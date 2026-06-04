@@ -1,0 +1,218 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
+import 'package:yiraclinics/features/presentation/slot/widgets/slot_filter_tabs.dart';
+import 'package:yiraclinics/features/presentation/slot/widgets/time_slot_card.dart';
+import '../../../core/colors/colors.dart' hide darkModeBgColor;
+import '../../../core/common_size_helpers/common_size_helpers.dart';
+import '../../../core/common_widgets/common_text.dart';
+import '../../../core/constants/constants.dart';
+import '../../../core/widgets/calendar/advanced_calendar.dart';
+import '../../../core/widgets/calendar/advanced_calendar_controller.dart';
+import '../../domain/entities/slot/time_slot_entity.dart';
+
+class SlotDashBoardScreen extends StatefulWidget {
+  const SlotDashBoardScreen({super.key});
+
+  @override
+  State<SlotDashBoardScreen> createState() => _SlotDashBoardScreenState();
+}
+
+class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
+  final _calendarControllerToday = AdvancedCalendarController.today();
+  final events = <DateTime>[DateTime.now()];
+
+  @override
+  void initState() {
+    context.read<SlotBloc>().add(InitializeSlotsEvent());
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        titleSpacing: 0,
+        centerTitle: false,
+        leading: const BackButton(),
+        title: CommonText(
+          "Ocimum, Jubleehils",
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: displayWidth(context) * 0.04,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.15),
+              child: Icon(
+                Icons.person,
+                size: 20,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: BlocBuilder<SlotBloc, SlotState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator.adaptive());
+            }
+
+            final totalCount = state.timeSlots.length;
+            final bookedCount = state.timeSlots
+                .where((s) => s.status == SlotStatus.booked)
+                .length;
+            final availableCount = state.timeSlots
+                .where((s) => s.status == SlotStatus.available)
+                .length;
+
+            final visibleSlots = state.filteredSlots;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                SizedBox(height: screenTopPadding),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                  ),
+                  child: AdvancedCalendar(
+                    onDateChanged: (date) async {},
+                    handlerColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.2),
+                    buttonPrimaryColor: primaryColor,
+                    weekFontSize: displayWidth(context) * 0.025,
+                    todayStyle: const TextStyle(fontSize: 0),
+                    headerStyle: TextStyle(
+                      fontSize: displayWidth(context) * 0.045,
+                      fontFamily: appPoppinFont,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    innerDot: false,
+                    showNavigationArrows: false,
+                    controller: _calendarControllerToday,
+                    events: events,
+                    startWeekDay: 1,
+                    weekColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black,
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: screenHorizontalSpacePadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: fieldSpace),
+                  /*    CommonText(
+                        "May 2026",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: displayWidth(context) * 0.03,
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),*/
+                      SlotFilterTabs(
+                        selectedIndex: state.selectedTabIndex,
+                        allCount: totalCount,
+                        bookedCount: bookedCount,
+                        availableCount: availableCount,
+                        onTabSelected: (index) {
+                          context.read<SlotBloc>().add(
+                            ChangeFilterTabUiEvent(index),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      _buildTimeSlotHeaderRow(Theme.of(context)),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: visibleSlots.isEmpty
+                      ? const Center(
+                    child: CommonText(
+                      "No time slots found for this selection.",
+                    ),
+                  )
+                      : ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: screenHorizontalSpacePadding,
+                      vertical: 8.0,
+                    ),
+                    itemCount: visibleSlots.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: TimeSlotCard(slot: visibleSlots[index]),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeSlotHeaderRow(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        CommonText(
+          "Time Slots",
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: displayWidth(context) * 0.039,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: CommonText(
+            "Availability: 9:00 AM - 5:00 PM",
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: displayWidth(context) * 0.022,
+              fontWeight: FontWeight.w600,
+              color: Colors.green,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
