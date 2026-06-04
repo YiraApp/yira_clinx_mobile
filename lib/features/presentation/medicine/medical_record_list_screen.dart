@@ -6,7 +6,6 @@ import 'package:yiraclinics/features/presentation/medicine/widgets/medical_recor
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
-import '../patient_profile/widgets/add_records_buttons.dart';
 import 'medical_history_bloc/medical_history_bloc.dart';
 
 

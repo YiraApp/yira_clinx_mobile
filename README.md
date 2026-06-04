@@ -1,10 +1,10 @@
 
 
 <p align="center">
-  <img src="https://yiraapp.blob.core.windows.net/appassets/yiraai.png" alt="Yira Clinix Logo" width="120" />
+  <img src="https://yiraapp.blob.core.windows.net/appassets/yiraai.png" alt="Yira Clinx Logo" width="120" />
 </p>
 
-<h1 align="center">Yira Clinix</h1>
+<h1 align="center">Yira Clinx</h1>
 
 <p align="center">
   <strong>Smart Clinical Practice & Healthcare Management Platform</strong>
@@ -24,13 +24,13 @@
 
 <br>
 
-# 🏥 About Yira Clinix
+# 🏥 About Yira Clinx
 
-**Yira Clinix** is a modern healthcare practice management platform designed for healthcare providers, clinics, hospitals, and healthcare organizations.
+**Yira Clinx** is a modern healthcare practice management platform designed for healthcare providers, clinics, hospitals, and healthcare organizations.
 
 The platform streamlines clinical workflows by enabling providers to manage patients, appointments, consultations, health records, care teams, and organizational memberships from a unified interface.
 
-Whether you're an independent practitioner, multi-specialty clinic, hospital network, or healthcare organization, Yira Clinix helps deliver efficient, secure, and patient-centered care.
+Whether you're an independent practitioner, multi-specialty clinic, hospital network, or healthcare organization, Yira Clinx helps deliver efficient, secure, and patient-centered care.
 
 ### Core Objectives
 

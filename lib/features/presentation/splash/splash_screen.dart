@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     Navigator.pushNamedAndRemoveUntil(
       context,
-      AppRoutes.appointmentDashboardScreen,
+      AppRoutes.prescriptionViewDetailsScreen,
       (route) => false,
     );
   }

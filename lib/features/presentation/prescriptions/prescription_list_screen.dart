@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
+import 'package:yiraclinics/features/presentation/prescriptions/widgets/prescription_record_fab.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/single_prescription_card.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -18,6 +19,7 @@ class PrescriptionListScreen extends StatelessWidget {
       create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData()),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        floatingActionButton:PrescriptionRecordFab( onAddRecordTapped: () {  }),
         body: SafeArea(
           child: BlocBuilder<PrescriptionBloc, PrescriptionState>(
             builder: (context, state) {

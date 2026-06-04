@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
 const Color darkModeCardColor = Color(0xff1C1B1B);
+const Color statusBarColor = Color(0xFFE8F5E9);
+const Color iconDarkColor = Color(0xFF81C784);
+const Color adaptiveTextColor = Color(0xFF1E293B);
+const Color borderSurfaceColor = Color(0xFF334155);
+const Color additionalNotesColor = Color(0xFF535F6B);
 const Color darkModeInnerCardColor = Color(0xff0D0D0D);
 const Color authScreenTitleColor = Color(0xff1F2A37);
 const Color secondaryColor = Color(0xff020617);

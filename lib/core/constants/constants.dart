@@ -11,7 +11,7 @@ const buttonHeight = 45.0;
 
 // ************ project title *************
 
-const projectTitle = "Yira CliniX";
+const projectTitle = "Yira ClinX";
 
 const appLogo = "assets/images/svgs/app_logo.svg";
 

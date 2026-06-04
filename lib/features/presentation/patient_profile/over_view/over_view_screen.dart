@@ -5,9 +5,6 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_history_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_summary_card.dart';
 
-import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
-import '../../../../core/constants/constants.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../widgets/add_records_buttons.dart';
 

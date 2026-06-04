@@ -1,5 +1,4 @@
 
-import '../../../domain/entities/slot/slot_appointment_entity.dart';
 import '../../../domain/entities/slot/time_slot_entity.dart';
 import '../../../domain/repositories/slot/slot_repo.dart';
 import '../../models/slot/time_slot_model.dart';

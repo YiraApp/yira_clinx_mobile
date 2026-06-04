@@ -18,14 +18,14 @@ import '../doctor/patient_appoinment_list/patient_appoinment_list.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
 import 'over_view/over_view_screen.dart';
 
-class PatientProfileScreen extends StatefulWidget {
-  const PatientProfileScreen({super.key});
+class DoctorPatientProfileScreen extends StatefulWidget {
+  const DoctorPatientProfileScreen({super.key});
 
   @override
-  State<PatientProfileScreen> createState() => _PatientProfileScreenState();
+  State<DoctorPatientProfileScreen> createState() => _DoctorPatientProfileScreenState();
 }
 
-class _PatientProfileScreenState extends State<PatientProfileScreen> {
+class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen> {
   int _activeTabIndex = 0;
 
   final List<String> _tabs = [

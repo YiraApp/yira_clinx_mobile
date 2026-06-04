@@ -5,7 +5,6 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
 import '../../../../core/common_widgets/common_text.dart';
-import '../../../../di/dependency_injection.dart';
 import '../../appointments/appointment_bloc/appointment_bloc.dart';
 import '../../appointments/widgets/appointment_card.dart';
 

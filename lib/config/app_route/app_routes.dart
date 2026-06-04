@@ -28,7 +28,7 @@ class AppRoutes {
   static const String settingsScreen= '/settingsScreen';
   static const String changePasswordScreen= '/changePasswordScreen';
   static const String onSuccessChangePassword= '/onSuccessChangePassword';
-  static const String patientProfileScreen= '/patientProfileScreen';
+  static const String doctorPatientProfileScreen= '/doctorPatientProfileScreen';
   static const String addMedicalRecordScreen= '/addMedicalRecordScreen';
   static const String medicalRecordDetailsScreen= '/medicalRecordDetailsScreen';
   static const String medicalHistoryScreen= '/medicalHistoryScreen';
@@ -40,4 +40,5 @@ class AppRoutes {
   static const String slotDashboard= '/slotDashboard';
   static const String addPrescriptionScreen= '/addPrescriptionScreen';
   static const String prescriptionListScreen= '/prescriptionListScreen';
+  static const String prescriptionViewDetailsScreen= '/prescriptionViewDetailsScreen';
 }

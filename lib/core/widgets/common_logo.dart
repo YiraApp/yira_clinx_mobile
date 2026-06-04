@@ -1,12 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../colors/colors.dart'; // Adjust path if needed
 
-class YiraClinixLogo extends StatelessWidget {
+class YiraClinxLogo extends StatelessWidget {
   final bool isTablet;
   final double? customSize;
   final Color? customColor;
@@ -16,7 +15,7 @@ class YiraClinixLogo extends StatelessWidget {
   final double padding;
   final bool isShadow;
 
-  const YiraClinixLogo({
+  const YiraClinxLogo({
     super.key,
     required this.isTablet,
     this.customSize,

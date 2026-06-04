@@ -8,7 +8,6 @@ import 'package:yiraclinics/features/presentation/medicine/widgets/vital_sign_ti
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
-import '../../../core/common_widgets/custom_button.dart';
 
 class MedicalRecordDetailsScreen extends StatelessWidget {
   const MedicalRecordDetailsScreen({super.key});

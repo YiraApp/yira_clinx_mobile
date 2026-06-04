@@ -11,12 +11,10 @@ import 'package:yiraclinics/features/presentation/medicine/widgets/vital_signs_s
 
 import '../../../core/colors/colors.dart';
 import '../../../core/common_drop_down/common_drop_down.dart';
-import '../../../core/common_input_fields/common_input_field.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_border_button.dart';
 import '../../../core/common_widgets/custom_button.dart';
-import '../patient_profile/widgets/patient_info_card.dart';
 import 'medical_record_bloc/medical_record_bloc.dart';
 
 class CreateMedicalRecordScreen extends StatefulWidget {

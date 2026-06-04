@@ -21,6 +21,7 @@ import 'package:yiraclinics/features/presentation/patient_profile/patient_profil
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
+import 'package:yiraclinics/features/presentation/prescriptions/prescription_view_details_screen.dart';
 import 'package:yiraclinics/features/presentation/settings/appearance_screen.dart';
 import 'package:yiraclinics/features/presentation/settings/change_password_bloc/change_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/change_password_screen.dart';
@@ -215,11 +216,11 @@ class AppRouter {
             child: PasswordChangeSuccessScreen(),
           ),
         );
-      case AppRoutes.patientProfileScreen:
+      case AppRoutes.doctorPatientProfileScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PatientProfileBloc>(),
-            child: PatientProfileScreen(),
+            child: DoctorPatientProfileScreen(),
           ),
         );
       case AppRoutes.addMedicalRecordScreen:
@@ -300,6 +301,13 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionListScreen(),
+          ),
+        );
+        case AppRoutes.prescriptionViewDetailsScreen:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<PrescriptionBloc>(),
+            child: PrescriptionViewDetailsScreen(),
           ),
         );
       //appointmentDetails

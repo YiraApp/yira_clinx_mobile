@@ -95,7 +95,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SettingsBloc());
   sl.registerLazySingleton(() => TestResultsBloc());
   sl.registerLazySingleton(() => WorkspaceBloc());
-  sl.registerLazySingleton(() => AppointmentBloc());
+  sl.registerFactory(() => AppointmentBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton(() => NavigationDrawerBloc());
   sl.registerLazySingleton(() => MedicalRecordBloc());
@@ -106,7 +106,7 @@ Future<void> init() async {
       repository: sl<MedicalHistoryRepository>(),
     ),
   );
-  sl.registerLazySingleton(() => UploadedBloc(repository: sl<RecordsRepository>()));
+  sl.registerFactory(() => UploadedBloc(repository: sl<RecordsRepository>()));
   sl.registerLazySingleton(() => RoleBloc(selectRoleUseCase: SelectRoleUseCase()));
 
   sl.registerLazySingleton(

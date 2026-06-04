@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/custom_border_button.dart';
 import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/constants/constants.dart';

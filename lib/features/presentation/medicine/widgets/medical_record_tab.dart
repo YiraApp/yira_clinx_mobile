@@ -61,17 +61,14 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // 1. Add Medical Record Animated Option
         _buildChildOption(
           label: 'Add Medical Record',
           icon: Icons.note_add_outlined,
-          color: primaryColor, // Using your Base Theme Primary
+          color: primaryColor,
           onTap: widget.onAddRecordTapped,
           offsetMultiplier: 1,
           isDark: isDark,
         ),
-
-        // Root Single-Action Context Toggle Trigger
         FloatingActionButton(
           backgroundColor: primaryColor,
           elevation: _isExpanded ? 4 : 2,
