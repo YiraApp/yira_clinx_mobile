@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custom_chart.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
@@ -89,7 +90,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.notifications_none_outlined, color: adaptiveTextColor),
+              icon: Icon(
+                Icons.notifications_none_outlined,
+                color: adaptiveTextColor,
+              ),
               onPressed: () {},
             ),
             const Padding(
@@ -104,7 +108,19 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         ),
         body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
           bloc: _dashboardBloc,
-          listener: (context, state) {},
+          buildWhen: (previous, current) {
+            // This prints exactly what state changes are being evaluated
+            debugPrint("🔄 buildWhen: Previous State: $previous -> Current State: $current");
+            return current is! DoctorAppointmentsNav && current is! PatientManagementNav;
+          },
+          listener: (context, state) {
+
+            if(state is DoctorAppointmentsNav){
+              Navigator.pushNamed(context, AppRoutes.appointmentDashboardScreen);
+            }else if(state is PatientManagementNav){
+              Navigator.pushNamed(context, AppRoutes.patientManagementScreen);
+            }
+          },
           builder: (context, state) {
             if (state is DoctorDashboardLoading) {
               return DoctorDashboardShimmer(fontFamily: appPoppinFont);
@@ -116,13 +132,22 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   children: [
                     Text(
                       state.message,
-                      style: const TextStyle(fontFamily: appPoppinFont, color: Colors.red),
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        color: Colors.red,
+                      ),
                     ),
                     const SizedBox(height: fieldSpace),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-                      onPressed: () => _dashboardBloc.add(FetchDoctorDashboardData()),
-                      child: const Text('Retry Operations', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                      ),
+                      onPressed: () =>
+                          _dashboardBloc.add(FetchDoctorDashboardData()),
+                      child: const Text(
+                        'Retry Operations',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -133,44 +158,70 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: screenHorizontalSpacePadding,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         const SizedBox(height: 8.0),
                         _buildWelcomeCard(context, isDark, primaryColor),
                         const SizedBox(height: fieldSpace),
                         _buildMetricsGrid(context, state, primaryColor),
-                        SizedBox(height: fieldSpace,),
-                        _buildSectionHeader(context, "Today's Schedule", "View Calendar", isDark, primaryColor),
-                        SizedBox(height: fieldSpace,),
+                        SizedBox(height: fieldSpace),
+                        _buildSectionHeader(
+                          context,
+                          "Today's Schedule",
+                          "View Calendar",
+                          isDark,
+                          primaryColor,
+                          () {
+                            context.read<DoctorDashboardBloc>().add(ViewCalendarEvent());
+                          },
+                        ),
+                        SizedBox(height: fieldSpace),
                       ]),
                     ),
                   ),
 
                   if (state.todaysAppointments.isEmpty)
                     SliverToBoxAdapter(
-                      child: _buildEmptyState(context, 'No active appointments today'),
+                      child: _buildEmptyState(
+                        context,
+                        'No active appointments today',
+                      ),
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: screenHorizontalSpacePadding,
+                      ),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final appointment = state.todaysAppointments[index];
 
-                          final bool isVideo = appointment.type == AppointmentType.videoCall;
+                          final bool isVideo =
+                              appointment.type == AppointmentType.videoCall;
 
                           return DocAppointmentCard(
-                            initials: _getInitials(appointment.patientName ?? 'Patient'),
+                            initials: _getInitials(
+                              appointment.patientName ?? 'Patient',
+                            ),
                             name: appointment.patientName ?? 'Unknown Patient',
-                            subtitle: isVideo ? 'Teleconsultation' : 'In-Clinic Visit',
-                            description: appointment.reason ?? 'General Checkup',
-                            timeOrDate: appointment.appointmentTime ?? '00:00 AM',
+                            subtitle: isVideo
+                                ? 'Teleconsultation'
+                                : 'In-Clinic Visit',
+                            description:
+                                appointment.reason ?? 'General Checkup',
+                            timeOrDate:
+                                appointment.appointmentTime ?? '00:00 AM',
                             statusLabel: isVideo ? 'Live Video' : 'Confirmed',
-                            statusColor: isVideo ? Colors.amber.withOpacity(0.15) : Colors.green.withOpacity(0.15),
-                            statusTextColor: isVideo ? Colors.amber[800]! : Colors.green[700]!,
+                            statusColor: isVideo
+                                ? Colors.amber.withOpacity(0.15)
+                                : Colors.green.withOpacity(0.15),
+                            statusTextColor: isVideo
+                                ? Colors.amber[800]!
+                                : Colors.green[700]!,
                             onTap: () {},
                           );
                         }, childCount: state.todaysAppointments.length),
@@ -178,31 +229,49 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     ),
 
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: screenHorizontalSpacePadding,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        _buildSectionHeader(context, "Recent Patients", "View All", isDark, primaryColor),
-                        SizedBox(height: fieldSpace,),
+                        _buildSectionHeader(
+                          context,
+                          "Recent Patients",
+                          "View All",
+                          isDark,
+                          primaryColor,
+                              () {
+                            context.read<DoctorDashboardBloc>().add(ViewPatientsEvent());
+                          },
+                        ),
+                        SizedBox(height: fieldSpace),
                       ]),
                     ),
                   ),
-
-                  // --- 2. WIRED: RECENT PATIENTS LOGS LIST ---
                   if (state.recentPatients.isEmpty)
                     SliverToBoxAdapter(
-                      child: _buildEmptyState(context, 'No historical patient logs available'),
+                      child: _buildEmptyState(
+                        context,
+                        'No historical patient logs available',
+                      ),
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: screenHorizontalSpacePadding,
+                      ),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final recentLog = state.recentPatients[index];
                           return DocAppointmentCard(
-                            initials: _getInitials(recentLog.patientName ?? 'Patient'),
+                            initials: _getInitials(
+                              recentLog.patientName ?? 'Patient',
+                            ),
                             name: recentLog.patientName ?? 'Unknown Patient',
                             subtitle: 'Historical Consultation',
-                            description: recentLog.diagnosis ?? 'Completed Session Case Log',
+                            description:
+                                recentLog.diagnosis ??
+                                'Completed Session Case Log',
                             timeOrDate: recentLog.appointmentDate ?? 'Recent',
                             statusLabel: 'Completed',
                             statusColor: primaryColor.withOpacity(0.1),
@@ -225,7 +294,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           "Weekly Appointments",
                           "Avg: 5.4/day",
                           isDark,
-                          _buildWeeklyChartBarList(context, primaryColor, chartHeight),
+                          _buildWeeklyChartBarList(
+                            context,
+                            primaryColor,
+                            chartHeight,
+                          ),
                         ),
                         SizedBox(height: fieldSpace),
                         _buildChartCard(
@@ -233,7 +306,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           "Monthly Patients",
                           "Yearly Total: 156",
                           isDark,
-                          _buildMonthlyChartBarList(context, primaryColor, chartHeight),
+                          _buildMonthlyChartBarList(
+                            context,
+                            primaryColor,
+                            chartHeight,
+                          ),
                         ),
                       ]),
                     ),
@@ -248,8 +325,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-
-  Widget _buildMetricsGrid(BuildContext context, DoctorDashboardLoaded state, Color primaryColor) {
+  Widget _buildMetricsGrid(
+    BuildContext context,
+    DoctorDashboardLoaded state,
+    Color primaryColor,
+  ) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -295,7 +375,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       margin: const EdgeInsets.symmetric(vertical: 12.0),
       padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B).withOpacity(0.2) : Colors.grey[50],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E293B).withOpacity(0.2)
+            : Colors.grey[50],
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Center(
@@ -312,22 +394,30 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeCard(BuildContext context, bool isDark, Color primaryColor) {
+  Widget _buildWelcomeCard(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+  ) {
     final textWidth = displayWidth(context);
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.0),
-        color: isDark ? darkModeCardColor : const Color(0xFFd8eaff).withOpacity(0.4),
+        color: isDark
+            ? darkModeCardColor
+            : const Color(0xFFd8eaff).withOpacity(0.4),
 
-        border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.2) : Colors.black.withOpacity(0.03),
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.03),
             blurRadius: 15,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -375,7 +465,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[500]),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: Colors.grey[500],
+                      ),
                       const SizedBox(width: 4.0),
                       Expanded(
                         child: Text(
@@ -395,10 +489,16 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
-                color: isDark ? Colors.grey[800]!.withOpacity(0.4) : primaryColor.withOpacity(0.06),
+                color: isDark
+                    ? Colors.grey[800]!.withOpacity(0.4)
+                    : primaryColor.withOpacity(0.06),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.wb_sunny_outlined, color: Colors.amberAccent, size: 20),
+              child: const Icon(
+                Icons.wb_sunny_outlined,
+                color: Colors.amberAccent,
+                size: 20,
+              ),
             ),
           ],
         ),
@@ -406,7 +506,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, String actionText, bool isDark, Color primaryColor) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    String actionText,
+    bool isDark,
+    Color primaryColor,
+      VoidCallback onTap
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -426,7 +533,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          onPressed: () {},
+          onPressed: onTap,
           child: Text(
             actionText,
             style: TextStyle(
@@ -441,19 +548,27 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildChartCard(BuildContext context, String title, String badgeText, bool isDark, Widget chartContent) {
+  Widget _buildChartCard(
+    BuildContext context,
+    String title,
+    String badgeText,
+    bool isDark,
+    Widget chartContent,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+            color: isDark
+                ? Colors.black.withOpacity(0.1)
+                : Colors.black.withOpacity(0.02),
             blurRadius: 10,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -474,7 +589,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[800]!.withOpacity(0.5) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? Colors.grey[800]!.withOpacity(0.5)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -496,7 +613,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildWeeklyChartBarList(BuildContext context, Color primaryColor, double height) {
+  Widget _buildWeeklyChartBarList(
+    BuildContext context,
+    Color primaryColor,
+    double height,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<Color> beautifulWeeklyPalette = [
@@ -521,19 +642,38 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildMonthlyChartBarList(BuildContext context, Color primaryColor, double height) {
+  Widget _buildMonthlyChartBarList(
+    BuildContext context,
+    Color primaryColor,
+    double height,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<Color> beautifulMonthlyColors = List.generate(12, (index) {
       final double progress = index / 11;
-      final Color endAccent = isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E);
+      final Color endAccent = isDark
+          ? const Color(0xFF2DD4BF)
+          : const Color(0xFF0F766E);
       return Color.lerp(primaryColor, endAccent, progress)!;
     });
 
     return CustomBarChart(
       monthly: true,
       values: const [35, 48, 55, 68, 15, 22, 44, 62, 52, 30, 38, 18],
-      labels: const ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
+      labels: const [
+        'JAN',
+        'FEB',
+        'MAR',
+        'APR',
+        'MAY',
+        'JUN',
+        'JUL',
+        'AUG',
+        'SEP',
+        'OCT',
+        'NOV',
+        'DEC',
+      ],
       maxY: 75,
       barWidth: 8,
       chartHeight: height,

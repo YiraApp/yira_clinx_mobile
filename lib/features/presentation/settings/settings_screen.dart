@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -47,10 +47,14 @@ class SettingsScreen extends StatelessWidget {
           if (state.themeMode == ThemeMode.dark) {
             activeThemeModeString = "Dark Mode";
           } else if (state.themeMode == ThemeMode.system) {
-            activeThemeModeString = isDark ? "Dark Mode (System)" : "Light Mode (System)";
+            activeThemeModeString = isDark
+                ? "Dark Mode (System)"
+                : "Light Mode (System)";
           }
 
-          String activeLanguageString = state.selectedLanguageCode == 'en' ? 'English (US)' : state.selectedLanguageCode.toUpperCase();
+          String activeLanguageString = state.selectedLanguageCode == 'en'
+              ? 'English (US)'
+              : state.selectedLanguageCode.toUpperCase();
 
           return ListView(
             padding: EdgeInsets.symmetric(
@@ -67,7 +71,9 @@ class SettingsScreen extends StatelessWidget {
                     title: "Password and security",
                     subtitle: "Manage passwords",
                     onTap: () {
-                      // Navigate to password or security settings
+                      context.read<SettingsBloc>().add(
+                        PasswordAndSecurityNavEvent(),
+                      );
                     },
                   ),
                 ],
@@ -83,8 +89,7 @@ class SettingsScreen extends StatelessWidget {
                     title: "Notification settings",
                     subtitle: "Push, email, and alert triggers",
                     onTap: () {
-                      // Navigate to sub-settings using your notification booleans 
-                      // (state.pushEnabled, state.emailEnabled, etc.)
+                      context.read<SettingsBloc>().add(NotificationNavEvent());
                     },
                   ),
                 ],
@@ -101,7 +106,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: activeLanguageString,
                     showDivider: true,
                     onTap: () {
-                      // Trigger your language selection flow
+                      context.read<SettingsBloc>().add(LanguageNavEvent());
                     },
                   ),
                   CustomSettingTile(
@@ -109,17 +114,65 @@ class SettingsScreen extends StatelessWidget {
                     title: "Theme settings",
                     subtitle: activeThemeModeString,
                     onTap: () {
-                      final bloc = context.read<SettingsBloc>();
-                      final targetDark = state.themeMode != ThemeMode.dark;
+                      context.read<SettingsBloc>().add(ThemeNavEvent());
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-
+              _buildSectionHeader(context, "TERMINATE ACCOUNT"),
+              const SizedBox(height: 10),
+              SettingsGroupCard(
+                children: [
+                  CustomSettingTile(
+                    icon: Icons.delete_forever_rounded,
+                    title: "Delete Account",
+                    subtitle: "Permanently erase your data",
+                    onTap: () {
+                      context.read<SettingsBloc>().add(DeleteAccountNavEvent());
                     },
                   ),
                 ],
               ),
             ],
           );
-        }, listener: (BuildContext context, SettingsState state) {  },
+        },
+        buildWhen: (previous, current) =>
+            current is! PasswordAndSecurityNavState &&
+            current is! NotificationNavState &&
+            current is! LanguageNavState &&
+            current is! ThemeNavState &&
+            current is! DeleteAccountNavState,
+        listener: (BuildContext context, SettingsState state) {
+          switch (state) {
+            case PasswordAndSecurityNavState():
+              Navigator.pushNamed(context, AppRoutes.changePasswordScreen);
+              break;
+            case NotificationNavState():
+              Navigator.pushNamed(
+                context,
+                AppRoutes.notificationSettingsScreen,
+              );
+
+              break;
+            case LanguageNavState():
+              Navigator.pushNamed(context, AppRoutes.languageSelectionScreen);
+
+              break;
+            case ThemeNavState():
+              Navigator.pushNamed(context, AppRoutes.appearanceScreen);
+
+              break;
+            case DeleteAccountNavState():
+              Navigator.pushNamed(context, AppRoutes.closeAccountScreen);
+
+              break;
+
+            default:
+              Navigator.pushNamed(context, AppRoutes.changePasswordScreen);
+          }
+        },
       ),
     );
   }
@@ -133,9 +186,38 @@ class SettingsScreen extends StatelessWidget {
         fontFamily: appPoppinFont,
         fontSize: width * 0.031,
         fontWeight: FontWeight.w600,
-        color: isDark ? textLightDarkColor : const Color(0xFF64748B),
+        color: (isDark ? textLightDarkColor : scoreSubTextColor),
         letterSpacing: 1.1,
       ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Account?"),
+          content: const Text(
+            "This action is permanent and cannot be undone. All clinical data, profile records, and configurations will be permanently deleted.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () {
+                Navigator.pop(context);
+                // Dispatch your delete account event here
+                // context.read<SettingsBloc>().add(DeleteAccountRequestedEvent());
+              },
+              child: const Text("Delete"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

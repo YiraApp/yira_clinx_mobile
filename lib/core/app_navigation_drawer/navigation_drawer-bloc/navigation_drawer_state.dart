@@ -29,22 +29,23 @@ class NavigationDrawerState {
   }
 }
 
+// Subclasses that require the index to be parsed into the constructor
 class DashboardNavState extends NavigationDrawerState {
-  const DashboardNavState() : super(selectedIndex: 0);
+  const DashboardNavState({required int index}) : super(selectedIndex: index);
 }
 
 class AppointmentsNavState extends NavigationDrawerState {
-  const AppointmentsNavState() : super(selectedIndex: 1);
+  const AppointmentsNavState({required int index}) : super(selectedIndex: index);
 }
 
 class PatientsNavState extends NavigationDrawerState {
-  const PatientsNavState() : super(selectedIndex: 2);
+  const PatientsNavState({required int index}) : super(selectedIndex: index);
 }
 
 class DoctorSlotNavState extends NavigationDrawerState {
-  const DoctorSlotNavState() : super(selectedIndex: 2);
+  const DoctorSlotNavState({required int index}) : super(selectedIndex: index);
 }
 
 class SettingsNavState extends NavigationDrawerState {
-  const SettingsNavState() : super(selectedIndex: 2);
+  const SettingsNavState({required int index}) : super(selectedIndex: index);
 }

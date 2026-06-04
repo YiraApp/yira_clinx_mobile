@@ -5,6 +5,7 @@ import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/
 import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/use_case/role_use_case.dart';
+import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/change_password_bloc/change_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
@@ -17,7 +18,7 @@ import 'package:yiraclinics/features/domain/repositories/medication/medication_r
 import 'package:yiraclinics/features/data/repository_impl/medication/medication_repo_impl.dart';
 // Other Features
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_bloc/dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 
 import '../features/data/data_sources/theme_local_data_source.dart';
@@ -36,6 +37,7 @@ import '../features/domain/repositories/slot/scheduler_repo.dart';
 import '../features/domain/repositories/slot/slot_repo.dart'; // 🚀 UPDATED: Pointing to the new slot_repo interface
 import '../features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import '../features/presentation/auth/work_space/work_space_bloc/work_space_bloc.dart';
+import '../features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import '../features/presentation/medicine/medical_history_bloc/medical_history_bloc.dart';
 import '../features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import '../features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
@@ -99,6 +101,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton(() => NavigationDrawerBloc());
   sl.registerLazySingleton(() => MedicalRecordBloc());
+  sl.registerLazySingleton(() => DoctorDashboardBloc());
   sl.registerLazySingleton(() => PatientProfileBloc(repository: sl()));
   sl.registerFactory(
         () => MedicalHistoryBloc(
@@ -108,6 +111,7 @@ Future<void> init() async {
   );
   sl.registerFactory(() => UploadedBloc(repository: sl<RecordsRepository>()));
   sl.registerLazySingleton(() => RoleBloc(selectRoleUseCase: SelectRoleUseCase()));
+  sl.registerLazySingleton(() => CloseAccountBloc());
 
   sl.registerLazySingleton(
         () => SlotBloc(

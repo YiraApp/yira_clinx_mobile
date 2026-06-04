@@ -8,12 +8,13 @@ part 'setting_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc() : super(const SettingsState()) {
-
     on<LanguageChanged>((event, emit) {
-      emit(state.copyWith(
-        selectedLanguageCode: event.languageCode,
-        status: SettingsStatus.initial,
-      ));
+      emit(
+        state.copyWith(
+          selectedLanguageCode: event.languageCode,
+          status: SettingsStatus.initial,
+        ),
+      );
     });
     on<NotificationToggleChanged>((event, emit) {
       switch (event.type) {
@@ -38,17 +39,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       }
     });
     on<ThemeChanged>((event, emit) {
-      emit(state.copyWith(
-        themeMode: event.themeMode,
-        status: SettingsStatus.initial,
-      ));
+      emit(
+        state.copyWith(
+          themeMode: event.themeMode,
+          status: SettingsStatus.initial,
+        ),
+      );
     });
 
     on<SoundToggleChanged>((event, emit) {
-      emit(state.copyWith(
-        soundEnabled: event.isEnabled,
-        status: SettingsStatus.initial,
-      ));
+      emit(
+        state.copyWith(
+          soundEnabled: event.isEnabled,
+          status: SettingsStatus.initial,
+        ),
+      );
     });
 
     on<SaveSettingsPressed>((event, emit) async {
@@ -61,11 +66,29 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
         emit(state.copyWith(status: SettingsStatus.success));
       } catch (e) {
-        emit(state.copyWith(
-          status: SettingsStatus.failure,
-          errorMessage: "Failed to update settings.",
-        ));
+        emit(
+          state.copyWith(
+            status: SettingsStatus.failure,
+            errorMessage: "Failed to update settings.",
+          ),
+        );
       }
+    });
+
+    on<PasswordAndSecurityNavEvent>((event, emit) {
+      emit(PasswordAndSecurityNavState());
+    });
+    on<NotificationNavEvent>((event, emit) {
+      emit(NotificationNavState());
+    });
+    on<LanguageNavEvent>((event, emit) {
+      emit(LanguageNavState());
+    });
+    on<ThemeNavEvent>((event, emit) {
+      emit(ThemeNavState());
+    });
+    on<DeleteAccountNavEvent>((event, emit) {
+      emit(DeleteAccountNavState());
     });
   }
 }

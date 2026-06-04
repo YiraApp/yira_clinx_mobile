@@ -53,27 +53,32 @@ class AppNavigationDrawer extends StatelessWidget {
             listener: (BuildContext context, NavigationDrawerState state) {
               switch (state) {
                 case DashboardNavState():
+                  Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.docDashboard);
                   break;
                 case AppointmentsNavState():
+                  Navigator.pop(context);
                   Navigator.pushNamed(
                     context,
                     AppRoutes.appointmentDashboardScreen,
                   );
                   break;
                 case PatientsNavState():
+                  Navigator.pop(context);
                   Navigator.pushNamed(
                     context,
                     AppRoutes.patientManagementScreen,
                   );
                   break;
                 case DoctorSlotNavState():
+                  Navigator.pop(context);
                   Navigator.pushNamed(
                     context,
-                    AppRoutes.smartSlotSchedulerScreen,
+                    AppRoutes.slotDashboard,
                   );
                   break;
                 case SettingsNavState():
+                  Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.settingsScreen);
                   break;
                 default:
@@ -103,9 +108,29 @@ class AppNavigationDrawer extends StatelessWidget {
                               icon: item.icon,
                               isSelected: state.selectedIndex == index,
                               onTap: () {
-                                context.read<NavigationDrawerBloc>().add(
-                                  NavItemChanged(index),
-                                );
+                                switch (index) {
+                                  case 0:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      DashBoardNav(),
+                                    );
+                                    break;
+                                  case 1:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      AppointmentsNav(),
+                                    );
+                                    break;
+                                  case 2:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      PatientsNav(),
+                                    );
+                                    break;
+                                  case 3:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      DoctorSlotsNav(),
+                                    );
+                                    break;
+                                  default:
+                                }
                               },
                             );
                           }),
@@ -126,7 +151,7 @@ class AppNavigationDrawer extends StatelessWidget {
                             isSelected: state.selectedIndex == 7,
                             onTap: () => context
                                 .read<NavigationDrawerBloc>()
-                                .add(NavItemChanged(7)),
+                                .add(SettingsNav()),
                           ),
                           Padding(
                             padding: EdgeInsets.symmetric(

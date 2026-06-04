@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
 import '../../../../core/common_drop_down/common_drop_down.dart';
 import '../../../../core/constants/constants.dart';
-import 'dashboard_bloc/dashboard_bloc.dart';
 
 class PatientManagementScreen extends StatelessWidget {
   const PatientManagementScreen({super.key});
@@ -17,17 +19,31 @@ class PatientManagementScreen extends StatelessWidget {
       create: (context) => DashboardBloc()..add(const GetDashboardData()),
       child: GestureDetector(
         onTap: () {
-          FocusScope.of(
-              context).unfocus();
+          FocusScope.of(context).unfocus();
         },
         child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: BlocConsumer<DashboardBloc, DashboardState>(
+              buildWhen: (previous, state) => state is! ViewPatientDetailsState,
               listener: (context, state) {
                 if (state.status == DashboardStatus.failure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(state.errorMessage ?? "Error")),
+                  );
+                }
+                if (state is ViewPatientDetailsState) {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.doctorPatientProfileScreen,
                   );
                 }
               },
@@ -54,29 +70,27 @@ class PatientManagementScreen extends StatelessWidget {
                           horizontal: screenHorizontalSpacePadding,
                           vertical: fieldSpace,
                         ),
-                        child: Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Patient Management",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Patient Management",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: displayWidth(context) * 0.045,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Unified view of patients, medical records, and clinical notes",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
-                                  color: Colors.grey,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Unified view of patients, medical records, and clinical notes",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: displayWidth(context) * 0.03,
+                                color: Colors.grey,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -148,7 +162,14 @@ class PatientManagementScreen extends StatelessWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: state.patients.length,
                           itemBuilder: (context, index) {
-                            return PatientCard(patient: state.patients[index]);
+                            return PatientCard(
+                              patient: state.patients[index],
+                              onTap: () {
+                                context.read<DashboardBloc>().add(
+                                  ViewPatientDetailsEvent(),
+                                );
+                              },
+                            );
                           },
                         ),
                       ),
@@ -176,6 +197,7 @@ class PatientManagementScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
+        color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? Colors.grey[800]! : Colors.grey.withOpacity(0.15),
@@ -248,9 +270,9 @@ class PatientManagementScreen extends StatelessWidget {
               hintText: "Search by name, ID, phone...",
               prefixIcon: const Icon(Icons.search, color: Colors.blueGrey),
               filled: true,
-              fillColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              fillColor: isDark
+                  ? darkModeCardColor
+                  : Theme.of(context).scaffoldBackgroundColor,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 0,
                 horizontal: 16,

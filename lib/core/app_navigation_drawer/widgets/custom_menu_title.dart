@@ -48,14 +48,13 @@ class CustomMenuTile extends StatelessWidget {
             vertical: referenceWidth * 0.038,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? activeBgColor.withOpacity(0.8) : Colors.transparent,
             borderRadius: BorderRadius.circular(fieldBorderRadius),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: customColor ?? (isSelected ? activeTextColor : inactiveTextColor.withOpacity(0.7)),
+                color: customColor ?? (inactiveTextColor.withOpacity(0.7)),
                 size: referenceWidth * (isTab ? 0.048 : 0.045),
               ),
               SizedBox(width: referenceWidth * 0.045),
@@ -64,9 +63,9 @@ class CustomMenuTile extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    color: customColor ?? (isSelected ? activeTextColor : inactiveTextColor),
+                    color: customColor ?? ( inactiveTextColor),
                     fontSize: referenceWidth * (isTab ? 0.042 : 0.033),
-                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ),

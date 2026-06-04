@@ -50,7 +50,7 @@ class CustomSettingTile extends StatelessWidget {
             title,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: width * 0.038,
+              fontSize: width * 0.035,
               fontWeight: FontWeight.w600,
               color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B),
             ),
@@ -61,7 +61,7 @@ class CustomSettingTile extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: width * 0.031,
+                fontSize: width * 0.029,
                 fontWeight: FontWeight.w400,
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),

@@ -8,137 +8,141 @@ import '../../../../domain/entities/dashboard/patient_entity.dart';
 
 class PatientCard extends StatelessWidget {
   final PatientEntity patient;
-  const PatientCard({super.key, required this.patient});
+  final VoidCallback onTap;
+  const PatientCard({super.key, required this.patient, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).cardColor : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
-          width: 1,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? darkModeCardColor: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? Colors.white10 : Colors.grey.shade200,
+            width: 1,
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
         ),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: .spaceBetween,
+              crossAxisAlignment: .start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: displayWidth(context) * 0.06,
+                      backgroundColor: isDark
+                          ? Colors.blue.withOpacity(0.2)
+                          : const Color(0xFFDBEAFE),
+                      child: CommonText(
+                        patient.name.substring(0, 2).toUpperCase(),
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: appPoppinFont,
+                          fontSize: displayWidth(context) * 0.035,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CommonText(
+                          patient.name,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w600,
+                            fontSize: displayWidth(context) * 0.036,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        CommonText(
+                          "${patient.id} | ${patient.age}y | ${patient.gender}",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontFamily: appPoppinFont,
+                            fontSize: displayWidth(context) * 0.029,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: .spaceBetween,
-            crossAxisAlignment: .start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: displayWidth(context) * 0.06,
-                    backgroundColor: isDark
-                        ? Colors.blue.withOpacity(0.2)
-                        : const Color(0xFFDBEAFE),
-                    child: CommonText(
-                      patient.name.substring(0, 2).toUpperCase(),
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.035,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CommonText(
-                        patient.name,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.036,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      CommonText(
-                        "${patient.id} | ${patient.age}y | ${patient.gender}",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.029,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
 
-              _buildStatusBadge(context, patient.status),
-            ],
-          ),
-          const SizedBox(height: 12),
-          CommonText(
-            patient.condition,
-            softWrap: true,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.03,
-              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                _buildStatusBadge(context, patient.status),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildInfoItem(context, "Visits: ", "${patient.visits}"),
-              const SizedBox(width: 16),
-              _buildInfoItem(context, "Last: ", patient.lastVisit),
-            ],
-          ),
-          if (patient.allergy.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.red.withOpacity(0.1)
-                    : const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withOpacity(0.2)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.shield, color: Colors.red, size: 14),
-                  const SizedBox(width: 6),
-                  CommonText(
-                    "Allergic: ${patient.allergy}",
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.025,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+            CommonText(
+              patient.condition,
+              softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontFamily: appPoppinFont,
+                fontSize: displayWidth(context) * 0.03,
+                color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _buildInfoItem(context, "Visits: ", "${patient.visits}"),
+                const SizedBox(width: 16),
+                _buildInfoItem(context, "Last: ", patient.lastVisit),
+              ],
+            ),
+            if (patient.allergy.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.red.withOpacity(0.1)
+                      : const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shield, color: Colors.red, size: 14),
+                    const SizedBox(width: 6),
+                    CommonText(
+                      "Allergic: ${patient.allergy}",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontFamily: appPoppinFont,
+                        fontSize: displayWidth(context) * 0.025,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

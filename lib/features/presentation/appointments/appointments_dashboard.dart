@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/appointment_tab_content.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/stat_card.dart';
@@ -53,7 +54,9 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
           Container(
             margin: EdgeInsets.only(right: screenHorizontalSpacePadding),
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
+              },
               icon: Icon(
                 Icons.add,
                 size: displayWidth(context) * 0.035,

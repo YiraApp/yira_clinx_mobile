@@ -4,7 +4,6 @@ part of 'dashboard_bloc.dart';
 
 enum DashboardStatus { initial, loading, success, failure }
 @immutable
-// presentation/bloc/dashboard/dashboard_state.dart
 
 class DashboardState extends Equatable {
   final DashboardStatus status;
@@ -27,7 +26,6 @@ class DashboardState extends Equatable {
     DashboardStatus? status,
     List<PatientEntity>? patients,
     List<PatientEntity>? allPatients,
-    // We wrap these in a function or use a flag to allow null
     String? Function()? selectedStatus,
     String? Function()? selectedGender,
     String? errorMessage,
@@ -45,4 +43,9 @@ class DashboardState extends Equatable {
 
   @override
   List<Object?> get props => [status, patients, allPatients, selectedStatus, selectedGender, errorMessage];
+}
+class ViewPatientDetailsState extends DashboardState{
+
+  @override
+  List<Object?> get props => [];
 }

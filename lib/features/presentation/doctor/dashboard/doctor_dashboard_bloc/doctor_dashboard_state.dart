@@ -39,3 +39,12 @@ class DoctorDashboardError extends DoctorDashboardState {
   @override
   List<Object?> get props => [message];
 }
+
+class DoctorAppointmentsNav extends DoctorDashboardState{
+  @override
+  List<Object?> get props => [];
+}
+class PatientManagementNav extends DoctorDashboardState{
+  @override
+  List<Object?> get props => [];
+}

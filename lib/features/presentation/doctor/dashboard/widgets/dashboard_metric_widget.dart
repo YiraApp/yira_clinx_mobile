@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/common_drop_down/common_drop_down.dart';
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../../core/constants/constants.dart';
-import '../dashboard_bloc/dashboard_bloc.dart';
+import '../patient_dashboard_bloc/dashboard_bloc.dart';
 
 class DashboardMetricWidget extends StatelessWidget {
   const DashboardMetricWidget({super.key});

@@ -11,8 +11,10 @@ import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/verify_otp_screen.dart';
 import 'package:yiraclinics/features/presentation/auth/work_space/work_space_screen.dart';
+import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
+import 'package:yiraclinics/features/presentation/close_account/close_account_screen.dart';
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_bloc/dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_details_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
@@ -308,6 +310,13 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionViewDetailsScreen(),
+          ),
+        );
+      case AppRoutes.closeAccountScreen:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<CloseAccountBloc>(),
+            child: CloseAccountScreen(),
           ),
         );
       //appointmentDetails
