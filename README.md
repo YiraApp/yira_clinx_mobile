@@ -119,21 +119,21 @@ Organization
 
 # 🛠️ Tech Stack
 
-| Category | Package | Purpose |
-|-----------|----------|----------|
-| Backend | cloud_firestore | Clinical and patient data storage |
-| Backend | firebase_auth | Authentication and authorization |
-| Backend | firebase_remote_config | Feature management |
-| Security | flutter_secure_storage | Secure token storage |
-| Security | local_auth | Face ID & Fingerprint authentication |
-| Security | google_sign_in | Google OAuth integration |
+| Category         | Package | Purpose |
+|------------------|----------|----------|
+| Package          | cloud_firestore | Clinical and patient data storage |
+| Package          | firebase_auth | Authentication and authorization |
+| Package          | firebase_remote_config | Feature management |
+| Security         | flutter_secure_storage | Secure token storage |
+| Security         | local_auth | Face ID & Fingerprint authentication |
+| Security         | google_sign_in | Google OAuth integration |
 | State Management | flutter_bloc | Scalable application state management |
-| UI/UX | shimmer | Skeleton loading states |
-| UI/UX | popup_menu | Contextual actions |
-| UI/UX | flutter_launcher_icons | App icon generation |
-| Media | photo_manager | Medical image management |
-| Media | image_picker | Capture and upload images |
-| Utilities | intl | Localization and date formatting |
+| UI/UX            | shimmer | Skeleton loading states |
+| UI/UX            | popup_menu | Contextual actions |
+| UI/UX            | flutter_launcher_icons | App icon generation |
+| Media            | photo_manager | Medical image management |
+| Media            | image_picker | Capture and upload images |
+| Utilities        | intl | Localization and date formatting |
 
 ---
 
@@ -166,21 +166,6 @@ Administrators who can:
 - Manage memberships
 - Configure access permissions
 - Monitor organizational operations
-
----
-
-# 🔄 Development Branches
-
-| Branch | Purpose |
-|----------|----------|
-| `main` | Production-ready releases |
-| `develop` | Active development |
-| `feature/provider-management` | Provider workflows |
-| `feature/patient-management` | Patient workflows |
-| `feature/appointments` | Appointment scheduling |
-| `feature/ehr-module` | Electronic health records |
-| `feature/organization-management` | Multi-organization support |
-| `feature/dashboard-enhancements` | Dashboard improvements |
 
 ---
 
@@ -225,32 +210,6 @@ flutter build apk --release
 ```bash
 flutter build ios --release
 ```
-
----
-
-# 🔐 Environment Configuration
-
-Create a `.env` file and configure:
-
-```env
-FIREBASE_PROJECT_ID=
-API_BASE_URL=
-ENVIRONMENT=
-```
-
----
-
-# 📈 Future Roadmap
-
-- Telemedicine consultations
-- AI-assisted clinical documentation
-- Digital prescriptions
-- Laboratory integrations
-- Insurance workflows
-- Health analytics dashboard
-- Provider collaboration tools
-- Patient engagement portal
-
 ---
 
 # 🤝 Contributing
@@ -264,7 +223,7 @@ ENVIRONMENT=
 
 # 📄 License
 
-Copyright © Yira Health Technologies.
+Copyright © YIRA HEALTH TECH PRIVATE LIMITED.
 
 All rights reserved.
 
