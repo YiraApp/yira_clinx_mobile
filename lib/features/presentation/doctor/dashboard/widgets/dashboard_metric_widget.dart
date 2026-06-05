@@ -118,7 +118,7 @@ class DashboardMetricWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.grey[800]! : Colors.grey.withOpacity(0.15),
           width: 1,
@@ -198,7 +198,7 @@ class DashboardMetricWidget extends StatelessWidget {
               ),
 
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
                   color: Colors.grey.withOpacity(0.2),
                   width: 1.0,
@@ -206,7 +206,7 @@ class DashboardMetricWidget extends StatelessWidget {
               ),
 
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
                   color: Colors.grey.withOpacity(0.2),
                   width: 1.0,
@@ -214,7 +214,7 @@ class DashboardMetricWidget extends StatelessWidget {
               ),
 
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
                   color: Colors.grey.withOpacity(0.2),
                   width: 1.5,

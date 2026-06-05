@@ -37,13 +37,13 @@ class OrganizationCard extends StatelessWidget {
                 ToggleOrganizationEvent(org.id),
               );
             },
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.all(isTab ? 20 : 16), // Adaptive inner frame padding
+              padding: EdgeInsets.all(isTab ? 20 : 16),
               decoration: BoxDecoration(
                 color: cardBg,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 border: Border.all(
                   color: org.isExpanded
                       ? theme.primaryColor.withOpacity(0.3)
@@ -117,7 +117,7 @@ class OrganizationCard extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
                       color: expandedSubTileBg,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
                       border: Border.all(
                         color: isDarkMode ? Colors.white10 : const Color(0xFFEDF2F7),
                       ),

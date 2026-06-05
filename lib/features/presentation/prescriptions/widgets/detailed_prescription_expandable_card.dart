@@ -57,7 +57,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(

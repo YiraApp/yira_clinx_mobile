@@ -19,7 +19,7 @@ class UnSyncedDataDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
       backgroundColor: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -67,7 +67,7 @@ class UnSyncedDataDialog extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                   elevation: 0,
                 ),
                 onPressed: () {
@@ -87,7 +87,7 @@ class UnSyncedDataDialog extends StatelessWidget {
               child: TextButton(
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red.shade600,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                 ),
                 onPressed: () {
                   Navigator.pop(context);

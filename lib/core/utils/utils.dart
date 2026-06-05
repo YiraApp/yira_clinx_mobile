@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../common_size_helpers/common_size_helpers.dart';
 import '../common_widgets/common_text.dart';
+import '../constants/constants.dart';
 import '../global_scaffold_key/global_scaffold_key.dart';
 
 class Utils {
@@ -22,7 +23,7 @@ class Utils {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
       ),
     );
@@ -153,7 +154,7 @@ class Utils {
       backgroundColor: status ? Colors.green.shade700 : Colors.red.shade800,
       duration: Duration(seconds: duration),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
       content: Row(
         children: [
           Icon(

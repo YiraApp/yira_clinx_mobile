@@ -22,7 +22,7 @@ class PatientCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? darkModeCardColor: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isDark ? Colors.white10 : Colors.grey.shade200,
             width: 1,
@@ -120,7 +120,7 @@ class PatientCard extends StatelessWidget {
                   color: isDark
                       ? Colors.red.withOpacity(0.1)
                       : const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                   border: Border.all(color: Colors.red.withOpacity(0.2)),
                 ),
                 child: Row(

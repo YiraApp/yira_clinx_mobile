@@ -166,7 +166,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                       padding: const EdgeInsets.all(8), // Enhanced professional layout alignment
                                       decoration: BoxDecoration(
                                         color: theme.primaryColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                                       ),
                                       child: Icon(
                                         currentIsInApp ? Icons.lan_rounded : Icons.domain_rounded, // Local Area Network/Enterprise topology visual

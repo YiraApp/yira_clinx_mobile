@@ -64,7 +64,7 @@ final double? dateSize;
                         : isToday
                         ? theme.highlightColor
                         : null,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                     shape: BoxShape.rectangle,
                   ),
                   child: Column(

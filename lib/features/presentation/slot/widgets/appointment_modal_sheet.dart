@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import '../../../../core/constants/constants.dart';
 import '../../../domain/entities/slot/slot_appointment_entity.dart';
 import '../slot_bloc/slot_bloc.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -20,7 +21,7 @@ class AppointmentModalSheet extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(fieldBorderRadius)),
       ),
       builder: (context) => AppointmentModalSheet(currentSlot: slot, slotBloc: bloc),
     );
@@ -67,7 +68,7 @@ class AppointmentModalSheet extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8F9FA),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +93,7 @@ class AppointmentModalSheet extends StatelessWidget {
                       foregroundColor: Colors.redAccent,
                       side: const BorderSide(color: Colors.redAccent),
                       minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                     ),
                     onPressed: () {
                       slotBloc.add(CancelAppointmentEvent(currentSlot.id));
@@ -108,7 +109,7 @@ class AppointmentModalSheet extends StatelessWidget {
                       backgroundColor: Colors.grey.shade200,
                       foregroundColor: Colors.black,
                       minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                       elevation: 0,
                     ),
                     onPressed: () => Navigator.pop(context),

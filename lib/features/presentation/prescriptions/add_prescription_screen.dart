@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/customer_card_section.dart';
@@ -23,7 +24,11 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData()),
       child: Scaffold(
-        appBar: AppBar(
+        appBar: CommonAppBar(
+          actions: [],
+          titleText: "Create Prescription Record",
+        ),
+        /*appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           titleSpacing: 0,
@@ -41,7 +46,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
           actions: [],
-        ),
+        ),*/
         bottomNavigationBar: Container(
           padding: EdgeInsets.only(
             left: 20,
@@ -56,8 +61,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                 ? Colors.white
                 : theme.colorScheme.surface,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
+              topLeft: Radius.circular(fieldBorderRadius),
+              topRight: Radius.circular(fieldBorderRadius),
             ),
             boxShadow: [
               BoxShadow(
@@ -143,7 +148,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                       ),
                                       decoration: BoxDecoration(
                                         color: theme.primaryColor,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                                       ),
                                       child: CommonText(
                                         '30Y',
@@ -264,7 +269,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                 TogglePrescriptionExpansion(),
                               );
                             },
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(fieldBorderRadius),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               child: Row(

@@ -28,7 +28,7 @@ class SectionCardWrapper extends StatelessWidget {
       decoration: BoxDecoration(
         // Adapts dynamically to the AppTheme background surfaces
         color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white10 : const Color(0xFFEAECEF),
           width: 1,
@@ -42,7 +42,7 @@ class SectionCardWrapper extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
                 child: Icon(
                   icon,

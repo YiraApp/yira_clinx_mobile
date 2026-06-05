@@ -54,7 +54,7 @@ class ConfirmationCodeSection extends StatelessWidget {
         CommonInputAddRecordTextField(
           controller: controller,
           focusNode: focusNode,
-          borderRadius: 12,
+          borderRadius:  fieldBorderRadius,
           textInputAction: TextInputAction.done,
           keyboardType: TextInputType.number,
           hintText: 'Enter 6-digit code',

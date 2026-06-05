@@ -46,7 +46,7 @@ class SinglePrescriptionCard extends StatelessWidget {
               ? [darkModeCardColor, darkModeCardColor.withOpacity(0.85)]
               : [Colors.white, const Color(0xFFF8FAFC)],
         ),
-        borderRadius: BorderRadius.circular(24), // Smoother premium border rounding
+        borderRadius: BorderRadius.circular(fieldBorderRadius), // Smoother premium border rounding
         boxShadow: !isDark
             ? [
           BoxShadow(
@@ -69,7 +69,7 @@ class SinglePrescriptionCard extends StatelessWidget {
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: InkWell(
           onTap: () {},
           splashColor: primaryTeal.withOpacity(0.04),
@@ -102,8 +102,8 @@ class SinglePrescriptionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: primaryTeal.withOpacity(0.7),
                     borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
+                      topRight: Radius.circular(fieldBorderRadius),
+                      bottomRight: Radius.circular(fieldBorderRadius),
                     ),
                   ),
                 ),
@@ -168,7 +168,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: isDark ? Colors.white.withOpacity(0.02) : sideMenuDividerColor,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(fieldBorderRadius),
                               border: Border.all(
                                 color: isDark ? Colors.white.withOpacity(0.02) : deviderColor,
                                 width: 1,

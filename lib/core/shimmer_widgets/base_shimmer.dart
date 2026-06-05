@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../constants/constants.dart';
+
 class BaseShimmer extends StatelessWidget {
   final Widget child;
 
@@ -31,7 +33,7 @@ class WelcomeCardShimmer extends StatelessWidget {
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF111C24) : Colors.white,
-        borderRadius: BorderRadius.circular(24.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Row(
@@ -75,7 +77,7 @@ class MetricCardShimmer extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[900] : Colors.white,
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Column(
@@ -111,7 +113,7 @@ class AppointmentCardShimmer extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[900] : Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Row(
@@ -128,7 +130,7 @@ class AppointmentCardShimmer extends StatelessWidget {
                 ],
               ),
             ),
-            Container(width: 60, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+            Container(width: 60, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),
           ],
         ),
       ),
@@ -159,7 +161,7 @@ class ChartCardShimmer extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(width: 140, height: 16, color: Colors.white),
-                Container(width: 70, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                Container(width: 70, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),
               ],
             ),
             const SizedBox(height: 32.0),

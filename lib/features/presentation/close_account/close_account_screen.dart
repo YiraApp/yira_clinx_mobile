@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/close_account/widgets/close_account_header.dart';
 import 'package:yiraclinics/features/presentation/close_account/widgets/close_action_button.dart';
 import 'package:yiraclinics/features/presentation/close_account/widgets/confirmation_code_section.dart';
@@ -69,20 +70,7 @@ class _CloseAccountScreenState extends State<CloseAccountScreen> {
             child: Scaffold(
               key: _scaffoldKey,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              appBar: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                leading: IconButton(
-                  onPressed: state.status == CloseAccountStatus.submitting
-                      ? null
-                      : () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    Icons.arrow_back_rounded,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                    size: 20,
-                  ),
-                ),
+              appBar: CommonAppBar(
                 actions: [
 
                 ],

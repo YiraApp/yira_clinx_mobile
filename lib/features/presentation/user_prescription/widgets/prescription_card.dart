@@ -34,7 +34,7 @@ class PrescriptionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
@@ -121,7 +121,7 @@ class PrescriptionCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: colorScheme.secondaryContainer.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: Row(
                 children: [
@@ -214,7 +214,7 @@ class PrescriptionCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: baseColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: baseColor.withOpacity(0.2)),
       ),
       child: CommonText(
@@ -270,7 +270,7 @@ class PrescriptionCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.1)),
       ),
       child: Column(
@@ -337,7 +337,7 @@ class PrescriptionCard extends StatelessWidget {
           if (active && med['progress'] != null) ...[
             const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
               child: LinearProgressIndicator(
                 value: med['progress'],
                 minHeight: 5,
@@ -377,7 +377,7 @@ class PrescriptionCard extends StatelessWidget {
         minimumSize: Size(full ? double.infinity : 0, 40),
         side: const BorderSide(color: Colors.red, width: 1.2),
         foregroundColor: Colors.red,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
       ),
       icon: const Icon(Icons.refresh_rounded, size: 16),
       label: CommonText(
@@ -403,7 +403,7 @@ class PrescriptionCard extends StatelessWidget {
         backgroundColor: colorScheme.primary,
         // foregroundColor: colorScheme.onPrimary,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
       ),
       child: CommonText(
         "View Details",

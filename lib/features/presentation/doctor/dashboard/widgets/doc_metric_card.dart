@@ -28,7 +28,7 @@ class DocMetricCard extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
       ),
       child: Column(

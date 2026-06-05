@@ -71,7 +71,7 @@ class PatientContactCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bannerBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: bannerBorder, width: 1),
       ),
       child: Row(

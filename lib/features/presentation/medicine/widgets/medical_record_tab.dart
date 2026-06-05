@@ -119,7 +119,7 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
                   margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
                     color: cardBgColor,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                     border: Border.all(color: cardBorderColor, width: 1),
                     boxShadow: [
                       BoxShadow(
@@ -147,7 +147,7 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
                     _toggleMenu();
                     onTap();
                   },
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                   child: Container(
                     width: 40,
                     height: 40,

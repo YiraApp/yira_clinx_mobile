@@ -65,7 +65,7 @@ class InputSearchChipField extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color:isDarkMode? darkModeInnerCardColor:Colors.transparent,
+            color:isDarkMode? darkModeCardColor.withOpacity(0.9)  :Colors.transparent,
             borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
           ),

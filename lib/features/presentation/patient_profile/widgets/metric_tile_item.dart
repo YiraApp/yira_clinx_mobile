@@ -30,7 +30,7 @@ class MetricTileItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isDark ? accentColor.withOpacity(0.18) : accentColor.withOpacity(0.07),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
           ),
           child: Icon(
             icon,

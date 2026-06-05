@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/colors/colors.dart';
+import '../../../../core/constants/constants.dart';
 import '../../../domain/entities/slot/slot_appointment_entity.dart';
 import '../slot_bloc/slot_bloc.dart';
 import 'appointment_modal_sheet.dart';
@@ -22,7 +23,7 @@ class SlotConfigurationCard extends StatelessWidget {
     final primary = theme.primaryColor;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(fieldBorderRadius),
       onTap: () => AppointmentModalSheet.show(
         context,
         slot,
@@ -32,7 +33,7 @@ class SlotConfigurationCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark? darkModeCardColor:Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: slot.hasAppointment
                 ? primary.withOpacity(.25)
@@ -59,7 +60,7 @@ class SlotConfigurationCard extends StatelessWidget {
                 color: slot.hasAppointment
                     ? primary
                     : Colors.green,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
             ),
 
@@ -143,9 +144,9 @@ class SlotConfigurationCard extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isDark
-            ? darkModeInnerCardColor
+            ? Colors.white.withOpacity(0.1)
             : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(fieldBorderRadius/2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +196,7 @@ class SlotConfigurationCard extends StatelessWidget {
         color: slot.hasAppointment
             ? theme.primaryColor.withOpacity(.12)
             : Colors.green.withOpacity(.12),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         children: [

@@ -34,23 +34,6 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
 
     return Scaffold(
         backgroundColor:Theme.of(context).scaffoldBackgroundColor,
-      /*appBar: PreferredSize(
-        preferredSize: Size.fromHeight(isTablet(context) ? 68.0 : 30.0),
-        child: AppBar(
-          title: CommonText(
-            "Clinical Notes",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.035,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-      ),*/
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -118,14 +101,14 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                 fontFamily: appPoppinFont,
               ),
               filled: true,
-              fillColor:isDark? darkModeInnerCardColor:Colors.white,
+              fillColor:isDark? darkModeCardColor.withOpacity(0.8):Colors.white,
               contentPadding: const EdgeInsets.all(14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
                   color: Colors.grey.withOpacity(0.2),
                 ),

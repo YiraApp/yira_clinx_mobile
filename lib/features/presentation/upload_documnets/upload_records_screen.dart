@@ -186,7 +186,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                         decoration: BoxDecoration(
                           color: isDark ? Colors.transparent :Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
                           border: Border.all(
                             color: Colors.grey.withOpacity(0.2),
                             width: 0.5,
@@ -198,7 +198,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                padding: const EdgeInsets.all(12),
                                decoration: BoxDecoration(
                                  color: primaryColor.withOpacity(0.1),
-                                 borderRadius: BorderRadius.circular(12),
+                                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                                ),
                                child: const Icon(
                                  Icons.note_add_rounded,
@@ -231,7 +231,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                                decoration: BoxDecoration(
                                    color:isDark? Colors.transparent: Colors.white,
-                                   borderRadius: BorderRadius.circular(12),
+                                   borderRadius: BorderRadius.circular(fieldBorderRadius),
                                    border: Border.all(
                                      color:isDark? Colors.grey.withOpacity(0.2):primaryColor,
                                      width: 0.5,
@@ -360,7 +360,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               decoration: BoxDecoration(
                 // color: isDark ? theme.colorScheme.surface : const Color(0xFFF4F5F7),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(fieldBorderRadius)),
                 border: Border(top: BorderSide(color: isDark ? Colors.white10 : const Color(0xFFE5E9F0), width: 1)),
               ),
               child: Row(

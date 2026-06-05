@@ -154,7 +154,7 @@ class HeightScaleScreen extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.grey.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -174,7 +174,7 @@ class HeightScaleScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
         child: Text(
           label.toUpperCase(),

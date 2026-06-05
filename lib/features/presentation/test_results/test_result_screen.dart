@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/test_result_bloc.dart';
 import 'package:yiraclinics/features/presentation/test_results/widgets/ai_insites_widget.dart';
 import 'package:yiraclinics/features/presentation/test_results/widgets/badge_widget.dart';
@@ -22,15 +23,7 @@ class TestResultsScreen extends StatelessWidget {
       create: (context) => TestResultsBloc()..add(LoadTestResults()),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: isDark ? Colors.white : Colors.black87,
-              size: 20,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+        appBar: CommonAppBar(
         ),
         body: BlocConsumer<TestResultsBloc, TestResultsState>(
           builder: (context, state) {
@@ -124,7 +117,7 @@ class TestResultsScreen extends StatelessWidget {
                       ),
 
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
                           color: Colors.grey.withOpacity(0.2),
                           width: 1.0,
@@ -132,7 +125,7 @@ class TestResultsScreen extends StatelessWidget {
                       ),
 
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
                           color: Colors.grey.withOpacity(0.2),
                           width: 1.0,
@@ -140,7 +133,7 @@ class TestResultsScreen extends StatelessWidget {
                       ),
 
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
                           color: Colors.grey.withOpacity(0.2),
                           width: 1.5,
@@ -198,7 +191,7 @@ class _AIPoweredAnalysisSection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
       child: Column(

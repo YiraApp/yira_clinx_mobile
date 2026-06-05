@@ -51,15 +51,15 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                   ? Colors.grey.shade100
                   : Colors.white.withOpacity(0.03),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+                topLeft: Radius.circular(fieldBorderRadius),
+                topRight: Radius.circular(fieldBorderRadius),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.medical_services_outlined,
-                  color: theme.primaryColor,
+                  color: isDarkMode?Colors.white:theme.primaryColor,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -67,7 +67,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                   child: CommonText(
                     medicineName,
                     style: TextStyle(
-                      color: theme.primaryColor,
+                      color: isDarkMode?Colors.white:theme.primaryColor,
                       fontSize: displayWidth(context) * 0.032,
                       fontFamily: appPoppinFont,
                     ),
@@ -85,7 +85,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color:isDarkMode? darkModeInnerCardColor:Colors.transparent,
+              color:isDarkMode? darkModeCardColor:Colors.transparent,
               borderRadius: BorderRadius.only(bottomLeft: Radius.circular(fieldBorderRadius),bottomRight: Radius.circular(fieldBorderRadius)),
             ),
             padding: const EdgeInsets.all(16),

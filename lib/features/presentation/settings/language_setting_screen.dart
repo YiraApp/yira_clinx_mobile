@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -17,30 +18,9 @@ class LanguageSettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final double fontScale = isTablet(context) ? 1.2 : 1.0;
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.language, color: theme.primaryColor, size: 28 * fontScale),
-            const SizedBox(width: 12),
-            CommonText(
-              "Language Settings",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.045,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.titleLarge?.color,
-              ),
-            )
-          ],
-        ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.appBarTheme.iconTheme?.color,
-            size: displayWidth(context) * 0.06,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText: "Language Settings",
+
 
       ),
       body: BlocConsumer<SettingsBloc,SettingsState>(
@@ -131,7 +111,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: theme.primaryColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +190,7 @@ class _LanguageCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: Container(
           padding: EdgeInsets.symmetric(
               horizontal: 14,
@@ -218,10 +198,10 @@ class _LanguageCard extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: theme.inputDecorationTheme.fillColor,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(
               color: isSelected ? theme.primaryColor : Colors.grey.shade300,
-              width: isSelected ? 2.5 : 1,
+              width: isSelected ? 2 : 0.5,
             ),
           ),
           child: Row(

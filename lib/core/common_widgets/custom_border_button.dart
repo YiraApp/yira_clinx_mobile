@@ -40,14 +40,14 @@ class CommonBorderButton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: effectiveBorderColor, width: 1.2),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           child: Padding(
             padding: EdgeInsets.only(left: 8,right: 8),
             child: Row(

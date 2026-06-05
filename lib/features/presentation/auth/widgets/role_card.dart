@@ -59,7 +59,7 @@ class DialogRoleCard extends StatelessWidget {
               : isDarkMode
               ? primaryColor.withOpacity(0.06)
               : unselectedCardBg,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isSelected
                 ? (isDarkMode
@@ -78,7 +78,7 @@ class DialogRoleCard extends StatelessWidget {
               height: width * 0.06,
               decoration: BoxDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 boxShadow: const [],
               ),
               child: Icon(role.icon, color: iconColor, size: width * 0.028),
@@ -124,7 +124,7 @@ class DialogRoleCard extends StatelessWidget {
               : isDarkMode
               ? primaryColor.withOpacity(0.06)
               : unselectedCardBg,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isSelected
                 ? (isDarkMode
@@ -143,7 +143,7 @@ class DialogRoleCard extends StatelessWidget {
               height: width * 0.13,
               decoration: BoxDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 boxShadow: const [],
               ),
               child: Icon(role.icon, color: iconColor, size: width * 0.058),

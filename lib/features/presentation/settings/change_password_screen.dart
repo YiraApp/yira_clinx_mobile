@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../../core/colors/colors.dart';
+import '../../../core/common_appbar/common_app_bar.dart';
 import '../../../core/common_input_fields/common_input_field.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
@@ -32,6 +33,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
@@ -48,14 +50,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              size: 20,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+        appBar: CommonAppBar(
+
 
         ),
         body: BlocConsumer<ChangePasswordBloc, ChangePasswordState>(
@@ -68,7 +64,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.05,
+                    horizontal: screenHorizontalSpacePadding,
                   ),
                   child: Form(
                     key: _formKey,
@@ -81,7 +77,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(height: screenHeight * 0.02),
+                                SizedBox(height: screenTopPadding),
                                 Text(
                                   'Change Password',
                                   style: TextStyle(
@@ -91,8 +87,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   ),
                                 ),
                                 SizedBox(height: screenHeight * 0.035),
-
-                                // New Password Header Label
                                 Text(
                                   'Password',
                                   style: TextStyle(
@@ -109,11 +103,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   passwordController: _passwordController,
                                   controller: passwordController,
                                   textInputAction: TextInputAction.next,
-                                  cursorColor: isDark ? Colors.white : Colors.black,
+                                  cursorColor: isDark ? darkModeBorderFocusedColor : lightModeBorderFocusedColor,
                                   style: TextStyle(
+                                    decorationThickness: 0,
+                                    decoration: TextDecoration.none,
                                     fontFamily: appPoppinFont,
-                                    fontSize: isTablet ? screenWidth * 0.018 : screenWidth * 0.038,
-                                    color: isDark ? Colors.white : Colors.black,
+                                    fontSize: isTablet ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w400,
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -123,43 +120,58 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   },
                                   showPasswordWidget: Icon(
                                     Icons.visibility,
-                                    color: Colors.grey,
-                                    size: screenHeight * 0.025,
+                                    color: isDark ? textDarkModeSecondaryColor : Colors.grey[600],
+                                    size: isTablet ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045, // Screen independent sizing scaling
                                   ),
                                   hidePasswordWidget: Icon(
                                     Icons.visibility_off,
-                                    color: Colors.grey,
-                                    size: screenHeight * 0.025,
+                                    color: isDark ? textDarkModeSecondaryColor : Colors.grey[600],
+                                    size: isTablet ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045,
                                   ),
                                   decoration: InputDecoration(
                                     isDense: true,
                                     labelText: 'Password',
                                     floatingLabelBehavior: FloatingLabelBehavior.never,
-                                    labelStyle: TextStyle(fontFamily: appPoppinFont,color: Colors.grey, fontSize: isTablet ? screenWidth * 0.018 : screenWidth * 0.034),
-                                    hintStyle: TextStyle(fontFamily: appPoppinFont,color: hintColor, fontSize: isTablet ? screenWidth * 0.018 : screenWidth * 0.038),
+                                    labelStyle: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      color: isDark ? textDarkModeSecondaryColor : textLightModeColor.withOpacity(0.5),
+                                      fontSize: isTablet ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                                    ),
+                                    hintStyle: TextStyle(
+                                      decoration: TextDecoration.none,
+                                      fontFamily: appPoppinFont,
+                                      color: isDark ? textDarkModeHintColor : textLightModeColor.withOpacity(0.4),
+                                      fontSize: isTablet ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                                    ),
                                     errorStyle: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        color: errorTextStyleColor,
-                                        fontSize: displayWidth(context) * 0.025),
+                                      fontFamily: appPoppinFont,
+                                      color: errorTextStyleColor,
+                                      fontSize: isTablet ? displayWidth(context) * 0.018 : displayWidth(context) * 0.025,
+                                    ),
                                     filled: true,
-                                    fillColor: Theme.of(context).brightness == Brightness.dark
-                                        ? filedBg.withOpacity(0.2)
-                                        : lightModeTextFieldBgColor,
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide.none,
-                                      borderRadius: BorderRadius.circular(12),
+                                    fillColor: isDark ? darkModeCardColor.withOpacity(0.9) : lightModeTextFieldBgColor,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+
+                                    // --- Standardized Borders Matrix System ---
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
+                                      borderSide: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor, width: 1.0),
                                     ),
                                     enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide.none,
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
+                                      borderSide: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor, width: 1.0),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
+                                      borderSide: BorderSide(color: isDark ? darkModeBorderFocusedColor : lightModeBorderFocusedColor, width: 1.5),
                                     ),
                                     errorBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(width: 1, color: Colors.redAccent),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
+                                      borderSide: const BorderSide(color: errorTextStyleColor, width: 1.0),
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
-                                      borderSide: const BorderSide(width: 1, color: Colors.redAccent),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
+                                      borderSide: const BorderSide(color: errorTextStyleColor, width: 1.5),
                                     ),
                                   ),
                                   onChanged: _validatePassword,
@@ -173,12 +185,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                                       child: CustomStepIndicator(
-
-                                        size: screenHeight * 0.01,
+                                        size: isTablet ? displayWidth(context) * 0.012 : displayWidth(context) * 0.022,
                                         totalSteps: 3,
                                         currentStep: _getStep(_passwordStrength),
                                         selectedColor: _getColor(_passwordStrength),
-                                        unselectedColor: Colors.grey[300]!,
+                                        unselectedColor: isDark ? const Color(0xFF334155) : Colors.grey[300]!, // Custom dark step track background
                                       ),
                                     );
                                   },
@@ -193,16 +204,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                           child: Row(
                                             children: [
                                               Icon(
-                                                isValid ? Icons.check : Icons.close,
-                                                color: isValid ? Colors.green : Colors.red,
-                                                size: screenHeight * 0.02,
+                                                isValid ? Icons.check_circle_rounded : Icons.cancel_rounded, // Styled to look cleaner for a clinic application
+                                                color: isValid ? const Color(0xFF10B981) : const Color(0xFFEF4444), // Emerald green / Ruby red
+                                                size: isTablet ? displayWidth(context) * 0.02 : displayWidth(context) * 0.045,
                                               ),
                                               const SizedBox(width: 8),
                                               Text(
                                                 rule.name,
-                                                style: TextStyle(fontFamily: appPoppinFont,
-                                                  fontSize: isTablet ? screenWidth * 0.018 : screenWidth * 0.034,
-                                                  color: isDark ? Colors.white70 : Colors.grey[700],
+                                                style: TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: isTablet ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                                                  color: isDark ? textDarkModeSecondaryColor : Colors.grey[700],
                                                 ),
                                               ),
                                             ],
@@ -226,6 +238,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                 const SizedBox(height: 6),
 
                                 CommonInputAddRecordTextField(
+                                  borderRadius:  fieldBorderRadius,
                                   controller: confirmPasswordController,
                                   hintText: 'Re-enter your new password',
                                   textInputAction: TextInputAction.done,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -16,30 +17,8 @@ class NotificationSettingsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.notifications_none_rounded, color: theme.primaryColor, size: 20),
-            const SizedBox(width: 12),
-            CommonText(
-              "Notification Preferences",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.045,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.titleLarge?.color,
-              ),
-            )
-          ],
-        ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.appBarTheme.iconTheme?.color,
-            size: displayWidth(context) * 0.06,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText: "Notification Preferences",
 
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
@@ -136,7 +115,7 @@ class NotificationSettingsScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.inputDecorationTheme.fillColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.transparent : Colors.grey.shade200,
         ),

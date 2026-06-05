@@ -20,7 +20,7 @@ class HealthOverviewCard extends StatelessWidget {
       padding: EdgeInsets.all(displayWidth(context) * 0.04),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
@@ -63,7 +63,7 @@ class HealthOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             child: LinearProgressIndicator(
               value: state.overallPercentage,
               backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,

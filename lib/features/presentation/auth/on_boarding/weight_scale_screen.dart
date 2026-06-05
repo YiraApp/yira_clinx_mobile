@@ -180,7 +180,7 @@ class WeightScaleScreen extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.grey.withOpacity(0.09),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -201,7 +201,7 @@ class WeightScaleScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
         child: Text(
           label.toUpperCase(),
@@ -230,7 +230,7 @@ class WeightScaleScreen extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
             ),
             child: const Icon(Icons.lightbulb_outline_sharp, color: Color(0xFF005696)),
           ),

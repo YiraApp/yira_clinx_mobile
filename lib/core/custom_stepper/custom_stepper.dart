@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../common_size_helpers/common_size_helpers.dart';
+import '../constants/constants.dart';
 class CustomStepIndicator extends StatelessWidget {
   final int totalSteps;
   final int currentStep;
@@ -31,7 +32,7 @@ class CustomStepIndicator extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: isActive ? selectedColor : unselectedColor,
-            borderRadius: BorderRadius.circular(10), // Rounded corners
+            borderRadius: BorderRadius.circular(fieldBorderRadius), // Rounded corners
           ),
         );
       }),

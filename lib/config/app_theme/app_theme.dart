@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../core/colors/colors.dart';
 
@@ -63,18 +64,18 @@ class AppTheme {
     colorScheme: const ColorScheme.dark(
       primary: primaryTeal,
       surface: darkBg,
-      onSurface: lightBackGroundColor,
+      onSurface: textDarkModePrimaryColor,
     ),
-    textTheme: _buildTextTheme(lightBackGroundColor),
+    textTheme: _buildTextTheme(textDarkModePrimaryColor),
     appBarTheme: const AppBarTheme(
       backgroundColor: darkBg,
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
       elevation: 0,
       centerTitle: true,
-      iconTheme: IconThemeData(color:lightBackGroundColor),
+      iconTheme: IconThemeData(color:textDarkModePrimaryColor),
       titleTextStyle: TextStyle(
-        color: lightBackGroundColor,
+        color: textDarkModePrimaryColor,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
@@ -116,11 +117,11 @@ class AppTheme {
         filled: true,
         fillColor: fill,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(color: border),
         ),
       );

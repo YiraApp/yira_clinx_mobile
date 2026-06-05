@@ -346,7 +346,7 @@ class SignInScreen extends StatelessWidget {
                 onChanged: (country) {},
               ),
             ),
-            borderRadius: 12,
+            borderRadius:  fieldBorderRadius,
             hintText: "Mobile number",
             controller: mobileNumberController,
             validator: (value) {
@@ -398,7 +398,7 @@ class SignInScreen extends StatelessWidget {
           const SizedBox(height: titleSpace),
           CommonInputAddRecordTextField(
             suffixIcon: null,
-            borderRadius: 12,
+            borderRadius:  fieldBorderRadius,
             hintText: "Enter Email",
             controller: emailController,
             focusNode: emailFocus,
@@ -417,7 +417,7 @@ class SignInScreen extends StatelessWidget {
           const SizedBox(height: titleSpace),
           CommonInputAddRecordTextField(
             suffixIcon: null,
-            borderRadius: 12,
+            borderRadius:  fieldBorderRadius,
             hintText: "Enter Password",
             controller: passwordController,
             focusNode: passwordFocus,

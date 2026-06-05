@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/constants.dart';
 import 'height_scaler.dart';
 
 class VerticalHeightRuler extends StatefulWidget {
@@ -101,7 +102,7 @@ class _VerticalHeightRulerState extends State<VerticalHeightRuler> {
             height: 4,
             decoration: BoxDecoration(
               color: widget.indicatorColor,
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
+              borderRadius: const BorderRadius.horizontal(right: Radius.circular(fieldBorderRadius)),
             ),
           ),
         ),

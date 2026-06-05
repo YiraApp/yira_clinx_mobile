@@ -47,7 +47,7 @@ class CloseAccountButtonSection extends StatelessWidget {
                       : Colors.red.shade200,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                   ),
                 ),
                 onPressed: isButtonEnabled ? onConfirmTap : null,
@@ -70,7 +70,7 @@ class CloseAccountButtonSection extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.grey.shade300),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
               ),
               onPressed: isSubmitting ? null : onCancelTap,

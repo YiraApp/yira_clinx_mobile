@@ -108,7 +108,7 @@ class AppointmentCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               color: tokenBgColor,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(fieldBorderRadius),
                             ),
                             child: Text(
                               appointment.tokenNumber,
@@ -215,7 +215,7 @@ class AppointmentCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               color: statusBgColor,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(fieldBorderRadius),
                             ),
                             child: Text(
                               statusLabel,

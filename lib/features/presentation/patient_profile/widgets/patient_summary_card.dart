@@ -22,7 +22,7 @@ class PatientSummaryCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? Colors.blueGrey.withOpacity(0.1) : const Color(0xFFF0F4F9),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border(
             left: BorderSide(
               color: isDark ? Colors.blue : const Color(0xFF1A73E8),

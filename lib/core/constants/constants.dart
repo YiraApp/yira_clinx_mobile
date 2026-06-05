@@ -4,7 +4,8 @@ const titleSpace = 8.0;
 const fieldSpace = 15.0;
 const screenTopPadding = 20.0;
 const screenHorizontalSpacePadding = 16.0;
-const fieldBorderRadius = 16.0;
+const fieldBorderRadius = 12.0;
+const textFieldBorderRadius = 8.0;
 const inputFieldBorderRadius = 16.0;
 const buttonHeight = 45.0;
 

@@ -183,7 +183,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                         return null;
                                       },
                                       pinTheme: PinTheme(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                                         inactiveColor: notificationSwitchColor,
                                         activeColor: primaryColor,
                                         selectedColor: primaryColor,

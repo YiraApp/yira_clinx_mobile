@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/appointment_tab_content.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/stat_card.dart';
 
@@ -40,16 +41,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+var isTab = isTablet(context);
+    final double computedRadius = fieldBorderRadius ;
 
+    final Color inactiveBorderColor = isDark ? darkModeBorderColor : lightModeBorderColor;
+    final Color activeBorderColor = isDark ? darkModeBorderFocusedColor : lightModeBorderFocusedColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
         actions: [
           Container(
             margin: EdgeInsets.only(right: screenHorizontalSpacePadding),
@@ -81,7 +81,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                   vertical: displayWidth(context) * 0.018,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
               ),
             ),
@@ -105,7 +105,6 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stat Cards Grid Track
                     SizedBox(
                       height: smallDeviceHeight(context) ? 90 : 100,
                       child: GridView.builder(
@@ -162,15 +161,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         color: isDark
                             ? Colors.white10.withOpacity(0.02)
                             : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                       ),
                       child: TabBar(
                         controller: _tabController,
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
                         indicator: BoxDecoration(
-                          color: isDark ? Colors.grey[800] : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          color: isDark ? darkModeCardColor: Colors.white,
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
                           boxShadow: [
                             if (!isDark)
                               BoxShadow(
@@ -198,59 +197,52 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                     ),
                     const SizedBox(height: fieldSpace),
 
-                    // Search Input Layout
+
                     TextField(
                       onChanged: (val) {},
                       style: TextStyle(
                         decorationThickness: 0,
+                        decoration: TextDecoration.none,
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.034,
+                        fontSize: isTab
+                            ? displayWidth(context) * 0.018
+                            : displayWidth(context) * 0.035, // Aligned with your app's global text size
+                        color: theme.colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
-                        hintStyle: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.034,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                        ),
                         hintText: "Search Patients...",
-                        prefixIcon: const Icon(
+                        hintStyle: TextStyle(
+                          decoration: TextDecoration.none,
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab
+                              ? displayWidth(context) * 0.018
+                              : displayWidth(context) * 0.032,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.5)
+                              : textLightModeColor.withOpacity(0.5),
+                        ),
+                        prefixIcon: Icon(
                           Icons.search,
-                          color: Colors.blueGrey,
+                          color: isDark ? Colors.white54 : Colors.blueGrey,
                           size: 18,
                         ),
                         filled: true,
                         fillColor: isDark
-                            ? darkModeCardColor
-                            : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withOpacity(0.3),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 0,
-                          horizontal: 16,
-                        ),
+                            ? darkModeCardColor.withOpacity(0.8)
+                            : lightModeTextFieldBgColor,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
-                            width: 1.0,
-                          ),
+                          borderRadius: BorderRadius.circular(computedRadius),
+                          borderSide: BorderSide(color: inactiveBorderColor, width: 1.0),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
-                            width: 1.0,
-                          ),
+                          borderRadius: BorderRadius.circular(computedRadius),
+                          borderSide: BorderSide(color: inactiveBorderColor, width: 1.0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
-                            width: 1.5,
-                          ),
+                          borderRadius: BorderRadius.circular(computedRadius),
+                          borderSide: BorderSide(color: activeBorderColor, width: 1.5),
                         ),
                       ),
                     ),

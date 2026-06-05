@@ -111,7 +111,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
             color: isSelected
                 ? primaryColor
                 : (isDark ? Colors.white.withOpacity(0.05) : Colors.white),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(
               color: isSelected ? primaryColor : (isDark ? Colors.white10 : Colors.grey.shade200),
               width: 2,
@@ -168,7 +168,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
                     width: 45,
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -233,13 +233,13 @@ class GenderAgeSelectionScreen extends StatelessWidget {
 
     return InkWell(
       onTap: () => _showDatePicker(context, displayDate, isDark),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(fieldBorderRadius),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isDark ? Colors.white10 : Colors.grey.shade200,
             width: 1.5,
@@ -258,7 +258,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: Icon(Icons.calendar_month_rounded, color: primaryColor),
             ),
@@ -290,7 +290,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [primaryColor, primaryColor.withOpacity(0.8)]),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: Text(
                 "$age yrs",
@@ -312,7 +312,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
               ? [Colors.blue.withOpacity(0.1), Colors.purple.withOpacity(0.1)]
               : [const Color(0xFFF2F6FF), const Color(0xFFF9FAFF)],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         children: [

@@ -40,7 +40,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: theme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(fieldBorderRadius),
                           ),
                           child: Icon(
                             Icons.description_outlined,

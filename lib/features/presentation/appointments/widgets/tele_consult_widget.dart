@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -23,12 +24,12 @@ class TeleconsultationCard extends StatelessWidget {
 
     return InkWell(
       onTap: () => onChanged(!isSelected),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(fieldBorderRadius),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.02) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: isDark ? darkModeCardColor.withOpacity(0.8) : Colors.white,
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isDark ? Colors.white10 : Colors.grey.shade200,
             width: 1.5,
@@ -40,7 +41,7 @@ class TeleconsultationCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F4FA),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: const Icon(
                 Icons.videocam_outlined,

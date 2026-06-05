@@ -40,7 +40,7 @@ class PatientInsuranceCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[900]!.withOpacity(0.5) : const Color(0xFFF8F9FA),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(color: isDark ? Colors.grey[850]! : const Color(0xFFE9ECEF)),
         ),
         child: Column(

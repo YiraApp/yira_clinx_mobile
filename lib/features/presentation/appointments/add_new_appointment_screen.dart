@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/tele_consult_widget.dart';
+import '../../../core/colors/colors.dart';
+import '../../../core/common_appbar/common_app_bar.dart';
 import '../../../core/common_drop_down/common_drop_down.dart';
 import '../../../core/common_input_fields/common_input_field_unlimited.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -24,22 +26,9 @@ class AddNewAppointmentScreen extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: theme.appBarTheme.iconTheme?.color,
-                size: width * 0.06,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: CommonText(
-              "Book Appointment",
-              style: theme.appBarTheme.titleTextStyle?.copyWith(
-                fontFamily: appPoppinFont,
-                fontSize: width * 0.045, // Responsive title size
-              ),
-            ),
+          appBar: CommonAppBar(
+            actions: [],
+            titleText: "Book Appointment",
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -81,34 +70,32 @@ class AddNewAppointmentScreen extends StatelessWidget {
                         size: 18,
                       ),
                       filled: true,
-                      fillColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
                       contentPadding: const EdgeInsets.symmetric(
                         vertical: 0,
                         horizontal: 16,
                       ),
 
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.0,
                         ),
                       ),
 
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.0,
                         ),
                       ),
 
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.5,
                         ),
                       ),
@@ -257,10 +244,10 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        side: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor),
                         foregroundColor: Colors.grey,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
                         ),
                       ),
                       child: CommonText(
@@ -314,7 +301,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     width: 45,
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -412,30 +399,26 @@ class AddNewAppointmentScreen extends StatelessWidget {
           size: 18,
         ),
         filled: true,
-        fillColor: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.0,
           ),
         ),
-
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.5,
           ),
         ),

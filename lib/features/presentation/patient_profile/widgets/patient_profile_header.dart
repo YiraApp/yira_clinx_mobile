@@ -23,7 +23,7 @@ class PatientProfileHeader extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
             ),
             child: Center(
               child: Text(

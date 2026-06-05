@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_info_session.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/diagnosis_treatment_section.dart';
@@ -67,26 +68,9 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: CommonText(
-          "Create New Medical Record",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.045,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: false,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black87,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText:"Create New Medical Record",
+        actions: [],
       ),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
         listener: (context, state) {
@@ -279,7 +263,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                     width: 45,
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -351,14 +335,14 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
 
     return InkWell(
       onTap: () => _showDatePicker(context, displayDate, isDark),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(fieldBorderRadius),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
           border: Border.all(color: Colors.grey.withOpacity(0.2)),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
         child: Row(
           children: [

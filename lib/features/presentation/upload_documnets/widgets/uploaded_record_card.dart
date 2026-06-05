@@ -33,7 +33,7 @@ class UploadedRecordCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         boxShadow: const [],
         border: Border.all(
           color: isDark ? Colors.white.withOpacity(0.12) : theme.dividerColor.withOpacity(0.2),

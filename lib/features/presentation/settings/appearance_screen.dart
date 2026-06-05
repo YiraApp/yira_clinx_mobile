@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
@@ -16,15 +17,8 @@ class AppearanceScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.appBarTheme.iconTheme?.color,
-            size: displayWidth(context) * 0.06,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+
       ),
       body: SafeArea(
         child: Padding(
@@ -35,7 +29,7 @@ class AppearanceScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                   boxShadow: [
                     BoxShadow(
                       color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
@@ -161,7 +155,7 @@ class _ThemeOptionCard extends StatelessWidget {
         width: displayWidth(context) * 0.24,
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isSelected ? primary : (isDark ? Colors.white24 : Colors.grey.shade200),
             width: isSelected ? 2 : 1,
