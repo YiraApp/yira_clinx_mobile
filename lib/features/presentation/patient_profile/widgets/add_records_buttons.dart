@@ -22,38 +22,32 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab> with Single
   bool _isExpanded = false;
   late AnimationController _animationController;
   late Animation<double> _animateIcon;
-  late Animation<double> _translateButton;
 
   @override
   void initState() {
+    super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addListener(() => setState(() {}));
-
-    _animateIcon = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
-    _translateButton = Tween<double>(begin: 56.0, end: -14.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOutCubic,
-      ),
+      duration: const Duration(milliseconds: 200),
     );
-    super.initState();
+    _animateIcon = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    super.initState();
+    super.dispose();
   }
 
   void _toggleMenu() {
-    if (_isExpanded) {
-      _animationController.reverse();
-    } else {
-      _animationController.forward();
-    }
-    _isExpanded = !_isExpanded;
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
   }
 
   @override
@@ -65,31 +59,42 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab> with Single
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildChildOption(
-          label: 'Prescribe',
-          icon: Icons.assignment_outlined,
-          color: const Color(0xFFEA4335), // Clinical Red
-          onTap: widget.onPrescribeTapped,
-          offsetMultiplier: 3,
-          isDark: isDark,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          child: _isExpanded
+              ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildChildOption(
+                label: 'Prescribe',
+                icon: Icons.assignment_outlined,
+                color: const Color(0xFFEA4335),
+                onTap: widget.onPrescribeTapped,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 12),
+              _buildChildOption(
+                label: 'Schedule',
+                icon: Icons.calendar_today_outlined,
+                color: const Color(0xFF34A853),
+                onTap: widget.onScheduleTapped,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 12),
+              _buildChildOption(
+                label: 'Add Note',
+                icon: Icons.add_circle_outline,
+                color: primaryColor,
+                onTap: widget.onAddNoteTapped,
+                isDark: isDark,
+              ),
+              const SizedBox(height: 12),
+            ],
+          )
+              : const SizedBox.shrink(),
         ),
-        _buildChildOption(
-          label: 'Schedule',
-          icon: Icons.calendar_today_outlined,
-          color: const Color(0xFF34A853), // Clinical Green
-          onTap: widget.onScheduleTapped,
-          offsetMultiplier: 2,
-          isDark: isDark,
-        ),
-        _buildChildOption(
-          label: 'Add Note',
-          icon: Icons.add_circle_outline,
-          color: primaryColor, // Base Theme Primary
-          onTap: widget.onAddNoteTapped,
-          offsetMultiplier: 1,
-          isDark: isDark,
-        ),
-
         FloatingActionButton(
           backgroundColor: primaryColor,
           elevation: _isExpanded ? 4 : 2,
@@ -113,88 +118,72 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab> with Single
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
-    required int offsetMultiplier,
     required bool isDark,
   }) {
     final cardBgColor = isDark ? Colors.grey[900]! : Colors.white;
     final cardTextColor = isDark ? Colors.grey[200]! : Colors.black87;
     final cardBorderColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
 
-    return Transform(
-      transform: Matrix4.translationValues(
-        0.0,
-        _translateButton.value * offsetMultiplier,
-        0.0,
-      ),
-      child: Opacity(
-        opacity: _animationController.value,
-        child: Visibility(
-          visible: _animationController.value > 0.0,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12, right: 4),
-            child: InkWell(
-              onTap: (){
-                _toggleMenu();
-                onTap();
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      color: cardBgColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cardBorderColor, width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: cardTextColor,
-                      ),
-                    ),
-                  ),
-
-                  // Small Option Action Round Container
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDark ? color.withOpacity(0.18) : color,
-                      shape: BoxShape.circle,
-                      border: isDark ? Border.all(color: color.withOpacity(0.4), width: 1.2) : null,
-                      boxShadow: !isDark
-                          ? [
-                        BoxShadow(
-                          color: color.withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        )
-                      ]
-                          : null,
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: isDark ? color : Colors.white,
-                    ),
-                  )
-                ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        onTap();
+        _toggleMenu();
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: cardBgColor,
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(color: cardBorderColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: cardTextColor,
               ),
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDark ? color.withOpacity(0.18) : color,
+              shape: BoxShape.circle,
+              border: isDark ? Border.all(color: color.withOpacity(0.4), width: 1.2) : null,
+              boxShadow: !isDark
+                  ? [
+                BoxShadow(
+                  color: color.withOpacity(0.25),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
+                )
+              ]
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isDark ? color : Colors.white,
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }

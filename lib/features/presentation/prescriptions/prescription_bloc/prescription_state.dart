@@ -44,3 +44,11 @@ class PrescriptionState extends Equatable {
     errorMessage,
   ];
 }
+class AddPrescriptionRecordNavState extends PrescriptionState {
+  @override
+  List<Object?> get props => [];
+}
+class SinglePrescriptionDetailsNavState extends PrescriptionState {
+  @override
+  List<Object?> get props => [];
+}

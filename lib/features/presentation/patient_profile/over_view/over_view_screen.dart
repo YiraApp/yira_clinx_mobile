@@ -7,47 +7,31 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../widgets/add_records_buttons.dart';
-
 class OverviewScreen extends StatelessWidget {
   final PatientProfileEntity patient;
+
+  final VoidCallback onPrescribeTap;
+  final VoidCallback onNoteTap;
+  final VoidCallback onScheduleTap;
 
   const OverviewScreen({
     super.key,
     required this.patient,
+    required this.onPrescribeTap,
+    required this.onNoteTap,
+    required this.onScheduleTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:Theme.of(context).scaffoldBackgroundColor,
-     /* appBar: PreferredSize(
-        preferredSize: Size.fromHeight(isTablet(context) ? 68.0 : 30.0),
-        child: AppBar(
-          title: CommonText(
-            "Overview",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.035,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-      ),*/
-        floatingActionButton:ClinicalSpeedDialFab(
-          onAddNoteTapped: () => debugPrint(
-            'Clean Architecture: Triggering Add Note event payload.',
-          ),
-          onScheduleTapped: () => debugPrint(
-            'Clean Architecture: Launching appointment booking engine.',
-          ),
-          onPrescribeTapped: () => debugPrint(
-            'Clean Architecture: Activating medical drug selector routine.',
-          ),
-        ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Pass the callbacks directly so they execute properly on tap
+      floatingActionButton: ClinicalSpeedDialFab(
+        onAddNoteTapped: onNoteTap,
+        onScheduleTapped: onScheduleTap,
+        onPrescribeTapped: onPrescribeTap,
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -57,7 +41,7 @@ class OverviewScreen extends StatelessWidget {
             PatientInsuranceCard(patient: patient),
             PatientHistoryCard(patient: patient),
             PatientSummaryCard(patient: patient),
-            const SizedBox(height: 60),
+            const SizedBox(height: 80),
           ],
         ),
       ),

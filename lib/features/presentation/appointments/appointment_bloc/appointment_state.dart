@@ -143,12 +143,27 @@ final class AppointmentLoaded extends AppointmentState {
 // 4. Error State
 final class AppointmentError extends AppointmentState {
   final String message;
-  const AppointmentError(this.message, {
+  const AppointmentError(
+    this.message, {
     super.selectedDob,
     super.availableSlots,
     super.selectedSlot,
   });
 
+  @override
+  AppointmentState copyWith({
+    DateTime? selectedDob,
+    List<String>? availableSlots,
+    String? Function()? selectedSlot,
+    List<Appointment>? appointments,
+    int? todayCount,
+    int? confirmedCount,
+    int? pendingCount,
+    int? aiOptimizationScore,
+  }) => this;
+}
+
+class OnAddAppointmentState extends AppointmentState {
   @override
   AppointmentState copyWith({
     DateTime? selectedDob,

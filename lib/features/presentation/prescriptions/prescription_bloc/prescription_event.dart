@@ -74,3 +74,12 @@ class SubmitPrescription extends PrescriptionEvent {
   @override
   List<Object> get props => [patientId, additionalNotes];
 }
+class AddPrescriptionRecordNavEvent extends PrescriptionEvent {
+  @override
+  List<Object?> get props => [];
+}
+
+class SinglePrescriptionDetailsNavEvent extends PrescriptionEvent {
+  @override
+  List<Object?> get props => [];
+}

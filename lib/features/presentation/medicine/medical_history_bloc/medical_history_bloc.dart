@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../../../domain/entities/medicine/medical_history_entity.dart';
@@ -32,6 +33,12 @@ class MedicalHistoryBloc extends Bloc<MedicalHistoryEvent, MedicalHistoryState> 
           emit(MedicalHistoryLoaded(updatedRecords));
         } catch (_) {}
       }
+    });
+    on<AddMedicalRecordNavEvent>((event, emit) async {
+      emit(AddMedicalRecordNavState());
+    });
+    on<SingleMedicineDetailsNavEvent>((event, emit) async {
+      emit(SingleMedicineDetailsNavState());
     });
   }
 }

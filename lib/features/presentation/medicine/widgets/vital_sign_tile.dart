@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -28,7 +29,7 @@ class VitalSignTile extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surface : Colors.white,
+        color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.grey.withOpacity(0.15)),
       ),

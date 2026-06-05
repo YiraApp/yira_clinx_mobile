@@ -14,27 +14,31 @@ class ExecutionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (state is! SlotDataState) {
+      return const SizedBox.shrink();
+    }
+
+    final dataState = state as SlotDataState;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
     return SectionCardWrapper(
       icon: Icons.settings_outlined,
       title: 'Execution',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCardLabel(context, 'Run Mode',isDark),
+          _buildCardLabel(context, 'Run Mode', isDark),
           const SizedBox(height: 8),
-          _buildRunModeToggle(context),
+          _buildRunModeToggle(context, dataState),
           const SizedBox(height: 20),
-          // _buildCardLabel(context, state.isSingleDay ? 'Target Date' : 'Target Date Range'),
-          // const SizedBox(height: 12),
-          _buildDatePickerTrigger(context,isDark),
+          _buildDatePickerTrigger(context, dataState, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildCardLabel(BuildContext context, String text,bool isDark) {
+  Widget _buildCardLabel(BuildContext context, String text, bool isDark) {
     return CommonText(
       text,
       style: TextStyle(
@@ -46,7 +50,7 @@ class ExecutionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRunModeToggle(BuildContext context) {
+  Widget _buildRunModeToggle(BuildContext context, SlotDataState dataState) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -56,21 +60,21 @@ class ExecutionCard extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: isDark ? theme.inputDecorationTheme.fillColor : const Color(0xFFE9ECEF),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         children: [
           Expanded(
             child: _ToggleSegment(
               label: 'Single Day',
-              isSelected: state.isSingleDay,
+              isSelected: dataState.isSingleDay,
               onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)),
             ),
           ),
           Expanded(
             child: _ToggleSegment(
               label: 'Date Range',
-              isSelected: !state.isSingleDay,
+              isSelected: !dataState.isSingleDay,
               onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)),
             ),
           ),
@@ -79,8 +83,8 @@ class ExecutionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDatePickerTrigger(BuildContext context,bool isDark) {
-    if (state.isSingleDay) {
+  Widget _buildDatePickerTrigger(BuildContext context, SlotDataState dataState, bool isDark) {
+    if (dataState.isSingleDay) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -95,11 +99,9 @@ class ExecutionCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           CommonDatePicker(
-            selectedDate: state.targetDate,
+            selectedDate: dataState.targetDate,
             onDateSelected: (DateTime chosen) {
-              context
-                  .read<SlotBloc>()
-                  .add(UpdateTargetDateEvent(chosen));
+              context.read<SlotBloc>().add(UpdateTargetDateEvent(chosen));
             },
           ),
         ],
@@ -119,22 +121,21 @@ class ExecutionCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-
         CommonDatePicker(
-          selectedDate: state.startDate,
+          selectedDate: dataState.startDate,
           onDateSelected: (DateTime chosen) {
-            final difference =
-                state.endDate.difference(chosen).inDays;
+            final difference = dataState.endDate.difference(chosen).inDays;
 
             if (difference > 7) {
               ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(
+                SnackBar(
                   content: Text(
-                    'The date range cannot be greater than 7 days.', style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.032,
-                    fontWeight: FontWeight.w600,
-                  )
+                    'The date range cannot be greater than 7 days.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: displayWidth(context) * 0.032,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               );
@@ -144,16 +145,12 @@ class ExecutionCard extends StatelessWidget {
             context.read<SlotBloc>().add(
               UpdateDateRangeEvent(
                 startDate: chosen,
-                endDate: state.endDate.isBefore(chosen)
-                    ? chosen
-                    : state.endDate,
+                endDate: dataState.endDate.isBefore(chosen) ? chosen : dataState.endDate,
               ),
             );
           },
         ),
-
         const SizedBox(height: 20),
-
         CommonText(
           "End Date",
           style: TextStyle(
@@ -161,17 +158,13 @@ class ExecutionCard extends StatelessWidget {
             fontSize: displayWidth(context) * 0.032,
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white60 : Colors.blueGrey,
-
           ),
         ),
         const SizedBox(height: 8),
-
-        /// END DATE
         CommonDatePicker(
-          selectedDate: state.endDate,
+          selectedDate: dataState.endDate,
           onDateSelected: (DateTime chosen) {
-            final difference =
-                chosen.difference(state.startDate).inDays;
+            final difference = chosen.difference(dataState.startDate).inDays;
 
             if (difference > 7) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -186,7 +179,7 @@ class ExecutionCard extends StatelessWidget {
 
             context.read<SlotBloc>().add(
               UpdateDateRangeEvent(
-                startDate: state.startDate,
+                startDate: dataState.startDate,
                 endDate: chosen,
               ),
             );
@@ -214,7 +207,7 @@ class _ToggleSegment extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isSelected ? theme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
         child: Center(
           child: CommonText(

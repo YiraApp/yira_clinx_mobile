@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
@@ -10,41 +11,33 @@ import 'widgets/execution_card.dart';
 import 'widgets/parameters_card.dart';
 import 'widgets/slot_configuration_card.dart';
 
-class SmartSchedulerScreen extends StatelessWidget {
+class SmartSchedulerScreen extends StatefulWidget {
   const SmartSchedulerScreen({super.key});
+
+  @override
+  State<SmartSchedulerScreen> createState() => _SmartSchedulerScreenState();
+}
+
+class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<SlotBloc>().add(InitializeSlotsEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: CommonText(
-          "Smart Scheduler",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.045,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: false,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black87,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+       titleText: "Smart Scheduler",
       ),
       body: BlocConsumer<SlotBloc, SlotState>(
+        buildWhen: (previous, current) => current is SlotDataState,
         listener: (context, state) {
-          if (state.deploySuccess) {
+          if (state is SlotDataState && state.deploySuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 backgroundColor: theme.colorScheme.primary,
@@ -61,7 +54,17 @@ class SmartSchedulerScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          if (state.isLoading) {
+          if (state is! SlotDataState) {
+            return Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+              ),
+            );
+          }
+
+          final dataState = state;
+
+          if (dataState.isLoading) {
             return Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
@@ -104,14 +107,12 @@ class SmartSchedulerScreen extends StatelessWidget {
                           softWrap: true,
                         ),
                         const SizedBox(height: 24),
-
-                        ExecutionCard(state: state),
+                        ExecutionCard(state: dataState),
                         const SizedBox(height: fieldSpace),
-
-                        ParametersCard(state: state),
+                        ParametersCard(state: dataState),
                         const SizedBox(height: inputFieldBorderRadius),
-
-                        if (state.isSingleDay && state.slots.isNotEmpty) ...[
+                        if (dataState.isSingleDay &&
+                            dataState.slots.isNotEmpty) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -126,7 +127,7 @@ class SmartSchedulerScreen extends StatelessWidget {
                               CommonText(
                                 DateFormat(
                                   'EEEE, MMM dd',
-                                ).format(state.targetDate).toUpperCase(),
+                                ).format(dataState.targetDate).toUpperCase(),
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: displayWidth(context) * 0.03,
@@ -140,21 +141,19 @@ class SmartSchedulerScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                         ],
-
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: state.slots.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            return SlotConfigurationCard(
-                              slot: state.slots[index],
-                            );
-                          },
-                        ),
-
-                        if (state.isSingleDay) ...[
+                        if (dataState.isSingleDay) ...[
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: dataState.slots.length,
+                            separatorBuilder: (_, __) =>
+                            const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              return SlotConfigurationCard(
+                                slot: dataState.slots[index],
+                              );
+                            },
+                          ),
                           const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: () => context.read<SlotBloc>().add(
@@ -166,7 +165,7 @@ class SmartSchedulerScreen extends StatelessWidget {
                                 color: theme.primaryColor.withOpacity(0.4),
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(fieldBorderRadius),
                               ),
                               backgroundColor: isDark
                                   ? Colors.white.withOpacity(0.02)
@@ -198,8 +197,6 @@ class SmartSchedulerScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Fixed Action Deploy Command Footbar Button
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
@@ -212,7 +209,7 @@ class SmartSchedulerScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: state.isDeploying
+                  child: dataState.isDeploying
                       ? const SizedBox(
                           height: 24,
                           width: 24,

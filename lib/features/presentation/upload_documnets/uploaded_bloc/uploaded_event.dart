@@ -14,3 +14,6 @@ class DeleteUploadedRecordItem extends UploadedBlocEvent {
   final String recordId;
   DeleteUploadedRecordItem(this.recordId);
 }
+class UploadRecordScreenNavEvent extends UploadedBlocEvent{
+
+}

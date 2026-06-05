@@ -24,6 +24,12 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     on<RemoveMedication>(_onRemoveMedication);
     on<UpdateMedicationDetails>(_onUpdateMedicationDetails);
     on<TogglePrescriptionExpansion>(_onTogglePrescriptionExpansion);
+    on<AddPrescriptionRecordNavEvent>((event, emit) async {
+      emit(AddPrescriptionRecordNavState());
+    });
+    on<SinglePrescriptionDetailsNavEvent>((event, emit) async {
+      emit(SinglePrescriptionDetailsNavState());
+    });
   }
 
   void _onLoadPrescriptionData(LoadPrescriptionData event, Emitter<PrescriptionState> emit) {

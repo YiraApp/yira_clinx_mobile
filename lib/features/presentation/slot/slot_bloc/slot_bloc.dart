@@ -8,11 +8,11 @@ import '../../../domain/repositories/slot/scheduler_repo.dart';
 
 part 'slot_event.dart';
 part 'slot_state.dart';
-class SlotBloc extends Bloc<SlotEvent, SlotState> {
-  final SchedulerRepository schedulerRepository; // Single repository handles all code paths
 
-  SlotBloc({required this.schedulerRepository}) : super(SlotState.initial()) {
-    // Legacy & Core Events
+class SlotBloc extends Bloc<SlotEvent, SlotState> {
+  final SchedulerRepository schedulerRepository;
+
+  SlotBloc({required this.schedulerRepository}) : super(SlotDataState.initial()) {
     on<InitializeSlotsEvent>(_onInitializeSlots);
     on<ChangeExecutionModeEvent>(_onChangeExecutionMode);
     on<UpdateTargetDateEvent>(_onUpdateTargetDate);
@@ -26,87 +26,102 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     on<BookAppointmentEvent>(_onBookAppointment);
     on<CancelAppointmentEvent>(_onCancelAppointment);
     on<DeployScheduleEvent>(_onDeploySchedule);
-
-    // Modern Dashboard Filter UI Event
     on<ChangeFilterTabUiEvent>(_onChangeFilterTabUi);
+    on<SlotGenNavEvent>(_onSlotGenNav);
+    on<OnTapSlotCardEvent>(_onSlotTapNav);
   }
 
   void _onInitializeSlots(InitializeSlotsEvent event, Emitter<SlotState> emit) async {
-    emit(state.copyWith(isLoading: true));
+    // FIX: If we are stuck in a navigation state, fall back to an initial data state structure
+    final SlotDataState currentState = state is SlotDataState
+        ? state as SlotDataState
+        : SlotDataState.initial();
 
-    final dateString = state.isSingleDay
-        ? DateFormat('MMM dd, yyyy').format(state.targetDate)
-        : "${DateFormat('MMM dd').format(state.startDate)} - ${DateFormat('MMM dd, yyyy').format(state.endDate)}";
+    emit(currentState.copyWith(isLoading: true));
+
+    final dateString = currentState.isSingleDay
+        ? DateFormat('MMM dd, yyyy').format(currentState.targetDate)
+        : "${DateFormat('MMM dd').format(currentState.startDate)} - ${DateFormat('MMM dd, yyyy').format(currentState.endDate)}";
 
     try {
-      // 1. Fetch old data using the legacy method signature
       final generatedLegacySlots = await schedulerRepository.generateSlots(
-        isSingleDay: state.isSingleDay,
+        isSingleDay: currentState.isSingleDay,
         targetDate: dateString,
-        durationMinutes: state.durationMinutes,
-        bufferType: state.bufferType,
+        durationMinutes: currentState.durationMinutes,
+        bufferType: currentState.bufferType,
       );
 
-      // 2. Fetch new dashboard metrics using the modern overloaded method signature
       final generatedModernSlots = await schedulerRepository.generateTimeSlots(
-        isSingleDay: state.isSingleDay,
+        isSingleDay: currentState.isSingleDay,
         targetDate: dateString,
-        durationMinutes: state.durationMinutes,
-        bufferType: state.bufferType,
+        durationMinutes: currentState.durationMinutes,
+        bufferType: currentState.bufferType,
       );
 
-      emit(state.copyWith(
+      emit(currentState.copyWith(
         slots: generatedLegacySlots,
         timeSlots: generatedModernSlots,
         isLoading: false,
       ));
     } catch (_) {
-      emit(state.copyWith(isLoading: false));
+      emit(currentState.copyWith(isLoading: false));
     }
   }
 
   void _onChangeExecutionMode(ChangeExecutionModeEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(isSingleDay: event.isSingleDay));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(isSingleDay: event.isSingleDay));
   }
 
   void _onUpdateTargetDate(UpdateTargetDateEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(targetDate: event.selectedDate));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(targetDate: event.selectedDate));
   }
 
   void _onUpdateDateRange(UpdateDateRangeEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(startDate: event.startDate, endDate: event.endDate));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(startDate: event.startDate, endDate: event.endDate));
   }
 
   void _onChangeDuration(ChangeDurationEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(durationMinutes: event.duration));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(durationMinutes: event.duration));
   }
 
   void _onChangeBuffer(ChangeBufferEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(bufferType: event.buffer));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(bufferType: event.buffer));
   }
 
   void _onAddCustomSlot(AddCustomSlotEvent event, Emitter<SlotState> emit) {
-    final updatedLegacy = List<SlotEntity>.from(state.slots);
-    final updatedModern = List<TimeSlot>.from(state.timeSlots);
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    final updatedLegacy = List<SlotEntity>.from(currentState.slots);
+    final updatedModern = List<TimeSlot>.from(currentState.timeSlots);
     final newId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Append to both lists to keep data mirrors completely synchronized
     updatedLegacy.add(SlotEntity(id: newId, startTime: '12:00 PM', endTime: '12:30 PM', label: 'Available'));
     updatedModern.add(TimeSlot(id: newId, time: '12:00 PM', duration: '30m', status: SlotStatus.available));
 
-    emit(state.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
+    emit(currentState.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
   }
 
   void _onRemoveSlot(RemoveSlotEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(
-      slots: state.slots.where((slot) => slot.id != event.slotId).toList(),
-      timeSlots: state.timeSlots.where((slot) => slot.id != event.slotId).toList(),
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    emit(currentState.copyWith(
+      slots: currentState.slots.where((slot) => slot.id != event.slotId).toList(),
+      timeSlots: currentState.timeSlots.where((slot) => slot.id != event.slotId).toList(),
     ));
   }
 
   void _onUpdateSlotDetails(UpdateSlotDetailsEvent event, Emitter<SlotState> emit) {
-    // 1. Update Legacy Slot Collection
-    final updatedLegacy = state.slots.map((slot) {
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    final updatedLegacy = currentState.slots.map((slot) {
       if (slot.id == event.slotId) {
         return slot.copyWith(
           startTime: event.startTime,
@@ -117,8 +132,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    // 2. Update Modern TimeSlot Collection
-    final updatedModern = state.timeSlots.map((slot) {
+    final updatedModern = currentState.timeSlots.map((slot) {
       if (slot.id == event.slotId) {
         return TimeSlot(
           id: slot.id,
@@ -133,18 +147,21 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    emit(state.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
+    emit(currentState.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
   }
 
   void _onBlockSlot(BlockSlotEvent event, Emitter<SlotState> emit) {
-    final updatedLegacy = state.slots.map((slot) {
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    final updatedLegacy = currentState.slots.map((slot) {
       if (slot.id == event.slotId) {
         return slot.copyWith(label: 'Blocked', appointment: () => null);
       }
       return slot;
     }).toList();
 
-    final updatedModern = state.timeSlots.map((slot) {
+    final updatedModern = currentState.timeSlots.map((slot) {
       if (slot.id == event.slotId) {
         return TimeSlot(
           id: slot.id,
@@ -159,11 +176,14 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    emit(state.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
+    emit(currentState.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
   }
 
   void _onBookAppointment(BookAppointmentEvent event, Emitter<SlotState> emit) {
-    final updatedLegacy = state.slots.map((slot) {
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    final updatedLegacy = currentState.slots.map((slot) {
       if (slot.id == event.slotId) {
         return slot.copyWith(
           label: 'Booked',
@@ -177,7 +197,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    final updatedModern = state.timeSlots.map((slot) {
+    final updatedModern = currentState.timeSlots.map((slot) {
       if (slot.id == event.slotId) {
         return TimeSlot(
           id: slot.id,
@@ -192,18 +212,21 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    emit(state.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
+    emit(currentState.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
   }
 
   void _onCancelAppointment(CancelAppointmentEvent event, Emitter<SlotState> emit) {
-    final updatedLegacy = state.slots.map((slot) {
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
+
+    final updatedLegacy = currentState.slots.map((slot) {
       if (slot.id == event.slotId) {
         return slot.copyWith(label: 'Available', appointment: () => null);
       }
       return slot;
     }).toList();
 
-    final updatedModern = state.timeSlots.map((slot) {
+    final updatedModern = currentState.timeSlots.map((slot) {
       if (slot.id == event.slotId) {
         return TimeSlot(
           id: slot.id,
@@ -218,23 +241,33 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       return slot;
     }).toList();
 
-    emit(state.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
+    emit(currentState.copyWith(slots: updatedLegacy, timeSlots: updatedModern));
   }
 
   void _onDeploySchedule(DeployScheduleEvent event, Emitter<SlotState> emit) async {
-    emit(state.copyWith(isDeploying: true));
+    if (state is! SlotDataState) return;
+    final currentState = state as SlotDataState;
 
-    // Deploys both versions to the downstream system via your single repository hooks
-    final outcomeLegacy = await schedulerRepository.deploySchedule(state.slots);
-    final outcomeModern = await schedulerRepository.deployTimeSchedule(state.timeSlots);
+    emit(currentState.copyWith(isDeploying: true));
 
-    emit(state.copyWith(
+    final outcomeLegacy = await schedulerRepository.deploySchedule(currentState.slots);
+    final outcomeModern = await schedulerRepository.deployTimeSchedule(currentState.timeSlots);
+
+    emit(currentState.copyWith(
       isDeploying: false,
       deploySuccess: outcomeLegacy && outcomeModern,
     ));
   }
 
   void _onChangeFilterTabUi(ChangeFilterTabUiEvent event, Emitter<SlotState> emit) {
-    emit(state.copyWith(selectedTabIndex: event.tabIndex));
+    if (state is! SlotDataState) return;
+    emit((state as SlotDataState).copyWith(selectedTabIndex: event.tabIndex));
+  }
+
+  void _onSlotGenNav(SlotGenNavEvent event, Emitter<SlotState> emit) {
+    emit(const SlotGenNavState());
+  }
+  void _onSlotTapNav(OnTapSlotCardEvent event, Emitter<SlotState> emit) {
+    emit(const OnTapSlotCardState());
   }
 }

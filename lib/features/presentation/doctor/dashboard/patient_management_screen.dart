@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
@@ -22,13 +23,8 @@ class PatientManagementScreen extends StatelessWidget {
           FocusScope.of(context).unfocus();
         },
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context),
-            ),
+          appBar: CommonAppBar(
+            actions: [],
           ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
@@ -198,9 +194,9 @@ class PatientManagementScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey.withOpacity(0.15),
+          color: isDark ? darkModeBorderColor : lightModeBorderColor,
           width: 1,
         ),
         boxShadow: [
@@ -254,7 +250,6 @@ class PatientManagementScreen extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Container(
-      color: isDark ? Colors.transparent : Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 0),
       child: Column(
         children: [
@@ -272,32 +267,29 @@ class PatientManagementScreen extends StatelessWidget {
               filled: true,
               fillColor: isDark
                   ? darkModeCardColor
-                  : Theme.of(context).scaffoldBackgroundColor,
+                  : lightModeTextFieldBgColor,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 0,
                 horizontal: 16,
               ),
-
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
+                  color:isDark ? darkModeBorderColor : lightModeBorderColor,
                   width: 1.0,
                 ),
               ),
-
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: isDark ? darkModeBorderColor : lightModeBorderColor,
                   width: 1.0,
                 ),
               ),
-
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: isDark ? darkModeBorderColor : lightModeBorderColor,
                   width: 1.5,
                 ),
               ),

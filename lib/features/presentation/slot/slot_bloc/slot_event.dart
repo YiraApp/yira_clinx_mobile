@@ -69,8 +69,12 @@ class CancelAppointmentEvent extends SlotEvent {
 }
 
 class DeployScheduleEvent extends SlotEvent {}
+class SlotGenNavEvent extends SlotEvent {}
 
 class ChangeFilterTabUiEvent extends SlotEvent {
   final int tabIndex;
   ChangeFilterTabUiEvent(this.tabIndex);
+}
+class OnTapSlotCardEvent extends SlotEvent {
+
 }

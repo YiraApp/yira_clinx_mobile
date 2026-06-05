@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/detail_display_card.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/section_label_text.dart';
@@ -26,33 +28,23 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title:  CommonText("Details",style: TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: displayWidth(context) * 0.045,
-          fontWeight: FontWeight.w600,
-        ),),
-        centerTitle: false,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText: "Details",
       ),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
   listener: (context, state) {
   },
   builder: (context, state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: isDark ? theme.colorScheme.surface : Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              color: isDark ? darkModeCardColor : Colors.white,
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
               border: Border.all(color: Colors.grey.withOpacity(0.15)),
             ),
             child: Column(

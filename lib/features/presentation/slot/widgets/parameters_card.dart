@@ -7,7 +7,7 @@ import '../../../../core/constants/constants.dart';
 import '../slot_bloc/slot_bloc.dart';
 import '../../../../core/common_widgets/common_text.dart';
 class ParametersCard extends StatelessWidget {
-  final SlotState state;
+  final SlotDataState state;
 
   const ParametersCard({super.key, required this.state});
 

@@ -60,5 +60,9 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         emit(AppointmentError("Failed to fetch dashboard records"));
       }
     });
+    on<OnAddAppointmentEvent>((event, emit) async {
+      emit(OnAddAppointmentState());
+    });
   }
+
 }
