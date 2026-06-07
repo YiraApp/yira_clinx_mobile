@@ -140,7 +140,7 @@ class SignInScreen extends StatelessWidget {
                                       height: 50,
                                       decoration: BoxDecoration(
                                         color: isDarkMode
-                                            ? darkModeFieldBgColor
+                                            ? darkModeCardColor.withOpacity(0.9)
                                             : filedBg,
                                         borderRadius: BorderRadius.circular(
                                           fieldBorderRadius * 5,
@@ -183,9 +183,7 @@ class SignInScreen extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-
                                     SizedBox(height: isTabletDevice ? 40 : 30),
-
                                     SizedBox(
                                       height: isTabletDevice
                                           ? screenHeight * 0.28
@@ -346,7 +344,7 @@ class SignInScreen extends StatelessWidget {
                 onChanged: (country) {},
               ),
             ),
-            borderRadius:  fieldBorderRadius,
+            borderRadius: fieldBorderRadius,
             hintText: "Mobile number",
             controller: mobileNumberController,
             validator: (value) {
@@ -398,7 +396,7 @@ class SignInScreen extends StatelessWidget {
           const SizedBox(height: titleSpace),
           CommonInputAddRecordTextField(
             suffixIcon: null,
-            borderRadius:  fieldBorderRadius,
+            borderRadius: fieldBorderRadius,
             hintText: "Enter Email",
             controller: emailController,
             focusNode: emailFocus,
@@ -417,7 +415,7 @@ class SignInScreen extends StatelessWidget {
           const SizedBox(height: titleSpace),
           CommonInputAddRecordTextField(
             suffixIcon: null,
-            borderRadius:  fieldBorderRadius,
+            borderRadius: fieldBorderRadius,
             hintText: "Enter Password",
             controller: passwordController,
             focusNode: passwordFocus,
