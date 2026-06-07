@@ -40,11 +40,11 @@ class SettingsScreen extends StatelessWidget {
           return ListView(
             padding: EdgeInsets.symmetric(
               horizontal: screenHorizontalSpacePadding,
-              vertical: 16.0,
+              vertical: screenTopPadding,
             ),
             children: [
               _buildSectionHeader(context, "ACCOUNT SECURITY"),
-              const SizedBox(height: 10),
+              const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 children: [
                   CustomSettingTile(
@@ -59,10 +59,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: fieldSpace),
 
               _buildSectionHeader(context, "COMMUNICATIONS"),
-              const SizedBox(height: 10),
+              const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 children: [
                   CustomSettingTile(
@@ -75,10 +75,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: fieldSpace),
 
               _buildSectionHeader(context, "APP PREFERENCES"),
-              const SizedBox(height: 10),
+              const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 children: [
                   CustomSettingTile(
@@ -100,10 +100,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: fieldSpace),
 
               _buildSectionHeader(context, "TERMINATE ACCOUNT"),
-              const SizedBox(height: 10),
+              const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 children: [
                   CustomSettingTile(
@@ -191,8 +191,6 @@ class SettingsScreen extends StatelessWidget {
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               onPressed: () {
                 Navigator.pop(context);
-                // Dispatch your delete account event here
-                // context.read<SettingsBloc>().add(DeleteAccountRequestedEvent());
               },
               child: const Text("Delete"),
             ),

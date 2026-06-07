@@ -26,7 +26,7 @@ class DialogRoleCard extends StatelessWidget {
 
     final unselectedCardBg = isDarkMode
         ? theme.cardColor
-        : sideMenuDividerColor.withOpacity(0.5);
+        : sideMenuDividerColor.withOpacity(1);
 
     final selectedCardBg = isDarkMode
         ? theme.colorScheme.primaryContainer.withOpacity(0.2)

@@ -34,9 +34,10 @@ class SinglePrescriptionCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(
-        horizontal: screenHorizontalSpacePadding,
-        vertical: 8,
+      margin: const EdgeInsets.only(
+        right: screenHorizontalSpacePadding,
+        left: screenHorizontalSpacePadding,
+        bottom: fieldSpace,
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(

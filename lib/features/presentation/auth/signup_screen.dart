@@ -145,7 +145,7 @@ class SignupScreen extends StatelessWidget {
                                     requestFocusNode: lastNameFocus,
                                     textInputAction: TextInputAction.next,
                                   ),
-                                  const SizedBox(height: 15),
+                                  const SizedBox(height: fieldSpace),
 
                                   CommonText(
                                     'Last Name *',
@@ -167,7 +167,7 @@ class SignupScreen extends StatelessWidget {
                                     requestFocusNode: emailFocus,
                                     textInputAction: TextInputAction.next,
                                   ),
-                                  const SizedBox(height: 15),
+                                  const SizedBox(height: fieldSpace),
 
                                   CommonText(
                                     'Email *',
@@ -189,7 +189,7 @@ class SignupScreen extends StatelessWidget {
                                     requestFocusNode: mobileFocus,
                                     textInputAction: TextInputAction.next,
                                   ),
-                                  const SizedBox(height: 15),
+                                  const SizedBox(height: fieldSpace),
 
                                   CommonText(
                                     'Mobile number *',
@@ -286,7 +286,7 @@ class SignupScreen extends StatelessWidget {
                                       FilteringTextInputFormatter.digitsOnly,
                                     ],
                                   ),
-                                  const SizedBox(height: 15),
+                                  const SizedBox(height: fieldSpace),
 
                                   CommonText(
                                     'Password *',
@@ -308,7 +308,7 @@ class SignupScreen extends StatelessWidget {
                                     requestFocusNode: confirmPasswordFocus,
                                     textInputAction: TextInputAction.next,
                                   ),
-                                  const SizedBox(height: 15),
+                                  const SizedBox(height: fieldSpace),
 
                                   CommonText(
                                     'Confirm Password *',

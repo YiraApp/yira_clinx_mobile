@@ -170,7 +170,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                   context.read<SlotBloc>().add(ChangeFilterTabUiEvent(index));
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: fieldSpace),
               _buildTimeSlotHeaderRow(Theme.of(context)),
               const SizedBox(height: 12),
             ],
@@ -185,12 +185,12 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: screenHorizontalSpacePadding,
-                    vertical: 8.0,
+                    vertical: 0.0,
                   ),
                   itemCount: visibleSlots.length,
                   itemBuilder: (context, index) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
+                      padding: const EdgeInsets.only(bottom: 0.0),
                       child: TimeSlotCard(
                         slot: visibleSlots[index],
                         bookSlot: () {

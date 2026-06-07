@@ -227,7 +227,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     isSelected: true,
                     onChanged: (bool? newValue) {},
                   ),
-                  SizedBox(height: 40),
+                  SizedBox(height: fieldSpace*3),
                   CustomElevatedButton(
                     text: "Book Appointment",
                     onPressed: () {
@@ -237,7 +237,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     height: 50,
                     borderRadius: 8,
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: fieldSpace*1.5),
                   SizedBox(
                     height: 50,
                     width: displayWidth(context),

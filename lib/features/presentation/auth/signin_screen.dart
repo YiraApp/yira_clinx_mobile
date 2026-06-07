@@ -405,7 +405,7 @@ class SignInScreen extends StatelessWidget {
             requestFocusNode: passwordFocus,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: fieldSpace),
           CommonText(
             'Password *',
             style: TextStyle(

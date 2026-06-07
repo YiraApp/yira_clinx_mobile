@@ -63,7 +63,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: isTab
+      body:
+      /*isTab
           ? Stack(
               children: [
                 Positioned(
@@ -174,7 +175,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                                 return Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                        bottom: 16.0,
+                                                        bottom: fieldSpace,
                                                       ),
                                                   child: DialogRoleCard(
                                                     isTablet: true,
@@ -275,7 +276,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                 ),
               ],
             )
-          : Stack(
+          :*/
+      Stack(
               children: [
                 Positioned(
                   top: 0,
@@ -325,7 +327,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                 CommonText(
                                   'Select Your Role',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * 0.065,
+                                    fontSize: displayWidth(context) * (isTab? 0.035:0.065),
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -333,7 +335,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                 CommonText(
                                   'Multiple permissions detected for this facility',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * 0.03,
+                                    fontSize: displayWidth(context) * (isTab? 0.02:0.03),
                                     fontWeight: FontWeight.w500,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -396,7 +398,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                                   child: Padding(
                                                     padding:
                                                         const EdgeInsets.only(
-                                                          bottom: 16.0,
+                                                          bottom: fieldSpace,
                                                         ),
                                                     child: DialogRoleCard(
                                                       isTablet: false,
@@ -439,7 +441,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                                   fontFamily: appPoppinFont,
                                                   fontSize:
                                                       displayWidth(context) *
-                                                      0.025,
+                                                      (isTab? 0.018:0.025),
                                                   fontWeight: FontWeight.w500,
                                                   color: isDarkMode
                                                       ? Colors.white30

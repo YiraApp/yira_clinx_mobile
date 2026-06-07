@@ -81,6 +81,7 @@ class _DoctorPatientProfileScreenState
 
             return Column(
               children: [
+                SizedBox(height: screenTopPadding,),
                 PatientProfileHeader(patient: patient),
                 PatientProfileTabBar(
                   tabs: _tabs,

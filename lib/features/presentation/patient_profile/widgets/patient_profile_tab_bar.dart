@@ -71,7 +71,7 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: fieldSpace),
       height: 40,
       child: ListView.builder(
         controller: _scrollController,

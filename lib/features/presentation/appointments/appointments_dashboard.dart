@@ -42,11 +42,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-var isTab = isTablet(context);
-    final double computedRadius = fieldBorderRadius ;
+    var isTab = isTablet(context);
+    final double computedRadius = fieldBorderRadius;
 
-    final Color inactiveBorderColor = isDark ? darkModeBorderColor : lightModeBorderColor;
-    final Color activeBorderColor = isDark ? darkModeBorderFocusedColor : lightModeBorderFocusedColor;
+    final Color inactiveBorderColor = isDark
+        ? darkModeBorderColor
+        : lightModeBorderColor;
+    final Color activeBorderColor = isDark
+        ? darkModeBorderFocusedColor
+        : lightModeBorderFocusedColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -99,8 +103,8 @@ var isTab = isTablet(context);
             if (state is AppointmentLoaded) {
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+                  horizontal: screenHorizontalSpacePadding,
+                  vertical: screenTopPadding,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,8 +157,6 @@ var isTab = isTablet(context);
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
-                    // Tab Navigation Switcher
                     Container(
                       height: 45,
                       decoration: BoxDecoration(
@@ -168,8 +170,10 @@ var isTab = isTablet(context);
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
                         indicator: BoxDecoration(
-                          color: isDark ? darkModeCardColor: Colors.white,
-                          borderRadius: BorderRadius.circular(fieldBorderRadius),
+                          color: isDark ? darkModeCardColor : Colors.white,
+                          borderRadius: BorderRadius.circular(
+                            fieldBorderRadius,
+                          ),
                           boxShadow: [
                             if (!isDark)
                               BoxShadow(
@@ -197,7 +201,6 @@ var isTab = isTablet(context);
                     ),
                     const SizedBox(height: fieldSpace),
 
-
                     TextField(
                       onChanged: (val) {},
                       style: TextStyle(
@@ -206,7 +209,8 @@ var isTab = isTablet(context);
                         fontFamily: appPoppinFont,
                         fontSize: isTab
                             ? displayWidth(context) * 0.018
-                            : displayWidth(context) * 0.035, // Aligned with your app's global text size
+                            : displayWidth(context) *
+                                  0.035, // Aligned with your app's global text size
                         color: theme.colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
@@ -230,25 +234,35 @@ var isTab = isTablet(context);
                         fillColor: isDark
                             ? darkModeCardColor.withOpacity(0.8)
                             : lightModeTextFieldBgColor,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
 
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(computedRadius),
-                          borderSide: BorderSide(color: inactiveBorderColor, width: 1.0),
+                          borderSide: BorderSide(
+                            color: inactiveBorderColor,
+                            width: 1.0,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(computedRadius),
-                          borderSide: BorderSide(color: inactiveBorderColor, width: 1.0),
+                          borderSide: BorderSide(
+                            color: inactiveBorderColor,
+                            width: 1.0,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(computedRadius),
-                          borderSide: BorderSide(color: activeBorderColor, width: 1.5),
+                          borderSide: BorderSide(
+                            color: activeBorderColor,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
-                    // Filter Drops Selection Row
                     Row(
                       children: [
                         Expanded(

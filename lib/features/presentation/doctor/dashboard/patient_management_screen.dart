@@ -62,9 +62,11 @@ class PatientManagementScreen extends StatelessWidget {
                   slivers: [
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                          vertical: fieldSpace,
+                        padding: const EdgeInsets.only(
+                          left: screenHorizontalSpacePadding,
+                          right: screenHorizontalSpacePadding,
+                          top: screenTopPadding,
+                          bottom: fieldSpace
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,8 +100,8 @@ class PatientManagementScreen extends StatelessWidget {
                       ),
                       sliver: SliverGrid.count(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
+                        crossAxisSpacing: fieldSpace,
+                        mainAxisSpacing: fieldSpace,
                         childAspectRatio: 2.1,
                         children: [
                           _buildMetricCard(
@@ -138,9 +140,10 @@ class PatientManagementScreen extends StatelessWidget {
                       ),
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                        vertical: 0,
+                      padding: const EdgeInsets.only(
+                        left: screenHorizontalSpacePadding,
+                        right: screenHorizontalSpacePadding,
+                        bottom: fieldSpace,
                       ),
                       sliver: SliverToBoxAdapter(
                         child: _buildHeader(context, isDark),
@@ -150,7 +153,7 @@ class PatientManagementScreen extends StatelessWidget {
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: screenHorizontalSpacePadding,
-                        vertical: fieldSpace,
+                        vertical: 0,
                       ),
                       sliver: SliverToBoxAdapter(
                         child: ListView.builder(

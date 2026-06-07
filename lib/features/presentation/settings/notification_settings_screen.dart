@@ -19,7 +19,6 @@ class NotificationSettingsScreen extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CommonAppBar(
         titleText: "Notification Preferences",
-
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
         listener: (context, state) {
@@ -33,20 +32,10 @@ class NotificationSettingsScreen extends StatelessWidget {
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(
                 horizontal: screenHorizontalSpacePadding,
-                vertical: 24),
+                vertical: screenTopPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               /* CommonText(
-                  "Choose how you want to receive notifications",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
-                    color: theme.textTheme.bodyMedium?.color,
-                  ),
-                ),
-                const SizedBox(height: 32),*/
-
                 _buildCardGroup(
                   context,
                   theme: theme,
@@ -72,9 +61,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 24),
-
+                const SizedBox(height: fieldSpace),
                 _buildCardGroup(
                   context,
                   theme: theme,

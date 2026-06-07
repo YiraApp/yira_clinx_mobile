@@ -25,7 +25,7 @@ class PatientInfoCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(left: screenHorizontalSpacePadding,right: screenHorizontalSpacePadding, top: 0,bottom: fieldSpace),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,

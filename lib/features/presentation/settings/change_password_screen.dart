@@ -96,7 +96,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     color: textColor.withOpacity(0.8),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: titleSpace),
 
                                 FancyPasswordField(
                                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -152,7 +152,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     fillColor: isDark ? darkModeCardColor.withOpacity(0.9) : lightModeTextFieldBgColor,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
 
-                                    // --- Standardized Borders Matrix System ---
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(fieldBorderRadius ?? 8.0),
                                       borderSide: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor, width: 1.0),
@@ -224,7 +223,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     );
                                   },
                                 ),
-                                SizedBox(height: screenHeight * 0.025),
+                                SizedBox(height: fieldSpace),
 
                                 Text(
                                   'Confirm Password',
@@ -235,7 +234,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     color: textColor.withOpacity(0.8),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: titleSpace),
 
                                 CommonInputAddRecordTextField(
                                   borderRadius:  fieldBorderRadius,

@@ -26,7 +26,6 @@ class OverviewScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // Pass the callbacks directly so they execute properly on tap
       floatingActionButton: ClinicalSpeedDialFab(
         onAddNoteTapped: onNoteTap,
         onScheduleTapped: onScheduleTap,

@@ -24,7 +24,6 @@ class OrganizationCard extends StatelessWidget {
     final mainText = isDarkMode ? Colors.white : const Color(0xFF1E293B);
     final subText = isDarkMode ? Colors.white60 : const Color(0xFF94A3B8);
 
-    // Dynamic layout multiplier scaling bases
     final double widthFactor = displayWidth(context);
 
     return Padding(

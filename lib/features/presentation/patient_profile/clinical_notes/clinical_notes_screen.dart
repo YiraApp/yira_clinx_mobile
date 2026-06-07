@@ -57,9 +57,10 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
               SliverList(
                 delegate: SliverChildListDelegate([
                   Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isWideScreen ? 24.0 : 16.0,
-
+                    padding: EdgeInsets.only(
+                      right: isWideScreen ? 24.0 : screenHorizontalSpacePadding,
+                      left: isWideScreen ? 24.0 : screenHorizontalSpacePadding,
+                      bottom: 100
                     ),
                     child: _buildHistoricalNoteCard(context, isWideScreen),
                   ),
@@ -171,7 +172,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     required bool isWideScreen,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return CommonBorderButton(height: 40, text: 'Cancel', onPressed: () {});
+    return CommonBorderButton(height: 40, text: 'Clear', onPressed: () {});
   }
 
   Widget _buildSaveButton({required bool isWideScreen}) {

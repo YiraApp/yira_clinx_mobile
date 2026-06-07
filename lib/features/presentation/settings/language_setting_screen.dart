@@ -41,7 +41,7 @@ class LanguageSettingsScreen extends StatelessWidget {
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(
                 horizontal: screenHorizontalSpacePadding,
-                vertical: 20.0
+                vertical: screenTopPadding
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,7 +187,7 @@ class _LanguageCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: fieldSpace),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(fieldBorderRadius),

@@ -107,7 +107,6 @@ class VerifyOtpScreen extends StatelessWidget {
                                     ),
                                   ),
 
-                                  // 3. Subtitle Description Text
                                   Padding(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: isTab
@@ -146,10 +145,9 @@ class VerifyOtpScreen extends StatelessWidget {
 
                                   SizedBox(
                                     height:
-                                        screenHeight * (isTab ? 0.05 : 0.06),
+                                        screenHeight * (isTab ? 0.05 : 0.045),
                                   ),
 
-                                  // 4. Pin Input Form Frame
                                   SizedBox(
                                     width: isTab
                                         ? referenceWidth * 0.82
@@ -222,9 +220,8 @@ class VerifyOtpScreen extends StatelessWidget {
                                       onChanged: (value) {},
                                     ),
                                   ),
-                                  SizedBox(height: screenHeight * 0.04),
+                                  SizedBox(height: screenHeight * 0.02),
 
-                                  // 5. Help Prompt Row
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [

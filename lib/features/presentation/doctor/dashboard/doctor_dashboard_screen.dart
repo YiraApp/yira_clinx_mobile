@@ -109,7 +109,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
           bloc: _dashboardBloc,
           buildWhen: (previous, current) {
-            // This prints exactly what state changes are being evaluated
             debugPrint("🔄 buildWhen: Previous State: $previous -> Current State: $current");
             return current is! DoctorAppointmentsNav && current is! PatientManagementNav;
           },
@@ -154,7 +153,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               );
             }
 
-            if (state is DoctorDashboardLoaded) {
+          else  if (state is DoctorDashboardLoaded) {
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -300,7 +299,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             chartHeight,
                           ),
                         ),
-                        SizedBox(height: fieldSpace),
+                       const SizedBox(height: fieldSpace),
                         _buildChartCard(
                           context,
                           "Monthly Patients",
