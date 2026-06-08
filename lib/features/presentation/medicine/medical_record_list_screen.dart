@@ -80,7 +80,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
         itemBuilder: (context, index) {
           final item = state.records[index];
           return Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
+            padding: const EdgeInsets.only(bottom: fieldSpace),
             child: MedicalRecordCard(
               title: item.title,
               formattedDate: DateFormat(

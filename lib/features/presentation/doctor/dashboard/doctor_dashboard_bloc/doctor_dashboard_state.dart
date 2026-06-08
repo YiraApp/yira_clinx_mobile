@@ -1,8 +1,6 @@
 part of 'doctor_dashboard_bloc.dart';
 
 @immutable
-
-@immutable
 abstract class DoctorDashboardState extends Equatable {
   const DoctorDashboardState();
 
@@ -40,11 +38,26 @@ class DoctorDashboardError extends DoctorDashboardState {
   List<Object?> get props => [message];
 }
 
-class DoctorAppointmentsNav extends DoctorDashboardState{
+class DoctorAppointmentsNav extends DoctorDashboardState {
   @override
   List<Object?> get props => [];
 }
-class PatientManagementNav extends DoctorDashboardState{
+
+class PatientManagementNav extends DoctorDashboardState {
   @override
   List<Object?> get props => [];
+}
+
+class DocAndAppPatientDetailsNavState extends DoctorDashboardState {
+  @override
+  List<Object?> get props => [];
+}
+
+class PatientDetailsLoadedState extends DoctorDashboardState {
+  final Map<String, dynamic> patientData;
+
+  const PatientDetailsLoadedState({required this.patientData});
+
+  @override
+  List<Object?> get props => [patientData];
 }

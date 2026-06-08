@@ -110,7 +110,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           bloc: _dashboardBloc,
           buildWhen: (previous, current) {
             debugPrint("🔄 buildWhen: Previous State: $previous -> Current State: $current");
-            return current is! DoctorAppointmentsNav && current is! PatientManagementNav;
+            return current is! DoctorAppointmentsNav && current is! PatientManagementNav && current is! DocAndAppPatientDetailsNavState;
           },
           listener: (context, state) {
 
@@ -118,6 +118,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               Navigator.pushNamed(context, AppRoutes.appointmentDashboardScreen);
             }else if(state is PatientManagementNav){
               Navigator.pushNamed(context, AppRoutes.patientManagementScreen);
+            } else if(state is DocAndAppPatientDetailsNavState){
+              Navigator.pushNamed(context, AppRoutes.dashboardPatientDetails);
             }
           },
           builder: (context, state) {
@@ -221,7 +223,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             statusTextColor: isVideo
                                 ? Colors.amber[800]!
                                 : Colors.green[700]!,
-                            onTap: () {},
+                            onTap: () {
+                              context.read<DoctorDashboardBloc>().add(DocAndAppPatientDetailsNavEvent());
+                            },
                           );
                         }, childCount: state.todaysAppointments.length),
                       ),
@@ -275,7 +279,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             statusLabel: 'Completed',
                             statusColor: primaryColor.withOpacity(0.1),
                             statusTextColor: primaryColor,
-                            onTap: () {},
+                            onTap: () {
+                              context.read<DoctorDashboardBloc>().add(DocAndAppPatientDetailsNavEvent());
+                            },
                           );
                         }, childCount: state.recentPatients.length),
                       ),
@@ -325,17 +331,18 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildMetricsGrid(
-    BuildContext context,
-    DoctorDashboardLoaded state,
-    Color primaryColor,
-  ) {
+      BuildContext context,
+      DoctorDashboardLoaded state,
+      Color primaryColor,
+      ) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12.0,
-      crossAxisSpacing: 12.0,
-      childAspectRatio: 1.45,
+      mainAxisSpacing: fieldSpace,
+      crossAxisSpacing: fieldSpace,
+      childAspectRatio: 1.5,
       children: [
         DocMetricCard(
           title: 'Today',

@@ -14,6 +14,8 @@ import 'package:yiraclinics/features/presentation/auth/work_space/work_space_scr
 import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_screen.dart';
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_details_screen.dart';
@@ -317,6 +319,13 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<CloseAccountBloc>(),
             child: CloseAccountScreen(),
+          ),
+        );
+      case AppRoutes.dashboardPatientDetails:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<DoctorDashboardBloc>(),
+            child: DashboardPatientDetailsScreen(),
           ),
         );
       //appointmentDetails

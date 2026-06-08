@@ -18,7 +18,7 @@ class PatientCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: fieldSpace),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? darkModeCardColor: Colors.white,

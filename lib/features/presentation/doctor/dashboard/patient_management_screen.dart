@@ -298,7 +298,7 @@ class PatientManagementScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: fieldSpace),
           Row(
             children: [
               Expanded(

@@ -42,4 +42,5 @@ class AppRoutes {
   static const String prescriptionListScreen= '/prescriptionListScreen';
   static const String prescriptionViewDetailsScreen= '/prescriptionViewDetailsScreen';
   static const String closeAccountScreen= '/closeAccountScreen';
+  static const String dashboardPatientDetails= '/dashboardPatientDetails';
 }
