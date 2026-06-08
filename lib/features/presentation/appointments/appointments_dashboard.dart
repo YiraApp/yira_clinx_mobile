@@ -71,7 +71,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w500,
-                  fontSize: displayWidth(context) * 0.028,
+                  fontSize:isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.028,
                   color: Colors.white,
                 ),
               ),
@@ -111,7 +111,44 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                   children: [
                     SizedBox(
                       height: smallDeviceHeight(context) ? 90 : 100,
-                      child: GridView.builder(
+                      child: isTab?
+                 Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Today",
+                        count: "${state.todayCount}",
+                        subtitle: "Apps",
+                        icon: Icons.calendar_today_outlined,
+                        iconColor: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Confirmed",
+                        count: "${state.confirmedCount}",
+                        subtitle: "Ready",
+                        icon: Icons.check_circle,
+                        iconColor: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Pending",
+                        count: "${state.pendingCount}",
+                        subtitle: "Need Info",
+                        icon: Icons.error_outline,
+                        iconColor: Colors.red,
+                      ),
+                    ),
+                  ],
+                ):
+               GridView.builder(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 2.0,
                           vertical: 2.0,
@@ -129,6 +166,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           switch (index) {
                             case 0:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Today",
                                 count: "${state.todayCount}",
                                 subtitle: "Apps",
@@ -137,6 +175,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                               );
                             case 1:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Confirmed",
                                 count: "${state.confirmedCount}",
                                 subtitle: "Ready",
@@ -146,6 +185,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             case 2:
                             default:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Pending",
                                 count: "${state.pendingCount}",
                                 subtitle: "Need Info",
@@ -189,7 +229,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         unselectedLabelColor: Colors.grey,
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                           fontFamily: appPoppinFont,
                         ),
                         tabs: const [
@@ -302,6 +342,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         physics: const BouncingScrollPhysics(),
                         children: [
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments,
                             emptyMessage:
                                 "No appointments scheduled for today.",
@@ -311,6 +352,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           ),
 
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments
                                 .where(
                                   (a) => a.type == AppointmentType.inClinic,
@@ -324,6 +366,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           ),
 
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments
                                 .where(
                                   (a) => a.type == AppointmentType.videoCall,

@@ -142,6 +142,7 @@ class _PatientAppointmentListViewState
                 itemBuilder: (context, index) {
                   final appointment = state.appointments[index];
                   return AppointmentCard(
+                    isTab: isTablet(context),
                     isPatientProfile: true,
                     appointment: appointment,
                     isTeleConsultation: true,

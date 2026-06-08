@@ -36,7 +36,7 @@ class _DashboardPatientDetailsScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
@@ -66,7 +66,7 @@ class _DashboardPatientDetailsScreenState
                 toolbarHeight: kToolbarHeight + 16,
                 titleSpacing: screenHorizontalSpacePadding,
                 title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: .spaceBetween,
                   children: [
                     Row(
                       children: [
@@ -78,7 +78,7 @@ class _DashboardPatientDetailsScreenState
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               color: Colors.white,
-                              fontSize: displayWidth(context) * 0.035,
+                              fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -93,7 +93,7 @@ class _DashboardPatientDetailsScreenState
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 color: Colors.white,
-                                fontSize: displayWidth(context) * 0.036,
+                                fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.036,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -103,7 +103,7 @@ class _DashboardPatientDetailsScreenState
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 color: Colors.white.withOpacity(0.8),
-                                fontSize: displayWidth(context) * 0.03,
+                                fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                               ),
                             ),
                           ],
@@ -144,7 +144,7 @@ class _DashboardPatientDetailsScreenState
                               CommonText(
                                 "Last: ${data["last_updated"] ?? '--'}",
                                 style: TextStyle(
-                                  fontSize: displayWidth(context) * 0.028,
+                                  fontSize: isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.028,
                                   fontFamily: appPoppinFont,
                                   color: isDark ? Colors.white70 : Colors.grey.shade600,
                                 ),
@@ -160,21 +160,24 @@ class _DashboardPatientDetailsScreenState
                             icon: Icons.calendar_month,
                             label: "Schedule",
                             iconColor: Colors.blue,
-                            onTap: () {},
+                            onTap: () {}, isTab: isTab,
                           ),
                           DashBoardPatientActionHubItem(
+                            isTab: isTab,
                             icon: Icons.science_outlined,
                             label: "Prescribe",
                             iconColor: Colors.green,
                             onTap: () {},
                           ),
                           DashBoardPatientActionHubItem(
+                            isTab: isTab,
                             icon: Icons.assignment_outlined,
                             label: "Records",
                             iconColor: Colors.teal,
                             onTap: () {},
                           ),
                           DashBoardPatientActionHubItem(
+                            isTab: isTab,
                             icon: Icons.cloud_upload_outlined,
                             label: "Documents",
                             iconColor: Colors.orange,
@@ -189,12 +192,13 @@ class _DashboardPatientDetailsScreenState
 
               SliverToBoxAdapter(
                 child: DashBoardPatientDetailCardWrapper(
-                  title: "Contact Information",
+                  title: "Contact Information"
+                  , isTab: isTab,
                   child: Column(
                     children: [
                       DashBoardPatientContactRow(
                         icon: Icons.phone_outlined,
-                        value: data["phone"],
+                        value: data["phone"],isTab: isTab,
                       ),
                       Divider(
                         height: 30,
@@ -203,7 +207,7 @@ class _DashboardPatientDetailsScreenState
                       ),
                       DashBoardPatientContactRow(
                         icon: Icons.mail_outline,
-                        value: data["email"],
+                        value: data["email"],isTab: isTab,
                       ),
                       Divider(
                         height: 30,
@@ -212,7 +216,7 @@ class _DashboardPatientDetailsScreenState
                       ),
                       DashBoardPatientContactRow(
                         icon: Icons.location_on_outlined,
-                        value: data["location"] ?? "No location provided",
+                        value: data["location"] ?? "No location provided",isTab: isTab,
                       ),
                     ],
                   ),
@@ -233,66 +237,11 @@ class _DashboardPatientDetailsScreenState
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w500,
-                          fontSize: displayWidth(context) * 0.035,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                         ),
                       ),
                       const SizedBox(height: titleSpace),
-                      GridView.count(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount:
-                        MediaQuery.of(context).size.shortestSide >= 600
-                            ? 3
-                            : 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.6,
-                        children: [
-                          DashBoardPatientVitalTile(
-                            label: "Blood Pressure",
-                            value: vitals["bp"],
-                            unit: "mmHg",
-                            icon: Icons.favorite,
-                            themeColor: Colors.pink.shade400,
-                          ),
-                          DashBoardPatientVitalTile(
-                            label: "Pulse",
-                            value: vitals["pulse"],
-                            unit: "bpm",
-                            icon: Icons.bolt,
-                            themeColor: Colors.pink.shade300,
-                          ),
-                          DashBoardPatientVitalTile(
-                            label: "Temperature",
-                            value: vitals["temp"],
-                            unit: "°F",
-                            icon: Icons.thermostat,
-                            themeColor: Colors.amber.shade600,
-                          ),
-                          DashBoardPatientVitalTile(
-                            label: "SpO2",
-                            value: vitals["spo2"],
-                            unit: "%",
-                            icon: Icons.opacity,
-                            themeColor: Colors.blue.shade400,
-                          ),
-                          DashBoardPatientVitalTile(
-                            label: "Weight",
-                            value: vitals["weight"],
-                            unit: "kg",
-                            icon: Icons.scale,
-                            themeColor: Colors.green.shade400,
-                          ),
-                          DashBoardPatientVitalTile(
-                            label: "Height",
-                            value: vitals["height"],
-                            unit: "cm",
-                            icon: Icons.straighten,
-                            themeColor: Colors.purple.shade300,
-                          ),
-                        ],
-                      ),
+                      _buildVitalsSection(context, vitals, isTab),
                     ],
                   ),
                 ),
@@ -300,6 +249,7 @@ class _DashboardPatientDetailsScreenState
 
               SliverToBoxAdapter(
                 child: DashBoardPatientDetailCardWrapper(
+                  isTab: isTab,
                   title: "Medical Information",
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -307,7 +257,7 @@ class _DashboardPatientDetailsScreenState
                       CommonText(
                         "Blood Group",
                         style: TextStyle(
-                          fontSize: displayWidth(context) * 0.033,
+                          fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.033,
                           fontFamily: appPoppinFont,
                         ),
                       ),
@@ -330,6 +280,7 @@ class _DashboardPatientDetailsScreenState
                     bottom: fieldSpace,
                   ),
                   child: DashBoardPatientDetailCardWrapper(
+                    isTab: isTab,
                     title: "Insurance",
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +298,7 @@ class _DashboardPatientDetailsScreenState
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.035,
+                                fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                               ),
                             ),
                           ],
@@ -364,7 +315,7 @@ class _DashboardPatientDetailsScreenState
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.03,
+                                    fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                                     color: Colors.grey,
                                   ),
                                 ),
@@ -374,7 +325,7 @@ class _DashboardPatientDetailsScreenState
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.035,
+                                    fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.035,
                                   ),
                                 ),
                               ],
@@ -387,7 +338,7 @@ class _DashboardPatientDetailsScreenState
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.03,
+                                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                                     color: Colors.grey,
                                   ),
                                 ),
@@ -397,7 +348,7 @@ class _DashboardPatientDetailsScreenState
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.035,
+                                    fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.035,
                                   ),
                                 ),
                               ],
@@ -412,6 +363,7 @@ class _DashboardPatientDetailsScreenState
 
               SliverToBoxAdapter(
                 child: DashBoardPatientDetailCardWrapper(
+                  isTab: isTab,
                   title: "Clinical Notes",
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,7 +385,7 @@ class _DashboardPatientDetailsScreenState
                             "Adding as Dr. bhargava c",
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.028,
+                              fontSize:isTab? displayWidth(context) * 0.014: displayWidth(context) * 0.028,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -477,7 +429,7 @@ class _DashboardPatientDetailsScreenState
                           return ClinicalNoteItemTile(
                             doctorName: note["doctor"],
                             date: note["date"],
-                            text: note["text"],
+                            text: note["text"], isTab: isTab,
                           );
                         },
                       ),
@@ -491,5 +443,85 @@ class _DashboardPatientDetailsScreenState
         },
       ),
     );
+  }
+  Widget _buildVitalsSection(BuildContext context, Map<String, dynamic> vitals, bool isTab) {
+    final List<Widget> vitalTiles = [
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "Blood Pressure",
+        value: vitals["bp"],
+        unit: "mmHg",
+        icon: Icons.favorite,
+        themeColor: Colors.pink.shade400,
+      ),
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "Pulse",
+        value: vitals["pulse"],
+        unit: "bpm",
+        icon: Icons.bolt,
+        themeColor: Colors.pink.shade300,
+      ),
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "Temperature",
+        value: vitals["temp"],
+        unit: "°F",
+        icon: Icons.thermostat,
+        themeColor: Colors.amber.shade600,
+      ),
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "SpO2",
+        value: vitals["spo2"],
+        unit: "%",
+        icon: Icons.opacity,
+        themeColor: Colors.blue.shade400,
+      ),
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "Weight",
+        value: vitals["weight"],
+        unit: "kg",
+        icon: Icons.scale,
+        themeColor: Colors.green.shade400,
+      ),
+      DashBoardPatientVitalTile(
+        isTab: isTab,
+        label: "Height",
+        value: vitals["height"],
+        unit: "cm",
+        icon: Icons.straighten,
+        themeColor: Colors.purple.shade300,
+      ),
+    ];
+    if (isTab) {
+      return SizedBox(
+        height: 110.0,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: vitalTiles.length,
+          separatorBuilder: (context, index) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            return SizedBox(
+              width: 160.0,
+              child: vitalTiles[index],
+            );
+          },
+        ),
+      );
+    } else {
+      return GridView.count(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: MediaQuery.of(context).size.shortestSide >= 600 ? 3 : 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.6,
+        children: vitalTiles,
+      );
+    }
   }
 }

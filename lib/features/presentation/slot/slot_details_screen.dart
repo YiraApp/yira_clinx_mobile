@@ -11,14 +11,13 @@ import '../../domain/entities/slot/slot_appointment_entity.dart';
 
 class SlotDetailsDialog extends StatefulWidget {
   final SlotEntity slot;
-
   const SlotDetailsDialog({super.key, required this.slot});
 
   static Future<void> show(BuildContext context, SlotEntity slot) {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (context) => SlotDetailsDialog(slot: slot),
+      builder: (context) => SlotDetailsDialog(slot: slot,),
     );
   }
 
@@ -49,10 +48,10 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    final double headlineSize = displayWidth(context) * 0.042;
-    final double labelSize = displayWidth(context) * 0.032;
-    final double valueSize = displayWidth(context) * 0.04;
+final bool isTab = isTablet(context);
+    final double headlineSize = isTab? displayWidth(context) * 0.022:  displayWidth(context) * 0.042;
+    final double labelSize = isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032;
+    final double valueSize = isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.04;
 
     return AlertDialog(
       backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.white,
@@ -153,8 +152,8 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
               const SizedBox(height: 12),
 
               widget.slot.hasAppointment
-                  ? _buildBookedAppointmentView(context, labelSize)
-                  : _buildUnbookedSlotForm(context, theme, labelSize),
+                  ? _buildBookedAppointmentView(context, labelSize,isTab)
+                  : _buildUnbookedSlotForm(context, theme, labelSize,isTab),
             ],
           ),
         ),
@@ -204,7 +203,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
       ),
     );
   }
-  Widget _buildBookedAppointmentView(BuildContext context, double labelSize) {
+  Widget _buildBookedAppointmentView(BuildContext context, double labelSize,bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final appointment = widget.slot.appointment!;
@@ -239,7 +238,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       'Patient Details',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.03,
+                        fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.03,
                         fontWeight: FontWeight.bold,
                         color: primaryColor,
                         letterSpacing: 0.5,
@@ -250,7 +249,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       appointment.patientName,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.035,
+                        fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
@@ -269,6 +268,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                   title: 'Phone',
                   value: appointment.contactNumber,
                   labelSize: labelSize,
+                  isTab: isTab
                 ),
               ),
               const SizedBox(width: 10),
@@ -287,7 +287,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         'Status',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.03,
+                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.03,
                           fontWeight: FontWeight.w600,
                           color: Colors.grey.shade500,
                         ),
@@ -303,7 +303,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                           'Payment pending',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.02,
+                            fontSize:isTab? displayWidth(context) * 0.016: displayWidth(context) * 0.02,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -322,6 +322,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             value: '"fever"',
             labelSize: labelSize,
             isFullWidth: true,
+            isTab: isTab
           ),
           const SizedBox(height: 24),
           Center(
@@ -344,7 +345,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontWeight: FontWeight.w600,
-                        fontSize: displayWidth(context) * 0.032,
+                        fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                         color: Colors.redAccent,
                         letterSpacing: 0.5,
                       ),
@@ -358,7 +359,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
       ),
     );
   }
-  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize) {
+  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize,bool isTab) {
     final isDark = theme.brightness == Brightness.dark;
 
     return Form(
@@ -390,7 +391,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.034,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.034,
                           color: !_isBlocked ? Colors.green : Colors.grey,
                         ),
                       ),
@@ -421,7 +422,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.034,
+                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.034,
                           color: _isBlocked ? Colors.redAccent : Colors.grey,
                         ),
                       ),
@@ -506,7 +507,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                 'Confirm Booking',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: displayWidth(context) * 0.035,
+                  fontSize:isTab? displayWidth(context) * 0.02:  displayWidth(context) * 0.035,
                   fontFamily: appPoppinFont,
                   letterSpacing: 0.5,
                 ),
@@ -578,7 +579,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
         required String title,
         required String value,
         required double labelSize,
-        bool isFullWidth = false,
+        bool isFullWidth = false,required bool isTab
       }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -596,7 +597,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             title,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.03,
+              fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.03,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade500,
             ),
@@ -606,7 +607,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             value,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.035,
+              fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white : textLightModeColor,
             ),

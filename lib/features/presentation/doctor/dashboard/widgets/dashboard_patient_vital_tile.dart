@@ -9,6 +9,7 @@ class DashBoardPatientVitalTile extends StatelessWidget {
   final String unit;
   final IconData icon;
   final Color themeColor;
+  final bool isTab;
 
   const DashBoardPatientVitalTile({
     super.key,
@@ -16,7 +17,7 @@ class DashBoardPatientVitalTile extends StatelessWidget {
     required this.value,
     required this.unit,
     required this.icon,
-    required this.themeColor,
+    required this.themeColor, required this.isTab,
   });
 
   @override
@@ -51,7 +52,7 @@ class DashBoardPatientVitalTile extends StatelessWidget {
                     color: themeColor,
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w600,
-                    fontSize: displayWidth(context) * 0.029,
+                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.029,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -64,14 +65,14 @@ class DashBoardPatientVitalTile extends StatelessWidget {
                 value ?? '--',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                   fontFamily: appPoppinFont,
                 ),
               ),
               const SizedBox(width: 4),
               CommonText(
                 unit,
-                style: TextStyle(color: Colors.grey,fontSize: displayWidth(context) * 0.03,
+                style: TextStyle(color: Colors.grey,fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.03,
                   fontFamily: appPoppinFont,),
               ),
             ],

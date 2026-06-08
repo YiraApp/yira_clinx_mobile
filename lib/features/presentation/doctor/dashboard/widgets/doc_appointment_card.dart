@@ -17,9 +17,10 @@ class DocAppointmentCard extends StatelessWidget {
   final Color statusColor;
   final Color statusTextColor;
   final VoidCallback? onTap;
+  final bool isTab;
 
   const DocAppointmentCard({
-    super.key, // Modern super parameter declaration format
+    super.key,
     required this.initials,
     required this.name,
     required this.subtitle,
@@ -28,7 +29,7 @@ class DocAppointmentCard extends StatelessWidget {
     required this.statusLabel,
     required this.statusColor,
     required this.statusTextColor,
-    this.onTap,
+    this.onTap, required this.isTab,
   });
 
   @override
@@ -75,7 +76,7 @@ class DocAppointmentCard extends StatelessWidget {
                     initials,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context)*0.035,
+                      fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.035,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : statusTextColor,
                       letterSpacing: -0.2,
@@ -99,7 +100,7 @@ class DocAppointmentCard extends StatelessWidget {
                               name,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context)*0.035,
+                                fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.035,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: -0.3,
                               ),
@@ -115,7 +116,7 @@ class DocAppointmentCard extends StatelessWidget {
                         timeOrDate,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize: isTab? displayWidth(context)*0.016:displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: secondaryText,
                         ),
@@ -125,7 +126,7 @@ class DocAppointmentCard extends StatelessWidget {
                         subtitle,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize:isTab? displayWidth(context)*0.016: displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: Theme.of(context).primaryColor,
                         ),
@@ -137,7 +138,7 @@ class DocAppointmentCard extends StatelessWidget {
                         description,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize: isTab? displayWidth(context)*0.016:displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: secondaryText,
                         ),
@@ -165,7 +166,7 @@ class DocAppointmentCard extends StatelessWidget {
               child: Text(
                 statusLabel.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize:isTab? displayWidth(context)*0.01: 10,
                   fontWeight: FontWeight.w800,
                   color: statusTextColor,
                   letterSpacing: 0.3,

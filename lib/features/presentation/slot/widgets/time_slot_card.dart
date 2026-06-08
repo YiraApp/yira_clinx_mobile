@@ -10,12 +10,12 @@ class TimeSlotCard extends StatelessWidget {
   final TimeSlot slot;
   final VoidCallback bookSlot;
   final VoidCallback viewSlotDetails;
-
+final bool isTab;
   const TimeSlotCard({
     super.key,
     required this.slot,
     required this.bookSlot,
-    required this.viewSlotDetails,
+    required this.viewSlotDetails, required this.isTab,
   });
 
   @override
@@ -53,7 +53,7 @@ class TimeSlotCard extends StatelessWidget {
                             slot.time,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.035,
+                              fontSize:  isTab?displayWidth(context) * 0.02:displayWidth(context) * 0.035,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.2,
                             ),
@@ -63,7 +63,7 @@ class TimeSlotCard extends StatelessWidget {
                             slot.duration,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.03,
+                              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                               color: primaryColor,
                               fontWeight: FontWeight.w600,
                             ),
@@ -83,7 +83,7 @@ class TimeSlotCard extends StatelessWidget {
                                   slot.patientName ?? "Unknown Patient",
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.035,
+                                    fontSize:  isTab?displayWidth(context) * 0.02:displayWidth(context) * 0.035,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -117,7 +117,7 @@ class TimeSlotCard extends StatelessWidget {
                                     : "Follow-up",
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
+                                  fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                                 ),
                               ),
                             ],
@@ -139,7 +139,7 @@ class TimeSlotCard extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           color: primaryColor,
-                          fontSize: displayWidth(context) * 0.023,
+                          fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.023,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -196,7 +196,7 @@ class TimeSlotCard extends StatelessWidget {
                           slot.time,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.035,
+                            fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.2,
                           ),
@@ -206,7 +206,7 @@ class TimeSlotCard extends StatelessWidget {
                           slot.duration,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.03,
+                            fontSize:  isTab?displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                             color: primaryColor,
                             fontWeight: FontWeight.w600,
                           ),
@@ -228,7 +228,7 @@ class TimeSlotCard extends StatelessWidget {
                           "Open for booking",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.024,
+                            fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.024,
                             color: greenColor,
                             fontWeight: FontWeight.w600,
                           ),
@@ -250,7 +250,7 @@ class TimeSlotCard extends StatelessWidget {
                       style: TextStyle(
                         color: greenColor,
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.023,
+                        fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.023,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

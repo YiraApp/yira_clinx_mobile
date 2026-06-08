@@ -21,6 +21,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
     final double width = displayWidth(context);
+    final bool isTab = isTablet(context);
     return BlocConsumer<AppointmentBloc, AppointmentState>(
       listener: (context, state) {},
       builder: (context, state) {
@@ -43,7 +44,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Patient Search *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -53,12 +54,12 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     style: TextStyle(
                       decorationThickness: 0,
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.03,
+                      fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                     ),
                     decoration: InputDecoration(
                       hintStyle: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.03,
+                        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurfaceVariant.withOpacity(0.6),
@@ -106,7 +107,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Date *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -114,14 +115,14 @@ class AddNewAppointmentScreen extends StatelessWidget {
                   _buildDOBPicker(
                     context,
                     state.selectedDob ?? DateTime(2000, 1, 1),
-                    isDark,
+                    isDark,isTab
                   ),
                   SizedBox(height: fieldSpace),
                   CommonText(
                     'Available slot *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -144,7 +145,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Duration',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -160,7 +161,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Visit Type *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -181,7 +182,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Assign Doctor *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -201,7 +202,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Reason/ Chief Complaint *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -223,6 +224,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                   ),
                   SizedBox(height: fieldSpace),
                   TeleconsultationCard(
+                    isTab: isTab,
                     isDark: isDark,
                     isSelected: true,
                     onChanged: (bool? newValue) {},
@@ -255,7 +257,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w500,
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                         ),
                       ),
                     ),
@@ -368,6 +370,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
     BuildContext context,
     DateTime? currentDob,
     bool isDark,
+      bool isTab
   ) {
     final DateTime displayDate = currentDob ?? DateTime(2000, 1, 1);
 
@@ -382,7 +385,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
       style: TextStyle(
         decorationThickness: 0,
         fontFamily: appPoppinFont,
-        fontSize: displayWidth(context) * 0.03,
+        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
       ),
 
       decoration: InputDecoration(

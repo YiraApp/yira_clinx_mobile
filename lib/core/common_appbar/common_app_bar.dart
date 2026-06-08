@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
 import '../common_widgets/common_text.dart';
 import '../constants/constants.dart';
@@ -20,6 +21,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final bool hasTitle = titleText != null && titleText!.trim().isNotEmpty;
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    bool isTab = isTablet(context);
     return AppBar(
       backgroundColor:isDarkMode? Colors.transparent:Colors.white,
       elevation: 0,
@@ -34,7 +36,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
         titleText!,
         style: TextStyle(
           fontFamily: appPoppinFont,
-          fontSize: MediaQuery.of(context).size.width * 0.045,
+          fontSize:isTab? displayWidth(context)*0.022: MediaQuery.of(context).size.width * 0.045,
           fontWeight: FontWeight.w600,
         ),
       )

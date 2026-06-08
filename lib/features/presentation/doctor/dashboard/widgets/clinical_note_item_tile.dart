@@ -10,12 +10,13 @@ class ClinicalNoteItemTile extends StatelessWidget {
   final String doctorName;
   final String date;
   final String text;
+  final bool isTab;
 
   const ClinicalNoteItemTile({
     super.key,
     required this.doctorName,
     required this.date,
-    required this.text,
+    required this.text, required this.isTab,
   });
 
   @override
@@ -42,7 +43,7 @@ class ClinicalNoteItemTile extends StatelessWidget {
                 style:  TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
-                  fontSize: displayWidth(context)*0.033,
+                  fontSize:isTab?displayWidth(context) * 0.018: displayWidth(context)*0.033,
                   fontFamily: appPoppinFont
                 ),
               ),
@@ -50,7 +51,7 @@ class ClinicalNoteItemTile extends StatelessWidget {
                 date,
                 style:TextStyle(
                     fontWeight: FontWeight.w400,
-                    fontSize: displayWidth(context)*0.028,
+                    fontSize: isTab?displayWidth(context) * 0.014:displayWidth(context)*0.028,
                     fontFamily: appPoppinFont
                 ),
               ),
@@ -61,7 +62,7 @@ class ClinicalNoteItemTile extends StatelessWidget {
             text,
             style: TextStyle(
                 fontWeight: FontWeight.w400,
-                fontSize: displayWidth(context)*0.03,
+                fontSize: isTab?displayWidth(context) * 0.018:displayWidth(context)*0.03,
                 fontFamily: appPoppinFont
             ),
             maxLines: 3,

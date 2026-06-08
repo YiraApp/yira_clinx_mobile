@@ -9,7 +9,8 @@ import '../../../../domain/entities/dashboard/patient_entity.dart';
 class PatientCard extends StatelessWidget {
   final PatientEntity patient;
   final VoidCallback onTap;
-  const PatientCard({super.key, required this.patient, required this.onTap});
+  final bool isTab;
+  const PatientCard({super.key, required this.patient, required this.onTap, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -47,17 +48,17 @@ class PatientCard extends StatelessWidget {
                 Row(
                   children: [
                     CircleAvatar(
-                      radius: displayWidth(context) * 0.06,
+                      radius:isTab?  displayWidth(context) * 0.03: displayWidth(context) * 0.06,
                       backgroundColor: isDark
                           ? Colors.blue.withOpacity(0.2)
                           : const Color(0xFFDBEAFE),
                       child: CommonText(
                         patient.name.substring(0, 2).toUpperCase(),
                         style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.035,
+                          fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                         ),
                       ),
                     ),
@@ -70,7 +71,7 @@ class PatientCard extends StatelessWidget {
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontWeight: FontWeight.w600,
-                            fontSize: displayWidth(context) * 0.036,
+                            fontSize: isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.036,
                             color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
@@ -79,7 +80,7 @@ class PatientCard extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.grey,
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.029,
+                            fontSize:isTab?  displayWidth(context) * 0.018:  displayWidth(context) * 0.029,
                           ),
                         ),
                       ],
@@ -87,7 +88,7 @@ class PatientCard extends StatelessWidget {
                   ],
                 ),
 
-                _buildStatusBadge(context, patient.status),
+                _buildStatusBadge(context, patient.status,isTab),
               ],
             ),
             const SizedBox(height: 12),
@@ -99,7 +100,7 @@ class PatientCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.03,
+                fontSize:isTab?  displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
                 color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
@@ -107,9 +108,9 @@ class PatientCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _buildInfoItem(context, "Visits: ", "${patient.visits}"),
+                _buildInfoItem(context, "Visits: ", "${patient.visits}",isTab),
                 const SizedBox(width: 16),
-                _buildInfoItem(context, "Last: ", patient.lastVisit),
+                _buildInfoItem(context, "Last: ", patient.lastVisit,isTab),
               ],
             ),
             if (patient.allergy.isNotEmpty) ...[
@@ -133,7 +134,7 @@ class PatientCard extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.red,
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.025,
+                        fontSize:isTab?  displayWidth(context) * 0.018:  displayWidth(context) * 0.025,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -147,12 +148,12 @@ class PatientCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(BuildContext context, String label, String value) {
+  Widget _buildInfoItem(BuildContext context, String label, String value,bool isTab) {
     return RichText(
       text: TextSpan(
         style: TextStyle(
           color: Colors.grey,
-          fontSize: displayWidth(context) * 0.03,
+          fontSize:isTab?  displayWidth(context) * 0.02:  displayWidth(context) * 0.03,
           fontFamily: appPoppinFont,
         ),
         children: [
@@ -163,7 +164,7 @@ class PatientCard extends StatelessWidget {
               fontFamily: appPoppinFont,
               color: Theme.of(context).textTheme.bodyLarge?.color,
               fontWeight: FontWeight.w600,
-              fontSize: displayWidth(context) * 0.028,
+              fontSize:isTab?  displayWidth(context) * 0.018:  displayWidth(context) * 0.028,
             ),
           ),
         ],
@@ -171,7 +172,7 @@ class PatientCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(BuildContext context, String status) {
+  Widget _buildStatusBadge(BuildContext context, String status,bool isTab) {
     Color color;
     switch (status.toUpperCase()) {
       case "CRITICAL":
@@ -198,7 +199,7 @@ class PatientCard extends StatelessWidget {
         style: TextStyle(
           fontFamily: appPoppinFont,
           color: color,
-          fontSize: displayWidth(context) * 0.025,
+          fontSize:isTab?  displayWidth(context) * 0.018:  displayWidth(context) * 0.025,
           fontWeight: FontWeight.w600,
         ),
       ),

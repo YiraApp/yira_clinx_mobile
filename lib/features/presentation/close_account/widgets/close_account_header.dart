@@ -4,13 +4,14 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 
 class CloseAccountHeader extends StatelessWidget {
+
   const CloseAccountHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
     final width = displayWidth(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final isTab = isTablet(context);
     return Column(
       children: [
         Image.asset(
@@ -24,7 +25,7 @@ class CloseAccountHeader extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: appPoppinFont,
-            fontSize: width * 0.045,
+            fontSize: isTab? width * 0.035: width * 0.045,
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : const Color(0xFF1E293B),
           ),
@@ -35,7 +36,7 @@ class CloseAccountHeader extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: appPoppinFont,
-            fontSize: width * 0.034,
+            fontSize: isTab? width * 0.022: width * 0.034,
             fontWeight: FontWeight.w400,
             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
           ),

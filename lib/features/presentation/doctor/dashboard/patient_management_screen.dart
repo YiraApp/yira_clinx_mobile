@@ -15,7 +15,7 @@ class PatientManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return BlocProvider(
       create: (context) => DashboardBloc()..add(const GetDashboardData()),
       child: GestureDetector(
@@ -75,7 +75,7 @@ class PatientManagementScreen extends StatelessWidget {
                               "Patient Management",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.045,
+                                fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.045,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -84,7 +84,7 @@ class PatientManagementScreen extends StatelessWidget {
                               "Unified view of patients, medical records, and clinical notes",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.03,
+                                fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                                 color: Colors.grey,
                               ),
                             ),
@@ -98,13 +98,70 @@ class PatientManagementScreen extends StatelessWidget {
                         right: screenHorizontalSpacePadding,
                         bottom: fieldSpace,
                       ),
-                      sliver: SliverGrid.count(
+                      sliver: isTab
+                          ? SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 120,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildMetricCard(
+                                  context: context,
+                                  title: "Total Patients",
+                                  value: "3",
+                                  icon: Icons.person_outline_rounded,
+                                  iconColor: Colors.deepPurpleAccent.withOpacity(0.6),
+                                  valueColor: isDark ? Colors.white : Colors.black87, isTab: isTab,
+                                ),
+                              ),
+                              const SizedBox(width: fieldSpace),
+                              Expanded(
+                                child: _buildMetricCard(
+                                  isTab: isTab,
+                                  context: context,
+                                  title: "Active Cases",
+                                  value: "3",
+                                  icon: Icons.timeline_rounded,
+                                  iconColor: Colors.green.withOpacity(0.6),
+                                  valueColor: Colors.green.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: fieldSpace),
+                              Expanded(
+                                child: _buildMetricCard(
+                                  isTab: isTab,
+                                  context: context,
+                                  title: "Critical Cases",
+                                  value: "0",
+                                  icon: Icons.favorite_border_rounded,
+                                  iconColor: Colors.redAccent.withOpacity(0.6),
+                                  valueColor: Colors.red.shade700,
+                                ),
+                              ),
+                              const SizedBox(width: fieldSpace),
+                              Expanded(
+                                child: _buildMetricCard(
+                                  isTab: isTab,
+                                  context: context,
+                                  title: "Medical Records",
+                                  value: "0",
+                                  icon: Icons.description_outlined,
+                                  iconColor: Colors.indigoAccent.withOpacity(0.6),
+                                  valueColor: Colors.indigo.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                          : SliverGrid.count(
                         crossAxisCount: 2,
                         crossAxisSpacing: fieldSpace,
                         mainAxisSpacing: fieldSpace,
                         childAspectRatio: 2.1,
                         children: [
                           _buildMetricCard(
+                            isTab: isTab,
                             context: context,
                             title: "Total Patients",
                             value: "3",
@@ -113,6 +170,7 @@ class PatientManagementScreen extends StatelessWidget {
                             valueColor: isDark ? Colors.white : Colors.black87,
                           ),
                           _buildMetricCard(
+                            isTab: isTab,
                             context: context,
                             title: "Active Cases",
                             value: "3",
@@ -121,6 +179,7 @@ class PatientManagementScreen extends StatelessWidget {
                             valueColor: Colors.green.shade700,
                           ),
                           _buildMetricCard(
+                            isTab: isTab,
                             context: context,
                             title: "Critical Cases",
                             value: "0",
@@ -129,6 +188,7 @@ class PatientManagementScreen extends StatelessWidget {
                             valueColor: Colors.red.shade700,
                           ),
                           _buildMetricCard(
+                            isTab: isTab,
                             context: context,
                             title: "Medical Records",
                             value: "0",
@@ -146,7 +206,7 @@ class PatientManagementScreen extends StatelessWidget {
                         bottom: fieldSpace,
                       ),
                       sliver: SliverToBoxAdapter(
-                        child: _buildHeader(context, isDark),
+                        child: _buildHeader(context, isDark,isTab),
                       ),
                     ),
 
@@ -162,6 +222,7 @@ class PatientManagementScreen extends StatelessWidget {
                           itemCount: state.patients.length,
                           itemBuilder: (context, index) {
                             return PatientCard(
+                              isTab:isTab,
                               patient: state.patients[index],
                               onTap: () {
                                 context.read<DashboardBloc>().add(
@@ -190,11 +251,12 @@ class PatientManagementScreen extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required Color valueColor,
+    required bool isTab
   }) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric( horizontal:isTab? 10: 16, vertical:isTab? 10: 12),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -212,13 +274,48 @@ class PatientManagementScreen extends StatelessWidget {
             ),
         ],
       ),
-      child: Row(
+      child: isTab?Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment:.center,
+        children: [
+          Icon(icon, size: 20, color: iconColor),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize:isTab? displayWidth(context) * 0.022:  displayWidth(context) * 0.045,
+                    fontWeight: FontWeight.w600,
+                    color: valueColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ):Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
@@ -251,7 +348,7 @@ class PatientManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
+  Widget _buildHeader(BuildContext context, bool isDark,bool isTab) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 0),
       child: Column(
@@ -260,10 +357,14 @@ class PatientManagementScreen extends StatelessWidget {
             onChanged: (val) {
               context.read<DashboardBloc>().add(SearchPatients(val));
             },
+            style:TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.032,
+            ) ,
             decoration: InputDecoration(
               hintStyle: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.032,
+                fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.032,
               ),
               hintText: "Search by name, ID, phone...",
               prefixIcon: const Icon(Icons.search, color: Colors.blueGrey),

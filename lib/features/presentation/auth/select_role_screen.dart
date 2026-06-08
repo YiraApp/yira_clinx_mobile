@@ -401,7 +401,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                                           bottom: fieldSpace,
                                                         ),
                                                     child: DialogRoleCard(
-                                                      isTablet: false,
+                                                      isTablet: isTab,
                                                       role: role,
                                                       isSelected: isSelected,
                                                       onTap: () {

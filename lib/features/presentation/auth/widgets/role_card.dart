@@ -8,14 +8,15 @@ import '../../../domain/entities/role/role_entity.dart';
 
 class DialogRoleCard extends StatelessWidget {
   final RoleEntity role;
-  final bool isSelected,isTablet;
+  final bool isSelected, isTablet;
   final VoidCallback onTap;
 
   const DialogRoleCard({
     super.key,
     required this.role,
     required this.isSelected,
-    required this.onTap, required this.isTablet,
+    required this.onTap,
+    required this.isTablet,
   });
 
   @override
@@ -27,10 +28,6 @@ class DialogRoleCard extends StatelessWidget {
     final unselectedCardBg = isDarkMode
         ? theme.cardColor
         : sideMenuDividerColor.withOpacity(1);
-
-    final selectedCardBg = isDarkMode
-        ? theme.colorScheme.primaryContainer.withOpacity(0.2)
-        : Colors.white;
 
     final iconBgColor = isDarkMode
         ? theme.scaffoldBackgroundColor
@@ -47,9 +44,18 @@ class DialogRoleCard extends StatelessWidget {
         ? (isDarkMode ? theme.colorScheme.primary : textLightDarkColor)
         : (isDarkMode ? Colors.white30 : authFieldBorderColor);
 
+    final double iconBoxSize = isTablet ? (width * 0.06) : (width * 0.13);
+    final double iconSize = isTablet ? (width * 0.028) : (width * 0.058);
+
+    final double titleFontSize = isTablet ? (width * 0.02) : (width * 0.04);
+    final FontWeight titleFontWeight = isTablet ? FontWeight.w500 : FontWeight.w600;
+
+    final double subtitleFontSize = isTablet ? (width * 0.018) : (width * 0.029);
+    final FontWeight subtitleFontWeight = isTablet ? FontWeight.w400 : FontWeight.w600;
+
     return GestureDetector(
       onTap: onTap,
-      child: isTablet? AnimatedContainer(
+      child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(18),
@@ -62,9 +68,7 @@ class DialogRoleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isSelected
-                ? (isDarkMode
-                ? theme.colorScheme.primary
-                : primaryColor)
+                ? (isDarkMode ? theme.colorScheme.primary : primaryColor)
                 : Colors.transparent,
             width: 1,
           ),
@@ -74,14 +78,14 @@ class DialogRoleCard extends StatelessWidget {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: width * 0.06,
-              height: width * 0.06,
+              width: iconBoxSize,
+              height: iconBoxSize,
               decoration: BoxDecoration(
                 color: iconBgColor,
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                 boxShadow: const [],
               ),
-              child: Icon(role.icon, color: iconColor, size: width * 0.028),
+              child: Icon(role.icon, color: iconColor, size: iconSize),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -93,8 +97,8 @@ class DialogRoleCard extends StatelessWidget {
                     role.title,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: width * 0.02,
-                      fontWeight: FontWeight.w500,
+                      fontSize: titleFontSize,
+                      fontWeight: titleFontWeight,
                       color: titleTextColor,
                     ),
                   ),
@@ -103,73 +107,8 @@ class DialogRoleCard extends StatelessWidget {
                     role.subtitle,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: width * 0.018,
-                      fontWeight: FontWeight.w400,
-                      color: subtitleTextColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios_rounded, color: arrowColor, size: 16),
-          ],
-        ),
-      ):AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? unselectedCardBg
-              : isDarkMode
-              ? primaryColor.withOpacity(0.06)
-              : unselectedCardBg,
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          border: Border.all(
-            color: isSelected
-                ? (isDarkMode
-                      ? theme.colorScheme.primary
-                      : primaryColor)
-                : Colors.transparent,
-            width: 1,
-          ),
-          boxShadow: const [],
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: width * 0.13,
-              height: width * 0.13,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
-                boxShadow: const [],
-              ),
-              child: Icon(role.icon, color: iconColor, size: width * 0.058),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    role.title,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: width * 0.04,
-                      fontWeight: FontWeight.w600,
-                      color: titleTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    role.subtitle,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: width * 0.029,
-                      fontWeight: FontWeight.w600,
+                      fontSize: subtitleFontSize,
+                      fontWeight: subtitleFontWeight,
                       color: subtitleTextColor,
                     ),
                   ),

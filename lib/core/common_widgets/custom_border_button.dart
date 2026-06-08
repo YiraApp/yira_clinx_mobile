@@ -63,7 +63,7 @@ class CommonBorderButton extends StatelessWidget {
                   text,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
+                    fontSize:isTablet(context)?displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                     fontWeight: FontWeight.w500,
                     color: effectiveTextColor,
                     height: 1.0,

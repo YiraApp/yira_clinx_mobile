@@ -24,17 +24,17 @@ class ConfirmationCodeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = displayWidth(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final isTab = isTablet(context);
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Confirmation code: ',
+              'Confirmation code : ',
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: width * 0.04,
+                fontSize:isTab? width * 0.022: width * 0.04,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
               ),
@@ -43,14 +43,14 @@ class ConfirmationCodeSection extends StatelessWidget {
               generatedCode,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: width * 0.04,
+                fontSize: isTab? width * 0.022:width * 0.04,
                 fontWeight: FontWeight.w700,
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: fieldSpace),
         CommonInputAddRecordTextField(
           controller: controller,
           focusNode: focusNode,

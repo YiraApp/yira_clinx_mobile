@@ -9,12 +9,12 @@ class AppointmentCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final bool isTeleConsultation;
   final bool isPatientProfile;
-
+final bool isTab;
   const AppointmentCard({
     super.key,
     required this.appointment,
     this.onEdit,
-    required this.isTeleConsultation,  this.isPatientProfile = false,
+    required this.isTeleConsultation,  this.isPatientProfile = false, required this.isTab,
   });
 
   @override
@@ -92,7 +92,7 @@ class AppointmentCard extends StatelessWidget {
                                   color: theme.primaryColor,
                                   fontWeight: FontWeight.w600,
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.032,
+                                  fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -100,7 +100,7 @@ class AppointmentCard extends StatelessWidget {
                                 " - ${appointment.duration}",
                                 style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.032),
+                                    fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.032),
                               ),
                             ],
                           ),
@@ -114,7 +114,7 @@ class AppointmentCard extends StatelessWidget {
                               appointment.tokenNumber,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: displayWidth(context) * 0.028,
+                                fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.028,
                                 fontFamily: appPoppinFont,
                               ),
                             ),
@@ -135,7 +135,7 @@ class AppointmentCard extends StatelessWidget {
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.031,
+                                fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.031,
                               ),
                             ),
                           ),
@@ -148,7 +148,7 @@ class AppointmentCard extends StatelessWidget {
                                   appointment.patientName,
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
-                                    fontSize: displayWidth(context) * 0.035,
+                                    fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                                     fontFamily: appPoppinFont,
                                   ),
                                 ),
@@ -161,7 +161,7 @@ class AppointmentCard extends StatelessWidget {
                                       appointment.phoneNumber,
                                       style: theme.textTheme.bodyMedium?.copyWith(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.032,
+                                        fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                                       ),
                                     ),
                                   ],
@@ -179,7 +179,7 @@ class AppointmentCard extends StatelessWidget {
                                       appointment.category,
                                       style: theme.textTheme.bodyMedium?.copyWith(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.032,
+                                        fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                                       ),
                                     ),
                                   ],
@@ -197,7 +197,7 @@ class AppointmentCard extends StatelessWidget {
                                       appointment.type == AppointmentType.videoCall ? "Video Call" : "In-Clinic",
                                       style: theme.textTheme.bodyMedium?.copyWith(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.032,
+                                        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.032,
                                       ),
                                     ),
                                   ],
@@ -223,7 +223,7 @@ class AppointmentCard extends StatelessWidget {
                                 color: statusTextColor,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.032,
+                                fontSize:isTab?displayWidth(context) * 0.016:  displayWidth(context) * 0.032,
                               ),
                             ),
                           ),

@@ -6,11 +6,12 @@ import '../../../../../core/common_widgets/common_text.dart';
 class DashBoardPatientDetailCardWrapper extends StatelessWidget {
   final Widget child;
   final String title;
+  final bool isTab;
 
   const DashBoardPatientDetailCardWrapper({
     super.key,
     required this.child,
-    required this.title,
+    required this.title,required this.isTab,
   });
 
   @override
@@ -27,7 +28,7 @@ class DashBoardPatientDetailCardWrapper extends StatelessWidget {
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.w500,
-              fontSize: displayWidth(context)*0.035,
+              fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context)*0.035,
             ),
           ),
           const SizedBox(height: titleSpace),

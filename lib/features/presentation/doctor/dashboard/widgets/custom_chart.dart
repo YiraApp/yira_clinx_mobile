@@ -15,6 +15,7 @@ class CustomBarChart extends StatelessWidget {
   final bool showXAxisDivider;
   final Color? xAxisDividerColor;
   final bool monthly;
+  final bool isTab;
 
   const CustomBarChart({
     super.key,
@@ -29,7 +30,7 @@ class CustomBarChart extends StatelessWidget {
     this.fontFamily,
     this.showXAxisDivider = true,
     this.xAxisDividerColor,
-    this.monthly = false,
+    this.monthly = false, required this.isTab,
   }) : assert(values.length == labels.length, 'Values and labels must have the same length');
 
   @override
@@ -43,7 +44,7 @@ class CustomBarChart extends StatelessWidget {
     final tooltipBgColor = isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
     final tooltipTextStyle = TextStyle(
       fontFamily: fontFamily,
-      fontSize: displayWidth(context) * 0.024,
+      fontSize: isTab?displayWidth(context) * 0.014 :displayWidth(context) * 0.024,
       fontWeight: FontWeight.w600,
       color: Colors.white,
     );
@@ -61,7 +62,7 @@ class CustomBarChart extends StatelessWidget {
               labels[index],
               style: TextStyle(
                 fontFamily: fontFamily,
-                fontSize: displayWidth(context) * 0.024,
+                fontSize: isTab? displayWidth(context)*0.014:displayWidth(context) * 0.024,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
