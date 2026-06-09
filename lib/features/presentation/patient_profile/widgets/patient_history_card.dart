@@ -6,32 +6,36 @@ import 'patient_info_card.dart';
 
 class PatientHistoryCard extends StatelessWidget {
   final PatientProfileEntity patient;
-
-  const PatientHistoryCard({super.key, required this.patient});
+  final bool isTab;
+  const PatientHistoryCard({super.key, required this.patient, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PatientInfoCard(
+      isTab: isTab,
       title: 'Visit History',
       titleIcon: Icons.history,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TimelineSegmentItem(
+            isTab: isTab,
             label: 'Initial Registration',
             value: patient.registrationDate,
             icon: Icons.login_rounded,
             isLast: false,
           ),
           TimelineSegmentItem(
+            isTab: isTab,
             label: 'Last Check-in Visit',
             value: patient.lastVisitDate,
             icon: Icons.assignment_turned_in_outlined,
             isLast: false,
           ),
           TimelineSegmentItem(
+            isTab: isTab,
             label: 'Next Scheduled Appointment',
             value: patient.nextAppointment ?? 'None scheduled',
             icon: Icons.event_repeat_outlined,

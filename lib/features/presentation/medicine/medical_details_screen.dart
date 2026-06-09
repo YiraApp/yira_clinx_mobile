@@ -55,14 +55,14 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabelText(text: "Chief Complaint"),
+                      SectionLabelText(text: "Chief Complaint", isTab: isTab,),
                       const SizedBox(height: 8),
                       CommonText(
                         chiefComplaintText,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.032,
-                          fontWeight: FontWeight.w500,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -74,14 +74,14 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabelText(text: "Diagnosis"),
+                       SectionLabelText(text: "Diagnosis", isTab: isTab,),
                       const SizedBox(height: 8),
                       CommonText(
                         diagnosisText,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.032,
-                          fontWeight: FontWeight.w500,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -92,12 +92,13 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: fieldSpace),
 
-          const SectionLabelText(text: "Vital Signs"),
+           SectionLabelText(text: "Vital Signs", isTab: isTab,),
           const SizedBox(height: fieldSpace),
           Row(
             children: [
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Blood Pressure",
                   value: "145/90",
                   accentColor: const Color(0xFF2563EB), // Primary Blue
@@ -106,6 +107,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Heart Rate",
                   value: "74",
                   accentColor: const Color(0xFFDC2626), // Alert Red
@@ -118,6 +120,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Temperature",
                   value: "99",
                   unit: "°C",
@@ -127,6 +130,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Weight",
                   value: "83",
                   unit: "kg",
@@ -137,6 +141,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           VitalSignTile(
+            isTab: isTab,
             label: "Height",
             value: "176",
             unit: "cm",
@@ -144,17 +149,17 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Symptoms"),
+           SectionLabelText(text: "Symptoms", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: symptomsText),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Physical Examination"),
+           SectionLabelText(text: "Physical Examination", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: physicalExamText),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Treatment Plan"),
+           SectionLabelText(text: "Treatment Plan", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: treatmentPlanText),
           const SizedBox(height: 20),

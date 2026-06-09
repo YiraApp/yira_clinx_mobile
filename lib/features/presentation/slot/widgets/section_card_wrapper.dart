@@ -8,12 +8,13 @@ class SectionCardWrapper extends StatelessWidget {
   final IconData icon;
   final String title;
   final Widget child;
+  final bool isTab;
 
   const SectionCardWrapper({
     super.key,
     required this.icon,
     required this.title,
-    required this.child,
+    required this.child, required this.isTab,
   });
 
   @override
@@ -26,7 +27,6 @@ class SectionCardWrapper extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        // Adapts dynamically to the AppTheme background surfaces
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
@@ -54,7 +54,7 @@ class SectionCardWrapper extends StatelessWidget {
               CommonText(
                 title,
                 style:TextStyle(fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context)*0.038,
+                  fontSize:isTab? displayWidth(context)*0.02 : displayWidth(context)*0.038,
                   fontWeight: FontWeight.bold,
                 ),
               ),

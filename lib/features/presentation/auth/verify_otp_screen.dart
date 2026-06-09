@@ -101,7 +101,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: isTab
-                                          ? referenceWidth * 0.055
+                                          ? referenceWidth * 0.035
                                           : displayWidth(context) * 0.065,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -124,7 +124,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: isTab
-                                                ? referenceWidth * 0.032
+                                                ? referenceWidth * 0.022
                                                 : screenWidth * 0.033,
                                           ),
                                         ),
@@ -134,7 +134,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: isTab
-                                                ? referenceWidth * 0.032
+                                                ? referenceWidth * 0.022
                                                 : screenWidth * 0.033,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -150,7 +150,7 @@ class VerifyOtpScreen extends StatelessWidget {
 
                                   SizedBox(
                                     width: isTab
-                                        ? referenceWidth * 0.82
+                                        ? referenceWidth * 0.55
                                         : screenWidth * 0.6,
                                     child: PinCodeTextField(
                                       backgroundColor: Colors.transparent,
@@ -162,7 +162,6 @@ class VerifyOtpScreen extends StatelessWidget {
                                         color: Colors.green.shade600,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      // PRODUCTION FIX: Updated to 6 digits to match your description text constraints
                                       length: 4,
                                       obscureText: true,
                                       obscuringCharacter: '*',
@@ -170,7 +169,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                       hintStyle: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab
-                                            ? referenceWidth * 0.032
+                                            ? referenceWidth * 0.022
                                             : screenWidth * 0.03,
                                       ),
                                       animationType: AnimationType.fade,
@@ -188,10 +187,10 @@ class VerifyOtpScreen extends StatelessWidget {
                                         shape: PinCodeFieldShape.box,
                                         borderWidth: 1.0,
                                         fieldHeight: isTab
-                                            ? referenceWidth * 0.11
+                                            ? referenceWidth * 0.09
                                             : screenWidth * 0.11,
                                         fieldWidth: isTab
-                                            ? referenceWidth * 0.105
+                                            ? referenceWidth * 0.09
                                             : screenWidth * 0.11,
                                         inactiveFillColor: Theme.of(
                                           context,
@@ -209,7 +208,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                       ),
                                       textStyle: TextStyle(
                                         fontSize: isTab
-                                            ? referenceWidth * 0.04
+                                            ? referenceWidth * 0.03
                                             : 16,
                                       ),
                                       keyboardType: TextInputType.number,
@@ -237,7 +236,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab
-                                              ? referenceWidth * 0.034
+                                              ? referenceWidth * 0.028
                                               : screenWidth * 0.035,
                                         ),
                                       ),
@@ -286,7 +285,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab
-                                                    ? referenceWidth * 0.03
+                                                    ? referenceWidth * 0.025
                                                     : screenWidth * 0.032,
                                                 color: Colors.grey,
                                               ),
@@ -297,7 +296,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab
-                                                    ? referenceWidth * 0.034
+                                                    ? referenceWidth * 0.028
                                                     : screenWidth * 0.034,
                                                 fontWeight: FontWeight.w600,
                                                 color: primaryColor,

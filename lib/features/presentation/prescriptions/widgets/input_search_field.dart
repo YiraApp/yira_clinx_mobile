@@ -12,6 +12,7 @@ class InputSearchChipField extends StatelessWidget {
   final List<String> selectedTokens;
   final Function(String) onRemoveToken;
   final ValueChanged<String>? onSubmitted;
+  final bool isTab;
 
   const InputSearchChipField({
     super.key,
@@ -21,7 +22,7 @@ class InputSearchChipField extends StatelessWidget {
     required this.icon,
     required this.selectedTokens,
     required this.onRemoveToken,
-    this.onSubmitted,
+    this.onSubmitted, required this.isTab,
   });
 
   @override
@@ -42,7 +43,8 @@ class InputSearchChipField extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.038,
+                fontSize:isTab
+                    ? displayWidth(context) * 0.02: displayWidth(context) * 0.038,
               ),
             ),
           ],
@@ -55,7 +57,8 @@ class InputSearchChipField extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.w500,
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.028,
+              fontSize:isTab
+                  ? displayWidth(context) * 0.018: displayWidth(context) * 0.028,
               color: Colors.grey,
             ),
             maxLines: 2,
@@ -83,7 +86,8 @@ class InputSearchChipField extends StatelessWidget {
                         style: TextStyle(
                           color: theme.primaryColor,
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.03,
+                          fontSize:isTab
+                              ? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                         ),
                       ),
                       backgroundColor: theme.primaryColor.withOpacity(0.1),
@@ -106,7 +110,8 @@ class InputSearchChipField extends StatelessWidget {
                   decorationThickness: 0,
                   decoration: TextDecoration.none,
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize: isTab
+                      ? displayWidth(context) * 0.018:displayWidth(context) * 0.032,
                 ),
                 decoration: InputDecoration(
                   hintText: hintText,
@@ -115,7 +120,8 @@ class InputSearchChipField extends StatelessWidget {
                     decoration: TextDecoration.none,
                     color: Colors.grey,
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.03,
+                    fontSize: isTab
+                        ? displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                   ),
                   filled: false,
                   border: InputBorder.none,

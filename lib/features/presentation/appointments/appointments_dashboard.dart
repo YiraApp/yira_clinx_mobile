@@ -56,14 +56,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
       appBar: CommonAppBar(
         actions: [
           Container(
-            margin: EdgeInsets.only(right: screenHorizontalSpacePadding),
+            margin: EdgeInsets.only(right: screenHorizontalSpacePadding,bottom: 10),
+
             child: ElevatedButton.icon(
               onPressed: () {
                 Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
               },
               icon: Icon(
                 Icons.add,
-                size: displayWidth(context) * 0.035,
+                size: 20,
                 color: Colors.white,
               ),
               label: CommonText(
@@ -71,7 +72,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w500,
-                  fontSize:isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.028,
+                  fontSize:isTab?displayWidth(context) * 0.012: displayWidth(context) * 0.028,
                   color: Colors.white,
                 ),
               ),

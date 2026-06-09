@@ -13,17 +13,19 @@ class OverviewScreen extends StatelessWidget {
   final VoidCallback onPrescribeTap;
   final VoidCallback onNoteTap;
   final VoidCallback onScheduleTap;
+  final bool isTab;
 
   const OverviewScreen({
     super.key,
     required this.patient,
     required this.onPrescribeTap,
     required this.onNoteTap,
-    required this.onScheduleTap,
+    required this.onScheduleTap, required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       floatingActionButton: ClinicalSpeedDialFab(
@@ -35,11 +37,11 @@ class OverviewScreen extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            PatientContactCard(patient: patient),
-            PatientMedicalCard(patient: patient),
-            PatientInsuranceCard(patient: patient),
-            PatientHistoryCard(patient: patient),
-            PatientSummaryCard(patient: patient),
+            PatientContactCard(patient: patient,isTab:isTab),
+            PatientMedicalCard(patient: patient,isTab:isTab),
+            PatientInsuranceCard(patient: patient,isTab:isTab),
+            PatientHistoryCard(patient: patient,isTab:isTab),
+            PatientSummaryCard(patient: patient,isTab:isTab),
             const SizedBox(height: 80),
           ],
         ),

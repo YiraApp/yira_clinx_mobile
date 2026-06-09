@@ -8,20 +8,22 @@ import 'patient_info_card.dart';
 
 class PatientContactCard extends StatelessWidget {
   final PatientProfileEntity patient;
-
-  const PatientContactCard({super.key, required this.patient});
+  final bool isTab;
+  const PatientContactCard({super.key, required this.patient,required this.isTab});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PatientInfoCard(
+      isTab: isTab,
       title: 'Contact Information',
       titleIcon: Icons.perm_contact_calendar_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.phone_android_rounded,
             label: 'Phone',
             value: patient.phone,
@@ -29,6 +31,7 @@ class PatientContactCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.alternate_email_rounded,
             label: 'Email Address',
             value: patient.email,
@@ -36,13 +39,14 @@ class PatientContactCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.map_outlined,
             label: 'Residential Address',
             value: patient.address,
             accentColor: Colors.indigo,
           ),
           const SizedBox(height: 24),
-          _buildEmergencyBanner(context),
+          _buildEmergencyBanner(context,isTab),
         ],
       ),
     );
@@ -60,7 +64,7 @@ class PatientContactCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEmergencyBanner(BuildContext context) {
+  Widget _buildEmergencyBanner(BuildContext context,bool isTab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bannerBg = isDark ? Colors.red.withOpacity(0.08) : Colors.red.withOpacity(0.1);
     final bannerBorder = isDark ? Colors.red.withOpacity(0.4) : Colors.red.withOpacity(0.01);
@@ -91,7 +95,7 @@ class PatientContactCard extends StatelessWidget {
                   'Emergency Contact',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.024,
+                    fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.024,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.6,
                     color: Colors.red,
@@ -102,7 +106,7 @@ class PatientContactCard extends StatelessWidget {
                   '${patient.emergencyContactName} • ${patient.emergencyContactPhone}',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize:isTab?  displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                     fontWeight: FontWeight.w600,
                     color: Colors.red,
                   ),

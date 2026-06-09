@@ -6,19 +6,21 @@ import 'patient_info_card.dart';
 
 class PatientMedicalCard extends StatelessWidget {
   final PatientProfileEntity patient;
-
-  const PatientMedicalCard({super.key, required this.patient});
+  final bool isTab;
+  const PatientMedicalCard({super.key, required this.patient, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PatientInfoCard(
+      isTab: isTab,
       title: 'Medical Information',
       titleIcon: Icons.medical_services_outlined,
       child: Column(
         children: [
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.healing_outlined,
             label: 'Condition',
             value: patient.condition,
@@ -26,6 +28,7 @@ class PatientMedicalCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.warning_amber_rounded,
             label: 'Allergies',
             value: patient.allergies,
@@ -34,6 +37,7 @@ class PatientMedicalCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.bloodtype_outlined,
             label: 'Blood Group',
             value: patient.bloodGroup,
@@ -41,6 +45,7 @@ class PatientMedicalCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.calendar_today_outlined,
             label: 'Total Visits',
             value: '${patient.totalVisits}',

@@ -109,46 +109,45 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
         opacity: _animationController.value,
         child: Visibility(
           visible: _animationController.value > 0.0,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12, right: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Text Flag Indicator Overlay Block
-                Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(fieldBorderRadius),
-                    border: Border.all(color: cardBorderColor, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+          child: InkWell(
+            onTap: () {
+              _toggleMenu();
+              onTap();
+
+            },
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12, right: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+
+                  Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: cardBgColor,
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
+                      border: Border.all(color: cardBorderColor, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cardTextColor,
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: cardTextColor,
                     ),
                   ),
-                ),
-
-                // Small Action Circle Container
-                InkWell(
-                  onTap: () {
-                    _toggleMenu();
-                    onTap();
-                  },
-                  borderRadius: BorderRadius.circular(fieldBorderRadius),
-                  child: Container(
+                  Container(
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
@@ -170,9 +169,9 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
                       size: 18,
                       color: isDark ? color : Colors.white,
                     ),
-                  ),
-                ),
-              ],
+                  )
+                ],
+              ),
             ),
           ),
         ),

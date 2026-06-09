@@ -44,7 +44,7 @@ class SignupScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, size: displayWidth(context) * 0.06),
+            icon: Icon(Icons.arrow_back, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),

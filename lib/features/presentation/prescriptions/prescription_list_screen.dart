@@ -15,7 +15,7 @@ class PrescriptionListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+final bool isTab= isTablet(context);
     return BlocProvider(
       create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData()),
       child: SafeArea(
@@ -95,6 +95,7 @@ class PrescriptionListScreen extends StatelessWidget {
                         SinglePrescriptionDetailsNavEvent(),
                       );
                     },
+                    isTab:isTab
                   );
                 },
               ),

@@ -11,12 +11,13 @@ class PatientInfoCard extends StatelessWidget {
   final String title;
   final IconData titleIcon;
   final Widget child;
+  final bool isTab;
 
   const PatientInfoCard({
     Key? key,
     required this.title,
     required this.titleIcon,
-    required this.child,
+    required this.child, required this.isTab,
   }) : super(key: key);
 
   @override
@@ -51,8 +52,7 @@ class PatientInfoCard extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w500,
-                  fontSize: displayWidth(context)*0.035,
-                  // color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontSize:isTab? displayWidth(context)*0.02: displayWidth(context)*0.035,
                 ),
               ),
             ],

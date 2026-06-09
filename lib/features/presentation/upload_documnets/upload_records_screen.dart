@@ -69,7 +69,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor:  theme.scaffoldBackgroundColor ,
       appBar: AppBar(
@@ -105,7 +105,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                     "Upload Clinical Documents",
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.054,
+                      fontSize:isTab? displayWidth(context) * 0.032:displayWidth(context) * 0.054,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                       letterSpacing: -0.3,
@@ -116,7 +116,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                     "For patient: ${widget.patientName}",
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.034,
+                      fontSize: isTab? displayWidth(context) * 0.022:displayWidth(context) * 0.034,
                       color: Colors.white.withOpacity(0.85),
                       fontWeight: FontWeight.w500,
                     ),
@@ -136,7 +136,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                       "Document Category",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.035,
+                        fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -158,7 +158,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                           "Selected Files",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.035,
+                            fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -169,7 +169,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                             "${stagedFiles.length} Files",
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.026,
+                              fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.026,
                               color: primaryColor,
                               fontWeight: FontWeight.w800,
                             ),
@@ -211,7 +211,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                "Drag and drop files here",
                                style: TextStyle(
                                  fontFamily: appPoppinFont,
-                                 fontSize: displayWidth(context) * 0.035,
+                                 fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                                  fontWeight: FontWeight.w700,
                                ),
                              ),
@@ -220,7 +220,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                "Support for PDF, JPG, PNG up to 10MB",
                                style: TextStyle(
                                  fontFamily: appPoppinFont,
-                                 fontSize: displayWidth(context) * 0.03,
+                                 fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                                  color: Colors.grey,
                                  fontWeight: FontWeight.w500,
                                ),
@@ -250,7 +250,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                    fontFamily: appPoppinFont,
                                    color: primaryColor,
                                    fontWeight: FontWeight.w600,
-                                   fontSize: displayWidth(context)*0.032,
+                                   fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context)*0.032,
                                  ),
                                ),
                              ),
@@ -299,14 +299,14 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontWeight: FontWeight.w600,
-                                        fontSize: displayWidth(context)*0.03,
+                                        fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context)*0.03,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     CommonText(
                                       '${(file['size'] / 1024).toStringAsFixed(1)} MB',
-                                      style: TextStyle(fontFamily: appPoppinFont,color: theme.hintColor, fontSize:  displayWidth(context)*0.028, fontWeight: FontWeight.w500),
+                                      style: TextStyle(fontFamily: appPoppinFont,color: theme.hintColor, fontSize: isTab? displayWidth(context) * 0.018: displayWidth(context)*0.028, fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -344,7 +344,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                 fontFamily: appPoppinFont,
                                 color: primaryColor,
                                 fontWeight: FontWeight.w600,
-                                fontSize: displayWidth(context) * 0.035,
+                                fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                               ),
                             ),
                           ),

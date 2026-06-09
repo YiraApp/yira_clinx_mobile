@@ -7,12 +7,13 @@ class PatientProfileTabBar extends StatefulWidget {
   final List<String> tabs;
   final int selectedIndex;
   final Function(int) onTabSelected;
+  final bool isTab;
 
   const PatientProfileTabBar({
     super.key,
     required this.tabs,
     required this.selectedIndex,
-    required this.onTabSelected,
+    required this.onTabSelected, required this.isTab,
   });
 
   @override
@@ -72,7 +73,7 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: fieldSpace),
-      height: 40,
+      height: widget.isTab? 50:40,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
@@ -101,7 +102,7 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
                   widget.tabs[idx],
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize:widget.isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                     color: isActive ? activeTextColor : inactiveTextColor,
                   ),

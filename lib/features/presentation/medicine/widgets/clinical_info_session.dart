@@ -10,12 +10,13 @@ class ClinicalInfoSection extends StatelessWidget {
   final TextEditingController chiefComplaintController;
   final TextEditingController symptomsController;
   final TextEditingController physicalExamController;
+  final bool isTab;
 
   const ClinicalInfoSection({
     super.key,
     required this.chiefComplaintController,
     required this.symptomsController,
-    required this.physicalExamController,
+    required this.physicalExamController, required this.isTab,
   });
 
   @override
@@ -23,19 +24,19 @@ class ClinicalInfoSection extends StatelessWidget {
     final labelStyle = TextStyle(
       fontWeight: FontWeight.w500,
       fontFamily: appPoppinFont,color: Colors.grey,
-      fontSize: displayWidth(context) * 0.032,
+      fontSize: isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: "Clinical Information"),
+         SectionHeader(title: "Clinical Information", isTab: isTab,),
         const SizedBox(height: 12),
 
         CommonText("Chief Complaint", style: TextStyle(
           fontWeight: FontWeight.w500,
           fontFamily: appPoppinFont,color: Colors.grey,
-          fontSize: displayWidth(context) * 0.032,
+          fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
         )),
         const SizedBox(height: 6),
         SizedBox(

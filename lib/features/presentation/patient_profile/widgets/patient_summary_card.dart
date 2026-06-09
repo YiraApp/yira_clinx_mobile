@@ -7,14 +7,15 @@ import 'patient_info_card.dart';
 
 class PatientSummaryCard extends StatelessWidget {
   final PatientProfileEntity patient;
-
-  const PatientSummaryCard({super.key, required this.patient});
+  final bool isTab;
+  const PatientSummaryCard({super.key, required this.patient, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PatientInfoCard(
+      isTab: isTab,
       title: 'Summary',
       titleIcon: Icons.description_outlined,
       child: Container(
@@ -44,7 +45,7 @@ class PatientSummaryCard extends StatelessWidget {
                 patient.summary,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                   fontWeight: FontWeight.w500,
                   height: 1.4,
                   color: isDark ? Colors.grey : Colors.grey[800],

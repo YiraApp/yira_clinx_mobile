@@ -43,7 +43,7 @@ class _DoctorPatientProfileScreenState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -82,10 +82,11 @@ class _DoctorPatientProfileScreenState
             return Column(
               children: [
                 SizedBox(height: screenTopPadding,),
-                PatientProfileHeader(patient: patient),
+                PatientProfileHeader(patient: patient,isTab:isTab),
                 PatientProfileTabBar(
                   tabs: _tabs,
                   selectedIndex: currentTab,
+                  isTab:isTab,
                   onTabSelected: (index) {
                     context.read<PatientProfileBloc>().add(TabChanged(index));
                   },
@@ -93,7 +94,7 @@ class _DoctorPatientProfileScreenState
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: _buildActiveTabContent(context, patient, currentTab),
+                    child: _buildActiveTabContent(context, patient, currentTab, isTab),
                   ),
                 ),
               ],
@@ -110,10 +111,12 @@ class _DoctorPatientProfileScreenState
       BuildContext context,
       PatientProfileEntity patient,
       int activeTab,
+      bool isTab
       ) {
     switch (activeTab) {
       case 0:
         return OverviewScreen(
+          isTab: isTab,
           key: const ValueKey('OverviewTabContentFrame'),
           patient: patient,
           onPrescribeTap: () {

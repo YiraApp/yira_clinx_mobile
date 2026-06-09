@@ -6,7 +6,8 @@ import '../../../../core/common_widgets/common_text.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
-  const SectionHeader({super.key, required this.title});
+  final bool isTab;
+  const SectionHeader({super.key, required this.title, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class SectionHeader extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.038,
+            fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.038,
           ),
         ),
       ],
