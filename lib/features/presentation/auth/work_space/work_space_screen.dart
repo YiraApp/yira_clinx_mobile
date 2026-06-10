@@ -93,7 +93,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               ),
                             ),
                             TextSpan(
-                              text: 'Bhargava',
+                              text: 'Rajesh Nagalingam',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontFamily: appPoppinFont,

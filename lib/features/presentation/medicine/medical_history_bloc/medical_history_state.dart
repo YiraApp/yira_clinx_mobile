@@ -1,35 +1,40 @@
 part of 'medical_history_bloc.dart';
 
 @immutable
-abstract class MedicalHistoryState extends Equatable {
+abstract class MedicalHistoryState {
   const MedicalHistoryState();
 }
 
-class MedicalHistoryInitial extends MedicalHistoryState {
+
+class MedicalHistoryInitial extends MedicalHistoryState with EquatableMixin {
   @override
   List<Object?> get props => [];
 }
-class MedicalHistoryLoading extends MedicalHistoryState {
+
+class MedicalHistoryLoading extends MedicalHistoryState with EquatableMixin {
   @override
   List<Object?> get props => [];
 }
-class AddMedicalRecordNavState extends MedicalHistoryState {
-  @override
-  List<Object?> get props => [];
-}
-class MedicalHistoryLoaded extends MedicalHistoryState {
+
+class MedicalHistoryLoaded extends MedicalHistoryState with EquatableMixin {
   final List<MedicalRecordBriefEntity> records;
   const MedicalHistoryLoaded(this.records);
+
   @override
   List<Object?> get props => [records];
 }
-class MedicalHistoryError extends MedicalHistoryState {
+
+class MedicalHistoryError extends MedicalHistoryState with EquatableMixin {
   final String message;
   const MedicalHistoryError(this.message);
+
   @override
   List<Object?> get props => [message];
 }
+
+class AddMedicalRecordNavState extends MedicalHistoryState {}
+
 class SingleMedicineDetailsNavState extends MedicalHistoryState {
-  @override
-  List<Object?> get props => [];
+  final String recordId;
+  const SingleMedicineDetailsNavState({required this.recordId});
 }

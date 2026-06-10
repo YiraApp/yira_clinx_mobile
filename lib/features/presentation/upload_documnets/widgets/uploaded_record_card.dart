@@ -146,7 +146,6 @@ final bool isTab;
               ),
               const SizedBox(width: 8),
 
-              // Visual Vertical Divider
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14.0),
                 child: VerticalDivider(
@@ -155,7 +154,6 @@ final bool isTab;
                   thickness: 1,
                 ),
               ),
-
               CommonCustomPopupMenu(
                 items: [
                   AppPopupItemModel(
@@ -172,7 +170,7 @@ final bool isTab;
                     icon: Icons.delete_outline_rounded,
                     title: 'Delete',
                     onTap: onDelete,
-                    isDestructive: true, // Auto-renders custom line separation and red tints
+                    isDestructive: true,
                   ),
                 ],
                 child: Padding(

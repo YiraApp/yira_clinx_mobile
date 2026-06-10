@@ -4,7 +4,7 @@ part of 'prescription_bloc.dart';
 enum PrescriptionStatus { initial, loading, success, failure }
 
 @immutable
-class PrescriptionState extends Equatable {
+class PrescriptionState  {
   final PrescriptionStatus status;
   final List<String> diagnoses;
   final List<MedicationItem> medications;
@@ -35,20 +35,14 @@ class PrescriptionState extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => [
-    status,
-    diagnoses,
-    medications,
-    isPrescriptionExpanded,
-    errorMessage,
-  ];
+
 }
 class AddPrescriptionRecordNavState extends PrescriptionState {
-  @override
-  List<Object?> get props => [];
+
 }
 class SinglePrescriptionDetailsNavState extends PrescriptionState {
-  @override
-  List<Object?> get props => [];
+  final String prescriptionId;
+
+  const SinglePrescriptionDetailsNavState(this.prescriptionId);
+
 }

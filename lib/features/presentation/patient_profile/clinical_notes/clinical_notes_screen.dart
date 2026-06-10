@@ -16,7 +16,6 @@ class ClinicalNotesScreen extends StatefulWidget {
 class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
   late final TextEditingController _notesController;
 
-  // Toggle this to true to preview the Empty State UI seamlessly
   final bool _isEmptyScenario = false;
 
   @override
@@ -90,7 +89,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16), // Increased from 12 for professional layout balance
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -180,7 +179,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
 
   Widget _buildDoctorIdentityLabel(bool isWideScreen) {
     return Text(
-      'Adding by Dr. bhargav c',
+      'Adding by Dr. Rajesh Nagalingam',
       style: TextStyle(
         fontFamily: appPoppinFont,
         fontSize: isWideScreen ? 13 : displayWidth(context) * 0.03,
@@ -263,19 +262,19 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
           Text(
             'Patient Notes\n'
                 'Patient Name: John Doe  Date: 26 May 2026\n'
-                'Age/Gender: 45 / Male\n\n' // Formatted text paragraphing spacing
+                'Age/Gender: 45 / Male\n\n'
                 'Chief Complaint: Patient presented with complaints of headache, mild fever, and fatigue for the past 3 days. History of Present Illness: Patient reports intermittent headaches associated with low-grade fever and generalized body weakness. No history of nausea, vomiting, chest pain, or shortness of breath. Vital Signs: Blood Pressure: 120/80 mmHg Pulse: 78 bpm Temperature: 99.5°F Oxygen Saturation: 98%. Examination: Patient is conscious, alert, and oriented. Mild throat redness noted. Chest clear on auscultation. No abnormal findings observed. Assessment: Likely viral upper respiratory tract infection. Plan: Prescribed Paracetamol for fever and headache. Encourage adequate hydration and rest. Monitor symptoms for worsening. Follow-up in 5–7 days or earlier if symptoms persist.',
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: isWideScreen ? 14 : displayWidth(context) * 0.035,
               fontWeight: FontWeight.w500,
-              height: 1.4, // Cleaned up line-height reading flow
+              height: 1.4,
             ),
             textAlign: TextAlign.start,
           ),
           const SizedBox(height: 16),
           Text(
-            'By dr. bhargav c',
+            'By Dr. Rajesh Nagalingam',
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: 11,

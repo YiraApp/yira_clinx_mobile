@@ -39,7 +39,11 @@ class _DoctorPatientProfileScreenState
     'Documents',
     'Appointments',
   ];
-
+  @override
+  void initState() {
+    super.initState();
+    context.read<PatientProfileBloc>().add(const TabChanged(0));
+  }
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

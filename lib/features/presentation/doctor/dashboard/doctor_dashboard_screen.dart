@@ -315,7 +315,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     padding: const EdgeInsets.only(
                       left: screenHorizontalSpacePadding,
                       right: screenHorizontalSpacePadding,
-                      bottom: fieldSpace,
+                      bottom: 50,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
@@ -497,7 +497,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   ),
                   const SizedBox(height: 4.0),
                   Text(
-                    'Dr. Challa Bhargava Narasimha',
+                    'Dr. Rajesh Nagalingam',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? textWidth * 0.018 : textWidth * 0.044,

@@ -28,7 +28,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
       emit(AddPrescriptionRecordNavState());
     });
     on<SinglePrescriptionDetailsNavEvent>((event, emit) async {
-      emit(SinglePrescriptionDetailsNavState());
+      emit(SinglePrescriptionDetailsNavState(event.prescriptionId));
     });
   }
 

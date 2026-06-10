@@ -241,7 +241,6 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
                     TextField(
                       onChanged: (val) {},
                       style: TextStyle(

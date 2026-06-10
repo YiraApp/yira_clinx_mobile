@@ -40,24 +40,24 @@ class DocAppointmentCard extends StatelessWidget {
     final primaryText = isDark ? Colors.white : textLightModeColor;
     final secondaryText = isDark ? textLightDarkColor : scoreSubTextColor;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(fieldBorderRadius),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: fieldSpace),
-        padding: const EdgeInsets.all(14.0),
-        decoration: BoxDecoration(
-          color: containerBg,
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: fieldSpace),
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: containerBg,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: Column(
           crossAxisAlignment: .end,
           children: [

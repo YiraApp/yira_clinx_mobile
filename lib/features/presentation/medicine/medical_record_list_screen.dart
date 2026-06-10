@@ -29,8 +29,13 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
     final theme = Theme.of(context);
 final isTab = isTablet(context);
     return BlocConsumer<MedicalHistoryBloc, MedicalHistoryState>(
-      buildWhen: (previous, current) => current is! AddMedicalRecordNavState || current is SingleMedicineDetailsNavState,
-      listener: (BuildContext context, MedicalHistoryState state) {
+      buildWhen: (previous, current) =>
+      current is MedicalHistoryLoading ||
+          current is MedicalHistoryError ||
+          current is MedicalHistoryLoaded,
+      listenWhen: (previous, current) =>
+      current is AddMedicalRecordNavState ||
+          current is SingleMedicineDetailsNavState, listener: (BuildContext context, MedicalHistoryState state) {
         if (state is AddMedicalRecordNavState) {
           Navigator.pushNamed(context, AppRoutes.addMedicalRecordScreen);
         } else if(state is SingleMedicineDetailsNavState){
@@ -94,7 +99,7 @@ final isTab = isTablet(context);
               vitalsSummary: item.vitalsSummary,
               onDetailsPressed: () {
                 context.read<MedicalHistoryBloc>().add(
-                  SingleMedicineDetailsNavEvent(),
+                  SingleMedicineDetailsNavEvent(recordId: item.id),
                 );
               },
               onDeletePressed: () {

@@ -16,7 +16,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<ViewPatientDetailsEvent>((event,emit)async{
       emit(ViewPatientDetailsState());
     });
-
   }
 
   Future<void> _onGetDashboardData(
@@ -26,7 +25,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(state.copyWith(status: DashboardStatus.loading));
 
     try {
-      // Mock Data - In production, call your GetPatientsUseCase here
       final List<PatientEntity> mockData = [
         PatientEntity(id: "YRA0001", name: "Rajesh Kumar", condition: "Hypertension", lastVisit: "Jan 15", status: "Active", gender: "Male", visits: 8, age: 45, allergy: "Penicillin"),
         PatientEntity(id: "YRA0002", name: "Priya Sharma", condition: "Arrhythmia", lastVisit: "Jan 14", status: "Monitoring", gender: "Female", visits: 5, age: 38),

@@ -226,7 +226,7 @@ final bool isTab = isTablet(context);
                               patient: state.patients[index],
                               onTap: () {
                                 context.read<DashboardBloc>().add(
-                                  ViewPatientDetailsEvent(),
+                                  ViewPatientDetailsEvent(patientId: '1'),
                                 );
                               },
                             );

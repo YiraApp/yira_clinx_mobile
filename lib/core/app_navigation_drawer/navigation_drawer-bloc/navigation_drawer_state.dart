@@ -9,7 +9,7 @@ class NavigationDrawerState {
 
   const NavigationDrawerState({
     this.selectedIndex = 0,
-    this.doctorName = "Dr. Bhargava Narasimha",
+    this.doctorName = "Dr. Rajesh Nagalingam",
     this.doctorRole = "Chief Medical Officer",
     this.profileImageUrl,
   });

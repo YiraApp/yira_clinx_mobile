@@ -1,5 +1,5 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
 class CustomBarChart extends StatelessWidget {
@@ -30,207 +30,182 @@ class CustomBarChart extends StatelessWidget {
     this.fontFamily,
     this.showXAxisDivider = true,
     this.xAxisDividerColor,
-    this.monthly = false, required this.isTab,
+    this.monthly = false,
+    required this.isTab,
   }) : assert(values.length == labels.length, 'Values and labels must have the same length');
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
 
-    final fallbackDividerColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
-    final effectiveDividerColor = xAxisDividerColor ?? fallbackDividerColor;
+    final effectiveDividerColor = xAxisDividerColor ?? theme.dividerColor;
 
-    final tooltipBgColor = isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A);
+    final tooltipBgColor = isDark ? theme.cardColor : Colors.grey[900]!;
+    final tooltipTextColor = isDark ? theme.textTheme.bodyLarge?.color : Colors.white;
+
     final tooltipTextStyle = TextStyle(
       fontFamily: fontFamily,
-      fontSize: isTab?displayWidth(context) * 0.014 :displayWidth(context) * 0.024,
+      fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.024,
       fontWeight: FontWeight.w600,
-      color: Colors.white,
+      color: tooltipTextColor,
     );
-    final sideTitles = SideTitles(
-      showTitles: true,
-      reservedSize: 24,
-      interval: 1,
-      getTitlesWidget: (double value, TitleMeta meta) {
-        final int index = value.round();
 
-        if (value == index.toDouble() && index >= 0 && index < labels.length) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 6.0),
-            child: Text(
-              labels[index],
-              style: TextStyle(
-                fontFamily: fontFamily,
-                fontSize: isTab? displayWidth(context)*0.014:displayWidth(context) * 0.024,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          );
-        }
-        return const SizedBox();
-      },
+    final xAxisTextStyle = TextStyle(
+      fontFamily: fontFamily,
+      fontSize: isTab ? displayWidth(context) * 0.012 : displayWidth(context) * 0.020,
+      color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+    );
+
+    // Dynamic style for the values displayed on top of the graph peaks
+    final dataLabelTextStyle = TextStyle(
+      fontFamily: fontFamily,
+      fontSize: isTab ? displayWidth(context) * 0.011 : displayWidth(context) * 0.025,
+      fontWeight: FontWeight.bold,
+      color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
+    );
+
+    final List<_ChartDataPoint> chartData = List.generate(
+      values.length,
+          (index) => _ChartDataPoint(xLabel: labels[index], yValue: values[index], index: index),
+    );
+
+    final tooltipBehavior = TooltipBehavior(
+      enable: true,
+      activationMode: ActivationMode.singleTap,
+      canShowMarker: false,
+      color: tooltipBgColor,
+      textStyle: tooltipTextStyle,
+      header: '',
+      format: 'point.y $tooltipSuffix',
     );
 
     return SizedBox(
       height: chartHeight,
-      child: monthly
-          ? LineChart(_buildLineChartData(primaryColor, isDark, tooltipBgColor, tooltipTextStyle, sideTitles, effectiveDividerColor))
-          : BarChart(_buildBarChartData(primaryColor, isDark, tooltipBgColor, tooltipTextStyle, sideTitles, effectiveDividerColor)),
+      child: SfCartesianChart(
+        margin: EdgeInsets.only(
+          left: isTab ? 12.0 : 8.0,
+          right: isTab ? 12.0 : 8.0,
+          bottom: 4.0,
+          top: 16.0,
+        ),
+        plotAreaBorderWidth: 0,
+        tooltipBehavior: tooltipBehavior,
+
+        primaryXAxis: CategoryAxis(
+          labelStyle: xAxisTextStyle,
+          interval: 1,
+          edgeLabelPlacement: EdgeLabelPlacement.shift,
+          axisLine: AxisLine(
+            width: showXAxisDivider ? 1.0 : 0.0,
+            color: effectiveDividerColor,
+          ),
+          majorTickLines: const MajorTickLines(size: 0),
+          majorGridLines: MajorGridLines(
+            width: monthly ? 1.0 : 0.0,
+            color: theme.dividerColor.withOpacity(isDark ? 0.15 : 0.4),
+            dashArray: const [4, 4],
+          ),
+        ),
+
+        primaryYAxis: NumericAxis(
+          maximum: maxY,
+          minimum: 0,
+          isVisible: false,
+          majorGridLines: MajorGridLines(
+            width: monthly ? 1.0 : 0.0,
+            color: theme.dividerColor.withOpacity(isDark ? 0.15 : 0.4),
+            dashArray: const [4, 4],
+          ),
+        ),
+
+        series: monthly
+            ? _buildSplineSeries(chartData, primaryColor, dataLabelTextStyle)
+            : _buildColumnSeries(chartData, primaryColor, isDark, dataLabelTextStyle),
+      ),
     );
   }
 
-  LineChartData _buildLineChartData(
+  List<CartesianSeries<_ChartDataPoint, String>> _buildSplineSeries(
+      List<_ChartDataPoint> data,
       Color primaryColor,
-      bool isDark,
-      Color tooltipBgColor,
-      TextStyle tooltipTextStyle,
-      SideTitles sideTitles,
-      Color dividerColor,
+      TextStyle dataLabelTextStyle,
       ) {
-    final double extraBounds = values.length > 1 ? 0.5 : 0.0;
-    final gridLineColor = isDark ? Colors.grey[800]!.withOpacity(0.5) : Colors.grey[300]!.withOpacity(0.6);
+    final lineColor = barColors?.first ?? primaryColor;
 
-    return LineChartData(
-      maxY: maxY,
-      minY: 0,
-      minX: -extraBounds,
-      maxX: (values.length - 1) + extraBounds,
-
-      gridData: FlGridData(
-        show: true,
-        drawVerticalLine: true,
-        drawHorizontalLine: true,
-        horizontalInterval: maxY / 4,
-        verticalInterval: 1,
-        getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: gridLineColor,
-            strokeWidth: 1,
-            dashArray: [4, 4],
-          );
-        },
-        getDrawingVerticalLine: (value) {
-          return FlLine(
-            color: gridLineColor,
-            strokeWidth: 1,
-            dashArray: [4, 4],
-          );
-        },
+    return [
+      SplineAreaSeries<_ChartDataPoint, String>(
+        dataSource: data,
+        xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
+        yValueMapper: (_ChartDataPoint point, _) => point.yValue,
+        color: lineColor.withOpacity(0.12),
+        animationDuration: 400,
+        enableTooltip: false,
       ),
-      titlesData: FlTitlesData(
-        show: true,
-        bottomTitles: AxisTitles(sideTitles: sideTitles), // Using our fixed interval side titles
-        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      borderData: FlBorderData(
-        show: showXAxisDivider,
-        border: Border(bottom: BorderSide(color: dividerColor, width: 1.0)),
-      ),
-      lineTouchData: LineTouchData(
-        enabled: true,
-        handleBuiltInTouches: true,
-        touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (touchedSpot) => tooltipBgColor,
-          tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          tooltipMargin: 8,
-          getTooltipItems: (List<LineBarSpot> touchedSpots) {
-            return touchedSpots.map((barSpot) {
-              return LineTooltipItem(
-                '${barSpot.y.toInt()} $tooltipSuffix',
-                tooltipTextStyle,
-              );
-            }).toList();
-          },
+      SplineSeries<_ChartDataPoint, String>(
+        dataSource: data,
+        xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
+        yValueMapper: (_ChartDataPoint point, _) => point.yValue,
+        color: lineColor,
+        width: 3,
+        enableTooltip: true,
+        dataLabelSettings: DataLabelSettings(
+          isVisible: true,
+          textStyle: dataLabelTextStyle,
+          labelAlignment: ChartDataLabelAlignment.top,
+          useSeriesColor: false,
         ),
-      ),
-      lineBarsData: [
-        LineChartBarData(
-          spots: List.generate(values.length, (index) => FlSpot(index.toDouble(), values[index])),
-          isCurved: true,
-          curveSmoothness: 0.35,
-          color: barColors?.first ?? primaryColor,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-              radius: 4,
-              color: barColors?.first ?? primaryColor,
-              strokeWidth: 0,
-            ),
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: (barColors?.first ?? primaryColor).withOpacity(0.12),
-          ),
+        markerSettings: MarkerSettings(
+          isVisible: true,
+          height: isTab ? 7 : 5,
+          width: isTab ? 7 : 5,
+          shape: DataMarkerType.circle,
+          color: lineColor,
+          borderWidth: 0,
         ),
-      ],
-    );
+        animationDuration: 400,
+      ),
+    ];
   }
 
-  BarChartData _buildBarChartData(
+  List<CartesianSeries<_ChartDataPoint, String>> _buildColumnSeries(
+      List<_ChartDataPoint> data,
       Color primaryColor,
       bool isDark,
-      Color tooltipBgColor,
-      TextStyle tooltipTextStyle,
-      SideTitles sideTitles,
-      Color dividerColor,
+      TextStyle dataLabelTextStyle,
       ) {
     final effectiveRadius = borderRadius ?? const BorderRadius.vertical(top: Radius.circular(8.0));
 
-    return BarChartData(
-      alignment: BarChartAlignment.spaceAround,
-      maxY: maxY,
-      barTouchData: BarTouchData(
-        enabled: true,
-        handleBuiltInTouches: true,
-        touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (group) => tooltipBgColor,
-          tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          tooltipMargin: 4,
-          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-            return BarTooltipItem('${rod.toY.toInt()} $tooltipSuffix', tooltipTextStyle);
-          },
+    return [
+      ColumnSeries<_ChartDataPoint, String>(
+        dataSource: data,
+        xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
+        yValueMapper: (_ChartDataPoint point, _) => point.yValue,
+        width: barWidth > 1 ? (barWidth / 50).clamp(0.1, 1.0) : barWidth,
+        borderRadius: effectiveRadius,
+        animationDuration: 400,
+        enableTooltip: true,
+        dataLabelSettings: const DataLabelSettings(
+          isVisible: false,
         ),
-      ),
-      titlesData: FlTitlesData(
-        show: true,
-        bottomTitles: AxisTitles(sideTitles: sideTitles),
-        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      gridData: const FlGridData(show: false),
-      borderData: FlBorderData(
-        show: showXAxisDivider,
-        border: Border(bottom: BorderSide(color: dividerColor, width: 1.0)),
-      ),
-      barGroups: List.generate(
-        values.length,
-            (index) {
-          Color specificBarColor;
-          if (barColors != null && index < barColors!.length) {
-            specificBarColor = barColors![index];
+        pointColorMapper: (_ChartDataPoint point, _) {
+          if (barColors != null && point.index < barColors!.length) {
+            return barColors![point.index];
           } else {
-            final double opacity = (index % 2 == 0) ? 1.0 : (isDark ? 0.5 : 0.6);
-            specificBarColor = primaryColor.withOpacity(opacity);
+            final double opacity = (point.index % 2 == 0) ? 1.0 : (isDark ? 0.45 : 0.6);
+            return primaryColor.withOpacity(opacity);
           }
-          return BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: values[index],
-                color: specificBarColor,
-                width: barWidth,
-                borderRadius: effectiveRadius,
-              ),
-            ],
-          );
         },
       ),
-    );
+    ];
   }
+}
+
+class _ChartDataPoint {
+  final String xLabel;
+  final double yValue;
+  final int index;
+
+  _ChartDataPoint({required this.xLabel, required this.yValue, required this.index});
 }

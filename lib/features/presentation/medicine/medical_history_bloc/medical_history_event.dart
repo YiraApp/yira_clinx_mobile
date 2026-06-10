@@ -16,11 +16,16 @@ class DeleteMedicalHistoryRecord extends MedicalHistoryEvent {
   @override
   List<Object?> get props => [recordId];
 }
+
 class AddMedicalRecordNavEvent extends MedicalHistoryEvent {
   @override
   List<Object?> get props => [];
 }
+
 class SingleMedicineDetailsNavEvent extends MedicalHistoryEvent {
+  final String recordId;
+  const SingleMedicineDetailsNavEvent({required this.recordId});
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [recordId];
 }

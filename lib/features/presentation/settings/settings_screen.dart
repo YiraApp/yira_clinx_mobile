@@ -43,7 +43,7 @@ final isTab = isTablet(context);
               vertical: screenTopPadding,
             ),
             children: [
-              _buildSectionHeader(context, "ACCOUNT SECURITY",isTab),
+              _buildSectionHeader(context, "Account Security",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 isTab: isTab,
@@ -63,7 +63,7 @@ final isTab = isTablet(context);
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "COMMUNICATIONS",isTab),
+              _buildSectionHeader(context, "Communications",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 isTab: isTab,
@@ -81,7 +81,7 @@ final isTab = isTablet(context);
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "APP PREFERENCES",isTab),
+              _buildSectionHeader(context, "App Preferences",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 isTab: isTab,
@@ -109,7 +109,7 @@ final isTab = isTablet(context);
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "TERMINATE ACCOUNT",isTab),
+              _buildSectionHeader(context, "Terminate Account",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 isTab: isTab,
@@ -134,6 +134,12 @@ final isTab = isTablet(context);
             current is! LanguageNavState &&
             current is! ThemeNavState &&
             current is! DeleteAccountNavState,
+        listenWhen: (previous, current) =>
+        current is PasswordAndSecurityNavState ||
+            current is NotificationNavState ||
+            current is LanguageNavState ||
+            current is ThemeNavState ||
+            current is DeleteAccountNavState,
         listener: (BuildContext context, SettingsState state) {
           switch (state) {
             case PasswordAndSecurityNavState():
@@ -160,7 +166,7 @@ final isTab = isTablet(context);
               break;
 
             default:
-              Navigator.pushNamed(context, AppRoutes.changePasswordScreen);
+              break;
           }
         },
       ),

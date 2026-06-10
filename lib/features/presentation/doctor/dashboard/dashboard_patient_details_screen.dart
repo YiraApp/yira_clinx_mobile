@@ -382,7 +382,7 @@ final isTab = isTablet(context);
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CommonText(
-                            "Adding as Dr. bhargava c",
+                            "Adding as Dr. Rajesh Nagalingam",
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize:isTab? displayWidth(context) * 0.014: displayWidth(context) * 0.028,

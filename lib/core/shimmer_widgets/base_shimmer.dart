@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../colors/colors.dart';
 import '../constants/constants.dart';
 
 class BaseShimmer extends StatelessWidget {
@@ -32,7 +33,7 @@ class WelcomeCardShimmer extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111C24) : Colors.white,
+        color: isDark ? darkModeWelcomeCardColor: Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
@@ -65,7 +66,6 @@ class WelcomeCardShimmer extends StatelessWidget {
   }
 }
 
-/// Shimmer placeholder for a single Metric Grid item
 class MetricCardShimmer extends StatelessWidget {
   const MetricCardShimmer({super.key});
 
@@ -99,8 +99,6 @@ class MetricCardShimmer extends StatelessWidget {
     );
   }
 }
-
-/// Shimmer placeholder for Appointment and Patient List tiles
 class AppointmentCardShimmer extends StatelessWidget {
   const AppointmentCardShimmer({super.key});
 
@@ -138,7 +136,6 @@ class AppointmentCardShimmer extends StatelessWidget {
   }
 }
 
-/// Shimmer placeholder for both Weekly and Monthly charts
 class ChartCardShimmer extends StatelessWidget {
   const ChartCardShimmer({super.key});
 
@@ -165,7 +162,6 @@ class ChartCardShimmer extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 32.0),
-            // Mocking a bar chart look inside the shimmer
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -188,7 +184,6 @@ class ChartCardShimmer extends StatelessWidget {
   }
 }
 
-/// Combines all pieces into a beautiful structural skeleton layout matching your screen
 class DoctorDashboardSkeleton extends StatelessWidget {
   const DoctorDashboardSkeleton({super.key});
 
@@ -201,8 +196,6 @@ class DoctorDashboardSkeleton extends StatelessWidget {
         children: [
           const WelcomeCardShimmer(),
           const SizedBox(height: 20.0),
-
-          // Metrics Grid Skeleton
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,

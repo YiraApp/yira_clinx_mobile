@@ -21,6 +21,7 @@ class CommonCustomPopupMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isTab = isTablet(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
  final Color menuBackground = isDark
@@ -66,7 +67,7 @@ class CommonCustomPopupMenu extends StatelessWidget {
               context,
               isDark,
               theme,
-              menuController,
+              menuController,isTab
             ),
           ),
         ),
@@ -80,6 +81,7 @@ class CommonCustomPopupMenu extends StatelessWidget {
       bool isDark,
       ThemeData theme,
       CustomPopupMenuController controller,
+      bool isTab
       ) {
     final List<Widget> menuWidgets = [];
 
@@ -122,7 +124,7 @@ class CommonCustomPopupMenu extends StatelessWidget {
                   item.title,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                     fontWeight: FontWeight.w500,
                     color: item.textColor ??
                         (item.isDestructive

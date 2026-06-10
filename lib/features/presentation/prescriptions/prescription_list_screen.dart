@@ -21,8 +21,11 @@ final bool isTab= isTablet(context);
       child: SafeArea(
         child: BlocConsumer<PrescriptionBloc, PrescriptionState>(
           buildWhen: (previous, current) =>
-              current is! AddPrescriptionRecordNavState ||
+          current is! AddPrescriptionRecordNavState &&
               current is! SinglePrescriptionDetailsNavState,
+          listenWhen: (previous, current) =>
+          current is AddPrescriptionRecordNavState ||
+              current is SinglePrescriptionDetailsNavState,
           listener: (context, state) {
             if (state is AddPrescriptionRecordNavState) {
               Navigator.pushNamed(context, AppRoutes.addPrescriptionScreen);
@@ -50,7 +53,7 @@ final bool isTab= isTablet(context);
               );
             }
             final prescriptionItems = [
-              {
+              {'id':'1',
                 'title': state.diagnoses.isNotEmpty
                     ? state.diagnoses.last
                     : 'Index hypermetropia',
@@ -59,6 +62,7 @@ final bool isTab= isTablet(context);
                 'date': 'JUN 03, 2026',
               },
               {
+                'id':'2',
                 'title': state.diagnoses.join(', ').isNotEmpty
                     ? state.diagnoses.join(', ')
                     : 'Hyperoxia, Hypermetropia',
@@ -92,7 +96,7 @@ final bool isTab= isTablet(context);
                     onDelete: () {},
                     onView: () {
                       context.read<PrescriptionBloc>().add(
-                        SinglePrescriptionDetailsNavEvent(),
+                        SinglePrescriptionDetailsNavEvent(prescriptionId: itemData['id']!),
                       );
                     },
                     isTab:isTab

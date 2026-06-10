@@ -10,8 +10,9 @@ const Color additionalNotesColor = Color(0xFF535F6B);
 const Color darkModeInnerCardColor = Color(0xff0D0D0D);
 const Color authScreenTitleColor = Color(0xff1F2A37);
 const Color secondaryColor = Color(0xff020617);
-// const Color primaryColor = Color(0xFF2563EB);
-const Color primaryColor = Color(0xFF29468C);
+const Color primaryColor = Color(0xFF2563EB);
+// i have finalized
+// const Color primaryColor = Color(0xFF29468C);
 
 // const Color darkBackGroundColor = Color(0xff020617);
 // const Color darkBackGroundColor = Color(0xFF131313);
@@ -65,6 +66,12 @@ const Color darkModeCardColor = Color(0xFF1E293B);
 const Color textDarkModePrimaryColor = Color(0xFFF8FAFC);
 const Color textDarkModeSecondaryColor = Color(0x99F1F5F9);
 const Color textDarkModeHintColor = Color(0x73F1F5F9);
+
+
+/*Shimmer colors*/
+const Color lightModeBaseColor = Color(0xFFEBEBEB);
+const Color darkModeBaseColor =  Color(0xFFF5F5F5);
+const Color darkModeWelcomeCardColor =  Color(0xFF111C24);
 
 
 
