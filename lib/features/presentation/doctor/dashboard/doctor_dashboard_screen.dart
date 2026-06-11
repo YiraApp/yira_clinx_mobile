@@ -10,6 +10,7 @@ import '../../../../core/app_navigation_drawer/navigation_drawer-bloc/navigation
 import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../di/dependency_injection.dart';
 import '../../../domain/entities/appointments/appointment_entity.dart';
 import 'doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 
@@ -27,10 +28,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _navigationDrawerBloc = NavigationDrawerBloc();
-    _dashboardBloc = DoctorDashboardBloc()..add(FetchDoctorDashboardData());
+    _navigationDrawerBloc = sl<NavigationDrawerBloc>()..add(const InitializeDrawerData());
+    _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
   }
-
   @override
   void dispose() {
     _dashboardBloc.close();
@@ -109,9 +109,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
           bloc: _dashboardBloc,
           buildWhen: (previous, current) {
-            debugPrint(
-              "🔄 buildWhen: Previous State: $previous -> Current State: $current",
-            );
+
             return current is! DoctorAppointmentsNav &&
                 current is! PatientManagementNav &&
                 current is! DocAndAppPatientDetailsNavState;

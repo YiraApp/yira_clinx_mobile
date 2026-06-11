@@ -6,6 +6,8 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import '../colors/colors.dart';
 import '../common_size_helpers/common_size_helpers.dart';
 import '../common_widgets/common_text.dart';
+import '../custom_dialogue/custom_dialogue.dart';
+import '../custom_dialogue/sign_out_alert.dart';
 import 'model/nav_item_model.dart';
 import 'navigation_drawer-bloc/navigation_drawer_bloc.dart';
 
@@ -26,7 +28,6 @@ class AppNavigationDrawer extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, parentConstraints) {
-        // Calculate dynamic width parameters based on screen constraints
         final double targetWidth = isTab ? 360 : displayWidth(context) * 0.82;
 
         return Container(
@@ -44,13 +45,27 @@ class AppNavigationDrawer extends StatelessWidget {
           ),
           child: BlocConsumer<NavigationDrawerBloc, NavigationDrawerState>(
             buildWhen: (previous, current) =>
-                previous != current ||
-                current is! DashboardNavState ||
-                current is! AppointmentsNavState ||
-                current is! PatientsNavState ||
-                current is! DoctorSlotNavState ||
-                current is! SettingsNavState,
-            listener: (BuildContext context, NavigationDrawerState state) {
+            previous != current &&
+                current is! DashboardNavState &&
+                current is! AppointmentsNavState &&
+                current is! PatientsNavState &&
+                current is! DoctorSlotNavState &&
+                current is! SettingsNavState &&
+                current is! ReadAboutUsNavState &&
+                current is! ContactNavState &&
+                current is! PrivacyNavState &&
+                current is! LogoutNavState,
+            listenWhen: (context, current) =>
+            current is DashboardNavState ||
+                current is AppointmentsNavState ||
+                current is PatientsNavState ||
+                current is DoctorSlotNavState ||
+                current is SettingsNavState ||
+                current is ReadAboutUsNavState ||
+                current is ContactNavState ||
+                current is PrivacyNavState ||
+                current is LogoutNavState,
+            listener: (BuildContext context, NavigationDrawerState state) async {
               switch (state) {
                 case DashboardNavState():
                   Navigator.pop(context);
@@ -72,16 +87,59 @@ class AppNavigationDrawer extends StatelessWidget {
                   break;
                 case DoctorSlotNavState():
                   Navigator.pop(context);
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.slotDashboard,
-                  );
+                  Navigator.pushNamed(context, AppRoutes.slotDashboard);
                   break;
                 case SettingsNavState():
                   Navigator.pop(context);
                   Navigator.pushNamed(context, AppRoutes.settingsScreen);
                   break;
+                case ReadAboutUsNavState():
+                  Navigator.pop(context);
+                  CustomUrlDialog.customLauncherDialogue(
+                    context,
+                    'Read About Us',
+                    'Yira Clinx (ClinicX) is a next-generation, AI-powered clinic management platform designed to automate and optimize medical practice workflows. Reversing manual administration friction, the platform natively unifies intelligent appointment scheduling, paperless digital check-ins, automated clinical documentation, and smart post-visit summaries delivered seamlessly via WhatsApp, SMS, and Email to ensure peak clinic efficiency.',
+                    primaryColor,
+                    'https://yira.ai/yira-clinx/',
+                    'More',
+                    'assets/images/ic_read_abt_us.png',
+                  );
+                  break;
+                case ContactNavState():
+                  Navigator.pop(context);
+                  CustomUrlDialog.customContactLauncherDialogue(
+                    context,
+                    'Contact Us',
+                    'We\'re here to help! If you\'re experiencing any system downtime, sync anomalies, or need immediate assistance managing your patient queues and configurations, please reach out to our dedicated clinic support operations. Our team is ready to ensure a smooth, reliable digital practice environment for you and your staff. Feel free to contact us anytime...',
+                    primaryColor,
+                    'https://yira.ai/clinx-support',
+                    'More',
+                    'assets/images/ic_contact_img.png',
+                    isContactUs: true,
+                  );
+                  break;
+                case PrivacyNavState():
+                  Navigator.pop(context);
+                  CustomUrlDialog.customLauncherDialogue(
+                    context,
+                    'Privacy Policy',
+                    'We at Yira Clinx recognize that as a healthcare professional or practice administrator, the privacy of your operational workflows and your patients\' medical records is paramount. We take patient data protection, secure electronic health record (EHR) storage, and compliance with healthcare digital frameworks extremely seriously. We are committed to maintaining rigorous data access control, end-to-end transport encryptions, and robust architecture protocols to safeguard all confidential clinical assets handled on our systems...',
+                    primaryColor,
+                    'https://yira.ai/clinx-privacy',
+                    'More',
+                    'assets/images/ic_privacy_plc.png',
+                  );
+                  break;
+                case LogoutNavState():
+                  Navigator.pop(context);
+                  await SignOutAlert
+                      .showSignCustomDialog(
+                      context,
+                      primaryColor,
+                      );
+                  break;
                 default:
+                  break;
               }
             },
             builder: (context, state) {
@@ -91,9 +149,7 @@ class AppNavigationDrawer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(context, state, targetWidth, isTab),
-
                     SizedBox(height: targetWidth * 0.05),
-
                     Expanded(
                       child: ListView(
                         physics: const BouncingScrollPhysics(),
@@ -111,22 +167,34 @@ class AppNavigationDrawer extends StatelessWidget {
                                 switch (index) {
                                   case 0:
                                     context.read<NavigationDrawerBloc>().add(
-                                      DashBoardNav(),
+                                      const DashBoardNav(),
                                     );
                                     break;
                                   case 1:
                                     context.read<NavigationDrawerBloc>().add(
-                                      AppointmentsNav(),
+                                      const AppointmentsNav(),
                                     );
                                     break;
                                   case 2:
                                     context.read<NavigationDrawerBloc>().add(
-                                      PatientsNav(),
+                                      const PatientsNav(),
                                     );
                                     break;
                                   case 3:
                                     context.read<NavigationDrawerBloc>().add(
-                                      DoctorSlotsNav(),
+                                      const DoctorSlotsNav(),
+                                    );
+                                  case 4:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      const ReadAboutUsNavEvent(),
+                                    );
+                                  case 5:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      const ContactNavEvent(),
+                                    );
+                                  case 6:
+                                    context.read<NavigationDrawerBloc>().add(
+                                      const PrivacyNavEvent(),
                                     );
                                     break;
                                   default:
@@ -151,7 +219,7 @@ class AppNavigationDrawer extends StatelessWidget {
                             isSelected: state.selectedIndex == 7,
                             onTap: () => context
                                 .read<NavigationDrawerBloc>()
-                                .add(SettingsNav()),
+                                .add(const SettingsNav()),
                           ),
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -168,17 +236,16 @@ class AppNavigationDrawer extends StatelessWidget {
                             title: "Logout",
                             icon: Icons.logout_rounded,
                             isSelected: false,
-                            customColor: const Color(0xFFDC3545),
+                            customColor: Colors.red,
                             onTap: () {
                               context.read<NavigationDrawerBloc>().add(
-                                LogoutRequested(),
+                                const LogoutNavEvent(),
                               );
                             },
                           ),
                         ],
                       ),
                     ),
-
                     Padding(
                       padding: EdgeInsets.only(
                         left: targetWidth * 0.1,
@@ -186,10 +253,9 @@ class AppNavigationDrawer extends StatelessWidget {
                         top: 12,
                       ),
                       child: CommonText(
-                        "V1.0.0",
+                        state.appVersion,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          // Dynamic font size relative to drawer container box size
                           fontSize: targetWidth * (isTab ? 0.04 : 0.034),
                           color: isDark ? Colors.white38 : Colors.black38,
                           letterSpacing: 0.8,
@@ -208,11 +274,11 @@ class AppNavigationDrawer extends StatelessWidget {
   }
 
   Widget _buildHeader(
-    BuildContext context,
-    NavigationDrawerState state,
-    double currentDrawerWidth,
-    bool isTab,
-  ) {
+      BuildContext context,
+      NavigationDrawerState state,
+      double currentDrawerWidth,
+      bool isTab,
+      ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -252,7 +318,6 @@ class AppNavigationDrawer extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(2),
               child: CircleAvatar(
-                // Dynamic radius scaling relative to current container width bounds
                 radius: currentDrawerWidth * 0.115,
                 backgroundColor: isDark
                     ? const Color(0xFF232733)
@@ -262,17 +327,15 @@ class AppNavigationDrawer extends StatelessWidget {
                     : null,
                 child: state.profileImageUrl == null
                     ? Icon(
-                        Icons.person_rounded,
-                        size: currentDrawerWidth * 0.115,
-                        color: theme.primaryColor.withOpacity(0.7),
-                      )
+                  Icons.person_rounded,
+                  size: currentDrawerWidth * 0.115,
+                  color: theme.primaryColor.withOpacity(0.7),
+                )
                     : null,
               ),
             ),
           ),
           SizedBox(height: currentDrawerWidth * 0.06),
-
-          // Dynamic Header Name Typography
           CommonText(
             state.doctorName,
             style: TextStyle(
@@ -284,8 +347,6 @@ class AppNavigationDrawer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-
-          // Dynamic Header Description Subtext Typography
           CommonText(
             state.doctorRole,
             style: TextStyle(

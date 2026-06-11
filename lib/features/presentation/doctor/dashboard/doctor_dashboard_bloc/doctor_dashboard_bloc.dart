@@ -3,6 +3,8 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 
+import '../../../../../core/local/flutter_secure_storage.dart';
+import '../../../../../core/use_cases/package_use_case.dart';
 import '../../../../domain/entities/appointments/appointment_entity.dart';
 
 part 'doctor_dashboard_event.dart';
@@ -10,56 +12,69 @@ part 'doctor_dashboard_state.dart';
 
 class DoctorDashboardBloc
     extends Bloc<DoctorDashboardEvent, DoctorDashboardState> {
-  DoctorDashboardBloc() : super(const DoctorDashboardInitial()) {
+  final GetAppVersionInfoUseCase _getAppVersionInfoUseCase;
+  final SecureStorageService _secureStorageService;
+  DoctorDashboardBloc({required GetAppVersionInfoUseCase getAppVersionInfoUseCase, required SecureStorageService secureStorageService}) : _getAppVersionInfoUseCase = getAppVersionInfoUseCase, _secureStorageService = secureStorageService, super(const DoctorDashboardInitial()) {
 
     on<FetchDoctorDashboardData>((event, emit) async {
-      emit(const DoctorDashboardLoading());
+      try{
+        final versionEntity = await _getAppVersionInfoUseCase();
+        await _secureStorageService.writeSecureValue<String>(
+          SecureCacheKey.appVersionInfo,
+          versionEntity.displayVersion,
+        );
+        emit(const DoctorDashboardLoading());
 
-      await Future.delayed(const Duration(milliseconds: 600));
+        await Future.delayed(const Duration(milliseconds: 600));
 
-      final List<AppointmentEntity> mockToday = [
-        const AppointmentEntity(
-          id: '1',
-          patientName: 'Sarah Jenkins',
-          type: AppointmentType.videoCall,
-          reason: 'Follow-up Consultation',
-          appointmentTime: '09:30 AM',
-        ),
-        const AppointmentEntity(
-          id: '2',
-          patientName: 'Michael Chen',
-          type: AppointmentType.inClinic,
-          reason: 'Annual Health Checkup',
-          appointmentTime: '10:15 AM',
-        ),
-      ];
+        final List<AppointmentEntity> mockToday = [
+          const AppointmentEntity(
+            id: '1',
+            patientName: 'Sarah Jenkins',
+            type: AppointmentType.videoCall,
+            reason: 'Follow-up Consultation',
+            appointmentTime: '09:30 AM',
+          ),
+          const AppointmentEntity(
+            id: '2',
+            patientName: 'Michael Chen',
+            type: AppointmentType.inClinic,
+            reason: 'Annual Health Checkup',
+            appointmentTime: '10:15 AM',
+          ),
+        ];
 
-      final List<AppointmentEntity> mockRecent = [
-        const AppointmentEntity(
-          id: '101',
-          patientName: 'Mani Jay',
-          type: AppointmentType.inClinic,
-          diagnosis: 'Acute Migraine headaches',
-          appointmentDate: '19/5/2026',
-        ),
-        const AppointmentEntity(
-          id: '102',
-          patientName: 'Anil Kumar',
-          type: AppointmentType.inClinic,
-          diagnosis: 'Common Cold & Nasal Congestion',
-          appointmentDate: '18/5/2026',
-        ),
-      ];
+        final List<AppointmentEntity> mockRecent = [
+          const AppointmentEntity(
+            id: '101',
+            patientName: 'Mani Jay',
+            type: AppointmentType.inClinic,
+            diagnosis: 'Acute Migraine headaches',
+            appointmentDate: '19/5/2026',
+          ),
+          const AppointmentEntity(
+            id: '102',
+            patientName: 'Anil Kumar',
+            type: AppointmentType.inClinic,
+            diagnosis: 'Common Cold & Nasal Congestion',
+            appointmentDate: '18/5/2026',
+          ),
+        ];
 
-      emit(
-        DoctorDashboardLoaded(
-          todaysAppointments: mockToday,
-          recentPatients: mockRecent,
-        ),
-      );
+        emit(
+          DoctorDashboardLoaded(
+            todaysAppointments: mockToday,
+            recentPatients: mockRecent,
+          ),
+        );
+      }catch(e){
+        emit(
+          DoctorDashboardError(message: e.toString())
+        );
+      }
+
     });
 
-    // --- PRODUCTION NAVIGATION RESETS: Yields nav, then restores previous state dataset immediately ---
     on<ViewCalendarEvent>((event, emit) {
       final cachedState = state;
       emit(DoctorAppointmentsNav());
@@ -99,9 +114,8 @@ class DoctorDashboardBloc
           "valid_till": null
         },
         "notes": [
-          {"doctor": "Dr. bhargav c", "date": "Jun 05", "text": "sdfdsmnfdslkfds"},
-          {"doctor": "Dr. bhargav c", "date": "Jun 05", "text": "ljfsajnfkfsdfds"},
-          {"doctor": "Dr. bhargav c", "date": "Jun 04", "text": "hello"}
+          {"doctor": "Dr. Raja Nagalingam", "date": "Jun 05", "text": "Daily go for a walk"},
+          {"doctor": "Dr. Raja Nagalingam", "date": "Jun 05", "text": "Do gym on alternative days"},
         ]
       };
 

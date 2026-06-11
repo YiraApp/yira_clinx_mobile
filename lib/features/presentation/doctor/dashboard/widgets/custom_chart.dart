@@ -57,8 +57,6 @@ class CustomBarChart extends StatelessWidget {
       fontSize: isTab ? displayWidth(context) * 0.012 : displayWidth(context) * 0.020,
       color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
     );
-
-    // Dynamic style for the values displayed on top of the graph peaks
     final dataLabelTextStyle = TextStyle(
       fontFamily: fontFamily,
       fontSize: isTab ? displayWidth(context) * 0.011 : displayWidth(context) * 0.025,

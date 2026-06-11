@@ -60,6 +60,7 @@ dependencies:
   custom_pop_up_menu: ^1.2.4
   flutter_speed_dial: ^7.0.0
   syncfusion_flutter_charts: ^33.2.12
+  flutter_secure_storage: ^10.3.1
 
 
 dev_dependencies:

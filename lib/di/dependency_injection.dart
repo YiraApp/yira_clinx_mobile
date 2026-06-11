@@ -11,22 +11,24 @@ import 'package:yiraclinics/features/presentation/settings/change_password_bloc/
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/test_result_bloc.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
-// Core
+
+import '../core/local/flutter_secure_storage.dart';
 import '../core/local/shared_preferences.dart';
-// Medication Feature
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
 import 'package:yiraclinics/features/data/repository_impl/medication/medication_repo_impl.dart';
-// Other Features
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 
+import '../core/package/data/package_info_impl.dart';
+import '../core/package/domain/package_repo.dart';
+import '../core/use_cases/package_use_case.dart';
 import '../features/data/data_sources/theme_local_data_source.dart';
 import '../features/data/repository_impl/app_theme/theme_repo_impl.dart';
 import '../features/data/repository_impl/medicine/medical_histoy_repo_impl.dart';
 import '../features/data/repository_impl/patient_profile_repo_impl/patient_profile_repo_impl.dart';
 import '../features/data/repository_impl/prescriptions/prescriptions_repo_impl.dart';
-import '../features/data/repository_impl/slot_impl/slot_scheduler_repo_impl.dart'; // Ensure this points to SlotRepositoryImpl
+import '../features/data/repository_impl/slot_impl/slot_scheduler_repo_impl.dart';
 import '../features/data/repository_impl/slot_repo_impl/slot_repo_impl.dart';
 import '../features/data/repository_impl/upload_record_repo_impl/upload_record_impl_repo.dart';
 import '../features/domain/repositories/app_theme/theme_repos.dart';
@@ -34,7 +36,7 @@ import '../features/domain/repositories/medicine/medical_history_repo.dart';
 import '../features/domain/repositories/patient_profile/patient_profile_repo.dart';
 import '../features/domain/repositories/prescritpions/prescriptions_repo.dart';
 import '../features/domain/repositories/slot/scheduler_repo.dart';
-import '../features/domain/repositories/slot/slot_repo.dart'; // 🚀 UPDATED: Pointing to the new slot_repo interface
+import '../features/domain/repositories/slot/slot_repo.dart';
 import '../features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import '../features/presentation/auth/work_space/work_space_bloc/work_space_bloc.dart';
 import '../features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
@@ -57,10 +59,11 @@ Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => SharedPrefsService(sl<SharedPreferences>()));
-
+  sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
   // ==========================================
   // 1. Repositories
   // ==========================================
+  sl.registerLazySingleton<PackageRepo>(() => const PackageRepoImpl());
   sl.registerLazySingleton<PatientRepository>(() => PatientRepositoryImpl());
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl());
   sl.registerLazySingleton<MedicalHistoryRepository>(() => MedicalHistoryRepositoryImpl());
@@ -74,6 +77,7 @@ Future<void> init() async {
   // ==========================================
   // 2. Use Cases
   // ==========================================
+  sl.registerLazySingleton<GetAppVersionInfoUseCase>(() => GetAppVersionInfoUseCase(sl<PackageRepo>()));
   sl.registerLazySingleton(() => GetPrescriptionUseCase(sl<MedicationRepository>()));
   sl.registerLazySingleton(() => GetThemeUseCase(sl<ThemeRepository>()));
   sl.registerLazySingleton(() => CacheThemeUseCase(sl<ThemeRepository>()));
@@ -99,9 +103,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => WorkspaceBloc());
   sl.registerFactory(() => AppointmentBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
-  sl.registerLazySingleton(() => NavigationDrawerBloc());
+  sl.registerLazySingleton<NavigationDrawerBloc>(
+        () => NavigationDrawerBloc(sl<SecureStorageService>()),
+  );
   sl.registerLazySingleton(() => MedicalRecordBloc());
-  sl.registerLazySingleton(() => DoctorDashboardBloc());
+  sl.registerFactory(() => DoctorDashboardBloc( getAppVersionInfoUseCase: sl<GetAppVersionInfoUseCase>(), secureStorageService: sl<SecureStorageService>()));
   sl.registerLazySingleton(() => PatientProfileBloc(repository: sl()));
   sl.registerFactory(
         () => MedicalHistoryBloc(
