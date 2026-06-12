@@ -86,7 +86,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * (isTab ? 0.022 : 0.035),
+                            fontSize: displayWidth(context) * (isTab ? 0.02 : 0.035),
                             fontWeight: FontWeight.w600,
                             color: isDark ? Colors.white : adaptiveTextColor,
                           ),

@@ -532,7 +532,7 @@ final bool isTab = isTablet(context);
                       'This slot will be marked unavailable for external patient booking sessions.',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.030,
+                        fontSize: isTab?displayWidth(context) * 0.018:displayWidth(context) * 0.030,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.white70 : const Color(0xFF991B1B),
                       ),
@@ -560,7 +560,7 @@ final bool isTab = isTablet(context);
                 'Block This Slot',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: displayWidth(context) * 0.035,
+                  fontSize:isTab?  displayWidth(context) * 0.022: displayWidth(context) * 0.035,
                   fontFamily: appPoppinFont,
                   letterSpacing: 0.5,
                 ),

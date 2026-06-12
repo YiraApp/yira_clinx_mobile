@@ -337,7 +337,7 @@ class AppNavigationDrawer extends StatelessWidget {
           ),
           SizedBox(height: currentDrawerWidth * 0.06),
           CommonText(
-            state.doctorName,
+            'Dr. Rajesh Nagalingam',
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: currentDrawerWidth * (isTab ? 0.052 : 0.05),
@@ -348,7 +348,7 @@ class AppNavigationDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           CommonText(
-            state.doctorRole,
+            "Senior Dentist",
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: currentDrawerWidth * (isTab ? 0.042 : 0.038),

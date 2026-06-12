@@ -6,6 +6,7 @@ import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart'
 import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/use_case/role_use_case.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
+import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/change_password_bloc/change_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
@@ -118,6 +119,7 @@ Future<void> init() async {
   sl.registerFactory(() => UploadedBloc(repository: sl<RecordsRepository>()));
   sl.registerLazySingleton(() => RoleBloc(selectRoleUseCase: SelectRoleUseCase()));
   sl.registerLazySingleton(() => CloseAccountBloc());
+  sl.registerLazySingleton(() => ForgotPasswordBloc());
 
   sl.registerLazySingleton(
         () => SlotBloc(

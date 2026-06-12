@@ -52,6 +52,9 @@ class SignInScreen extends StatelessWidget {
               Navigator.pushNamed(context, AppRoutes.selectRoleScreen);
 
               break;
+              case NavForgotPasswordState():
+              Navigator.pushNamed(context, AppRoutes.forgotPassword);
+              break;
 
             default:
               break;
@@ -422,15 +425,47 @@ class SignInScreen extends StatelessWidget {
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 30),
-          CustomElevatedButton(
-            noElevation: true,
-            height: 50,
-            width: double.infinity,
-            text: "Sign In",
-            onPressed: () {
-              context.read<SignInBloc>().add(NavSelectRole());
-            },
+          Column(
+            crossAxisAlignment: .end,
+            children: [
+              CustomElevatedButton(
+                noElevation: true,
+                height: 50,
+                width: double.infinity,
+                text: "Sign In",
+                onPressed: () {
+                  context.read<SignInBloc>().add(NavSelectRole());
+                },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () {
+                  context.read<SignInBloc>().add(
+                    NavForgotPasswordEvent(),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize
+                      .shrinkWrap,
+                ),
+                child: Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize:
+                    refWidth *
+                        (isTab
+                            ? 0.026
+                            : 0.035),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
+            ],
           ),
+
         ],
       ),
     );

@@ -27,6 +27,9 @@ class NavSignIn extends SignInEvent {
 class NavSignUp extends SignInEvent {
   const NavSignUp();
 }
+class NavForgotPasswordEvent extends SignInEvent {
+  const NavForgotPasswordEvent();
+}
 class NavSelectRole extends SignInEvent {
   const NavSelectRole();
 }

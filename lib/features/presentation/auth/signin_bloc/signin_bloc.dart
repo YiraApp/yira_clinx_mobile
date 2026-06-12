@@ -8,7 +8,7 @@ part 'signin_state.dart';
 
 class SignInBloc extends Bloc<SignInEvent, SignInState> {
   Timer? _timer;
-  static const int _countdownDuration = 30; // Resend window in seconds
+  static const int _countdownDuration = 30;
 
   SignInBloc() : super(SignInInitial()) {
     on<OnVerifyAndLogin>(_onVerifyAndLogin);
@@ -21,6 +21,9 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     });
     on<NavSelectRoleVerifyOtp>((event, emit) {
       emit(NavigateToSelectRoleVerifyOtp());
+    });
+    on<NavForgotPasswordEvent>((event, emit) {
+      emit(NavForgotPasswordState());
     });
     on<NavSelectRoleSignUp>((event, emit) {
       emit(NavigateToSelectRoleSignUp());

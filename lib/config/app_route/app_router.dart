@@ -18,6 +18,8 @@ import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
+import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_details_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
@@ -327,6 +329,13 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<DoctorDashboardBloc>(),
             child: DashboardPatientDetailsScreen(),
+          ),
+        );
+      case AppRoutes.forgotPassword:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<ForgotPasswordBloc>(),
+            child: ForgotPasswordScreen(),
           ),
         );
       //appointmentDetails

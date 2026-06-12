@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/config/app_route/app_router.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
+import '../../config/app_route/app_routes.dart';
 import '../../di/dependency_injection.dart';
 import '../local/flutter_secure_storage.dart';
 
@@ -156,7 +158,7 @@ class SignOutAlert {
                                       await sl<SecureStorageService>().clearAllSecureData();
                                       if (context.mounted) {
                                         Navigator.of(context).pushNamedAndRemoveUntil(
-                                          '/login',
+                                          AppRoutes.signIn,
                                               (route) => false,
                                         );
                                       }

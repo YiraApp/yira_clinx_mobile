@@ -20,7 +20,9 @@ class NavigateToSelectRole extends SignInState {}
 class NavigateToSelectRoleSignUp extends SignInState {}
 class NavigateToSelectRoleVerifyOtp extends SignInState {}
 class NavigateToSelectWorkSpace extends SignInState {}
-
+class NavForgotPasswordState extends SignInState {
+  const NavForgotPasswordState();
+}
 class SignInError extends SignInState {
   final String errorMessage;
 
