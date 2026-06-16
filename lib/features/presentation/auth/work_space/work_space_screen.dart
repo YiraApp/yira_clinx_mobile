@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/auth/work_space/widgets/organization_card.dart';
@@ -58,11 +59,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        currentIsInApp ? Icons.admin_panel_settings_rounded : Icons.health_and_safety, // Conveys secure access management
+                      currentIsInApp ?   Icon(
+                        Icons.admin_panel_settings_rounded,
                         color: primaryColor,
                         size: isTab ? 65 : 55,
+                      ): ClipRRect(
+                        borderRadius: BorderRadius.circular(12.0),
+                        child: SvgPicture.asset(
+                          'assets/images/svgs/ic_apps_logo.svg',
+                          width: isTab ? 65 : 60,
+                          height: isTab ? 65 : 60,
+                        ),
                       ),
+
                       const SizedBox(height: 14),
                       currentIsInApp
                           ? CommonText(

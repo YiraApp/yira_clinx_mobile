@@ -83,7 +83,15 @@ class _SplashScreenState extends State<SplashScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset('assets/images/ic_splash_logo.svg'),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12.0),
+                          child: SvgPicture.asset(
+                            'assets/images/svgs/ic_apps_logo.svg',
+                            width: isTab ? 65 : 60,
+                            height: isTab ? 65 : 60,
+                          ),
+                        ),
+                        // SvgPicture.asset('assets/images/ic_splash_logo.svg'),
                         SizedBox(height: 10),
                         CommonText(
                           projectTitle,
@@ -161,7 +169,15 @@ class _SplashScreenState extends State<SplashScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset('assets/images/ic_splash_logo.svg'),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12.0),
+                          child: SvgPicture.asset(
+                            'assets/images/svgs/ic_apps_logo.svg',
+                            width:  70,
+                            height:  70,
+                          ),
+                        ),
+                        // SvgPicture.asset('assets/images/ic_splash_logo.svg'),
                         SizedBox(height: 10),
                         CommonText(
                           projectTitle,

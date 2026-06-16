@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
@@ -86,13 +87,20 @@ class VerifyOtpScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   SizedBox(height: screenHeight * 0.02),
-
-                                  // 1. Branding Header Icon
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    child: SvgPicture.asset(
+                                      'assets/images/svgs/ic_apps_logo.svg',
+                                      width: isTab ? 65 : 60,
+                                      height: isTab ? 65 : 60,
+                                    ),
+                                  ),
+                                  /*// 1. Branding Header Icon
                                   Icon(
                                     Icons.health_and_safety,
                                     color: primaryColor,
                                     size: isTab ? referenceWidth * 0.16 : 65,
-                                  ),
+                                  ),*/
                                   SizedBox(height: screenHeight * 0.03),
 
                                   // 2. Title Text

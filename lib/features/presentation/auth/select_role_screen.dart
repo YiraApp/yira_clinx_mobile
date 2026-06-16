@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -318,11 +319,19 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  child: SvgPicture.asset(
+                                    'assets/images/svgs/ic_apps_logo.svg',
+                                    width: isTab ? 65 : 60,
+                                    height: isTab ? 65 : 60,
+                                  ),
+                                ),
+                                /*Icon(
                                   Icons.health_and_safety,
                                   color: primaryColor,
                                   size: 65,
-                                ),
+                                ),*/
                                 SizedBox(height: 10),
                                 CommonText(
                                   'Select Your Role',

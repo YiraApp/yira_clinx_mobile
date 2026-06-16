@@ -2,6 +2,7 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -52,7 +53,7 @@ class SignInScreen extends StatelessWidget {
               Navigator.pushNamed(context, AppRoutes.selectRoleScreen);
 
               break;
-              case NavForgotPasswordState():
+            case NavForgotPasswordState():
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
               break;
 
@@ -84,12 +85,20 @@ class SignInScreen extends StatelessWidget {
                         physics: const BouncingScrollPhysics(),
                         child: Column(
                           children: [
-                            Icon(
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: SvgPicture.asset(
+                                'assets/images/svgs/ic_apps_logo.svg',
+                                width: isTabletDevice ? 65 : 60,
+                                height: isTabletDevice ? 65 : 60,
+                              ),
+                            ),
+                            /*Icon(
                               Icons.health_and_safety,
                               color: primaryColor,
                               size: isTabletDevice ? 75 : 65,
-                            ),
-                            const SizedBox(height: 10),
+                            ),*/
+                            const SizedBox(height: 20),
 
                             CommonText(
                               'Welcome Back',
@@ -440,32 +449,24 @@ class SignInScreen extends StatelessWidget {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-                  context.read<SignInBloc>().add(
-                    NavForgotPasswordEvent(),
-                  );
+                  context.read<SignInBloc>().add(NavForgotPasswordEvent());
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize
-                      .shrinkWrap,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
                   'Forgot password?',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize:
-                    refWidth *
-                        (isTab
-                            ? 0.026
-                            : 0.035),
+                    fontSize: refWidth * (isTab ? 0.026 : 0.035),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              )
+              ),
             ],
           ),
-
         ],
       ),
     );

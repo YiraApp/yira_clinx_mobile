@@ -2,6 +2,7 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
@@ -87,11 +88,19 @@ class SignupScreen extends StatelessWidget {
                       builder: (context, state) {
                         return Column(
                           children: [
-                            Icon(
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: SvgPicture.asset(
+                                'assets/images/svgs/ic_apps_logo.svg',
+                                width: isTab ? 65 : 60,
+                                height: isTab ? 65 : 60,
+                              ),
+                            ),
+                            /*Icon(
                               Icons.health_and_safety,
                               color: primaryColor,
                               size: isTab ? 75 : 65,
-                            ),
+                            ),*/
                             const SizedBox(height: 10),
 
                             CommonText(
