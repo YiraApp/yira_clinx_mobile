@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
@@ -23,6 +24,10 @@ import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_b
 
 import '../core/package/data/package_info_impl.dart';
 import '../core/package/domain/package_repo.dart';
+import '../core/services/network_services/data/network_repo_impl/network_repo_impl.dart';
+import '../core/services/network_services/domain/neetwork_repo/network_repo.dart';
+import '../core/services/network_services/network_bloc/network_bloc.dart';
+import '../core/services/network_services/network_remote_data_source/network_remote_data_source.dart';
 import '../core/use_cases/package_use_case.dart';
 import '../features/data/data_sources/theme_local_data_source.dart';
 import '../features/data/repository_impl/app_theme/theme_repo_impl.dart';
@@ -58,12 +63,19 @@ final sl = GetIt.instance;
 Future<void> init() async {
   // External Dependencies
   final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerLazySingleton(() => InternetConnection());
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => SharedPrefsService(sl<SharedPreferences>()));
   sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
   // ==========================================
   // 1. Repositories
   // ==========================================
+  sl.registerLazySingleton<NetworkRemoteDataSource>(
+        () => NetworkRemoteDataSourceImpl(sl<InternetConnection>()),
+  );
+  sl.registerLazySingleton<NetworkRepository>(
+        () => NetworkRepositoryImpl(remoteDataSource: sl<NetworkRemoteDataSource>()),
+  );
   sl.registerLazySingleton<PackageRepo>(() => const PackageRepoImpl());
   sl.registerLazySingleton<PatientRepository>(() => PatientRepositoryImpl());
   sl.registerLazySingleton<MedicationRepository>(() => MedicationRepositoryImpl());
@@ -75,6 +87,7 @@ Future<void> init() async {
   sl.registerLazySingleton<SlotRepository>(() => const SlotRepositoryImpl());
   sl.registerLazySingleton<SchedulerRepository>(() =>  SchedulerRepositoryImpl());
   sl.registerLazySingleton<PrescriptionRepository>(() => PrescriptionRepositoryImpl());
+
   // ==========================================
   // 2. Use Cases
   // ==========================================
@@ -88,6 +101,8 @@ Future<void> init() async {
   // ==========================================
   // 3. Blocs
   // ==========================================
+  sl.registerLazySingleton(() => NetworkBloc(networkRepository: sl<NetworkRepository>()));
+
   sl.registerFactory(() => MedicationBloc(getMedicationSummary: sl<GetPrescriptionUseCase>()));
   sl.registerLazySingleton(() => SignInBloc());
   sl.registerLazySingleton(

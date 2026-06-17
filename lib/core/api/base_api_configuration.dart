@@ -9,13 +9,11 @@ class EnvironmentService {
           accountBaseUrl: "yiraapi.azurewebsites.net",
           healthCampBaseUrl: "yiraapi.azurewebsites.net",
         );
-
       case Environment.qa:
         return const EnvironmentConfig(
           accountBaseUrl: "yiraapi.azurewebsites.net",
           healthCampBaseUrl: "yiraapi.azurewebsites.net",
         );
-
       case Environment.production:
         return const EnvironmentConfig(
           accountBaseUrl: "yiraapi.azurewebsites.net",

@@ -6,6 +6,7 @@ import 'config/app_route/app_router.dart';
 import 'config/app_route/app_routes.dart';
 import 'config/app_theme/app_theme.dart';
 import 'core/global_scaffold_key/global_scaffold_key.dart';
+import 'core/services/network_services/network_bloc/network_bloc.dart';
 import 'features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 
 // Theme Imports
@@ -24,6 +25,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<NetworkBloc>(
+          create: (context) => sl<NetworkBloc>(),
+        ),
         BlocProvider<OnBoardingBloc>(create: (_) => sl<OnBoardingBloc>()),
         BlocProvider<ThemeBloc>(create: (_) => sl<ThemeBloc>()..add(LoadThemeEvent())),
       ],
