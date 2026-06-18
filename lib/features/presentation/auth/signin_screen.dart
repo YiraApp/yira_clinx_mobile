@@ -63,170 +63,193 @@ class SignInScreen extends StatelessWidget {
           }
         },
         builder: (context, state) {
-          return InternetGuard(
-            child: Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              appBar: PreferredSize(
-                preferredSize: Size.fromHeight(isTabletDevice ? 40.0 : 20.0),
-                child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-              ),
-              body: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: isTabletDevice ? 550 : double.infinity,
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final double referenceWidth = isTabletDevice
-                          ? constraints.maxWidth
-                          : screenWidth;
-            
-                      return SizedBox(
-                        width: double.infinity,
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12.0),
-                                child: SvgPicture.asset(
-                                  'assets/images/svgs/ic_apps_logo.svg',
-                                  width: isTabletDevice ? 65 : 60,
-                                  height: isTabletDevice ? 65 : 60,
-                                ),
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(isTabletDevice ? 40.0 : 20.0),
+              child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+            ),
+            body: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTabletDevice ? 550 : double.infinity,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double referenceWidth = isTabletDevice
+                        ? constraints.maxWidth
+                        : screenWidth;
+
+                    return SizedBox(
+                      width: double.infinity,
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: SvgPicture.asset(
+                                'assets/images/svgs/ic_apps_logo.svg',
+                                width: isTabletDevice ? 65 : 60,
+                                height: isTabletDevice ? 65 : 60,
                               ),
-                              /*Icon(
-                                Icons.health_and_safety,
-                                color: primaryColor,
-                                size: isTabletDevice ? 75 : 65,
-                              ),*/
-                              const SizedBox(height: 20),
-            
-                              CommonText(
-                                'Welcome Back',
+                            ),
+                            /*Icon(
+                              Icons.health_and_safety,
+                              color: primaryColor,
+                              size: isTabletDevice ? 75 : 65,
+                            ),*/
+                            const SizedBox(height: 20),
+
+                            CommonText(
+                              'Welcome Back',
+                              style: TextStyle(
+                                fontSize:
+                                    referenceWidth *
+                                    (isTabletDevice ? 0.055 : 0.065),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: appPoppinFont,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: CommonText(
+                                'Secure access to your professional dashboard.',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize:
                                       referenceWidth *
-                                      (isTabletDevice ? 0.055 : 0.065),
-                                  fontWeight: FontWeight.w600,
+                                      (isTabletDevice ? 0.026 : 0.03),
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: appPoppinFont,
+                                  color: isDarkMode
+                                      ? Colors.white60
+                                      : Colors.grey.shade600,
                                 ),
                               ),
-                              Padding(
+                            ),
+
+                            SizedBox(height: isTabletDevice ? 40 : 30),
+
+                            DefaultTabController(
+                              length: 2,
+                              initialIndex: 0,
+                              child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
+                                  horizontal: 16,
                                 ),
-                                child: CommonText(
-                                  'Secure access to your professional dashboard.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize:
-                                        referenceWidth *
-                                        (isTabletDevice ? 0.026 : 0.03),
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: appPoppinFont,
-                                    color: isDarkMode
-                                        ? Colors.white60
-                                        : Colors.grey.shade600,
-                                  ),
-                                ),
-                              ),
-            
-                              SizedBox(height: isTabletDevice ? 40 : 30),
-            
-                              DefaultTabController(
-                                length: 2,
-                                initialIndex: 0,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      Container(
-                                        margin: EdgeInsets.symmetric(
-                                          horizontal: isTabletDevice
-                                              ? screenHorizontalSpacePadding
-                                              : (screenHorizontalSpacePadding /
-                                                    2),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: <Widget>[
+                                    Container(
+                                      margin: EdgeInsets.symmetric(
+                                        horizontal: isTabletDevice
+                                            ? screenHorizontalSpacePadding
+                                            : (screenHorizontalSpacePadding /
+                                                  2),
+                                      ),
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: isDarkMode
+                                            ? darkModeCardColor.withOpacity(0.9)
+                                            : filedBg,
+                                        borderRadius: BorderRadius.circular(
+                                          fieldBorderRadius * 5,
                                         ),
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          color: isDarkMode
-                                              ? darkModeCardColor.withOpacity(0.9)
-                                              : filedBg,
-                                          borderRadius: BorderRadius.circular(
-                                            fieldBorderRadius * 5,
-                                          ),
+                                      ),
+                                      child: TabBar(
+                                        overlayColor: WidgetStateProperty.all(
+                                          Colors.transparent,
                                         ),
-                                        child: TabBar(
-                                          overlayColor: WidgetStateProperty.all(
-                                            Colors.transparent,
+                                        indicatorSize: TabBarIndicatorSize.tab,
+                                        dividerColor: Colors.transparent,
+                                        indicatorColor: Colors.transparent,
+                                        labelColor: isDarkMode
+                                            ? Colors.black
+                                            : primaryColor,
+                                        labelStyle: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: appPoppinFont,
+                                          fontSize:
+                                              referenceWidth *
+                                              (isTabletDevice ? 0.028 : 0.035),
+                                        ),
+                                        unselectedLabelColor: isDarkMode
+                                            ? Colors.white60
+                                            : Colors.grey.shade600,
+                                        indicator: RectangularIndicator(
+                                          bottomLeftRadius:
+                                              fieldBorderRadius * 5,
+                                          bottomRightRadius:
+                                              fieldBorderRadius * 5,
+                                          topLeftRadius: fieldBorderRadius * 5,
+                                          topRightRadius: fieldBorderRadius * 5,
+                                          color: Colors.white,
+                                          horizontalPadding: 4,
+                                          verticalPadding: 4,
+                                        ),
+                                        tabs: const [
+                                          Tab(text: "Mobile Login"),
+                                          Tab(text: "Email Login"),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(height: isTabletDevice ? 40 : 30),
+                                    SizedBox(
+                                      height: isTabletDevice
+                                          ? screenHeight * 0.28
+                                          : screenHeight * 0.45,
+                                      child: TabBarView(
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        children: [
+                                          _buildMobileForm(
+                                            context,
+                                            isDarkMode,
+                                            isTabletDevice,
+                                            referenceWidth,
                                           ),
-                                          indicatorSize: TabBarIndicatorSize.tab,
-                                          dividerColor: Colors.transparent,
-                                          indicatorColor: Colors.transparent,
-                                          labelColor: isDarkMode
-                                              ? Colors.black
-                                              : primaryColor,
-                                          labelStyle: TextStyle(
-                                            fontWeight: FontWeight.w600,
+                                          _buildEmailForm(
+                                            context,
+                                            isTabletDevice,
+                                            referenceWidth,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        CommonText(
+                                          "Don't you have account? ",
+                                          style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize:
                                                 referenceWidth *
-                                                (isTabletDevice ? 0.028 : 0.035),
+                                                (isTabletDevice
+                                                    ? 0.026
+                                                    : 0.035),
+                                            fontWeight: FontWeight.w400,
                                           ),
-                                          unselectedLabelColor: isDarkMode
-                                              ? Colors.white60
-                                              : Colors.grey.shade600,
-                                          indicator: RectangularIndicator(
-                                            bottomLeftRadius:
-                                                fieldBorderRadius * 5,
-                                            bottomRightRadius:
-                                                fieldBorderRadius * 5,
-                                            topLeftRadius: fieldBorderRadius * 5,
-                                            topRightRadius: fieldBorderRadius * 5,
-                                            color: Colors.white,
-                                            horizontalPadding: 4,
-                                            verticalPadding: 4,
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            context.read<SignInBloc>().add(
+                                              NavSignUp(),
+                                            );
+                                          },
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
                                           ),
-                                          tabs: const [
-                                            Tab(text: "Mobile Login"),
-                                            Tab(text: "Email Login"),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(height: isTabletDevice ? 40 : 30),
-                                      SizedBox(
-                                        height: isTabletDevice
-                                            ? screenHeight * 0.28
-                                            : screenHeight * 0.45,
-                                        child: TabBarView(
-                                          physics:
-                                              const NeverScrollableScrollPhysics(),
-                                          children: [
-                                            _buildMobileForm(
-                                              context,
-                                              isDarkMode,
-                                              isTabletDevice,
-                                              referenceWidth,
-                                            ),
-                                            _buildEmailForm(
-                                              context,
-                                              isTabletDevice,
-                                              referenceWidth,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-            
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          CommonText(
-                                            "Don't you have account? ",
+                                          child: Text(
+                                            'Sign Up',
                                             style: TextStyle(
                                               fontFamily: appPoppinFont,
                                               fontSize:
@@ -234,47 +257,22 @@ class SignInScreen extends StatelessWidget {
                                                   (isTabletDevice
                                                       ? 0.026
                                                       : 0.035),
-                                              fontWeight: FontWeight.w400,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          TextButton(
-                                            onPressed: () {
-                                              context.read<SignInBloc>().add(
-                                                NavSignUp(),
-                                              );
-                                            },
-                                            style: TextButton.styleFrom(
-                                              padding: EdgeInsets.zero,
-                                              minimumSize: Size.zero,
-                                              tapTargetSize: MaterialTapTargetSize
-                                                  .shrinkWrap,
-                                            ),
-                                            child: Text(
-                                              'Sign Up',
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize:
-                                                    referenceWidth *
-                                                    (isTabletDevice
-                                                        ? 0.026
-                                                        : 0.035),
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20),
-                                    ],
-                                  ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

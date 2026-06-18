@@ -1,4 +1,3 @@
-// presentation/widgets/internet_guard.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,20 +19,22 @@ class InternetGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.ltr,
-      child: Stack(
-        children: [
-          if (child != null) child!,
-
-          BlocBuilder<NetworkBloc, NetworkState>(
-            buildWhen: (previous, current) => previous.status != current.status,
-            builder: (context, state) {
-              if (state.status == NetworkStatus.offline) {
-                return const _PremiumOfflineOverlay();
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+      child: Material(
+        type: MaterialType.transparency,
+        child: Stack(
+          children: [
+            if (child != null) child!,
+            BlocBuilder<NetworkBloc, NetworkState>(
+              buildWhen: (previous, current) => previous.status != current.status,
+              builder: (context, state) {
+                if (state.status == NetworkStatus.offline) {
+                  return const _PremiumOfflineOverlay();
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -47,7 +48,6 @@ class _PremiumOfflineOverlay extends StatelessWidget {
     final double screenWidth = displayWidth(context);
     final bool isTabletDevice = isTablet(context);
 
-    // Theme-Aware Configurations
     final ThemeData theme = Theme.of(context);
     final bool isDarkMode = theme.brightness == Brightness.dark;
 
@@ -90,7 +90,7 @@ class _PremiumOfflineOverlay extends StatelessWidget {
         child: Container(
           color: isDarkMode ? Colors.black.withOpacity(0.35) : Colors.black.withOpacity(0.12),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0), // Restored subtle glass factor
+            filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0),
             child: Center(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -100,12 +100,10 @@ class _PremiumOfflineOverlay extends StatelessWidget {
                   vertical: cardPaddingVertical,
                 ),
                 margin: const EdgeInsets.symmetric(horizontal: 32),
-
                 constraints: BoxConstraints(
                   minWidth: isTabletDevice ? 460.0 : screenWidth * 0.85,
                   maxWidth: 500.0,
                 ),
-
                 decoration: BoxDecoration(
                   color: cardBackground,
                   borderRadius: BorderRadius.circular(isTabletDevice ? 36 : 28),
@@ -155,7 +153,6 @@ class _PremiumOfflineOverlay extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: isTabletDevice ? 32 : 24),
-
                       Text(
                         "Connection Interrupted",
                         textAlign: TextAlign.center,
@@ -169,7 +166,6 @@ class _PremiumOfflineOverlay extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-
                       Text(
                         "We are waiting for your network connection to stabilize. Please check your data or Wi-Fi settings.",
                         textAlign: TextAlign.center,
@@ -183,7 +179,6 @@ class _PremiumOfflineOverlay extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: isTabletDevice ? 32 : 24),
-
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: isTabletDevice ? 20 : 14,
