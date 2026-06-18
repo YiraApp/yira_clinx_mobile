@@ -1,0 +1,138 @@
+{
+  "project_info": {
+    "project_number": "13608445650",
+    "project_id": "yiralife-85a1f",
+    "storage_bucket": "yiralife-85a1f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13608445650:android:af9479e358fec52a992f0b",
+        "android_client_info": {
+          "package_name": "com.paccore.yiralife"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "13608445650-0mq8vgf7v7agmth8rpa4tc93ovfgqc9n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "ca431e3c906f3ee20844709d63ad9d3bb215b1e9"
+          }
+        },
+        {
+          "client_id": "13608445650-8rs668k1d8shblb6qvnccqma55om1plm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "d10eae0a801d4e463e3a1db9b59180e88bc0bcda"
+          }
+        },
+        {
+          "client_id": "13608445650-9kl9leomd3upce7h9cafq3vppf8mpk04.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "9baba35a2d628229f404a321999ae6e58d6a0ac8"
+          }
+        },
+        {
+          "client_id": "13608445650-ds0d60vasbs9ma20coh5s0nn0t4m3giu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "6e23461ffcf23087a616c8bda0031d13a4e25c97"
+          }
+        },
+        {
+          "client_id": "13608445650-fjkbf88kn84pusdsee5qgtn12dk2rvg3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "3af84bed9779c2ebdc0d9e966c8e92b3d36bd185"
+          }
+        },
+        {
+          "client_id": "13608445650-flrag6amvvl37dh2lpd7ri52f64b5s9p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "ff56ad4d952a937020ff6b18f091712ee111a379"
+          }
+        },
+        {
+          "client_id": "13608445650-h6h68sm98pbcsmbn8fe3tgrl6etdvaa3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "1e7bb9603cd58d88fe458aeb739efd9f21c6bab9"
+          }
+        },
+        {
+          "client_id": "13608445650-laov7v2vhrk06sr3v9vakfm02oe9pd0m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "b67452759263b26e97bb70010606c93d8fe3f225"
+          }
+        },
+        {
+          "client_id": "13608445650-o10pmloni8muqqbknvtqk7oeaou8a3f4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "1a5532ce61063e1a51f961a096b295b4d6ec0c13"
+          }
+        },
+        {
+          "client_id": "13608445650-opph4uquj43f6vufpjqcthsiveff5gsg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "8db00627dd2024f3ce716808b02ad3ed147f3ebe"
+          }
+        },
+        {
+          "client_id": "13608445650-qvh4i5l83ei13906p5alca3rgjup87d5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "197b4ab2d7ff8fbb5ca44b4a61d3c28f90566914"
+          }
+        },
+        {
+          "client_id": "13608445650-u7mk393t5tel2met778dv3sl0le23o3m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "3f36eef0a130a53a35e56c04b2b36718ea3b1b6e"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALoUPIcbg_MDvdD1S9OqjIEO65yGCoIq0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "13608445650-7vevse2l2hll1o7i2ku6ne4rpcma7u34.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "13608445650-tl2jcvrdfnbl1fdm501n229vgvluc9g6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.paccore.yiralife"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

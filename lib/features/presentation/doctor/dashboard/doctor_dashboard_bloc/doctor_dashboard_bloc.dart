@@ -14,19 +14,21 @@ class DoctorDashboardBloc
     extends Bloc<DoctorDashboardEvent, DoctorDashboardState> {
   final GetAppVersionInfoUseCase _getAppVersionInfoUseCase;
   final SecureStorageService _secureStorageService;
-  DoctorDashboardBloc({required GetAppVersionInfoUseCase getAppVersionInfoUseCase, required SecureStorageService secureStorageService}) : _getAppVersionInfoUseCase = getAppVersionInfoUseCase, _secureStorageService = secureStorageService, super(const DoctorDashboardInitial()) {
-
+  DoctorDashboardBloc({
+    required GetAppVersionInfoUseCase getAppVersionInfoUseCase,
+    required SecureStorageService secureStorageService,
+  }) : _getAppVersionInfoUseCase = getAppVersionInfoUseCase,
+       _secureStorageService = secureStorageService,
+       super(const DoctorDashboardInitial()) {
     on<FetchDoctorDashboardData>((event, emit) async {
-      try{
+      try {
         final versionEntity = await _getAppVersionInfoUseCase();
         await _secureStorageService.writeSecureValue<String>(
           SecureCacheKey.appVersionInfo,
           versionEntity.displayVersion,
         );
         emit(const DoctorDashboardLoading());
-
         await Future.delayed(const Duration(milliseconds: 600));
-
         final List<AppointmentEntity> mockToday = [
           const AppointmentEntity(
             id: '1',
@@ -60,19 +62,15 @@ class DoctorDashboardBloc
             appointmentDate: '18/5/2026',
           ),
         ];
-
         emit(
           DoctorDashboardLoaded(
             todaysAppointments: mockToday,
             recentPatients: mockRecent,
           ),
         );
-      }catch(e){
-        emit(
-          DoctorDashboardError(message: e.toString())
-        );
+      } catch (e) {
+        emit(DoctorDashboardError(message: e.toString()));
       }
-
     });
 
     on<ViewCalendarEvent>((event, emit) {
@@ -80,23 +78,19 @@ class DoctorDashboardBloc
       emit(DoctorAppointmentsNav());
       if (cachedState is DoctorDashboardLoaded) emit(cachedState);
     });
-
     on<ViewPatientsEvent>((event, emit) {
       final cachedState = state;
       emit(PatientManagementNav());
       if (cachedState is DoctorDashboardLoaded) emit(cachedState);
     });
-
     on<DocAndAppPatientDetailsNavEvent>((event, emit) {
       final cachedState = state;
       emit(DocAndAppPatientDetailsNavState());
       if (cachedState is DoctorDashboardLoaded) emit(cachedState);
     });
-
     on<FetchPatientDetails>((event, emit) async {
       emit(const DoctorDashboardLoading());
       await Future.delayed(const Duration(milliseconds: 400));
-
       final mockProfileDetails = {
         "name": "mani n",
         "age": 25,
@@ -106,19 +100,31 @@ class DoctorDashboardBloc
         "email": "jmani83280@gmail.com",
         "location": null,
         "vitals": {
-          "bp": null, "pulse": null, "temp": null, "spo2": null, "weight": null, "height": null
+          "bp": null,
+          "pulse": null,
+          "temp": null,
+          "spo2": null,
+          "weight": null,
+          "height": null,
         },
         "insurance": {
           "provider": "sbi",
           "policy_number": "12345",
-          "valid_till": null
+          "valid_till": null,
         },
         "notes": [
-          {"doctor": "Dr. Raja Nagalingam", "date": "Jun 05", "text": "Daily go for a walk"},
-          {"doctor": "Dr. Raja Nagalingam", "date": "Jun 05", "text": "Do gym on alternative days"},
-        ]
+          {
+            "doctor": "Dr. Raja Nagalingam",
+            "date": "Jun 05",
+            "text": "Daily go for a walk",
+          },
+          {
+            "doctor": "Dr. Raja Nagalingam",
+            "date": "Jun 05",
+            "text": "Do gym on alternative days",
+          },
+        ],
       };
-
       emit(PatientDetailsLoadedState(patientData: mockProfileDetails));
     });
   }
