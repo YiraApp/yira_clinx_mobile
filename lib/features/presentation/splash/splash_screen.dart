@@ -91,7 +91,6 @@ class _SplashScreenState extends State<SplashScreen> {
                             height: isTab ? 65 : 60,
                           ),
                         ),
-                        // SvgPicture.asset('assets/images/ic_splash_logo.svg'),
                         SizedBox(height: 10),
                         CommonText(
                           projectTitle,

@@ -38,6 +38,14 @@
           }
         },
         {
+          "client_id": "13608445650-d73tcjaqce72tjhvsvcn0mlbmqria7ik.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.paccore.yiralife",
+            "certificate_hash": "6d64b88321b64466835dc47b205f92e61ecfc8b5"
+          }
+        },
+        {
           "client_id": "13608445650-ds0d60vasbs9ma20coh5s0nn0t4m3giu.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -119,7 +127,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "13608445650-7vevse2l2hll1o7i2ku6ne4rpcma7u34.apps.googleusercontent.com",
+              "client_id": "13608445650-ea5kfr8m4lhjsuil3s34nj4d8gl2ojta.apps.googleusercontent.com",
               "client_type": 3
             },
             {

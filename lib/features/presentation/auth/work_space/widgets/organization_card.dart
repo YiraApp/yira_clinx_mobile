@@ -146,7 +146,7 @@ class OrganizationCard extends StatelessWidget {
                         size: isTab ? 24 : 20,
                       ),
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.docDashboard);
+                        Navigator.pushNamed(context, AppRoutes.userConfiguration);
                       },
                     ),
                   );

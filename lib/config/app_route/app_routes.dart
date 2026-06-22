@@ -44,4 +44,7 @@ class AppRoutes {
   static const String closeAccountScreen= '/closeAccountScreen';
   static const String dashboardPatientDetails= '/dashboardPatientDetails';
   static const String forgotPassword= '/forgotPassword';
+  static const String forceUpdateScreen= '/forceUpdateScreen';
+  static const String softUpdateScreen= '/softUpdateScreen';
+  static const String maintenanceScreen= '/maintenanceScreen';
 }

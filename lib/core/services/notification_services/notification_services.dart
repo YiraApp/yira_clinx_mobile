@@ -42,8 +42,6 @@ class NotificationService {
     playSound: true,
   );
 
-  /// Initializes listening capabilities, native streams, and local channels
-  /// WITHOUT prompting the user for permission on startup.
   Future<void> initializeNotificationPipeline(
       BuildContext context,
       Function(String) onPayloadReceived,

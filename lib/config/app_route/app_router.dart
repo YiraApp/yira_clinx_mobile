@@ -15,6 +15,9 @@ import 'package:yiraclinics/features/presentation/auth/work_space/work_space_scr
 import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_screen.dart';
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/force_update_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/maintance_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/soft_update_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
@@ -303,14 +306,14 @@ class AppRouter {
             child: AddPrescriptionRecordScreen(),
           ),
         );
-        case AppRoutes.prescriptionListScreen:
+      case AppRoutes.prescriptionListScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionListScreen(),
           ),
         );
-        case AppRoutes.prescriptionViewDetailsScreen:
+      case AppRoutes.prescriptionViewDetailsScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
@@ -338,6 +341,12 @@ class AppRouter {
             child: ForgotPasswordScreen(),
           ),
         );
+      case AppRoutes.forceUpdateScreen:
+        return MaterialPageRoute(builder: (_) => ForceUpdateView());
+      case AppRoutes.softUpdateScreen:
+        return MaterialPageRoute(builder: (_) => SoftUpdateView());
+      case AppRoutes.maintenanceScreen:
+        return MaterialPageRoute(builder: (_) => MaintenanceView());
       //appointmentDetails
       default:
         return MaterialPageRoute(
