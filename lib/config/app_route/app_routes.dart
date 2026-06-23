@@ -47,4 +47,6 @@ class AppRoutes {
   static const String forceUpdateScreen= '/forceUpdateScreen';
   static const String softUpdateScreen= '/softUpdateScreen';
   static const String maintenanceScreen= '/maintenanceScreen';
+  static const String sessionExpired= '/sessionExpired';
+  static const String serverDown= '/serverDown';
 }

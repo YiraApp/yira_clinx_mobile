@@ -7,6 +7,7 @@ import '../../config/app_route/app_router.dart';
 import '../../config/app_route/app_routes.dart';
 import '../../config/app_theme/app_theme.dart';
 import '../../core/global_scaffold_key/global_scaffold_key.dart';
+import '../../core/navigation_services/navigation_services.dart';
 import '../../core/services/network_services/network_bloc/network_bloc.dart';
 import '../../core/widgets/internet_guard.dart';
 import '../../core/widgets/notificatio_wrapper.dart';
@@ -16,7 +17,7 @@ import '../presentation/theme/theme_bloc/theme_bloc.dart';
 class AppGateway extends StatelessWidget {
   const AppGateway({super.key});
 
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  // static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +33,7 @@ class AppGateway extends StatelessWidget {
         buildWhen: (previous, current) => previous.themeMode != current.themeMode,
         builder: (context, themeState) {
           return MaterialApp(
-            navigatorKey: navigatorKey, // 2. Assign the key here
+            navigatorKey: NavigationService.navigatorKey, // 2. Assign the key here
             supportedLocales: const [Locale("en")],
             localizationsDelegates: const [CountryLocalizations.delegate],
             scaffoldMessengerKey: Globals.scaffoldMessengerKey,
@@ -53,7 +54,7 @@ class AppGateway extends StatelessWidget {
                     final String? itemId = payload['id'];
 
                     if (targetRoute != null) {
-                      navigatorKey.currentState?.pushNamed(
+                      NavigationService.navigatorKey.currentState?.pushNamed(
                         targetRoute,
                         arguments: itemId,
                       );

@@ -1,5 +1,4 @@
 
-// data/repositories/network_repository_impl.dart
 import 'dart:async';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import '../../domain/neetwork_repo/network_repo.dart';
@@ -12,8 +11,6 @@ class NetworkRemoteDataSourceImpl implements NetworkRemoteDataSource {
   @override
   Stream<InternetStatus> get onStatusChange => _connection.onStatusChange;
 }
-
-
 
 class NetworkRepositoryImpl implements NetworkRepository {
   final NetworkRemoteDataSource remoteDataSource;

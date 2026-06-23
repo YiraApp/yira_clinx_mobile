@@ -23,14 +23,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(
+   /* SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
-    );
+    );*/
     _startTimer();
   }
 
@@ -43,7 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
     Navigator.pushNamedAndRemoveUntil(
       context,
-      AppRoutes.docDashboard,
+      AppRoutes.uploadRecordScreen,
       (route) => false,
     );
   }

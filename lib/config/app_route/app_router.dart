@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
+import 'package:yiraclinics/core/server_down/server_down_screen.dart';
+import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/slot/slot_appointment_entity.dart';
 import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
@@ -347,6 +349,10 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => SoftUpdateView());
       case AppRoutes.maintenanceScreen:
         return MaterialPageRoute(builder: (_) => MaintenanceView());
+      case AppRoutes.sessionExpired:
+        return MaterialPageRoute(builder: (_) => SessionExpiredScreen());
+        case AppRoutes.serverDown:
+        return MaterialPageRoute(builder: (_) => ServerDownScreen());
       //appointmentDetails
       default:
         return MaterialPageRoute(
