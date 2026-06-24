@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
-import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 
 import '../../../../core/common_input_fields/common_input_field.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -64,7 +64,7 @@ class SignupScreen extends StatelessWidget {
                   width: double.infinity,
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    child: BlocConsumer<SignInBloc, SignInState>(
+                    child: BlocConsumer<LoginBloc, LogInState>(
                       buildWhen: (previous, state) =>
                           state is! NavigateToSignIn &&
                           state is! NavigateToSelectRoleSignUp,
@@ -348,7 +348,7 @@ class SignupScreen extends StatelessWidget {
                                     width: double.infinity,
                                     text: "Sign Up",
                                     onPressed: () {
-                                      context.read<SignInBloc>().add(
+                                      context.read<LoginBloc>().add(
                                         NavSelectRoleSignUp(),
                                       );
                                     },
@@ -371,7 +371,7 @@ class SignupScreen extends StatelessWidget {
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          context.read<SignInBloc>().add(
+                                          context.read<LoginBloc>().add(
                                             NavSignIn(),
                                           );
                                         },

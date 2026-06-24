@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -45,7 +45,7 @@ class VerifyOtpScreen extends StatelessWidget {
                     ? constraints.maxWidth
                     : screenWidth;
 
-                return BlocConsumer<SignInBloc, SignInState>(
+                return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
                       current is! TimerFinished &&
                       current is! NavigateToSelectRoleVerifyOtp,
@@ -269,7 +269,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                       : isButtonActive // FIXED: Verified active flag matching original mobile state
                                       ? TextButton(
                                           onPressed: () {
-                                            context.read<SignInBloc>().add(
+                                            context.read<LoginBloc>().add(
                                               OnReSendOtp(mobileNumber ?? ''),
                                             );
                                           },
@@ -341,7 +341,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                             width: double.infinity,
                                             text: "Verify & Continue",
                                             onPressed: () {
-                                              context.read<SignInBloc>().add(
+                                              context.read<LoginBloc>().add(
                                                 NavSelectRole(),
                                               );
                                             },

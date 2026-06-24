@@ -1,17 +1,25 @@
 import '../../../domain/entities/login/login_entity.dart';
 
 class LoginModel extends LoginEntity {
-  const LoginModel({
-    required super.status,
-    required super.message,
-    LoginDataModel? super.data,
-  });
+  LoginModel({
+    super.status,
+    super.message,
+    DataModel? data,
+  }) : super(data: data);
 
   factory LoginModel.fromJson(Map<String, dynamic> json) {
     return LoginModel(
-      status: json['status'] ?? false,
-      message: json['message'] ?? '',
-      data: json['data'] != null ? LoginDataModel.fromJson(json['data']) : null,
+      status: json['status'],
+      message: json['message'],
+      data: json['data'] != null ? DataModel.fromJson(json['data']) : null,
+    );
+  }
+
+  factory LoginModel.fromEntity(LoginEntity entity) {
+    return LoginModel(
+      status: entity.status,
+      message: entity.message,
+      data: entity.data != null ? DataModel.fromEntity(entity.data!) : null,
     );
   }
 
@@ -19,27 +27,90 @@ class LoginModel extends LoginEntity {
     return {
       'status': status,
       'message': message,
-      'data': data != null ? (data as LoginDataModel).toJson() : null,
+      'data': (data as DataModel?)?.toJson(),
     };
   }
 }
 
-class LoginDataModel extends LoginDataEntity {
-  const LoginDataModel({
-    required super.accessToken,
-    required super.refreshToken,
-    required super.accessTokenExpiry,
-    required super.refreshTokenExpiry,
-    UserModel? super.user,
-  });
+class DataModel extends DataEntity {
+  DataModel({
+    super.accessToken,
+    super.refreshToken,
+    super.accessTokenExpiry,
+    super.refreshTokenExpiry,
+    super.id,
+    super.isMobileVerified,
+    super.isEmailVerified,
+    super.roleCount,
+    super.hospitalCount,
+    super.organizationCount,
+    List<RoleModel>? roles,
+    super.firstName,
+    super.lastName,
+    super.email,
+    super.phoneNumber,
+    super.countryCode,
+    super.gender,
+    super.dob,
+    super.height,
+    super.weight,
+    super.heightUnit,
+    super.weightUnit,
+  }) : super(roles: roles);
 
-  factory LoginDataModel.fromJson(Map<String, dynamic> json) {
-    return LoginDataModel(
-      accessToken: json['accessToken'] ?? '',
-      refreshToken: json['refreshToken'] ?? '',
-      accessTokenExpiry: json['accessTokenExpiry'] ?? '',
-      refreshTokenExpiry: json['refreshTokenExpiry'] ?? '',
-      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+  factory DataModel.fromJson(Map<String, dynamic> json) {
+    return DataModel(
+      accessToken: json['accessToken'],
+      refreshToken: json['refreshToken'],
+      accessTokenExpiry: json['accessTokenExpiry'],
+      refreshTokenExpiry: json['refreshTokenExpiry'],
+      id: json['id'],
+      isMobileVerified: json['isMobileVerified'],
+      isEmailVerified: json['isEmailVerified'],
+      roleCount: json['roleCount'],
+      hospitalCount: json['hospitalCount'],
+      organizationCount: json['organizationCount'],
+      roles: json['roles'] != null
+          ? (json['roles'] as List).map((v) => RoleModel.fromJson(v)).toList()
+          : null,
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      email: json['email'],
+      phoneNumber: json['phoneNumber'],
+      countryCode: json['countryCode'],
+      gender: json['gender'],
+      dob: json['dob'],
+      height: json['height'],
+      weight: json['weight'],
+      heightUnit: json['heightUnit'],
+      weightUnit: json['weightUnit'],
+    );
+  }
+
+  factory DataModel.fromEntity(DataEntity entity) {
+    return DataModel(
+      accessToken: entity.accessToken,
+      refreshToken: entity.refreshToken,
+      accessTokenExpiry: entity.accessTokenExpiry,
+      refreshTokenExpiry: entity.refreshTokenExpiry,
+      id: entity.id,
+      isMobileVerified: entity.isMobileVerified,
+      isEmailVerified: entity.isEmailVerified,
+      roleCount: entity.roleCount,
+      hospitalCount: entity.hospitalCount,
+      organizationCount: entity.organizationCount,
+      roles: entity.roles?.map((v) => RoleModel.fromEntity(v)).toList(),
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      email: entity.email,
+      phoneNumber: entity.phoneNumber,
+      countryCode: entity.countryCode,
+      gender: entity.gender,
+      dob: entity.dob,
+      height: entity.height,
+      weight: entity.weight,
+      heightUnit: entity.heightUnit,
+      weightUnit: entity.weightUnit,
     );
   }
 
@@ -49,100 +120,56 @@ class LoginDataModel extends LoginDataEntity {
       'refreshToken': refreshToken,
       'accessTokenExpiry': accessTokenExpiry,
       'refreshTokenExpiry': refreshTokenExpiry,
-      'user': user != null ? (user as UserModel).toJson() : null,
-    };
-  }
-}
-
-class UserModel extends UserEntity {
-  const UserModel({
-    required super.id,
-    required super.firstName,
-    required super.lastName,
-    required super.email,
-    required super.phoneNumber,
-    required super.countryCode,
-    required super.isMobileVerified,
-    required super.isEmailVerified,
-    required List<RoleModel> super.roles,
-  });
-
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    var rolesList = <RoleModel>[];
-    if (json['Roles'] != null) {
-      json['Roles'].forEach((v) {
-        rolesList.add(RoleModel.fromJson(v));
-      });
-    }
-    return UserModel(
-      id: json['Id'] ?? '',
-      firstName: json['FirstName'] ?? '',
-      lastName: json['LastName'] ?? '',
-      email: json['Email'] ?? '',
-      phoneNumber: json['PhoneNumber'] ?? '',
-      countryCode: json['CountryCode'] ?? '',
-      isMobileVerified: json['IsMobileVerified'] ?? false,
-      isEmailVerified: json['IsEmailVerified'] ?? false,
-      roles: rolesList,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'Id': id,
-      'FirstName': firstName,
-      'LastName': lastName,
-      'Email': email,
-      'PhoneNumber': phoneNumber,
-      'CountryCode': countryCode,
-      'IsMobileVerified': isMobileVerified,
-      'IsEmailVerified': isEmailVerified,
-      'Roles': roles.map((v) => (v as RoleModel).toJson()).toList(),
+      'id': id,
+      'isMobileVerified': isMobileVerified,
+      'isEmailVerified': isEmailVerified,
+      'roleCount': roleCount,
+      'hospitalCount': hospitalCount,
+      'organizationCount': organizationCount,
+      'roles': roles?.map((v) => (v as RoleModel).toJson()).toList(),
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'countryCode': countryCode,
+      'gender': gender,
+      'dob': dob,
+      'height': height,
+      'weight': weight,
+      'heightUnit': heightUnit,
+      'weightUnit': weightUnit,
     };
   }
 }
 
 class RoleModel extends RoleEntity {
-  const RoleModel({
-    required super.userRoleId,
-    required super.roleId,
-    required super.roleName,
-    required super.organizationId,
-    required super.organizationName,
-    required super.organizationCode,
-    required super.hospitalId,
-    required super.hospitalName,
-    required super.hospitalCode,
-    required super.status,
+  RoleModel({
+    super.roleId,
+    super.roleName,
+    super.status,
   });
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
     return RoleModel(
-      userRoleId: json['UserRoleId'] ?? '',
-      roleId: json['RoleId'] ?? '',
-      roleName: json['RoleName'] ?? '',
-      organizationId: json['OrganizationId'] ?? '',
-      organizationName: json['OrganizationName'] ?? '',
-      organizationCode: json['OrganizationCode'] ?? '',
-      hospitalId: json['HospitalId'] ?? '',
-      hospitalName: json['HospitalName'] ?? '',
-      hospitalCode: json['HospitalCode'] ?? '',
-      status: json['Status'] ?? false,
+      roleId: json['roleId'],
+      roleName: json['roleName'],
+      status: json['status'],
+    );
+  }
+
+  factory RoleModel.fromEntity(RoleEntity entity) {
+    return RoleModel(
+      roleId: entity.roleId,
+      roleName: entity.roleName,
+      status: entity.status,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'UserRoleId': userRoleId,
-      'RoleId': roleId,
-      'RoleName': roleName,
-      'OrganizationId': organizationId,
-      'OrganizationName': organizationName,
-      'OrganizationCode': organizationCode,
-      'HospitalId': hospitalId,
-      'HospitalName': hospitalName,
-      'HospitalCode': hospitalCode,
-      'Status': status,
+      'roleId': roleId,
+      'roleName': roleName,
+      'status': status,
     };
   }
 }

@@ -1,119 +1,66 @@
+class LoginEntity {
+  final bool? status;
+  final String? message;
+  final DataEntity? data;
 
-import 'package:equatable/equatable.dart';
-
-class LoginEntity extends Equatable {
-  final bool status;
-  final String message;
-  final LoginDataEntity? data;
-
-  const LoginEntity({
-    required this.status,
-    required this.message,
-    this.data,
-  });
-
-  @override
-  List<Object?> get props => [status, message, data];
+  LoginEntity({this.status, this.message, this.data});
 }
 
-class LoginDataEntity extends Equatable {
-  final String accessToken;
-  final String refreshToken;
-  final String accessTokenExpiry;
-  final String refreshTokenExpiry;
-  final UserEntity? user;
+class DataEntity {
+  final String? accessToken;
+  final String? refreshToken;
+  final String? accessTokenExpiry;
+  final String? refreshTokenExpiry;
+  final String? id;
+  final bool? isMobileVerified;
+  final bool? isEmailVerified;
+  final int? roleCount;
+  final int? hospitalCount;
+  final int? organizationCount;
+  final String? userRole;
+  final List<RoleEntity>? roles;
+  final String? firstName;
+  final String? lastName;
+  final String? email;
+  final String? phoneNumber;
+  final String? countryCode;
+  final String? gender;
+  final String? dob;
+  final String? height;
+  final String? weight;
+  final String? heightUnit;
+  final String? weightUnit;
 
-  const LoginDataEntity({
-    required this.accessToken,
-    required this.refreshToken,
-    required this.accessTokenExpiry,
-    required this.refreshTokenExpiry,
-    this.user,
+  DataEntity({
+    this.accessToken,
+    this.refreshToken,
+    this.accessTokenExpiry,
+    this.refreshTokenExpiry,
+    this.id,
+    this.isMobileVerified,
+    this.isEmailVerified,
+    this.roleCount,
+    this.hospitalCount,
+    this.organizationCount,
+    this.roles,
+    this.firstName,
+    this.lastName,
+    this.email,
+    this.phoneNumber,
+    this.countryCode,
+    this.gender,
+    this.dob,
+    this.height,
+    this.weight,
+    this.heightUnit,
+    this.weightUnit, this.userRole,
   });
-
-  @override
-  List<Object?> get props => [
-    accessToken,
-    refreshToken,
-    accessTokenExpiry,
-    refreshTokenExpiry,
-    user,
-  ];
 }
 
-class UserEntity extends Equatable {
-  final String id;
-  final String firstName;
-  final String lastName;
-  final String email;
-  final String phoneNumber;
-  final String countryCode;
-  final bool isMobileVerified;
-  final bool isEmailVerified;
-  final List<RoleEntity> roles;
+class RoleEntity {
+  final String? roleId;
+  final String? roleName;
+  final bool? status;
 
-  const UserEntity({
-    required this.id,
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-    required this.phoneNumber,
-    required this.countryCode,
-    required this.isMobileVerified,
-    required this.isEmailVerified,
-    required this.roles,
-  });
-
-  @override
-  List<Object?> get props => [
-    id,
-    firstName,
-    lastName,
-    email,
-    phoneNumber,
-    countryCode,
-    isMobileVerified,
-    isEmailVerified,
-    roles,
-  ];
-}
-
-class RoleEntity extends Equatable {
-  final String userRoleId;
-  final String roleId;
-  final String roleName;
-  final String organizationId;
-  final String organizationName;
-  final String organizationCode;
-  final String hospitalId;
-  final String hospitalName;
-  final String hospitalCode;
-  final bool status;
-
-  const RoleEntity({
-    required this.userRoleId,
-    required this.roleId,
-    required this.roleName,
-    required this.organizationId,
-    required this.organizationName,
-    required this.organizationCode,
-    required this.hospitalId,
-    required this.hospitalName,
-    required this.hospitalCode,
-    required this.status,
-  });
-
-  @override
-  List<Object?> get props => [
-    userRoleId,
-    roleId,
-    roleName,
-    organizationId,
-    organizationName,
-    organizationCode,
-    hospitalId,
-    hospitalName,
-    hospitalCode,
-    status,
-  ];
+  RoleEntity({this.roleId, this.roleName, this.status});
 }

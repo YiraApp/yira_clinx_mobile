@@ -7,12 +7,20 @@ import 'features/app_gate_way/app_gate_way.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  EnvironmentService.setEnvironment(Environment.dev);
-  await Future.wait([
-    Firebase.initializeApp(),
-    NotificationService.instance.registerBackgroundHandler(),
-    init(),
-  ]);
+  EnvironmentService.setEnvironment(Environment.qa);
+
+  try {
+    await Future.wait([
+      Firebase.initializeApp(),
+      NotificationService.instance.registerBackgroundHandler(),
+    ]);
+
+    await init();
+
+    runApp(const AppGateway());
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 
   runApp(const AppGateway());
 }

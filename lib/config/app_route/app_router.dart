@@ -11,7 +11,7 @@ import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/
 import 'package:yiraclinics/features/presentation/appointments/appointments_dashboard.dart';
 import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
-import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/verify_otp_screen.dart';
 import 'package:yiraclinics/features/presentation/auth/work_space/work_space_screen.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
@@ -47,11 +47,12 @@ import 'package:yiraclinics/features/presentation/test_results/test_result_scree
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import '../../di/dependency_injection.dart';
+import '../../features/domain/entities/login/login_entity.dart';
 import '../../features/presentation/auth/on_boarding/gender_selection_screen.dart';
 import '../../features/presentation/auth/on_boarding/height_scale_screen.dart';
 import '../../features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 import '../../features/presentation/auth/on_boarding/weight_scale_screen.dart';
-import '../../features/presentation/auth/signin_screen.dart';
+import '../../features/presentation/auth/login_screen.dart';
 import '../../features/presentation/auth/signup_screen.dart';
 import '../../features/presentation/auth/work_space/work_space_bloc/work_space_bloc.dart';
 import '../../features/presentation/configuration/configuration_screen.dart';
@@ -77,14 +78,14 @@ class AppRouter {
       case AppRoutes.signIn:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
-            child: SignInScreen(),
+            value: sl<LoginBloc>(),
+            child: LoginScreen(),
           ),
         );
       case AppRoutes.signup:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
+            value: sl<LoginBloc>(),
             child: SignupScreen(),
           ),
         );
@@ -180,10 +181,11 @@ class AppRouter {
           ),
         );
       case AppRoutes.selectRoleScreen:
+        final args = settings.arguments as List<RoleEntity>;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<RoleBloc>(),
-            child: SelectRoleScreen(),
+            child: SelectRoleScreen(roles: args,),
           ),
         );
       case AppRoutes.workSpaceScreen:
@@ -210,7 +212,7 @@ class AppRouter {
       case AppRoutes.verifyOtp:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
+            value: sl<LoginBloc>(),
             child: VerifyOtpScreen(),
           ),
         );

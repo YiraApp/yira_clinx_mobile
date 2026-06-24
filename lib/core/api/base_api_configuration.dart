@@ -11,8 +11,8 @@ class EnvironmentService {
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "",
-          healthCampBaseUrl: "",
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
         );
       case Environment.production:
         return const EnvironmentConfig(

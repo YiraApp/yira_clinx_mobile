@@ -6,15 +6,15 @@ class SelectRoleUseCase {
 
   const SelectRoleUseCase();
 
-  Future<List<RoleEntity>> getAvailableRoles() async {
+  Future<List<RoleLoginEntity>> getAvailableRoles() async {
     return [
-      RoleEntity(
+      RoleLoginEntity(
         type: RoleType.frontDesk,
         title: 'Patient',
         subtitle: 'Authorized Access',
         icon: Icons.lock_open_outlined,
       ),
-      const RoleEntity(
+      const RoleLoginEntity(
         type: RoleType.provider,
         title: 'Provider',
         subtitle: 'Authorized Access',
