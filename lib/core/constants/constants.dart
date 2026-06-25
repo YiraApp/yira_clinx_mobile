@@ -13,6 +13,8 @@ const buttonHeight = 45.0;
 // ************ project title *************
 
 const projectTitle = "Yira ClinX";
+const professionalRole = "provider";
+const userRole = "patient";
 
 const appLogo = "assets/images/svgs/app_logo.svg";
 

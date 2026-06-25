@@ -14,7 +14,6 @@ void main() async {
       Firebase.initializeApp(),
       NotificationService.instance.registerBackgroundHandler(),
     ]);
-
     await init();
 
     runApp(const AppGateway());

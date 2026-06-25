@@ -49,4 +49,5 @@ class AppRoutes {
   static const String maintenanceScreen= '/maintenanceScreen';
   static const String sessionExpired= '/sessionExpired';
   static const String serverDown= '/serverDown';
+  static const String unsupportedRole= '/unsupportedRole';
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
-
 import '../../../config/app_route/app_routes.dart';
+import '../../../core/constants/clinx_storage_keys.dart';
+import '../../../core/local/global_session.dart';
+import '../../../core/local/shared_preferences.dart';
+import '../../../di/dependency_injection.dart';
+import 'auth_bloc/auth_bloc.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,23 +21,17 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
-
+  late final SharedPrefsService _sharedPrefsService;
   bool _timerFinished = false;
+  AuthState? _latestState;
 
   @override
   void initState() {
     super.initState();
-   /* SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );*/
+    _sharedPrefsService = sl<SharedPrefsService>();
+    context.read<AuthBloc>().add(AppStarted());
     _startTimer();
   }
-
   void _startTimer() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
@@ -41,11 +39,61 @@ class _SplashScreenState extends State<SplashScreen> {
         _timerFinished = true;
       });
     }
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.uploadRecordScreen,
-      (route) => false,
-    );
+    _attemptNavigation();
+  }
+
+  void _attemptNavigation() {
+
+    if (!_timerFinished) return;
+
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final bool isLoggedIn =
+          _sharedPrefsService.getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ??
+          false;
+      if (isLoggedIn && currentUser != null && currentUser.data != null) {
+        final payload = currentUser.data!;
+
+        if (payload.latestUserRole == professionalRole) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.docDashboard,
+            (route) => false,
+          );
+        } else if (payload.latestUserRole == userRole) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.dashboardPatientDetails,
+            (route) => false,
+          );
+        }else{
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.unsupportedRole,
+                (route) => false,
+            arguments: currentUser
+          );
+        }
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.signIn,
+          (route) => false,
+        );
+      }
+    }
+    catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (SplashScreen): Navigation error routing sequence: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.signIn,
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -172,11 +220,10 @@ class _SplashScreenState extends State<SplashScreen> {
                           borderRadius: BorderRadius.circular(12.0),
                           child: SvgPicture.asset(
                             'assets/images/svgs/ic_apps_logo.svg',
-                            width:  70,
-                            height:  70,
+                            width: 70,
+                            height: 70,
                           ),
                         ),
-                        // SvgPicture.asset('assets/images/ic_splash_logo.svg'),
                         SizedBox(height: 10),
                         CommonText(
                           projectTitle,

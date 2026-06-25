@@ -18,11 +18,13 @@ import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/na
 
 // Data Sources & Repositories Imports
 import 'package:yiraclinics/features/data/data_sources/theme_local_data_source.dart';
+import 'package:yiraclinics/features/data/repository_impl/auth/auth_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/login/login_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/app_theme/theme_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/medicine/medical_histoy_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/patient_profile_repo_impl/patient_profile_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/prescriptions/prescriptions_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/send_otp_repo/send_otp_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_impl/slot_scheduler_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_repo_impl/slot_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/upload_record_repo_impl/upload_record_impl_repo.dart';
@@ -30,14 +32,18 @@ import 'package:yiraclinics/features/data/repository_impl/medication/medication_
 
 // Domain Layer (Repositories & Entities) Imports
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
+import 'package:yiraclinics/features/domain/repositories/auth/auth_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/login/login_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/prescritpions/prescriptions_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/send_otp/send_otp_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/scheduler_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/slot_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
+import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
+import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
 // Use Cases Imports
 import 'package:yiraclinics/features/use_cases/cached_theme_use_case.dart';
@@ -72,6 +78,9 @@ import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart'
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart' as user_presc;
+import 'package:yiraclinics/features/use_cases/send_otp_use_case.dart';
+
+import '../core/local/global_session.dart';
 
 final sl = GetIt.instance;
 
@@ -85,7 +94,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => apiClient);
   sl.registerLazySingleton(() => SharedPrefsService(sl<SharedPreferences>()));
   sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
-
+  final globalSession = GlobalSession.instance;
+  await globalSession.initialize(sl<SecureStorageService>()); // Await the configuration read
+  sl.registerSingleton<GlobalSession>(globalSession);
   // ==========================================
   // 1. Data Sources & Repositories
   // ==========================================
@@ -94,6 +105,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton<ThemeRepository>(
         () => ThemeRepositoryImpl(sl<ThemeLocalDataSource>()),
+  );
+  sl.registerLazySingleton<AuthRepository>(
+        () => AuthRepositoryImpl(sl<SharedPrefsService>(), sl<SecureStorageService>()),
   );
   sl.registerLazySingleton<NetworkRemoteDataSource>(
         () => NetworkRemoteDataSourceImpl(sl<InternetConnection>()),
@@ -121,10 +135,15 @@ Future<void> init() async {
   sl.registerLazySingleton<PrescriptionRepository>(
         () => PrescriptionRepositoryImpl(),
   );
-
+  sl.registerLazySingleton<SendOtpRepo>(
+        () => SendOtpRepositoryImpl(apiClient: sl<ApiClient>()),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
+  sl.registerLazySingleton<AuthUseCase>(
+        () => AuthUseCase(sl<AuthRepository>()),
+  );
   sl.registerLazySingleton<GetAppVersionInfoUseCase>(
         () => GetAppVersionInfoUseCase(sl<PackageRepo>()),
   );
@@ -146,7 +165,9 @@ Future<void> init() async {
   sl.registerLazySingleton(
         () => LoginEmailUseCase(repository: sl<LoginRepository>()),
   );
-
+  sl.registerLazySingleton(
+        () => SendOtpUseCase(repository: sl<SendOtpRepo>()),
+  );
   // ==========================================
   // 3. Blocs / Cubits
   // ==========================================
@@ -159,6 +180,9 @@ Future<void> init() async {
   sl.registerLazySingleton(
         () => NetworkBloc(networkRepository: sl<NetworkRepository>()),
   );
+  sl.registerLazySingleton(
+        () => AuthBloc(sl<AuthUseCase>()),
+  );
   sl.registerFactory(
         () => user_presc.MedicationBloc(getMedicationSummary: sl<GetPrescriptionUseCase>()),
   );
@@ -166,7 +190,7 @@ Future<void> init() async {
         () => LoginBloc(
       loginMobileUseCase: sl<LoginMobileUseCase>(),
       loginEmailUseCase: sl<LoginEmailUseCase>(), sharedPrefsService: sl<SharedPrefsService>(),
-          
+          sendOtpUseCase: sl<SendOtpUseCase>()
     ),
   );
 

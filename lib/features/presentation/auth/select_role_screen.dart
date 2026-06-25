@@ -180,10 +180,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                               padding: EdgeInsets.zero,
                                               itemCount: widget.roles?.length ?? 0,
                                               itemBuilder: (context, index) {
-                                                final role = state.roles[index];
-                                                final isSelected =
-                                                    state.selectedRole ==
-                                                    role.type;
+                                                final role = widget.roles![index];
+
 
                                                 return GestureDetector(
                                                   onTap: () {
@@ -196,18 +194,9 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                                         ),
                                                     child: DialogRoleCard(
                                                       isTablet: isTab,
-                                                      isSelected: isSelected,
+                                                      isSelected: true,
                                                       onTap: () {
-                                                        context
-                                                            .read<RoleBloc>()
-                                                            .add(
-                                                              ChooseRoleEvent(
-                                                                role.type,
-                                                              ),
-                                                            );
-                                                        context
-                                                            .read<RoleBloc>()
-                                                            .add(RoleSelected());
+
                                                       }, roleEntity: widget.roles![index],
                                                     ),
                                                   ),

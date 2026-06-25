@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 
 import '../../../core/colors/colors.dart';
@@ -12,8 +13,8 @@ import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 
 class VerifyOtpScreen extends StatelessWidget {
-  final String? mobileNumber;
-  VerifyOtpScreen({super.key, this.mobileNumber});
+  final SendOtpEntity sendOtpEntity;
+  VerifyOtpScreen({super.key, required this.sendOtpEntity});
 
   final TextEditingController otpController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -47,11 +48,54 @@ class VerifyOtpScreen extends StatelessWidget {
 
                 return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
-                      current is! TimerFinished &&
-                      current is! NavigateToSelectRoleVerifyOtp,
+                      current is TimerTick ||
+                      current is TimerFinished ||
+                      current is SendOtpLoading ||
+                      current is ReSendOtpLoading ||
+                      current is SignInLoading ||
+                      current is SignInError,
                   listener: (context, state) {
-                    if (state is NavigateToSelectRoleVerifyOtp) {
-                      Navigator.pushNamed(context, AppRoutes.selectRoleScreen);
+                    switch (state) {
+                      case LoginSuccess():
+                        final payload = state.loginEntity.data;
+                        if (payload != null &&
+                            payload.roleCount == 1 &&
+                            payload.hospitalCount == 1 &&
+                            payload.organizationCount == 1) {
+                          final String role = (payload.latestUserRole ?? '')
+                              .toLowerCase()
+                              .trim();
+                          if (role == professionalRole) {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.docDashboard,
+                              (route) => false,
+                            );
+                          } else if (role == userRole) {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.dashboardPatientDetails,
+                              (route) => false,
+                            );
+                          } else {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.unsupportedRole,
+                              (route) => false,
+                              arguments: state.loginEntity,
+                            );
+                          }
+                        } else {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.selectRoleScreen,
+                            arguments: payload?.roles ?? [],
+                          );
+                        }
+                        break;
+
+                      default:
+                        break;
                     }
                   },
                   builder: (context, state) {
@@ -69,7 +113,6 @@ class VerifyOtpScreen extends StatelessWidget {
                     } else {
                       isButtonActive = true;
                     }
-
                     return SingleChildScrollView(
                       physics: const ClampingScrollPhysics(),
                       child: Padding(
@@ -95,15 +138,8 @@ class VerifyOtpScreen extends StatelessWidget {
                                       height: isTab ? 65 : 60,
                                     ),
                                   ),
-                                  /*// 1. Branding Header Icon
-                                  Icon(
-                                    Icons.health_and_safety,
-                                    color: primaryColor,
-                                    size: isTab ? referenceWidth * 0.16 : 65,
-                                  ),*/
-                                  SizedBox(height: screenHeight * 0.03),
 
-                                  // 2. Title Text
+                                  SizedBox(height: screenHeight * 0.03),
                                   Text(
                                     'Verification Code',
                                     style: TextStyle(
@@ -137,7 +173,8 @@ class VerifyOtpScreen extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          mobileNumber ?? '+91- 9848022338',
+                                          sendOtpEntity.data?.contact ??
+                                              '+91- 9999999999',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
@@ -159,7 +196,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                   SizedBox(
                                     width: isTab
                                         ? referenceWidth * 0.55
-                                        : screenWidth * 0.6,
+                                        : screenWidth * 0.82,
                                     child: PinCodeTextField(
                                       backgroundColor: Colors.transparent,
                                       autoDisposeControllers: false,
@@ -170,7 +207,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                         color: Colors.green.shade600,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      length: 4,
+                                      length: 6,
                                       obscureText: true,
                                       obscuringCharacter: '*',
                                       hintCharacter: '*',
@@ -188,7 +225,9 @@ class VerifyOtpScreen extends StatelessWidget {
                                         return null;
                                       },
                                       pinTheme: PinTheme(
-                                        borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                        borderRadius: BorderRadius.circular(
+                                          fieldBorderRadius,
+                                        ),
                                         inactiveColor: notificationSwitchColor,
                                         activeColor: primaryColor,
                                         selectedColor: primaryColor,
@@ -266,11 +305,19 @@ class VerifyOtpScreen extends StatelessWidget {
                                             ),
                                           ),
                                         )
-                                      : isButtonActive // FIXED: Verified active flag matching original mobile state
+                                      : isButtonActive
                                       ? TextButton(
                                           onPressed: () {
+                                            final String activeCountryCode =
+                                                context
+                                                    .read<LoginBloc>()
+                                                    .currentCountryCode;
                                             context.read<LoginBloc>().add(
-                                              OnReSendOtp(mobileNumber ?? ''),
+                                              OnReSendOtp(
+                                                sendOtpEntity.data?.contact ??
+                                                    '',
+                                                activeCountryCode,
+                                              ),
                                             );
                                           },
                                           child: Text(
@@ -335,17 +382,40 @@ class VerifyOtpScreen extends StatelessWidget {
                                                 ? screenHeight * 0.04
                                                 : 24.0,
                                           ),
-                                          child: CustomElevatedButton(
-                                            noElevation: true,
-                                            height: 50,
-                                            width: double.infinity,
-                                            text: "Verify & Continue",
-                                            onPressed: () {
-                                              context.read<LoginBloc>().add(
-                                                NavSelectRole(),
-                                              );
-                                            },
-                                          ),
+                                          child: state is LoginLoading
+                                              ? Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                )
+                                              : CustomElevatedButton(
+                                                  noElevation: true,
+                                                  height: 50,
+                                                  width: double.infinity,
+                                                  text: "Verify & Continue",
+                                                  onPressed: () {
+                                                    final String
+                                                    activeCountryCode = context
+                                                        .read<LoginBloc>()
+                                                        .currentCountryCode;
+                                                    context.read<LoginBloc>().add(
+                                                      OnTapMobileSignInEvent(
+                                                        mobileNumber:
+                                                            sendOtpEntity
+                                                                .data
+                                                                ?.contact ??
+                                                            '',
+                                                        otp: otpController.text,
+                                                        sessionId:
+                                                            sendOtpEntity
+                                                                .data
+                                                                ?.sessionId ??
+                                                            '',
+                                                        countryCode:
+                                                            activeCountryCode,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                         ),
                                 ],
                               ),

@@ -56,6 +56,10 @@ class DataModel extends DataEntity {
     super.weight,
     super.heightUnit,
     super.weightUnit,
+    super.latestUserRole,
+    super.latestHospitalId,
+    super.latestOrgId,
+    super.latestRoleId
   }) : super(roles: roles);
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
@@ -84,6 +88,10 @@ class DataModel extends DataEntity {
       weight: json['weight'],
       heightUnit: json['heightUnit'],
       weightUnit: json['weightUnit'],
+      latestUserRole: json['latestUserRole'] ,
+      latestHospitalId: json['latestHospitalId'],
+      latestOrgId: json['latestOrgId'],
+      latestRoleId: json['latestRoleId']
     );
   }
 
@@ -111,6 +119,10 @@ class DataModel extends DataEntity {
       weight: entity.weight,
       heightUnit: entity.heightUnit,
       weightUnit: entity.weightUnit,
+      latestUserRole: entity.latestUserRole,
+        latestRoleId: entity.latestRoleId,
+        latestHospitalId: entity.latestHospitalId,
+        latestOrgId: entity.latestOrgId
     );
   }
 
@@ -138,6 +150,10 @@ class DataModel extends DataEntity {
       'weight': weight,
       'heightUnit': heightUnit,
       'weightUnit': weightUnit,
+      'latestUserRole':latestUserRole,
+      'latestHospitalId':latestHospitalId,
+      'latestOrgId':latestOrgId,
+      'latestRoleId':latestRoleId
     };
   }
 }

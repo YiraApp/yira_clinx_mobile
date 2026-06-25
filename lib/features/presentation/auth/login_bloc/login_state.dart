@@ -11,11 +11,36 @@ class SignInInitial extends LogInState {}
 class SignInLoading extends LogInState {}
 
 class ReSendOtpLoading extends LogInState {}
+class SendOtpLoading extends LogInState {
+}
+class SendOtpSuccessState extends LogInState {
+  final SendOtpEntity sendOtpEntity;
+  const SendOtpSuccessState(this.sendOtpEntity);
+}
+class SendOtpFailureState extends LogInState {
+  final String errorMessage;
+
+  const SendOtpFailureState(this.errorMessage);
+}
+class ReSendOtpSuccessState extends LogInState {
+  final SendOtpEntity sendOtpEntity;
+  const ReSendOtpSuccessState(this.sendOtpEntity);
+}
+class ReSendOtpFailureState extends LogInState {
+  final String errorMessage;
+
+  const ReSendOtpFailureState(this.errorMessage);
+}
 
 class NavigateToHome extends LogInState {}
 class NavigateToSignup extends LogInState {}
 class NavigateToSignIn extends LogInState {}
-class NavigateToVerifyOtp extends LogInState {}
+class NavigateToVerifyOtp extends LogInState {
+  final SendOtpEntity sendOtpEntity;
+
+  const NavigateToVerifyOtp({required this.sendOtpEntity});
+
+}
 class NavigateToSelectRole extends LogInState {}
 class NavigateToSelectRoleSignUp extends LogInState {}
 class NavigateToSelectRoleVerifyOtp extends LogInState {}

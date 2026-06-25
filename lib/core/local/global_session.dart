@@ -9,7 +9,6 @@ class GlobalSession {
   static final GlobalSession instance = GlobalSession._internal();
 
   final ValueNotifier<LoginEntity?> userNotifier = ValueNotifier<LoginEntity?>(null);
-
   late SecureStorageService _secureStorage;
 
   Future<void> initialize(SecureStorageService secureStorageService) async {
@@ -18,10 +17,11 @@ class GlobalSession {
       final String? userJson = await _secureStorage.readSecureValue<String>(SecureCacheKey.userData);
       if (userJson != null) {
         final Map<String, dynamic> userMap = jsonDecode(userJson);
+        // Safely map from stored cached maps back into memory
         userNotifier.value = LoginModel.fromJson(userMap);
       }
     } catch (e) {
-      debugPrint("Error initializing GlobalSession: $e");
+      debugPrint("CRITICAL (GlobalSession): Cache initialization failed: $e");
       userNotifier.value = null;
     }
   }
@@ -29,15 +29,29 @@ class GlobalSession {
   Future<void> update(LoginEntity data) async {
     userNotifier.value = data;
     try {
-      final String userJson = jsonEncode((data as LoginModel).toJson());
+      Map<String, dynamic> jsonMap;
+
+      // FIX: Safely evaluate type instead of forcing an unsafe implicit runtime cast
+      if (data is LoginModel) {
+        jsonMap = data.toJson();
+      } else {
+        jsonMap = LoginModel.fromEntity(data).toJson();
+      }
+
+      final String userJson = jsonEncode(jsonMap);
       await _secureStorage.writeSecureValue<String>(SecureCacheKey.userData, userJson);
-    } catch (e) {
-      debugPrint("Error saving to SecureStorage: $e");
+    } catch (e, stackTrace) {
+      debugPrint("CRITICAL (GlobalSession): Error saving session payload to SecureStorage: $e");
+      debugPrint("Stacktrace: $stackTrace");
     }
   }
 
   Future<void> clear() async {
     userNotifier.value = null;
-    await _secureStorage.deleteSecureValue(SecureCacheKey.userData);
+    try {
+      await _secureStorage.deleteSecureValue(SecureCacheKey.userData);
+    } catch (e) {
+      debugPrint("Error clearing secure storage cache: $e");
+    }
   }
 }

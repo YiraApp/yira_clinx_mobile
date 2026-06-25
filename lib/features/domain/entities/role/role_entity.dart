@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum RoleType { frontDesk, provider }
+enum RoleType { patient, provider }
 
 class RoleLoginEntity {
   final RoleType type;

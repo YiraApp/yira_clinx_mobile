@@ -43,7 +43,11 @@ class LoginScreen extends StatelessWidget {
         listener: (context, state) {
           switch (state) {
             case NavigateToVerifyOtp():
-              Navigator.pushNamed(context, AppRoutes.verifyOtp);
+              Navigator.pushNamed(
+                context,
+                AppRoutes.verifyOtp,
+                arguments: state.sendOtpEntity,
+              );
               break;
             case NavigateToSignup():
               Navigator.pushNamed(context, AppRoutes.signup);
@@ -54,10 +58,30 @@ class LoginScreen extends StatelessWidget {
                   payload.roleCount == 1 &&
                   payload.hospitalCount == 1 &&
                   payload.organizationCount == 1) {
-                Navigator.pushReplacementNamed(
-                  context,
-                  AppRoutes.userConfiguration,
-                );
+                final String role = (payload.latestUserRole ?? '')
+                    .toLowerCase()
+                    .trim();
+
+                if (role == professionalRole) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.docDashboard,
+                    (route) => false,
+                  );
+                } else if (role == userRole) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.dashboardPatientDetails,
+                    (route) => false,
+                  );
+                } else {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.unsupportedRole,
+                    (route) => false,
+                    arguments: state.loginEntity,
+                  );
+                }
               } else {
                 Navigator.pushNamed(
                   context,
@@ -230,6 +254,7 @@ class LoginScreen extends StatelessWidget {
                                               isDarkMode,
                                               isTabletDevice,
                                               referenceWidth,
+                                              state
                                             ),
                                             _buildEmailForm(
                                               context,
@@ -310,6 +335,7 @@ class LoginScreen extends StatelessWidget {
     bool isDarkMode,
     bool isTab,
     double refWidth,
+      LogInState state
   ) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -379,7 +405,13 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  onChanged: (country) {},
+                  onChanged: (country) {
+                    if (country.dialCode != null) {
+                      context.read<LoginBloc>().add(
+                        OnCountryCodeChanged(country.dialCode!),
+                      );
+                    }
+                  },
                 ),
               ),
               borderRadius: fieldBorderRadius,
@@ -399,15 +431,28 @@ class LoginScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 30),
-            CustomElevatedButton(
-              noElevation: true,
-              height: 50,
-              width: double.infinity,
-              text: "Send OTP",
-              onPressed: () {
-                context.read<LoginBloc>().add(NavSendOtp());
-              },
-            ),
+            state is SendOtpLoading
+                ? Center(child: CircularProgressIndicator())
+                : CustomElevatedButton(
+                    noElevation: true,
+                    height: 50,
+                    width: double.infinity,
+                    text: "Send OTP",
+                    onPressed: () {
+                      if (mobileFormKey.currentState?.validate() ?? false) {
+                        final String activeCountryCode = context
+                            .read<LoginBloc>()
+                            .currentCountryCode;
+                        context.read<LoginBloc>().add(
+                          OnSendOtp(
+                            mobileNumberController.text,
+                            activeCountryCode,
+                          ),
+                        );
+                      }
+
+                    },
+                  ),
           ],
         ),
       ),

@@ -12,11 +12,17 @@ class OnVerifyAndLogin extends LogInEvent {
 
   const OnVerifyAndLogin(this.mobileNumber, this.otp);
 }
+class OnSendOtp extends LogInEvent {
+  final String mobileNumber;
+  final String countryCode;
 
+  const OnSendOtp(this.mobileNumber, this.countryCode);
+}
 class OnReSendOtp extends LogInEvent {
   final String mobileNumber;
+  final String countryCode;
 
-  const OnReSendOtp(this.mobileNumber);
+  const OnReSendOtp(this.mobileNumber, this.countryCode);
 }
 class NavSendOtp extends LogInEvent {
   const NavSendOtp();
@@ -39,15 +45,19 @@ class NavSelectRoleVerifyOtp extends LogInEvent {
 class NavSelectRoleSignUp extends LogInEvent {
   const NavSelectRoleSignUp();
 }
-/// Triggered internally every second by our countdown timer loop
+
 class _OnTimerTick extends LogInEvent {
   final int secondsRemaining;
 
   const _OnTimerTick(this.secondsRemaining);
 }
 
-/// Triggered internally when the countdown hits zero
+
 class _OnTimerFinished extends LogInEvent {}
+class OnCountryCodeChanged extends LogInEvent {
+  final String countryCode;
+  const OnCountryCodeChanged(this.countryCode);
+}
 class OnTapEmailSignInEvent extends LogInEvent{
   final String email;
   final String password;

@@ -17,7 +17,11 @@ class DataEntity {
   final int? roleCount;
   final int? hospitalCount;
   final int? organizationCount;
-  final String? userRole;
+  final String? latestUserRole;
+  final String? latestOrgId;
+  final String? latestHospitalId;
+
+  final String? latestRoleId;
   final List<RoleEntity>? roles;
   final String? firstName;
   final String? lastName;
@@ -53,7 +57,7 @@ class DataEntity {
     this.height,
     this.weight,
     this.heightUnit,
-    this.weightUnit, this.userRole,
+    this.weightUnit, this.latestUserRole, this.latestOrgId, this.latestHospitalId, this.latestRoleId,
   });
 }
 

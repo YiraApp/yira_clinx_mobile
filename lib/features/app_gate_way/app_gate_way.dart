@@ -14,6 +14,7 @@ import 'package:yiraclinics/core/widgets/internet_guard.dart';
 import 'package:yiraclinics/core/widgets/notificatio_wrapper.dart';
 
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
+import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
 
 class AppGateway extends StatelessWidget {
@@ -24,6 +25,7 @@ class AppGateway extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<NetworkBloc>(create: (context) => sl<NetworkBloc>()),
+        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
         BlocProvider<OnBoardingBloc>(create: (_) => sl<OnBoardingBloc>()),
         BlocProvider<ThemeBloc>(
           create: (_) => sl<ThemeBloc>()..add(LoadThemeEvent()),

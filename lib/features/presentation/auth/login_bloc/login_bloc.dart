@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
+import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
 
@@ -11,6 +12,7 @@ import '../../../../core/constants/clinx_storage_keys.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/local/shared_preferences.dart';
 import '../../../domain/entities/login/login_entity.dart';
+import '../../../use_cases/send_otp_use_case.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -19,65 +21,86 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   final LoginMobileUseCase loginMobileUseCase;
   final LoginEmailUseCase loginEmailUseCase;
   final SharedPrefsService sharedPrefsService;
+  final SendOtpUseCase sendOtpUseCase;
 
   Timer? _timer;
-
-  static const int _countdownDuration = 30;
-
-  LoginBloc({required this.loginMobileUseCase, required this.loginEmailUseCase, required this.sharedPrefsService})
-    : super(SignInInitial()) {
+  static const int _countdownDuration = 60;
+  String currentCountryCode = "+91";
+  LoginBloc({
+    required this.loginMobileUseCase,
+    required this.loginEmailUseCase,
+    required this.sharedPrefsService,
+    required this.sendOtpUseCase,
+  }) : super(SignInInitial()) {
+    // Auth & API Events
+    on<OnCountryCodeChanged>((event, emit) {
+      currentCountryCode = event.countryCode;
+    });
+    on<OnTapEmailSignInEvent>(_onTapEmailSignIn);
+    on<OnTapMobileSignInEvent>(_onTapMobileSignIn);
     on<OnVerifyAndLogin>(_onVerifyAndLogin);
     on<OnReSendOtp>(_onReSendOtp);
-    on<NavSendOtp>((event, emit) {
-      emit(NavigateToVerifyOtp());
-    });
-    on<NavSelectRole>((event, emit) {
-      emit(NavigateToSelectRole());
-    });
-    on<NavSelectRoleVerifyOtp>((event, emit) {
-      emit(NavigateToSelectRoleVerifyOtp());
-    });
-    on<NavForgotPasswordEvent>((event, emit) {
-      emit(NavForgotPasswordState());
-    });
-    on<NavSelectRoleSignUp>((event, emit) {
-      emit(NavigateToSelectRoleSignUp());
-    });
-    on<NavSignIn>((event, emit) {
-      emit(NavigateToSignIn());
-    });
-    on<NavSignUp>((event, emit) {
-      emit(NavigateToSignup());
-    });
-    on<OnTapEmailSignInEvent>((event, emit) async {
-      emit(const LoginLoading());
-      try {
-        final LoginEntity? result = await loginEmailUseCase(
-          LoginWithEmailParams(
-            email: event.email.trim(),
-            password: event.password,
-          ),
-        );
-        if (result != null) {
-          await GlobalSession.instance.update(result);
-          emit(LoginSuccess(loginEntity: result));
-          if(result.status ?? false){
-            await Future.wait([
-              sharedPrefsService.setValue<bool>(ClinxStorageKeys.isUserLoggedIn, true),
-            ]);
-          }
-        } else {
-          emit(const LoginFailure());
-        }
-      } catch (error, stackTrace) {
-        debugPrint("CRITICAL (LoginBloc): Unexpected authorization exception: $error");
-        debugPrint("Stacktrace: $stackTrace");
+    on<OnSendOtp>(_onSendOtp);
+    on<NavSelectRole>((event, emit) => emit(NavigateToSelectRole()));
+    on<NavSelectRoleVerifyOtp>(
+      (event, emit) => emit(NavigateToSelectRoleVerifyOtp()),
+    );
+    on<NavForgotPasswordEvent>((event, emit) => emit(NavForgotPasswordState()));
+    on<NavSelectRoleSignUp>(
+      (event, emit) => emit(NavigateToSelectRoleSignUp()),
+    );
+    on<NavSignIn>((event, emit) => emit(NavigateToSignIn()));
+    on<NavSignUp>((event, emit) => emit(NavigateToSignup()));
 
-        emit(LoginFailure(errorMessage: error.toString()));
+    // Internal Timer Events
+    on<_OnTimerTick>(_onTimerTick);
+    on<_OnTimerFinished>(_onTimerFinished);
+  }
+
+  // --- Event Handlers ---
+
+  Future<void> _onTapEmailSignIn(
+    OnTapEmailSignInEvent event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const LoginLoading());
+    try {
+      final LoginEntity? result = await loginEmailUseCase(
+        LoginWithEmailParams(
+          email: event.email.trim(),
+          password: event.password,
+        ),
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage = result?.message ?? "Invalid email or password.";
+        emit(LoginFailure(errorMessage: failureMessage));
+        return;
+      } else {
+        await Future.wait([
+          GlobalSession.instance.update(result),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isUserLoggedIn,
+            true,
+          ),
+        ]);
+        emit(LoginSuccess(loginEntity: result));
       }
-    });
-    on<OnTapMobileSignInEvent>((event, emit) async {
-      emit(LoginLoading());
+    } catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Unexpected authorization exception: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+      emit(LoginFailure(errorMessage: error.toString()));
+    }
+  }
+
+  Future<void> _onTapMobileSignIn(
+    OnTapMobileSignInEvent event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const LoginLoading());
+    try {
       final LoginEntity? result = await loginMobileUseCase(
         LoginWithMobileParams(
           mobileNumber: event.mobileNumber,
@@ -86,16 +109,31 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
           countryCode: event.countryCode,
         ),
       );
-      if (result != null) {
-        emit(LoginSuccess(loginEntity: result));
+      {}
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Invalid OTP or mobile number.";
+        emit(LoginFailure(errorMessage: failureMessage));
+        return;
       } else {
-        emit(LoginFailure());
+        await Future.wait([
+          GlobalSession.instance.update(result),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isUserLoggedIn,
+            true,
+          ),
+        ]);
+
+        emit(LoginSuccess(loginEntity: result));
       }
-    });
-    on<_OnTimerTick>(_onTimerTick);
-    on<_OnTimerFinished>(_onTimerFinished);
-    _startCountdown();
+    } catch (exception, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Unexpected mobile login exception: $exception",
+      );
+      emit(LoginFailure(errorMessage: exception.toString()));
+    }
   }
+
   Future<void> _onVerifyAndLogin(
     OnVerifyAndLogin event,
     Emitter<LogInState> emit,
@@ -110,15 +148,64 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     }
   }
 
+  Future<void> _onSendOtp(OnSendOtp event, Emitter<LogInState> emit) async {
+    emit(SendOtpLoading());
+    try {
+      final SendOtpEntity? result = await sendOtpUseCase(
+        countryCode: event.countryCode.trim(),
+        mobileNumber: event.mobileNumber.trim(),
+        isReSend: false,
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Failed to send OTP. Please verify your number.";
+        emit(SendOtpFailureState(failureMessage));
+        return;
+      } else {
+        _timer?.cancel();
+        _startCountdown();
+        emit(NavigateToVerifyOtp(sendOtpEntity: result));
+      }
+    } catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Unexpected error during Send OTP sequence: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+
+      emit(SendOtpFailureState(error.toString()));
+    }
+  }
+
   Future<void> _onReSendOtp(OnReSendOtp event, Emitter<LogInState> emit) async {
     emit(ReSendOtpLoading());
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      _startCountdown();
-    } catch (e) {
-      emit(SignInError(e.toString()));
+      final SendOtpEntity? result = await sendOtpUseCase(
+        countryCode: event.countryCode.trim(),
+        mobileNumber: event.mobileNumber.trim(),
+        isReSend: true,
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Failed to send OTP. Please verify your number.";
+        emit(ReSendOtpFailureState(failureMessage));
+        return;
+      } else {
+        _timer?.cancel();
+        _startCountdown();
+      }
+    } catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Unexpected error during Send OTP sequence: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+
+      emit(ReSendOtpFailureState(error.toString()));
     }
   }
+
+  // --- Timer Helper Routines ---
 
   void _onTimerTick(_OnTimerTick event, Emitter<LogInState> emit) {
     emit(TimerTick(event.secondsRemaining));
@@ -135,9 +222,11 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       currentDuration--;
-      if (currentDuration > 0) {
+
+      if (currentDuration >= 0) {
         add(_OnTimerTick(currentDuration));
-      } else {
+      }
+      if (currentDuration <= 0) {
         timer.cancel();
         add(_OnTimerFinished());
       }

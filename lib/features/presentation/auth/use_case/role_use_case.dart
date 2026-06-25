@@ -9,7 +9,7 @@ class SelectRoleUseCase {
   Future<List<RoleLoginEntity>> getAvailableRoles() async {
     return [
       RoleLoginEntity(
-        type: RoleType.frontDesk,
+        type: RoleType.patient,
         title: 'Patient',
         subtitle: 'Authorized Access',
         icon: Icons.lock_open_outlined,
