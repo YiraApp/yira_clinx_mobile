@@ -59,7 +59,8 @@ class DataModel extends DataEntity {
     super.latestUserRole,
     super.latestHospitalId,
     super.latestOrgId,
-    super.latestRoleId
+    super.latestRoleId,
+    super.navigationId
   }) : super(roles: roles);
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
@@ -91,7 +92,8 @@ class DataModel extends DataEntity {
       latestUserRole: json['latestUserRole'] ,
       latestHospitalId: json['latestHospitalId'],
       latestOrgId: json['latestOrgId'],
-      latestRoleId: json['latestRoleId']
+      latestRoleId: json['latestRoleId'],
+        navigationId: json['navigationId']
     );
   }
 
@@ -122,7 +124,8 @@ class DataModel extends DataEntity {
       latestUserRole: entity.latestUserRole,
         latestRoleId: entity.latestRoleId,
         latestHospitalId: entity.latestHospitalId,
-        latestOrgId: entity.latestOrgId
+        latestOrgId: entity.latestOrgId,
+        navigationId: entity.navigationId
     );
   }
 
@@ -153,7 +156,8 @@ class DataModel extends DataEntity {
       'latestUserRole':latestUserRole,
       'latestHospitalId':latestHospitalId,
       'latestOrgId':latestOrgId,
-      'latestRoleId':latestRoleId
+      'latestRoleId':latestRoleId,
+      'navigationId':navigationId
     };
   }
 }

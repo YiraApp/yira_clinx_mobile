@@ -18,8 +18,8 @@ class DataEntity {
   final int? hospitalCount;
   final int? organizationCount;
   final String? latestUserRole;
-  final String? latestOrgId;
-  final String? latestHospitalId;
+  final int? latestOrgId;
+  final int? latestHospitalId;
 
   final String? latestRoleId;
   final List<RoleEntity>? roles;
@@ -34,6 +34,7 @@ class DataEntity {
   final String? weight;
   final String? heightUnit;
   final String? weightUnit;
+  final String? navigationId;
 
   DataEntity({
     this.accessToken,
@@ -57,7 +58,7 @@ class DataEntity {
     this.height,
     this.weight,
     this.heightUnit,
-    this.weightUnit, this.latestUserRole, this.latestOrgId, this.latestHospitalId, this.latestRoleId,
+    this.weightUnit, this.latestUserRole, this.latestOrgId, this.latestHospitalId, this.latestRoleId, this.navigationId,
   });
 }
 

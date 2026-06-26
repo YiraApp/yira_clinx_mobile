@@ -62,17 +62,17 @@ class LoginScreen extends StatelessWidget {
                     .toLowerCase()
                     .trim();
 
-                if (role == professionalRole) {
+                if (payload.navigationId == '2') {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     AppRoutes.docDashboard,
-                    (route) => false,
+                        (route) => false,
                   );
-                } else if (role == userRole) {
+                } else if (payload.navigationId == '1') {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     AppRoutes.dashboardPatientDetails,
-                    (route) => false,
+                        (route) => false,
                   );
                 } else {
                   Navigator.pushNamedAndRemoveUntil(

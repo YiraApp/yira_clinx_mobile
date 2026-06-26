@@ -5,7 +5,6 @@ import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../../../core/colors/colors.dart';
 import '../../../domain/entities/login/login_entity.dart';
-import '../../../domain/entities/role/role_entity.dart';
 
 class DialogRoleCard extends StatelessWidget {
 

@@ -10,7 +10,6 @@ import 'package:yiraclinics/features/presentation/auth/widgets/role_card.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/common_text.dart';
-import '../../../core/common_widgets/custom_button.dart';
 import '../../domain/entities/login/login_entity.dart';
 
 class SelectRoleScreen extends StatefulWidget {
@@ -51,56 +50,72 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final canvasBg = isDarkMode
-        ? const Color(0xFF0F172A)
-        : const Color(0xFFF8FAFC);
-    final primaryTextColor = isDarkMode
-        ? Colors.white
-        : const Color(0xFF1E293B);
-    final secondaryTextColor = isDarkMode
-        ? Colors.white60
-        : const Color(0xFF64748B);
-    final brandIconBg = isDarkMode
-        ? theme.cardColor
-        : primaryColor.withOpacity(0.08);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body:
-      Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: screenSize.height * 0.45,
-                  child: Opacity(
-                    opacity: isDarkMode ? 0.03 : 0.06,
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black, Colors.black.withOpacity(0.0)],
-                      ).createShader(bounds),
-                      blendMode: BlendMode.dstIn,
-                      child: Image.asset(
-                        'assets/images/ic_role_bg.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+     appBar: AppBar(
+        automaticallyImplyLeading: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenSize.height * 0.45,
+            child: Opacity(
+              opacity: isDarkMode ? 0.03 : 0.06,
+              child: ShaderMask(
+                shaderCallback: (bounds) => LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black, Colors.black.withOpacity(0.0)],
+                ).createShader(bounds),
+                blendMode: BlendMode.dstIn,
+                child: Image.asset(
+                  'assets/images/ic_role_bg.png',
+                  fit: BoxFit.cover,
                 ),
-                SafeArea(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: SizedBox(
-                      height:
-                          screenSize.height -
-                          MediaQuery.of(context).padding.top -
-                          MediaQuery.of(context).padding.bottom,
-                      child: Column(
-                        children: [
-                          Padding(
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: BlocConsumer<RoleBloc, RoleState>(
+              // FIXED: Removed the restrictive buildWhen statement that was trapping state updates
+              listener: (context, state) {
+                if (state is RoleSelectedState) {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.workSpaceScreen,
+                    arguments: state.roleEntity,
+                  );
+                }
+              },
+              builder: (context, state) {
+                // Handle loading / initial initialization states cleanly across full dimensions
+                if (state is RoleLoading || state is RoleInitial) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                    ),
+                  );
+                }
+
+                // Treat both RolesLoaded and general fallbacks securely by checking data listings
+                if (state is RolesLoaded || widget.roles != null) {
+                  return FadeTransition(
+                    opacity: _fadeController,
+                    // FIXED: Eliminated SingleChildScrollView + Column + Expanded layout runtime crashes using a proper CustomScrollView hierarchy
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
+                        // 1. App Logo and Header Titles
+                        SliverToBoxAdapter(
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24.0,
                               vertical: 36.0,
@@ -116,12 +131,11 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                     height: isTab ? 65 : 60,
                                   ),
                                 ),
-
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 CommonText(
                                   'Select Your Role',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * (isTab? 0.035:0.065),
+                                    fontSize: displayWidth(context) * (isTab ? 0.035 : 0.065),
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -129,7 +143,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                 CommonText(
                                   'Multiple permissions detected for this facility',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * (isTab? 0.02:0.03),
+                                    fontSize: displayWidth(context) * (isTab ? 0.02 : 0.03),
                                     fontWeight: FontWeight.w500,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -137,155 +151,78 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                               ],
                             ),
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: screenHorizontalSpacePadding,
-                              ),
-                              child: BlocConsumer<RoleBloc, RoleState>(
-                                buildWhen: (previous, current) =>
-                                    current is! RoleLoading &&
-                                    current is! RoleSelectedState,
-                                listener: (context, state) {
-                                  if (state is RoleSelectedState) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.workSpaceScreen,
-                                    );
-                                  }
-                                },
-                                builder: (context, state) {
-                                  if (state is RoleLoading ||
-                                      state is RoleInitial) {
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              primaryColor,
-                                            ),
-                                      ),
-                                    );
-                                  }
-                                  if (state is RolesLoaded) {
-                                    return FadeTransition(
-                                      opacity: _fadeController,
-                                      child: Column(
-                                        children: [
-                                          Expanded(
-                                            child: ListView.builder(
-                                              shrinkWrap: true,
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              padding: EdgeInsets.zero,
-                                              itemCount: widget.roles?.length ?? 0,
-                                              itemBuilder: (context, index) {
-                                                final role = widget.roles![index];
+                        ),
 
-
-                                                return GestureDetector(
-                                                  onTap: () {
-
-                                                  },
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          bottom: fieldSpace,
-                                                        ),
-                                                    child: DialogRoleCard(
-                                                      isTablet: isTab,
-                                                      isSelected: true,
-                                                      onTap: () {
-
-                                                      }, roleEntity: widget.roles![index],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.verified_user_outlined,
-                                                size: 14,
-                                                color: isDarkMode
-                                                    ? Colors.white24
-                                                    : Colors.black26,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                'Secure configuration environment rules apply.',
-                                                style: TextStyle(
-                                                  fontFamily: appPoppinFont,
-                                                  fontSize:
-                                                      displayWidth(context) *
-                                                      (isTab? 0.018:0.025),
-                                                  fontWeight: FontWeight.w500,
-                                                  color: isDarkMode
-                                                      ? Colors.white30
-                                                      : Colors.black38,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 14),
-
-                                          /* Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 16.0,
-                                      ),
-                                      child: AnimatedScale(
-                                        scale: state.selectedRole != null
-                                            ? 1.0
-                                            : 0.98,
-                                        duration: const Duration(
-                                          milliseconds: 250,
-                                        ),
-                                        curve: Curves.easeOutBack,
-                                        child: AnimatedOpacity(
-                                          opacity: state.selectedRole != null
-                                              ? 1.0
-                                              : 0.5,
-                                          duration: const Duration(
-                                            milliseconds: 200,
-                                          ),
-                                          child: CustomElevatedButton(
-                                            noElevation: true,
-                                            height: 54,
-                                            width: displayWidth(context),
-                                            text: "Get Started",
-                                            onPressed:
-                                                state.selectedRole != null
-                                                ? () {
-                                                    debugPrint(
-                                                      "Initializing workspace route entry: ${state.selectedRole}",
-                                                    );
-                                                  }
-                                                : () {},
-                                          ),
-                                        ),
-                                      ),
-                                    ),*/
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: screenHorizontalSpacePadding,
+                          ),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                final role = widget.roles![index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: fieldSpace),
+                                  child: DialogRoleCard(
+                                    isTablet: isTab,
+                                    isSelected: true, // Wire to state.selectedRole == role if your state tracks selections
+                                    onTap: () {
+                                      final selectedRole = widget.roles?[index];
+                                      if (selectedRole == null) return;
+                                      context.read<RoleBloc>().add(RoleSelected(selectedRole));
+                                    },
+                                    roleEntity: role,
+                                  ),
+                                );
+                              },
+                              childCount: widget.roles?.length ?? 0,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+
+                        // 3. Environment Security Sticky Footer
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.verified_user_outlined,
+                                      size: 14,
+                                      color: isDarkMode ? Colors.white24 : Colors.black26,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Secure configuration environment rules apply.',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: displayWidth(context) * (isTab ? 0.018 : 0.025),
+                                        fontWeight: FontWeight.w500,
+                                        color: isDarkMode ? Colors.white30 : Colors.black38,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
             ),
+          ),
+        ],
+      ),
     );
   }
 }

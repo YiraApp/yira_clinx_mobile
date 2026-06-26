@@ -188,10 +188,11 @@ class AppRouter {
           ),
         );
       case AppRoutes.workSpaceScreen:
+        RoleEntity roleEntity = settings.arguments as RoleEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<WorkspaceBloc>(),
-            child: WorkspaceScreen(),
+            child: WorkspaceScreen(roleEntity: roleEntity,),
           ),
         );
       case AppRoutes.docDashboard:

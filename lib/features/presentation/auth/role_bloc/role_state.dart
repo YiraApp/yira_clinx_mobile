@@ -7,7 +7,11 @@ abstract class RoleState {
 }
 
 class RoleInitial extends RoleState {}
-class RoleSelectedState extends RoleState {}
+class RoleSelectedState extends RoleState {
+  final RoleEntity roleEntity;
+
+  const RoleSelectedState(this.roleEntity);
+}
 
 class RoleLoading extends RoleState {}
 

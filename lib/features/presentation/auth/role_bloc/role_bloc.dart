@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 
 import '../../../domain/entities/role/role_entity.dart';
 import '../use_case/role_use_case.dart';
@@ -15,7 +16,7 @@ class RoleBloc extends Bloc<RoleEvent, RoleState> {
     on<LoadRolesEvent>(_onLoadRoles);
     on<ChooseRoleEvent>(_onChooseRole);
     on<RoleSelected>((event, emit) {
-      emit(RoleSelectedState());
+      emit(RoleSelectedState(event.roleEntity));
     },);
   }
 

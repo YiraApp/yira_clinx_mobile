@@ -54,13 +54,13 @@ class _SplashScreenState extends State<SplashScreen> {
       if (isLoggedIn && currentUser != null && currentUser.data != null) {
         final payload = currentUser.data!;
 
-        if (payload.latestUserRole == professionalRole) {
+        if (payload.navigationId == '2') {
           Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.docDashboard,
             (route) => false,
           );
-        } else if (payload.latestUserRole == userRole) {
+        } else if (payload.navigationId == '1') {
           Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.dashboardPatientDetails,

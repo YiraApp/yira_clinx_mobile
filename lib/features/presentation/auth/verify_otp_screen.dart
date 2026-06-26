@@ -62,16 +62,16 @@ class VerifyOtpScreen extends StatelessWidget {
                             payload.roleCount == 1 &&
                             payload.hospitalCount == 1 &&
                             payload.organizationCount == 1) {
-                          final String role = (payload.latestUserRole ?? '')
+                          final String role = (payload.navigationId ?? '')
                               .toLowerCase()
                               .trim();
-                          if (role == professionalRole) {
+                          if (role == "2") {
                             Navigator.pushNamedAndRemoveUntil(
                               context,
                               AppRoutes.docDashboard,
                               (route) => false,
                             );
-                          } else if (role == userRole) {
+                          } else if (role == "1") {
                             Navigator.pushNamedAndRemoveUntil(
                               context,
                               AppRoutes.dashboardPatientDetails,

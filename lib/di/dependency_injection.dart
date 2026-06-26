@@ -29,6 +29,7 @@ import 'package:yiraclinics/features/data/repository_impl/slot_impl/slot_schedul
 import 'package:yiraclinics/features/data/repository_impl/slot_repo_impl/slot_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/upload_record_repo_impl/upload_record_impl_repo.dart';
 import 'package:yiraclinics/features/data/repository_impl/medication/medication_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/work_space/get_work_space_details_impl.dart';
 
 // Domain Layer (Repositories & Entities) Imports
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
@@ -42,12 +43,14 @@ import 'package:yiraclinics/features/domain/repositories/slot/scheduler_repo.dar
 import 'package:yiraclinics/features/domain/repositories/slot/slot_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
+import 'package:yiraclinics/features/domain/repositories/work_space/get_work_space_details_repo.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
 // Use Cases Imports
 import 'package:yiraclinics/features/use_cases/cached_theme_use_case.dart';
 import 'package:yiraclinics/features/use_cases/get_theme_use_case.dart';
+import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/medical_history_use_case.dart';
 import 'package:yiraclinics/features/use_cases/save_prescription_use_case.dart';
@@ -138,6 +141,9 @@ Future<void> init() async {
   sl.registerLazySingleton<SendOtpRepo>(
         () => SendOtpRepositoryImpl(apiClient: sl<ApiClient>()),
   );
+  sl.registerLazySingleton<GetWorkSpaceDetailsRepo>(
+        () => GetWorkSpaceDetailsImpl(apiClient: sl<ApiClient>()),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
@@ -167,6 +173,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(
         () => SendOtpUseCase(repository: sl<SendOtpRepo>()),
+  );
+  sl.registerLazySingleton(
+        () => GetWorkSpaceDetailsUseCase( sl<GetWorkSpaceDetailsRepo>()),
   );
   // ==========================================
   // 3. Blocs / Cubits
@@ -199,7 +208,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DashboardBloc());
   sl.registerLazySingleton(() => SettingsBloc());
   sl.registerLazySingleton(() => TestResultsBloc());
-  sl.registerLazySingleton(() => WorkspaceBloc());
+  sl.registerLazySingleton(() => WorkspaceBloc(getWorkSpaceDetailsUseCase: sl<GetWorkSpaceDetailsUseCase>()));
   sl.registerFactory(() => AppointmentBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton<NavigationDrawerBloc>(
