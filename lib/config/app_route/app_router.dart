@@ -113,7 +113,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<ConfigBloc>(),
-            child: ConfigurationScreen(),
+            child: UserConfigurationScreen(),
           ),
         );
       case AppRoutes.patientManagementScreen:
@@ -180,11 +180,12 @@ class AppRouter {
           ),
         );
       case AppRoutes.selectRoleScreen:
-        final args = settings.arguments as List<RoleEntity>;
+        final args = settings.arguments;
+        final rolesList = args is List<RoleEntity> ? args : <RoleEntity>[];
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<RoleBloc>(),
-            child: SelectRoleScreen(roles: args),
+            child: SelectRoleScreen(roles: rolesList),
           ),
         );
       case AppRoutes.workSpaceScreen:

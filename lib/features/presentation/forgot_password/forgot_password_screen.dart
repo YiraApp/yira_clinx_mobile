@@ -14,6 +14,7 @@ import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/custom_stepper/custom_stepper.dart';
+import '../../../core/utils/dismiss_key_board.dart';
 import 'forgot_password_bloc/forgot_password_bloc.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -47,7 +48,7 @@ class ForgotPasswordScreen extends StatelessWidget {
     final double referenceWidth = displayWidth(context);
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () => context.dismissKeyboard,
       child: BlocConsumer<ForgotPasswordBloc, ForgotPasswordState>(
         buildWhen: (previous, state) => state is! NavigateToSignIn,
         listener: (context, state) {
@@ -679,6 +680,7 @@ class ForgotPasswordScreen extends StatelessWidget {
             width: double.infinity,
             text: "Verify OTP",
             onPressed: () {
+              context.dismissKeyboard();
               context.read<ForgotPasswordBloc>().add(
                 VerifyOtpClicked(otp: otpController.text),
               );

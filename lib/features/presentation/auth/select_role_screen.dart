@@ -53,7 +53,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-     appBar: AppBar(
+      appBar: AppBar(
         automaticallyImplyLeading: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -81,21 +81,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
               ),
             ),
           ),
-
           SafeArea(
-            child: BlocConsumer<RoleBloc, RoleState>(
-              // FIXED: Removed the restrictive buildWhen statement that was trapping state updates
-              listener: (context, state) {
-                if (state is RoleSelectedState) {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.workSpaceScreen,
-                    arguments: state.roleEntity,
-                  );
-                }
-              },
+            // Changed from BlocConsumer to pure BlocBuilder
+            child: BlocBuilder<RoleBloc, RoleState>(
               builder: (context, state) {
-                // Handle loading / initial initialization states cleanly across full dimensions
                 if (state is RoleLoading || state is RoleInitial) {
                   return const Center(
                     child: CircularProgressIndicator(
@@ -105,15 +94,12 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   );
                 }
 
-                // Treat both RolesLoaded and general fallbacks securely by checking data listings
                 if (state is RolesLoaded || widget.roles != null) {
                   return FadeTransition(
                     opacity: _fadeController,
-                    // FIXED: Eliminated SingleChildScrollView + Column + Expanded layout runtime crashes using a proper CustomScrollView hierarchy
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
-                        // 1. App Logo and Header Titles
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -152,7 +138,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             ),
                           ),
                         ),
-
                         SliverPadding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: screenHorizontalSpacePadding,
@@ -160,18 +145,33 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate(
                                   (context, index) {
-                                final role = widget.roles![index];
+                                final role = widget.roles?[index];
+
+                                // Pure BLoC selection conditional evaluation
+                                final isSelected = state is RoleSelectedState &&
+                                    state.roleEntity.roleId == role?.roleId;
+
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: fieldSpace),
                                   child: DialogRoleCard(
                                     isTablet: isTab,
-                                    isSelected: true, // Wire to state.selectedRole == role if your state tracks selections
-                                    onTap: () {
+                                    isSelected: isSelected,
+                                    roleEntity: role!,
+                                    onTap: () async {
                                       final selectedRole = widget.roles?[index];
                                       if (selectedRole == null) return;
+
                                       context.read<RoleBloc>().add(RoleSelected(selectedRole));
+
+                                    await Navigator.pushNamed(
+                                        context,
+                                        AppRoutes.workSpaceScreen,
+                                        arguments: selectedRole,
+                                      );
+                                      if (context.mounted) {
+                                        context.read<RoleBloc>().add(ClearRoleSelectionEvent());
+                                      }
                                     },
-                                    roleEntity: role,
                                   ),
                                 );
                               },
@@ -179,8 +179,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             ),
                           ),
                         ),
-
-                        // 3. Environment Security Sticky Footer
                         SliverFillRemaining(
                           hasScrollBody: false,
                           child: Padding(

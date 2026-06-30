@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/utils/dismiss_key_board.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 
 import '../../../core/common_input_fields/common_input_field.dart';
@@ -34,7 +35,7 @@ class LoginScreen extends StatelessWidget {
     final double screenWidth = displayWidth(context);
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () => context.dismissKeyboard(),
       child: BlocConsumer<LoginBloc, LogInState>(
         buildWhen: (previous, state) =>
             state is! NavigateToVerifyOtp &&
@@ -61,14 +62,20 @@ class LoginScreen extends StatelessWidget {
                 final String role = (payload.latestUserRole ?? '')
                     .toLowerCase()
                     .trim();
-
-                if (payload.navigationId == '2') {
+                Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.userConfiguration,
+                        (route) => false
+                );
+                /*if (payload.navigationId == '2') {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     AppRoutes.docDashboard,
                         (route) => false,
                   );
-                } else if (payload.navigationId == '1') {
+                }
+                else if (payload.navigationId == '1')
+                {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     AppRoutes.dashboardPatientDetails,
@@ -81,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                     (route) => false,
                     arguments: state.loginEntity,
                   );
-                }
+                }*/
               } else {
                 Navigator.pushNamed(
                   context,
@@ -100,6 +107,8 @@ class LoginScreen extends StatelessWidget {
         },
         builder: (context, state) {
           var isLoading = state is LoginLoading;
+          var isMobileLoading = state is SendOtpLoading;
+
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: PreferredSize(
@@ -107,7 +116,7 @@ class LoginScreen extends StatelessWidget {
               child: AppBar(backgroundColor: Colors.transparent, elevation: 0),
             ),
             body: AbsorbPointer(
-              absorbing: isLoading,
+              absorbing: isLoading || isMobileLoading,
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
@@ -284,6 +293,7 @@ class LoginScreen extends StatelessWidget {
                                           ),
                                           TextButton(
                                             onPressed: () {
+                                              context.dismissKeyboard();
                                               context.read<LoginBloc>().add(
                                                 NavSignUp(),
                                               );
@@ -440,6 +450,7 @@ class LoginScreen extends StatelessWidget {
                     text: "Send OTP",
                     onPressed: () {
                       if (mobileFormKey.currentState?.validate() ?? false) {
+                        context.dismissKeyboard();
                         final String activeCountryCode = context
                             .read<LoginBloc>()
                             .currentCountryCode;
@@ -562,6 +573,7 @@ class LoginScreen extends StatelessWidget {
                         text: "Sign In",
                         onPressed: () {
                           if (emailFormKey.currentState?.validate() ?? false) {
+                            context.dismissKeyboard();
                             context.read<LoginBloc>().add(
                               OnTapEmailSignInEvent(
                                 email: emailController.text.trim(),
@@ -574,6 +586,7 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
+                    context.dismissKeyboard();
                     context.read<LoginBloc>().add(NavForgotPasswordEvent());
                   },
                   style: TextButton.styleFrom(

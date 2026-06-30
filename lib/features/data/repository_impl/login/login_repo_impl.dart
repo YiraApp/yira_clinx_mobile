@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 
 import '../../../../core/api/api_client.dart';
@@ -31,9 +32,10 @@ class LoginRepositoryImpl implements LoginRepository {
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;
-      }
+      } else{
+        return LoginModel.fromJson(response.data as Map<String, dynamic>);
 
-      return LoginModel.fromJson(response.data as Map<String, dynamic>);
+      }
     } catch (error, stackTrace) {
       developer.log(
         "loginWithEmail failed gracefully inside repository layer",
@@ -61,11 +63,13 @@ class LoginRepositoryImpl implements LoginRepository {
         if (countryCode != null && countryCode.isNotEmpty)
           "countryCode": countryCode,
       };
+      debugPrint('login requestBody --$requestBody');
 
       final response = await _apiClient.account.post(
         URLs.loginUrl,
         data: requestBody,
       );
+      debugPrint('login response --$response');
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;

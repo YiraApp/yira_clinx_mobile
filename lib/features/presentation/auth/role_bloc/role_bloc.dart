@@ -18,15 +18,13 @@ class RoleBloc extends Bloc<RoleEvent, RoleState> {
     on<RoleSelected>((event, emit) {
       emit(RoleSelectedState(event.roleEntity));
     },);
+
   }
 
   Future<void> _onLoadRoles(LoadRolesEvent event, Emitter<RoleState> emit) async {
-    emit(RoleLoading()); // Shows the progress indicator
+    emit(RoleLoading());
     try {
-      // 1. Await data from your usecase
       final rolesList = await selectRoleUseCase.getAvailableRoles();
-
-      // 2. Emit the Loaded state with data
       emit(RolesLoaded(
         roles: rolesList,
         selectedRole: rolesList.isNotEmpty ? rolesList.first.type : null,

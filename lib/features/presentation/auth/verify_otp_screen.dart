@@ -48,11 +48,12 @@ class VerifyOtpScreen extends StatelessWidget {
 
                 return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
-                      current is TimerTick ||
+                  current is TimerTick ||
                       current is TimerFinished ||
                       current is SendOtpLoading ||
                       current is ReSendOtpLoading ||
                       current is SignInLoading ||
+                      current is LoginLoading ||
                       current is SignInError,
                   listener: (context, state) {
                     switch (state) {
@@ -86,14 +87,14 @@ class VerifyOtpScreen extends StatelessWidget {
                             );
                           }
                         } else {
-                          Navigator.pushNamed(
+                          Navigator.pushNamedAndRemoveUntil(
                             context,
                             AppRoutes.selectRoleScreen,
-                            arguments: payload?.roles ?? [],
+                            (route) => false,
+                            arguments: state.loginEntity.data?.roles,
                           );
                         }
                         break;
-
                       default:
                         break;
                     }
@@ -362,13 +363,13 @@ class VerifyOtpScreen extends StatelessWidget {
 
                                   const Spacer(),
 
-                                  // 7. Verification Button Base
-                                  state is SignInLoading
+                                  state is LoginLoading
                                       ? Padding(
                                           padding: EdgeInsets.only(
                                             bottom: screenHeight * 0.04,
                                           ),
-                                          child: const SizedBox(
+                                          child:  SizedBox(
+                                            width: displayWidth(context),
                                             height: 50,
                                             child: Center(
                                               child:
@@ -382,12 +383,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                                 ? screenHeight * 0.04
                                                 : 24.0,
                                           ),
-                                          child: state is LoginLoading
-                                              ? Center(
-                                                  child:
-                                                      CircularProgressIndicator(),
-                                                )
-                                              : CustomElevatedButton(
+                                          child: CustomElevatedButton(
                                                   noElevation: true,
                                                   height: 50,
                                                   width: double.infinity,

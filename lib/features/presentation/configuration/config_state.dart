@@ -1,30 +1,30 @@
 part of 'config_bloc.dart';
 
 @immutable
-class ConfigState {
-  final Map<String, bool> settings;
-  final bool isSyncing; // For the small AppBar pulse
-  final bool isUpdated; // For the full-screen Success Overlay
+abstract class ConfigState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
-  const ConfigState({
-    this.settings = const {
-      "notif": true,
-      "dark": false,
-      "bio": true
-    },
-    this.isSyncing = false,
-    this.isUpdated = false,
-  });
+class ConfigInitial extends ConfigState {}
 
-  ConfigState copyWith({
-    Map<String, bool>? settings,
-    bool? isSyncing,
-    bool? isUpdated,
-  }) {
-    return ConfigState(
-      settings: settings ?? this.settings,
-      isSyncing: isSyncing ?? this.isSyncing,
-      isUpdated: isUpdated ?? this.isUpdated,
-    );
-  }
+class LoadDataStatus extends ConfigState {}
+
+// 3. Success State
+class GetDataSuccessState extends ConfigState {
+  final LoginEntity? loginEntity;
+
+  GetDataSuccessState(this.loginEntity);
+
+  @override
+  List<Object?> get props => [loginEntity];
+}
+
+class GetDataFailureState extends ConfigState {
+  final String? errorMessage;
+
+  GetDataFailureState(this.errorMessage);
+
+  @override
+  List<Object?> get props => [errorMessage];
 }

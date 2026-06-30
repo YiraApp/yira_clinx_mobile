@@ -12,6 +12,7 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../core/utils/dismiss_key_board.dart';
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
@@ -35,11 +36,10 @@ class SignupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final double screenHeight = displayHeight(context);
     final double screenWidth = displayWidth(context);
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () => context.dismissKeyboard(),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -96,11 +96,6 @@ class SignupScreen extends StatelessWidget {
                                 height: isTab ? 65 : 60,
                               ),
                             ),
-                            /*Icon(
-                              Icons.health_and_safety,
-                              color: primaryColor,
-                              size: isTab ? 75 : 65,
-                            ),*/
                             const SizedBox(height: 10),
 
                             CommonText(
@@ -348,6 +343,7 @@ class SignupScreen extends StatelessWidget {
                                     width: double.infinity,
                                     text: "Sign Up",
                                     onPressed: () {
+                                      context.dismissKeyboard();
                                       context.read<LoginBloc>().add(
                                         NavSelectRoleSignUp(),
                                       );

@@ -15,3 +15,4 @@ class ChooseRoleEvent extends RoleEvent {
   final RoleType selectedRole;
   const ChooseRoleEvent(this.selectedRole);
 }
+class ClearRoleSelectionEvent extends RoleEvent {}

@@ -32,6 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
     context.read<AuthBloc>().add(AppStarted());
     _startTimer();
   }
+
   void _startTimer() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
@@ -43,7 +44,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _attemptNavigation() {
-
     if (!_timerFinished) return;
 
     try {
@@ -53,8 +53,12 @@ class _SplashScreenState extends State<SplashScreen> {
           false;
       if (isLoggedIn && currentUser != null && currentUser.data != null) {
         final payload = currentUser.data!;
-
-        if (payload.navigationId == '2') {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.userConfiguration,
+              (route) => false
+        );
+        /*if (payload.navigationId == '2') {
           Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.docDashboard,
@@ -66,14 +70,14 @@ class _SplashScreenState extends State<SplashScreen> {
             AppRoutes.dashboardPatientDetails,
             (route) => false,
           );
-        }else{
+        } else {
           Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.unsupportedRole,
-                (route) => false,
-            arguments: currentUser
+            (route) => false,
+            arguments: currentUser,
           );
-        }
+        }*/
       } else {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -81,8 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
           (route) => false,
         );
       }
-    }
-    catch (error, stackTrace) {
+    } catch (error, stackTrace) {
       debugPrint(
         "CRITICAL (SplashScreen): Navigation error routing sequence: $error",
       );
@@ -107,6 +110,10 @@ class _SplashScreenState extends State<SplashScreen> {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return isTab
         ? Scaffold(
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(0),
+              child: SizedBox.shrink(),
+            ),
             key: scaffoldKey,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             extendBodyBehindAppBar: true,
@@ -191,11 +198,14 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           )
         : Scaffold(
-            key: scaffoldKey,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: PreferredSize(
+              preferredSize: Size.fromHeight(0),
+              child: SizedBox.shrink(),
+            ),
+            key: scaffoldKey,
             extendBodyBehindAppBar: true,
             extendBody: true,
-
             body: Stack(
               children: [
                 SizedBox(

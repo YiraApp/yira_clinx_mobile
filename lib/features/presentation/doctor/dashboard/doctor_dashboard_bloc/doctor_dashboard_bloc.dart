@@ -1,10 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
-import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
-
-import '../../../../../core/local/flutter_secure_storage.dart';
-import '../../../../../core/use_cases/package_use_case.dart';
+import '../../../../../core/local/global_session.dart';
 import '../../../../domain/entities/appointments/appointment_entity.dart';
 
 part 'doctor_dashboard_event.dart';
@@ -12,21 +9,11 @@ part 'doctor_dashboard_state.dart';
 
 class DoctorDashboardBloc
     extends Bloc<DoctorDashboardEvent, DoctorDashboardState> {
-  final GetAppVersionInfoUseCase _getAppVersionInfoUseCase;
-  final SecureStorageService _secureStorageService;
-  DoctorDashboardBloc({
-    required GetAppVersionInfoUseCase getAppVersionInfoUseCase,
-    required SecureStorageService secureStorageService,
-  }) : _getAppVersionInfoUseCase = getAppVersionInfoUseCase,
-       _secureStorageService = secureStorageService,
-       super(const DoctorDashboardInitial()) {
+  DoctorDashboardBloc() : super(const DoctorDashboardInitial()) {
     on<FetchDoctorDashboardData>((event, emit) async {
       try {
-        final versionEntity = await _getAppVersionInfoUseCase();
-        await _secureStorageService.writeSecureValue<String>(
-          SecureCacheKey.appVersionInfo,
-          versionEntity.displayVersion,
-        );
+
+
         emit(const DoctorDashboardLoading());
         await Future.delayed(const Duration(milliseconds: 600));
         final List<AppointmentEntity> mockToday = [

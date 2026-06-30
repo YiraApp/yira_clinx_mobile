@@ -37,8 +37,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   @override
   void dispose() {
-    _dashboardBloc.close();
-    _navigationDrawerBloc.close();
     super.dispose();
   }
 

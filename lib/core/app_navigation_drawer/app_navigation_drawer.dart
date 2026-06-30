@@ -8,18 +8,31 @@ import '../common_size_helpers/common_size_helpers.dart';
 import '../common_widgets/common_text.dart';
 import '../custom_dialogue/custom_dialogue.dart';
 import '../custom_dialogue/sign_out_alert.dart';
+import '../local/global_session.dart';
+import '../package/domain/plat_form_info_entity.dart';
 import 'model/nav_item_model.dart';
 import 'navigation_drawer-bloc/navigation_drawer_bloc.dart';
 
 class AppNavigationDrawer extends StatelessWidget {
   const AppNavigationDrawer({super.key});
 
+  void _navigateToCleanRoot(BuildContext context, String routeName) {
+    Navigator.pop(context);
+
+    if (ModalRoute.of(context)?.settings.name != routeName) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        routeName,
+            (Route<dynamic> route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bool isTab = isTablet(context);
-
     final containerBgColor = isDark ? darkModeBgColor : lightModeBgColor;
 
     final dividerColor = isDark
@@ -44,61 +57,31 @@ class AppNavigationDrawer extends StatelessWidget {
             ],
           ),
           child: BlocConsumer<NavigationDrawerBloc, NavigationDrawerState>(
-            buildWhen: (previous, current) =>
-            previous != current &&
-                current is! DashboardNavState &&
-                current is! AppointmentsNavState &&
-                current is! PatientsNavState &&
-                current is! DoctorSlotNavState &&
-                current is! SettingsNavState &&
-                current is! ReadAboutUsNavState &&
-                current is! ContactNavState &&
-                current is! PrivacyNavState &&
-                current is! LogoutNavState,
-            listenWhen: (context, current) =>
-            current is DashboardNavState ||
-                current is AppointmentsNavState ||
-                current is PatientsNavState ||
-                current is DoctorSlotNavState ||
-                current is SettingsNavState ||
-                current is ReadAboutUsNavState ||
-                current is ContactNavState ||
-                current is PrivacyNavState ||
-                current is LogoutNavState,
+            buildWhen: (previous, current) => previous.selectedIndex != current.selectedIndex,
+            listenWhen: (previous, current) => previous != current,
             listener: (BuildContext context, NavigationDrawerState state) async {
               switch (state) {
                 case DashboardNavState():
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.docDashboard);
+                  _navigateToCleanRoot(context, AppRoutes.docDashboard);
                   break;
                 case AppointmentsNavState():
-                  Navigator.pop(context);
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.appointmentDashboardScreen,
-                  );
+                  _navigateToCleanRoot(context, AppRoutes.appointmentDashboardScreen);
                   break;
                 case PatientsNavState():
-                  Navigator.pop(context);
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.patientManagementScreen,
-                  );
+                  _navigateToCleanRoot(context, AppRoutes.patientManagementScreen);
                   break;
                 case DoctorSlotNavState():
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.slotDashboard);
+                  _navigateToCleanRoot(context, AppRoutes.slotDashboard);
                   break;
                 case SettingsNavState():
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, AppRoutes.settingsScreen);
+                  _navigateToCleanRoot(context, AppRoutes.settingsScreen);
                   break;
                 case ReadAboutUsNavState():
                   Navigator.pop(context);
                   CustomUrlDialog.customLauncherDialogue(
                     context,
                     'Read About Us',
-                    'Yira Clinx (ClinicX) is a next-generation, AI-powered clinic management platform designed to automate and optimize medical practice workflows. Reversing manual administration friction, the platform natively unifies intelligent appointment scheduling, paperless digital check-ins, automated clinical documentation, and smart post-visit summaries delivered seamlessly via WhatsApp, SMS, and Email to ensure peak clinic efficiency.',
+                    'Yira Clinx (ClinicX) is a next-generation, AI-powered clinic management platform designed to automate and optimize medical practice workflows...',
                     primaryColor,
                     'https://yira.ai/yira-clinx/',
                     'More',
@@ -110,7 +93,7 @@ class AppNavigationDrawer extends StatelessWidget {
                   CustomUrlDialog.customContactLauncherDialogue(
                     context,
                     'Contact Us',
-                    'We\'re here to help! If you\'re experiencing any system downtime, sync anomalies, or need immediate assistance managing your patient queues and configurations, please reach out to our dedicated clinic support operations. Our team is ready to ensure a smooth, reliable digital practice environment for you and your staff. Feel free to contact us anytime...',
+                    'We\'re here to help! If you\'re experiencing any system downtime...',
                     primaryColor,
                     'https://yira.ai/clinx-support',
                     'More',
@@ -123,7 +106,7 @@ class AppNavigationDrawer extends StatelessWidget {
                   CustomUrlDialog.customLauncherDialogue(
                     context,
                     'Privacy Policy',
-                    'We at Yira Clinx recognize that as a healthcare professional or practice administrator, the privacy of your operational workflows and your patients\' medical records is paramount. We take patient data protection, secure electronic health record (EHR) storage, and compliance with healthcare digital frameworks extremely seriously. We are committed to maintaining rigorous data access control, end-to-end transport encryptions, and robust architecture protocols to safeguard all confidential clinical assets handled on our systems...',
+                    'We at Yira Clinx recognize that as a healthcare professional...',
                     primaryColor,
                     'https://yira.ai/clinx-privacy',
                     'More',
@@ -132,11 +115,7 @@ class AppNavigationDrawer extends StatelessWidget {
                   break;
                 case LogoutNavState():
                   Navigator.pop(context);
-                  await SignOutAlert
-                      .showSignCustomDialog(
-                      context,
-                      primaryColor,
-                      );
+                  await SignOutAlert.showSignCustomDialog(context, primaryColor);
                   break;
                 default:
                   break;
@@ -153,9 +132,7 @@ class AppNavigationDrawer extends StatelessWidget {
                     Expanded(
                       child: ListView(
                         physics: const BouncingScrollPhysics(),
-                        padding: EdgeInsets.symmetric(
-                          vertical: targetWidth * 0.025,
-                        ),
+                        padding: EdgeInsets.symmetric(vertical: targetWidth * 0.025),
                         children: [
                           ...List.generate(primaryNavItems.length, (index) {
                             final item = primaryNavItems[index];
@@ -164,40 +141,15 @@ class AppNavigationDrawer extends StatelessWidget {
                               icon: item.icon,
                               isSelected: state.selectedIndex == index,
                               onTap: () {
+                                final bloc = context.read<NavigationDrawerBloc>();
                                 switch (index) {
-                                  case 0:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const DashBoardNav(),
-                                    );
-                                    break;
-                                  case 1:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const AppointmentsNav(),
-                                    );
-                                    break;
-                                  case 2:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const PatientsNav(),
-                                    );
-                                    break;
-                                  case 3:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const DoctorSlotsNav(),
-                                    );
-                                  case 4:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const ReadAboutUsNavEvent(),
-                                    );
-                                  case 5:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const ContactNavEvent(),
-                                    );
-                                  case 6:
-                                    context.read<NavigationDrawerBloc>().add(
-                                      const PrivacyNavEvent(),
-                                    );
-                                    break;
-                                  default:
+                                  case 0: bloc.add(const DashBoardNav()); break;
+                                  case 1: bloc.add(const AppointmentsNav()); break;
+                                  case 2: bloc.add(const PatientsNav()); break;
+                                  case 3: bloc.add(const DoctorSlotsNav()); break;
+                                  case 4: bloc.add(const ReadAboutUsNavEvent()); break;
+                                  case 5: bloc.add(const ContactNavEvent()); break;
+                                  case 6: bloc.add(const PrivacyNavEvent()); break;
                                 }
                               },
                             );
@@ -207,61 +159,52 @@ class AppNavigationDrawer extends StatelessWidget {
                               horizontal: targetWidth * 0.08,
                               vertical: 12,
                             ),
-                            child: Divider(
-                              height: 1,
-                              thickness: 1.2,
-                              color: dividerColor,
-                            ),
+                            child: Divider(height: 1, thickness: 1.2, color: dividerColor),
                           ),
                           CustomMenuTile(
                             title: "Settings",
                             icon: Icons.settings_outlined,
                             isSelected: state.selectedIndex == 7,
-                            onTap: () => context
-                                .read<NavigationDrawerBloc>()
-                                .add(const SettingsNav()),
+                            onTap: () => context.read<NavigationDrawerBloc>().add(const SettingsNav()),
                           ),
                           Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: targetWidth * 0.08,
                               vertical: 12,
                             ),
-                            child: Divider(
-                              height: 1,
-                              thickness: 1.2,
-                              color: dividerColor,
-                            ),
+                            child: Divider(height: 1, thickness: 1.2, color: dividerColor),
                           ),
                           CustomMenuTile(
                             title: "Logout",
                             icon: Icons.logout_rounded,
                             isSelected: false,
                             customColor: Colors.red,
-                            onTap: () {
-                              context.read<NavigationDrawerBloc>().add(
-                                const LogoutNavEvent(),
-                              );
-                            },
+                            onTap: () => context.read<NavigationDrawerBloc>().add(const LogoutNavEvent()),
                           ),
                         ],
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: targetWidth * 0.1,
-                        bottom: 20.0,
-                        top: 12,
-                      ),
-                      child: CommonText(
-                        state.appVersion,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: targetWidth * (isTab ? 0.04 : 0.034),
-                          color: isDark ? Colors.white38 : Colors.black38,
-                          letterSpacing: 0.8,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    ValueListenableBuilder<PlatformInfoEntity?>(
+                      valueListenable: GlobalSession.instance.platformNotifier,
+                      builder: (context, platformInfo, _) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            left: targetWidth * 0.1,
+                            bottom: 20.0,
+                            top: 12,
+                          ),
+                          child: CommonText(
+                            'App Version- ${platformInfo?.version ?? ''}',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: targetWidth * (isTab ? 0.04 : 0.034),
+                              color: isDark ? Colors.white38 : Colors.black38,
+                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -273,12 +216,7 @@ class AppNavigationDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(
-      BuildContext context,
-      NavigationDrawerState state,
-      double currentDrawerWidth,
-      bool isTab,
-      ) {
+  Widget _buildHeader(BuildContext context, NavigationDrawerState state, double currentDrawerWidth, bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -298,39 +236,18 @@ class AppNavigationDrawer extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  theme.primaryColor,
-                  theme.primaryColor.withOpacity(0.4),
-                ],
+                colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.4)],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.primaryColor.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
               padding: const EdgeInsets.all(2),
               child: CircleAvatar(
                 radius: currentDrawerWidth * 0.115,
-                backgroundColor: isDark
-                    ? const Color(0xFF232733)
-                    : const Color(0xFFE9ECEF),
-                backgroundImage: state.profileImageUrl != null
-                    ? NetworkImage(state.profileImageUrl!)
-                    : null,
+                backgroundColor: isDark ? const Color(0xFF232733) : const Color(0xFFE9ECEF),
+                backgroundImage: state.profileImageUrl != null ? NetworkImage(state.profileImageUrl!) : null,
                 child: state.profileImageUrl == null
-                    ? Icon(
-                  Icons.person_rounded,
-                  size: currentDrawerWidth * 0.115,
-                  color: theme.primaryColor.withOpacity(0.7),
-                )
+                    ? Icon(Icons.person_rounded, size: currentDrawerWidth * 0.115, color: theme.primaryColor.withOpacity(0.7))
                     : null,
               ),
             ),

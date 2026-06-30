@@ -6,10 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/flutter_secure_storage.dart';
 import 'package:yiraclinics/core/local/shared_preferences.dart';
-import 'package:yiraclinics/core/urls/urls.dart';
-import 'package:yiraclinics/core/package/data/package_info_impl.dart';
-import 'package:yiraclinics/core/package/domain/package_repo.dart';
-import 'package:yiraclinics/core/use_cases/package_use_case.dart';
 import 'package:yiraclinics/core/services/network_services/data/network_repo_impl/network_repo_impl.dart';
 import 'package:yiraclinics/core/services/network_services/domain/neetwork_repo/network_repo.dart';
 import 'package:yiraclinics/core/services/network_services/network_bloc/network_bloc.dart';
@@ -34,6 +30,7 @@ import 'package:yiraclinics/features/data/repository_impl/work_space/get_work_sp
 // Domain Layer (Repositories & Entities) Imports
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
 import 'package:yiraclinics/features/domain/repositories/auth/auth_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/configuration/configuration_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/login/login_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
@@ -49,6 +46,7 @@ import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
 // Use Cases Imports
 import 'package:yiraclinics/features/use_cases/cached_theme_use_case.dart';
+import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import 'package:yiraclinics/features/use_cases/get_theme_use_case.dart';
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
@@ -59,7 +57,6 @@ import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
 import 'package:yiraclinics/features/presentation/auth/use_case/role_use_case.dart';
 
 // Blocs & Presentation Imports
-import 'package:yiraclinics/features/data/models/login/login_model.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
@@ -80,10 +77,15 @@ import 'package:yiraclinics/features/presentation/prescriptions/prescription_blo
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
-import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart' as user_presc;
+import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart'
+    as user_presc;
 import 'package:yiraclinics/features/use_cases/send_otp_use_case.dart';
 
 import '../core/local/global_session.dart';
+import '../core/package/data/platform_info_impl.dart';
+import '../core/package/domain/plat_form_info_repo.dart';
+import '../core/use_cases/get_plat_form_info_usecase.dart';
+import '../features/data/repository_impl/configuration/configuration_repo_impl.dart';
 
 final sl = GetIt.instance;
 
@@ -98,147 +100,161 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SharedPrefsService(sl<SharedPreferences>()));
   sl.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
   final globalSession = GlobalSession.instance;
-  await globalSession.initialize(sl<SecureStorageService>()); // Await the configuration read
+  await globalSession.initialize(sl<SecureStorageService>());
   sl.registerSingleton<GlobalSession>(globalSession);
   // ==========================================
   // 1. Data Sources & Repositories
   // ==========================================
   sl.registerLazySingleton<ThemeLocalDataSource>(
-        () => ThemeLocalDataSourceImpl(sl<SharedPrefsService>()),
+    () => ThemeLocalDataSourceImpl(sl<SharedPrefsService>()),
   );
   sl.registerLazySingleton<ThemeRepository>(
-        () => ThemeRepositoryImpl(sl<ThemeLocalDataSource>()),
+    () => ThemeRepositoryImpl(sl<ThemeLocalDataSource>()),
   );
   sl.registerLazySingleton<AuthRepository>(
-        () => AuthRepositoryImpl(sl<SharedPrefsService>(), sl<SecureStorageService>()),
+    () => AuthRepositoryImpl(
+      sl<SharedPrefsService>(),
+      sl<SecureStorageService>(),
+    ),
   );
   sl.registerLazySingleton<NetworkRemoteDataSource>(
-        () => NetworkRemoteDataSourceImpl(sl<InternetConnection>()),
+    () => NetworkRemoteDataSourceImpl(sl<InternetConnection>()),
   );
   sl.registerLazySingleton<NetworkRepository>(
-        () => NetworkRepositoryImpl(remoteDataSource: sl<NetworkRemoteDataSource>()),
+    () =>
+        NetworkRepositoryImpl(remoteDataSource: sl<NetworkRemoteDataSource>()),
   );
-  sl.registerLazySingleton<PackageRepo>(() => const PackageRepoImpl());
+  sl.registerLazySingleton<PlatformInfoRepo>(
+    () => const PlatformInfoRepoImpl(),
+  );
   sl.registerLazySingleton<LoginRepository>(
-        () => LoginRepositoryImpl(apiClient: sl<ApiClient>()),
+    () => LoginRepositoryImpl(apiClient: sl<ApiClient>()),
   );
   sl.registerLazySingleton<PatientRepository>(() => PatientRepositoryImpl());
   sl.registerLazySingleton<MedicationRepository>(
-        () => MedicationRepositoryImpl(),
+    () => MedicationRepositoryImpl(),
   );
   sl.registerLazySingleton<MedicalHistoryRepository>(
-        () => MedicalHistoryRepositoryImpl(),
+    () => MedicalHistoryRepositoryImpl(),
   );
 
   sl.registerLazySingleton<RecordsRepository>(() => RecordsRepositoryImpl());
   sl.registerLazySingleton<SlotRepository>(() => const SlotRepositoryImpl());
   sl.registerLazySingleton<SchedulerRepository>(
-        () => SchedulerRepositoryImpl(),
+    () => SchedulerRepositoryImpl(),
   );
   sl.registerLazySingleton<PrescriptionRepository>(
-        () => PrescriptionRepositoryImpl(),
+    () => PrescriptionRepositoryImpl(),
   );
   sl.registerLazySingleton<SendOtpRepo>(
-        () => SendOtpRepositoryImpl(apiClient: sl<ApiClient>()),
+    () => SendOtpRepositoryImpl(apiClient: sl<ApiClient>()),
   );
   sl.registerLazySingleton<GetWorkSpaceDetailsRepo>(
-        () => GetWorkSpaceDetailsImpl(apiClient: sl<ApiClient>()),
+    () => GetWorkSpaceDetailsImpl(apiClient: sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<ConfigurationRepo>(
+        () => ConfigurationRepoImpl(
+      apiClient: sl<ApiClient>(),
+    ),
   );
   // ==========================================
   // 2. Use Cases
   // ==========================================
   sl.registerLazySingleton<AuthUseCase>(
-        () => AuthUseCase(sl<AuthRepository>()),
+    () => AuthUseCase(sl<AuthRepository>()),
   );
-  sl.registerLazySingleton<GetAppVersionInfoUseCase>(
-        () => GetAppVersionInfoUseCase(sl<PackageRepo>()),
+  sl.registerLazySingleton<GetPlatformInfoUseCase>(
+    () => GetPlatformInfoUseCase(sl<PlatformInfoRepo>()),
   );
   sl.registerLazySingleton(
-        () => GetPrescriptionUseCase(sl<MedicationRepository>()),
+    () => GetPrescriptionUseCase(sl<MedicationRepository>()),
   );
   sl.registerLazySingleton(() => GetThemeUseCase(sl<ThemeRepository>()));
   sl.registerLazySingleton(() => CacheThemeUseCase(sl<ThemeRepository>()));
   sl.registerLazySingleton(() => SelectRoleUseCase());
   sl.registerLazySingleton(
-        () => GetMedicalRecordsUseCase(sl<MedicalHistoryRepository>()),
+    () => GetMedicalRecordsUseCase(sl<MedicalHistoryRepository>()),
   );
   sl.registerLazySingleton(
-        () => SavePrescriptionUseCase(sl<PrescriptionRepository>()),
+    () => SavePrescriptionUseCase(sl<PrescriptionRepository>()),
   );
   sl.registerLazySingleton(
-        () => LoginMobileUseCase(repository: sl<LoginRepository>()),
+    () => LoginMobileUseCase(repository: sl<LoginRepository>()),
   );
   sl.registerLazySingleton(
-        () => LoginEmailUseCase(repository: sl<LoginRepository>()),
+    () => LoginEmailUseCase(repository: sl<LoginRepository>()),
   );
+  sl.registerLazySingleton(() => SendOtpUseCase(repository: sl<SendOtpRepo>()));
   sl.registerLazySingleton(
-        () => SendOtpUseCase(repository: sl<SendOtpRepo>()),
+    () => GetWorkSpaceDetailsUseCase(sl<GetWorkSpaceDetailsRepo>()),
   );
-  sl.registerLazySingleton(
-        () => GetWorkSpaceDetailsUseCase( sl<GetWorkSpaceDetailsRepo>()),
+  sl.registerLazySingleton<ConfigUseCase>(
+    () => ConfigUseCase(repository: sl<ConfigurationRepo>()),
   );
   // ==========================================
   // 3. Blocs / Cubits
   // ==========================================
   sl.registerLazySingleton(
-        () => ThemeBloc(
+    () => ThemeBloc(
       getThemeUseCase: sl<GetThemeUseCase>(),
       cacheThemeUseCase: sl<CacheThemeUseCase>(),
     ),
   );
   sl.registerLazySingleton(
-        () => NetworkBloc(networkRepository: sl<NetworkRepository>()),
+    () => NetworkBloc(networkRepository: sl<NetworkRepository>()),
   );
-  sl.registerLazySingleton(
-        () => AuthBloc(sl<AuthUseCase>()),
-  );
+  sl.registerLazySingleton(() => AuthBloc(sl<AuthUseCase>()));
   sl.registerFactory(
-        () => user_presc.MedicationBloc(getMedicationSummary: sl<GetPrescriptionUseCase>()),
+    () => user_presc.MedicationBloc(
+      getMedicationSummary: sl<GetPrescriptionUseCase>(),
+    ),
   );
   sl.registerLazySingleton(
-        () => LoginBloc(
+    () => LoginBloc(
       loginMobileUseCase: sl<LoginMobileUseCase>(),
-      loginEmailUseCase: sl<LoginEmailUseCase>(), sharedPrefsService: sl<SharedPrefsService>(),
-          sendOtpUseCase: sl<SendOtpUseCase>()
+      loginEmailUseCase: sl<LoginEmailUseCase>(),
+      sharedPrefsService: sl<SharedPrefsService>(),
+      sendOtpUseCase: sl<SendOtpUseCase>(),
     ),
   );
 
   sl.registerLazySingleton(() => OnBoardingBloc());
-  sl.registerLazySingleton(() => ConfigBloc());
+  sl.registerLazySingleton(
+    () => ConfigBloc(configUseCase: sl<ConfigUseCase>()),
+  );
   sl.registerLazySingleton(() => DashboardBloc());
   sl.registerLazySingleton(() => SettingsBloc());
   sl.registerLazySingleton(() => TestResultsBloc());
-  sl.registerLazySingleton(() => WorkspaceBloc(getWorkSpaceDetailsUseCase: sl<GetWorkSpaceDetailsUseCase>()));
+  sl.registerLazySingleton(
+    () => WorkspaceBloc(
+      getWorkSpaceDetailsUseCase: sl<GetWorkSpaceDetailsUseCase>(),
+    ),
+  );
   sl.registerFactory(() => AppointmentBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton<NavigationDrawerBloc>(
-        () => NavigationDrawerBloc(sl<SecureStorageService>()),
+    () => NavigationDrawerBloc(sl<SecureStorageService>()),
   );
   sl.registerLazySingleton(() => MedicalRecordBloc());
-  sl.registerFactory(
-        () => DoctorDashboardBloc(
-      getAppVersionInfoUseCase: sl<GetAppVersionInfoUseCase>(),
-      secureStorageService: sl<SecureStorageService>(),
-    ),
-  );
+  sl.registerFactory(() => DoctorDashboardBloc());
   sl.registerLazySingleton(() => PatientProfileBloc(repository: sl()));
   sl.registerFactory(
-        () => MedicalHistoryBloc(
+    () => MedicalHistoryBloc(
       getMedicalRecordsUseCase: sl<GetMedicalRecordsUseCase>(),
       repository: sl<MedicalHistoryRepository>(),
     ),
   );
   sl.registerFactory(() => UploadedBloc(repository: sl<RecordsRepository>()));
   sl.registerLazySingleton(
-        () => RoleBloc(selectRoleUseCase: sl<SelectRoleUseCase>()),
+    () => RoleBloc(selectRoleUseCase: sl<SelectRoleUseCase>()),
   );
   sl.registerLazySingleton(() => CloseAccountBloc());
   sl.registerLazySingleton(() => ForgotPasswordBloc());
   sl.registerLazySingleton(
-        () => SlotBloc(schedulerRepository: sl<SchedulerRepository>()),
+    () => SlotBloc(schedulerRepository: sl<SchedulerRepository>()),
   );
   sl.registerFactory(
-        () => PrescriptionBloc(
+    () => PrescriptionBloc(
       savePrescriptionUseCase: sl<SavePrescriptionUseCase>(),
     ),
   );

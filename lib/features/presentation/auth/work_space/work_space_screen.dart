@@ -62,7 +62,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final panelBg = isDarkMode ? theme.cardColor : Colors.white;
     final bool currentIsInApp = widget.isInApp ?? false;
 
-    // 4. Use BlocProvider.value to inject the pre-initialized BLoC instance
     return BlocProvider.value(
       value: _workspaceBloc,
       child: Scaffold(
@@ -81,6 +80,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 ),
               )
             : AppBar(
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: mainHeadingColor,
+              size: 20,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         automaticallyImplyLeading: true,
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -8,32 +8,59 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/constants/constants.dart';
 import 'config_bloc.dart';
 
-class ConfigurationScreen extends StatefulWidget {
-  const ConfigurationScreen({super.key});
+class UserConfigurationScreen extends StatefulWidget {
+  const UserConfigurationScreen({super.key});
 
   @override
-  State<ConfigurationScreen> createState() => _ConfigurationScreenState();
+  State<UserConfigurationScreen> createState() => _UserConfigurationScreenState();
 }
 
-class _ConfigurationScreenState extends State<ConfigurationScreen> {
+class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
   @override
   void initState() {
-    Future.delayed(Duration(seconds: 4)).then((_){
-      Navigator.pushNamed(context, AppRoutes.docDashboard);
-    });
+    context.read<ConfigBloc>().add(LoadUserConfigurationScreen());
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocBuilder<ConfigBloc, ConfigState>(
+    return BlocConsumer<ConfigBloc, ConfigState>(
+      listener: (context, state) {
+        if (state is GetDataSuccessState) {
+          var payload = state.loginEntity?.data;
+          debugPrint('getUserData payload---$payload');
+          if (payload?.navigationId == '1') {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.dashboardPatientDetails,
+              (route) => false,
+            );
+          } else if (payload?.navigationId == '2') {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.docDashboard,
+              (route) => false,
+            );
+          } else {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.unsupportedRole,
+              (route) => false,
+              arguments: state.loginEntity,
+            );
+          }
+        }
+      },
+      listenWhen: (previous, current) => current is GetDataSuccessState,
+
       builder: (context, state) {
         return Scaffold(
           body: SafeArea(
             child: Column(
               children: [
-                SizedBox(height: displayHeight(context)/5,),
+                SizedBox(height: displayHeight(context) / 5),
                 SizedBox(
                   height: displayHeight(context) * 0.35,
                   child: Lottie.asset(
@@ -45,15 +72,17 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                   "Setting up your experience",
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontFamily: appPoppinFont
+                    fontFamily: appPoppinFont,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   "Please wait while we sync your preferences",
-                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey,fontFamily: appPoppinFont),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                    fontFamily: appPoppinFont,
+                  ),
                 ),
-
               ],
             ),
           ),
