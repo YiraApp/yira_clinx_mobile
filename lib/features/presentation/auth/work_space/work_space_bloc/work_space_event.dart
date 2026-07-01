@@ -13,3 +13,9 @@ class ToggleOrganizationEvent extends WorkspaceEvent {
   final int orgId;
   ToggleOrganizationEvent(this.orgId);
 }
+
+class OnSaveLatestOrgDetailsEvent extends WorkspaceEvent {
+  final UpdateLatestOrgDetailsModelParams updateLatestOrgDetailsModelParams;
+  OnSaveLatestOrgDetailsEvent(this.updateLatestOrgDetailsModelParams);
+}
+

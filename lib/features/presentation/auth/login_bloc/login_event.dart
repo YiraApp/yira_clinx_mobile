@@ -61,14 +61,16 @@ class OnCountryCodeChanged extends LogInEvent {
 class OnTapEmailSignInEvent extends LogInEvent{
   final String email;
   final String password;
+  final String fcmToken;
 
-  const OnTapEmailSignInEvent({required this.email, required this.password});
+  const OnTapEmailSignInEvent({required this.email, required this.password, required this.fcmToken});
 }
 class OnTapMobileSignInEvent extends LogInEvent{
   final  String mobileNumber;
   final String otp;
   final String sessionId;
   final String countryCode;
+  final String fcmToken;
 
-  const OnTapMobileSignInEvent({ required this.mobileNumber, required this.otp, required this.sessionId, required this.countryCode});
+  const OnTapMobileSignInEvent({ required this.mobileNumber, required this.otp, required this.sessionId, required this.countryCode, required this.fcmToken});
 }

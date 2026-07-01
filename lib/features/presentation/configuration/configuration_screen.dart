@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
-import 'package:yiraclinics/config/app_route/app_router.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/constants/constants.dart';
@@ -12,7 +11,8 @@ class UserConfigurationScreen extends StatefulWidget {
   const UserConfigurationScreen({super.key});
 
   @override
-  State<UserConfigurationScreen> createState() => _UserConfigurationScreenState();
+  State<UserConfigurationScreen> createState() =>
+      _UserConfigurationScreenState();
 }
 
 class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
@@ -29,27 +29,49 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
     return BlocConsumer<ConfigBloc, ConfigState>(
       listener: (context, state) {
         if (state is GetDataSuccessState) {
-          var payload = state.loginEntity?.data;
-          debugPrint('getUserData payload---$payload');
-          if (payload?.navigationId == '1') {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.dashboardPatientDetails,
-              (route) => false,
-            );
-          } else if (payload?.navigationId == '2') {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.docDashboard,
-              (route) => false,
-            );
+          if (state.versionData?.data?.versionStatus == false) {
+            final updateType =
+                state.versionData?.data?.updateType.toLowerCase() ?? '';
+
+            final updateRoutes = const {
+              'force': AppRoutes.forceUpdateScreen,
+              'soft': AppRoutes.softUpdateScreen,
+              'maintenance': AppRoutes.maintenanceScreen,
+              'logout': AppRoutes.forceUpdateScreen,
+            };
+
+            final targetRoute = updateRoutes[updateType];
+            if (targetRoute != null) {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                targetRoute,
+                (route) => false,
+              );
+              return;
+            }
           } else {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.unsupportedRole,
-              (route) => false,
-              arguments: state.loginEntity,
-            );
+            final payload = state.coreData.data;
+            final navigationId = payload?.navigationId;
+            final navigationRoutes = const {
+              '1': AppRoutes.dashboardPatientDetails,
+              '2': AppRoutes.docDashboard,
+            };
+
+            final coreRoute = navigationRoutes[navigationId];
+            if (coreRoute != null) {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                coreRoute,
+                (route) => false,
+              );
+            } else {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.unsupportedRole,
+                (route) => false,
+                arguments: state.coreData,
+              );
+            }
           }
         }
       },

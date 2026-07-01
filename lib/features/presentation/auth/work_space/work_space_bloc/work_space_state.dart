@@ -31,3 +31,12 @@ class WorkspaceError extends WorkspaceState {
 
    WorkspaceError(this.errorMessage);
 }
+class OnSaveLatestOrgDetailsStateError extends WorkspaceState {
+  final String errorMessage;
+
+  OnSaveLatestOrgDetailsStateError(this.errorMessage);
+}
+class OnSuccessLatestOrgDetailsState extends WorkspaceState {
+  final UpdateLatestOrgDetailsEntity updateLatestOrgDetailsEntity;
+  OnSuccessLatestOrgDetailsState(this.updateLatestOrgDetailsEntity);
+}

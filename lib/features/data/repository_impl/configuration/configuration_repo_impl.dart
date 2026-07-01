@@ -20,11 +20,17 @@ class ConfigurationRepoImpl extends ConfigurationRepo {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';
+      final platFormData =  GlobalSession.instance.platformNotifier.value;
+      final Map<String, dynamic> requestBody = {
+        "userId": currentUser?.data?.id,
+        "deviceId": platFormData?.deviceId,
+      };
       final response = await _apiClient.account.get(
         URLs.getUserDataUrl,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
         ),
+        data: requestBody,
       );
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;

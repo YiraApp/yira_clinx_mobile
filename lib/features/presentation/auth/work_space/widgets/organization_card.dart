@@ -5,13 +5,16 @@ import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../../../../config/app_route/app_routes.dart';
 import '../../../../domain/entities/work_space/get_work_space_entity.dart';
+import '../../../../use_cases/update_latest_org_details_use_case.dart';
 import '../work_space_bloc/work_space_bloc.dart';
 
 class OrganizationCard extends StatelessWidget {
   final DataEntity org;
   final bool? isTablet;
+  final Function(int hospitalId)? onPressed;
 
-  const OrganizationCard({super.key, required this.org, this.isTablet = false});
+
+  const OrganizationCard({super.key, required this.org, this.isTablet = false, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +22,12 @@ class OrganizationCard extends StatelessWidget {
     final isDarkMode = theme.brightness == Brightness.dark;
     final bool isTab = isTablet ?? false;
 
-    final cardBg = isDarkMode ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC);
-    final expandedSubTileBg = isDarkMode ? Colors.white.withOpacity(0.02) : const Color(0xFFFAFAFA);
+    final cardBg = isDarkMode
+        ? theme.scaffoldBackgroundColor
+        : const Color(0xFFF8FAFC);
+    final expandedSubTileBg = isDarkMode
+        ? Colors.white.withOpacity(0.02)
+        : const Color(0xFFFAFAFA);
     final mainText = isDarkMode ? Colors.white : const Color(0xFF1E293B);
     final subText = isDarkMode ? Colors.white60 : const Color(0xFF94A3B8);
 
@@ -29,8 +36,12 @@ class OrganizationCard extends StatelessWidget {
     return BlocBuilder<WorkspaceBloc, WorkspaceState>(
       buildWhen: (previous, current) {
         if (previous is WorkspacesLoaded && current is WorkspacesLoaded) {
-          final prevExpanded = previous.expandedOrganizationIds.contains(org.organizationId);
-          final currExpanded = current.expandedOrganizationIds.contains(org.organizationId);
+          final prevExpanded = previous.expandedOrganizationIds.contains(
+            org.organizationId,
+          );
+          final currExpanded = current.expandedOrganizationIds.contains(
+            org.organizationId,
+          );
           return prevExpanded != currExpanded;
         }
         return true;
@@ -38,7 +49,9 @@ class OrganizationCard extends StatelessWidget {
       builder: (context, state) {
         bool isExpanded = false;
         if (state is WorkspacesLoaded) {
-          isExpanded = state.expandedOrganizationIds.contains(org.organizationId);
+          isExpanded = state.expandedOrganizationIds.contains(
+            org.organizationId,
+          );
         }
 
         return Padding(
@@ -64,7 +77,9 @@ class OrganizationCard extends StatelessWidget {
                     border: Border.all(
                       color: isExpanded
                           ? theme.primaryColor.withOpacity(0.3)
-                          : (isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0)),
+                          : (isDarkMode
+                                ? Colors.white10
+                                : const Color(0xFFE2E8F0)),
                       width: isExpanded ? 1.5 : 1.0,
                     ),
                   ),
@@ -124,51 +139,69 @@ class OrganizationCard extends StatelessWidget {
 
               if (isExpanded)
                 Padding(
-                  padding: EdgeInsets.only(
-                    top: 8.0,
-                    left: isTab ? 20.0 : 12.0,
-                  ),
+                  padding: EdgeInsets.only(top: 8.0, left: isTab ? 20.0 : 12.0),
                   child: Column(
-                    children: org.hospitals?.map((hospital) {
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: expandedSubTileBg,
-                          borderRadius: BorderRadius.circular(fieldBorderRadius),
-                          border: Border.all(
-                            color: isDarkMode ? Colors.white10 : const Color(0xFFEDF2F7),
-                          ),
-                        ),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: isTab ? 20 : 16,
-                            vertical: isTab ? 8 : 4,
-                          ),
-                          leading: Icon(
-                            Icons.wb_sunny_outlined,
-                            color: theme.primaryColor,
-                            size: isTab ? 18 : 16,
-                          ),
-                          title: Text(
-                            hospital.hospitalName ?? '',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.grey.shade300 : Colors.grey.shade700,
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w600,
-                              fontSize: widthFactor * (isTab ? 0.018 : 0.032),
+                    children:
+                        org.hospitals?.map((hospital) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: expandedSubTileBg,
+                              borderRadius: BorderRadius.circular(
+                                fieldBorderRadius,
+                              ),
+                              border: Border.all(
+                                color: isDarkMode
+                                    ? Colors.white10
+                                    : const Color(0xFFEDF2F7),
+                              ),
                             ),
-                          ),
-                          trailing: Icon(
-                            Icons.chevron_right_rounded,
-                            color: subText,
-                            size: isTab ? 24 : 20,
-                          ),
-                          onTap: () {
-                            Navigator.pushNamed(context, AppRoutes.userConfiguration);
-                          },
-                        ),
-                      );
-                    }).toList() ?? [],
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: isTab ? 20 : 16,
+                                vertical: isTab ? 8 : 4,
+                              ),
+                              leading: Icon(
+                                Icons.wb_sunny_outlined,
+                                color: theme.primaryColor,
+                                size: isTab ? 18 : 16,
+                              ),
+                              title: Text(
+                                hospital.hospitalName ?? '',
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.grey.shade300
+                                      : Colors.grey.shade700,
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize:
+                                      widthFactor * (isTab ? 0.018 : 0.032),
+                                ),
+                              ),
+                              trailing: Icon(
+                                Icons.chevron_right_rounded,
+                                color: subText,
+                                size: isTab ? 24 : 20,
+                              ),
+                              onTap:() {
+                                if (onPressed != null && hospital.hospitalId != null) {
+                                  onPressed!(hospital.hospitalId ?? 1) ;
+                                }
+                              }
+                                /*() {
+                                var data = UpdateLatestOrgDetailsModelParams(
+                                  latestRoleId: '',
+                                  latestOrgId: org.organizationId ?? 1,
+                                  latestHospitalId: hospital.hospitalId ?? 1,
+                                );
+                                context.read<WorkspaceBloc>().add(
+                                  OnSaveLatestOrgDetailsEvent(data),
+                                );
+                              },*/
+                            ),
+                          );
+                        }).toList() ??
+                        [],
                   ),
                 ),
             ],

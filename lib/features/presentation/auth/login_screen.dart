@@ -14,19 +14,60 @@ import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/fcm_token/fcm_token_helper.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController mobileNumberController = TextEditingController();
+
   final TextEditingController emailController = TextEditingController();
+
   final TextEditingController passwordController = TextEditingController();
 
   final FocusNode emailFocus = FocusNode();
+
   final FocusNode mobileFocus = FocusNode();
+
   final FocusNode passwordFocus = FocusNode();
+
   final GlobalKey<FormState> mobileFormKey = GlobalKey<FormState>();
+
   final GlobalKey<FormState> emailFormKey = GlobalKey<FormState>();
+
+  String _cachedFcmToken = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeviceToken();
+  }
+
+  @override
+  void dispose() {
+    mobileNumberController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    emailFocus.dispose();
+    mobileFocus.dispose();
+    passwordFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDeviceToken() async {
+    final String token = await FcmTokenHelper.getProductionFcmToken();
+    if (mounted && token.isNotEmpty) {
+      setState(() {
+        _cachedFcmToken = token;
+      });
+      debugPrint("Auth Configuration - Device token initialized successfully.");
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final bool isTabletDevice = isTablet(context);
@@ -577,7 +618,7 @@ class LoginScreen extends StatelessWidget {
                             context.read<LoginBloc>().add(
                               OnTapEmailSignInEvent(
                                 email: emailController.text.trim(),
-                                password: passwordController.text,
+                                password: passwordController.text, fcmToken: _cachedFcmToken,
                               ),
                             );
                           }

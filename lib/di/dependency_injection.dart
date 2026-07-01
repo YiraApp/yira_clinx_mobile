@@ -15,6 +15,7 @@ import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/na
 // Data Sources & Repositories Imports
 import 'package:yiraclinics/features/data/data_sources/theme_local_data_source.dart';
 import 'package:yiraclinics/features/data/repository_impl/auth/auth_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/fcm_token/update_fcm_token_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/login/login_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/app_theme/theme_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/medicine/medical_histoy_repo_impl.dart';
@@ -23,14 +24,17 @@ import 'package:yiraclinics/features/data/repository_impl/prescriptions/prescrip
 import 'package:yiraclinics/features/data/repository_impl/send_otp_repo/send_otp_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_impl/slot_scheduler_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_repo_impl/slot_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/token/get_version_and_token_status_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/upload_record_repo_impl/upload_record_impl_repo.dart';
 import 'package:yiraclinics/features/data/repository_impl/medication/medication_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/work_space/get_work_space_details_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/work_space/update_latest_org_details_repo_impl.dart';
 
 // Domain Layer (Repositories & Entities) Imports
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
 import 'package:yiraclinics/features/domain/repositories/auth/auth_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/configuration/configuration_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/fcm_token/update_fcm_token_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/login/login_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
@@ -38,9 +42,11 @@ import 'package:yiraclinics/features/domain/repositories/prescritpions/prescript
 import 'package:yiraclinics/features/domain/repositories/send_otp/send_otp_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/scheduler_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/slot_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/token/get_version_and_token_status_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/get_work_space_details_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/work_space/update_latest_org_details_repo.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
@@ -80,12 +86,15 @@ import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart'
     as user_presc;
 import 'package:yiraclinics/features/use_cases/send_otp_use_case.dart';
+import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
+import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
 import '../core/local/global_session.dart';
 import '../core/package/data/platform_info_impl.dart';
 import '../core/package/domain/plat_form_info_repo.dart';
 import '../core/use_cases/get_plat_form_info_usecase.dart';
 import '../features/data/repository_impl/configuration/configuration_repo_impl.dart';
+import '../features/use_cases/get_version_and_token_status_use_case.dart';
 
 final sl = GetIt.instance;
 
@@ -157,6 +166,21 @@ Future<void> init() async {
       apiClient: sl<ApiClient>(),
     ),
   );
+  sl.registerLazySingleton<UpdateFcmRepository>(
+        () => UpdateFcmRepoImpl(
+      apiClient: sl<ApiClient>(),
+    ),
+  );
+  sl.registerLazySingleton<UpdateLatestOrgDetailsRepo>(
+        () => UpdateLatestOrgDetailsRepoImpl(
+       sl<ApiClient>(),
+    ),
+  );
+  sl.registerLazySingleton<GetVersionAndTokenStatusRepo>(
+        () => GetVersionAndTokenStatusRepoImpl(
+       sl<ApiClient>(),
+    ),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
@@ -191,6 +215,15 @@ Future<void> init() async {
   sl.registerLazySingleton<ConfigUseCase>(
     () => ConfigUseCase(repository: sl<ConfigurationRepo>()),
   );
+  sl.registerLazySingleton<UpdateFcmTokenUseCase>(
+        () => UpdateFcmTokenUseCase(repository: sl<UpdateFcmRepository>()),
+  );
+  sl.registerLazySingleton<UpdateLatestOrgDetailsUseCase>(
+        () => UpdateLatestOrgDetailsUseCase( sl<UpdateLatestOrgDetailsRepo>()),
+  );
+  sl.registerLazySingleton<GetVersionAndTokenStatusUseCase>(
+        () => GetVersionAndTokenStatusUseCase(  repository: sl<GetVersionAndTokenStatusRepo>()),
+  );
   // ==========================================
   // 3. Blocs / Cubits
   // ==========================================
@@ -215,12 +248,13 @@ Future<void> init() async {
       loginEmailUseCase: sl<LoginEmailUseCase>(),
       sharedPrefsService: sl<SharedPrefsService>(),
       sendOtpUseCase: sl<SendOtpUseCase>(),
+      updateFcmTokenUseCase: sl<UpdateFcmTokenUseCase>()
     ),
   );
 
   sl.registerLazySingleton(() => OnBoardingBloc());
   sl.registerLazySingleton(
-    () => ConfigBloc(configUseCase: sl<ConfigUseCase>()),
+    () => ConfigBloc(configUseCase: sl<ConfigUseCase>(), getVersionAndTokenStatusUseCase: sl<GetVersionAndTokenStatusUseCase>()),
   );
   sl.registerLazySingleton(() => DashboardBloc());
   sl.registerLazySingleton(() => SettingsBloc());
@@ -228,6 +262,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
     () => WorkspaceBloc(
       getWorkSpaceDetailsUseCase: sl<GetWorkSpaceDetailsUseCase>(),
+      updateLatestOrgDetailsUseCase: sl<UpdateLatestOrgDetailsUseCase>()
     ),
   );
   sl.registerFactory(() => AppointmentBloc());

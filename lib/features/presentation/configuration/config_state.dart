@@ -10,20 +10,41 @@ class ConfigInitial extends ConfigState {}
 
 class LoadDataStatus extends ConfigState {}
 
-// 3. Success State
-class GetDataSuccessState extends ConfigState {
-  final LoginEntity? loginEntity;
 
-  GetDataSuccessState(this.loginEntity);
+class GetDataSuccessState extends ConfigState {
+  final LoginEntity coreData;
+  final VersionTokenStatusEntity? versionData;
+
+   GetDataSuccessState({
+    required this.coreData,
+    this.versionData,
+  });
 
   @override
-  List<Object?> get props => [loginEntity];
+  List<Object?> get props => [coreData, versionData];
+}
+class GetTokenSuccessState extends ConfigState {
+  final VersionTokenStatusEntity? getVersionTokenStatusEntity;
+
+  GetTokenSuccessState(this.getVersionTokenStatusEntity);
+
+  @override
+  List<Object?> get props => [getVersionTokenStatusEntity];
 }
 
 class GetDataFailureState extends ConfigState {
   final String? errorMessage;
 
   GetDataFailureState(this.errorMessage);
+
+  @override
+  List<Object?> get props => [errorMessage];
+}
+
+class GetTokenFailureState extends ConfigState {
+  final String? errorMessage;
+
+  GetTokenFailureState(this.errorMessage);
 
   @override
   List<Object?> get props => [errorMessage];

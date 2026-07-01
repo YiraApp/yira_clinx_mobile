@@ -11,14 +11,38 @@ import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/fcm_token/fcm_token_helper.dart';
 
-class VerifyOtpScreen extends StatelessWidget {
+class VerifyOtpScreen extends StatefulWidget {
   final SendOtpEntity sendOtpEntity;
   VerifyOtpScreen({super.key, required this.sendOtpEntity});
 
-  final TextEditingController otpController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  @override
+  State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
+}
 
+class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
+  final TextEditingController otpController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
+  String _cachedFcmToken = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeviceToken();
+  }
+
+
+  Future<void> _loadDeviceToken() async {
+    final String token = await FcmTokenHelper.getProductionFcmToken();
+    if (mounted && token.isNotEmpty) {
+      setState(() {
+        _cachedFcmToken = token;
+      });
+      debugPrint("Auth Configuration - Device token initialized successfully.");
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
@@ -174,7 +198,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          sendOtpEntity.data?.contact ??
+                                          widget.sendOtpEntity.data?.contact ??
                                               '+91- 9999999999',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
@@ -315,7 +339,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                                     .currentCountryCode;
                                             context.read<LoginBloc>().add(
                                               OnReSendOtp(
-                                                sendOtpEntity.data?.contact ??
+                                                widget.sendOtpEntity.data?.contact ??
                                                     '',
                                                 activeCountryCode,
                                               ),
@@ -396,18 +420,18 @@ class VerifyOtpScreen extends StatelessWidget {
                                                     context.read<LoginBloc>().add(
                                                       OnTapMobileSignInEvent(
                                                         mobileNumber:
-                                                            sendOtpEntity
+                                                            widget.sendOtpEntity
                                                                 .data
                                                                 ?.contact ??
                                                             '',
                                                         otp: otpController.text,
                                                         sessionId:
-                                                            sendOtpEntity
+                                                            widget.sendOtpEntity
                                                                 .data
                                                                 ?.sessionId ??
                                                             '',
                                                         countryCode:
-                                                            activeCountryCode,
+                                                            activeCountryCode, fcmToken: _cachedFcmToken,
                                                       ),
                                                     );
                                                   },

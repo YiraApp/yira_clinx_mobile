@@ -13,6 +13,7 @@ import '../../../../core/local/global_session.dart';
 import '../../../../core/local/shared_preferences.dart';
 import '../../../domain/entities/login/login_entity.dart';
 import '../../../use_cases/send_otp_use_case.dart';
+import '../../../use_cases/update_fcm_token_use_case.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -20,6 +21,7 @@ part 'login_state.dart';
 class LoginBloc extends Bloc<LogInEvent, LogInState> {
   final LoginMobileUseCase loginMobileUseCase;
   final LoginEmailUseCase loginEmailUseCase;
+  final UpdateFcmTokenUseCase updateFcmTokenUseCase;
   final SharedPrefsService sharedPrefsService;
   final SendOtpUseCase sendOtpUseCase;
 
@@ -30,7 +32,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     required this.loginMobileUseCase,
     required this.loginEmailUseCase,
     required this.sharedPrefsService,
-    required this.sendOtpUseCase,
+    required this.sendOtpUseCase, required this.updateFcmTokenUseCase,
   }) : super(SignInInitial()) {
     // Auth & API Events
     on<OnCountryCodeChanged>((event, emit) {
@@ -84,6 +86,14 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
             true,
           ),
         ]);
+        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+          try {
+            await updateFcmTokenUseCase.call(event.fcmToken);
+            debugPrint("Production Login Pipeline - Remote FCM Token synced successfully.");
+          } catch (fcmError, fcmStack) {
+            debugPrint("CRITICAL (LoginBloc) - FCM Token sync failed background tracking: $fcmError\n$fcmStack");
+          }
+        }
         emit(LoginSuccess(loginEntity: result));
       }
     } catch (error, stackTrace) {
@@ -123,7 +133,14 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
             true,
           ),
         ]);
-
+        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+          try {
+            await updateFcmTokenUseCase.call(event.fcmToken);
+            debugPrint("Production Login Pipeline - Remote FCM Token synced successfully.");
+          } catch (fcmError, fcmStack) {
+            debugPrint("CRITICAL (LoginBloc) - FCM Token sync failed background tracking: $fcmError\n$fcmStack");
+          }
+        }
         emit(LoginSuccess(loginEntity: result));
       }
     } catch (exception, stackTrace) {
