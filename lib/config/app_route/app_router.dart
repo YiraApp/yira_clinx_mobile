@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
@@ -19,6 +18,7 @@ import 'package:yiraclinics/features/presentation/close_account/close_account_bl
 import 'package:yiraclinics/features/presentation/close_account/close_account_screen.dart';
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
 import 'package:yiraclinics/features/presentation/configure_screens/force_update_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/log_out_screen.dart';
 import 'package:yiraclinics/features/presentation/configure_screens/maintance_screen.dart';
 import 'package:yiraclinics/features/presentation/configure_screens/soft_update_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
@@ -367,6 +367,8 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (context) => UnsupportedRoleScreen(loginEntity: loginData),
         );
+      case AppRoutes.logOutScreen:
+        return MaterialPageRoute(builder: (_) => LogoutScreen());
       //appointmentDetails
       default:
         return MaterialPageRoute(

@@ -8,6 +8,7 @@ const fieldBorderRadius = 12.0;
 const textFieldBorderRadius = 8.0;
 const inputFieldBorderRadius = 16.0;
 const buttonHeight = 45.0;
+const reSendOtpDuration = 60;
 
 
 // ************ project title *************
@@ -16,7 +17,7 @@ const projectTitle = "Yira ClinX";
 const professionalRole = "provider";
 const userRole = "patient";
 
-const appLogo = "assets/images/svgs/app_logo.svg";
+const appLogo = "assets/images/svgs/ic_apps_logo.svg";
 
 
 // ************ project fonts *************

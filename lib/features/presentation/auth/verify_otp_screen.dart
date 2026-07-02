@@ -15,7 +15,7 @@ import '../../../core/fcm_token/fcm_token_helper.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final SendOtpEntity sendOtpEntity;
-  VerifyOtpScreen({super.key, required this.sendOtpEntity});
+  const VerifyOtpScreen({super.key, required this.sendOtpEntity});
 
   @override
   State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();

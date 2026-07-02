@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart'; // For kDebugMode
-
 import '../constants/constants.dart';
 import '../expention_handler/exception_handler.dart';
 
@@ -46,12 +44,12 @@ class ErrorInterceptor extends Interceptor {
 
     switch (err.type) {
       case DioExceptionType.connectionError:
-        statusCode = socket_exception; // E.g., 001 or no network
+        statusCode = socket_exception;
         break;
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        statusCode = HttpStatus.gatewayTimeout; // 504
+        statusCode = HttpStatus.gatewayTimeout;
         break;
       case DioExceptionType.cancel:
         return handler.next(err);

@@ -4,7 +4,6 @@ import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.d
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
 import '../../../../domain/entities/work_space/get_work_space_entity.dart';
-import '../../../../domain/entities/work_space/organization_entity.dart';
 import '../../../../domain/entities/work_space/update_latest_org_details_entity.dart';
 
 part 'work_space_event.dart';

@@ -43,7 +43,7 @@ class Utils {
     try {
       final compressedImageData = await FlutterImageCompress.compressAndGetFile(
         file.path,
-        '${await directory.path}/$newFileName',
+        '${directory.path}/$newFileName',
         keepExif: false,
       );
       String filePath = compressedImageData!.path;
@@ -53,7 +53,7 @@ class Utils {
       await compressedFile.writeAsBytes(imageBytes);
 
       return compressedFile;
-    } on CompressError catch (error) {
+    } on CompressError {
       return null;
     }
   }
@@ -101,7 +101,7 @@ class Utils {
     return isPermissionGranted;
   }
 
-  static showAlertDialog(context, String title, String reason) =>
+  static Future<void> showAlertDialog(context, String title, String reason) =>
       showCupertinoDialog<void>(
         context: context,
         barrierDismissible: false,
@@ -181,7 +181,7 @@ class Utils {
     Globals.scaffoldMessengerKey.currentState?.showSnackBar(snackBar);
   }
 
-  static androidDialogue(
+  static Future<dynamic> androidDialogue(
     BuildContext context,
     String title,
     String reason,

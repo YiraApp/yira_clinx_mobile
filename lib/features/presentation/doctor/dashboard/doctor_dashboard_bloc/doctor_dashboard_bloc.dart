@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
-import '../../../../../core/local/global_session.dart';
 import '../../../../domain/entities/appointments/appointment_entity.dart';
 
 part 'doctor_dashboard_event.dart';

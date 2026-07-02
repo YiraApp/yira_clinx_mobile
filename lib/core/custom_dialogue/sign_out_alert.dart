@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/config/app_route/app_router.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';

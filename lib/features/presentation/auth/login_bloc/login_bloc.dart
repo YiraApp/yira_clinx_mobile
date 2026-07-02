@@ -1,14 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:meta/meta.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
 
 import '../../../../core/constants/clinx_storage_keys.dart';
+import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/local/shared_preferences.dart';
 import '../../../domain/entities/login/login_entity.dart';
@@ -26,7 +25,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   final SendOtpUseCase sendOtpUseCase;
 
   Timer? _timer;
-  static const int _countdownDuration = 60;
+  static const int _countdownDuration = reSendOtpDuration;
   String currentCountryCode = "+91";
   LoginBloc({
     required this.loginMobileUseCase,
@@ -143,7 +142,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         }
         emit(LoginSuccess(loginEntity: result));
       }
-    } catch (exception, stackTrace) {
+    } catch (exception) {
       debugPrint(
         "CRITICAL (LoginBloc): Unexpected mobile login exception: $exception",
       );

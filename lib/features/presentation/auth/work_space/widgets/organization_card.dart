@@ -3,9 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
-import '../../../../../config/app_route/app_routes.dart';
 import '../../../../domain/entities/work_space/get_work_space_entity.dart';
-import '../../../../use_cases/update_latest_org_details_use_case.dart';
 import '../work_space_bloc/work_space_bloc.dart';
 
 class OrganizationCard extends StatelessWidget {

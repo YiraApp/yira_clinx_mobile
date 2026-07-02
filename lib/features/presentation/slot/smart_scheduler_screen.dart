@@ -147,7 +147,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: dataState.slots.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                             const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               return SlotConfigurationCard(

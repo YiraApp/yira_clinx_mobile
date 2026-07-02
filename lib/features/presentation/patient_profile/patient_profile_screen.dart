@@ -29,7 +29,7 @@ class DoctorPatientProfileScreen extends StatefulWidget {
 
 class _DoctorPatientProfileScreenState
     extends State<DoctorPatientProfileScreen> {
-  int _activeTabIndex = 0;
+  final int _activeTabIndex = 0;
 
   final List<String> _tabs = [
     'Overview',

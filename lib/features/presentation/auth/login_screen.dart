@@ -17,7 +17,7 @@ import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
 
 class LoginScreen extends StatefulWidget {
-  LoginScreen({super.key});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();

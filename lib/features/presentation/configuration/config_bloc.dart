@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:meta/meta.dart';
 import 'package:yiraclinics/features/domain/entities/token/get_version_and_token_status_entity.dart';
 import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 

@@ -61,7 +61,7 @@ class LoginRepositoryImpl implements LoginRepository {
         "sessionId": sessionId,
         "loginType": "mobileNumber",
         if (countryCode != null && countryCode.isNotEmpty)
-          "countryCode": countryCode,
+          "countryCode": countryCode.replaceAll('+', '').trim(),
       };
       debugPrint('login requestBody --$requestBody');
 

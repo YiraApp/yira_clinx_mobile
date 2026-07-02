@@ -106,7 +106,7 @@ const Color newDeleteIconColor = Color(0xffF7743C);
 const Color whiteColor = Color(0xffffffff);
 const Color newContainerColor = Color(0xffF2FFED);
 const Color wellNessOrgContainerColor = Color(0xffE0F2FF);
-const Color wellNessOrgCardColor = Color(0xfffffff);
+const Color wellNessOrgCardColor = Color(0x0fffffff);
 const Color wellNessOrgBarColor = Color(0xff6F74FF);
 
 const Color lowRange = Color(0xffFFD467);
@@ -118,7 +118,7 @@ const Color lightBackground = Color(0xffF5F5F6);
 const Color periodsWellnessColor = Color(0xffF9F9F9);
 const Color surveyContainerColor = Color(0xffF1EAF0);
 const Color babyCareContainerColor = Color(0xff060606);
-const Color lightVaccinationColor = Color(0xffFEDF6FF);
+const Color lightVaccinationColor = Color(0xfffedf6ff);
 
 const cancelButtonColor = Color(0xFFE9EFFA);
 const deleteAccountBtnColor = Color(0xffD03D3D);

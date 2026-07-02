@@ -23,7 +23,7 @@ class InternetGuard extends StatelessWidget {
         type: MaterialType.transparency,
         child: Stack(
           children: [
-            if (child != null) child!,
+            ?child,
             BlocBuilder<NetworkBloc, NetworkState>(
               buildWhen: (previous, current) => previous.status != current.status,
               builder: (context, state) {
