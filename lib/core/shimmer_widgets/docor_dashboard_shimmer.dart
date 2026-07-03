@@ -22,12 +22,12 @@ class DoctorDashboardShimmer extends StatelessWidget {
     final baseColor = isDark ? darkModeCardColor.withOpacity(0.1) : lightModeBaseColor;
     final highlightColor = isDark ? whiteColor.withOpacity(0.08) : darkModeBaseColor;
 
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(isTab ? 24.0 : 16.0),
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(isTab ? 24.0 : 16.0),
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -37,12 +37,12 @@ class DoctorDashboardShimmer extends StatelessWidget {
             _buildMetricsLayout(context, isDark, isTab),
             const SizedBox(height: 24.0),
 
-            const _HeaderPlaceholder(), // Optimization: Made const class
+            const _HeaderPlaceholder(),
             const SizedBox(height: 16.0),
             Column(
               children: List.generate(
                 isTab ? 3 : 2,
-                    (index) => _ListItemPlaceholder(isDark: isDark), // Optimization: Made const class
+                    (index) => _ListItemPlaceholder(isDark: isDark),
               ),
             ),
             const SizedBox(height: 20.0),
@@ -87,7 +87,6 @@ class DoctorDashboardShimmer extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         mainAxisSpacing: 16.0,
         crossAxisSpacing: 16.0,
-        // Fix: Decreased ratio slightly to accommodate constraints across smaller phone widths
         childAspectRatio: 1.35,
         children: List.generate(4, (index) => _MetricCardShimmer(isDark: isDark)),
       );
@@ -188,7 +187,7 @@ class _MetricCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12.0), // Fix: Slightly adjusted from 16 to guarantee safety on small screens
+      padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[900] : Colors.white,
         borderRadius: BorderRadius.circular(16.0),
@@ -196,7 +195,6 @@ class _MetricCardShimmer extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        // Fix: Changed MainAxisAlignment to start safely and handle spacing cleanly
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,7 +203,9 @@ class _MetricCardShimmer extends StatelessWidget {
               Container(width: 24, height: 24, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
             ],
           ),
-          const Spacer(), // Fix: Dynamically absorbs extra spaces cleanly without causing over-bound exceptions
+          // PRODUCTION FIX: Removed `Spacer()` to prevent crash within unbounded scroll-view constraints.
+          // Replaced with a reliable spacing block to position lower rows perfectly.
+          const SizedBox(height: 16.0),
           Container(width: 35, height: 26, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),
           const SizedBox(height: 6.0),
           Container(width: 85, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),

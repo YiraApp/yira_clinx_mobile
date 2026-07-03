@@ -6,12 +6,14 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
+import '../../../core/models/select_role_model.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final SendOtpEntity sendOtpEntity;
@@ -33,7 +35,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     _loadDeviceToken();
   }
 
-
   Future<void> _loadDeviceToken() async {
     final String token = await FcmTokenHelper.getProductionFcmToken();
     if (mounted && token.isNotEmpty) {
@@ -43,6 +44,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       debugPrint("Auth Configuration - Device token initialized successfully.");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
@@ -72,7 +74,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
                 return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
-                  current is TimerTick ||
+                      current is TimerTick ||
                       current is TimerFinished ||
                       current is SendOtpLoading ||
                       current is ReSendOtpLoading ||
@@ -111,11 +113,15 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                             );
                           }
                         } else {
+                          SelectRoleModel data = SelectRoleModel(
+                            state.loginEntity.data?.roles ?? [],
+                            false,
+                          );
                           Navigator.pushNamedAndRemoveUntil(
                             context,
                             AppRoutes.selectRoleScreen,
                             (route) => false,
-                            arguments: state.loginEntity.data?.roles,
+                            arguments: data,
                           );
                         }
                         break;
@@ -220,7 +226,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
                                   SizedBox(
                                     width: isTab
-                                        ? referenceWidth * 0.55
+                                        ? referenceWidth * 0.7
                                         : screenWidth * 0.82,
                                     child: PinCodeTextField(
                                       backgroundColor: Colors.transparent,
@@ -287,7 +293,30 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                       inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly,
                                       ],
-                                      onCompleted: (v) {},
+                                      onCompleted: (pinCode) {
+                                        final String activeCountryCode = context
+                                            .read<LoginBloc>()
+                                            .currentCountryCode;
+                                        context.read<LoginBloc>().add(
+                                          OnTapMobileSignInEvent(
+                                            mobileNumber:
+                                                widget
+                                                    .sendOtpEntity
+                                                    .data
+                                                    ?.contact ??
+                                                '',
+                                            otp: pinCode,
+                                            sessionId:
+                                                widget
+                                                    .sendOtpEntity
+                                                    .data
+                                                    ?.sessionId ??
+                                                '',
+                                            countryCode: activeCountryCode,
+                                            fcmToken: _cachedFcmToken,
+                                          ),
+                                        );
+                                      },
                                       onChanged: (value) {},
                                     ),
                                   ),
@@ -339,7 +368,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                                     .currentCountryCode;
                                             context.read<LoginBloc>().add(
                                               OnReSendOtp(
-                                                widget.sendOtpEntity.data?.contact ??
+                                                widget
+                                                        .sendOtpEntity
+                                                        .data
+                                                        ?.contact ??
                                                     '',
                                                 activeCountryCode,
                                               ),
@@ -392,7 +424,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                           padding: EdgeInsets.only(
                                             bottom: screenHeight * 0.04,
                                           ),
-                                          child:  SizedBox(
+                                          child: SizedBox(
                                             width: displayWidth(context),
                                             height: 50,
                                             child: Center(
@@ -408,34 +440,37 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                                 : 24.0,
                                           ),
                                           child: CustomElevatedButton(
-                                                  noElevation: true,
-                                                  height: 50,
-                                                  width: double.infinity,
-                                                  text: "Verify & Continue",
-                                                  onPressed: () {
-                                                    final String
-                                                    activeCountryCode = context
-                                                        .read<LoginBloc>()
-                                                        .currentCountryCode;
-                                                    context.read<LoginBloc>().add(
-                                                      OnTapMobileSignInEvent(
-                                                        mobileNumber:
-                                                            widget.sendOtpEntity
-                                                                .data
-                                                                ?.contact ??
-                                                            '',
-                                                        otp: otpController.text,
-                                                        sessionId:
-                                                            widget.sendOtpEntity
-                                                                .data
-                                                                ?.sessionId ??
-                                                            '',
-                                                        countryCode:
-                                                            activeCountryCode, fcmToken: _cachedFcmToken,
-                                                      ),
-                                                    );
-                                                  },
+                                            noElevation: true,
+                                            height: 50,
+                                            width: double.infinity,
+                                            text: "Verify & Continue",
+                                            onPressed: () {
+                                              final String activeCountryCode =
+                                                  context
+                                                      .read<LoginBloc>()
+                                                      .currentCountryCode;
+                                              context.read<LoginBloc>().add(
+                                                OnTapMobileSignInEvent(
+                                                  mobileNumber:
+                                                      widget
+                                                          .sendOtpEntity
+                                                          .data
+                                                          ?.contact ??
+                                                      '',
+                                                  otp: otpController.text,
+                                                  sessionId:
+                                                      widget
+                                                          .sendOtpEntity
+                                                          .data
+                                                          ?.sessionId ??
+                                                      '',
+                                                  countryCode:
+                                                      activeCountryCode,
+                                                  fcmToken: _cachedFcmToken,
                                                 ),
+                                              );
+                                            },
+                                          ),
                                         ),
                                 ],
                               ),

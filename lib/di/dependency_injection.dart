@@ -272,7 +272,7 @@ Future<void> init() async {
     ),
   );
   sl.registerLazySingleton(
-    () => NetworkBloc(networkRepository: sl<NetworkRepository>()),
+    () => NetworkBloc( networkRepository: sl<NetworkRepository>(),),
   );
   sl.registerLazySingleton(() => AuthBloc(sl<AuthUseCase>()));
   sl.registerFactory(

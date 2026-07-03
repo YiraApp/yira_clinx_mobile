@@ -15,6 +15,7 @@ class ErrorInterceptor extends Interceptor {
 
     if (!isSuccess) {
       ExceptionHandler.processException(
+        status: false,
         statusCode: HttpStatus.ok,
         message: serverMessage,
       );
@@ -30,6 +31,7 @@ class ErrorInterceptor extends Interceptor {
     }
     if (serverMessage != null && serverMessage.trim().isNotEmpty) {
       ExceptionHandler.processException(
+        status: true,
         statusCode: HttpStatus.ok,
         message: serverMessage,
       );
@@ -65,6 +67,7 @@ class ErrorInterceptor extends Interceptor {
     displayMessage ??= err.message;
     ExceptionHandler.processException(
       statusCode: statusCode,
+      status: false,
       message: displayMessage,
     );
 

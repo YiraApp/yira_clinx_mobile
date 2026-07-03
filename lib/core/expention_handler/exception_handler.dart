@@ -14,6 +14,7 @@ class ExceptionHandler {
     required int statusCode,
     String? message,
     bool isShownSnack = true,
+    bool status = false
   }) {
     if (statusCode == HttpStatus.unauthorized ||
         statusCode == HttpStatus.forbidden) {
@@ -36,9 +37,9 @@ class ExceptionHandler {
     if (!isShownSnack) return;
 
     final String finalMessage = _getErrorMessage(statusCode, message);
-    final bool isError = statusCode != HttpStatus.ok;
+    // final bool isError = statusCode != HttpStatus.ok;
 
-    Utils.showSnackBar(message: finalMessage, status: !isError);
+    Utils.showSnackBar(message: finalMessage, status: status);
   }
 
   static String _getErrorMessage(int statusCode, String? customMessage) {

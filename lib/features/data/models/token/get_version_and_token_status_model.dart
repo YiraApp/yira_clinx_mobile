@@ -1,5 +1,5 @@
-
 import '../../../domain/entities/token/get_version_and_token_status_entity.dart';
+
 class GetVersionAndTokenStatusModel extends VersionTokenStatusEntity {
   const GetVersionAndTokenStatusModel({
     required super.status,
@@ -12,7 +12,9 @@ class GetVersionAndTokenStatusModel extends VersionTokenStatusEntity {
       status: json['status'] as bool? ?? false,
       message: json['message'] as String? ?? '',
       data: json['data'] != null
-          ? VersionTokenStatusDataModel.fromJson(json['data'] as Map<String, dynamic>)
+          ? VersionTokenStatusDataModel.fromJson(
+              json['data'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -21,17 +23,20 @@ class GetVersionAndTokenStatusModel extends VersionTokenStatusEntity {
     return {
       'status': status,
       'message': message,
-      'data': data != null ? (data as VersionTokenStatusDataModel).toJson() : null,
+      'data': data != null
+          ? (data as VersionTokenStatusDataModel).toJson()
+          : null,
     };
   }
 }
-
 
 class VersionTokenStatusDataModel extends GetVersionTokenStatusEntity {
   const VersionTokenStatusDataModel({
     required super.versionStatus,
     required super.updateType,
     required super.tokenStatus,
+    required super.playStoreLink,
+    required super.appStoreLink,
   });
 
   factory VersionTokenStatusDataModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +44,8 @@ class VersionTokenStatusDataModel extends GetVersionTokenStatusEntity {
       versionStatus: json['versionStatus'] as bool? ?? false,
       updateType: json['updateType'] as String? ?? '',
       tokenStatus: json['tokenStatus'] as bool? ?? false,
+      playStoreLink: json['playStoreLink'] as String? ?? '',
+      appStoreLink: json['appStoreLink'] as String? ?? '',
     );
   }
 
@@ -47,6 +54,8 @@ class VersionTokenStatusDataModel extends GetVersionTokenStatusEntity {
       'versionStatus': versionStatus,
       'updateType': updateType,
       'tokenStatus': tokenStatus,
+      'playStoreLink': playStoreLink,
+      'appStoreLink': appStoreLink
     };
   }
 }

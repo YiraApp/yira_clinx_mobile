@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -67,18 +66,25 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
     final adaptiveTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
 
-    return NetworkListener(
-      onOnline: () {
-        _navigationDrawerBloc.add(const InitializeDrawerData());
-        _dashboardBloc.add(FetchDoctorDashboardData());
-      },
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<NavigationDrawerBloc>.value(
-            value: _navigationDrawerBloc,
-          ),
-          BlocProvider<DoctorDashboardBloc>.value(value: _dashboardBloc),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        // PRODUCTION LIFECYCLE FIX: Used .value constructor for the global/shared singleton
+        // to prevent the widget tree from closing it down when the dashboard unmounts.
+        BlocProvider<NavigationDrawerBloc>.value(
+          value: _navigationDrawerBloc,
+        ),
+        // Kept standard instantiation syntax for local screen state management context.
+        BlocProvider<DoctorDashboardBloc>(
+          create: (context) => _dashboardBloc,
+        ),
+      ],
+      child: NetworkListener(
+        onOnline: () {
+          if (_dashboardBloc.state is! DoctorDashboardLoaded && _dashboardBloc.state is! DoctorDashboardLoading) {
+            _navigationDrawerBloc.add(const InitializeDrawerData());
+            _dashboardBloc.add(FetchDoctorDashboardData());
+          }
+        },
         child: Scaffold(
           backgroundColor: scaffoldBg,
           drawer: const AppNavigationDrawer(),
@@ -199,7 +205,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             "View Calendar",
                             isDark,
                             primaryColor,
-                            () => context.read<DoctorDashboardBloc>().add(
+                                () => context.read<DoctorDashboardBloc>().add(
                               ViewCalendarEvent(),
                             ),
                             isTabletDevice,
@@ -223,9 +229,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
+                              context,
+                              index,
+                              ) {
                             final appointment = state.todaysAppointments[index];
                             final bool isVideo =
                                 appointment.type == AppointmentType.videoCall;
@@ -235,14 +241,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 appointment.patientName ?? 'Patient',
                               ),
                               name:
-                                  appointment.patientName ?? 'Unknown Patient',
+                              appointment.patientName ?? 'Unknown Patient',
                               subtitle: isVideo
                                   ? 'Teleconsultation'
                                   : 'In-Clinic Visit',
                               description:
-                                  appointment.reason ?? 'General Checkup',
+                              appointment.reason ?? 'General Checkup',
                               timeOrDate:
-                                  appointment.appointmentTime ?? '00:00 AM',
+                              appointment.appointmentTime ?? '00:00 AM',
                               statusLabel: isVideo ? 'Live Video' : 'Confirmed',
                               statusColor: isVideo
                                   ? Colors.amber.withOpacity(0.15)
@@ -271,7 +277,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             "View All",
                             isDark,
                             primaryColor,
-                            () => context.read<DoctorDashboardBloc>().add(
+                                () => context.read<DoctorDashboardBloc>().add(
                               ViewPatientsEvent(),
                             ),
                             isTabletDevice,
@@ -295,9 +301,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
+                              context,
+                              index,
+                              ) {
                             final recentLog = state.recentPatients[index];
                             return DocAppointmentCard(
                               isTab: isTabletDevice,
@@ -307,7 +313,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                               name: recentLog.patientName ?? 'Unknown Patient',
                               subtitle: 'Historical Consultation',
                               description:
-                                  recentLog.diagnosis ??
+                              recentLog.diagnosis ??
                                   'Completed Session Case Log',
                               timeOrDate: recentLog.appointmentDate ?? 'Recent',
                               statusLabel: 'Completed',
@@ -369,11 +375,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildMetricsGrid(
-    BuildContext context,
-    DoctorDashboardLoaded state,
-    Color primaryColor,
-    bool isTab,
-  ) {
+      BuildContext context,
+      DoctorDashboardLoaded state,
+      Color primaryColor,
+      bool isTab,
+      ) {
     final List<Widget> metricCards = [
       DocMetricCard(
         title: 'Today',
@@ -458,11 +464,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildWelcomeCard(
-    BuildContext context,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
+      BuildContext context,
+      bool isDark,
+      Color primaryColor,
+      bool isTab,
+      ) {
     final textWidth = displayWidth(context);
     return Container(
       width: double.infinity,
@@ -571,14 +577,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildSectionHeader(
-    BuildContext context,
-    String title,
-    String actionText,
-    bool isDark,
-    Color primaryColor,
-    VoidCallback onTap,
-    bool isTab,
-  ) {
+      BuildContext context,
+      String title,
+      String actionText,
+      bool isDark,
+      Color primaryColor,
+      VoidCallback onTap,
+      bool isTab,
+      ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -618,13 +624,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildChartCard(
-    BuildContext context,
-    String title,
-    String badgeText,
-    bool isDark,
-    Widget chartContent,
-    bool isTab,
-  ) {
+      BuildContext context,
+      String title,
+      String badgeText,
+      bool isDark,
+      Widget chartContent,
+      bool isTab,
+      ) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -688,10 +694,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildWeeklyChartBarList(
-    BuildContext context,
-    Color primaryColor,
-    double height,
-  ) {
+      BuildContext context,
+      Color primaryColor,
+      double height,
+      ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulWeeklyPalette = [
       primaryColor,
@@ -716,10 +722,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildMonthlyChartBarList(
-    BuildContext context,
-    Color primaryColor,
-    double height,
-  ) {
+      BuildContext context,
+      Color primaryColor,
+      double height,
+      ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulMonthlyColors = List.generate(12, (index) {
       final double progress = index / 11;

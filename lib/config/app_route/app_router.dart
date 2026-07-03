@@ -48,8 +48,11 @@ import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/
 import 'package:yiraclinics/features/presentation/test_results/test_result_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
+import '../../core/models/select_role_model.dart';
+import '../../core/models/work_space_model.dart';
 import '../../di/dependency_injection.dart';
 import '../../features/domain/entities/login/login_entity.dart';
+import '../../features/domain/entities/token/get_version_and_token_status_entity.dart';
 import '../../features/presentation/auth/on_boarding/gender_selection_screen.dart';
 import '../../features/presentation/auth/on_boarding/height_scale_screen.dart';
 import '../../features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
@@ -180,20 +183,19 @@ class AppRouter {
           ),
         );
       case AppRoutes.selectRoleScreen:
-        final args = settings.arguments;
-        final rolesList = args is List<RoleEntity> ? args : <RoleEntity>[];
+        final args = settings.arguments as SelectRoleModel;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<RoleBloc>(),
-            child: SelectRoleScreen(roles: rolesList),
+            child: SelectRoleScreen(roles: args),
           ),
         );
       case AppRoutes.workSpaceScreen:
-        RoleEntity roleEntity = settings.arguments as RoleEntity;
+        WorkSpaceModel workSpaceModel = settings.arguments as WorkSpaceModel;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<WorkspaceBloc>(),
-            child: WorkspaceScreen(roleEntity: roleEntity,),
+            child: WorkspaceScreen(roleEntity: workSpaceModel,),
           ),
         );
       case AppRoutes.docDashboard:
@@ -353,9 +355,11 @@ class AppRouter {
           ),
         );
       case AppRoutes.forceUpdateScreen:
-        return MaterialPageRoute(builder: (_) => ForceUpdateView());
+        final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
+        return MaterialPageRoute(builder: (_) => ForceUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
       case AppRoutes.softUpdateScreen:
-        return MaterialPageRoute(builder: (_) => SoftUpdateView());
+        final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
+        return MaterialPageRoute(builder: (_) => SoftUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
       case AppRoutes.maintenanceScreen:
         return MaterialPageRoute(builder: (_) => MaintenanceView());
       case AppRoutes.sessionExpired:

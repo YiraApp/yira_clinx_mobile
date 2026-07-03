@@ -20,13 +20,16 @@ class GetVersionTokenStatusEntity extends Equatable {
   final bool versionStatus;
   final String updateType;
   final bool tokenStatus;
+  final String playStoreLink;
+  final String appStoreLink;
+
 
   const GetVersionTokenStatusEntity({
     required this.versionStatus,
     required this.updateType,
-    required this.tokenStatus,
+    required this.tokenStatus, required this.playStoreLink, required this.appStoreLink,
   });
 
   @override
-  List<Object?> get props => [versionStatus, updateType, tokenStatus];
+  List<Object?> get props => [versionStatus, updateType, tokenStatus,playStoreLink,appStoreLink];
 }

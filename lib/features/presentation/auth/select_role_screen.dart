@@ -9,10 +9,12 @@ import 'package:yiraclinics/features/presentation/auth/widgets/role_card.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/common_text.dart';
-import '../../domain/entities/login/login_entity.dart';
+import '../../../core/local/global_session.dart';
+import '../../../core/models/select_role_model.dart';
+import '../../../core/models/work_space_model.dart';
 
 class SelectRoleScreen extends StatefulWidget {
-  final List<RoleEntity>? roles;
+  final SelectRoleModel? roles;
   const SelectRoleScreen({super.key, this.roles});
 
   @override
@@ -49,14 +51,54 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-
+    final mainHeadingColor = isDarkMode
+        ? Colors.white
+        : const Color(0xFF0F172A);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: widget.roles?.inApp ?? false
+          ? AppBar(
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: mainHeadingColor,
+                  size: 20,
+                ),
+                onPressed: () {
+                  final currentUser = GlobalSession.instance.userNotifier.value;
+                  final payload = currentUser?.data;
+                  final navigationId = payload?.navigationId;
+                  final navigationRoutes = const {
+                    '1': AppRoutes.dashboardPatientDetails,
+                    '2': AppRoutes.docDashboard,
+                  };
+
+                  final coreRoute = navigationRoutes[navigationId];
+                  if (coreRoute != null) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      coreRoute,
+                      (route) => false,
+                    );
+                  } else {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.unsupportedRole,
+                      (route) => false,
+                      arguments: currentUser?.data,
+                    );
+                  }
+                },
+              ),
+              automaticallyImplyLeading: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            )
+          : AppBar(
+              automaticallyImplyLeading: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
       body: Stack(
         children: [
           Positioned(
@@ -81,7 +123,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
             ),
           ),
           SafeArea(
-            // Changed from BlocConsumer to pure BlocBuilder
             child: BlocBuilder<RoleBloc, RoleState>(
               builder: (context, state) {
                 if (state is RoleLoading || state is RoleInitial) {
@@ -93,7 +134,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   );
                 }
 
-                if (state is RolesLoaded || widget.roles != null) {
+                if (state is RolesLoaded || widget.roles?.roles != null) {
                   return FadeTransition(
                     opacity: _fadeController,
                     child: CustomScrollView(
@@ -120,7 +161,9 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                 CommonText(
                                   'Select Your Role',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * (isTab ? 0.035 : 0.065),
+                                    fontSize:
+                                        displayWidth(context) *
+                                        (isTab ? 0.035 : 0.065),
                                     fontWeight: FontWeight.w600,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -128,7 +171,9 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                 CommonText(
                                   'Multiple permissions detected for this facility',
                                   style: TextStyle(
-                                    fontSize: displayWidth(context) * (isTab ? 0.02 : 0.03),
+                                    fontSize:
+                                        displayWidth(context) *
+                                        (isTab ? 0.02 : 0.03),
                                     fontWeight: FontWeight.w500,
                                     fontFamily: appPoppinFont,
                                   ),
@@ -142,46 +187,58 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             horizontal: screenHorizontalSpacePadding,
                           ),
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                final role = widget.roles?[index];
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final role = widget.roles?.roles[index];
+                              final isSelected =
+                                  state is RoleSelectedState &&
+                                  state.roleEntity.roleId == role?.roleId;
 
-                                // Pure BLoC selection conditional evaluation
-                                final isSelected = state is RoleSelectedState &&
-                                    state.roleEntity.roleId == role?.roleId;
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: fieldSpace,
+                                ),
+                                child: DialogRoleCard(
+                                  isTablet: isTab,
+                                  isSelected: isSelected,
+                                  roleEntity: role!,
+                                  onTap: () async {
+                                    final selectedRole =
+                                        widget.roles?.roles[index];
+                                    if (selectedRole == null) return;
 
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: fieldSpace),
-                                  child: DialogRoleCard(
-                                    isTablet: isTab,
-                                    isSelected: isSelected,
-                                    roleEntity: role!,
-                                    onTap: () async {
-                                      final selectedRole = widget.roles?[index];
-                                      if (selectedRole == null) return;
-
-                                      context.read<RoleBloc>().add(RoleSelected(selectedRole));
-
+                                    context.read<RoleBloc>().add(
+                                      RoleSelected(selectedRole),
+                                    );
+                                    WorkSpaceModel data = WorkSpaceModel(
+                                      widget.roles?.inApp ?? false,
+                                      selectedRole,
+                                    );
                                     await Navigator.pushNamed(
-                                        context,
-                                        AppRoutes.workSpaceScreen,
-                                        arguments: selectedRole,
+                                      context,
+                                      AppRoutes.workSpaceScreen,
+                                      arguments: data,
+                                    );
+                                    if (context.mounted) {
+                                      context.read<RoleBloc>().add(
+                                        ClearRoleSelectionEvent(),
                                       );
-                                      if (context.mounted) {
-                                        context.read<RoleBloc>().add(ClearRoleSelectionEvent());
-                                      }
-                                    },
-                                  ),
-                                );
-                              },
-                              childCount: widget.roles?.length ?? 0,
-                            ),
+                                    }
+                                  },
+                                ),
+                              );
+                            }, childCount: widget.roles?.roles.length ?? 0),
                           ),
                         ),
                         SliverFillRemaining(
                           hasScrollBody: false,
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
+                            padding: const EdgeInsets.only(
+                              bottom: 24.0,
+                              top: 16.0,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -191,16 +248,22 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                     Icon(
                                       Icons.verified_user_outlined,
                                       size: 14,
-                                      color: isDarkMode ? Colors.white24 : Colors.black26,
+                                      color: isDarkMode
+                                          ? Colors.white24
+                                          : Colors.black26,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'Secure configuration environment rules apply.',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * (isTab ? 0.018 : 0.025),
+                                        fontSize:
+                                            displayWidth(context) *
+                                            (isTab ? 0.018 : 0.025),
                                         fontWeight: FontWeight.w500,
-                                        color: isDarkMode ? Colors.white30 : Colors.black38,
+                                        color: isDarkMode
+                                            ? Colors.white30
+                                            : Colors.black38,
                                       ),
                                     ),
                                   ],
@@ -213,7 +276,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                     ),
                   );
                 }
-
                 return const SizedBox.shrink();
               },
             ),

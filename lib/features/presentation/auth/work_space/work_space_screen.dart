@@ -12,13 +12,14 @@ import '../../../../core/colors/colors.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/local/global_session.dart';
+import '../../../../core/models/work_space_model.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../domain/entities/login/login_entity.dart';
 
 class WorkspaceScreen extends StatefulWidget {
-  final bool? isInApp;
-  final RoleEntity? roleEntity;
-  const WorkspaceScreen({super.key, this.isInApp = false, this.roleEntity});
+
+  final WorkSpaceModel? roleEntity;
+  const WorkspaceScreen({super.key, this.roleEntity});
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -39,7 +40,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
     final params = WorkSpaceParameters(
       currentUser?.data?.id ?? '',
-      widget.roleEntity?.roleId ?? '',
+      widget.roleEntity?.roleEntity.roleId ?? '',
     );
 
     _workspaceBloc.add(LoadWorkspacesEvent(params));
@@ -60,7 +61,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
     final paragraphColor = isDarkMode ? Colors.white60 : const Color(0xFF64748B);
     final panelBg = isDarkMode ? theme.cardColor : Colors.white;
-    final bool currentIsInApp = widget.isInApp ?? false;
+    final bool currentIsInApp = widget.roleEntity?.inApp ?? false;
 
     return BlocProvider.value(
       value: _workspaceBloc,
@@ -311,7 +312,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                           org: currentOrg,
                                           onPressed: (int hospitalId) {
                                             var data = UpdateLatestOrgDetailsModelParams(
-                                              latestRoleId: widget.roleEntity?.roleId ?? '',
+                                              latestRoleId: widget.roleEntity?.roleEntity.roleId ?? '',
                                               latestOrgId: currentOrg.organizationId ?? 1,
                                               latestHospitalId: hospitalId,
                                             );

@@ -45,7 +45,10 @@ class DashboardNavState extends NavigationDrawerState {
   const DashboardNavState({required int index, String version = 'V1.0.0'})
       : super._withVersion(selectedIndex: index, appVersion: version);
 }
-
+class OrgSwitchNavState extends NavigationDrawerState {
+  const OrgSwitchNavState({required int index, String version = 'V1.0.0'})
+      : super._withVersion(selectedIndex: index, appVersion: version);
+}
 class AppointmentsNavState extends NavigationDrawerState {
   const AppointmentsNavState({required int index, String version = 'V1.0.0'})
       : super._withVersion(selectedIndex: index, appVersion: version);

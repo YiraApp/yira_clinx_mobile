@@ -25,6 +25,7 @@ class AppRoutes {
   static const String selectRoleScreen= '/selectRoleScreen';
   static const String workSpaceScreen= '/workSpaceScreen';
   static const String docDashboard= '/docDashboard';
+  static const String orgSwitch= '/orgSwitch';
   static const String settingsScreen= '/settingsScreen';
   static const String changePasswordScreen= '/changePasswordScreen';
   static const String onSuccessChangePassword= '/onSuccessChangePassword';

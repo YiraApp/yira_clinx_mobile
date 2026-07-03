@@ -18,7 +18,9 @@ class RoleBloc extends Bloc<RoleEvent, RoleState> {
     on<RoleSelected>((event, emit) {
       emit(RoleSelectedState(event.roleEntity));
     },);
-
+    on<ClearRoleSelectionEvent>((event, emit) {
+      emit(RolesLoaded(roles: []));
+    });
   }
 
   Future<void> _onLoadRoles(LoadRolesEvent event, Emitter<RoleState> emit) async {

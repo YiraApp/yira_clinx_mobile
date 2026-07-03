@@ -1,12 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/configure_screens/widgets/update_illustration.dart';
 import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_button.dart';
+import '../../../core/utils/utils.dart';
+import '../../domain/entities/token/get_version_and_token_status_entity.dart';
 
 class ForceUpdateView extends StatelessWidget {
-  const ForceUpdateView({super.key});
+  final GetVersionTokenStatusEntity getVersionTokenStatusEntity;
+  const ForceUpdateView({super.key, required this.getVersionTokenStatusEntity});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +67,17 @@ class ForceUpdateView extends StatelessWidget {
                     height: isTab ? 45 : 50,
                     text: 'Update Now',
                     borderRadius: fieldBorderRadius,
-                    onPressed: () {},
+                    onPressed: () {
+                      if (Platform.isAndroid) {
+                        Utils.launchURL(
+                          getVersionTokenStatusEntity.playStoreLink,
+                        );
+                      } else {
+                        Utils.launchURL(
+                          getVersionTokenStatusEntity.appStoreLink,
+                        );
+                      }
+                    },
                   ),
                 ],
               ),

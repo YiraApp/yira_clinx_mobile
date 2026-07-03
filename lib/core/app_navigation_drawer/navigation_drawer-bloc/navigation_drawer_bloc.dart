@@ -19,7 +19,9 @@ class NavigationDrawerBloc extends Bloc<NavigationDrawerEvent, NavigationDrawerS
     on<DashBoardNav>((event, emit) {
       emit(DashboardNavState(index: 0, version: state.appVersion));
     });
-
+    on<OrgSwitchNav>((event, emit) {
+      emit(OrgSwitchNavState(index: 0, version: state.appVersion));
+    });
     on<AppointmentsNav>((event, emit) {
       emit(AppointmentsNavState(index: 1, version: state.appVersion));
     });

@@ -41,10 +41,15 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
 
             final targetRoute = updateRoutes[updateType];
             if (targetRoute != null) {
+              dynamic routingArguments;
+              if (updateType == 'force' || updateType == 'soft') {
+                 routingArguments = state.versionData?.data;
+              }
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 targetRoute,
                 (route) => false,
+                arguments: routingArguments
               );
               return;
             }

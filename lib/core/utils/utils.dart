@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../common_size_helpers/common_size_helpers.dart';
 import '../common_widgets/common_text.dart';
@@ -12,6 +14,68 @@ import '../constants/constants.dart';
 import '../global_scaffold_key/global_scaffold_key.dart';
 
 class Utils {
+  static void printText(String message, {String tag = 'APP_LOG'}) {
+    debugPrint('[$tag] $message');
+  }
+  static Future<void> launchURL(
+      String urlString, {
+        void Function(String errorMessage)? onLaunchFailure,
+      }) async {
+    final String trimmedUrl = urlString.trim();
+
+    if (trimmedUrl.isEmpty) {
+      _handleError('URL string is empty', onLaunchFailure);
+      return;
+    }
+
+    final Uri? parsedUri = Uri.tryParse(trimmedUrl);
+    if (parsedUri == null) {
+      _handleError('Could not parse invalid URL: $trimmedUrl', onLaunchFailure);
+      return;
+    }
+
+    try {
+      final bool canOpen = await canLaunchUrl(parsedUri);
+
+      if (canOpen) {
+        final bool success = await launchUrl(
+          parsedUri,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!success) {
+          _handleError('System failed to launch URL: $trimmedUrl', onLaunchFailure);
+        }
+      } else {
+        _handleError('No application found capable of launching URL: $trimmedUrl', onLaunchFailure);
+      }
+    } catch (e, stackTrace) {
+      _handleError(
+        'Unexpected error launching URL: $e',
+        onLaunchFailure,
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  static void _handleError(
+      String message,
+      void Function(String)? onFailureCallback, {
+        Object? error,
+        StackTrace? stackTrace,
+      }) {
+    log(
+      message,
+      name: 'UrlLauncherUtils',
+      error: error,
+      stackTrace: stackTrace,
+    );
+
+    if (onFailureCallback != null) {
+      onFailureCallback(message);
+    }
+  }
   static void showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

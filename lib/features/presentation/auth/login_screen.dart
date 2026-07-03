@@ -8,6 +8,7 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/utils/dismiss_key_board.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 
 import '../../../core/common_input_fields/common_input_field.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -15,6 +16,8 @@ import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
+import '../../../core/models/select_role_model.dart';
+import '../../../core/services/network_services/network_listener/network_listener.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,6 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint("Auth Configuration - Device token initialized successfully.");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final bool isTabletDevice = isTablet(context);
@@ -104,9 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     .toLowerCase()
                     .trim();
                 Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.userConfiguration,
-                        (route) => false
+                  context,
+                  AppRoutes.userConfiguration,
+                  (route) => false,
                 );
                 /*if (payload.navigationId == '2') {
                   Navigator.pushNamedAndRemoveUntil(
@@ -131,10 +135,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 }*/
               } else {
+                SelectRoleModel data = SelectRoleModel(payload?.roles ?? [],false);
                 Navigator.pushNamed(
                   context,
                   AppRoutes.selectRoleScreen,
-                  arguments: payload?.roles ?? [],
+                  arguments: data,
                 );
               }
               break;
@@ -190,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Welcome Back',
                                 style: TextStyle(
                                   fontSize:
-                                      referenceWidth *
+                                  referenceWidth *
                                       (isTabletDevice ? 0.055 : 0.065),
                                   fontWeight: FontWeight.w600,
                                   fontFamily: appPoppinFont,
@@ -205,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize:
-                                        referenceWidth *
+                                    referenceWidth *
                                         (isTabletDevice ? 0.026 : 0.03),
                                     fontWeight: FontWeight.w500,
                                     fontFamily: appPoppinFont,
@@ -233,14 +238,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                           horizontal: isTabletDevice
                                               ? screenHorizontalSpacePadding
                                               : (screenHorizontalSpacePadding /
-                                                    2),
+                                              2),
                                         ),
                                         height: 50,
                                         decoration: BoxDecoration(
                                           color: isDarkMode
                                               ? darkModeCardColor.withOpacity(
-                                                  0.9,
-                                                )
+                                            0.9,
+                                          )
                                               : filedBg,
                                           borderRadius: BorderRadius.circular(
                                             fieldBorderRadius * 5,
@@ -251,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             Colors.transparent,
                                           ),
                                           indicatorSize:
-                                              TabBarIndicatorSize.tab,
+                                          TabBarIndicatorSize.tab,
                                           dividerColor: Colors.transparent,
                                           indicatorColor: Colors.transparent,
                                           labelColor: isDarkMode
@@ -261,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             fontWeight: FontWeight.w600,
                                             fontFamily: appPoppinFont,
                                             fontSize:
-                                                referenceWidth *
+                                            referenceWidth *
                                                 (isTabletDevice
                                                     ? 0.028
                                                     : 0.035),
@@ -271,13 +276,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                               : Colors.grey.shade600,
                                           indicator: RectangularIndicator(
                                             bottomLeftRadius:
-                                                fieldBorderRadius * 5,
+                                            fieldBorderRadius * 5,
                                             bottomRightRadius:
-                                                fieldBorderRadius * 5,
+                                            fieldBorderRadius * 5,
                                             topLeftRadius:
-                                                fieldBorderRadius * 5,
+                                            fieldBorderRadius * 5,
                                             topRightRadius:
-                                                fieldBorderRadius * 5,
+                                            fieldBorderRadius * 5,
                                             color: Colors.white,
                                             horizontalPadding: 4,
                                             verticalPadding: 4,
@@ -297,14 +302,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                             : screenHeight * 0.45,
                                         child: TabBarView(
                                           physics:
-                                              const NeverScrollableScrollPhysics(),
+                                          const NeverScrollableScrollPhysics(),
                                           children: [
                                             _buildMobileForm(
                                               context,
                                               isDarkMode,
                                               isTabletDevice,
                                               referenceWidth,
-                                              state
+                                              state,
                                             ),
                                             _buildEmailForm(
                                               context,
@@ -318,14 +323,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                       Row(
                                         mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        MainAxisAlignment.center,
                                         children: [
                                           CommonText(
                                             "Don't you have account? ",
                                             style: TextStyle(
                                               fontFamily: appPoppinFont,
                                               fontSize:
-                                                  referenceWidth *
+                                              referenceWidth *
                                                   (isTabletDevice
                                                       ? 0.026
                                                       : 0.035),
@@ -343,15 +348,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                               padding: EdgeInsets.zero,
                                               minimumSize: Size.zero,
                                               tapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
+                                              MaterialTapTargetSize
+                                                  .shrinkWrap,
                                             ),
                                             child: Text(
                                               'Sign Up',
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize:
-                                                    referenceWidth *
+                                                referenceWidth *
                                                     (isTabletDevice
                                                         ? 0.026
                                                         : 0.035),
@@ -386,7 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool isDarkMode,
     bool isTab,
     double refWidth,
-      LogInState state
+    LogInState state,
   ) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -502,7 +507,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         );
                       }
-
                     },
                   ),
           ],
@@ -586,17 +590,22 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: passwordController,
               focusNode: passwordFocus,
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Please enter your password';
-                } else if (value.length < 8) {
-                  return 'Password must be at least 8 Characters';
-                } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                  return 'Password must contain a Capital letter';
-                } else if (!RegExp(r'[0-9]').hasMatch(value)) {
-                  return 'Password must contain a Number';
-                } else if (!RegExp(r'[$?!#&@%*]').hasMatch(value)) {
-                  return 'Password must contain a special character (\$?!#&@%*)';
                 }
+                if (value.length < 8) {
+                  return 'Password must be at least 8 Characters';
+                }
+                if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                  return 'Password must contain a Capital letter';
+                }
+                if (!RegExp(r'[0-9]').hasMatch(value)) {
+                  return 'Password must contain a Number';
+                }
+                if (!RegExp(r'[.$?!#&@%*]').hasMatch(value)) {
+                  return 'Password must contain a special character (.\$?!#&@%*)';
+                }
+
                 return null;
               },
               textInputAction: TextInputAction.done,
@@ -618,7 +627,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             context.read<LoginBloc>().add(
                               OnTapEmailSignInEvent(
                                 email: emailController.text.trim(),
-                                password: passwordController.text, fcmToken: _cachedFcmToken,
+                                password: passwordController.text,
+                                fcmToken: _cachedFcmToken,
                               ),
                             );
                           }
