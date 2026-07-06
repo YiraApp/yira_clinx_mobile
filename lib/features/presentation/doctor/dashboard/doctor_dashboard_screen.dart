@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/services/network_services/network_listener/network_listener.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custom_chart.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_metric_grid.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_metric_card.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/welocme_card.dart';
 import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
 import '../../../../core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
+import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../di/dependency_injection.dart';
-import '../../../domain/entities/appointments/appointment_entity.dart';
 import 'doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
+
+import 'widgets/dashboard_section_header.dart';
+import 'widgets/dashboard_chart_card.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   const DoctorDashboardScreen({super.key});
@@ -34,15 +37,18 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   double _calculateResponsiveChartHeight(BuildContext context) {
-    final computedHeight = displayHeight(context) / 6;
-    if (computedHeight < 110) return 110.0;
-    if (computedHeight > 180) return 180.0;
+    final bool isTabletDevice = isTablet(context);
+    final double divisor = isTabletDevice ? 4.2 : 4.8;
+    final double computedHeight = displayHeight(context) / divisor;
+
+    if (isTabletDevice) {
+      if (computedHeight < 200.0) return 200.0;
+      if (computedHeight > 340.0) return 340.0;
+    } else {
+      if (computedHeight < 140.0) return 140.0;
+      if (computedHeight > 200.0) return 200.0;
+    }
     return computedHeight;
   }
 
@@ -63,24 +69,17 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     final chartHeight = _calculateResponsiveChartHeight(context);
     final width = displayWidth(context);
     final isTabletDevice = isTablet(context);
-
     final adaptiveTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
 
     return MultiBlocProvider(
       providers: [
-        // PRODUCTION LIFECYCLE FIX: Used .value constructor for the global/shared singleton
-        // to prevent the widget tree from closing it down when the dashboard unmounts.
-        BlocProvider<NavigationDrawerBloc>.value(
-          value: _navigationDrawerBloc,
-        ),
-        // Kept standard instantiation syntax for local screen state management context.
-        BlocProvider<DoctorDashboardBloc>(
-          create: (context) => _dashboardBloc,
-        ),
+        BlocProvider<NavigationDrawerBloc>.value(value: _navigationDrawerBloc),
+        BlocProvider<DoctorDashboardBloc>(create: (context) => _dashboardBloc),
       ],
       child: NetworkListener(
         onOnline: () {
-          if (_dashboardBloc.state is! DoctorDashboardLoaded && _dashboardBloc.state is! DoctorDashboardLoading) {
+          if (_dashboardBloc.state is! DoctorDashboardSuccessState &&
+              _dashboardBloc.state is! DoctorDashboardLoading) {
             _navigationDrawerBloc.add(const InitializeDrawerData());
             _dashboardBloc.add(FetchDoctorDashboardData());
           }
@@ -158,15 +157,23 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: fieldSpace),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                        ),
+                      TextButton(
                         onPressed: () =>
                             _dashboardBloc.add(FetchDoctorDashboardData()),
-                        child: const Text(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
                           'Retry Operations',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize:
+                                displayWidth(context) *
+                                (isTablet(context) ? 0.026 : 0.035),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -174,7 +181,19 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 );
               }
 
-              if (state is DoctorDashboardLoaded) {
+              if (state is DoctorDashboardSuccessState) {
+                final dashboard = state.dashboardEntity.data;
+
+                // NULL BOUNDARY: If entire dashboard payload block body is null, show global state error card instead of a runtime crash
+                if (dashboard == null) {
+                  return Center(
+                    child: _buildEmptyState(
+                      context,
+                      'Dashboard parameters uninitialized.',
+                    ),
+                  );
+                }
+
                 return CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
@@ -185,41 +204,61 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           const SizedBox(height: 8.0),
-                          _buildWelcomeCard(
-                            context,
-                            isDark,
-                            primaryColor,
-                            isTabletDevice,
+
+                          // PROFILE HANDLING: Guarded with default fallback text markers inside your WelcomeCard wrapper
+                          WelcomeCard(
+                            name: dashboard.profile.name.isNotEmpty
+                                ? dashboard.profile.name
+                                : "Doctor",
+                            specialty: dashboard.profile.specialty.isNotEmpty
+                                ? dashboard.profile.specialty
+                                : "Medical Professional",
+                            clinicAddress:
+                                dashboard.profile.clinicAddress.isNotEmpty
+                                ? dashboard.profile.clinicAddress
+                                : "Clinic Location N/A",
+                            primaryColor: primaryColor,
+                            isDark: isDark,
+                            isTab: isTabletDevice,
+                            fontFamily: appPoppinFont,
                           ),
                           const SizedBox(height: fieldSpace),
-                          _buildMetricsGrid(
-                            context,
-                            state,
-                            primaryColor,
-                            isTabletDevice,
+
+                          // METRICS HANDLING: Fallbacks evaluated inside DashboardMetricsGrid implementation safely
+                          DashboardMetricsGrid(
+                            metrics: dashboard.metrics,
+                            primaryColor: primaryColor,
+                            isTab: isTabletDevice,
                           ),
                           const SizedBox(height: fieldSpace),
-                          _buildSectionHeader(
-                            context,
-                            "Today's Schedule",
-                            "View Calendar",
-                            isDark,
-                            primaryColor,
-                                () => context.read<DoctorDashboardBloc>().add(
-                              ViewCalendarEvent(),
-                            ),
-                            isTabletDevice,
+
+                          DashboardSectionHeader(
+                            title: "Today's Schedule",
+                            actionText: "View Calendar",
+                            isDark: isDark,
+                            primaryColor: primaryColor,
+                            onTap: () => context
+                                .read<DoctorDashboardBloc>()
+                                .add(ViewCalendarEvent()),
+                            isTab: isTabletDevice,
+                            fontFamily: appPoppinFont,
                           ),
-                          const SizedBox(height: fieldSpace),
+                          const SizedBox(height: 8.0),
                         ]),
                       ),
                     ),
 
-                    if (state.todaysAppointments.isEmpty)
-                      SliverToBoxAdapter(
-                        child: _buildEmptyState(
-                          context,
-                          'No active appointments today',
+                    // SCHEDULE EMPTY/NULL BOUNDARY
+                    if (dashboard.todaysSchedule.isEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: screenHorizontalSpacePadding,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: _buildEmptyState(
+                            context,
+                            'No active appointments today',
+                          ),
                         ),
                       )
                     else
@@ -229,39 +268,47 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                              ) {
-                            final appointment = state.todaysAppointments[index];
+                            context,
+                            index,
+                          ) {
+                            final appointment = dashboard.todaysSchedule[index];
                             final bool isVideo =
-                                appointment.type == AppointmentType.videoCall;
+                                appointment.statusTag.toUpperCase() ==
+                                'LIVE VIDEO';
 
-                            return DocAppointmentCard(
-                              initials: _getInitials(
-                                appointment.patientName ?? 'Patient',
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: DocAppointmentCard(
+                                initials: _getInitials(appointment.patientName),
+                                name: appointment.patientName.isNotEmpty
+                                    ? appointment.patientName
+                                    : 'Unknown Patient',
+                                subtitle:
+                                    appointment.consultationType.isNotEmpty
+                                    ? appointment.consultationType
+                                    : 'Consultation',
+                                description: appointment.reason.isNotEmpty
+                                    ? appointment.reason
+                                    : 'General Checkup',
+                                timeOrDate: appointment.time.isNotEmpty
+                                    ? appointment.time
+                                    : '--:-- AM',
+                                statusLabel: appointment.statusTag.isNotEmpty
+                                    ? appointment.statusTag
+                                    : 'Confirmed',
+                                statusColor: isVideo
+                                    ? Colors.amber.withOpacity(0.15)
+                                    : Colors.green.withOpacity(0.15),
+                                statusTextColor: isVideo
+                                    ? Colors.amber[800]!
+                                    : Colors.green[700]!,
+                                onTap: () => context
+                                    .read<DoctorDashboardBloc>()
+                                    .add(DocAndAppPatientDetailsNavEvent()),
+                                isTab: isTabletDevice,
                               ),
-                              name:
-                              appointment.patientName ?? 'Unknown Patient',
-                              subtitle: isVideo
-                                  ? 'Teleconsultation'
-                                  : 'In-Clinic Visit',
-                              description:
-                              appointment.reason ?? 'General Checkup',
-                              timeOrDate:
-                              appointment.appointmentTime ?? '00:00 AM',
-                              statusLabel: isVideo ? 'Live Video' : 'Confirmed',
-                              statusColor: isVideo
-                                  ? Colors.amber.withOpacity(0.15)
-                                  : Colors.green.withOpacity(0.15),
-                              statusTextColor: isVideo
-                                  ? Colors.amber[800]!
-                                  : Colors.green[700]!,
-                              onTap: () => context
-                                  .read<DoctorDashboardBloc>()
-                                  .add(DocAndAppPatientDetailsNavEvent()),
-                              isTab: isTabletDevice,
                             );
-                          }, childCount: state.todaysAppointments.length),
+                          }, childCount: dashboard.todaysSchedule.length),
                         ),
                       ),
 
@@ -271,27 +318,34 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          _buildSectionHeader(
-                            context,
-                            "Recent Patients",
-                            "View All",
-                            isDark,
-                            primaryColor,
-                                () => context.read<DoctorDashboardBloc>().add(
-                              ViewPatientsEvent(),
-                            ),
-                            isTabletDevice,
+                          const SizedBox(height: 8.0),
+                          DashboardSectionHeader(
+                            title: "Recent Patients",
+                            actionText: "View All",
+                            isDark: isDark,
+                            primaryColor: primaryColor,
+                            onTap: () => context
+                                .read<DoctorDashboardBloc>()
+                                .add(ViewPatientsEvent()),
+                            isTab: isTabletDevice,
+                            fontFamily: appPoppinFont,
                           ),
-                          const SizedBox(height: fieldSpace),
+                          const SizedBox(height: 8.0),
                         ]),
                       ),
                     ),
 
-                    if (state.recentPatients.isEmpty)
-                      SliverToBoxAdapter(
-                        child: _buildEmptyState(
-                          context,
-                          'No historical patient logs available',
+                    // RECENT PATIENTS EMPTY/NULL BOUNDARY
+                    if (dashboard.recentPatients.isEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: screenHorizontalSpacePadding,
+                        ),
+                        sliver: SliverToBoxAdapter(
+                          child: _buildEmptyState(
+                            context,
+                            'No historical patient logs available',
+                          ),
                         ),
                       )
                     else
@@ -301,29 +355,38 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                              ) {
-                            final recentLog = state.recentPatients[index];
-                            return DocAppointmentCard(
-                              isTab: isTabletDevice,
-                              initials: _getInitials(
-                                recentLog.patientName ?? 'Patient',
+                            context,
+                            index,
+                          ) {
+                            final recentLog = dashboard.recentPatients[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: DocAppointmentCard(
+                                isTab: isTabletDevice,
+                                initials: _getInitials(recentLog.name),
+                                name: recentLog.name.isNotEmpty
+                                    ? recentLog.name
+                                    : 'Unknown Patient',
+                                subtitle: recentLog.consultationType.isNotEmpty
+                                    ? recentLog.consultationType
+                                    : 'Historical Log',
+                                description: recentLog.condition.isNotEmpty
+                                    ? recentLog.condition
+                                    : 'Case history logs completed',
+                                timeOrDate: recentLog.date.isNotEmpty
+                                    ? recentLog.date
+                                    : 'Recent',
+                                statusLabel: recentLog.status.isNotEmpty
+                                    ? recentLog.status
+                                    : 'Completed',
+                                statusColor: primaryColor.withOpacity(0.1),
+                                statusTextColor: primaryColor,
+                                onTap: () => context
+                                    .read<DoctorDashboardBloc>()
+                                    .add(DocAndAppPatientDetailsNavEvent()),
                               ),
-                              name: recentLog.patientName ?? 'Unknown Patient',
-                              subtitle: 'Historical Consultation',
-                              description:
-                              recentLog.diagnosis ??
-                                  'Completed Session Case Log',
-                              timeOrDate: recentLog.appointmentDate ?? 'Recent',
-                              statusLabel: 'Completed',
-                              statusColor: primaryColor.withOpacity(0.1),
-                              statusTextColor: primaryColor,
-                              onTap: () => context
-                                  .read<DoctorDashboardBloc>()
-                                  .add(DocAndAppPatientDetailsNavEvent()),
                             );
-                          }, childCount: state.recentPatients.length),
+                          }, childCount: dashboard.recentPatients.length),
                         ),
                       ),
 
@@ -331,34 +394,56 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       padding: const EdgeInsets.only(
                         left: screenHorizontalSpacePadding,
                         right: screenHorizontalSpacePadding,
-                        bottom: 50,
+                        top: 12.0,
+                        bottom: 40.0,
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          _buildChartCard(
-                            context,
-                            "Weekly Appointments",
-                            "Avg: 5.4/day",
-                            isDark,
-                            _buildWeeklyChartBarList(
-                              context,
-                              primaryColor,
-                              chartHeight,
-                            ),
-                            isTabletDevice,
+                          // WEEKLY CHART EMPTY BOUNDARY
+                          DashboardChartCard(
+                            title: "Weekly Appointments",
+                            badgeText:
+                                "Avg: ${dashboard.weeklyAppointments.averagePerDay}/day",
+                            isDark: isDark,
+                            isTab: isTabletDevice,
+                            fontFamily: appPoppinFont,
+                            chartContent:
+                                dashboard.weeklyAppointments.dailyData.isEmpty
+                                ? _buildInlineChartEmptyState(
+                                    context,
+                                    'No tracking data logged this week.',
+                                  )
+                                : _buildWeeklyChartBarList(
+                                    context,
+                                    primaryColor,
+                                    chartHeight,
+                                    dashboard.weeklyAppointments.xLabels,
+                                    dashboard.weeklyAppointments.yValues,
+                                  ),
                           ),
                           const SizedBox(height: fieldSpace),
-                          _buildChartCard(
-                            context,
-                            "Monthly Patients",
-                            "Yearly Total: 156",
-                            isDark,
-                            _buildMonthlyChartBarList(
-                              context,
-                              primaryColor,
-                              chartHeight,
-                            ),
-                            isTabletDevice,
+
+                          // MONTHLY CHART EMPTY BOUNDARY
+                          DashboardChartCard(
+                            title: "Monthly Patients",
+                            badgeText:
+                                "Yearly Total: ${dashboard.monthlyPatients.yearlyTotal}",
+                            isDark: isDark,
+                            isTab: isTabletDevice,
+                            fontFamily: appPoppinFont,
+                            chartContent:
+                                dashboard.monthlyPatients.monthlyData.isEmpty
+                                ? _buildInlineChartEmptyState(
+                                    context,
+                                    'No tracking data logged this year.',
+                                  )
+                                : _buildMonthlyChartBarList(
+                                    context,
+                                    primaryColor,
+                                    chartHeight,
+                                    dashboard.monthlyPatients.xLabels,
+                                    dashboard.monthlyPatients.yValues,
+                                  ),
                           ),
                         ]),
                       ),
@@ -374,80 +459,15 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildMetricsGrid(
-      BuildContext context,
-      DoctorDashboardLoaded state,
-      Color primaryColor,
-      bool isTab,
-      ) {
-    final List<Widget> metricCards = [
-      DocMetricCard(
-        title: 'Today',
-        value: '${state.todaysAppointments.length}',
-        subtext: '0 completed',
-        icon: Icons.calendar_today_outlined,
-        iconColor: primaryColor,
-        isTab: isTab,
-      ),
-      DocMetricCard(
-        title: 'Patients',
-        value: '4',
-        subtext: '0 new this week',
-        icon: Icons.person_outline_rounded,
-        iconColor: primaryColor,
-        isTab: isTab,
-      ),
-      DocMetricCard(
-        title: 'Done',
-        value: '0',
-        subtext: '0 follow-ups',
-        icon: Icons.check_circle_outline_rounded,
-        iconColor: Colors.teal,
-        isTab: isTab,
-      ),
-      DocMetricCard(
-        title: 'Stats',
-        value: '0',
-        subtext: '0 new patients',
-        icon: Icons.analytics_outlined,
-        iconColor: primaryColor,
-        isTab: isTab,
-      ),
-    ];
-    if (isTab) {
-      return Row(
-        children: List.generate(metricCards.length, (index) {
-          final bool isLast = index == metricCards.length - 1;
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: isLast ? 0.0 : fieldSpace),
-              child: metricCards[index],
-            ),
-          );
-        }),
-      );
-    }
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: fieldSpace,
-      crossAxisSpacing: fieldSpace,
-      childAspectRatio: 1.5,
-      children: metricCards,
-    );
-  }
-
   Widget _buildEmptyState(BuildContext context, String message) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12.0),
-      padding: const EdgeInsets.all(24.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? const Color(0xFF1E293B).withOpacity(0.2)
             : Colors.grey[50],
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       child: Center(
         child: Text(
@@ -463,241 +483,42 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeCard(
-      BuildContext context,
-      bool isDark,
-      Color primaryColor,
-      bool isTab,
-      ) {
-    final textWidth = displayWidth(context);
+  // Beautiful placeholder fallback specifically tailored for empty charts inside DashboardChartCard
+  Widget _buildInlineChartEmptyState(BuildContext context, String explanation) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.0),
-        color: isDark
-            ? darkModeCardColor
-            : const Color(0xFFd8eaff).withOpacity(0.4),
-        border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+      height: _calculateResponsiveChartHeight(context),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bar_chart_rounded,
+            size: 36,
+            color: Colors.grey.withOpacity(0.4),
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WELCOME BACK',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? textWidth * 0.014 : textWidth * 0.028,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColor,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    'Dr. Rajesh Nagalingam',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? textWidth * 0.018 : textWidth * 0.044,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  Text(
-                    'Dentist',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? textWidth * 0.015 : textWidth * 0.034,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.grey[400] : Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 4.0),
-                      Expanded(
-                        child: Text(
-                          'Ocimum dental clinic, Journalist colony, Hyd 500034',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab
-                                ? textWidth * 0.015
-                                : textWidth * 0.03,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.grey[800]!.withOpacity(0.4)
-                    : primaryColor.withOpacity(0.06),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.wb_sunny_outlined,
-                color: Colors.amberAccent,
-                size: 20,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(
-      BuildContext context,
-      String title,
-      String actionText,
-      bool isDark,
-      Color primaryColor,
-      VoidCallback onTap,
-      bool isTab,
-      ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab
-                ? displayWidth(context) * 0.02
-                : displayWidth(context) * 0.038,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
-            letterSpacing: -0.3,
-          ),
-        ),
-        TextButton(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          onPressed: onTap,
-          child: Text(
-            actionText,
+          const SizedBox(height: 6.0),
+          Text(
+            explanation,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: isTab
-                  ? displayWidth(context) * 0.018
-                  : displayWidth(context) * 0.032,
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
+              fontSize: displayWidth(context) * 0.03,
+              color: Colors.grey[400],
+              fontWeight: FontWeight.w500,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChartCard(
-      BuildContext context,
-      String title,
-      String badgeText,
-      bool isDark,
-      Widget chartContent,
-      bool isTab,
-      ) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.1)
-                : Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: isTab
-                      ? displayWidth(context) * 0.02
-                      : displayWidth(context) * 0.036,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.grey[800]!.withOpacity(0.5)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab
-                        ? displayWidth(context) * 0.014
-                        : displayWidth(context) * 0.026,
-                    color: isDark ? Colors.grey[400] : const Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20.0),
-          chartContent,
         ],
       ),
     );
   }
 
   Widget _buildWeeklyChartBarList(
-      BuildContext context,
-      Color primaryColor,
-      double height,
-      ) {
+    BuildContext context,
+    Color primaryColor,
+    double height,
+    List<String> labels,
+    List<double> values,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulWeeklyPalette = [
       primaryColor,
@@ -708,11 +529,15 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       isDark ? const Color(0xFF14B8A6) : const Color(0xFF0F766E),
       isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
     ];
+    final double highestValue = values.isEmpty
+        ? 10.0
+        : values.reduce((a, b) => a > b ? a : b);
+    final double computedMaxY = highestValue == 0 ? 12.0 : highestValue * 1.25;
+
     return CustomBarChart(
-      values: const [6, 11, 1, 4, 9, 5, 2],
-      labels: const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-      maxY: 12,
-      barWidth: 14,
+      values: values,
+      labels: labels,
+      maxY: computedMaxY,
       chartHeight: height,
       barColors: beautifulWeeklyPalette,
       fontFamily: appPoppinFont,
@@ -722,38 +547,32 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildMonthlyChartBarList(
-      BuildContext context,
-      Color primaryColor,
-      double height,
-      ) {
+    BuildContext context,
+    Color primaryColor,
+    double height,
+    List<String> labels,
+    List<double> values,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulMonthlyColors = List.generate(12, (index) {
       final double progress = index / 11;
-      final Color endAccent = isDark
-          ? const Color(0xFF2DD4BF)
-          : const Color(0xFF0F766E);
-      return Color.lerp(primaryColor, endAccent, progress)!;
+      return Color.lerp(
+        primaryColor,
+        isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
+        progress,
+      )!;
     });
+    final double highestValue = values.isEmpty
+        ? 50.0
+        : values.reduce((a, b) => a > b ? a : b);
+    final double computedMaxY = highestValue == 0 ? 40.0 : highestValue * 1.30;
+
     return CustomBarChart(
       isTab: isTablet(context),
       monthly: true,
-      values: const [35, 48, 55, 68, 15, 22, 44, 62, 52, 30, 38, 18],
-      labels: const [
-        'JAN',
-        'FEB',
-        'MAR',
-        'APR',
-        'MAY',
-        'JUN',
-        'JUL',
-        'AUG',
-        'SEP',
-        'OCT',
-        'NOV',
-        'DEC',
-      ],
-      maxY: 75,
-      barWidth: 8,
+      values: values,
+      labels: labels,
+      maxY: computedMaxY,
       chartHeight: height,
       barColors: beautifulMonthlyColors,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),

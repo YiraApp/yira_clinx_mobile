@@ -204,8 +204,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                           ),
                                         ),
                                         Text(
-                                          widget.sendOtpEntity.data?.contact ??
-                                              '+91- 9999999999',
+                                          '${context.read<LoginBloc>().currentCountryCode}-${widget.sendOtpEntity.data?.contact}',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
@@ -355,7 +354,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                             height: 40,
                                             child: Center(
                                               child:
-                                                  CircularProgressIndicator(),
+                                                  CircularProgressIndicator.adaptive(),
                                             ),
                                           ),
                                         )
@@ -429,7 +428,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                             height: 50,
                                             child: Center(
                                               child:
-                                                  CircularProgressIndicator(),
+                                                  CircularProgressIndicator.adaptive(),
                                             ),
                                           ),
                                         )

@@ -23,11 +23,13 @@ class AppNavigationDrawer extends StatelessWidget {
     Navigator.pop(context);
 
     if (ModalRoute.of(context)?.settings.name != routeName) {
-      Navigator.pushNamedAndRemoveUntil(
+      Navigator.pushNamed(context, routeName,
+       );
+      /*Navigator.pushNamedAndRemoveUntil(
         context,
         routeName,
         (Route<dynamic> route) => false,
-      );
+      );*/
     }
   }
 
@@ -74,12 +76,14 @@ class AppNavigationDrawer extends StatelessWidget {
                     currentUser?.data?.roles ?? [],
                     true,
                   );
-                  Navigator.pushNamedAndRemoveUntil(
+                  Navigator.pushNamed(context, AppRoutes.selectRoleScreen,
+                    arguments: data,);
+                  /*Navigator.pushNamedAndRemoveUntil(
                     context,
                     AppRoutes.selectRoleScreen,
                     (route) => false,
                     arguments: data,
-                  );
+                  );*/
                   break;
                 case AppointmentsNavState():
                   _navigateToCleanRoot(

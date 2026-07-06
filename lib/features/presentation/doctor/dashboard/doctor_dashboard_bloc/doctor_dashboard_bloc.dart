@@ -1,6 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
+import 'package:yiraclinics/features/domain/entities/dashboard/doctor_dashboard_entity.dart';
+import 'package:yiraclinics/features/use_cases/doctor_dashboard_use_case.dart';
+import '../../../../../core/local/global_session.dart';
 import '../../../../domain/entities/appointments/appointment_entity.dart';
 
 part 'doctor_dashboard_event.dart';
@@ -8,57 +11,36 @@ part 'doctor_dashboard_state.dart';
 
 class DoctorDashboardBloc
     extends Bloc<DoctorDashboardEvent, DoctorDashboardState> {
-  DoctorDashboardBloc() : super(const DoctorDashboardInitial()) {
+  final DoctorDashboardUseCase doctorDashboardUseCase;
+  DoctorDashboardBloc({required this.doctorDashboardUseCase})
+    : super(const DoctorDashboardInitial()) {
     on<FetchDoctorDashboardData>((event, emit) async {
       try {
-
-
         emit(const DoctorDashboardLoading());
-        await Future.delayed(const Duration(milliseconds: 600));
-        final List<AppointmentEntity> mockToday = [
-          const AppointmentEntity(
-            id: '1',
-            patientName: 'Sarah Jenkins',
-            type: AppointmentType.videoCall,
-            reason: 'Follow-up Consultation',
-            appointmentTime: '09:30 AM',
-          ),
-          const AppointmentEntity(
-            id: '2',
-            patientName: 'Michael Chen',
-            type: AppointmentType.inClinic,
-            reason: 'Annual Health Checkup',
-            appointmentTime: '10:15 AM',
-          ),
-        ];
-
-        final List<AppointmentEntity> mockRecent = [
-          const AppointmentEntity(
-            id: '101',
-            patientName: 'Mani Jay',
-            type: AppointmentType.inClinic,
-            diagnosis: 'Acute Migraine headaches',
-            appointmentDate: '19/5/2026',
-          ),
-          const AppointmentEntity(
-            id: '102',
-            patientName: 'Anil Kumar',
-            type: AppointmentType.inClinic,
-            diagnosis: 'Common Cold & Nasal Congestion',
-            appointmentDate: '18/5/2026',
-          ),
-        ];
-        emit(
-          DoctorDashboardLoaded(
-            todaysAppointments: mockToday,
-            recentPatients: mockRecent,
-          ),
+        final currentUser = GlobalSession.instance.userNotifier.value;
+        var params = UpdateLatestDetailsRequest(
+          userId: currentUser?.data?.id ?? '',
+          latestRoleId: currentUser?.data?.latestRoleId ?? '',
+          latestOrgId: currentUser?.data?.latestOrgId ?? 0,
+          latestHospitalId: currentUser?.data?.latestHospitalId ?? 0,
         );
+        var dashBoardData = await doctorDashboardUseCase.call(params);
+        if (dashBoardData != null &&
+            dashBoardData.status == true &&
+            dashBoardData.data != null) {
+          emit(DoctorDashboardSuccessState(dashboardEntity: dashBoardData));
+        } else {
+          emit(
+            DoctorDashboardError(
+              message:
+                  dashBoardData?.message ?? "Failed to load dashboard data.",
+            ),
+          );
+        }
       } catch (e) {
         emit(DoctorDashboardError(message: e.toString()));
       }
     });
-
     on<ViewCalendarEvent>((event, emit) {
       final cachedState = state;
       emit(DoctorAppointmentsNav());

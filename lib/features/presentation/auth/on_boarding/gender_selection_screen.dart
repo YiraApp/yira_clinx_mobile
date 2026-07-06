@@ -338,7 +338,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 10, 24, MediaQuery.of(context).padding.bottom + 10),
       child: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator.adaptive())
           : CustomElevatedButton(
         noElevation: true,
         height: 58,

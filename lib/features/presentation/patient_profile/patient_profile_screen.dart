@@ -60,11 +60,11 @@ final bool isTab = isTablet(context);
             context.read<PatientProfileBloc>().add(
               const LoadPatientProfile('3456'),
             );
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
 
           if (state is PatientProfileLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
           if (state is PatientProfileError) {
             return Center(
@@ -105,7 +105,7 @@ final bool isTab = isTablet(context);
             );
           }
 
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator.adaptive());
         },
       ),
     );

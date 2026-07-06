@@ -19,7 +19,8 @@ class GetWorkSpaceDetailsImpl extends GetWorkSpaceDetailsRepo {
   Future<GetWorkSpaceDetailsEntity?> getWorkSpaceDetails({
     required String userId,
     required String roleId,
-  }) async {
+  })
+  async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';

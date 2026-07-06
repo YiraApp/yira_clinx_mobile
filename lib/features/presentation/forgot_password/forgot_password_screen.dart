@@ -477,7 +477,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 ? SizedBox(
                     height: 50,
                     width: displayWidth(context),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator.adaptive()),
                   )
                 : CustomElevatedButton(
                     noElevation: true,
@@ -571,7 +571,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 ? SizedBox(
                     height: 50,
                     width: displayWidth(context),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator.adaptive()),
                   )
                 : CustomElevatedButton(
                     noElevation: true,
@@ -720,7 +720,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     child: SizedBox(
                       height: 32,
                       width: 32,
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: CircularProgressIndicator.adaptive()),
                     ),
                   )
                 : isButtonActive
@@ -776,7 +776,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               ? SizedBox(
                   height: 50,
                   width: displayWidth(context),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CircularProgressIndicator.adaptive()),
                 )
               : CustomElevatedButton(
                   noElevation: true,
@@ -1047,7 +1047,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 ? SizedBox(
               height: 50,
               width: displayWidth(context),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: CircularProgressIndicator.adaptive()),
             )
                 : CustomElevatedButton(
               noElevation: true,

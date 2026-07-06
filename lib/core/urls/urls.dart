@@ -17,4 +17,9 @@ class URLs {
   static const forgetSendOtpURl = "/v1/api/auth/forgot_password";
   static const forgetVerifyOtpURl = "/v1/api/auth/verify_otp";
   static const saveResetPasswordURl = "/v1/api/auth/change_password";
+
+  /*Dashboard*/
+  static const doctorDashBoardUrl = "/v1/api/doctor_dashboard";
+
+
 }

@@ -32,7 +32,10 @@ class CustomBarChart extends StatelessWidget {
     this.xAxisDividerColor,
     this.monthly = false,
     required this.isTab,
-  }) : assert(values.length == labels.length, 'Values and labels must have the same length');
+  }) : assert(
+         values.length == labels.length,
+         'Values and labels must have the same length',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -43,30 +46,44 @@ class CustomBarChart extends StatelessWidget {
     final effectiveDividerColor = xAxisDividerColor ?? theme.dividerColor;
 
     final tooltipBgColor = isDark ? theme.cardColor : Colors.grey[900]!;
-    final tooltipTextColor = isDark ? theme.textTheme.bodyLarge?.color : Colors.white;
+    final tooltipTextColor = isDark
+        ? theme.textTheme.bodyLarge?.color
+        : Colors.white;
 
     final tooltipTextStyle = TextStyle(
       fontFamily: fontFamily,
-      fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.024,
+      fontSize: isTab
+          ? displayWidth(context) * 0.014
+          : displayWidth(context) * 0.024,
       fontWeight: FontWeight.w600,
       color: tooltipTextColor,
     );
 
     final xAxisTextStyle = TextStyle(
       fontFamily: fontFamily,
-      fontSize: isTab ? displayWidth(context) * 0.012 : displayWidth(context) * 0.020,
+      fontSize: isTab
+          ? displayWidth(context) * 0.012
+          : displayWidth(context) *
+                0.022, // Slightly increased size for visibility
       color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+      fontWeight: FontWeight.w500,
     );
     final dataLabelTextStyle = TextStyle(
       fontFamily: fontFamily,
-      fontSize: isTab ? displayWidth(context) * 0.011 : displayWidth(context) * 0.025,
+      fontSize: isTab
+          ? displayWidth(context) * 0.011
+          : displayWidth(context) * 0.025,
       fontWeight: FontWeight.bold,
       color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
     );
 
     final List<_ChartDataPoint> chartData = List.generate(
       values.length,
-          (index) => _ChartDataPoint(xLabel: labels[index], yValue: values[index], index: index),
+      (index) => _ChartDataPoint(
+        xLabel: labels[index],
+        yValue: values[index],
+        index: index,
+      ),
     );
 
     final tooltipBehavior = TooltipBehavior(
@@ -85,8 +102,10 @@ class CustomBarChart extends StatelessWidget {
         margin: EdgeInsets.only(
           left: isTab ? 12.0 : 8.0,
           right: isTab ? 12.0 : 8.0,
-          bottom: 4.0,
-          top: 16.0,
+          bottom: isTab
+              ? 12.0
+              : 22.0,
+          top: 10.0,
         ),
         plotAreaBorderWidth: 0,
         tooltipBehavior: tooltipBehavior,
@@ -94,7 +113,8 @@ class CustomBarChart extends StatelessWidget {
         primaryXAxis: CategoryAxis(
           labelStyle: xAxisTextStyle,
           interval: 1,
-          edgeLabelPlacement: EdgeLabelPlacement.shift,
+          edgeLabelPlacement: EdgeLabelPlacement
+              .none,
           axisLine: AxisLine(
             width: showXAxisDivider ? 1.0 : 0.0,
             color: effectiveDividerColor,
@@ -120,16 +140,21 @@ class CustomBarChart extends StatelessWidget {
 
         series: monthly
             ? _buildSplineSeries(chartData, primaryColor, dataLabelTextStyle)
-            : _buildColumnSeries(chartData, primaryColor, isDark, dataLabelTextStyle),
+            : _buildColumnSeries(
+                chartData,
+                primaryColor,
+                isDark,
+                dataLabelTextStyle,
+              ),
       ),
     );
   }
 
   List<CartesianSeries<_ChartDataPoint, String>> _buildSplineSeries(
-      List<_ChartDataPoint> data,
-      Color primaryColor,
-      TextStyle dataLabelTextStyle,
-      ) {
+    List<_ChartDataPoint> data,
+    Color primaryColor,
+    TextStyle dataLabelTextStyle,
+  ) {
     final lineColor = barColors?.first ?? primaryColor;
 
     return [
@@ -168,30 +193,36 @@ class CustomBarChart extends StatelessWidget {
   }
 
   List<CartesianSeries<_ChartDataPoint, String>> _buildColumnSeries(
-      List<_ChartDataPoint> data,
-      Color primaryColor,
-      bool isDark,
-      TextStyle dataLabelTextStyle,
-      ) {
-    final effectiveRadius = borderRadius ?? const BorderRadius.vertical(top: Radius.circular(8.0));
+    List<_ChartDataPoint> data,
+    Color primaryColor,
+    bool isDark,
+    TextStyle dataLabelTextStyle,
+  ) {
+    final effectiveRadius =
+        borderRadius ?? const BorderRadius.vertical(top: Radius.circular(8.0));
+
+    final double calculatedRelativeWidth = monthly
+        ? (isTab ? 0.4 : 0.75)
+        : (isTab ? 0.3 : 0.35);
 
     return [
       ColumnSeries<_ChartDataPoint, String>(
         dataSource: data,
         xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
         yValueMapper: (_ChartDataPoint point, _) => point.yValue,
-        width: barWidth > 1 ? (barWidth / 50).clamp(0.1, 1.0) : barWidth,
+        width: calculatedRelativeWidth,
+        spacing: 0.1,
         borderRadius: effectiveRadius,
         animationDuration: 400,
         enableTooltip: true,
-        dataLabelSettings: const DataLabelSettings(
-          isVisible: false,
-        ),
+        dataLabelSettings: const DataLabelSettings(isVisible: false),
         pointColorMapper: (_ChartDataPoint point, _) {
           if (barColors != null && point.index < barColors!.length) {
             return barColors![point.index];
           } else {
-            final double opacity = (point.index % 2 == 0) ? 1.0 : (isDark ? 0.45 : 0.6);
+            final double opacity = (point.index % 2 == 0)
+                ? 1.0
+                : (isDark ? 0.45 : 0.6);
             return primaryColor.withOpacity(opacity);
           }
         },
@@ -205,5 +236,9 @@ class _ChartDataPoint {
   final double yValue;
   final int index;
 
-  _ChartDataPoint({required this.xLabel, required this.yValue, required this.index});
+  _ChartDataPoint({
+    required this.xLabel,
+    required this.yValue,
+    required this.index,
+  });
 }

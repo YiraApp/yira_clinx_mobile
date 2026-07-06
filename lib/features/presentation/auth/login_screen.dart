@@ -488,7 +488,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 30),
             state is SendOtpLoading
-                ? Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator.adaptive())
                 : CustomElevatedButton(
                     noElevation: true,
                     height: 50,
@@ -615,7 +615,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: .end,
               children: [
                 state is LoginLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator.adaptive())
                     : CustomElevatedButton(
                         noElevation: true,
                         height: 50,

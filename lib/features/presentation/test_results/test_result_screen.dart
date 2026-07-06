@@ -28,7 +28,7 @@ class TestResultsScreen extends StatelessWidget {
         body: BlocConsumer<TestResultsBloc, TestResultsState>(
           builder: (context, state) {
             if (state is TestResultsLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
             if (state is TestResultsLoaded) return _buildUI(context, state);
             return const SizedBox();

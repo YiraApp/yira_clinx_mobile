@@ -37,7 +37,14 @@ class DoctorDashboardError extends DoctorDashboardState {
   @override
   List<Object?> get props => [message];
 }
+class DoctorDashboardSuccessState extends DoctorDashboardState {
+  final DoctorDashboardEntity dashboardEntity;
 
+  const DoctorDashboardSuccessState({required this.dashboardEntity});
+
+  @override
+  List<Object?> get props => [dashboardEntity];
+}
 class DoctorAppointmentsNav extends DoctorDashboardState {
   @override
   List<Object?> get props => [];

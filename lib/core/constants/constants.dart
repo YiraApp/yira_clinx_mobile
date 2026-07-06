@@ -29,3 +29,8 @@ const appInterFont = "Inter";
 const socket_exception=001;
 const global_exception=002;
 const no_internet=003;
+
+/*local db keys*/
+
+const dbName = 'yira_clinics_universal_cache.db';
+const doctorDashboardKey = 'getDoctorDashboardDetails';

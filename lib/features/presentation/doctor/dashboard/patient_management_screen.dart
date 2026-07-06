@@ -25,6 +25,7 @@ final bool isTab = isTablet(context);
         child: Scaffold(
           appBar: CommonAppBar(
             actions: [],
+            onBackPressed: ()=>Navigator.pop(context),
           ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
@@ -45,7 +46,7 @@ final bool isTab = isTablet(context);
               },
               builder: (context, state) {
                 if (state.status == DashboardStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator.adaptive());
                 }
                 if (state.status == DashboardStatus.success &&
                     state.patients.isEmpty) {

@@ -61,7 +61,7 @@ class WeightScaleScreen extends StatelessWidget {
               ],
             ),
             child: state.isLoading
-                ? const SizedBox(height: 50, child: Center(child: CircularProgressIndicator()))
+                ? const SizedBox(height: 50, child: Center(child: CircularProgressIndicator.adaptive()))
                 : CustomElevatedButton(
               noElevation: true,
               height: 55,
