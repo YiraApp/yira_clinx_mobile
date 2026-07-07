@@ -95,7 +95,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                           if (role == "2") {
                             Navigator.pushNamedAndRemoveUntil(
                               context,
-                              AppRoutes.docDashboard,
+                              AppRoutes.doctorDashboard,
                               (route) => false,
                             );
                           } else if (role == "1") {

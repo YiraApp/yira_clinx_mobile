@@ -20,6 +20,8 @@ class URLs {
 
   /*Dashboard*/
   static const doctorDashBoardUrl = "/v1/api/doctor_dashboard";
+  /*Side menu*/
+  static const sideMenuUrl = "/v1/api/side_menu";
 
 
 }

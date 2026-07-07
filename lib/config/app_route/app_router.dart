@@ -126,14 +126,14 @@ class AppRouter {
             child: PatientManagementScreen(),
           ),
         );
-      case AppRoutes.prescriptionScreen:
+      case AppRoutes.userPrescriptionManagement:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionManagementScreen(),
           ),
         );
-      case AppRoutes.prescriptionDetailScreen:
+      case AppRoutes.userPrescriptionDetailScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
@@ -161,7 +161,7 @@ class AppRouter {
             child: NotificationSettingsScreen(),
           ),
         );
-      case AppRoutes.testResultScreen:
+      case AppRoutes.userTestResultScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<TestResultsBloc>(),
@@ -198,7 +198,7 @@ class AppRouter {
             child: WorkspaceScreen(roleEntity: workSpaceModel,),
           ),
         );
-      case AppRoutes.docDashboard:
+      case AppRoutes.doctorDashboard:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<NavigationDrawerBloc>(),
@@ -263,7 +263,7 @@ class AppRouter {
           ),
         );
 
-      case AppRoutes.patientAppointmentListScreen:
+      case AppRoutes.doctorPatientAppointmentListScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),

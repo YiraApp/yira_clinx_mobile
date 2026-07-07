@@ -63,7 +63,7 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
               final navigationId = payload?.navigationId;
               final navigationRoutes = const {
                 '1': AppRoutes.dashboardPatientDetails,
-                '2': AppRoutes.docDashboard,
+                '2': AppRoutes.doctorDashboard,
               };
 
               final coreRoute = navigationRoutes[navigationId];

@@ -77,7 +77,7 @@ class SoftUpdateView extends StatelessWidget {
                               final navigationId = payload?.navigationId;
                               final navigationRoutes = const {
                                 '1': AppRoutes.dashboardPatientDetails,
-                                '2': AppRoutes.docDashboard,
+                                '2': AppRoutes.doctorDashboard,
                               };
                               final coreRoute = navigationRoutes[navigationId];
                               if (coreRoute != null) {
@@ -157,7 +157,7 @@ class SoftUpdateView extends StatelessWidget {
                             final navigationId = payload?.navigationId;
                             final navigationRoutes = const {
                               '1': AppRoutes.dashboardPatientDetails,
-                              '2': AppRoutes.docDashboard,
+                              '2': AppRoutes.doctorDashboard,
                             };
                             final coreRoute = navigationRoutes[navigationId];
                             if (coreRoute != null) {

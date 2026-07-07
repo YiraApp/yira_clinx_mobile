@@ -23,6 +23,7 @@ import 'package:yiraclinics/features/data/repository_impl/medicine/medical_histo
 import 'package:yiraclinics/features/data/repository_impl/patient_profile_repo_impl/patient_profile_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/prescriptions/prescriptions_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/send_otp_repo/send_otp_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/side_menu/side_menu_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_impl/slot_scheduler_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/slot_repo_impl/slot_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/token/get_version_and_token_status_repo_impl.dart';
@@ -44,6 +45,7 @@ import 'package:yiraclinics/features/domain/repositories/medicine/medical_histor
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/prescritpions/prescriptions_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/send_otp/send_otp_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/side_menu/side_menu_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/scheduler_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/slot/slot_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/token/get_version_and_token_status_repo.dart';
@@ -93,6 +95,7 @@ import 'package:yiraclinics/features/presentation/user_prescription/prescription
 as user_presc;
 import 'package:yiraclinics/features/use_cases/save_reset_password_use_case.dart';
 import 'package:yiraclinics/features/use_cases/send_otp_use_case.dart';
+import 'package:yiraclinics/features/use_cases/side_menu_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
@@ -215,7 +218,13 @@ Future<void> init() async {
       sl<LocalCacheDataSource>(),
     ),
   );
+  sl.registerLazySingleton<SideMenuRepo>(
+        () => SideMenuRepoImpl(
+      sl<ApiClient>(),
+      sl<LocalCacheDataSource>()
 
+    ),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
@@ -283,6 +292,11 @@ Future<void> init() async {
       sl<DoctorDashboardRepo>(),
     ),
   );
+  sl.registerLazySingleton<SideMenuUseCase>(
+        () => SideMenuUseCase(
+      sl<SideMenuRepo>(),
+    ),
+  );
 
   // ==========================================
   // 3. Blocs / Cubits
@@ -316,7 +330,7 @@ Future<void> init() async {
   sl.registerLazySingleton(
         () => ConfigBloc(
       configUseCase: sl<ConfigUseCase>(),
-      getVersionAndTokenStatusUseCase: sl<GetVersionAndTokenStatusUseCase>(),
+      getVersionAndTokenStatusUseCase: sl<GetVersionAndTokenStatusUseCase>(), sideMenuUseCase: sl<SideMenuUseCase>(),
     ),
   );
   sl.registerLazySingleton(() => DashboardBloc());
