@@ -43,6 +43,10 @@ class NavigateToVerifyOtp extends LogInState {
 }
 class NavigateToSelectRole extends LogInState {}
 class NavigateToSelectRoleSignUp extends LogInState {}
+class NavTellAboutYourSelfSignUpState extends LogInState {
+  const NavTellAboutYourSelfSignUpState();
+}
+
 class NavigateToSelectRoleVerifyOtp extends LogInState {}
 class NavigateToSelectWorkSpace extends LogInState {}
 class NavForgotPasswordState extends LogInState {

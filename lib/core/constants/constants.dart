@@ -8,7 +8,7 @@ const fieldBorderRadius = 12.0;
 const textFieldBorderRadius = 8.0;
 const inputFieldBorderRadius = 16.0;
 const buttonHeight = 45.0;
-const reSendOtpDuration = 60;
+const reSendOtpDuration = 30;
 
 
 // ************ project title *************

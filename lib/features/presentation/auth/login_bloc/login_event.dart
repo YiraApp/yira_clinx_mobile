@@ -46,6 +46,11 @@ class NavSelectRoleSignUp extends LogInEvent {
   const NavSelectRoleSignUp();
 }
 
+
+class NavTellAboutYourSelfSignUp extends LogInEvent {
+  const NavTellAboutYourSelfSignUp();
+}
+
 class _OnTimerTick extends LogInEvent {
   final int secondsRemaining;
 

@@ -1,5 +1,4 @@
 import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -35,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _sharedPrefsService = sl<SharedPrefsService>();
     context.read<AuthBloc>().add(AppStarted());
-    _startTimer();
+     _startTimer();
   }
 
   void _startTimer() async {

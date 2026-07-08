@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +13,7 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../core/common_drop_down/common_drop_down.dart';
 import '../../../core/utils/dismiss_key_board.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -36,7 +39,7 @@ class SignupScreen extends StatelessWidget {
     final bool isTab = isTablet(context);
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final double screenWidth = displayWidth(context);
-
+    final String? profileImagePath = null;
     return GestureDetector(
       onTap: () => context.dismissKeyboard(),
       child: Scaffold(
@@ -76,18 +79,18 @@ class SignupScreen extends StatelessWidget {
                               (route) => false,
                             ),
                           }
-                        else if (state is NavigateToSelectRoleSignUp)
+                        else if (state is NavTellAboutYourSelfSignUpState)
                           {
                             Navigator.pushNamed(
                               context,
-                              AppRoutes.selectRoleScreen,
+                              AppRoutes.genderSelection,
                             ),
                           },
                       },
                       builder: (context, state) {
                         return Column(
                           children: [
-                            ClipRRect(
+                            /*ClipRRect(
                               borderRadius: BorderRadius.circular(12.0),
                               child: SvgPicture.asset(
                                 'assets/images/svgs/ic_apps_logo.svg',
@@ -95,8 +98,7 @@ class SignupScreen extends StatelessWidget {
                                 height: isTab ? 65 : 60,
                               ),
                             ),
-                            const SizedBox(height: 10),
-
+                            const SizedBox(height: 10),*/
                             CommonText(
                               'Create Account',
                               style: TextStyle(
@@ -128,6 +130,80 @@ class SignupScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Center(
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor.withOpacity(0.2),
+                                              width: 3,
+                                            ),
+                                          ),
+                                          child: CircleAvatar(
+                                            radius: isTab ? 55 : 48,
+                                            backgroundColor: isDarkMode
+                                                ? Colors.white.withOpacity(0.05)
+                                                : Colors.grey.shade100,
+                                            backgroundImage:
+                                                profileImagePath != null
+                                                ? FileImage(
+                                                    File(profileImagePath),
+                                                  )
+                                                : null,
+                                            child: profileImagePath == null
+                                                ? Icon(
+                                                    Icons
+                                                        .person_outline_rounded,
+                                                    size: isTab ? 48 : 42,
+                                                    color: isDarkMode
+                                                        ? Colors.white54
+                                                        : Colors.grey.shade400,
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 4,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              // TODO: Fire picker event to your LoginBloc / Image Service
+                                            },
+                                            child: Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(
+                                                  context,
+                                                ).primaryColor,
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withOpacity(0.15),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Icon(
+                                                profileImagePath == null
+                                                    ? Icons.camera_alt_rounded
+                                                    : Icons.edit_rounded,
+                                                size: isTab ? 20 : 16,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 15),
                                   CommonText(
                                     'First Name *',
                                     style: TextStyle(
@@ -141,7 +217,7 @@ class SignupScreen extends StatelessWidget {
                                   const SizedBox(height: titleSpace),
                                   CommonInputAddRecordTextField(
                                     suffixIcon: null,
-                                    borderRadius:  fieldBorderRadius,
+                                    borderRadius: fieldBorderRadius,
                                     hintText: "Enter First Name",
                                     controller: firstNameController,
                                     focusNode: firstNameFocus,
@@ -163,7 +239,7 @@ class SignupScreen extends StatelessWidget {
                                   const SizedBox(height: titleSpace),
                                   CommonInputAddRecordTextField(
                                     suffixIcon: null,
-                                    borderRadius:  fieldBorderRadius,
+                                    borderRadius: fieldBorderRadius,
                                     hintText: "Enter Last Name",
                                     controller: lastNameController,
                                     focusNode: lastNameFocus,
@@ -185,7 +261,7 @@ class SignupScreen extends StatelessWidget {
                                   const SizedBox(height: titleSpace),
                                   CommonInputAddRecordTextField(
                                     suffixIcon: null,
-                                    borderRadius:  fieldBorderRadius,
+                                    borderRadius: fieldBorderRadius,
                                     hintText: "Enter Email",
                                     controller: emailController,
                                     focusNode: emailFocus,
@@ -270,7 +346,7 @@ class SignupScreen extends StatelessWidget {
                                         onChanged: (country) {},
                                       ),
                                     ),
-                                    borderRadius:  fieldBorderRadius,
+                                    borderRadius: fieldBorderRadius,
                                     hintText: "Mobile number",
                                     controller: mobileNumberController,
                                     validator: (value) {
@@ -304,34 +380,12 @@ class SignupScreen extends StatelessWidget {
                                   const SizedBox(height: titleSpace),
                                   CommonInputAddRecordTextField(
                                     suffixIcon: null,
-                                    borderRadius:  fieldBorderRadius,
+                                    borderRadius: fieldBorderRadius,
                                     hintText: "Enter Password",
                                     controller: passwordController,
                                     focusNode: passwordFocus,
                                     requestFocusNode: confirmPasswordFocus,
                                     textInputAction: TextInputAction.next,
-                                  ),
-                                  const SizedBox(height: fieldSpace),
-
-                                  CommonText(
-                                    'Confirm Password *',
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize:
-                                          referenceWidth *
-                                          (isTab ? 0.026 : 0.032),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: titleSpace),
-                                  CommonInputAddRecordTextField(
-                                    suffixIcon: null,
-                                    borderRadius:  fieldBorderRadius,
-                                    hintText: "Enter Confirm Password",
-                                    controller: confirmPasswordController,
-                                    focusNode: confirmPasswordFocus,
-                                    requestFocusNode: null,
-                                    textInputAction: TextInputAction.done,
                                   ),
 
                                   const SizedBox(height: 40),
@@ -344,7 +398,7 @@ class SignupScreen extends StatelessWidget {
                                     onPressed: () {
                                       context.dismissKeyboard();
                                       context.read<LoginBloc>().add(
-                                        NavSelectRoleSignUp(),
+                                        NavTellAboutYourSelfSignUp(),
                                       );
                                     },
                                   ),

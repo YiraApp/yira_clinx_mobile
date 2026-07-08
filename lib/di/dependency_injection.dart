@@ -53,6 +53,7 @@ import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploade
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/get_work_space_details_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/update_latest_org_details_repo.dart';
+import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
@@ -343,6 +344,7 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => AppointmentBloc());
+  sl.registerFactory(() => PermissionsBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton<NavigationDrawerBloc>(
         () => NavigationDrawerBloc(sl<SecureStorageService>()),

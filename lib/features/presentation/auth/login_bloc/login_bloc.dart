@@ -27,6 +27,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   Timer? _timer;
   static const int _countdownDuration = reSendOtpDuration;
   String currentCountryCode = "+91";
+  String bloodGroup = '';
+  String relationType = '';
   LoginBloc({
     required this.loginMobileUseCase,
     required this.loginEmailUseCase,
@@ -49,6 +51,10 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     on<NavForgotPasswordEvent>((event, emit) => emit(NavForgotPasswordState()));
     on<NavSelectRoleSignUp>(
       (event, emit) => emit(NavigateToSelectRoleSignUp()),
+    );
+
+    on<NavTellAboutYourSelfSignUp>(
+      (event, emit) => emit(NavTellAboutYourSelfSignUpState()),
     );
     on<NavSignIn>((event, emit) => emit(NavigateToSignIn()));
     on<NavSignUp>((event, emit) => emit(NavigateToSignup()));

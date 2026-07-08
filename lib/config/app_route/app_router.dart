@@ -32,6 +32,8 @@ import 'package:yiraclinics/features/presentation/medicine/medical_history_bloc/
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_screen.dart';
+import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
+import 'package:yiraclinics/features/presentation/permisions/permissions_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
@@ -352,6 +354,13 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<ForgotPasswordBloc>(),
             child: ForgotPasswordScreen(),
+          ),
+        );
+        case AppRoutes.permissionScreen:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<PermissionsBloc>(),
+            child: PermissionsScreen(),
           ),
         );
       case AppRoutes.forceUpdateScreen:

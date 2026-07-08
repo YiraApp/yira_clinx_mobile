@@ -52,4 +52,5 @@ class AppRoutes {
   static const String serverDown= '/serverDown';
   static const String unsupportedRole= '/unsupportedRole';
   static const String logOutScreen= '/logOutScreen';
+  static const String permissionScreen= '/permissionScreen';
 }
