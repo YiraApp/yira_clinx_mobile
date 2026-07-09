@@ -114,9 +114,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
                         isTab,
                         tabletPadding,
                       ),
-
                       const SizedBox(height: fieldSpace * 1.2),
-
                       _buildSubHeading(context, "Blood Group", referenceWidth, isTab),
                       const SizedBox(height: titleSpace),
                       CommonDropdown(
@@ -131,8 +129,6 @@ class GenderAgeSelectionScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: fieldSpace * 1.8),
-
-                      // ====== BEAUTIFIED SEPARATE EMERGENCY CONTACT CARD ======
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(22),

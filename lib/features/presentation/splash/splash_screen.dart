@@ -231,7 +231,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: Column(
                     children: [
                       if (!_timerFinished)
-                        CircularProgressIndicator(
+                        CircularProgressIndicator.adaptive(
                           strokeWidth: 3,
                           backgroundColor: isDarkMode
                               ? Colors.white.withOpacity(0.1)
@@ -319,7 +319,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: Column(
                     children: [
                       if (!_timerFinished)
-                        CircularProgressIndicator(
+                        CircularProgressIndicator.adaptive(
                           strokeWidth: 3,
                           backgroundColor: isDarkMode
                               ? Colors.white.withOpacity(0.1)

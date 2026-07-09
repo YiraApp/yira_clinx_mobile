@@ -28,7 +28,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final List<PatientEntity> mockData = [
         PatientEntity(id: "YRA0001", name: "Rajesh Kumar", condition: "Hypertension", lastVisit: "Jan 15", status: "Active", gender: "Male", visits: 8, age: 45, allergy: "Penicillin"),
         PatientEntity(id: "YRA0002", name: "Priya Sharma", condition: "Arrhythmia", lastVisit: "Jan 14", status: "Monitoring", gender: "Female", visits: 5, age: 38),
-        PatientEntity(id: "YRA0003", name: "Amit Patel", condition: "Post-surgery recovery", lastVisit: "Jan 13", status: "Recovering", gender: "Male", visits: 12, age: 52, allergy: "Aspirin"),
+        PatientEntity(id: "YRA0003", name: "Amit Patel", condition: "Post-surgery recovery", lastVisit: "Jan 13", status: "Recovering", gender: "Male", visits: 12, age: 52, allergy: "Aspirin"),        PatientEntity(id: "YRA0004", name: "Rajesh Kumar", condition: "Hypertension", lastVisit: "Jan 15", status: "Active", gender: "Male", visits: 8, age: 45, allergy: "Penicillin"),
+        PatientEntity(id: "YRA0005", name: "Priya Sharma", condition: "Arrhythmia", lastVisit: "Jan 14", status: "Monitoring", gender: "Female", visits: 5, age: 38),
+        PatientEntity(id: "YRA0006", name: "Amit Patel", condition: "Post-surgery recovery", lastVisit: "Jan 13", status: "Recovering", gender: "Male", visits: 12, age: 52, allergy: "Aspirin"),
       ];
 
       emit(state.copyWith(

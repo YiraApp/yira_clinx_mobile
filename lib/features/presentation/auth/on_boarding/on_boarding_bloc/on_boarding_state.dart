@@ -34,7 +34,7 @@ class OnBoardingState extends Equatable {
     this.selectedGender = "Male",
     this.selectedAge = 25,
     this.selectedDob,
-    this.selectedBloodGroup = 'Select Gender',
+    this.selectedBloodGroup = 'Select Blood Group',
     this.selectedEmergencyRelation = 'Select Relation Type',
     this.isLoading = false,
     this.errorMessage,

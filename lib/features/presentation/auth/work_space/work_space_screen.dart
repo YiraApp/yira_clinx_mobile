@@ -253,7 +253,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                 builder: (context, state) {
                                   if (state is WorkspaceLoading) {
                                     return Center(
-                                      child: CircularProgressIndicator(
+                                      child: CircularProgressIndicator.adaptive(
                                         strokeWidth: 2.5,
                                         valueColor: AlwaysStoppedAnimation<Color>(
                                           theme.primaryColor,

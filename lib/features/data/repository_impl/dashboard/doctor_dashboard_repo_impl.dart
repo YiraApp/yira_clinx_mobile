@@ -222,9 +222,10 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
       "latestOrgId": latestOrgId,
       "latestHospitalId": latestHospitalId,
     };
+    var endPoint = URLs.doctorDashBoardUrl;
     final String fullCacheKey = _generateDeterministicCacheKey(
       customPrefix: doctorDashboardKey,
-      baseUrl: URLs.doctorDashBoardUrl,
+      baseUrl: endPoint,
       params: requestBody,
     );
 
@@ -247,7 +248,7 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
       final String token = currentUser?.data?.accessToken ?? '';
 
       final response = await _apiClient.account.get(
-        URLs.doctorDashBoardUrl,
+        endPoint,
         data: requestBody,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},

@@ -138,7 +138,7 @@ class SignOutAlert {
                                         child: SizedBox(
                                           height: 24,
                                           width: 24,
-                                          child: CircularProgressIndicator(
+                                          child: CircularProgressIndicator.adaptive(
                                             strokeWidth: 2.5,
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(

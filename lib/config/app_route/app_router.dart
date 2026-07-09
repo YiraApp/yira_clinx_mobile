@@ -24,6 +24,7 @@ import 'package:yiraclinics/features/presentation/configure_screens/soft_update_
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
@@ -202,9 +203,16 @@ class AppRouter {
         );
       case AppRoutes.doctorDashboard:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: sl<NavigationDrawerBloc>(),
-            child: DoctorDashboardScreen(),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider<NavigationDrawerBloc>.value(
+                value: sl<NavigationDrawerBloc>(),
+              ),
+              BlocProvider<DoctorDashboardBloc>.value(
+                value: sl<DoctorDashboardBloc>(),
+              ),
+            ],
+            child: const DoctorDashboardScreen(),
           ),
         );
       case AppRoutes.settingsScreen:
@@ -345,7 +353,7 @@ class AppRouter {
       case AppRoutes.dashboardPatientDetails:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<DoctorDashboardBloc>(),
+            value: sl<PatientDetailsBloc>(),
             child: DashboardPatientDetailsScreen(),
           ),
         );

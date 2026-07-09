@@ -40,7 +40,7 @@ class DocAppointmentCard extends StatelessWidget {
     final secondaryText = isDark ? textLightDarkColor : scoreSubTextColor;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: fieldSpace),
+      margin: const EdgeInsets.only(bottom: titleSpace),
       padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
         color: containerBg,

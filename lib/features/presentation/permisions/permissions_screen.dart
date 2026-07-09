@@ -50,7 +50,7 @@ class PermissionsScreen extends StatelessWidget {
             builder: (context, state) {
               if (state is PermissionsLoading) {
                 return Center(
-                  child: CircularProgressIndicator(
+                  child: CircularProgressIndicator.adaptive(
                     valueColor: AlwaysStoppedAnimation<Color>(
                       theme.colorScheme.primary,
                     ),

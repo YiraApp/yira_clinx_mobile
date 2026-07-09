@@ -13,6 +13,7 @@ import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../di/dependency_injection.dart';
+import '../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
 import 'doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 
 import 'widgets/dashboard_section_header.dart';
@@ -123,21 +124,33 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           ),
           body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
             bloc: _dashboardBloc,
-            buildWhen: (previous, current) {
-              return current is! DoctorAppointmentsNav &&
-                  current is! PatientManagementNav &&
-                  current is! DocAndAppPatientDetailsNavState;
+           buildWhen: (previous, current) {
+              return current is DoctorDashboardSuccessState ||
+                  current is DoctorDashboardLoading ||
+                  current is DoctorDashboardError ||
+                  current is DoctorAppointmentsNav ||
+                  current is PatientManagementNav ||
+                  current is DocAndAppPatientDetailsNavState;
             },
-            listener: (context, state) {
+            listener: (context, state) async {
               if (state is DoctorAppointmentsNav) {
-                Navigator.pushNamed(
+                await Navigator.pushNamed(
                   context,
                   AppRoutes.appointmentDashboardScreen,
                 );
+                if (context.mounted) {
+                  _dashboardBloc.add(ClearNavigationTriggerEvent());
+                }
               } else if (state is PatientManagementNav) {
-                Navigator.pushNamed(context, AppRoutes.patientManagementScreen);
+                await Navigator.pushNamed(context, AppRoutes.patientManagementScreen);
+                if (context.mounted) {
+                  _dashboardBloc.add(ClearNavigationTriggerEvent());
+                }
               } else if (state is DocAndAppPatientDetailsNavState) {
-                Navigator.pushNamed(context, AppRoutes.dashboardPatientDetails);
+                await Navigator.pushNamed(context, AppRoutes.dashboardPatientDetails);
+                if (context.mounted) {
+                  _dashboardBloc.add(ClearNavigationTriggerEvent());
+                }
               }
             },
             builder: (context, state) {
@@ -170,7 +183,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize:
-                                displayWidth(context) *
+                            displayWidth(context) *
                                 (isTablet(context) ? 0.026 : 0.035),
                             fontWeight: FontWeight.w600,
                           ),
@@ -181,10 +194,20 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 );
               }
 
+              DoctorDashboardEntity? workingEntity;
               if (state is DoctorDashboardSuccessState) {
-                final dashboard = state.dashboardEntity.data;
+                workingEntity = state.dashboardEntity;
+              } else if (state is DocAndAppPatientDetailsNavState) {
+                workingEntity = state.dashboardEntity;
+              } else if (state is DoctorAppointmentsNav) {
+                workingEntity = state.dashboardEntity;
+              } else if (state is PatientManagementNav) {
+                workingEntity = state.dashboardEntity;
+              }
 
-                // NULL BOUNDARY: If entire dashboard payload block body is null, show global state error card instead of a runtime crash
+              if (workingEntity != null) {
+                final dashboard = workingEntity.data;
+
                 if (dashboard == null) {
                   return Center(
                     child: _buildEmptyState(
@@ -205,7 +228,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         delegate: SliverChildListDelegate([
                           const SizedBox(height: 8.0),
 
-                          // PROFILE HANDLING: Guarded with default fallback text markers inside your WelcomeCard wrapper
                           WelcomeCard(
                             name: dashboard.profile.name.isNotEmpty
                                 ? dashboard.profile.name
@@ -214,7 +236,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 ? dashboard.profile.specialty
                                 : "Medical Professional",
                             clinicAddress:
-                                dashboard.profile.clinicAddress.isNotEmpty
+                            dashboard.profile.clinicAddress.isNotEmpty
                                 ? dashboard.profile.clinicAddress
                                 : "Clinic Location N/A",
                             primaryColor: primaryColor,
@@ -224,7 +246,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           ),
                           const SizedBox(height: fieldSpace),
 
-                          // METRICS HANDLING: Fallbacks evaluated inside DashboardMetricsGrid implementation safely
                           DashboardMetricsGrid(
                             metrics: dashboard.metrics,
                             primaryColor: primaryColor,
@@ -248,7 +269,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                     ),
 
-                    // SCHEDULE EMPTY/NULL BOUNDARY
                     if (dashboard.todaysSchedule.isEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(
@@ -268,13 +288,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
+                              context,
+                              index,
+                              ) {
                             final appointment = dashboard.todaysSchedule[index];
                             final bool isVideo =
                                 appointment.statusTag.toUpperCase() ==
-                                'LIVE VIDEO';
+                                    'LIVE VIDEO';
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
@@ -284,7 +304,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                     ? appointment.patientName
                                     : 'Unknown Patient',
                                 subtitle:
-                                    appointment.consultationType.isNotEmpty
+                                appointment.consultationType.isNotEmpty
                                     ? appointment.consultationType
                                     : 'Consultation',
                                 description: appointment.reason.isNotEmpty
@@ -335,7 +355,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                     ),
 
-                    // RECENT PATIENTS EMPTY/NULL BOUNDARY
                     if (dashboard.recentPatients.isEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(
@@ -355,9 +374,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
+                              context,
+                              index,
+                              ) {
                             final recentLog = dashboard.recentPatients[index];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
@@ -399,51 +418,49 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          // WEEKLY CHART EMPTY BOUNDARY
                           DashboardChartCard(
                             title: "Weekly Appointments",
                             badgeText:
-                                "Avg: ${dashboard.weeklyAppointments.averagePerDay}/day",
+                            "Avg: ${dashboard.weeklyAppointments.averagePerDay}/day",
                             isDark: isDark,
                             isTab: isTabletDevice,
                             fontFamily: appPoppinFont,
                             chartContent:
-                                dashboard.weeklyAppointments.dailyData.isEmpty
+                            dashboard.weeklyAppointments.dailyData.isEmpty
                                 ? _buildInlineChartEmptyState(
-                                    context,
-                                    'No tracking data logged this week.',
-                                  )
+                              context,
+                              'No tracking data logged this week.',
+                            )
                                 : _buildWeeklyChartBarList(
-                                    context,
-                                    primaryColor,
-                                    chartHeight,
-                                    dashboard.weeklyAppointments.xLabels,
-                                    dashboard.weeklyAppointments.yValues,
-                                  ),
+                              context,
+                              primaryColor,
+                              chartHeight,
+                              dashboard.weeklyAppointments.xLabels,
+                              dashboard.weeklyAppointments.yValues,
+                            ),
                           ),
                           const SizedBox(height: fieldSpace),
 
-                          // MONTHLY CHART EMPTY BOUNDARY
                           DashboardChartCard(
                             title: "Monthly Patients",
                             badgeText:
-                                "Yearly Total: ${dashboard.monthlyPatients.yearlyTotal}",
+                            "Yearly Total: ${dashboard.monthlyPatients.yearlyTotal}",
                             isDark: isDark,
                             isTab: isTabletDevice,
                             fontFamily: appPoppinFont,
                             chartContent:
-                                dashboard.monthlyPatients.monthlyData.isEmpty
+                            dashboard.monthlyPatients.monthlyData.isEmpty
                                 ? _buildInlineChartEmptyState(
-                                    context,
-                                    'No tracking data logged this year.',
-                                  )
+                              context,
+                              'No tracking data logged this year.',
+                            )
                                 : _buildMonthlyChartBarList(
-                                    context,
-                                    primaryColor,
-                                    chartHeight,
-                                    dashboard.monthlyPatients.xLabels,
-                                    dashboard.monthlyPatients.yValues,
-                                  ),
+                              context,
+                              primaryColor,
+                              chartHeight,
+                              dashboard.monthlyPatients.xLabels,
+                              dashboard.monthlyPatients.yValues,
+                            ),
                           ),
                         ]),
                       ),
@@ -451,7 +468,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   ],
                 );
               }
-              return const SizedBox.shrink();
+
+              return const Center(child: CircularProgressIndicator.adaptive());
             },
           ),
         ),
@@ -483,7 +501,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  // Beautiful placeholder fallback specifically tailored for empty charts inside DashboardChartCard
   Widget _buildInlineChartEmptyState(BuildContext context, String explanation) {
     return Container(
       width: double.infinity,
@@ -513,12 +530,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildWeeklyChartBarList(
-    BuildContext context,
-    Color primaryColor,
-    double height,
-    List<String> labels,
-    List<double> values,
-  ) {
+      BuildContext context,
+      Color primaryColor,
+      double height,
+      List<String> labels,
+      List<double> values,
+      ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulWeeklyPalette = [
       primaryColor,
@@ -547,12 +564,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Widget _buildMonthlyChartBarList(
-    BuildContext context,
-    Color primaryColor,
-    double height,
-    List<String> labels,
-    List<double> values,
-  ) {
+      BuildContext context,
+      Color primaryColor,
+      double height,
+      List<String> labels,
+      List<double> values,
+      ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final List<Color> beautifulMonthlyColors = List.generate(12, (index) {
       final double progress = index / 11;

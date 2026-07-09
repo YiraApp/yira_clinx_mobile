@@ -127,7 +127,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
               builder: (context, state) {
                 if (state is RoleLoading || state is RoleInitial) {
                   return const Center(
-                    child: CircularProgressIndicator(
+                    child: CircularProgressIndicator.adaptive(
                       strokeWidth: 2.5,
                       valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     ),
