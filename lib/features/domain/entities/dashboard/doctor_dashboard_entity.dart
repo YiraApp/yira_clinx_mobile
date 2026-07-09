@@ -76,6 +76,7 @@ class TodaysScheduleEntity {
   final int hospitalId;
   final int appointmentId;
   final String patientName;
+  final String initital;
   final String time;
   final String consultationType;
   final String reason;
@@ -90,7 +91,7 @@ class TodaysScheduleEntity {
     required this.time,
     required this.consultationType,
     required this.reason,
-    required this.statusTag,
+    required this.statusTag, required this.initital,
   });
 }
 
@@ -101,6 +102,7 @@ class RecentPatientsEntity {
   final int appointmentId;
   final String name;
   final String date;
+  final String initial;
   final String consultationType;
   final String condition;
   final String status;
@@ -114,7 +116,7 @@ class RecentPatientsEntity {
     required this.date,
     required this.consultationType,
     required this.condition,
-    required this.status,
+    required this.status, required this.initial,
   });
 }
 

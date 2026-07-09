@@ -215,7 +215,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
     required super.time,
     required super.consultationType,
     required super.reason,
-    required super.statusTag,
+    required super.statusTag, required super.initital,
   });
 
   factory TodaysScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -228,7 +228,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       time: json['time'] as String? ?? '',
       consultationType: json['consultationType'] as String? ?? '',
       reason: json['reason'] as String? ?? '',
-      statusTag: json['statusTag'] as String? ?? '',
+      statusTag: json['statusTag'] as String? ?? '', initital: json['initials'] as String? ?? '',
     );
   }
 
@@ -242,7 +242,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       time: entity.time,
       consultationType: entity.consultationType,
       reason: entity.reason,
-      statusTag: entity.statusTag,
+      statusTag: entity.statusTag, initital: entity.initital,
     );
   }
 
@@ -257,6 +257,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       'consultationType': consultationType,
       'reason': reason,
       'statusTag': statusTag,
+      'initials':initital
     };
   }
 }
@@ -271,7 +272,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
     required super.date,
     required super.consultationType,
     required super.condition,
-    required super.status,
+    required super.status, required super.initial,
   });
 
   factory RecentPatientsModel.fromJson(Map<String, dynamic> json) {
@@ -285,6 +286,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
       consultationType: json['consultationType'] as String? ?? '',
       condition: json['condition'] as String? ?? '',
       status: json['status'] as String? ?? '',
+        initial: json['initials'] as String? ?? ''
     );
   }
 
@@ -298,7 +300,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
       date: entity.date,
       consultationType: entity.consultationType,
       condition: entity.condition,
-      status: entity.status,
+      status: entity.status, initial: entity.initial,
     );
   }
 
@@ -313,6 +315,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
       'consultationType': consultationType,
       'condition': condition,
       'status': status,
+      'initials':initial
     };
   }
 }
