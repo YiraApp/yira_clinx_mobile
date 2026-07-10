@@ -12,14 +12,6 @@ class PatientProfileInitial extends PatientProfileState {}
 
 class PatientProfileLoading extends PatientProfileState {}
 
-/*class PatientProfileLoaded extends PatientProfileState {
-  final PatientProfileEntity patient;
-
-  const PatientProfileLoaded(this.patient);
-
-  @override
-  List<Object?> get props => [patient];
-}*/
 
 class PatientProfileError extends PatientProfileState {
   final String message;

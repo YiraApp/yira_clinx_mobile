@@ -4,6 +4,9 @@ import '../constants/constants.dart';
 import '../expention_handler/exception_handler.dart';
 
 class ErrorInterceptor extends Interceptor {
+  final bool showSuccessSnack;
+
+  ErrorInterceptor({this.showSuccessSnack = true});
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     final data = response.data;
@@ -29,14 +32,13 @@ class ErrorInterceptor extends Interceptor {
         ),
       );
     }
-    if (serverMessage != null && serverMessage.trim().isNotEmpty) {
+    if (showSuccessSnack && serverMessage != null && serverMessage.trim().isNotEmpty) {
       ExceptionHandler.processException(
         status: true,
         statusCode: HttpStatus.ok,
         message: serverMessage,
       );
     }
-
     return handler.next(response);
   }
 

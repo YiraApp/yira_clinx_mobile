@@ -55,7 +55,7 @@ class DashboardClinicalNotesRepoImpl extends DashboardPatientClinicalNotesRepo {
     try {
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account.get(
+      final response = await _apiClient.account(showSuccessSnack: true).get(
         endPoint,
         data: requestBody,
         options: Options(

@@ -31,6 +31,7 @@ class SideMenuRepoImpl extends SideMenuRepo {
     required int latestOrgId,
     required int latestHospitalId,
   }) async {
+    var endPoint = URLs.sideMenuUrl;
     var requestBody = {
       "userId": userId.trim(),
       "latestRoleId": latestRoleId.trim(),
@@ -39,7 +40,7 @@ class SideMenuRepoImpl extends SideMenuRepo {
     };
     final String fullCacheKey = _generateDeterministicCacheKey(
       customPrefix: sideMenuKey,
-      baseUrl: URLs.sideMenuUrl,
+      baseUrl: endPoint,
       params: requestBody,
     );
     final List<ConnectivityResult> connectivityResults = await _connectivity
@@ -58,8 +59,8 @@ class SideMenuRepoImpl extends SideMenuRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account.get(
-        URLs.sideMenuUrl,
+      final response = await _apiClient.account(showSuccessSnack: true).get(
+        endPoint,
         data: requestBody,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -98,7 +99,8 @@ class SideMenuRepoImpl extends SideMenuRepo {
   }
 
   @override
-  Future<SideMenuEntity?> fetchDirectFromKey(String cacheKey) async {
+  Future<SideMenuEntity?> fetchDirectFromKey(String cacheKey)
+  async {
     try {
       final String? cachedJsonString = await _localCache.getCachedResponse(
         cacheKey,

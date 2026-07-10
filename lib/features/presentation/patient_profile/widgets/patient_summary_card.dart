@@ -6,9 +6,9 @@ import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'patient_info_card.dart';
 
 class PatientSummaryCard extends StatelessWidget {
-  final PatientProfileEntity patient;
+  final String summary;
   final bool isTab;
-  const PatientSummaryCard({super.key, required this.patient, required this.isTab});
+  const PatientSummaryCard({super.key, required this.summary, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class PatientSummaryCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                patient.summary,
+                summary,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,

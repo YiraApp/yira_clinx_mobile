@@ -30,10 +30,11 @@ class UpdateFcmRepoImpl extends UpdateFcmRepository {
         "fcmToken": fcmToken,
       };
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: false).post(
         URLs.updateFcmTokenUrl,
         data: requestBody,
         options: Options(
+          extra: {'showSuccessSnack': false},
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
             HttpHeaders.authorizationHeader: 'Bearer $token',

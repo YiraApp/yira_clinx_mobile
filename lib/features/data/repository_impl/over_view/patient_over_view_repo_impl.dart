@@ -1,40 +1,39 @@
+
+
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/features/data/models/dashboard/dashboard_patient_details_model.dart';
-import 'package:yiraclinics/features/domain/entities/dashboard/dashboard_patient_details_entity.dart';
+import 'package:yiraclinics/features/data/models/over_view/over_view_model.dart';
+import 'package:yiraclinics/features/domain/entities/over_view/over_view_entity.dart';
+import 'package:yiraclinics/features/domain/repositories/patient_over_view_repo/patient_over_view_repo.dart';
 
 import '../../../../core/api/api_client.dart';
+import '../../../../core/constants/constants.dart';
 import '../../../../core/local/cache/local_cache_data_source.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/urls/urls.dart';
-import '../../../domain/repositories/dash_board/dashboard_patient_details_repo.dart';
 
-class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
+class PatientOverViewRepoImpl extends PatientOverViewRepo{
   final ApiClient _apiClient;
   final LocalCacheDataSource _localCache;
   final Connectivity _connectivity;
-  DashboardPatientDetailsRepoImpl(
+
+  PatientOverViewRepoImpl(
       this._apiClient,
       this._localCache, [
         Connectivity? connectivity,
       ]) : _connectivity = connectivity ?? Connectivity();
   @override
-  Future<DashBoardPatientDetailsEntity?> fetchPatientData({
-    required String appointmentId,
-  })  async {
-    final currentUser = GlobalSession.instance.userNotifier.value;
-    var endPoint = URLs.dashboardPatientDetailsUrl;
-    final Map<String, dynamic> requestBody = {
-      "userId": currentUser?.data?.id ?? '',
-      "appointmentId": appointmentId
+  Future<PatientOverViewEntity?> fetchOverViewData({required String userId}) async {
+    var endPoint = URLs.patientOverViewUrl;
+    var requestBody = {
+      "userId": userId,
     };
     final String fullCacheKey = _generateDeterministicCacheKey(
-      customPrefix: dashboardPatientDetailsKey,
+      customPrefix: patientOverViewKey,
       baseUrl: endPoint,
       params: requestBody,
     );
@@ -43,15 +42,16 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
     final bool isHardwareOffline = connectivityResults.contains(
       ConnectivityResult.none,
     );
-
     if (isHardwareOffline) {
       developer.log(
         "Hardware interface disconnected. Directing thread logic instantly to SQLite cache.",
-        name: "DoctorDashboardRepoImpl",
+        name: "PatientOverViewRepoImpl",
       );
-      return fetchPatientDataDirectFromKey(fullCacheKey);
+      return fetchOverViewDirectFromKey(fullCacheKey);
     }
+
     try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
       final response = await _apiClient.account(showSuccessSnack: true).get(
@@ -73,28 +73,28 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
 
         if (isSuccessStatus && nestedPayload != null) {
           await _localCache.saveResponse(fullCacheKey, jsonEncode(rawData));
-          return DashBoardPatientDetailsModel.fromJson(rawData);
+          return PatientOverViewModel.fromJson(rawData);
         }
       }
     } on DioException catch (dioError) {
       developer.log(
         "Dio network error handled: ${dioError.type}. Recovering context gracefully via cache pipeline.",
         error: dioError,
-        name: "DashboardClinicalNotesRepoImpl",
+        name: "PatientOverViewRepoImpl",
       );
     } catch (unexpectedError, stackTrace) {
       developer.log(
         "Unexpected formatting model processing exception occurred inside repository.",
         error: unexpectedError,
         stackTrace: stackTrace,
-        name: "DashboardClinicalNotesRepoImpl",
+        name: "PatientOverViewRepoImpl",
       );
     }
-    return fetchPatientDataDirectFromKey(fullCacheKey);
+    return fetchOverViewDirectFromKey(fullCacheKey);
   }
 
   @override
-  Future<DashBoardPatientDetailsEntity?> fetchPatientDataDirectFromKey(String cacheKey)
+  Future<PatientOverViewEntity?> fetchOverViewDirectFromKey(String cacheKey)
   async {
     try {
       final String? cachedJsonString = await _localCache.getCachedResponse(
@@ -102,70 +102,48 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
       );
       final Map<String, dynamic> mockJsonResponse = {
         "status": true,
-        "message": "Patient profile data retrieved successfully",
+        "message": "Overview details fetched successfully",
         "data": {
-          "patient_info": {
-            "patient_id": "gsdfds",
-            "appointment_id": "12",
-            "name": "Mani N",
-            "age": "25 yrs",
-            "gender": "Male",
-            "last_visit": "4/6/2026"
-          },
           "contact_information": {
-            "phone": "9908875796",
-            "email": "jmani83280@gmail.com",
-            "location": ""
-          },
-          "latest_vitals": {
-            "blood_pressure": {
-              "value": "120/80",
-              "unit": "mmHg"
-            },
-            "pulse": {
-              "value": "78",
-              "unit": "bpm"
-            },
-            "temperature": {
-              "value": "98.4",
-              "unit": "°F"
-            },
-            "spo2": {
-              "value": "98",
-              "unit": "%"
-            },
-            "weight": {
-              "value": "82",
-              "unit": "kg"
-            },
-            "height": {
-              "value": "168",
-              "unit": "cm"
+            "phone": "6303012453",
+            "email_address": "teja@gmail.com",
+            "residential_address": "Sandhya techno 1, Hyderabad, pin code - 500081",
+            "emergency_contact": {
+              "name": "Rajesh",
+              "phone": "9908875796"
             }
           },
           "medical_information": {
-            "blood_group": "B+"
+            "condition": "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints.",
+            "allergies": "illness",
+            "blood_group": "B+",
+            "total_visits": 0
           },
           "insurance": {
-            "provider": "sbi",
-            "policy_number": "12345",
-            "valid_till": "12-08-2046"
-          }
+            "policy_name": "Star Health Premier",
+            "policy_number": "ST-99482-XYZ"
+          },
+          "visit_history": {
+            "initial_registration": "May 26, 2026",
+            "last_check_in_visit": "May 26, 2026",
+            "next_scheduled_appointment": "July 16, 2026"
+          },
+          "summary": "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints."
         }
       };
 
-      return DashBoardPatientDetailsModel.fromJson(mockJsonResponse);
+      return PatientOverViewModel.fromJson(mockJsonResponse);
       /*if (cachedJsonString != null) {
         final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
-        developer.log("Direct cache key fetch execution hit success.", name: "DoctorDashboardRepoImpl");
-        return DashBoardPatientDetailsModel.fromJson(decodedData);
+        developer.log("Direct cache key fetch execution hit success.", name: "SideMenuRepoImpl");
+        return PatientOverViewModel.fromJson(decodedData);
       }*/
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",
         error: cacheError,
         stackTrace: stackTrace,
-        name: "DashboardClinicalNotesRepoImpl",
+        name: "PatientOverViewRepoImpl",
       );
     }
     return null;
@@ -174,8 +152,7 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
     required String customPrefix,
     required String baseUrl,
     required Map<String, dynamic> params,
-  })
-  {
+  }) {
     final sortedKeys = params.keys.toList()..sort();
     final String queryString = sortedKeys
         .map((key) => "$key=${Uri.encodeComponent(params[key].toString())}")

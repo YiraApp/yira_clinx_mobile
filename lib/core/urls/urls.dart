@@ -24,6 +24,7 @@ class URLs {
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/dashboardPatientClinicalDetailsUrl";
   /*Side menu*/
   static const sideMenuUrl = "/v1/api/side_menu";
+  static const patientOverViewUrl = "/v1/api/patientOverViewUrl";
 
 
 }

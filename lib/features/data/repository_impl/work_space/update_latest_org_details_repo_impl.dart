@@ -27,16 +27,18 @@ class UpdateLatestOrgDetailsRepoImpl extends UpdateLatestOrgDetailsRepo {
       final Map<String, dynamic> requestBody = {
         "userId": currentUser?.data?.id,
         "latestRoleId": latestRoleId,
-        "latestOrgId":latestOrgId ,
-        "latestHospitalId": latestHospitalId
+        "latestOrgId": latestOrgId,
+        "latestHospitalId": latestHospitalId,
       };
-      final response = await apiClient.account.post(
-        URLs.updateLatestOrgDetails,
-        data: requestBody,
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
+      final response = await apiClient
+          .account(showSuccessSnack: true)
+          .post(
+            URLs.updateLatestOrgDetails,
+            data: requestBody,
+            options: Options(
+              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            ),
+          );
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;

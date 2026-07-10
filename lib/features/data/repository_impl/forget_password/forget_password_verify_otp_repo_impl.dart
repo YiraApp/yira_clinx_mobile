@@ -30,7 +30,7 @@ class ForgetPasswordVerifyOtpRepoImpl extends ForgetPasswordVerifyOtpRepo {
         "otp": otp,
       };
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.forgetVerifyOtpURl,
         data: requestBody,
       );

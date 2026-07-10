@@ -26,7 +26,7 @@ class ForgetPasswordSendOtpRepoImpl extends ForgetPasswordSendOtpRepo {
         "isResend": isResend,
       };
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.forgetSendOtpURl,
         data: requestBody,
       );

@@ -247,7 +247,7 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account.get(
+      final response = await _apiClient.account(showSuccessSnack: true).get(
         endPoint,
         data: requestBody,
         options: Options(

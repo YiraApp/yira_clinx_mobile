@@ -11,16 +11,13 @@ import '../../../../core/urls/urls.dart';
 
 class GetWorkSpaceDetailsImpl extends GetWorkSpaceDetailsRepo {
   final ApiClient _apiClient;
-
   GetWorkSpaceDetailsImpl({required ApiClient apiClient})
     : _apiClient = apiClient;
-
   @override
   Future<GetWorkSpaceDetailsEntity?> getWorkSpaceDetails({
     required String userId,
     required String roleId,
-  })
-  async {
+  }) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';
@@ -29,15 +26,16 @@ class GetWorkSpaceDetailsImpl extends GetWorkSpaceDetailsRepo {
         "userId": userId.trim(),
         "roleId": roleId.trim(),
       };
-      final response = await _apiClient.account.get(
-        URLs.workspaceDetailsUrl,
-        queryParameters: queryParameters,
+      final response = await _apiClient
+          .account(showSuccessSnack: true)
+          .get(
+            URLs.workspaceDetailsUrl,
+            queryParameters: queryParameters,
 
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
-
+            options: Options(
+              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            ),
+          );
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;
       } else {

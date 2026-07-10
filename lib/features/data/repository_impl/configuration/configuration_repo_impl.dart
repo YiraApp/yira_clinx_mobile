@@ -25,7 +25,7 @@ class ConfigurationRepoImpl extends ConfigurationRepo {
         "userId": currentUser?.data?.id,
         "deviceId": platFormData?.deviceId,
       };
-      final response = await _apiClient.account.get(
+      final response = await _apiClient.account(showSuccessSnack: true).get(
         URLs.getUserDataUrl,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},

@@ -8,7 +8,6 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_a
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/welocme_card.dart';
 import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
 import '../../../../core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
-import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -338,7 +337,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          const SizedBox(height: 8.0),
                           DashboardSectionHeader(
                             title: "Recent Patients",
                             actionText: "View All",
@@ -413,7 +411,6 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       padding: const EdgeInsets.only(
                         left: screenHorizontalSpacePadding,
                         right: screenHorizontalSpacePadding,
-                        top: 12.0,
                         bottom: 40.0,
                       ),
                       sliver: SliverList(

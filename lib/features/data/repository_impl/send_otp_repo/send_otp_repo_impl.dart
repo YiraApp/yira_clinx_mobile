@@ -25,7 +25,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         "isResend": isReSend,
       };
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.sendOtpUrl,
         data: requestBody,
       );

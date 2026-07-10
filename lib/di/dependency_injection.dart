@@ -45,6 +45,7 @@ import 'package:yiraclinics/features/domain/repositories/foget_password/forget_p
 import 'package:yiraclinics/features/domain/repositories/foget_password/save_reset_password_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/login/login_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/patient_over_view_repo/patient_over_view_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/prescritpions/prescriptions_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/send_otp/send_otp_repo.dart';
@@ -57,6 +58,7 @@ import 'package:yiraclinics/features/domain/repositories/medication/medication_r
 import 'package:yiraclinics/features/domain/repositories/work_space/get_work_space_details_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/update_latest_org_details_repo.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
@@ -70,6 +72,7 @@ import 'package:yiraclinics/features/use_cases/get_theme_use_case.dart';
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/medical_history_use_case.dart';
+import 'package:yiraclinics/features/use_cases/patient_over_view_use_case.dart';
 import 'package:yiraclinics/features/use_cases/save_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
@@ -114,6 +117,7 @@ import '../features/data/repository_impl/configuration/configuration_repo_impl.d
 import '../features/data/repository_impl/forget_password/forget_password_send_otp_repo_impl.dart';
 import '../features/data/repository_impl/forget_password/forget_password_verify_otp_repo_impl.dart';
 import '../features/data/repository_impl/forget_password/save_reset_password_repo_impl.dart';
+import '../features/data/repository_impl/over_view/patient_over_view_repo_impl.dart';
 import '../features/domain/repositories/dash_board/dashboard_patient_clinical_notes_repo.dart';
 import '../features/domain/repositories/foget_password/forget_password_verify_otp_repo.dart';
 import '../features/use_cases/dashboard_patient_clinical_notes_use_case.dart';
@@ -240,6 +244,12 @@ Future<void> init() async {
       sl<LocalCacheDataSource>(),
     ),
   );
+  sl.registerFactory<PatientOverViewRepo>(
+        () => PatientOverViewRepoImpl(
+      sl<ApiClient>(),
+      sl<LocalCacheDataSource>(),
+    ),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
@@ -310,6 +320,11 @@ Future<void> init() async {
   sl.registerLazySingleton<DashboardPatientDetailsUseCase>(
     () => DashboardPatientDetailsUseCase(sl<DashboardPatientDetailsRepo>()),
   );
+  sl.registerFactory<PatientOverViewUseCase>(
+        () => PatientOverViewUseCase(
+      sl<PatientOverViewRepo>(),
+    ),
+  );
   // ==========================================
   // 3. Blocs / Cubits
   // ==========================================
@@ -362,7 +377,7 @@ Future<void> init() async {
     () => NavigationDrawerBloc(sl<SecureStorageService>()),
   );
   sl.registerLazySingleton(() => MedicalRecordBloc());
-  sl.registerLazySingleton(
+  sl.registerFactory(
     () => DoctorDashboardBloc(
       doctorDashboardUseCase: sl<DoctorDashboardUseCase>()
     ),
@@ -395,6 +410,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(
     () => SlotBloc(schedulerRepository: sl<SchedulerRepository>()),
+  );
+  sl.registerFactory(
+        () => PatientOverViewBloc(  patientOverViewUseCase: sl<PatientOverViewUseCase>()),
   );
   sl.registerFactory(
     () => PrescriptionBloc(

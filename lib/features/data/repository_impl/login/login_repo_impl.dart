@@ -25,7 +25,7 @@ class LoginRepositoryImpl implements LoginRepository {
         "password": password,
         "loginType": "email",
       };
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.loginUrl,
         data: requestBody,
       );
@@ -65,7 +65,7 @@ class LoginRepositoryImpl implements LoginRepository {
       };
       debugPrint('login requestBody --$requestBody');
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.loginUrl,
         data: requestBody,
       );

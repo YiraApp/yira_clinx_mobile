@@ -35,5 +35,6 @@ const no_internet=003;
 const dbName = 'yira_clinics_universal_cache.db';
 const doctorDashboardKey = 'getDoctorDashboardDetails';
 const sideMenuKey = 'sideMenuKey';
+const patientOverViewKey = 'patientOverViewKey';
 const dashboardPatientDetailsKey = 'dashboardPatientDetailsKey';
 const dashboardPatientClinicalDetailsKey = 'dashboardPatientClinicalDetailsKey';

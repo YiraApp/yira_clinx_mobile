@@ -29,7 +29,7 @@ class SaveResetPasswordRepoImpl extends SaveResetPasswordRepo {
         "confirmPassword": confirmPassword
       };
 
-      final response = await _apiClient.account.post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.saveResetPasswordURl,
         data: requestBody,
       );

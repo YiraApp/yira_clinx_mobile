@@ -25,10 +25,11 @@ class GetVersionAndTokenStatusRepoImpl extends GetVersionAndTokenStatusRepo {
         "currentVersion": platFormData?.version ?? '1.0.0',
         "deviceId": platFormData?.deviceId ?? 'unknown_id',
       };
-      final response = await apiClient.account.post(
+      final response = await apiClient.account(showSuccessSnack: false).post(
         URLs.getVersionAndTokenStatus,
         data: requestBody,
         options: Options(
+          extra: {'showSuccessSnack': false},
           headers: {
             HttpHeaders.contentTypeHeader: 'application/json',
             HttpHeaders.authorizationHeader: 'Bearer $token',
