@@ -128,18 +128,18 @@ class PatientManagementNav extends DoctorDashboardState {
 }
 
 class DocAndAppPatientDetailsNavState extends DoctorDashboardState {
-  final DoctorDashboardEntity dashboardEntity;
+  final DashboardPatientDetails patientDetails;
   final DateTime timestamp;
 
   const DocAndAppPatientDetailsNavState({
-    required this.dashboardEntity,
+    required this.patientDetails,
     required this.timestamp,
     super.patientData,
     super.clinicalNotesData,
   });
 
   @override
-  List<Object?> get props => [dashboardEntity, timestamp, patientData, clinicalNotesData];
+  List<Object?> get props => [patientDetails, timestamp, patientData, clinicalNotesData];
 }
 
 class PatientClinicalLoadedState extends DoctorDashboardState {

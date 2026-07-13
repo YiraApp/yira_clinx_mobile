@@ -3,8 +3,8 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
 class CustomBarChart extends StatelessWidget {
-  final List<double> values;
-  final List<String> labels;
+  final List<double?> values;
+  final List<String?> labels;
   final double maxY;
   final double chartHeight;
   final List<Color>? barColors;
@@ -80,8 +80,8 @@ class CustomBarChart extends StatelessWidget {
     final List<_ChartDataPoint> chartData = List.generate(
       values.length,
       (index) => _ChartDataPoint(
-        xLabel: labels[index],
-        yValue: values[index],
+        xLabel: labels[index] ?? '',
+        yValue: values[index] ?? 0.0,
         index: index,
       ),
     );

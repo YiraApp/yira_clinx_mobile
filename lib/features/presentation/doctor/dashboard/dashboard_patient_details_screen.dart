@@ -16,9 +16,19 @@ import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/custom_border_button.dart';
 import '../../../../core/common_widgets/custom_button.dart';
 import '../../../domain/entities/dashboard/dashboard_patient_details_entity.dart';
+import '../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
+
+class DashboardPatientDetails{
+  final TodaysScheduleEntity? todaysSchedule;
+  final RecentPatientsEntity? recentPatients;
+  final bool? isRecent;
+
+  DashboardPatientDetails(this.todaysSchedule, this.recentPatients, this.isRecent);
+}
 
 class DashboardPatientDetailsScreen extends StatelessWidget {
-  const DashboardPatientDetailsScreen({super.key});
+  final DashboardPatientDetails? dashboardPatientDetails;
+  const DashboardPatientDetailsScreen({super.key, this.dashboardPatientDetails});
 
   @override
   Widget build(BuildContext context) {

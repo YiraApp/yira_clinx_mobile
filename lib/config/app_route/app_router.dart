@@ -351,10 +351,13 @@ class AppRouter {
           ),
         );
       case AppRoutes.dashboardPatientDetails:
+        final DashboardPatientDetails dashboardPatientDetails = settings.arguments as DashboardPatientDetails;
+
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PatientDetailsBloc>(),
-            child: DashboardPatientDetailsScreen(),
+            child: DashboardPatientDetailsScreen(dashboardPatientDetails: dashboardPatientDetails,),
+
           ),
         );
       case AppRoutes.forgotPassword:

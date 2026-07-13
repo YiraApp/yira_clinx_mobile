@@ -1,157 +1,136 @@
-
-import 'package:flutter/foundation.dart';
-
-@immutable
 class DoctorDashboardEntity {
-  final bool status;
-  final String message;
+  final bool? status;
+  final String? message;
   final DashboardDataEntity? data;
 
-  const DoctorDashboardEntity({
-    required this.status,
-    required this.message,
-    this.data,
-  });
+  const DoctorDashboardEntity({this.status, this.message, this.data});
 }
 
 class DashboardDataEntity {
-  final ProfileEntity profile;
-  final MetricsEntity metrics;
-  final List<TodaysScheduleEntity> todaysSchedule;
-  final List<RecentPatientsEntity> recentPatients;
-  final WeeklyAppointmentsEntity weeklyAppointments;
-  final MonthlyPatientsEntity monthlyPatients;
+  final int? orgId;
+  final String? orgName;
+  final int? hospitalId;
+  final String? hospitalName;
+  final DoctorProfileEntity? profile;
+  final DashboardMetricsEntity? metrics;
+  final List<TodaysScheduleEntity>? todaysSchedule;
+  final List<RecentPatientsEntity>? recentPatients;
+  final WeeklyAppointmentsEntity? weeklyAppointments;
+  final MonthlyPatientsEntity? monthlyPatients;
 
   const DashboardDataEntity({
-    required this.profile,
-    required this.metrics,
-    required this.todaysSchedule,
-    required this.recentPatients,
-    required this.weeklyAppointments,
-    required this.monthlyPatients,
+    this.orgId,
+    this.orgName,
+    this.hospitalId,
+    this.hospitalName,
+    this.profile,
+    this.metrics,
+    this.todaysSchedule,
+    this.recentPatients,
+    this.weeklyAppointments,
+    this.monthlyPatients,
   });
 }
 
-class ProfileEntity {
-  final String name;
-  final String specialty;
-  final String clinicAddress;
+class DoctorProfileEntity {
+  final String? name;
+  final String? specialty;
+  final String? clinicAddress;
 
-  const ProfileEntity({
-    required this.name,
-    required this.specialty,
-    required this.clinicAddress,
-  });
+  const DoctorProfileEntity({this.name, this.specialty, this.clinicAddress});
 }
 
-class MetricsEntity {
-  final MetricCardEntity today;
-  final MetricCardEntity patients;
-  final MetricCardEntity done;
-  final MetricCardEntity stats;
+class DashboardMetricsEntity {
+  final MetricItemEntity? today;
+  final MetricItemEntity? patients;
+  final MetricItemEntity? done;
+  final MetricItemEntity? stats;
 
-  const MetricsEntity({
-    required this.today,
-    required this.patients,
-    required this.done,
-    required this.stats,
-  });
+  const DashboardMetricsEntity({this.today, this.patients, this.done, this.stats});
 }
 
-class MetricCardEntity {
-  final String title;
-  final int value;
-  final String subtext;
+class MetricItemEntity {
+  final String? title;
+  final int? value;
+  final String? subtext;
 
-  const MetricCardEntity({
-    required this.title,
-    required this.value,
-    required this.subtext,
-  });
+  const MetricItemEntity({this.title, this.value, this.subtext});
 }
 
 class TodaysScheduleEntity {
-  final int patientUserId;
-  final int orgId;
-  final int hospitalId;
-  final int appointmentId;
-  final String patientName;
-  final String initital;
-  final String time;
-  final String consultationType;
-  final String reason;
-  final String statusTag;
+  final String? patientUserId;
+  final int? orgId;
+  final int? hospitalId;
+  final int? appointmentId;
+  final String? patientName;
+  final String? time;
+  final String? consultationType;
+  final String? reason;
+  final String? statusTag;
 
   const TodaysScheduleEntity({
-    required this.patientUserId,
-    required this.orgId,
-    required this.hospitalId,
-    required this.appointmentId,
-    required this.patientName,
-    required this.time,
-    required this.consultationType,
-    required this.reason,
-    required this.statusTag, required this.initital,
+    this.patientUserId,
+    this.orgId,
+    this.hospitalId,
+    this.appointmentId,
+    this.patientName,
+    this.time,
+    this.consultationType,
+    this.reason,
+    this.statusTag,
   });
 }
 
 class RecentPatientsEntity {
-  final int patientUserId;
-  final int orgId;
-  final int hospitalId;
-  final int appointmentId;
-  final String name;
-  final String date;
-  final String initial;
-  final String consultationType;
-  final String condition;
-  final String status;
+  final String? patientUserId;
+  final int? orgId;
+  final int? hospitalId;
+  final int? appointmentId;
+  final String? name;
+  final String? date;
+  final String? consultationType;
+  final String? condition;
+  final String? status;
 
   const RecentPatientsEntity({
-    required this.patientUserId,
-    required this.orgId,
-    required this.hospitalId,
-    required this.appointmentId,
-    required this.name,
-    required this.date,
-    required this.consultationType,
-    required this.condition,
-    required this.status, required this.initial,
+    this.patientUserId,
+    this.orgId,
+    this.hospitalId,
+    this.appointmentId,
+    this.name,
+    this.date,
+    this.consultationType,
+    this.condition,
+    this.status,
   });
 }
 
 class WeeklyAppointmentsEntity {
-  final int averagePerDay;
-  final List<ChartDataPoint> dailyData;
+  final int? averagePerDay;
+  final List<DailyDataEntity>? dailyData;
+  List<String?> get xLabels => dailyData!.map((e) => e.label).toList();
+  List<double?> get yValues => dailyData!.map((e) => e.value!.toDouble()).toList() ?? [];
+  const WeeklyAppointmentsEntity({this.averagePerDay, this.dailyData});
+}
 
-  // X-Axis and Y-Axis helper mappings for your charts
-  List<String> get xLabels => dailyData.map((e) => e.label).toList();
-  List<double> get yValues => dailyData.map((e) => e.value).toList();
+class DailyDataEntity {
+  final String? label;
+  final int? value;
 
-  const WeeklyAppointmentsEntity({
-    required this.averagePerDay,
-    required this.dailyData,
-  });
+  const DailyDataEntity({this.label, this.value});
 }
 
 class MonthlyPatientsEntity {
-  final int yearlyTotal;
-  final List<ChartDataPoint> monthlyData;
-  List<String> get xLabels => monthlyData.map((e) => e.label).toList();
-  List<double> get yValues => monthlyData.map((e) => e.value).toList();
-
-  const MonthlyPatientsEntity({
-    required this.yearlyTotal,
-    required this.monthlyData,
-  });
+  final int? yearlyTotal;
+  final List<MonthlyDataEntity>? monthlyData;
+  List<String?> get xLabels => monthlyData!.map((e) => e.label).toList();
+  List<double> get yValues => monthlyData?.map((e) => e.value!.toDouble()).toList() ?? [];
+  const MonthlyPatientsEntity({this.yearlyTotal, this.monthlyData});
 }
 
-class ChartDataPoint {
-  final String label;
-  final double value;
+class MonthlyDataEntity {
+  final String? label;
+  final int? value;
 
-  const ChartDataPoint({
-    required this.label,
-    required this.value,
-  });
+  const MonthlyDataEntity({this.label, this.value});
 }

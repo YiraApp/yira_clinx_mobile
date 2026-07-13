@@ -19,12 +19,12 @@ class URLs {
   static const saveResetPasswordURl = "/v1/api/auth/change_password";
 
   /*Dashboard*/
-  static const doctorDashBoardUrl = "/v1/api/doctor_dashboard";
+  static const doctorDashBoardUrl = "/v1/api/auth/dashboard";
   static const dashboardPatientDetailsUrl = "/v1/api/dashboardPatientDetailsUrl";
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/dashboardPatientClinicalDetailsUrl";
   /*Side menu*/
   static const sideMenuUrl = "/v1/api/side_menu";
+  /*Patient Profile*/
   static const patientOverViewUrl = "/v1/api/patientOverViewUrl";
-
 
 }
