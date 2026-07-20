@@ -48,3 +48,20 @@ class UpdateDOBEvent extends OnBoardingEvent {
   final DateTime dob;
   UpdateDOBEvent(this.dob);
 }
+class UpdateBloodGroupEvent extends OnBoardingEvent {
+  final String bloodGroup;
+
+  UpdateBloodGroupEvent(this.bloodGroup);
+
+  @override
+  List<Object?> get props => [bloodGroup];
+}
+
+class UpdateEmergencyRelationEvent extends OnBoardingEvent {
+  final String relation;
+
+  UpdateEmergencyRelationEvent(this.relation);
+
+  @override
+  List<Object?> get props => [relation];
+}

@@ -61,7 +61,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
           },
           builder: (context, state) {
             if (state.status == MedicationStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
             return CustomScrollView(
               slivers: [

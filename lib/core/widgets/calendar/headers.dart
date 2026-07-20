@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 
 class Header extends StatelessWidget {
   const Header({
-    Key? key,
+    super.key,
     required this.monthDate,
     this.margin = const EdgeInsets.only(
       left: 16.0,
@@ -17,7 +17,7 @@ class Header extends StatelessWidget {
     this.dateStyle,
     this.todayStyle,
     this.child,
-  }) : super(key: key);
+  });
 
   static final _dateFormatter = DateFormat().add_yMMMM();
   final DateTime monthDate;
@@ -41,7 +41,7 @@ class Header extends StatelessWidget {
             _dateFormatter.format(monthDate),
             style: dateStyle ?? theme.textTheme.titleMedium,
           ),
-          if (child != null) child!,
+          ?child,
           const Spacer(),
           InkWell(
             onTap: onPressed,

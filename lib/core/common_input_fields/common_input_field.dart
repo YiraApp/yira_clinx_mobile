@@ -147,8 +147,10 @@ class _CommonInputAddRecordTextFieldState extends State<CommonInputAddRecordText
               ),
             )
                 : null),
+        errorMaxLines: 3,
         fillColor: isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
         errorStyle: TextStyle(
+
             fontFamily: appPoppinFont,
             color: errorTextStyleColor,
             fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.025),

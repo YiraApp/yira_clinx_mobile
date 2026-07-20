@@ -5,11 +5,14 @@ abstract class ForgotPasswordEvent {}
 
 
 class ForgotPasswordSendOtp extends ForgotPasswordEvent {
-  final String mobileNumber;
-  ForgotPasswordSendOtp(this.mobileNumber);
+  final ForgetPasswordSendOtpParams forgetPasswordSendOtpParams;
+  ForgotPasswordSendOtp(this.forgetPasswordSendOtpParams);
 }
 
-
+class OnCountryCodeChangedEvent extends ForgotPasswordEvent {
+  final String countryCode;
+   OnCountryCodeChangedEvent(this.countryCode);
+}
 class ForgotPasswordSendEmailLink extends ForgotPasswordEvent {
   final String email;
   ForgotPasswordSendEmailLink(this.email);

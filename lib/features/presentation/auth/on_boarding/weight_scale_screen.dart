@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import '../../../../../config/yira_colors/yira_colors.dart';
@@ -15,117 +16,146 @@ class WeightScaleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final bool isTab = isTablet(context);
+    final double screenWidth = displayWidth(context);
+
+    // Calculate dynamic horizontal padding for tablet viewports to perfectly center a 550px workspace
+    final double tabletPadding = isTab ? (screenWidth - 550) / 2 : 0.0;
 
     return BlocConsumer<OnBoardingBloc, OnBoardingState>(
       listener: (context, state) {
-        //
         // if (state.successMessage != null) Utils.showSnackBar(message:  state.successMessage!);
         // if (state.errorMessage != null) Utils.showErrorSnackBar(context, state.errorMessage!);
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            scrolledUnderElevation: 0,
             centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87, size: 20),
-              onPressed: () => Navigator.pop(context),
+            leading: Padding(
+              padding: EdgeInsets.only(left: isTab ? tabletPadding + 8 : 8.0),
+              child: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: isDark ? Colors.white : Colors.black87,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
             title: Text(
               'Personal Health',
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.045,
+                fontSize: (isTab ? 550 : screenWidth) * 0.045,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           bottomNavigationBar: Container(
-            padding: EdgeInsets.fromLTRB(
-                screenHorizontalSpacePadding,
-                10,
-                screenHorizontalSpacePadding,
-                MediaQuery.of(context).padding.bottom + 10
-            ),
             decoration: BoxDecoration(
               color: isDark ? newDarkModeBgColor : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                )
-              ],
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.black.withOpacity(0.04),
+                  width: 1,
+                ),
+              ),
             ),
-            child: state.isLoading
-                ? const SizedBox(height: 50, child: Center(child: CircularProgressIndicator()))
-                : CustomElevatedButton(
-              noElevation: true,
-              height: 55,
-              width: displayWidth(context),
-              text: "Next Step",
-              onPressed: () => context.read<OnBoardingBloc>().add(SaveOnBoardingEvent(date: todayDate)),
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTab ? tabletPadding : 0.0,
+                ),
+                child: _buildBottomButton(context, state, todayDate),
+              ),
             ),
           ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Pin rendering boundary references to a max layout scale of 550px for tablet symmetry
+                final double referenceWidth = isTab ? 550 : screenWidth;
+
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    screenHorizontalSpacePadding + tabletPadding,
+                    10,
+                    screenHorizontalSpacePadding + tabletPadding,
+                    24,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10),
-                      _buildHeaderSection(context, isDark),
-                      const SizedBox(height: 30),
-                      Center(child: _buildUnitSelector(context, state.currentUnit)),
-                      SizedBox(height: displayHeight(context) * 0.05),
-                      _buildWeightDisplay(context, state, isDark),
-                      SizedBox(height: displayHeight(context) * 0.05),
+                      _buildHeaderSection(context, isDark, referenceWidth,isTab),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: _buildUnitSelector(
+                          context,
+                          state.currentUnit,
+                          isDark,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildWeightDisplay(
+                        context,
+                        state,
+                        isDark,
+                        referenceWidth,isTab
+                      ),
+                      const SizedBox(height: 32),
                       WeightScaleRuler(
                         key: ValueKey(state.currentUnit),
                         currentValue: state.currentWeight,
                         indicatorColor: const Color(0xFF005696),
-                        onChanged: (val) => context.read<OnBoardingBloc>().add(UpdateWeightEvent(val)),
+                        onChanged: (val) => context.read<OnBoardingBloc>().add(
+                          UpdateWeightEvent(val),
+                        ),
                         unit: state.currentUnit,
                       ),
                       const SizedBox(height: 40),
-                      _buildTipCard(context, isDark),
-                      const SizedBox(height: 40),
+                      _buildTipCard(context, isDark, referenceWidth,isTab),
                     ],
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildHeaderSection(BuildContext context, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Your Current\nWeight',
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.085,
-            fontWeight: FontWeight.w700,
-            height: 1.1,
-          ),
-        ),
-        const SizedBox(height: 15),
-      ],
+  Widget _buildHeaderSection(
+    BuildContext context,
+    bool isDark,
+    double referenceWidth,bool isTab
+  ) {
+    return Text(
+      'Your Current\nWeight',
+      style: TextStyle(
+        fontFamily: appPoppinFont,
+        fontSize: isTab ? referenceWidth * 0.062: referenceWidth * 0.085,
+        fontWeight: FontWeight.w700,
+        height: 1.1,
+      ),
     );
   }
 
-  Widget _buildWeightDisplay(BuildContext context, OnBoardingState state, bool isDark) {
+  Widget _buildWeightDisplay(
+    BuildContext context,
+    OnBoardingState state,
+    bool isDark,
+    double referenceWidth,bool isTab
+  ) {
     return Center(
       child: Column(
         children: [
@@ -137,7 +167,7 @@ class WeightScaleScreen extends StatelessWidget {
                 state.currentWeight.toStringAsFixed(1),
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.18,
+                  fontSize: referenceWidth * 0.18,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -2,
                   color: isDark ? Colors.white : const Color(0xFF1D1D35),
@@ -149,7 +179,7 @@ class WeightScaleScreen extends StatelessWidget {
                   state.currentUnit,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.06,
+                    fontSize: referenceWidth * 0.06,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade500,
                   ),
@@ -163,7 +193,7 @@ class WeightScaleScreen extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.035,
+              fontSize: isTab ? referenceWidth * 0.024: referenceWidth * 0.035,
               height: 1.5,
               fontWeight: FontWeight.w400,
             ),
@@ -173,68 +203,110 @@ class WeightScaleScreen extends StatelessWidget {
     );
   }
 
-
-
-  Widget _buildUnitSelector(BuildContext context, String activeUnit) {
+  Widget _buildUnitSelector(
+    BuildContext context,
+    String activeUnit,
+    bool isDark,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.09),
+        color: isDark
+            ? Colors.white.withOpacity(0.06)
+            : Colors.grey.withOpacity(0.09),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _unitOption(context, 'kg', activeUnit == 'kgs'),
-          _unitOption(context, 'lbs', activeUnit == 'lbs'),
+          _unitOption(context, 'kg', activeUnit == 'kgs', isDark),
+          _unitOption(context, 'lbs', activeUnit == 'lbs', isDark),
         ],
       ),
     );
   }
 
-  Widget _unitOption(BuildContext context, String label, bool isSelected) {
+  Widget _unitOption(
+    BuildContext context,
+    String label,
+    bool isSelected,
+    bool isDark,
+  ) {
     return GestureDetector(
-      onTap: () => context.read<OnBoardingBloc>().add(ToggleUnitEvent(label == 'kg' ? 'kgs' : 'lbs')),
+      onTap: () => context.read<OnBoardingBloc>().add(
+        ToggleUnitEvent(label == 'kg' ? 'kgs' : 'lbs'),
+      ),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-
-        padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected
+              ? (isDark ? Colors.white.withOpacity(0.15) : Colors.white)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(fieldBorderRadius),
+          boxShadow: isSelected && !isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Text(
           label.toUpperCase(),
           style: TextStyle(
             fontFamily: appPoppinFont,
-            color: isSelected ? primaryColor : Colors.grey,
+            color: isSelected ? primaryColor : Colors.grey.shade500,
             fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTipCard(BuildContext context, bool isDark) {
+  Widget _buildTipCard(
+    BuildContext context,
+    bool isDark,
+    double referenceWidth,bool isTab
+  ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF2F6FF),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+        color: isDark
+            ? Colors.white.withOpacity(0.04)
+            : const Color(0xFFF4F7FF),
+        borderRadius: BorderRadius.circular(fieldBorderRadius ?? 14),
+        border: Border.all(color: Colors.blue.withOpacity(0.08)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              color: isDark ? Colors.white10 : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: !isDark
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [],
             ),
-            child: const Icon(Icons.lightbulb_outline_sharp, color: Color(0xFF005696)),
+            child: const Icon(
+              Icons.lightbulb_outline_sharp,
+              color: Color(0xFF005696),
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,17 +317,17 @@ class WeightScaleScreen extends StatelessWidget {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF1D1D35),
-                    fontSize: displayWidth(context)*0.035,
+                    fontSize: isTab ? referenceWidth * 0.024: referenceWidth * 0.035,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 4),
                 Text(
                   'Tracking daily helps our AI understand your fluid patterns.',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context)*0.032,
-                    color: Colors.grey.shade600,
-                    height: 1.4,
+                    fontSize: isTab ? referenceWidth * 0.024: referenceWidth * 0.032,
+                    color: isDark ? Colors.white70 : Colors.blueGrey.shade700,
+                    height: 1.45,
                   ),
                 ),
               ],
@@ -263,6 +335,28 @@ class WeightScaleScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBottomButton(
+    BuildContext context,
+    OnBoardingState state,
+    String date,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: state.isLoading
+          ? const SizedBox(
+              height: 56,
+              child: Center(child: CircularProgressIndicator.adaptive()),
+            )
+          : CustomElevatedButton(
+              noElevation: true,
+              height: 56,
+              width: double.infinity,
+              text: "Complete Profile",
+              onPressed: () {},
+            ),
     );
   }
 }

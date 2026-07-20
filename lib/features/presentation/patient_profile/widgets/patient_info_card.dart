@@ -14,11 +14,11 @@ class PatientInfoCard extends StatelessWidget {
   final bool isTab;
 
   const PatientInfoCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.titleIcon,
     required this.child, required this.isTab,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -57,7 +57,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
         builder: (context, state) {
           if (state is! SlotDataState) {
             return Center(
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
               ),
             );
@@ -67,7 +67,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
 
           if (dataState.isLoading) {
             return Center(
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
               ),
             );
@@ -147,7 +147,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: dataState.slots.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                             const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               return SlotConfigurationCard(
@@ -212,8 +212,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                     ],
                   ),
                   child: dataState.isDeploying
-                      ?  Center(child: CircularProgressIndicator(
-                    color: isDark ? Colors.white : Colors.black54,
+                      ?  Center(child: CircularProgressIndicator.adaptive(
                   ),)
                       : CustomElevatedButton(
                           noElevation: true,

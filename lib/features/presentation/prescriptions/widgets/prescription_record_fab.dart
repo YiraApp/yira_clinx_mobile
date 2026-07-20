@@ -181,7 +181,7 @@ class _PrescriptionRecordFabState extends State<PrescriptionRecordFab> with Sing
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
+          SizedBox(
             width: isTab ? 50 : 44,
             height: isTab ? 50 : 44,
             child: Icon(icon, color: color, size: isTab ? 22 : 20),

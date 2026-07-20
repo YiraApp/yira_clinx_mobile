@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-enum RoleType { frontDesk, provider }
+enum RoleType { patient, provider }
 
-class RoleEntity {
+class RoleLoginEntity {
   final RoleType type;
   final String title;
   final String subtitle;
   final IconData icon;
 
-  const RoleEntity({
+  const RoleLoginEntity({
     required this.type,
     required this.title,
     required this.subtitle,

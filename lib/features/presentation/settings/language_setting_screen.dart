@@ -160,7 +160,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                       ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                      child: CircularProgressIndicator.adaptive( strokeWidth: 2)
                   )
                       : null,
                 ),

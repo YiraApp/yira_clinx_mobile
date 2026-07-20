@@ -1,6 +1,5 @@
 
 
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -13,7 +12,7 @@ class CounterItem extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const CounterItem({
+  const CounterItem({super.key, 
     required this.label,
     required this.value,
     this.valueColor,
