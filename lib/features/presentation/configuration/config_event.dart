@@ -11,3 +11,4 @@ class ToggleSettingEvent extends ConfigEvent {
 
 // Resets the success overlay so the user can see the settings again
 class ResetUpdateStatusEvent extends ConfigEvent {}
+class LoadUserConfigurationScreen extends ConfigEvent {}

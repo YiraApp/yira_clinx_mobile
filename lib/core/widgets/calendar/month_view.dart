@@ -7,7 +7,7 @@ import 'date_time_utils.dart';
 
 class MonthView extends StatelessWidget {
   const MonthView({
-    Key? key,
+    super.key,
     required this.monthView,
     required this.todayDate,
     required this.selectedDate,
@@ -18,7 +18,7 @@ class MonthView extends StatelessWidget {
     this.events,
     required this.keepLineSize,
     this.textStyle, required this.numberOfweeks, required this.buttonPrimaryColor,
-  }) : super(key: key);
+  });
 final int numberOfweeks;
 
 final Color buttonPrimaryColor;

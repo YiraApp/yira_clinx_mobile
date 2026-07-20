@@ -9,12 +9,11 @@ import 'date_box.dart';
 /// Week day names line.
 class WeekDays extends StatelessWidget {
   const WeekDays({
-    Key? key,
+    super.key,
     this.weekNames = const <String>['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     this.style,
     required this.keepLineSize, required this.buttonPrimaryColor, required this.weekColor,
-  })  : assert(weekNames.length == 7, '`weekNames` must have length 7'),
-        super(key: key);
+  })  : assert(weekNames.length == 7, '`weekNames` must have length 7');
 
   /// Week day names.
   final List<String> weekNames;

@@ -8,7 +8,6 @@ part 'on_boarding_state.dart';
 class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
   OnBoardingBloc() : super(const OnBoardingState()) {
 
-    // --- Weight Handlers ---
 
     on<UpdateWeightEvent>((event, emit) {
       emit(state.copyWith(currentWeight: event.weight));
@@ -29,7 +28,13 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
         currentUnit: event.unit,
       ));
     });
+    on<UpdateBloodGroupEvent>((event, emit) {
+      emit(state.copyWith(selectedBloodGroup: event.bloodGroup));
+    });
 
+    on<UpdateEmergencyRelationEvent>((event, emit) {
+      emit(state.copyWith(selectedEmergencyRelation: event.relation));
+    });
     on<UpdateDOBEvent>((event, emit) {
       final age = DateTime.now().year - event.dob.year;
       emit(state.copyWith(selectedDob: event.dob, selectedAge: age));
@@ -61,7 +66,6 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
       ));
     });
 
-    // --- API & Save Handlers ---
 
     on<SaveOnBoardingEvent>((event, emit) async {
       emit(state.copyWith(isLoading: true, errorMessage: null, successMessage: null));

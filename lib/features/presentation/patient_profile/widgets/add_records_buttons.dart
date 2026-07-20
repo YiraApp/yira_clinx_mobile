@@ -249,7 +249,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
+          SizedBox(
             width: isTab ? 50 : 44,
             height: isTab ? 50 : 44,
             // decoration: BoxDecoration(

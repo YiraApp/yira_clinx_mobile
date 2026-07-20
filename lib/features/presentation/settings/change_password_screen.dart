@@ -278,7 +278,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           child: state is ChangePasswordLoading
                               ? const SizedBox(
                             height: 50,
-                            child: Center(child: CircularProgressIndicator()),
+                            child: Center(child: CircularProgressIndicator.adaptive()),
                           )
                               : CustomElevatedButton(
                             noElevation: true,

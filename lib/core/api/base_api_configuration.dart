@@ -6,18 +6,18 @@ class EnvironmentService {
     switch (_currentEnv) {
       case Environment.dev:
         return const EnvironmentConfig(
-          accountBaseUrl: "yiraapi.azurewebsites.net",
-          healthCampBaseUrl: "yiraapi.azurewebsites.net",
+          accountBaseUrl: "",
+          healthCampBaseUrl: "",
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "yiraapi.azurewebsites.net",
-          healthCampBaseUrl: "yiraapi.azurewebsites.net",
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "yiraapi.azurewebsites.net",
-          healthCampBaseUrl: "yiraapi.azurewebsites.net"
+          accountBaseUrl: "",
+          healthCampBaseUrl: ""
         );
     }
   }

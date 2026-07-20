@@ -1,15 +1,24 @@
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
+import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
-import '../../../../domain/entities/work_space/organization_entity.dart';
+import '../../../../domain/entities/work_space/get_work_space_entity.dart';
+import '../../../../domain/entities/work_space/update_latest_org_details_entity.dart';
 
 part 'work_space_event.dart';
 part 'work_space_state.dart';
 
 class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
-  WorkspaceBloc() : super(WorkspaceInitial()) {
+  final GetWorkSpaceDetailsUseCase getWorkSpaceDetailsUseCase;
+  final UpdateLatestOrgDetailsUseCase updateLatestOrgDetailsUseCase;
+  WorkspaceBloc({
+    required this.getWorkSpaceDetailsUseCase,
+    required this.updateLatestOrgDetailsUseCase,
+  }) : super(WorkspaceInitial()) {
     on<LoadWorkspacesEvent>(_onLoadWorkspaces);
     on<ToggleOrganizationEvent>(_onToggleOrganization);
+    on<OnSaveLatestOrgDetailsEvent>(_onSaveLatestOrgDetails);
     on<NavToDashBoardEvent>((event, emit) {
       emit(NavToDashBoard());
     });
@@ -21,73 +30,48 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
   void _onLoadWorkspaces(
     LoadWorkspacesEvent event,
     Emitter<WorkspaceState> emit,
-  ) {
+  ) async {
     emit(WorkspaceLoading());
+    try {
+      final response = await getWorkSpaceDetailsUseCase(event.parameters);
 
-    final mockData = [
-      OrganizationEntity(
-        id: '1',
-        name: 'Ocimum dental clinic',
-        isExpanded: true,
-        hospitals: [
-          HospitalEntity(id: '101', name: 'Ocimum Somajiguda'),
-          HospitalEntity(id: '102', name: 'Ocimum Gachibowli'),
-          HospitalEntity(id: '103', name: 'Ocimum Jubilee Hills'),
-          HospitalEntity(id: '104', name: 'Ocimum Madhapur'),
-          HospitalEntity(id: '105', name: 'Ocimum Secunderabad'),
-        ],
-      ),
-      OrganizationEntity(
-        id: '2',
-        name: 'AIG Hospitals Group',
-        isExpanded: true,
-        hospitals: [
-          HospitalEntity(id: '201', name: 'AIG Somajiguda'),
-          HospitalEntity(id: '202', name: 'AIG Gachibowli'),
-          HospitalEntity(id: '203', name: 'AIG Jubilee Hills'),
-          HospitalEntity(id: '204', name: 'AIG Madhapur'),
-          HospitalEntity(id: '205', name: 'AIG Secunderabad'),
-        ],
-      ),
+      if (response != null &&
+          response.status == true &&
+          response.data != null) {
+        final cleanList = response.data!.whereType<DataEntity>().toList();
+        emit(WorkspacesLoaded(organizations: cleanList));
+      } else {
+        emit(WorkspaceError(response?.message ?? "Failed to load workspaces."));
+      }
+    } catch (e) {
+      emit(WorkspaceError("An unexpected error occurred: $e"));
+    }
+  }
 
-      OrganizationEntity(
-        id: '3',
-        name: 'KIMS Healthcare',
-        isExpanded: false,
-        hospitals: [
-          HospitalEntity(id: '301', name: 'KIMS Secunderabad'),
-          HospitalEntity(id: '302', name: 'KIMS Kondapur'),
-          HospitalEntity(id: '303', name: 'KIMS Gachibowli'),
-          HospitalEntity(id: '304', name: 'KIMS Begumpet'),
-          HospitalEntity(id: '305', name: 'KIMS Paradise'),
-        ],
-      ),
-      OrganizationEntity(
-        id: '4',
-        name: 'Yashoda Hospitals',
-        isExpanded: false,
-        hospitals: [
-          HospitalEntity(id: '401', name: 'Yashoda Somajiguda'),
-          HospitalEntity(id: '402', name: 'Yashoda Malakpet'),
-          HospitalEntity(id: '403', name: 'Yashoda Secunderabad'),
-          HospitalEntity(id: '404', name: 'Yashoda Hitech City'),
-          HospitalEntity(id: '405', name: 'Yashoda Clinics Begumpet'),
-        ],
-      ),
-      OrganizationEntity(
-        id: '5',
-        name: 'Demo Org Group 1',
-        isExpanded: false,
-        hospitals: [
-          HospitalEntity(id: '501', name: 'Demo Clinic Gachibowli'),
-          HospitalEntity(id: '502', name: 'Demo Hospital Kukatpally'),
-          HospitalEntity(id: '503', name: 'Demo Care Miyapur'),
-          HospitalEntity(id: '504', name: 'Demo Wellness Banjara Hills'),
-          HospitalEntity(id: '505', name: 'Demo Medical Center Manikonda'),
-        ],
-      ),
-    ];
-    emit(WorkspacesLoaded(mockData));
+  Future<void> _onSaveLatestOrgDetails(
+    OnSaveLatestOrgDetailsEvent event,
+    Emitter<WorkspaceState> emit,
+  ) async {
+    if (state is WorkspacesLoaded) {
+      try {
+        var response = await updateLatestOrgDetailsUseCase.call(
+          event.updateLatestOrgDetailsModelParams,
+        );
+        if (response != null &&
+            response.status == true &&
+            response.data != null) {
+          emit(OnSuccessLatestOrgDetailsState(response));
+        } else {
+          emit(
+            WorkspaceError(response?.message ?? "Failed to save Latest Org Details."),
+          );
+        }
+      } catch (e) {
+        emit(
+          OnSaveLatestOrgDetailsStateError("An unexpected error occurred: $e"),
+        );
+      }
+    }
   }
 
   void _onToggleOrganization(
@@ -95,14 +79,18 @@ class WorkspaceBloc extends Bloc<WorkspaceEvent, WorkspaceState> {
     Emitter<WorkspaceState> emit,
   ) {
     if (state is WorkspacesLoaded) {
-      final currentOrgs = (state as WorkspacesLoaded).organizations;
-      final updatedOrgs = currentOrgs.map((org) {
-        if (org?.id == event.orgId) {
-          return org?.copyWith(isExpanded: !org.isExpanded);
-        }
-        return org;
-      }).toList();
-      emit(WorkspacesLoaded(updatedOrgs));
+      final currentState = state as WorkspacesLoaded;
+
+      final updatedExpandedIds = Set<int>.from(
+        currentState.expandedOrganizationIds,
+      );
+
+      if (updatedExpandedIds.contains(event.orgId)) {
+        updatedExpandedIds.remove(event.orgId);
+      } else {
+        updatedExpandedIds.add(event.orgId);
+      }
+      emit(currentState.copyWith(expandedOrganizationIds: updatedExpandedIds));
     }
   }
 }

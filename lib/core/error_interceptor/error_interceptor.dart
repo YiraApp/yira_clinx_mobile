@@ -1,35 +1,43 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
-
 import '../constants/constants.dart';
 import '../expention_handler/exception_handler.dart';
 
 class ErrorInterceptor extends Interceptor {
+  final bool showSuccessSnack;
+
+  ErrorInterceptor({this.showSuccessSnack = true});
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (response.data is Map<String, dynamic>) {
-      final bool status = response.data['status'] ?? true;
-      if (!status) {
-        ExceptionHandler.processException(
-          statusCode: HttpStatus.ok,
-          message: response.data['message'],
-        );
-        return handler.reject(DioException(
+    final data = response.data;
+    if (data is! Map<String, dynamic>) {
+      return handler.next(response);
+    }
+    final bool isSuccess = data['status'] ?? true;
+    final String? serverMessage = data['message']?.toString();
+
+    if (!isSuccess) {
+      ExceptionHandler.processException(
+        status: false,
+        statusCode: HttpStatus.ok,
+        message: serverMessage,
+      );
+
+      return handler.reject(
+        DioException(
           requestOptions: response.requestOptions,
           response: response,
           type: DioExceptionType.badResponse,
-        ));
-      }
-      else {
-        if (response.data['message'] != null && response.data['message'].isNotEmpty) {
-          ExceptionHandler.processException(
-            statusCode: HttpStatus.ok,
-            message: response.data['message'],
-          );
-        }
-      }
-
+          message: serverMessage ?? 'Business logic failure',
+        ),
+      );
+    }
+    if (showSuccessSnack && serverMessage != null && serverMessage.trim().isNotEmpty) {
+      ExceptionHandler.processException(
+        status: true,
+        statusCode: HttpStatus.ok,
+        message: serverMessage,
+      );
     }
     return handler.next(response);
   }
@@ -38,10 +46,33 @@ class ErrorInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     int statusCode = err.response?.statusCode ?? 0;
 
-    if (err.type == DioExceptionType.connectionError) statusCode = socket_exception;
-    if (err.type == DioExceptionType.connectionTimeout) statusCode = HttpStatus.gatewayTimeout;
+    switch (err.type) {
+      case DioExceptionType.connectionError:
+        statusCode = socket_exception;
+        break;
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        statusCode = HttpStatus.gatewayTimeout;
+        break;
+      case DioExceptionType.cancel:
+        return handler.next(err);
+      default:
+        break;
+    }
 
-    ExceptionHandler.processException(statusCode: statusCode, message: err.message);
+    String? displayMessage;
+    final responseData = err.response?.data;
+    if (responseData is Map<String, dynamic>) {
+      displayMessage = responseData['message']?.toString();
+    }
+    displayMessage ??= err.message;
+    ExceptionHandler.processException(
+      statusCode: statusCode,
+      status: false,
+      message: displayMessage,
+    );
+
     return handler.next(err);
   }
 }

@@ -14,7 +14,7 @@ import 'month_view.dart';
 /// Advanced Calendar widget.
 class AdvancedCalendar extends StatefulWidget {
   const AdvancedCalendar({
-    Key? key,
+    super.key,
     this.controller,
     this.startWeekDay,
     this.events,
@@ -36,8 +36,7 @@ class AdvancedCalendar extends StatefulWidget {
               innerDot && !keepLineSize ||
               !innerDot && !keepLineSize,
           'keepLineSize should be used only when innerDot is true',
-        ),
-        super(key: key);
+        );
 
   /// Calendar selection date controller.
   final AdvancedCalendarController? controller;
@@ -196,7 +195,7 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
               children: [
                 ValueListenableBuilder<int>(
                   valueListenable: _monthViewCurrentPage,
-                  builder: (_, value, __) {
+                  builder: (_, value, _) {
                     return Header(
                       monthDate:
                           _monthRangeList[_monthViewCurrentPage.value].firstDay,
@@ -251,7 +250,7 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
                 ),
                 AnimatedBuilder(
                   animation: _animationController,
-                  builder: (_, __) {
+                  builder: (_, _) {
                     final height = Tween<double>(
                       begin: widget.weekLineHeight,
                       end:
@@ -261,7 +260,7 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
                       height: height,
                       child: ValueListenableBuilder<DateTime>(
                         valueListenable: _controller,
-                        builder: (_, selectedDate, __) {
+                        builder: (_, selectedDate, _) {
                           return Stack(
                             alignment: Alignment.center,
                             children: [
@@ -309,7 +308,7 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
                               ),
                               ValueListenableBuilder<int>(
                                 valueListenable: _monthViewCurrentPage,
-                                builder: (_, pageIndex, __) {
+                                builder: (_, pageIndex, _) {
                                   final index = selectedDate.findWeekIndex(
                                     _monthRangeList[_monthViewCurrentPage.value]
                                         .dates,
@@ -421,7 +420,7 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
     _handleDateChanged(date);
 
     _monthViewCurrentPage.value = _monthRangeList
-        .lastIndexWhere((monthRange) => monthRange!.dates.contains(date));
+        .lastIndexWhere((monthRange) => monthRange.dates.contains(date));
   }
 
   void _handleDateChanged(DateTime date) {

@@ -2,12 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'metric_tile_item.dart';
 import 'patient_info_card.dart';
 
 class PatientContactCard extends StatelessWidget {
-  final PatientProfileEntity patient;
+  final ContactInformationEntity patient;
   final bool isTab;
   const PatientContactCard({super.key, required this.patient,required this.isTab});
 
@@ -26,7 +27,7 @@ class PatientContactCard extends StatelessWidget {
             isTab: isTab,
             icon: Icons.phone_android_rounded,
             label: 'Phone',
-            value: patient.phone,
+            value: patient.phone ?? '',
             accentColor: Colors.blue,
           ),
           _buildDivider(isDark),
@@ -34,7 +35,7 @@ class PatientContactCard extends StatelessWidget {
             isTab: isTab,
             icon: Icons.alternate_email_rounded,
             label: 'Email Address',
-            value: patient.email,
+            value: patient.emailAddress ?? '',
             accentColor: Colors.teal,
           ),
           _buildDivider(isDark),
@@ -42,7 +43,7 @@ class PatientContactCard extends StatelessWidget {
             isTab: isTab,
             icon: Icons.map_outlined,
             label: 'Residential Address',
-            value: patient.address,
+            value: patient.residentialAddress ?? '',
             accentColor: Colors.indigo,
           ),
           const SizedBox(height: 24),
@@ -103,7 +104,7 @@ class PatientContactCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${patient.emergencyContactName} • ${patient.emergencyContactPhone}',
+                  '${patient.emergencyContact?.name ?? ''} • ${patient.emergencyContact?.phone ?? ''}',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize:isTab?  displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
