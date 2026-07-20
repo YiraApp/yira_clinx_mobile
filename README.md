@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/Platform-Flutter-02569B?logo=flutter&style=for-the-badge" alt="Flutter" />
 </a>
 <a href="https://dart.dev">
-    <img src="https://img.shields.io/badge/Dart-3.10.1-0175C2?logo=dart&style=for-the-badge" alt="Dart" />
+    <img src="https://img.shields.io/badge/Dart-3.11.4-0175C2?logo=dart&style=for-the-badge" alt="Dart" />
 </a>
 <a href="https://firebase.google.com">
     <img src="https://img.shields.io/badge/Backend-Firebase-FFCA28?logo=firebase&style=for-the-badge" alt="Firebase" />
