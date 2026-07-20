@@ -17,6 +17,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
   final Function(String?) onFreqChanged;
   final Function(String?) onDurationChanged;
   final Function(String?) onRouteChanged;
+  final bool isTab;
 
   const PrescribedPrescriptionCard({
     super.key,
@@ -29,7 +30,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
     required this.onDosageChanged,
     required this.onFreqChanged,
     required this.onDurationChanged,
-    required this.onRouteChanged,
+    required this.onRouteChanged, required this.isTab,
   });
 
   @override
@@ -51,15 +52,15 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                   ? Colors.grey.shade100
                   : Colors.white.withOpacity(0.03),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+                topLeft: Radius.circular(fieldBorderRadius),
+                topRight: Radius.circular(fieldBorderRadius),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.medical_services_outlined,
-                  color: theme.primaryColor,
+                  color: isDarkMode?Colors.white:theme.primaryColor,
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -67,8 +68,9 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                   child: CommonText(
                     medicineName,
                     style: TextStyle(
-                      color: theme.primaryColor,
-                      fontSize: displayWidth(context) * 0.032,
+                      color: isDarkMode?Colors.white:theme.primaryColor,
+                      fontSize:isTab
+                          ? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                       fontFamily: appPoppinFont,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -85,7 +87,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color:isDarkMode? darkModeInnerCardColor:Colors.transparent,
+              color:isDarkMode? darkModeCardColor:Colors.transparent,
               borderRadius: BorderRadius.only(bottomLeft: Radius.circular(fieldBorderRadius),bottomRight: Radius.circular(fieldBorderRadius)),
             ),
             padding: const EdgeInsets.all(16),
@@ -108,7 +110,8 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                             style: TextStyle(
                               letterSpacing: 0.5,
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.033,
+                              fontSize: isTab
+                                  ? displayWidth(context) * 0.02:displayWidth(context) * 0.033,
                               fontWeight: .w500,
                             ),
                           ),
@@ -150,12 +153,10 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8),
-                    Wrap(
+                    Row(
                       spacing: spacing,
-                      runSpacing: runSpacing,
                       children: [
-                        SizedBox(
-                          width: itemWidth,
+                        Expanded(
                           child: MedicationDropdownSelector(
                             label: 'Duration',
                             value: currentDuration,
@@ -173,8 +174,7 @@ class PrescribedPrescriptionCard extends StatelessWidget {
                             onChanged: onDurationChanged,
                           ),
                         ),
-                        SizedBox(
-                          width: itemWidth,
+                        Expanded(
                           child: MedicationDropdownSelector(
                             label: 'Route',
                             value: currentRoute,

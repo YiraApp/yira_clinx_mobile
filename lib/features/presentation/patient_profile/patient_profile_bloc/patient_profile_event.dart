@@ -16,3 +16,11 @@ class LoadPatientProfile extends PatientProfileEvent {
   @override
   List<Object?> get props => [patientId];
 }
+
+class TabChanged extends PatientProfileEvent {
+  final int activeTabIndex;
+  const TabChanged(this.activeTabIndex);
+
+  @override
+  List<Object> get props => [activeTabIndex];
+}

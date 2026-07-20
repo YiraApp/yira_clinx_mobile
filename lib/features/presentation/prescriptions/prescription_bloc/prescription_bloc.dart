@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../../../domain/entities/prescriptions/prescription_item.dart';
@@ -24,6 +23,12 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     on<RemoveMedication>(_onRemoveMedication);
     on<UpdateMedicationDetails>(_onUpdateMedicationDetails);
     on<TogglePrescriptionExpansion>(_onTogglePrescriptionExpansion);
+    on<AddPrescriptionRecordNavEvent>((event, emit) async {
+      emit(AddPrescriptionRecordNavState());
+    });
+    on<SinglePrescriptionDetailsNavEvent>((event, emit) async {
+      emit(SinglePrescriptionDetailsNavState(event.prescriptionId));
+    });
   }
 
   void _onLoadPrescriptionData(LoadPrescriptionData event, Emitter<PrescriptionState> emit) {

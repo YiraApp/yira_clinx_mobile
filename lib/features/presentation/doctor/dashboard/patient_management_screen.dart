@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
 import '../../../../core/common_drop_down/common_drop_down.dart';
 import '../../../../core/constants/constants.dart';
-import 'dashboard_bloc/dashboard_bloc.dart';
 
 class PatientManagementScreen extends StatelessWidget {
   const PatientManagementScreen({super.key});
@@ -12,49 +15,49 @@ class PatientManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isTab = isTablet(context);
 
     return BlocProvider(
       create: (context) => DashboardBloc()..add(const GetDashboardData()),
       child: GestureDetector(
-        onTap: () {
-          FocusScope.of(
-              context).unfocus();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
+          appBar: CommonAppBar(
+            actions: const [],
+            onBackPressed: () => Navigator.pop(context),
+          ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: BlocConsumer<DashboardBloc, DashboardState>(
+              buildWhen: (previous, state) => state is! ViewPatientDetailsState,
               listener: (context, state) {
-                if (state.status == DashboardStatus.failure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.errorMessage ?? "Error")),
+                if (state is ViewPatientDetailsState) {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.doctorPatientProfileScreen,
                   );
                 }
               },
               builder: (context, state) {
                 if (state.status == DashboardStatus.loading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state.status == DashboardStatus.success &&
-                    state.patients.isEmpty) {
                   return const Center(
-                    child: Text(
-                      "No patients found",
-                      style: TextStyle(fontFamily: appPoppinFont),
-                    ),
+                    child: CircularProgressIndicator.adaptive(),
                   );
                 }
 
-                return CustomScrollView(
+                return NestedScrollView(
                   physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                          vertical: fieldSpace,
-                        ),
-                        child: Expanded(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      // 1. Title Section
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: screenHorizontalSpacePadding,
+                            right: screenHorizontalSpacePadding,
+                            top: screenTopPadding,
+                            bottom: fieldSpace,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -62,7 +65,9 @@ class PatientManagementScreen extends StatelessWidget {
                                 "Patient Management",
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.045,
+                                  fontSize: isTab
+                                      ? displayWidth(context) * 0.022
+                                      : displayWidth(context) * 0.045,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -71,7 +76,9 @@ class PatientManagementScreen extends StatelessWidget {
                                 "Unified view of patients, medical records, and clinical notes",
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
+                                  fontSize: isTab
+                                      ? displayWidth(context) * 0.018
+                                      : displayWidth(context) * 0.03,
                                   color: Colors.grey,
                                 ),
                               ),
@@ -79,81 +86,232 @@ class PatientManagementScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.only(
-                        left: screenHorizontalSpacePadding,
-                        right: screenHorizontalSpacePadding,
-                        bottom: fieldSpace,
-                      ),
-                      sliver: SliverGrid.count(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 2.1,
-                        children: [
-                          _buildMetricCard(
-                            context: context,
-                            title: "Total Patients",
-                            value: "3",
-                            icon: Icons.person_outline_rounded,
-                            iconColor: Colors.deepPurpleAccent.withOpacity(0.6),
-                            valueColor: isDark ? Colors.white : Colors.black87,
-                          ),
-                          _buildMetricCard(
-                            context: context,
-                            title: "Active Cases",
-                            value: "3",
-                            icon: Icons.timeline_rounded,
-                            iconColor: Colors.green.withOpacity(0.6),
-                            valueColor: Colors.green.shade700,
-                          ),
-                          _buildMetricCard(
-                            context: context,
-                            title: "Critical Cases",
-                            value: "0",
-                            icon: Icons.favorite_border_rounded,
-                            iconColor: Colors.redAccent.withOpacity(0.6),
-                            valueColor: Colors.red.shade700,
-                          ),
-                          _buildMetricCard(
-                            context: context,
-                            title: "Medical Records",
-                            value: "0",
-                            icon: Icons.description_outlined,
-                            iconColor: Colors.indigoAccent.withOpacity(0.6),
-                            valueColor: Colors.indigo.shade700,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                        vertical: 0,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildHeader(context, isDark),
-                      ),
-                    ),
 
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                        vertical: fieldSpace,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: state.patients.length,
-                          itemBuilder: (context, index) {
-                            return PatientCard(patient: state.patients[index]);
-                          },
+                      // 2. Sticky persistently pinned header
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _StickySearchHeaderDelegate(
+                          child: Container(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: screenHorizontalSpacePadding,
+                            ),
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 10),
+                                _buildHeader(context, isDark, isTab),
+                              ],
+                            ),
+                          ),
+                          headerHeight: isTab ? 140.0 : 130.0,
                         ),
                       ),
+                    ];
+                  },
+                  body: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: screenHorizontalSpacePadding,
                     ),
-                  ],
+                    child:
+                        state.status == DashboardStatus.success &&
+                            state.patients.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "No patients found",
+                              style: TextStyle(fontFamily: appPoppinFont),
+                            ),
+                          )
+                        : CustomScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            slivers: [
+                              // Spacing below the pinned search filters header
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 16),
+                              ),
+
+                              // Metrics Component Section integrated cleanly as a sliver layout element
+                              SliverToBoxAdapter(
+                                child: SizedBox(
+                                  height: 110,
+                                  child: isTab
+                                      ? Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildMetricCard(
+                                                context: context,
+                                                title: "Total Patients",
+                                                value: "3",
+                                                icon: Icons
+                                                    .person_outline_rounded,
+                                                iconColor: Colors
+                                                    .deepPurpleAccent
+                                                    .withOpacity(0.6),
+                                                valueColor: isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                                isTab: isTab,
+                                              ),
+                                            ),
+                                            const SizedBox(width: fieldSpace),
+                                            Expanded(
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Active Cases",
+                                                value: "3",
+                                                icon: Icons.timeline_rounded,
+                                                iconColor: Colors.green
+                                                    .withOpacity(0.6),
+                                                valueColor:
+                                                    Colors.green.shade700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: fieldSpace),
+                                            /*Expanded(
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Critical Cases",
+                                                value: "0",
+                                                icon: Icons
+                                                    .favorite_border_rounded,
+                                                iconColor: Colors.redAccent
+                                                    .withOpacity(0.6),
+                                                valueColor: Colors.red.shade700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: fieldSpace),*/
+                                            Expanded(
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Medical Records",
+                                                value: "0",
+                                                icon:
+                                                    Icons.description_outlined,
+                                                iconColor: Colors.indigoAccent
+                                                    .withOpacity(0.6),
+                                                valueColor:
+                                                    Colors.indigo.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : ListView(
+                                          scrollDirection: Axis.horizontal,
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          children: [
+                                            SizedBox(
+                                              width: 140,
+                                              child: _buildMetricCard(
+                                                context: context,
+                                                title: "Total Patients",
+                                                value: "3",
+                                                icon: Icons
+                                                    .person_outline_rounded,
+                                                iconColor: Colors
+                                                    .deepPurpleAccent
+                                                    .withOpacity(0.6),
+                                                valueColor: isDark
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                                isTab: isTab,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            SizedBox(
+                                              width: 140,
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Active Cases",
+                                                value: "3",
+                                                icon: Icons.timeline_rounded,
+                                                iconColor: Colors.green
+                                                    .withOpacity(0.6),
+                                                valueColor:
+                                                    Colors.green.shade700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            /*SizedBox(
+                                              width: 140,
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Critical Cases",
+                                                value: "0",
+                                                icon: Icons
+                                                    .favorite_border_rounded,
+                                                iconColor: Colors.redAccent
+                                                    .withOpacity(0.6),
+                                                valueColor: Colors.red.shade700,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),*/
+                                            SizedBox(
+                                              width: 140,
+                                              child: _buildMetricCard(
+                                                isTab: isTab,
+                                                context: context,
+                                                title: "Medical Records",
+                                                value: "0",
+                                                icon:
+                                                    Icons.description_outlined,
+                                                iconColor: Colors.indigoAccent
+                                                    .withOpacity(0.6),
+                                                valueColor:
+                                                    Colors.indigo.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+
+                              // Spacing layout helper between metric row and list elements
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 16),
+                              ),
+
+                              // The Main Patient List View rendering safely
+                              SliverList(
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 12.0,
+                                    ),
+                                    key: ValueKey(
+                                      state.patients[index].id ??
+                                          index.toString(),
+                                    ),
+                                    child: PatientCard(
+                                      isTab: isTab,
+                                      patient: state.patients[index],
+                                      onTap: () {
+                                        context.read<DashboardBloc>().add(
+                                          ViewPatientDetailsEvent(
+                                            patientId:
+                                                state.patients[index].id ?? '1',
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                }, childCount: state.patients.length),
+                              ),
+
+                              // Bottom spacer layout helper for list ending overscroll feel
+                              const SliverToBoxAdapter(
+                                child: SizedBox(height: 24),
+                              ),
+                            ],
+                          ),
+                  ),
                 );
               },
             ),
@@ -170,15 +328,20 @@ class PatientManagementScreen extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required Color valueColor,
+    required bool isTab,
   }) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTab ? 10 : 16,
+        vertical: isTab ? 10 : 12,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? darkModeCardColor : Colors.white,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey.withOpacity(0.15),
+          color: isDark ? darkModeBorderColor : lightModeBorderColor,
           width: 1,
         ),
         boxShadow: [
@@ -191,135 +354,206 @@ class PatientManagementScreen extends StatelessWidget {
             ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: isTab
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.03,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.045,
-                    fontWeight: FontWeight.w600,
-                    color: valueColor,
+                Icon(icon, size: 20, color: iconColor),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab
+                              ? displayWidth(context) * 0.018
+                              : displayWidth(context) * 0.03,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab
+                              ? displayWidth(context) * 0.022
+                              : displayWidth(context) * 0.045,
+                          fontWeight: FontWeight.w600,
+                          color: valueColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: displayWidth(context) * 0.03,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        value,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: displayWidth(context) * 0.045,
+                          fontWeight: FontWeight.w600,
+                          color: valueColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(icon, size: 20, color: iconColor),
+              ],
             ),
-          ),
-          Icon(icon, size: 20, color: iconColor),
-        ],
-      ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Container(
-      color: isDark ? Colors.transparent : Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 0),
-      child: Column(
-        children: [
-          TextField(
-            onChanged: (val) {
-              context.read<DashboardBloc>().add(SearchPatients(val));
-            },
-            decoration: InputDecoration(
-              hintStyle: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.032,
+  Widget _buildHeader(BuildContext context, bool isDark, bool isTab) {
+    return Column(
+      children: [
+        TextField(
+          onChanged: (val) {
+            context.read<DashboardBloc>().add(SearchPatients(val));
+          },
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: isTab
+                ? displayWidth(context) * 0.018
+                : displayWidth(context) * 0.032,
+          ),
+          decoration: InputDecoration(
+            hintStyle: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab
+                  ? displayWidth(context) * 0.018
+                  : displayWidth(context) * 0.032,
+            ),
+            hintText: "Search by name, ID, phone...",
+            prefixIcon: const Icon(Icons.search, color: Colors.blueGrey),
+            filled: true,
+            fillColor: isDark ? darkModeCardColor : lightModeTextFieldBgColor,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 0,
+              horizontal: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              borderSide: BorderSide(
+                color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                width: 1.0,
               ),
-              hintText: "Search by name, ID, phone...",
-              prefixIcon: const Icon(Icons.search, color: Colors.blueGrey),
-              filled: true,
-              fillColor: Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 0,
-                horizontal: 16,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              borderSide: BorderSide(
+                color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                width: 1.0,
               ),
-
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1.0,
-                ),
-              ),
-
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1.0,
-                ),
-              ),
-
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                  color: Colors.grey.withOpacity(0.2),
-                  width: 1.5,
-                ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              borderSide: BorderSide(
+                color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                width: 1.5,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: CommonDropdown(
-                  title: "All Status",
-                  selectedValue: "All",
-                  options: const [
-                    "All",
-                    "Active",
-                    "Monitoring",
-                    "Recovering",
-                    "Critical",
-                    "Stable",
-                  ],
-                  onSelected: (value) {
-                    context.read<DashboardBloc>().add(
-                      FilterPatients(status: value),
-                    );
-                  },
-                ),
+        ),
+        const SizedBox(height: fieldSpace),
+        Row(
+          children: [
+            Expanded(
+              child: CommonDropdown(
+                title: "All Status",
+                selectedValue: "All",
+                options: const [
+                  "All",
+                  "Active",
+                  "Monitoring",
+                  "Recovering",
+                  "Critical",
+                  "Stable",
+                ],
+                onSelected: (value) {
+                  context.read<DashboardBloc>().add(
+                    FilterPatients(status: value),
+                  );
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CommonDropdown(
-                  title: "All Genders",
-                  selectedValue: "All",
-                  options: const ["All", "Male", "Female", "Others"],
-                  onSelected: (value) {
-                    context.read<DashboardBloc>().add(
-                      FilterPatients(gender: value),
-                    );
-                  },
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: CommonDropdown(
+                title: "All Genders",
+                selectedValue: "All",
+                options: const ["All", "Male", "Female", "Others"],
+                onSelected: (value) {
+                  context.read<DashboardBloc>().add(
+                    FilterPatients(gender: value),
+                  );
+                },
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
+  }
+}
+
+class _StickySearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double headerHeight;
+
+  const _StickySearchHeaderDelegate({
+    required this.child,
+    required this.headerHeight,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  double get maxExtent => headerHeight;
+
+  @override
+  double get minExtent => headerHeight;
+
+  @override
+  bool shouldRebuild(covariant _StickySearchHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child ||
+        oldDelegate.headerHeight != headerHeight;
   }
 }

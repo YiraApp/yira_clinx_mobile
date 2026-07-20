@@ -11,6 +11,7 @@ class CommonBorderButton extends StatelessWidget {
   final double height;
   final Color? borderColor;
   final Color? textColor;
+  final bool? isPatientDetail;
 
 
   const CommonBorderButton({
@@ -21,7 +22,7 @@ class CommonBorderButton extends StatelessWidget {
     this.width,
     this.height = 42,
     this.borderColor,
-    this.textColor,
+    this.textColor, this.isPatientDetail = false,
   });
 
   @override
@@ -40,14 +41,14 @@ class CommonBorderButton extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isPatientDetail?? false ?8:fieldBorderRadius),
         border: Border.all(color: effectiveBorderColor, width: 1.2),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           child: Padding(
             padding: EdgeInsets.only(left: 8,right: 8),
             child: Row(
@@ -62,7 +63,7 @@ class CommonBorderButton extends StatelessWidget {
                   text,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
+                    fontSize:isTablet(context)?displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                     fontWeight: FontWeight.w500,
                     color: effectiveTextColor,
                     height: 1.0,

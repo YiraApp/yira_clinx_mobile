@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
@@ -13,18 +14,11 @@ class AppearanceScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final double fontScale = isTablet(context) ? 1.2 : 1.0;
     final bool isDark = theme.brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.appBarTheme.iconTheme?.color,
-            size: displayWidth(context) * 0.06,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+
       ),
       body: SafeArea(
         child: Padding(
@@ -35,7 +29,7 @@ class AppearanceScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                   boxShadow: [
                     BoxShadow(
                       color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
@@ -51,13 +45,13 @@ class AppearanceScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.palette_outlined,
                             color: theme.primaryColor,
-                            size: 28 * fontScale),
+                            size: isTab?19 * fontScale: 28 * fontScale),
                         const SizedBox(width: 12),
                         CommonText(
                           "Appearance",
                           style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.038,
+                              fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.038,
                               fontWeight: FontWeight.w600),
                         ),
                       ],
@@ -67,7 +61,7 @@ class AppearanceScreen extends StatelessWidget {
                       "Customize how the application looks",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.032,
+                        fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.032,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -75,12 +69,12 @@ class AppearanceScreen extends StatelessWidget {
                       "Theme",
                       style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.038,
+                          fontSize:  isTab? displayWidth(context) * 0.022:displayWidth(context) * 0.038,
                           fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 16),
 
-                    const _ThemeSelectorRow(),
+                    _ThemeSelectorRow(isTab: isTab),
 
                     const SizedBox(height: 30),
                   ],
@@ -95,7 +89,8 @@ class AppearanceScreen extends StatelessWidget {
 }
 
 class _ThemeSelectorRow extends StatelessWidget {
-  const _ThemeSelectorRow();
+  final bool isTab;
+  const _ThemeSelectorRow({required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +102,7 @@ class _ThemeSelectorRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _ThemeOptionCard(
+              isTab: isTab,
               label: "Light",
               icon: Icons.wb_sunny_outlined,
               isSelected: state.themeMode == ThemeMode.light,
@@ -114,6 +110,7 @@ class _ThemeSelectorRow extends StatelessWidget {
               iconColor: Colors.orange.shade400,
             ),
             _ThemeOptionCard(
+              isTab: isTab,
               label: "Dark",
               icon: Icons.dark_mode_outlined,
               isSelected: state.themeMode == ThemeMode.dark,
@@ -125,7 +122,7 @@ class _ThemeSelectorRow extends StatelessWidget {
               icon: Icons.important_devices_outlined,
               isSelected: state.themeMode == ThemeMode.system,
               onTap: () => context.read<ThemeBloc>().add(SetThemeEvent(ThemeMode.system)),
-              iconColor: Colors.blue.shade600,
+              iconColor: Colors.blue.shade600, isTab: isTab,
             ),
           ],
         );
@@ -140,13 +137,14 @@ class _ThemeOptionCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final Color iconColor;
+  final bool isTab;
 
   const _ThemeOptionCard({
     required this.label,
     required this.icon,
     required this.isSelected,
     required this.onTap,
-    required this.iconColor,
+    required this.iconColor, required this.isTab,
   });
 
   @override
@@ -161,7 +159,7 @@ class _ThemeOptionCard extends StatelessWidget {
         width: displayWidth(context) * 0.24,
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isSelected ? primary : (isDark ? Colors.white24 : Colors.grey.shade200),
             width: isSelected ? 2 : 1,
@@ -182,7 +180,7 @@ class _ThemeOptionCard extends StatelessWidget {
               label,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.032,
+                fontSize:isTab?displayWidth(context) * 0.019: displayWidth(context) * 0.032,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected
                     ? (isDark ? Colors.white : Colors.black)

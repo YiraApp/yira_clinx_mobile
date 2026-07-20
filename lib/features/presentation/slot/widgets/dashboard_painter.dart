@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/constants.dart';
+
 class DashedBorderPainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
@@ -22,7 +24,7 @@ class DashedBorderPainter extends CustomPainter {
     final path = Path()
       ..addRRect(RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, size.width, size.height),
-        const Radius.circular(16),
+        const Radius.circular(fieldBorderRadius),
       ));
 
     for (final metric in path.computeMetrics()) {

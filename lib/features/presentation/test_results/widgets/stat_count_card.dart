@@ -31,7 +31,7 @@ class StatCountCard extends StatelessWidget {
       width: cardWidth,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
       child: Column(

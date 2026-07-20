@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/tele_consult_widget.dart';
+import '../../../core/colors/colors.dart';
+import '../../../core/common_appbar/common_app_bar.dart';
 import '../../../core/common_drop_down/common_drop_down.dart';
 import '../../../core/common_input_fields/common_input_field_unlimited.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -19,27 +21,15 @@ class AddNewAppointmentScreen extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
     final double width = displayWidth(context);
+    final bool isTab = isTablet(context);
     return BlocConsumer<AppointmentBloc, AppointmentState>(
       listener: (context, state) {},
       builder: (context, state) {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color: theme.appBarTheme.iconTheme?.color,
-                size: width * 0.06,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: CommonText(
-              "Book Appointment",
-              style: theme.appBarTheme.titleTextStyle?.copyWith(
-                fontFamily: appPoppinFont,
-                fontSize: width * 0.045, // Responsive title size
-              ),
-            ),
+          appBar: CommonAppBar(
+            actions: [],
+            titleText: "Book Appointment",
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -54,7 +44,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Patient Search *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -64,12 +54,12 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     style: TextStyle(
                       decorationThickness: 0,
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.03,
+                      fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                     ),
                     decoration: InputDecoration(
                       hintStyle: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.03,
+                        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurfaceVariant.withOpacity(0.6),
@@ -81,34 +71,32 @@ class AddNewAppointmentScreen extends StatelessWidget {
                         size: 18,
                       ),
                       filled: true,
-                      fillColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
                       contentPadding: const EdgeInsets.symmetric(
                         vertical: 0,
                         horizontal: 16,
                       ),
 
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.0,
                         ),
                       ),
 
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.0,
                         ),
                       ),
 
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
                           width: 1.5,
                         ),
                       ),
@@ -119,7 +107,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Date *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -127,14 +115,14 @@ class AddNewAppointmentScreen extends StatelessWidget {
                   _buildDOBPicker(
                     context,
                     state.selectedDob ?? DateTime(2000, 1, 1),
-                    isDark,
+                    isDark,isTab
                   ),
                   SizedBox(height: fieldSpace),
                   CommonText(
                     'Available slot *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -157,7 +145,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Duration',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -173,7 +161,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Visit Type *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -194,7 +182,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Assign Doctor *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -214,7 +202,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     'Reason/ Chief Complaint *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -236,11 +224,12 @@ class AddNewAppointmentScreen extends StatelessWidget {
                   ),
                   SizedBox(height: fieldSpace),
                   TeleconsultationCard(
+                    isTab: isTab,
                     isDark: isDark,
                     isSelected: true,
                     onChanged: (bool? newValue) {},
                   ),
-                  SizedBox(height: 40),
+                  SizedBox(height: fieldSpace*3),
                   CustomElevatedButton(
                     text: "Book Appointment",
                     onPressed: () {
@@ -250,17 +239,17 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     height: 50,
                     borderRadius: 8,
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: fieldSpace*1.5),
                   SizedBox(
                     height: 50,
                     width: displayWidth(context),
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                        side: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor),
                         foregroundColor: Colors.grey,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
                         ),
                       ),
                       child: CommonText(
@@ -268,7 +257,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w500,
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                         ),
                       ),
                     ),
@@ -314,7 +303,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     width: 45,
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -381,6 +370,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
     BuildContext context,
     DateTime? currentDob,
     bool isDark,
+      bool isTab
   ) {
     final DateTime displayDate = currentDob ?? DateTime(2000, 1, 1);
 
@@ -395,7 +385,7 @@ class AddNewAppointmentScreen extends StatelessWidget {
       style: TextStyle(
         decorationThickness: 0,
         fontFamily: appPoppinFont,
-        fontSize: displayWidth(context) * 0.03,
+        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
       ),
 
       decoration: InputDecoration(
@@ -412,30 +402,26 @@ class AddNewAppointmentScreen extends StatelessWidget {
           size: 18,
         ),
         filled: true,
-        fillColor: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.0,
           ),
         ),
-
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.0,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(
-            color: Colors.grey.withOpacity(0.2),
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
             width: 1.5,
           ),
         ),

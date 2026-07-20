@@ -1,6 +1,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/detail_display_card.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/section_label_text.dart';
@@ -26,33 +28,23 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title:  CommonText("Details",style: TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: displayWidth(context) * 0.045,
-          fontWeight: FontWeight.w600,
-        ),),
-        centerTitle: false,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText: "Details",
       ),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
   listener: (context, state) {
   },
   builder: (context, state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: isDark ? theme.colorScheme.surface : Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              color: isDark ? darkModeCardColor : Colors.white,
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
               border: Border.all(color: Colors.grey.withOpacity(0.15)),
             ),
             child: Column(
@@ -63,14 +55,14 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabelText(text: "Chief Complaint"),
+                      SectionLabelText(text: "Chief Complaint", isTab: isTab,),
                       const SizedBox(height: 8),
                       CommonText(
                         chiefComplaintText,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.032,
-                          fontWeight: FontWeight.w500,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -82,14 +74,14 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionLabelText(text: "Diagnosis"),
+                       SectionLabelText(text: "Diagnosis", isTab: isTab,),
                       const SizedBox(height: 8),
                       CommonText(
                         diagnosisText,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.032,
-                          fontWeight: FontWeight.w500,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -100,12 +92,13 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: fieldSpace),
 
-          const SectionLabelText(text: "Vital Signs"),
+           SectionLabelText(text: "Vital Signs", isTab: isTab,),
           const SizedBox(height: fieldSpace),
           Row(
             children: [
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Blood Pressure",
                   value: "145/90",
                   accentColor: const Color(0xFF2563EB), // Primary Blue
@@ -114,6 +107,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Heart Rate",
                   value: "74",
                   accentColor: const Color(0xFFDC2626), // Alert Red
@@ -126,6 +120,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Temperature",
                   value: "99",
                   unit: "°C",
@@ -135,6 +130,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: VitalSignTile(
+                  isTab: isTab,
                   label: "Weight",
                   value: "83",
                   unit: "kg",
@@ -145,6 +141,7 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           VitalSignTile(
+            isTab: isTab,
             label: "Height",
             value: "176",
             unit: "cm",
@@ -152,17 +149,17 @@ class MedicalRecordDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Symptoms"),
+           SectionLabelText(text: "Symptoms", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: symptomsText),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Physical Examination"),
+           SectionLabelText(text: "Physical Examination", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: physicalExamText),
           const SizedBox(height: 28),
 
-          const SectionLabelText(text: "Treatment Plan"),
+           SectionLabelText(text: "Treatment Plan", isTab: isTab,),
           const SizedBox(height: 8),
           DetailDisplayCard(text: treatmentPlanText),
           const SizedBox(height: 20),

@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../colors/colors.dart';
+import '../constants/constants.dart';
+
 class BaseShimmer extends StatelessWidget {
   final Widget child;
 
@@ -30,8 +33,8 @@ class WelcomeCardShimmer extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111C24) : Colors.white,
-        borderRadius: BorderRadius.circular(24.0),
+        color: isDark ? darkModeWelcomeCardColor: Colors.white,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Row(
@@ -63,7 +66,6 @@ class WelcomeCardShimmer extends StatelessWidget {
   }
 }
 
-/// Shimmer placeholder for a single Metric Grid item
 class MetricCardShimmer extends StatelessWidget {
   const MetricCardShimmer({super.key});
 
@@ -75,7 +77,7 @@ class MetricCardShimmer extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[900] : Colors.white,
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Column(
@@ -97,8 +99,6 @@ class MetricCardShimmer extends StatelessWidget {
     );
   }
 }
-
-/// Shimmer placeholder for Appointment and Patient List tiles
 class AppointmentCardShimmer extends StatelessWidget {
   const AppointmentCardShimmer({super.key});
 
@@ -111,7 +111,7 @@ class AppointmentCardShimmer extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey[900] : Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: BaseShimmer(
         child: Row(
@@ -128,7 +128,7 @@ class AppointmentCardShimmer extends StatelessWidget {
                 ],
               ),
             ),
-            Container(width: 60, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+            Container(width: 60, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),
           ],
         ),
       ),
@@ -136,7 +136,6 @@ class AppointmentCardShimmer extends StatelessWidget {
   }
 }
 
-/// Shimmer placeholder for both Weekly and Monthly charts
 class ChartCardShimmer extends StatelessWidget {
   const ChartCardShimmer({super.key});
 
@@ -159,11 +158,10 @@ class ChartCardShimmer extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(width: 140, height: 16, color: Colors.white),
-                Container(width: 70, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                Container(width: 70, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(fieldBorderRadius))),
               ],
             ),
             const SizedBox(height: 32.0),
-            // Mocking a bar chart look inside the shimmer
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -186,7 +184,6 @@ class ChartCardShimmer extends StatelessWidget {
   }
 }
 
-/// Combines all pieces into a beautiful structural skeleton layout matching your screen
 class DoctorDashboardSkeleton extends StatelessWidget {
   const DoctorDashboardSkeleton({super.key});
 
@@ -199,8 +196,6 @@ class DoctorDashboardSkeleton extends StatelessWidget {
         children: [
           const WelcomeCardShimmer(),
           const SizedBox(height: 20.0),
-
-          // Metrics Grid Skeleton
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,

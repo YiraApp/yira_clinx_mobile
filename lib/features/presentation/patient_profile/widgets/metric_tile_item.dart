@@ -9,6 +9,7 @@ class MetricTileItem extends StatelessWidget {
   final String value;
   final Color accentColor;
   final Color? valueColor;
+  final bool isTab;
 
   const MetricTileItem({
     super.key,
@@ -16,7 +17,7 @@ class MetricTileItem extends StatelessWidget {
     required this.label,
     required this.value,
     required this.accentColor,
-    this.valueColor,
+    this.valueColor, required this.isTab,
   });
 
   @override
@@ -30,7 +31,7 @@ class MetricTileItem extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isDark ? accentColor.withOpacity(0.18) : accentColor.withOpacity(0.07),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
           ),
           child: Icon(
             icon,
@@ -47,7 +48,7 @@ class MetricTileItem extends StatelessWidget {
                 label.toUpperCase(),
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.024,
+                  fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.024,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
@@ -58,7 +59,7 @@ class MetricTileItem extends StatelessWidget {
                 value,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                   fontWeight: FontWeight.w500,
                   height: 1.3,
                   color: valueColor ?? (isDark ? Colors.white.withOpacity(0.9) : Colors.black87),

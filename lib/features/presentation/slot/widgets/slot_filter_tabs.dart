@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
@@ -9,6 +10,7 @@ class SlotFilterTabs extends StatelessWidget {
   final int bookedCount;
   final int availableCount;
   final ValueChanged<int> onTabSelected;
+  final bool isTab;
 
   const SlotFilterTabs({
     super.key,
@@ -16,7 +18,7 @@ class SlotFilterTabs extends StatelessWidget {
     required this.allCount,
     required this.bookedCount,
     required this.availableCount,
-    required this.onTabSelected,
+    required this.onTabSelected, required this.isTab,
   });
 
   @override
@@ -27,9 +29,9 @@ class SlotFilterTabs extends StatelessWidget {
       height: 45,
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white10.withOpacity(0.02)
+            ? darkModeCardColor
             : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         children: [
@@ -53,9 +55,9 @@ class SlotFilterTabs extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? (theme.brightness == Brightness.light ? Colors.white : Colors.grey[800])
+                ? (theme.brightness == Brightness.light ? Colors.white : Colors.white70)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             boxShadow: isSelected && theme.brightness == Brightness.light
                 ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
                 : null,
@@ -65,7 +67,7 @@ class SlotFilterTabs extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context)*0.03,
+              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context)*0.03,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected
                   ? theme.colorScheme.primary

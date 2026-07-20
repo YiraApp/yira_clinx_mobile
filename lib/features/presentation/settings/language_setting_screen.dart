@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -15,32 +16,12 @@ class LanguageSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    bool isTab = isTablet(context);
     final double fontScale = isTablet(context) ? 1.2 : 1.0;
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.language, color: theme.primaryColor, size: 28 * fontScale),
-            const SizedBox(width: 12),
-            CommonText(
-              "Language Settings",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.045,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.titleLarge?.color,
-              ),
-            )
-          ],
-        ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.appBarTheme.iconTheme?.color,
-            size: displayWidth(context) * 0.06,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        titleText: "Language Settings",
+
 
       ),
       body: BlocConsumer<SettingsBloc,SettingsState>(
@@ -61,7 +42,7 @@ class LanguageSettingsScreen extends StatelessWidget {
           return SingleChildScrollView(
             padding: EdgeInsets.symmetric(
                 horizontal: screenHorizontalSpacePadding,
-                vertical: 20.0
+                vertical: screenTopPadding
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +51,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   'Select Language',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
+                    fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                     letterSpacing: 1.1,
                     color: primaryColor,
                     fontWeight: FontWeight.w600,
@@ -83,12 +64,13 @@ class LanguageSettingsScreen extends StatelessWidget {
                   'Choose your preferred language for the application interface and communications.',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context) * 0.032,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
                 const SizedBox(height: 24),
                 _LanguageCard(
+                  isTab: isTab,
                   label: 'English',
                   nativeLabel: 'English',
                   isSelected: state.selectedLanguageCode == 'en',
@@ -96,6 +78,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   onTap: () => context.read<SettingsBloc>().add(LanguageChanged('en')),
                 ),
                 _LanguageCard(
+                  isTab: isTab,
                   label: 'Hindi',
                   nativeLabel: 'हिन्दी',
                   isSelected: state.selectedLanguageCode == 'hi',
@@ -103,6 +86,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   onTap: () => context.read<SettingsBloc>().add(LanguageChanged('hi')),
                 ),
                 _LanguageCard(
+                  isTab: isTab,
                   label: 'Telugu',
                   nativeLabel: 'తెలుగు',
                   isSelected: state.selectedLanguageCode == 'te',
@@ -110,6 +94,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   onTap: () => context.read<SettingsBloc>().add(LanguageChanged('te')),
                 ),
                 _LanguageCard(
+                  isTab: isTab,
                   label: 'Marathi',
                   nativeLabel: 'मराठी',
                   isSelected: state.selectedLanguageCode == 'mr',
@@ -117,6 +102,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   onTap: () => context.read<SettingsBloc>().add(LanguageChanged('mr')),
                 ),
                 _LanguageCard(
+                  isTab: isTab,
                   label: 'Tamil',
                   nativeLabel: 'தமிழ்',
                   isSelected: state.selectedLanguageCode == 'ta',
@@ -131,7 +117,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: theme.primaryColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +126,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                         'Current selection: $currentFullDisplayName',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.035,
+                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.035,
                           color: theme.primaryColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -150,7 +136,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                         'The interface will be displayed in $languageOnly after saving. Some system notifications may still appear in the default system language.',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                           height: 1.4,
                         ),
                         maxLines: 5,
@@ -174,7 +160,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                       ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                      child: CircularProgressIndicator.adaptive( strokeWidth: 2)
                   )
                       : null,
                 ),
@@ -193,13 +179,14 @@ class _LanguageCard extends StatelessWidget {
   final bool isSelected;
   final double fontScale;
   final VoidCallback onTap;
+  final bool isTab;
 
   const _LanguageCard({
     required this.label,
     required this.nativeLabel,
     required this.isSelected,
     required this.fontScale,
-    required this.onTap,
+    required this.onTap, required this.isTab,
   });
 
   @override
@@ -207,21 +194,21 @@ class _LanguageCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: fieldSpace),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: Container(
           padding: EdgeInsets.symmetric(
               horizontal: 14,
-              vertical: isTablet(context) ? 22 : 12
+              vertical: isTab ? 22 : 12
           ),
           decoration: BoxDecoration(
             color: theme.inputDecorationTheme.fillColor,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(
               color: isSelected ? theme.primaryColor : Colors.grey.shade300,
-              width: isSelected ? 2.5 : 1,
+              width: isSelected ? 2 : 0.5,
             ),
           ),
           child: Row(
@@ -234,7 +221,7 @@ class _LanguageCard extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.032,
+                      fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                       height: 1.4,
                     ),
                   ),
@@ -243,7 +230,7 @@ class _LanguageCard extends StatelessWidget {
                     nativeLabel,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.038,
+                      fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.038,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
                     ),

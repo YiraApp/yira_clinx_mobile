@@ -14,6 +14,9 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
     on<FetchUploadedRecords>(_onFetchUploadedRecords);
     on<FilterCategoryChanged>(_onFilterCategoryChanged);
     on<DeleteUploadedRecordItem>(_onDeleteUploadedRecordItem);
+    on<UploadRecordScreenNavEvent>((event, emit) async {
+      emit(UploadRecordScreenNavState());
+    });
   }
 
   Future<void> _onFetchUploadedRecords(FetchUploadedRecords event, Emitter<UploadedBlocState> emit) async {
@@ -45,13 +48,10 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
       filteredRecords: _filterData(updatedList, state.selectedCategory),
     ));
   }
-
-  // Pure filtering function mapping UI states directly to Entity states
   List<UploadedRecord> _filterData(List<UploadedRecord> list, String category) {
     if (category.toLowerCase() == 'all') {
       return list;
     }
-    // Strict match filter evaluating lowercase string sequences
     return list.where((item) => item.category.toLowerCase() == category.toLowerCase()).toList();
   }
 }

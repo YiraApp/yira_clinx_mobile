@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/yira_colors/yira_colors.dart' hide textLightModeColor;
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -17,9 +16,10 @@ class DocAppointmentCard extends StatelessWidget {
   final Color statusColor;
   final Color statusTextColor;
   final VoidCallback? onTap;
+  final bool isTab;
 
   const DocAppointmentCard({
-    super.key, // Modern super parameter declaration format
+    super.key,
     required this.initials,
     required this.name,
     required this.subtitle,
@@ -28,7 +28,7 @@ class DocAppointmentCard extends StatelessWidget {
     required this.statusLabel,
     required this.statusColor,
     required this.statusTextColor,
-    this.onTap,
+    this.onTap, required this.isTab,
   });
 
   @override
@@ -39,24 +39,24 @@ class DocAppointmentCard extends StatelessWidget {
     final primaryText = isDark ? Colors.white : textLightModeColor;
     final secondaryText = isDark ? textLightDarkColor : scoreSubTextColor;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(fieldBorderRadius),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: fieldSpace),
-        padding: const EdgeInsets.all(14.0),
-        decoration: BoxDecoration(
-          color: containerBg,
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: titleSpace),
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: containerBg,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: Column(
           crossAxisAlignment: .end,
           children: [
@@ -75,7 +75,7 @@ class DocAppointmentCard extends StatelessWidget {
                     initials,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context)*0.035,
+                      fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.035,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : statusTextColor,
                       letterSpacing: -0.2,
@@ -99,7 +99,7 @@ class DocAppointmentCard extends StatelessWidget {
                               name,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context)*0.035,
+                                fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.035,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: -0.3,
                               ),
@@ -115,7 +115,7 @@ class DocAppointmentCard extends StatelessWidget {
                         timeOrDate,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize: isTab? displayWidth(context)*0.016:displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: secondaryText,
                         ),
@@ -125,7 +125,7 @@ class DocAppointmentCard extends StatelessWidget {
                         subtitle,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize:isTab? displayWidth(context)*0.016: displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: Theme.of(context).primaryColor,
                         ),
@@ -137,7 +137,7 @@ class DocAppointmentCard extends StatelessWidget {
                         description,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context)*0.03,
+                          fontSize: isTab? displayWidth(context)*0.016:displayWidth(context)*0.03,
                           fontWeight: FontWeight.w500,
                           color: secondaryText,
                         ),
@@ -165,7 +165,7 @@ class DocAppointmentCard extends StatelessWidget {
               child: Text(
                 statusLabel.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize:isTab? displayWidth(context)*0.01: 10,
                   fontWeight: FontWeight.w800,
                   color: statusTextColor,
                   letterSpacing: 0.3,

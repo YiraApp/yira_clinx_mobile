@@ -40,3 +40,24 @@ class NotificationToggleChanged extends SettingsEvent {
   List<Object?> get props => [type, isEnabled];
 }
 
+class PasswordAndSecurityNavEvent extends SettingsEvent {
+  @override
+  List<Object?> get props => [];
+}
+class NotificationNavEvent extends SettingsEvent {
+  @override
+  List<Object?> get props => [];
+}
+class LanguageNavEvent extends SettingsEvent {
+  @override
+  List<Object?> get props => [];
+}
+class ThemeNavEvent extends SettingsEvent {
+  @override
+  List<Object?> get props => [];
+}
+class DeleteAccountNavEvent extends SettingsEvent {
+  @override
+  List<Object?> get props => [];
+}
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -18,8 +19,8 @@ class DetailDisplayCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surface : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? darkModeCardColor : Colors.white,
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.grey.withOpacity(0.15)),
       ),
       child: CommonText(

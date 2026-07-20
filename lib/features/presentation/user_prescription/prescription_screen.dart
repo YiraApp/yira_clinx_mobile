@@ -61,7 +61,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
           },
           builder: (context, state) {
             if (state.status == MedicationStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
             return CustomScrollView(
               slivers: [
@@ -124,7 +124,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
                                 ),
 
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                                   borderSide: BorderSide(
                                     color: Colors.grey.withOpacity(0.2),
                                     width: 1.0,
@@ -132,7 +132,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
                                 ),
 
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                                   borderSide: BorderSide(
                                     color: Colors.grey.withOpacity(0.2),
                                     width: 1.0,
@@ -140,7 +140,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
                                 ),
 
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                                   borderSide: BorderSide(
                                     color: Colors.grey.withOpacity(0.2),
                                     width: 1.5,
@@ -298,7 +298,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
@@ -419,7 +419,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

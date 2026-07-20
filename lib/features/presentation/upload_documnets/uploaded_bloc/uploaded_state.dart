@@ -11,7 +11,7 @@ class UploadedBlocState {
     this.status = UploadedStatus.initial,
     this.allRecords = const [],
     this.filteredRecords = const [],
-    this.selectedCategory = 'All', // Set to match 'All' tab exactly
+    this.selectedCategory = 'All',
   });
 
   UploadedBlocState copyWith({
@@ -27,4 +27,7 @@ class UploadedBlocState {
       selectedCategory: selectedCategory ?? this.selectedCategory,
     );
   }
+}
+class UploadRecordScreenNavState extends UploadedBlocState{
+
 }

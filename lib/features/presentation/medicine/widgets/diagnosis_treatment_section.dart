@@ -8,11 +8,12 @@ import '../../../../core/constants/constants.dart';
 class DiagnosisTreatmentSection extends StatelessWidget {
   final TextEditingController diagnosisController;
   final TextEditingController treatmentPlanController;
+  final bool isTab;
 
   const DiagnosisTreatmentSection({
     super.key,
     required this.diagnosisController,
-    required this.treatmentPlanController,
+    required this.treatmentPlanController, required this.isTab,
   });
 
   @override
@@ -21,21 +22,21 @@ class DiagnosisTreatmentSection extends StatelessWidget {
     final labelStyle = TextStyle(
       fontWeight: FontWeight.w500,
       fontFamily: appPoppinFont,color: Colors.grey,
-      fontSize: displayWidth(context) * 0.032,
+      fontSize:isTab? displayWidth(context) * 0.018:  displayWidth(context) * 0.032,
     );
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: "Diagnosis & Treatment"),
+         SectionHeader(title: "Diagnosis & Treatment", isTab: isTab,),
         const SizedBox(height: 16),
 
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? theme.colorScheme.surface : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
           ),
           child: Column(
@@ -47,7 +48,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                 height: 80,
                 child: CommonInputFieldUnlimited(
                   suffixIcon: null,
-                  borderRadius: 12,
+                  borderRadius:  fieldBorderRadius,
                   textInputAction: TextInputAction.next,
                   controller: diagnosisController,
                   hintText: "Search diagnosis...",
@@ -62,7 +63,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                 height: 80,
                 child: CommonInputFieldUnlimited(
                   suffixIcon: null,
-                  borderRadius: 12,
+                  borderRadius:  fieldBorderRadius,
                   textInputAction: TextInputAction.done,
                   controller: treatmentPlanController,
                   hintText: "Treatment plan...",

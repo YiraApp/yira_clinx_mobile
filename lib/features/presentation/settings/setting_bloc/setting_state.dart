@@ -80,3 +80,24 @@ class SettingsState extends Equatable {
     prescriptionReminders,
   ];
 }
+
+class PasswordAndSecurityNavState extends SettingsState {
+  @override
+  List<Object?> get props => [];
+}
+class NotificationNavState extends SettingsState {
+  @override
+  List<Object?> get props => [];
+}
+class LanguageNavState extends SettingsState {
+  @override
+  List<Object?> get props => [];
+}
+class ThemeNavState extends SettingsState {
+  @override
+  List<Object?> get props => [];
+}
+class DeleteAccountNavState extends SettingsState {
+  @override
+  List<Object?> get props => [];
+}

@@ -8,13 +8,13 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<PatientProfileEntity> getPatientProfile(String patientId) async {
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
+      // await Future.delayed(const Duration(milliseconds: 800));
 
       return const PatientProfileEntity(
         id: '3456',
         name: 'Teja Ch',
         dob: '2006-02-18',
-        gender: 'Male', // Explicit gender field value
+        gender: 'Male',
         bloodGroup: 'B+',
         phone: '6303012453',
         email: 'teja@gmail.com',
@@ -28,7 +28,6 @@ class PatientRepositoryImpl implements PatientRepository {
         lastVisitDate: 'May 26, 2026',
         nextAppointment: null,
         summary: 'Severe persistent hand pain in the right distal radius extending up through the metacarpal joints.',
-        // New Policy Mock Data
         policyName: 'Star Health Premier',
         policyNumber: 'ST-99482-XYZ',
       );

@@ -14,6 +14,7 @@ class VitalSignsSection extends StatelessWidget {
   final TextEditingController weightController;
   final TextEditingController heightController;
   final TextEditingController oxygenSaturationController;
+  final bool isTab;
 
 
   const VitalSignsSection({
@@ -22,7 +23,7 @@ class VitalSignsSection extends StatelessWidget {
     required this.hrController,
     required this.tempController,
     required this.weightController,
-    required this.heightController, required this.oxygenSaturationController,
+    required this.heightController, required this.oxygenSaturationController, required this.isTab,
   });
 
   @override
@@ -30,13 +31,13 @@ class VitalSignsSection extends StatelessWidget {
     final labelStyle = TextStyle(
       fontWeight: FontWeight.w500,
       fontFamily: appPoppinFont,color: Colors.grey,
-      fontSize: displayWidth(context) * 0.032,
+      fontSize: isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: "Vital Signs"),
+         SectionHeader(title: "Vital Signs", isTab: isTab,),
         const SizedBox(height: 12),
 
         Row(

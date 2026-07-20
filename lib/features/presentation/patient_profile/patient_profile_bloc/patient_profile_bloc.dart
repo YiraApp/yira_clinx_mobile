@@ -13,6 +13,15 @@ class PatientProfileBloc extends Bloc<PatientProfileEvent, PatientProfileState> 
 
   PatientProfileBloc({required this.repository}) : super(PatientProfileInitial()) {
     on<LoadPatientProfile>(_onLoadPatientProfile);
+    on<TabChanged>(_onTabChanged);
+  }
+
+  // Extracted to its own method to keep the constructor clean and readable
+  void _onTabChanged(TabChanged event, Emitter<PatientProfileState> emit) {
+    if (state is PatientProfileLoaded) {
+      final currentState = state as PatientProfileLoaded;
+      emit(currentState.copyWith(activeTabIndex: event.activeTabIndex));
+    }
   }
 
   Future<void> _onLoadPatientProfile(
@@ -21,12 +30,11 @@ class PatientProfileBloc extends Bloc<PatientProfileEvent, PatientProfileState> 
       ) async {
     emit(PatientProfileLoading());
     try {
-      // Direct call to your mock repository without dartz .fold()
       final patient = await repository.getPatientProfile(event.patientId);
 
-      emit(PatientProfileLoaded(patient));
+      // Explicitly pass activeTabIndex: 0 to ensure Overview is the starting tab
+      emit(PatientProfileLoaded(patient: patient, activeTabIndex: 0));
     } catch (e) {
-      // Catches the mock repository Exception and propagates it to your UI state
       emit(PatientProfileError(e.toString()));
     }
   }

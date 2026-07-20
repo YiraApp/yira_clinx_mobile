@@ -8,7 +8,7 @@ import 'date_time_utils.dart';
 
 class WeekView extends StatelessWidget {
   WeekView({
-    Key? key,
+    super.key,
     required this.dates,
     required this.selectedDate,
     required this.lineHeight,
@@ -18,7 +18,7 @@ class WeekView extends StatelessWidget {
     required this.innerDot,
     required this.keepLineSize,
     this.textStyle, this.dateSize, required this.buttonPrimaryColor,
-  }) : super(key: key);
+  });
 final double? dateSize;
   final DateTime todayDate = DateTime.now().toZeroTime();
   final List<DateTime> dates;
@@ -64,7 +64,7 @@ final double? dateSize;
                         : isToday
                         ? theme.highlightColor
                         : null,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                     shape: BoxShape.rectangle,
                   ),
                   child: Column(

@@ -1,21 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
+import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
+import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
+import '../../../core/fcm_token/fcm_token_helper.dart';
+import '../../../core/models/select_role_model.dart';
 
-class VerifyOtpScreen extends StatelessWidget {
-  final String? mobileNumber;
-  VerifyOtpScreen({super.key, this.mobileNumber});
+class VerifyOtpScreen extends StatefulWidget {
+  final SendOtpEntity sendOtpEntity;
+  const VerifyOtpScreen({super.key, required this.sendOtpEntity});
 
+  @override
+  State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
+}
+
+class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   final TextEditingController otpController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
+  String _cachedFcmToken = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeviceToken();
+  }
+
+  Future<void> _loadDeviceToken() async {
+    final String token = await FcmTokenHelper.getProductionFcmToken();
+    if (mounted && token.isNotEmpty) {
+      setState(() {
+        _cachedFcmToken = token;
+      });
+      debugPrint("Auth Configuration - Device token initialized successfully.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +72,61 @@ class VerifyOtpScreen extends StatelessWidget {
                     ? constraints.maxWidth
                     : screenWidth;
 
-                return BlocConsumer<SignInBloc, SignInState>(
+                return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
-                      current is! TimerFinished &&
-                      current is! NavigateToSelectRoleVerifyOtp,
+                      current is TimerTick ||
+                      current is TimerFinished ||
+                      current is SendOtpLoading ||
+                      current is ReSendOtpLoading ||
+                      current is SignInLoading ||
+                      current is LoginLoading ||
+                      current is SignInError,
                   listener: (context, state) {
-                    if (state is NavigateToSelectRoleVerifyOtp) {
-                      Navigator.pushNamed(context, AppRoutes.selectRoleScreen);
+                    switch (state) {
+                      case LoginSuccess():
+                        final payload = state.loginEntity.data;
+                        if (payload != null &&
+                            payload.roleCount == 1 &&
+                            payload.hospitalCount == 1 &&
+                            payload.organizationCount == 1) {
+                          final String role = (payload.navigationId ?? '')
+                              .toLowerCase()
+                              .trim();
+                          if (role == "2") {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.doctorDashboard,
+                              (route) => false,
+                            );
+                          } else if (role == "1") {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.dashboardPatientDetails,
+                              (route) => false,
+                            );
+                          } else {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              AppRoutes.unsupportedRole,
+                              (route) => false,
+                              arguments: state.loginEntity,
+                            );
+                          }
+                        } else {
+                          SelectRoleModel data = SelectRoleModel(
+                            state.loginEntity.data?.roles ?? [],
+                            false,
+                          );
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.selectRoleScreen,
+                            (route) => false,
+                            arguments: data,
+                          );
+                        }
+                        break;
+                      default:
+                        break;
                     }
                   },
                   builder: (context, state) {
@@ -68,7 +144,6 @@ class VerifyOtpScreen extends StatelessWidget {
                     } else {
                       isButtonActive = true;
                     }
-
                     return SingleChildScrollView(
                       physics: const ClampingScrollPhysics(),
                       child: Padding(
@@ -86,28 +161,27 @@ class VerifyOtpScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   SizedBox(height: screenHeight * 0.02),
-
-                                  // 1. Branding Header Icon
-                                  Icon(
-                                    Icons.health_and_safety,
-                                    color: primaryColor,
-                                    size: isTab ? referenceWidth * 0.16 : 65,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    child: SvgPicture.asset(
+                                      'assets/images/svgs/ic_apps_logo.svg',
+                                      width: isTab ? 65 : 60,
+                                      height: isTab ? 65 : 60,
+                                    ),
                                   ),
-                                  SizedBox(height: screenHeight * 0.03),
 
-                                  // 2. Title Text
+                                  SizedBox(height: screenHeight * 0.03),
                                   Text(
                                     'Verification Code',
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: isTab
-                                          ? referenceWidth * 0.055
+                                          ? referenceWidth * 0.035
                                           : displayWidth(context) * 0.065,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
 
-                                  // 3. Subtitle Description Text
                                   Padding(
                                     padding: EdgeInsets.symmetric(
                                       horizontal: isTab
@@ -125,17 +199,17 @@ class VerifyOtpScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: isTab
-                                                ? referenceWidth * 0.032
+                                                ? referenceWidth * 0.022
                                                 : screenWidth * 0.033,
                                           ),
                                         ),
                                         Text(
-                                          mobileNumber ?? '+91- 9848022338',
+                                          '${context.read<LoginBloc>().currentCountryCode}-${widget.sendOtpEntity.data?.contact}',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: isTab
-                                                ? referenceWidth * 0.032
+                                                ? referenceWidth * 0.022
                                                 : screenWidth * 0.033,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -146,14 +220,13 @@ class VerifyOtpScreen extends StatelessWidget {
 
                                   SizedBox(
                                     height:
-                                        screenHeight * (isTab ? 0.05 : 0.06),
+                                        screenHeight * (isTab ? 0.05 : 0.045),
                                   ),
 
-                                  // 4. Pin Input Form Frame
                                   SizedBox(
                                     width: isTab
-                                        ? referenceWidth * 0.82
-                                        : screenWidth * 0.6,
+                                        ? referenceWidth * 0.7
+                                        : screenWidth * 0.82,
                                     child: PinCodeTextField(
                                       backgroundColor: Colors.transparent,
                                       autoDisposeControllers: false,
@@ -164,15 +237,14 @@ class VerifyOtpScreen extends StatelessWidget {
                                         color: Colors.green.shade600,
                                         fontWeight: FontWeight.bold,
                                       ),
-                                      // PRODUCTION FIX: Updated to 6 digits to match your description text constraints
-                                      length: 4,
+                                      length: 6,
                                       obscureText: true,
                                       obscuringCharacter: '*',
                                       hintCharacter: '*',
                                       hintStyle: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab
-                                            ? referenceWidth * 0.032
+                                            ? referenceWidth * 0.022
                                             : screenWidth * 0.03,
                                       ),
                                       animationType: AnimationType.fade,
@@ -183,17 +255,19 @@ class VerifyOtpScreen extends StatelessWidget {
                                         return null;
                                       },
                                       pinTheme: PinTheme(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(
+                                          fieldBorderRadius,
+                                        ),
                                         inactiveColor: notificationSwitchColor,
                                         activeColor: primaryColor,
                                         selectedColor: primaryColor,
                                         shape: PinCodeFieldShape.box,
                                         borderWidth: 1.0,
                                         fieldHeight: isTab
-                                            ? referenceWidth * 0.11
+                                            ? referenceWidth * 0.09
                                             : screenWidth * 0.11,
                                         fieldWidth: isTab
-                                            ? referenceWidth * 0.105
+                                            ? referenceWidth * 0.09
                                             : screenWidth * 0.11,
                                         inactiveFillColor: Theme.of(
                                           context,
@@ -211,20 +285,42 @@ class VerifyOtpScreen extends StatelessWidget {
                                       ),
                                       textStyle: TextStyle(
                                         fontSize: isTab
-                                            ? referenceWidth * 0.04
+                                            ? referenceWidth * 0.03
                                             : 16,
                                       ),
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [
                                         FilteringTextInputFormatter.digitsOnly,
                                       ],
-                                      onCompleted: (v) {},
+                                      onCompleted: (pinCode) {
+                                        final String activeCountryCode = context
+                                            .read<LoginBloc>()
+                                            .currentCountryCode;
+                                        context.read<LoginBloc>().add(
+                                          OnTapMobileSignInEvent(
+                                            mobileNumber:
+                                                widget
+                                                    .sendOtpEntity
+                                                    .data
+                                                    ?.contact ??
+                                                '',
+                                            otp: pinCode,
+                                            sessionId:
+                                                widget
+                                                    .sendOtpEntity
+                                                    .data
+                                                    ?.sessionId ??
+                                                '',
+                                            countryCode: activeCountryCode,
+                                            fcmToken: _cachedFcmToken,
+                                          ),
+                                        );
+                                      },
                                       onChanged: (value) {},
                                     ),
                                   ),
-                                  SizedBox(height: screenHeight * 0.04),
+                                  SizedBox(height: screenHeight * 0.02),
 
-                                  // 5. Help Prompt Row
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -240,7 +336,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab
-                                              ? referenceWidth * 0.034
+                                              ? referenceWidth * 0.028
                                               : screenWidth * 0.035,
                                         ),
                                       ),
@@ -258,15 +354,26 @@ class VerifyOtpScreen extends StatelessWidget {
                                             height: 40,
                                             child: Center(
                                               child:
-                                                  CircularProgressIndicator(),
+                                                  CircularProgressIndicator.adaptive(),
                                             ),
                                           ),
                                         )
-                                      : isButtonActive // FIXED: Verified active flag matching original mobile state
+                                      : isButtonActive
                                       ? TextButton(
                                           onPressed: () {
-                                            context.read<SignInBloc>().add(
-                                              OnReSendOtp(mobileNumber ?? ''),
+                                            final String activeCountryCode =
+                                                context
+                                                    .read<LoginBloc>()
+                                                    .currentCountryCode;
+                                            context.read<LoginBloc>().add(
+                                              OnReSendOtp(
+                                                widget
+                                                        .sendOtpEntity
+                                                        .data
+                                                        ?.contact ??
+                                                    '',
+                                                activeCountryCode,
+                                              ),
                                             );
                                           },
                                           child: Text(
@@ -289,7 +396,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab
-                                                    ? referenceWidth * 0.03
+                                                    ? referenceWidth * 0.025
                                                     : screenWidth * 0.032,
                                                 color: Colors.grey,
                                               ),
@@ -300,7 +407,7 @@ class VerifyOtpScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab
-                                                    ? referenceWidth * 0.034
+                                                    ? referenceWidth * 0.028
                                                     : screenWidth * 0.034,
                                                 fontWeight: FontWeight.w600,
                                                 color: primaryColor,
@@ -311,17 +418,17 @@ class VerifyOtpScreen extends StatelessWidget {
 
                                   const Spacer(),
 
-                                  // 7. Verification Button Base
-                                  state is SignInLoading
+                                  state is LoginLoading
                                       ? Padding(
                                           padding: EdgeInsets.only(
                                             bottom: screenHeight * 0.04,
                                           ),
-                                          child: const SizedBox(
+                                          child: SizedBox(
+                                            width: displayWidth(context),
                                             height: 50,
                                             child: Center(
                                               child:
-                                                  CircularProgressIndicator(),
+                                                  CircularProgressIndicator.adaptive(),
                                             ),
                                           ),
                                         )
@@ -337,8 +444,29 @@ class VerifyOtpScreen extends StatelessWidget {
                                             width: double.infinity,
                                             text: "Verify & Continue",
                                             onPressed: () {
-                                              context.read<SignInBloc>().add(
-                                                NavSelectRole(),
+                                              final String activeCountryCode =
+                                                  context
+                                                      .read<LoginBloc>()
+                                                      .currentCountryCode;
+                                              context.read<LoginBloc>().add(
+                                                OnTapMobileSignInEvent(
+                                                  mobileNumber:
+                                                      widget
+                                                          .sendOtpEntity
+                                                          .data
+                                                          ?.contact ??
+                                                      '',
+                                                  otp: otpController.text,
+                                                  sessionId:
+                                                      widget
+                                                          .sendOtpEntity
+                                                          .data
+                                                          ?.sessionId ??
+                                                      '',
+                                                  countryCode:
+                                                      activeCountryCode,
+                                                  fcmToken: _cachedFcmToken,
+                                                ),
                                               );
                                             },
                                           ),

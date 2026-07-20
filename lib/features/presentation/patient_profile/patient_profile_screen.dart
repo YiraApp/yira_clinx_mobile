@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_list_screen.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/clinical_notes/clinical_notes_screen.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_header.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
@@ -22,11 +24,13 @@ class DoctorPatientProfileScreen extends StatefulWidget {
   const DoctorPatientProfileScreen({super.key});
 
   @override
-  State<DoctorPatientProfileScreen> createState() => _DoctorPatientProfileScreenState();
+  State<DoctorPatientProfileScreen> createState() =>
+      _DoctorPatientProfileScreenState();
 }
 
-class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen> {
-  int _activeTabIndex = 0;
+class _DoctorPatientProfileScreenState
+    extends State<DoctorPatientProfileScreen> {
+  final int _activeTabIndex = 0;
 
   final List<String> _tabs = [
     'Overview',
@@ -36,25 +40,19 @@ class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen>
     'Documents',
     'Appointments',
   ];
-
+  @override
+  void initState() {
+    super.initState();
+    context.read<PatientProfileBloc>().add(const TabChanged(0));
+  }
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: isDark ? Colors.white : Colors.black87,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
+        actions: [],
       ),
       body: BlocConsumer<PatientProfileBloc, PatientProfileState>(
         listener: (BuildContext context, PatientProfileState state) {},
@@ -63,11 +61,11 @@ class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen>
             context.read<PatientProfileBloc>().add(
               const LoadPatientProfile('3456'),
             );
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
 
           if (state is PatientProfileLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
           if (state is PatientProfileError) {
             return Center(
@@ -84,42 +82,60 @@ class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen>
 
           if (state is PatientProfileLoaded) {
             final patient = state.patient;
+            final currentTab = state.activeTabIndex;
 
             return Column(
               children: [
-                PatientProfileHeader(patient: patient),
+                SizedBox(height: screenTopPadding,),
+                PatientProfileHeader(patient: patient,isTab:isTab),
                 PatientProfileTabBar(
                   tabs: _tabs,
+                  selectedIndex: currentTab,
+                  isTab:isTab,
                   onTabSelected: (index) {
-                    setState(() {
-                      _activeTabIndex = index;
-                    });
-                    debugPrint('Tab switched context indices target: $index');
+                    context.read<PatientProfileBloc>().add(TabChanged(index));
                   },
                 ),
-
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: _buildActiveTabContent(patient),
+                    child: _buildActiveTabContent(context, patient, currentTab, isTab),
                   ),
                 ),
               ],
             );
           }
 
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator.adaptive());
         },
       ),
     );
   }
 
-  Widget _buildActiveTabContent(PatientProfileEntity patient) {
-    switch (_activeTabIndex) {
+  Widget _buildActiveTabContent(
+      BuildContext context,
+      PatientProfileEntity patient,
+      int activeTab,
+      bool isTab
+      ) {
+    switch (activeTab) {
       case 0:
-        return OverviewScreen(
-          key: const ValueKey('OverviewTabContentFrame'),
-          patient: patient,
+        return BlocProvider<PatientOverViewBloc>(
+          create: (_) => sl<PatientOverViewBloc>(),
+          child: OverviewScreen(
+            isTab: isTab,
+            key: const ValueKey('OverviewTabContentFrame'),
+            patient: patient,
+            onPrescribeTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(3));
+            },
+            onNoteTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(1));
+            },
+            onScheduleTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(5));
+            },
+          ),
         );
       case 1:
         return const ClinicalNotesScreen(
@@ -128,28 +144,36 @@ class _DoctorPatientProfileScreenState extends State<DoctorPatientProfileScreen>
       case 2:
         return BlocProvider<MedicalHistoryBloc>(
           create: (_) => sl<MedicalHistoryBloc>(),
-          child: const MedicalRecordsListScreen(key: ValueKey('MedicalRecordsListFrame')),
+          child: const MedicalRecordsListScreen(
+            key: ValueKey('MedicalRecordsListFrame'),
+          ),
         );
       case 3:
         return BlocProvider<PrescriptionBloc>(
           create: (_) => sl<PrescriptionBloc>(),
-          child: const PrescriptionListScreen(key: ValueKey('PrescriptionRecordsListFrame')),
+          child: const PrescriptionListScreen(
+            key: ValueKey('PrescriptionRecordsListFrame'),
+          ),
         );
       case 4:
         return BlocProvider<UploadedBloc>(
           create: (_) => sl<UploadedBloc>(),
-          child: const UploadedRecordsScreen(key: ValueKey('UploadRecordsListFrame')),
+          child: const UploadedRecordsScreen(
+            key: ValueKey('UploadRecordsListFrame'),
+          ),
         );
       case 5:
         return BlocProvider<AppointmentBloc>(
           create: (_) => sl<AppointmentBloc>(),
-          child: const PatientAppointmentList(key: ValueKey('AppointmentListListFrame')),
+          child: const PatientAppointmentList(
+            key: ValueKey('AppointmentListListFrame'),
+          ),
         );
       default:
         return Center(
           key: const ValueKey('FallbackTabContentFrame'),
           child: Text(
-            '${_tabs[_activeTabIndex]} Module Coming Soon',
+            '${_tabs[activeTab]} Module Coming Soon',
             style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
         );

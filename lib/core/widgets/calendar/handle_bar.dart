@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 class HandleBar extends StatelessWidget {
 
   const HandleBar({
-    Key? key,
+    super.key,
     this.decoration,
     this.margin = const EdgeInsets.only(
       top: 0.0,bottom: 8
     ),
     this.onPressed, required this.handlerColor,
-  }) : super(key: key);
+  });
 
   final BoxDecoration? decoration;
   final EdgeInsetsGeometry margin;

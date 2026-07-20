@@ -7,8 +7,8 @@ import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 
 class PatientProfileHeader extends StatelessWidget {
   final PatientProfileEntity patient;
-
-  const PatientProfileHeader({super.key, required this.patient});
+final bool isTab;
+  const PatientProfileHeader({super.key, required this.patient, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class PatientProfileHeader extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
             ),
             child: Center(
               child: Text(
@@ -31,7 +31,7 @@ class PatientProfileHeader extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   color: isDark ? Colors.blue[300] : primaryColor,
-                  fontSize: displayWidth(context) * 0.035,
+                  fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -48,7 +48,7 @@ class PatientProfileHeader extends StatelessWidget {
                       patient.name,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.035,
+                        fontSize: isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : Colors.black87,
                       ),
@@ -63,7 +63,7 @@ class PatientProfileHeader extends StatelessWidget {
                       child: Text(
                         'Active',
                         style: TextStyle(
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.green[300] : const Color(0xFF15803D),
@@ -76,7 +76,7 @@ class PatientProfileHeader extends StatelessWidget {
                 Text(
                   '${patient.id} | ${patient.dob} | ${patient.gender} | ${patient.bloodGroup}',
                   style: TextStyle(
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                     fontFamily: appPoppinFont,
                     color: isDark ? Colors.grey[400] : Colors.grey,
                   ),

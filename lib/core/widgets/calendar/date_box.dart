@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Unit of calendar.
 class DateBox extends StatelessWidget {
   const DateBox({
-    Key? key,
+    super.key,
     required this.child,
     this.color,
     this.width = 24.0,
@@ -15,7 +15,7 @@ class DateBox extends StatelessWidget {
     this.isSelected = false,
     this.isToday = false,
     this.hasEvent = false, required this.buttonPrimaryColor,this.isWeek = false
-  }) : super(key: key);
+  });
 
   /// Child widget.
   final Widget child;

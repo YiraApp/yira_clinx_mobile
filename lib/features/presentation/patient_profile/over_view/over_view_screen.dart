@@ -1,65 +1,130 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_contact_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_medical_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_insurance_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_history_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_summary_card.dart';
 
+import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
+import '../patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../widgets/add_records_buttons.dart';
 
-class OverviewScreen extends StatelessWidget {
+class OverviewScreen extends StatefulWidget {
   final PatientProfileEntity patient;
+  final VoidCallback onPrescribeTap;
+  final VoidCallback onNoteTap;
+  final VoidCallback onScheduleTap;
+  final bool isTab;
 
   const OverviewScreen({
     super.key,
     required this.patient,
+    required this.onPrescribeTap,
+    required this.onNoteTap,
+    required this.onScheduleTap,
+    required this.isTab,
   });
+
+  @override
+  State<OverviewScreen> createState() => _OverviewScreenState();
+}
+
+class _OverviewScreenState extends State<OverviewScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadPatientData();
+  }
+
+  void _loadPatientData() {
+    final String patientId = widget.patient.id?.toString() ?? '';
+    context.read<PatientOverViewBloc>().add(LoadPatientData(patientId));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:Theme.of(context).scaffoldBackgroundColor,
-     /* appBar: PreferredSize(
-        preferredSize: Size.fromHeight(isTablet(context) ? 68.0 : 30.0),
-        child: AppBar(
-          title: CommonText(
-            "Overview",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.035,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          centerTitle: false,
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-      ),*/
-        floatingActionButton:ClinicalSpeedDialFab(
-          onAddNoteTapped: () => debugPrint(
-            'Clean Architecture: Triggering Add Note event payload.',
-          ),
-          onScheduleTapped: () => debugPrint(
-            'Clean Architecture: Launching appointment booking engine.',
-          ),
-          onPrescribeTapped: () => debugPrint(
-            'Clean Architecture: Activating medical drug selector routine.',
-          ),
-        ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            PatientContactCard(patient: patient),
-            PatientMedicalCard(patient: patient),
-            PatientInsuranceCard(patient: patient),
-            PatientHistoryCard(patient: patient),
-            PatientSummaryCard(patient: patient),
-            const SizedBox(height: 60),
-          ],
-        ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      floatingActionButton: ClinicalSpeedDialFab(
+        onAddNoteTapped: widget.onNoteTap,
+        onScheduleTapped: widget.onScheduleTap,
+        onPrescribeTapped: widget.onPrescribeTap,
+      ),
+      body: BlocConsumer<PatientOverViewBloc, PatientOverViewState>(
+        listener: (context, state) {
+
+        },
+        builder: (context, state) {
+          if (state is LoadingPatientViewDetails) {
+            return const PatientOverviewShimmer();
+          }
+
+          if (state is LoadPatientDataFailureState) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      state.error,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _loadPatientData,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (state is LoadPatientDataState) {
+            final fetchedData = state.patientOverViewEntity.data;
+
+            if (fetchedData == null) {
+              return const Center(child: Text("No data details found."));
+            }
+
+            return RefreshIndicator.adaptive(
+              onRefresh: () async => _loadPatientData(),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Safe parsing: Only display cards if the model data exists
+                    if (fetchedData.contactInformation != null)
+                      PatientContactCard(patient: fetchedData.contactInformation!, isTab: widget.isTab),
+
+                    if (fetchedData.medicalInformation != null)
+                      PatientMedicalCard(patient: fetchedData.medicalInformation!, isTab: widget.isTab),
+
+                    if (fetchedData.insurance != null)
+                      PatientInsuranceCard(patient: fetchedData.insurance!, isTab: widget.isTab),
+
+                    if (fetchedData.visitHistory != null)
+                      PatientHistoryCard(patient: fetchedData.visitHistory!, isTab: widget.isTab),
+
+                    if (fetchedData.summary != null && fetchedData.summary!.isNotEmpty)
+                      PatientSummaryCard(summary: fetchedData.summary!, isTab: widget.isTab),
+
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
       ),
     );
   }

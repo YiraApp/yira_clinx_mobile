@@ -55,7 +55,7 @@ class CustomElevatedButton extends StatelessWidget {
                           text,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.02,
+                            fontSize: displayWidth(context) * 0.018,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
@@ -65,7 +65,7 @@ class CustomElevatedButton extends StatelessWidget {
                       text,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.02,
+                        fontSize: displayWidth(context) * 0.018,
                         fontWeight: FontWeight.w400,
                       ),
                     ),

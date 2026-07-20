@@ -40,7 +40,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: theme.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(fieldBorderRadius),
                           ),
                           child: Icon(
                             Icons.description_outlined,
@@ -125,7 +125,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                                     : 'Hyperoxia, Hypermetropia',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * (isTab ? 0.024 : 0.031),
+                                  fontSize: displayWidth(context) * (isTab ? 0.02 : 0.031),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -135,7 +135,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(left: screenHorizontalSpacePadding, top: fieldSpace, bottom: 6),
                           child: CommonText(
-                            'Medication Details',
+                            'Prescription Details',
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),

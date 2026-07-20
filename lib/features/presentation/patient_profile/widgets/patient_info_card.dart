@@ -11,13 +11,14 @@ class PatientInfoCard extends StatelessWidget {
   final String title;
   final IconData titleIcon;
   final Widget child;
+  final bool isTab;
 
   const PatientInfoCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.titleIcon,
-    required this.child,
-  }) : super(key: key);
+    required this.child, required this.isTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class PatientInfoCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(left: screenHorizontalSpacePadding,right: screenHorizontalSpacePadding, top: 0,bottom: fieldSpace),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
@@ -51,8 +52,7 @@ class PatientInfoCard extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w500,
-                  fontSize: displayWidth(context)*0.035,
-                  // color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontSize:isTab? displayWidth(context)*0.02: displayWidth(context)*0.035,
                 ),
               ),
             ],

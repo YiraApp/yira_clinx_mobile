@@ -39,7 +39,7 @@ class ReusableTestCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
@@ -62,7 +62,7 @@ class ReusableTestCard extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
                 child: Icon(
                   Icons.science_outlined,
@@ -198,7 +198,7 @@ class _ParameterChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white12 : Colors.grey.shade200,
         ),

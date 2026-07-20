@@ -10,6 +10,7 @@ class StatCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color iconColor;
+  final bool isTab;
 
   const StatCard({
     super.key,
@@ -17,7 +18,7 @@ class StatCard extends StatelessWidget {
     required this.count,
     required this.subtitle,
     required this.icon,
-    required this.iconColor,
+    required this.iconColor, required this.isTab,
   });
 
   @override
@@ -27,7 +28,7 @@ class StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         color: isDark?darkModeCardColor:Colors.white,
         border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
@@ -48,7 +49,7 @@ class StatCard extends StatelessWidget {
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.w600,
-              fontSize: displayWidth(context)*0.032
+              fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.032
             ),
           ),
           Text(
@@ -56,7 +57,7 @@ class StatCard extends StatelessWidget {
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.w600,
-                fontSize: displayWidth(context)*0.045,
+                fontSize:isTab? displayWidth(context)*0.02: displayWidth(context)*0.045,
               color: iconColor
             ),
           ),
@@ -69,7 +70,7 @@ class StatCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.normal,
-                    fontSize: displayWidth(context)*0.025,),
+                    fontSize: isTab? displayWidth(context)*0.015:displayWidth(context)*0.025,),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

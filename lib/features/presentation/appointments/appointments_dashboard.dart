@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/appointment_tab_content.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/stat_card.dart';
 
@@ -39,24 +41,30 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    var isTab = isTablet(context);
+    final double computedRadius = fieldBorderRadius;
 
+    final Color inactiveBorderColor = isDark
+        ? darkModeBorderColor
+        : lightModeBorderColor;
+    final Color activeBorderColor = isDark
+        ? darkModeBorderFocusedColor
+        : lightModeBorderFocusedColor;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: CommonAppBar(
         actions: [
           Container(
-            margin: EdgeInsets.only(right: screenHorizontalSpacePadding),
+            margin: EdgeInsets.only(right: screenHorizontalSpacePadding,bottom: 10),
+
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
+              },
               icon: Icon(
                 Icons.add,
-                size: displayWidth(context) * 0.035,
+                size: 20,
                 color: Colors.white,
               ),
               label: CommonText(
@@ -64,7 +72,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w500,
-                  fontSize: displayWidth(context) * 0.028,
+                  fontSize:isTab?displayWidth(context) * 0.012: displayWidth(context) * 0.028,
                   color: Colors.white,
                 ),
               ),
@@ -78,7 +86,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                   vertical: displayWidth(context) * 0.018,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
               ),
             ),
@@ -90,22 +98,58 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
           listener: (BuildContext context, AppointmentState state) {},
           builder: (context, state) {
             if (state is AppointmentLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
 
             if (state is AppointmentLoaded) {
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
+                  horizontal: screenHorizontalSpacePadding,
+                  vertical: screenTopPadding,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stat Cards Grid Track
                     SizedBox(
                       height: smallDeviceHeight(context) ? 90 : 100,
-                      child: GridView.builder(
+                      child: isTab?
+                 Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Today",
+                        count: "${state.todayCount}",
+                        subtitle: "Apps",
+                        icon: Icons.calendar_today_outlined,
+                        iconColor: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Confirmed",
+                        count: "${state.confirmedCount}",
+                        subtitle: "Ready",
+                        icon: Icons.check_circle,
+                        iconColor: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: StatCard(
+                        isTab: isTab,
+                        title: "Pending",
+                        count: "${state.pendingCount}",
+                        subtitle: "Need Info",
+                        icon: Icons.error_outline,
+                        iconColor: Colors.red,
+                      ),
+                    ),
+                  ],
+                ):
+               GridView.builder(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 2.0,
                           vertical: 2.0,
@@ -123,6 +167,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           switch (index) {
                             case 0:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Today",
                                 count: "${state.todayCount}",
                                 subtitle: "Apps",
@@ -131,6 +176,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                               );
                             case 1:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Confirmed",
                                 count: "${state.confirmedCount}",
                                 subtitle: "Ready",
@@ -140,6 +186,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             case 2:
                             default:
                               return StatCard(
+                                isTab: isTab,
                                 title: "Pending",
                                 count: "${state.pendingCount}",
                                 subtitle: "Need Info",
@@ -151,23 +198,23 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
-                    // Tab Navigation Switcher
                     Container(
                       height: 45,
                       decoration: BoxDecoration(
                         color: isDark
                             ? Colors.white10.withOpacity(0.02)
                             : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                       ),
                       child: TabBar(
                         controller: _tabController,
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
                         indicator: BoxDecoration(
-                          color: isDark ? Colors.grey[800] : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
+                          color: isDark ? darkModeCardColor : Colors.white,
+                          borderRadius: BorderRadius.circular(
+                            fieldBorderRadius,
+                          ),
                           boxShadow: [
                             if (!isDark)
                               BoxShadow(
@@ -183,7 +230,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         unselectedLabelColor: Colors.grey,
                         labelStyle: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.032,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                           fontFamily: appPoppinFont,
                         ),
                         tabs: const [
@@ -194,66 +241,68 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
-                    // Search Input Layout
                     TextField(
                       onChanged: (val) {},
                       style: TextStyle(
                         decorationThickness: 0,
+                        decoration: TextDecoration.none,
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.034,
+                        fontSize: isTab
+                            ? displayWidth(context) * 0.018
+                            : displayWidth(context) *
+                                  0.035, // Aligned with your app's global text size
+                        color: theme.colorScheme.onSurface,
                       ),
                       decoration: InputDecoration(
-                        hintStyle: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.034,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant.withOpacity(0.4),
-                        ),
                         hintText: "Search Patients...",
-                        prefixIcon: const Icon(
+                        hintStyle: TextStyle(
+                          decoration: TextDecoration.none,
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab
+                              ? displayWidth(context) * 0.018
+                              : displayWidth(context) * 0.032,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.5)
+                              : textLightModeColor.withOpacity(0.5),
+                        ),
+                        prefixIcon: Icon(
                           Icons.search,
-                          color: Colors.blueGrey,
+                          color: isDark ? Colors.white54 : Colors.blueGrey,
                           size: 18,
                         ),
                         filled: true,
                         fillColor: isDark
-                            ? darkModeCardColor
-                            : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withOpacity(0.3),
+                            ? darkModeCardColor.withOpacity(0.8)
+                            : lightModeTextFieldBgColor,
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 0,
                           horizontal: 16,
+                          vertical: 14,
                         ),
+
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(computedRadius),
                           borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: inactiveBorderColor,
                             width: 1.0,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(computedRadius),
                           borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: inactiveBorderColor,
                             width: 1.0,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(computedRadius),
                           borderSide: BorderSide(
-                            color: Colors.grey.withOpacity(0.2),
+                            color: activeBorderColor,
                             width: 1.5,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: fieldSpace),
-
-                    // Filter Drops Selection Row
                     Row(
                       children: [
                         Expanded(
@@ -293,6 +342,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         physics: const BouncingScrollPhysics(),
                         children: [
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments,
                             emptyMessage:
                                 "No appointments scheduled for today.",
@@ -302,6 +352,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           ),
 
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments
                                 .where(
                                   (a) => a.type == AppointmentType.inClinic,
@@ -315,6 +366,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           ),
 
                           AppointmentTabContent(
+                            isTab: isTab,
                             appointments: state.appointments
                                 .where(
                                   (a) => a.type == AppointmentType.videoCall,

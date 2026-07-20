@@ -1,8 +1,8 @@
-// presentation/widgets/custom_setting_tile.dart
+
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/constants/constants.dart'; // Holds appPoppinFont string constant
+import 'package:yiraclinics/core/constants/constants.dart';
 
 class CustomSettingTile extends StatelessWidget {
   final IconData icon;
@@ -10,6 +10,7 @@ class CustomSettingTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final bool showDivider;
+  final bool isTab;
 
   const CustomSettingTile({
     super.key,
@@ -17,7 +18,7 @@ class CustomSettingTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.showDivider = false,
+    this.showDivider = false, required this.isTab,
   });
 
   @override
@@ -35,22 +36,22 @@ class CustomSettingTile extends StatelessWidget {
             vertical: width * 0.025,
           ),
           leading: Container(
-            padding: EdgeInsets.all(width * 0.03),
+            padding: EdgeInsets.all(isTab? 10:width * 0.03),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(width * 0.03),
+              borderRadius: BorderRadius.circular(isTab? 4:width * 0.03),
             ),
             child: Icon(
               icon,
               color: primaryColor,
-              size: width * 0.055,
+              size: isTab? 20:width * 0.055,
             ),
           ),
           title: Text(
             title,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: width * 0.038,
+              fontSize: isTab? width*0.02:width * 0.035,
               fontWeight: FontWeight.w600,
               color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B),
             ),
@@ -61,7 +62,7 @@ class CustomSettingTile extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: width * 0.031,
+                fontSize: isTab? width*0.018:width * 0.029,
                 fontWeight: FontWeight.w400,
                 color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
@@ -69,7 +70,7 @@ class CustomSettingTile extends StatelessWidget {
           ),
           trailing: Icon(
             Icons.arrow_forward_ios_rounded,
-            size: width * 0.035,
+            size:isTab? 20: width * 0.035,
             color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
           ),
         ),

@@ -17,6 +17,7 @@ class MedicalRecordCard extends StatelessWidget {
   final VoidCallback onDetailsPressed;
   final VoidCallback onDeletePressed;
   final VoidCallback onEditPressed;
+  final bool isTab;
 
   const MedicalRecordCard({
     super.key,
@@ -28,14 +29,13 @@ class MedicalRecordCard extends StatelessWidget {
     required this.diagnosis,
     required this.vitalsSummary,
     required this.onDetailsPressed,
-    required this.onDeletePressed, required this.onEditPressed,
+    required this.onDeletePressed, required this.onEditPressed, required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bool isTab = isTablet(context);
 
     return Container(
       width: double.infinity,
@@ -103,7 +103,7 @@ class MedicalRecordCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color:primaryColor,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
                         ),
                         child: CommonText(
                           status,
@@ -123,7 +123,7 @@ class MedicalRecordCard extends StatelessWidget {
           ),
 
           Container(
-            color: isDark ? darkModeInnerCardColor : Colors.white,
+            color: isDark ? darkModeCardColor.withOpacity(0.9) : Colors.white,
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +138,7 @@ class MedicalRecordCard extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
                   ),
                   child: Row(
                     children: [
@@ -147,7 +147,7 @@ class MedicalRecordCard extends StatelessWidget {
                         height: 38,
                         decoration: const BoxDecoration(
                           color: primaryColor,
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
+                          borderRadius: BorderRadius.only(topLeft: Radius.circular(fieldBorderRadius), bottomLeft: Radius.circular(fieldBorderRadius)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -156,7 +156,7 @@ class MedicalRecordCard extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.bold,
-                          fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.032,
+                          fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                         ),
                       ),
                       SizedBox(width: 10,),
@@ -167,7 +167,7 @@ class MedicalRecordCard extends StatelessWidget {
                             fontFamily: appPoppinFont,
                             fontStyle: FontStyle.italic,
                             color: Colors.grey.shade600,
-                            fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.032,
+                            fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                           ),
                         ),
                       ),
@@ -200,7 +200,7 @@ class MedicalRecordCard extends StatelessWidget {
                       child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18)),
                 ),
                 const SizedBox(width: 8),
-                CommonBorderButton(height: 35, icon: Icons.remove_red_eye_outlined,text: 'View Details', onPressed: () {}),
+                CommonBorderButton(height: 35, icon: Icons.remove_red_eye_outlined,text: 'View Details', onPressed: onDetailsPressed),
               ],
             ),
           )
@@ -222,7 +222,7 @@ class MedicalRecordCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w600,
-                fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.032,
+                fontSize: isTab ? displayWidth(context) * 0.017 : displayWidth(context) * 0.032,
               ),
             ),
           ),
@@ -246,7 +246,7 @@ class MedicalRecordCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 color: Colors.grey.shade600,
-                fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.032,
+                fontSize: isTab ? displayWidth(context) * 0.017 : displayWidth(context) * 0.032,
               ),
             ),
           ),

@@ -6,8 +6,9 @@ import '../../../../core/common_widgets/common_text.dart';
 
 class SectionLabelText extends StatelessWidget {
   final String text;
+  final bool isTab;
 
-  const SectionLabelText({super.key, required this.text});
+  const SectionLabelText({super.key, required this.text, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class SectionLabelText extends StatelessWidget {
         color: textLightDarkColor,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
-        fontSize: isTab ? displayWidth(context) * 0.012 : displayWidth(context) * 0.032,
+        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
       ),
     );
   }

@@ -14,17 +14,18 @@ class AppRoutes {
   static const String genderSelection= '/genderSelection';
   static const String userConfiguration= '/userConfiguration';
   static const String patientManagementScreen= '/patientManagementScreen';
-  static const String prescriptionScreen= '/prescriptionScreen';
-  static const String prescriptionDetailScreen= '/prescriptionDetailScreen';
+  static const String userPrescriptionManagement= '/userPrescriptionManagement';
+  static const String userPrescriptionDetailScreen= '/userPrescriptionDetailScreen';
   static const String languageSelectionScreen= '/languageSelectionScreen';
   static const String appearanceScreen= '/appearanceScreen';
   static const String notificationSettingsScreen= '/notificationSettingsScreen';
-  static const String testResultScreen= '/testResultScreen';
+  static const String userTestResultScreen= '/userTestResultScreen';
   static const String addAppointmentScreen= '/addAppointmentScreen';
   static const String appointmentDashboardScreen= '/appointmentDashboardScreen';
   static const String selectRoleScreen= '/selectRoleScreen';
   static const String workSpaceScreen= '/workSpaceScreen';
-  static const String docDashboard= '/docDashboard';
+  static const String doctorDashboard= '/doctorDashboard';
+  static const String organizationSwitch= '/organizationSwitch';
   static const String settingsScreen= '/settingsScreen';
   static const String changePasswordScreen= '/changePasswordScreen';
   static const String onSuccessChangePassword= '/onSuccessChangePassword';
@@ -32,7 +33,7 @@ class AppRoutes {
   static const String addMedicalRecordScreen= '/addMedicalRecordScreen';
   static const String medicalRecordDetailsScreen= '/medicalRecordDetailsScreen';
   static const String medicalHistoryScreen= '/medicalHistoryScreen';
-  static const String patientAppointmentListScreen= '/patientAppointmentListScreen';
+  static const String doctorPatientAppointmentListScreen= '/doctorPatientAppointmentListScreen';
   static const String uploadedRecordScreen= '/uploadedRecordScreen';
   static const String uploadRecordScreen= '/uploadRecordScreen';
   static const String smartSlotSchedulerScreen= '/smartSlotSchedulerScreen';
@@ -41,4 +42,15 @@ class AppRoutes {
   static const String addPrescriptionScreen= '/addPrescriptionScreen';
   static const String prescriptionListScreen= '/prescriptionListScreen';
   static const String prescriptionViewDetailsScreen= '/prescriptionViewDetailsScreen';
+  static const String closeAccountScreen= '/closeAccountScreen';
+  static const String dashboardPatientDetails= '/dashboardPatientDetails';
+  static const String forgotPassword= '/forgotPassword';
+  static const String forceUpdateScreen= '/forceUpdateScreen';
+  static const String softUpdateScreen= '/softUpdateScreen';
+  static const String maintenanceScreen= '/maintenanceScreen';
+  static const String sessionExpired= '/sessionExpired';
+  static const String serverDown= '/serverDown';
+  static const String unsupportedRole= '/unsupportedRole';
+  static const String logOutScreen= '/logOutScreen';
+  static const String permissionScreen= '/permissionScreen';
 }

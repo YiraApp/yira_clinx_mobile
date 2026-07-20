@@ -11,14 +11,13 @@ import '../../domain/entities/slot/slot_appointment_entity.dart';
 
 class SlotDetailsDialog extends StatefulWidget {
   final SlotEntity slot;
-
   const SlotDetailsDialog({super.key, required this.slot});
 
   static Future<void> show(BuildContext context, SlotEntity slot) {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (context) => SlotDetailsDialog(slot: slot),
+      builder: (context) => SlotDetailsDialog(slot: slot,),
     );
   }
 
@@ -49,15 +48,15 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    final double headlineSize = displayWidth(context) * 0.042;
-    final double labelSize = displayWidth(context) * 0.032;
-    final double valueSize = displayWidth(context) * 0.04;
+final bool isTab = isTablet(context);
+    final double headlineSize = isTab? displayWidth(context) * 0.022:  displayWidth(context) * 0.042;
+    final double labelSize = isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032;
+    final double valueSize = isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.04;
 
     return AlertDialog(
       backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.white,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       titlePadding: const EdgeInsets.only(top: 20, left: 20, right: 16, bottom: 0),
       contentPadding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 24),
@@ -153,8 +152,8 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
               const SizedBox(height: 12),
 
               widget.slot.hasAppointment
-                  ? _buildBookedAppointmentView(context, labelSize)
-                  : _buildUnbookedSlotForm(context, theme, labelSize),
+                  ? _buildBookedAppointmentView(context, labelSize,isTab)
+                  : _buildUnbookedSlotForm(context, theme, labelSize,isTab),
             ],
           ),
         ),
@@ -173,8 +172,8 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? darkModeCardColor: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
       ),
       child: Column(
@@ -204,8 +203,163 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
       ),
     );
   }
+  Widget _buildBookedAppointmentView(BuildContext context, double labelSize,bool isTab) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final appointment = widget.slot.appointment!;
 
-  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F8FF),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        border: Border.all(color: const Color(0xFFD2E3FC).withOpacity(0.4),width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(fieldBorderRadius),
+                ),
+                child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CommonText(
+                      'Patient Details',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.03,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    CommonText(
+                      appointment.patientName,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.035,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _buildAppointmentMetaBox(
+                  context,
+                  title: 'Phone',
+                  value: appointment.contactNumber,
+                  labelSize: labelSize,
+                  isTab: isTab
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? darkModeCardColor : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CommonText(
+                        'Status',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.03,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(fieldBorderRadius),
+                        ),
+                        child: CommonText(
+                          'Payment pending',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize:isTab? displayWidth(context) * 0.016: displayWidth(context) * 0.02,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildAppointmentMetaBox(
+            context,
+            title: 'Reason for visit',
+            value: '"fever"',
+            labelSize: labelSize,
+            isFullWidth: true,
+            isTab: isTab
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: InkWell(
+              onTap: () {
+                context.read<SlotBloc>().add(CancelAppointmentEvent(widget.slot.id));
+                Navigator.of(context).pop();
+              },
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.close_rounded, color: Colors.redAccent, size: 18),
+                    const SizedBox(width: 8),
+                    CommonText(
+                      'Cancel Appointment',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.w600,
+                        fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                        color: Colors.redAccent,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize,bool isTab) {
     final isDark = theme.brightness == Brightness.dark;
 
     return Form(
@@ -213,7 +367,6 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Available vs Block Slot Segment Controller
           Row(
             children: [
               Expanded(
@@ -238,7 +391,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.034,
+                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.034,
                           color: !_isBlocked ? Colors.green : Colors.grey,
                         ),
                       ),
@@ -269,7 +422,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w600,
-                          fontSize: displayWidth(context) * 0.034,
+                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.034,
                           color: _isBlocked ? Colors.redAccent : Colors.grey,
                         ),
                       ),
@@ -281,9 +434,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           ),
           const SizedBox(height: 24),
 
-          // Conditional UI View Routing Layer
           if (!_isBlocked) ...[
-            // 1. APPOINTMENT BOOKING SUB-FORM PROFILE
             CommonText(
               'Book Appointment',
               style: TextStyle(
@@ -349,14 +500,14 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                 elevation: 0,
               ),
               child: CommonText(
                 'Confirm Booking',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: displayWidth(context) * 0.035,
+                  fontSize:isTab? displayWidth(context) * 0.02:  displayWidth(context) * 0.035,
                   fontFamily: appPoppinFont,
                   letterSpacing: 0.5,
                 ),
@@ -369,7 +520,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF1F2),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
                 border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
               ),
               child: Row(
@@ -381,7 +532,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       'This slot will be marked unavailable for external patient booking sessions.',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.030,
+                        fontSize: isTab?displayWidth(context) * 0.018:displayWidth(context) * 0.030,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.white70 : const Color(0xFF991B1B),
                       ),
@@ -402,14 +553,14 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                 elevation: 0,
               ),
               child: CommonText(
                 'Block This Slot',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: displayWidth(context) * 0.035,
+                  fontSize:isTab?  displayWidth(context) * 0.022: displayWidth(context) * 0.035,
                   fontFamily: appPoppinFont,
                   letterSpacing: 0.5,
                 ),
@@ -421,176 +572,23 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
     );
   }
 
-  Widget _buildBookedAppointmentView(BuildContext context, double labelSize) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final appointment = widget.slot.appointment!;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F8FF),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFD2E3FC).withOpacity(0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A73E8),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CommonText(
-                      'Patient Details',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: labelSize,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1A73E8),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    CommonText(
-                      appointment.patientName.toUpperCase(),
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.046,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _buildAppointmentMetaBox(
-                  context,
-                  title: 'Phone',
-                  value: appointment.contactNumber,
-                  labelSize: labelSize,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? theme.scaffoldBackgroundColor : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CommonText(
-                        'Status',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: labelSize,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF5452F6),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: CommonText(
-                          'Payment pending',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.024,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildAppointmentMetaBox(
-            context,
-            title: 'Reason for visit',
-            value: '"fever"',
-            labelSize: labelSize,
-            isFullWidth: true,
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: InkWell(
-              onTap: () {
-                context.read<SlotBloc>().add(CancelAppointmentEvent(widget.slot.id));
-                Navigator.of(context).pop();
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.close_rounded, color: Colors.redAccent, size: 18),
-                    const SizedBox(width: 8),
-                    CommonText(
-                      'Cancel Appointment',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontWeight: FontWeight.bold,
-                        fontSize: displayWidth(context) * 0.034,
-                        color: Colors.redAccent,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildAppointmentMetaBox(
       BuildContext context, {
         required String title,
         required String value,
         required double labelSize,
-        bool isFullWidth = false,
+        bool isFullWidth = false,required bool isTab
       }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: isFullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.white,
+        color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? darkModeBorderColor : const Color(0xFFE2E8F0),width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,8 +597,8 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             title,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: labelSize,
-              fontWeight: FontWeight.bold,
+              fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.03,
+              fontWeight: FontWeight.w600,
               color: Colors.grey.shade500,
             ),
           ),
@@ -609,9 +607,9 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             value,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.036,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : textLightModeColor,
             ),
           ),
         ],

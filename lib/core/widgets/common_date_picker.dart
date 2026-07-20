@@ -1,26 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-
 import '../../core/constants/constants.dart';
 import '../common_widgets/common_text.dart';
 
 class CommonDatePicker extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
+  final double? borderRadius;
 
   const CommonDatePicker({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
+    this.borderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final bool isTab = isTablet(context);
+
+    // Synchronized border radius fallback logic matching form elements
+    final double computedRadius = borderRadius ?? fieldBorderRadius ?? 8.0;
+
+    // Adaptive System Colors Matrix
+    final Color inactiveBorderColor = isDark ? darkModeBorderColor : lightModeBorderColor;
+    final Color activeBorderColor = isDark ? darkModeBorderFocusedColor : lightModeBorderFocusedColor;
+    final Color surfaceColor = isDark
+        ? darkModeCardColor.withOpacity(0.8)
+        : lightModeTextFieldBgColor;
 
     return InkWell(
       onTap: () async {
@@ -30,155 +41,90 @@ class CommonDatePicker extends StatelessWidget {
         final chosen = await showDatePicker(
           initialEntryMode: DatePickerEntryMode.calendarOnly,
           context: context,
-          initialDate: selectedDate.isBefore(DateTime(1940))
-              ? DateTime.now()
-              : selectedDate,
+          initialDate: selectedDate.isBefore(DateTime(1940)) ? DateTime.now() : selectedDate,
           firstDate: DateTime(1940),
           lastDate: DateTime(dynamicLastYear, 12, 31),
           builder: (BuildContext context, Widget? child) {
-            final currentTheme = Theme.of(context);
-            final isDarkTheme =
-                currentTheme.brightness == Brightness.dark;
-
             return Theme(
-              data: currentTheme.copyWith(
+              data: theme.copyWith(
                 textButtonTheme: TextButtonThemeData(
                   style: TextButton.styleFrom(
-                    foregroundColor: currentTheme.primaryColor,
+                    foregroundColor: activeBorderColor,
                     textStyle: TextStyle(
                       fontFamily: appPoppinFont,
                       fontWeight: FontWeight.w600,
-                      fontSize: displayWidth(context) * 0.036,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.036,
                     ),
                   ),
                 ),
                 datePickerTheme: DatePickerThemeData(
-                  backgroundColor:
-                  isDarkTheme ? cardPopUpMenuColor : Colors.white,
-
-                  headerBackgroundColor:
-                  currentTheme.primaryColor,
-
+                  backgroundColor: isDark ? darkModeCardColor : Colors.white,
+                  headerBackgroundColor: theme.primaryColor,
                   headerForegroundColor: Colors.white,
-
-                  dividerColor: isDarkTheme
-                      ? Colors.white12
-                      : Colors.grey.shade200,
-
+                  dividerColor: isDark ? darkModeBorderColor : lightModeBorderColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(computedRadius),
+                    side: BorderSide(color: inactiveBorderColor, width: 1.0),
                   ),
-
                   headerHeadlineStyle: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
-                    fontSize:
-                    displayWidth(context) * 0.048,
+                    fontSize: isTab ? displayWidth(context) * 0.024 : displayWidth(context) * 0.048,
                     color: Colors.white,
                   ),
-
                   headerHelpStyle: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w500,
-                    fontSize:
-                    displayWidth(context) * 0.038,
+                    fontSize: isTab ? displayWidth(context) * 0.020 : displayWidth(context) * 0.038,
                     color: Colors.white,
                   ),
-
                   dayStyle: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize:
-                    displayWidth(context) * 0.032,
+                    fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                   ),
-
                   yearStyle: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize:
-                    displayWidth(context) * 0.032,
+                    fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                   ),
-
-                  dayForegroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      if (states.contains(
-                          WidgetState.selected)) {
-                        return Colors.white;
-                      }
-
-                      return isDarkTheme
-                          ? Colors.white
-                          : Colors.black87;
-                    },
-                  ),
-
-                  dayBackgroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      if (states.contains(
-                          WidgetState.selected)) {
-                        return currentTheme.primaryColor;
-                      }
-                      return null;
-                    },
-                  ),
-
-                  todayForegroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      return Colors.white;
-                    },
-                  ),
-
-                  todayBackgroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      return currentTheme.primaryColor;
-                    },
-                  ),
-
-                  yearForegroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      if (states.contains(
-                          WidgetState.selected)) {
-                        return Colors.white;
-                      }
-
-                      return isDarkTheme
-                          ? Colors.white
-                          : Colors.black87;
-                    },
-                  ),
-
-                  yearBackgroundColor:
-                  WidgetStateProperty.resolveWith(
-                        (states) {
-                      if (states.contains(
-                          WidgetState.selected)) {
-                        return currentTheme.primaryColor;
-                      }
-                      return null;
-                    },
-                  ),
+                  dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                    return isDark ? textDarkModePrimaryColor : textLightModeColor;
+                  }),
+                  dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return theme.primaryColor;
+                    return null;
+                  }),
+                  todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                    return theme.primaryColor;
+                  }),
+                  todayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return theme.primaryColor;
+                    return Colors.transparent;
+                  }),
+                  yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return Colors.white;
+                    return isDark ? textDarkModePrimaryColor : textLightModeColor;
+                  }),
+                  yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) return theme.primaryColor;
+                    return null;
+                  }),
                 ),
-                colorScheme: isDarkTheme
+                colorScheme: isDark
                     ? ColorScheme.dark(
-                  primary:
-                  currentTheme.primaryColor,
+                  primary: theme.primaryColor,
                   onPrimary: Colors.white,
-                  surface: cardPopUpMenuColor,
-                  onSurface: Colors.white,
-                  onSurfaceVariant:
-                  Colors.white,
+                  surface: darkModeCardColor,
+                  onSurface: textDarkModePrimaryColor,
+                  onSurfaceVariant: Colors.white,
                 )
                     : ColorScheme.light(
-                  primary:
-                  currentTheme.primaryColor,
+                  primary: theme.primaryColor,
                   onPrimary: Colors.white,
                   surface: Colors.white,
-                  onSurface: Colors.black87,
-                  onSurfaceVariant:
-                  Colors.white,
+                  onSurface: textLightModeColor,
+                  onSurfaceVariant: textLightModeColor.withOpacity(0.6),
                 ),
               ),
               child: child!,
@@ -191,40 +137,35 @@ class CommonDatePicker extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), // Synchronized height padding
         decoration: BoxDecoration(
-          color: theme.inputDecorationTheme.fillColor,
-          borderRadius: BorderRadius.circular(14),
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(computedRadius),
           border: Border.all(
-            color: isDark
-                ? Colors.transparent
-                : const Color(0xFFCED4DA),
+            color: inactiveBorderColor,
+            width: 1.0,
           ),
         ),
         child: Row(
-          mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: CommonText(
-                DateFormat('MMM dd, yyyy')
-                    .format(selectedDate),
-                style: textTheme.bodyMedium?.copyWith(
+                DateFormat('MMM dd, yyyy').format(selectedDate),
+                style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize:
-                  displayWidth(context) * 0.034,
+                  decorationThickness: 0,
+                  decoration: TextDecoration.none,
+                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
             Icon(
               Icons.calendar_today_rounded,
               size: 18,
-              color: isDark
-                  ? Colors.white60
-                  : const Color(0xFF495057),
+              color: isDark ? Colors.white : const Color(0xFF495057),
             ),
           ],
         ),

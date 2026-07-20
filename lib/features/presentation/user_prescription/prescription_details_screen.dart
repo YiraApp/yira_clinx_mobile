@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -20,27 +21,13 @@ class PrescriptionDetailScreen extends StatelessWidget {
       create: (context) => sl<MedicationBloc>()..add(LoadPrescriptionDetails(prescriptionId)),
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: theme.appBarTheme.iconTheme?.color,
-              size: width * 0.06,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: CommonText(
-            "Prescription Details",
-            style: theme.appBarTheme.titleTextStyle?.copyWith(
-              fontFamily: appPoppinFont,
-              fontSize: width * 0.045, // Responsive title size
-            ),
-          ),
+        appBar: CommonAppBar(
+         titleText: "Prescription Details",
         ),
         body: BlocBuilder<MedicationBloc, MedicationState>(
           builder: (context, state) {
             if (state.status == MedicationStatus.loading || state.status == MedicationStatus.initial) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
 
             final data = state.selectedPrescriptionDetail;
@@ -160,7 +147,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: 2),
             decoration: BoxDecoration(
               color: Colors.green.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
             ),
             child: CommonText(
               status,
@@ -191,7 +178,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
               ? Colors.white10
               : Colors.grey.shade200,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +279,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                 : Colors.grey.shade100,
             color: theme.primaryColor,
             minHeight: 6,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
           ),
         ],
       ),
@@ -305,7 +292,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: theme.primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: CommonText(
         text,
@@ -326,7 +313,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
       padding: EdgeInsets.all(width * 0.04),
       decoration: BoxDecoration(
         color: theme.primaryColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: CommonText(
         notes,

@@ -7,9 +7,10 @@ import '../../../../core/constants/constants.dart';
 import '../slot_bloc/slot_bloc.dart';
 import '../../../../core/common_widgets/common_text.dart';
 class ParametersCard extends StatelessWidget {
-  final SlotState state;
+  final SlotDataState state;
+  final bool isTab;
 
-  const ParametersCard({super.key, required this.state});
+  const ParametersCard({super.key, required this.state, required this.isTab});
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +19,15 @@ class ParametersCard extends StatelessWidget {
 
     return SectionCardWrapper(
       icon: Icons.tune_rounded,
-      title: 'Parameters',
+      title: 'Parameters'
+      , isTab: isTab,
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCardLabel(context, 'Slot Duration'),
+                _buildCardLabel(context, 'Slot Duration',isTab),
                 const SizedBox(height: 8),
                 CommonDropdown(
                   title: 'Select Duration',
@@ -46,7 +48,7 @@ class ParametersCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildCardLabel(context, 'Buffer Time'),
+                _buildCardLabel(context, 'Buffer Time',isTab),
                 const SizedBox(height: 8),
                 CommonDropdown(
                   title: 'Select Buffer',
@@ -64,7 +66,7 @@ class ParametersCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCardLabel(BuildContext context, String text) {
+  Widget _buildCardLabel(BuildContext context, String text,bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -72,7 +74,7 @@ class ParametersCard extends StatelessWidget {
       text,
       style: TextStyle(
         fontFamily: appPoppinFont,
-        fontSize: displayWidth(context) * 0.032,
+        fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
         color: isDark ? Colors.white60 : Colors.blueGrey,
         letterSpacing: 0.8,

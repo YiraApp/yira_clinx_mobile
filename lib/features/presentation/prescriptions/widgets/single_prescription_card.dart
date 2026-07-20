@@ -14,13 +14,13 @@ class SinglePrescriptionCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onView;
-
+final bool isTab;
   const SinglePrescriptionCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.date,
-    this.onEdit, this.onDelete, this.onView,
+    this.onEdit, this.onDelete, this.onView, required this.isTab,
   });
 
   @override
@@ -34,9 +34,10 @@ class SinglePrescriptionCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(
-        horizontal: screenHorizontalSpacePadding,
-        vertical: 8,
+      margin: const EdgeInsets.only(
+        right: screenHorizontalSpacePadding,
+        left: screenHorizontalSpacePadding,
+        bottom: fieldSpace,
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -46,7 +47,7 @@ class SinglePrescriptionCard extends StatelessWidget {
               ? [darkModeCardColor, darkModeCardColor.withOpacity(0.85)]
               : [Colors.white, const Color(0xFFF8FAFC)],
         ),
-        borderRadius: BorderRadius.circular(24), // Smoother premium border rounding
+        borderRadius: BorderRadius.circular(fieldBorderRadius), // Smoother premium border rounding
         boxShadow: !isDark
             ? [
           BoxShadow(
@@ -69,7 +70,7 @@ class SinglePrescriptionCard extends StatelessWidget {
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         child: InkWell(
           onTap: () {},
           splashColor: primaryTeal.withOpacity(0.04),
@@ -102,8 +103,8 @@ class SinglePrescriptionCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: primaryTeal.withOpacity(0.7),
                     borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
+                      topRight: Radius.circular(fieldBorderRadius),
+                      bottomRight: Radius.circular(fieldBorderRadius),
                     ),
                   ),
                 ),
@@ -144,7 +145,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * (isTab ? 0.022 : 0.035),
+                              fontSize: displayWidth(context) * (isTab ? 0.018 : 0.035),
                               fontWeight: FontWeight.w500,
                               color: isDark ? sideMenuDividerColor : cardPopUpMenuColor,
                               letterSpacing: -0.2,
@@ -157,7 +158,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * (isTab ? 0.017 : 0.03),
+                              fontSize: displayWidth(context) * (isTab ? 0.015 : 0.03),
                               fontWeight: FontWeight.w400,
                               height: 1.35,
                               color: isDark ? textLightDarkColor : scoreSubTextColor,
@@ -168,7 +169,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: isDark ? Colors.white.withOpacity(0.02) : sideMenuDividerColor,
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(fieldBorderRadius),
                               border: Border.all(
                                 color: isDark ? Colors.white.withOpacity(0.02) : deviderColor,
                                 width: 1,
@@ -187,7 +188,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                                   date.toUpperCase(),
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * (isTab ? 0.015 : 0.026),
+                                    fontSize: displayWidth(context) * (isTab ? 0.012 : 0.026),
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.6,
                                     color: isDark ? textLightDarkColor : dialogueSubTextColor,

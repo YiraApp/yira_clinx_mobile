@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -9,12 +10,13 @@ class TeleconsultationCard extends StatelessWidget {
   final bool isSelected;
   final ValueChanged<bool?> onChanged;
   final bool isDark;
+  final bool isTab;
 
   const TeleconsultationCard({
     super.key,
     required this.isSelected,
     required this.onChanged,
-    this.isDark = false,
+    this.isDark = false, required this.isTab,
   });
 
   @override
@@ -23,12 +25,12 @@ class TeleconsultationCard extends StatelessWidget {
 
     return InkWell(
       onTap: () => onChanged(!isSelected),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(fieldBorderRadius),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withOpacity(0.02) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: isDark ? darkModeCardColor.withOpacity(0.8) : Colors.white,
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: isDark ? Colors.white10 : Colors.grey.shade200,
             width: 1.5,
@@ -40,7 +42,7 @@ class TeleconsultationCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F4FA),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: const Icon(
                 Icons.videocam_outlined,
@@ -58,7 +60,7 @@ class TeleconsultationCard extends StatelessWidget {
                     'Teleconsultation',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.035,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.035,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -69,7 +71,7 @@ class TeleconsultationCard extends StatelessWidget {
                     'Virtual video call via secure link',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.028,
+                      fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.028,
                       fontWeight: FontWeight.w400,
                     ),
                     overflow: TextOverflow.ellipsis,

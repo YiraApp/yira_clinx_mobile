@@ -12,6 +12,7 @@ class AppointmentTabContent extends StatelessWidget {
   final String emptyMessage;
   final VoidCallback? onBookAppointment;
   final int? tabIndex;
+  final bool isTab;
 
   const AppointmentTabContent({
     super.key,
@@ -19,7 +20,7 @@ class AppointmentTabContent extends StatelessWidget {
     required this.tabTitle,
     required this.emptyMessage,
     this.onBookAppointment,
-    this.tabIndex,
+    this.tabIndex, required this.isTab,
   });
 
   @override
@@ -57,7 +58,7 @@ class AppointmentTabContent extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w400,
-                    fontSize: displayWidth(context) * 0.03,
+                    fontSize:isTab?  displayWidth(context) * 0.022: displayWidth(context) * 0.03,
                     color: Theme.of(context).hintColor,
                   ),
                   textAlign: TextAlign.center,
@@ -82,7 +83,7 @@ class AppointmentTabContent extends StatelessWidget {
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
                       ),
                     ),
                   ),
@@ -106,7 +107,7 @@ class AppointmentTabContent extends StatelessWidget {
                 tabTitle,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.036,
+                  fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.036,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
@@ -123,6 +124,7 @@ class AppointmentTabContent extends StatelessWidget {
             itemBuilder: (context, index) {
               final appointment = appointments[index];
               return AppointmentCard(
+                isTab: isTab,
                 appointment: appointment,
                 isTeleConsultation: tabIndex == 3,
                 onEdit: () {},
