@@ -4,7 +4,7 @@ import '../../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
 import '../widgets/doc_metric_card.dart';
 
 class DashboardMetricsGrid extends StatelessWidget {
-  final MetricsEntity metrics;
+  final DashboardMetricsEntity metrics;
   final Color primaryColor;
   final bool isTab;
 
@@ -19,33 +19,33 @@ class DashboardMetricsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> metricCards = [
       DocMetricCard(
-        title: metrics.today.title,
-        value: '${metrics.today.value}',
-        subtext: metrics.today.subtext,
+        title: metrics.today?.title ?? '',
+        value: '${metrics.today?.value}',
+        subtext: metrics.today?.subtext ??'',
         icon: Icons.calendar_today_outlined,
         iconColor: primaryColor,
         isTab: isTab,
       ),
       DocMetricCard(
-        title: metrics.patients.title,
-        value: '${metrics.patients.value}',
-        subtext: metrics.patients.subtext,
+        title: metrics.patients?.title ?? '',
+        value: '${metrics.patients?.value}',
+        subtext: metrics.patients?.subtext ?? '',
         icon: Icons.person_outline_rounded,
         iconColor: primaryColor,
         isTab: isTab,
       ),
       DocMetricCard(
-        title: metrics.done.title,
-        value: '${metrics.done.value}',
-        subtext: metrics.done.subtext,
+        title: metrics.done?.title ?? '',
+        value: '${metrics.done?.value}',
+        subtext: metrics.done?.subtext ?? '',
         icon: Icons.check_circle_outline_rounded,
         iconColor: Colors.teal,
         isTab: isTab,
       ),
       DocMetricCard(
-        title: metrics.stats.title,
-        value: '${metrics.stats.value}',
-        subtext: metrics.stats.subtext,
+        title: metrics.stats?.title ?? '',
+        value: '${metrics.stats?.value}',
+        subtext: metrics.stats?.subtext ??'',
         icon: Icons.analytics_outlined,
         iconColor: primaryColor,
         isTab: isTab,

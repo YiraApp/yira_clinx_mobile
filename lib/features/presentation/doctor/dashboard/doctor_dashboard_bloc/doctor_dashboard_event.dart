@@ -24,12 +24,14 @@ class ViewPatientsEvent extends DoctorDashboardEvent {
 }
 
 class DocAndAppPatientDetailsNavEvent extends DoctorDashboardEvent {
+  final DashboardPatientDetails details;
+
+  const DocAndAppPatientDetailsNavEvent(this.details);
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [details];
 }
 
-// PRODUCTION FIX: Dispatched from the UI listener to instantly clear
-// the navigation state pipeline without hitting the network layers again.
+
 class ClearNavigationTriggerEvent extends DoctorDashboardEvent {
   @override
   List<Object?> get props => [];

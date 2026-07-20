@@ -65,130 +65,6 @@ import '../../../../core/api/api_client.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../domain/repositories/dash_board/doctor_dashboard_repo.dart';
 
-/*
-class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
-  final ApiClient _apiClient;
-
-  DoctorDashboardRepoImpl(this._apiClient);
-
-  @override
-  Future<DoctorDashboardEntity?> fetchData({
-    required String userId,
-    required String latestRoleId,
-    required int latestOrgId,
-    required int latestHospitalId,
-  }) async {
-    try {
-      await Future.delayed(const Duration(milliseconds: 600));
-
-      final Map<String, dynamic> mockJsonResponse = {
-        "status": true,
-        "message": "Login successful! Welcome back.",
-        "data": {
-          "profile": {
-            "name": "Dr. Rajesh Nagalingam",
-            "specialty": "Dentist",
-            "clinicAddress": "Ocimum dental clinic, Journalist colony, Hyd 500034"
-          },
-          "metrics": {
-            "today": {"title": "Today", "value": 2, "subtext": "01 completed"},
-            "patients": {"title": "Patients", "value": 4, "subtext": "01 new this week"},
-            "done": {"title": "Done", "value": 10, "subtext": "04 follow-ups"},
-            "stats": {"title": "Stats", "value": 10, "subtext": "05 new patients"}
-          },
-          "todaysSchedule": [
-            {
-              "patientUserId": 1,
-              "orgId": 1,
-              "hospitalId": 1,
-              "appointmentId": 1,
-              "patientName": "Sarah Jenkins",
-              "time": "09:30 AM",
-              "consultationType": "Teleconsultation",
-              "reason": "Follow-up Consultation",
-              "statusTag": "LIVE VIDEO"
-            },
-            {
-              "patientUserId": 2,
-              "orgId": 2,
-              "hospitalId": 2,
-              "appointmentId": 2,
-              "patientName": "Sara Alikhan",
-              "time": "10:30 AM",
-              "consultationType": "Teleconsultation",
-              "reason": "Follow-up Consultation",
-              "statusTag": "LIVE VIDEO"
-            }
-          ],
-          "recentPatients": [
-            {
-              "patientUserId": 1,
-              "orgId": 1,
-              "hospitalId": 1,
-              "appointmentId": 1,
-              "name": "Mani Jay",
-              "date": "19/5/2026",
-              "consultationType": "Historical Consultation",
-              "condition": "Acute Migraine headaches",
-              "status": "COMPLETED"
-            },
-            {
-              "patientUserId": 2,
-              "orgId": 2,
-              "hospitalId": 2,
-              "appointmentId": 2,
-              "name": "Anil Kumar",
-              "date": "18/5/2026",
-              "consultationType": "Historical Consultation",
-              "condition": "Common Cold & Nasal Congestion",
-              "status": "COMPLETED"
-            }
-          ],
-          "weeklyAppointments": {
-            "averagePerDay": 3,
-            "dailyData": [
-              {"label": "MON", "value": 40},
-              {"label": "TUE", "value": 30},
-              {"label": "WED", "value": 20},
-              {"label": "THU", "value": 20},
-              {"label": "FRI", "value": 50},
-              {"label": "SAT", "value": 30},
-              {"label": "SUN", "value": 10}
-            ]
-          },
-          "monthlyPatients": {
-            "yearlyTotal": 156,
-            "monthlyData": [
-          {"label": "JAN", "value": 12},
-          {"label": "FEB", "value": 18},
-          {"label": "MAR", "value": 22},
-          {"label": "APR", "value": 28},
-          {"label": "MAY", "value": 5},
-          {"label": "JUN", "value": 8},
-          {"label": "JUL", "value": 18},
-          {"label": "AUG", "value": 24},
-          {"label": "SEP", "value": 20},
-          {"label": "OCT", "value": 15},
-        {"label": "NOV", "value": 15},
-        {"label": "DEC", "value": 8}
-    ]
-    }
-    }
-    };
-
-    return DoctorDashBoardModel.fromJson(mockJsonResponse);
-
-    } catch (error, stackTrace) {
-    developer.log(
-    "doctor details failed inside mock repository layer",
-    error: error,
-    stackTrace: stackTrace,
-    name: "DoctorDashboardRepoImpl",
-    );
-    return null;
-    }
-  }
-}*/
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
@@ -217,10 +93,9 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
     required int latestHospitalId,
   }) async {
     final Map<String, dynamic> requestBody = {
-      "userId": userId.trim(),
-      "latestRoleId": latestRoleId.trim(),
-      "latestOrgId": latestOrgId,
-      "latestHospitalId": latestHospitalId,
+      "doctorId": userId.trim(),
+      "orgId": latestOrgId,
+      "hospitalId": latestHospitalId,
     };
     var endPoint = URLs.doctorDashBoardUrl;
     final String fullCacheKey = _generateDeterministicCacheKey(
@@ -247,13 +122,15 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).get(
-        endPoint,
-        data: requestBody,
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
+      final response = await _apiClient
+          .account(showSuccessSnack: true)
+          .post(
+            endPoint,
+            data: requestBody,
+            options: Options(
+              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            ),
+          );
 
       if (response.data != null && response.data is Map<String, dynamic>) {
         final Map<String, dynamic> rawData =
@@ -293,116 +170,14 @@ class DoctorDashboardRepoImpl extends DoctorDashboardRepo {
       final String? cachedJsonString = await _localCache.getCachedResponse(
         cacheKey,
       );
-      final Map<String, dynamic> mockJsonResponse = {
-        "status": true,
-        "message": "Login successful! Welcome back.",
-        "data": {
-          "profile": {
-            "name": "Dr. Rajesh Nagalingam",
-            "specialty": "Dentist",
-            "clinicAddress":
-                "Ocimum dental clinic, Journalist colony, Hyd 500034",
-          },
-          "metrics": {
-            "today": {"title": "Today", "value": 2, "subtext": "01 completed"},
-            "patients": {
-              "title": "Patients",
-              "value": 4,
-              "subtext": "01 new this week",
-            },
-            "done": {"title": "Done", "value": 10, "subtext": "04 follow-ups"},
-            "stats": {
-              "title": "Stats",
-              "value": 10,
-              "subtext": "05 new patients",
-            },
-          },
-          "todaysSchedule": [
-            {
-              "patientUserId": 1,
-              "orgId": 1,
-              "hospitalId": 1,
-              "appointmentId": 1,
-              "patientName": "Sarah Jenkins",
-              "time": "09:30 AM",
-              "consultationType": "Teleconsultation",
-              "reason": "Follow-up Consultation",
-              "statusTag": "LIVE VIDEO",
-            },
-            {
-              "patientUserId": 2,
-              "orgId": 2,
-              "hospitalId": 2,
-              "appointmentId": 2,
-              "patientName": "Sara Alikhan",
-              "time": "10:30 AM",
-              "consultationType": "Teleconsultation",
-              "reason": "Follow-up Consultation",
-              "statusTag": "LIVE VIDEO",
-            },
-          ],
-          "recentPatients": [
-            {
-              "patientUserId": 1,
-              "orgId": 1,
-              "hospitalId": 1,
-              "appointmentId": 1,
-              "name": "Mani Jay",
-              "date": "19/5/2026",
-              "consultationType": "Historical Consultation",
-              "condition": "Acute Migraine headaches",
-              "status": "COMPLETED",
-            },
-            {
-              "patientUserId": 2,
-              "orgId": 2,
-              "hospitalId": 2,
-              "appointmentId": 2,
-              "name": "Anil Kumar",
-              "date": "18/5/2026",
-              "consultationType": "Historical Consultation",
-              "condition": "Common Cold & Nasal Congestion",
-              "status": "COMPLETED",
-            },
-          ],
-          "weeklyAppointments": {
-            "averagePerDay": 3,
-            "dailyData": [
-              {"label": "MON", "value": 40},
-              {"label": "TUE", "value": 30},
-              {"label": "WED", "value": 20},
-              {"label": "THU", "value": 20},
-              {"label": "FRI", "value": 50},
-              {"label": "SAT", "value": 30},
-              {"label": "SUN", "value": 10},
-            ],
-          },
-          "monthlyPatients": {
-            "yearlyTotal": 156,
-            "monthlyData": [
-              {"label": "JAN", "value": 12},
-              {"label": "FEB", "value": 18},
-              {"label": "MAR", "value": 22},
-              {"label": "APR", "value": 28},
-              {"label": "MAY", "value": 5},
-              {"label": "JUN", "value": 8},
-              {"label": "JUL", "value": 18},
-              {"label": "AUG", "value": 24},
-              {"label": "SEP", "value": 20},
-              {"label": "OCT", "value": 15},
-              {"label": "NOV", "value": 15},
-              {"label": "DEC", "value": 8},
-            ],
-          },
-        },
-      };
-
-      return DoctorDashBoardModel.fromJson(mockJsonResponse);
-      /*if (cachedJsonString != null) {
+      if (cachedJsonString != null) {
         final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
-        developer.log("Direct cache key fetch execution hit success.", name: "DoctorDashboardRepoImpl");
+        developer.log(
+          "Direct cache key fetch execution hit success.",
+          name: "DoctorDashboardRepoImpl",
+        );
         return DoctorDashBoardModel.fromJson(decodedData);
-      }*/
+      }
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",
