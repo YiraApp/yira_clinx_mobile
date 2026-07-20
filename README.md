@@ -1,7 +1,7 @@
 
 
 <p align="center">
-  <img src="https://drive.google.com/file/d/121QzHJJe-CduIR-YPNG045qfTOwOzTIe/view?usp=sharing" alt="Yira Clinx Logo" width="120" />
+  <img src="https://yiraappdev.blob.core.windows.net/uploadedfiles/system/external/external_20-07-2026--12-05-05_drive_image.png" alt="Yira Clinx Logo" width="120" />
 </p>
 
 <h1 align="center">Yira Clinx</h1>
