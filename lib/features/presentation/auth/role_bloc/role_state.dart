@@ -7,17 +7,21 @@ abstract class RoleState {
 }
 
 class RoleInitial extends RoleState {}
-class RoleSelectedState extends RoleState {}
+class RoleSelectedState extends RoleState {
+  final RoleEntity roleEntity;
+
+  const RoleSelectedState(this.roleEntity);
+}
 
 class RoleLoading extends RoleState {}
 
 class RolesLoaded extends RoleState {
-  final List<RoleEntity> roles;
+  final List<RoleLoginEntity> roles;
   final RoleType? selectedRole;
 
   const RolesLoaded({required this.roles, this.selectedRole});
 
-  RolesLoaded copyWith({List<RoleEntity>? roles, RoleType? selectedRole}) {
+  RolesLoaded copyWith({List<RoleLoginEntity>? roles, RoleType? selectedRole}) {
     return RolesLoaded(
       roles: roles ?? this.roles,
       selectedRole: selectedRole ?? this.selectedRole,

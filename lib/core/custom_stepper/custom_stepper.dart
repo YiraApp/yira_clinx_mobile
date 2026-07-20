@@ -27,7 +27,7 @@ class CustomStepIndicator extends StatelessWidget {
         final isActive = index < currentStep;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width:isTablet(context) ?displayWidth(context)/5: displayWidth(context)/3.6,
+          width:isTablet(context) ?displayWidth(context)/5.2: displayWidth(context)/3.6,
           height: size,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(

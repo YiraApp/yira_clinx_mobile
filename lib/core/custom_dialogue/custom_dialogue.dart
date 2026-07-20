@@ -8,7 +8,7 @@ import '../common_widgets/common_text.dart';
 import '../common_widgets/custom_button.dart';
 
 class CustomUrlDialog {
-  static customLauncherDialogue(
+  static Future<dynamic> customLauncherDialogue(
       BuildContext context,
       String title,
       String description,
@@ -228,7 +228,7 @@ class CustomUrlDialog {
     );
   }
 
-  static customContactLauncherDialogue(
+  static dynamic customContactLauncherDialogue(
       BuildContext context,
       String title,
       String description,
@@ -241,7 +241,7 @@ class CustomUrlDialog {
     return customLauncherDialogue(context, title, description, buttonPrimaryColor, url, buttonText, icon, isContactUs: isContactUs);
   }
 
-  static customNotificationDialogue(
+  static Future<dynamic> customNotificationDialogue(
       BuildContext context,
       String title,
       String description,

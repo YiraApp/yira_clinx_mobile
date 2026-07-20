@@ -2,29 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
+import 'package:yiraclinics/core/server_down/server_down_screen.dart';
+import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
+import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/domain/entities/slot/slot_appointment_entity.dart';
 import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointments_dashboard.dart';
 import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
-import 'package:yiraclinics/features/presentation/auth/signin_bloc/signin_bloc.dart';
+import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/verify_otp_screen.dart';
 import 'package:yiraclinics/features/presentation/auth/work_space/work_space_screen.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_bloc/close_account_bloc.dart';
 import 'package:yiraclinics/features/presentation/close_account/close_account_screen.dart';
 import 'package:yiraclinics/features/presentation/configuration/config_bloc.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/force_update_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/log_out_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/maintance_screen.dart';
+import 'package:yiraclinics/features/presentation/configure_screens/soft_update_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_details_screen.dart';
+import 'package:yiraclinics/features/presentation/medicine/medical_history_bloc/medical_history_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_screen.dart';
+import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
+import 'package:yiraclinics/features/presentation/permisions/permissions_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
@@ -41,12 +51,16 @@ import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/
 import 'package:yiraclinics/features/presentation/test_results/test_result_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
+import '../../core/models/select_role_model.dart';
+import '../../core/models/work_space_model.dart';
 import '../../di/dependency_injection.dart';
+import '../../features/domain/entities/login/login_entity.dart';
+import '../../features/domain/entities/token/get_version_and_token_status_entity.dart';
 import '../../features/presentation/auth/on_boarding/gender_selection_screen.dart';
 import '../../features/presentation/auth/on_boarding/height_scale_screen.dart';
 import '../../features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 import '../../features/presentation/auth/on_boarding/weight_scale_screen.dart';
-import '../../features/presentation/auth/signin_screen.dart';
+import '../../features/presentation/auth/login_screen.dart';
 import '../../features/presentation/auth/signup_screen.dart';
 import '../../features/presentation/auth/work_space/work_space_bloc/work_space_bloc.dart';
 import '../../features/presentation/configuration/configuration_screen.dart';
@@ -59,6 +73,7 @@ import '../../features/presentation/settings/notification_settings_screen.dart';
 import '../../features/presentation/slot/slot_dashboard_screen.dart';
 import '../../features/presentation/slot/slot_details_screen.dart';
 import '../../features/presentation/splash/splash_screen.dart';
+import '../../features/presentation/un_supported_role_screen/un_supported_role_screen.dart';
 import '../../features/presentation/upload_documnets/uploaded_records_screen.dart';
 import '../../features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import '../../features/presentation/user_prescription/prescription_details_screen.dart';
@@ -71,17 +86,13 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => SplashScreen());
       case AppRoutes.signIn:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
-            child: SignInScreen(),
-          ),
+          builder: (_) =>
+              BlocProvider.value(value: sl<LoginBloc>(), child: LoginScreen()),
         );
       case AppRoutes.signup:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
-            child: SignupScreen(),
-          ),
+          builder: (_) =>
+              BlocProvider.value(value: sl<LoginBloc>(), child: SignupScreen()),
         );
       case AppRoutes.weightScale:
         return MaterialPageRoute(
@@ -108,7 +119,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<ConfigBloc>(),
-            child: ConfigurationScreen(),
+            child: UserConfigurationScreen(),
           ),
         );
       case AppRoutes.patientManagementScreen:
@@ -118,14 +129,14 @@ class AppRouter {
             child: PatientManagementScreen(),
           ),
         );
-      case AppRoutes.prescriptionScreen:
+      case AppRoutes.userPrescriptionManagement:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionManagementScreen(),
           ),
         );
-      case AppRoutes.prescriptionDetailScreen:
+      case AppRoutes.userPrescriptionDetailScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
@@ -153,7 +164,7 @@ class AppRouter {
             child: NotificationSettingsScreen(),
           ),
         );
-      case AppRoutes.testResultScreen:
+      case AppRoutes.userTestResultScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<TestResultsBloc>(),
@@ -175,24 +186,33 @@ class AppRouter {
           ),
         );
       case AppRoutes.selectRoleScreen:
+        final args = settings.arguments as SelectRoleModel;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<RoleBloc>(),
-            child: SelectRoleScreen(),
+            child: SelectRoleScreen(roles: args),
           ),
         );
       case AppRoutes.workSpaceScreen:
+        WorkSpaceModel workSpaceModel = settings.arguments as WorkSpaceModel;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<WorkspaceBloc>(),
-            child: WorkspaceScreen(),
+            child: WorkspaceScreen(roleEntity: workSpaceModel,),
           ),
         );
-      case AppRoutes.docDashboard:
+      case AppRoutes.doctorDashboard:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: sl<NavigationDrawerBloc>(),
-            child: DoctorDashboardScreen(),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider<NavigationDrawerBloc>.value(
+                value: sl<NavigationDrawerBloc>(),
+              ),
+              BlocProvider<DoctorDashboardBloc>.value(
+                value: sl<DoctorDashboardBloc>(),
+              ),
+            ],
+            child: const DoctorDashboardScreen(),
           ),
         );
       case AppRoutes.settingsScreen:
@@ -203,10 +223,11 @@ class AppRouter {
           ),
         );
       case AppRoutes.verifyOtp:
+        final SendOtpEntity sendOtpData = settings.arguments as SendOtpEntity;
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<SignInBloc>(),
-            child: VerifyOtpScreen(),
+            value: sl<LoginBloc>(),
+            child: VerifyOtpScreen(sendOtpEntity: sendOtpData,),
           ),
         );
       case AppRoutes.changePasswordScreen:
@@ -245,9 +266,14 @@ class AppRouter {
           ),
         );
       case AppRoutes.medicalHistoryScreen:
-        return MaterialPageRoute(builder: (_) => MedicalRecordsListScreen());
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<MedicalHistoryBloc>(),
+            child: MedicalRecordsListScreen(),
+          ),
+        );
 
-      case AppRoutes.patientAppointmentListScreen:
+      case AppRoutes.doctorPatientAppointmentListScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
@@ -303,14 +329,14 @@ class AppRouter {
             child: AddPrescriptionRecordScreen(),
           ),
         );
-        case AppRoutes.prescriptionListScreen:
+      case AppRoutes.prescriptionListScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionListScreen(),
           ),
         );
-        case AppRoutes.prescriptionViewDetailsScreen:
+      case AppRoutes.prescriptionViewDetailsScreen:
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
@@ -325,10 +351,13 @@ class AppRouter {
           ),
         );
       case AppRoutes.dashboardPatientDetails:
+        final DashboardPatientDetails dashboardPatientDetails = settings.arguments as DashboardPatientDetails;
+
         return MaterialPageRoute(
           builder: (_) => BlocProvider.value(
-            value: sl<DoctorDashboardBloc>(),
-            child: DashboardPatientDetailsScreen(),
+            value: sl<PatientDetailsBloc>(),
+            child: DashboardPatientDetailsScreen(dashboardPatientDetails: dashboardPatientDetails,),
+
           ),
         );
       case AppRoutes.forgotPassword:
@@ -338,6 +367,32 @@ class AppRouter {
             child: ForgotPasswordScreen(),
           ),
         );
+        case AppRoutes.permissionScreen:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: sl<PermissionsBloc>(),
+            child: PermissionsScreen(),
+          ),
+        );
+      case AppRoutes.forceUpdateScreen:
+        final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
+        return MaterialPageRoute(builder: (_) => ForceUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
+      case AppRoutes.softUpdateScreen:
+        final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
+        return MaterialPageRoute(builder: (_) => SoftUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
+      case AppRoutes.maintenanceScreen:
+        return MaterialPageRoute(builder: (_) => MaintenanceView());
+      case AppRoutes.sessionExpired:
+        return MaterialPageRoute(builder: (_) => SessionExpiredScreen());
+      case AppRoutes.serverDown:
+        return MaterialPageRoute(builder: (_) => ServerDownScreen());
+      case AppRoutes.unsupportedRole:
+        final LoginEntity loginData = settings.arguments as LoginEntity;
+        return MaterialPageRoute(
+          builder: (context) => UnsupportedRoleScreen(loginEntity: loginData),
+        );
+      case AppRoutes.logOutScreen:
+        return MaterialPageRoute(builder: (_) => LogoutScreen());
       //appointmentDetails
       default:
         return MaterialPageRoute(

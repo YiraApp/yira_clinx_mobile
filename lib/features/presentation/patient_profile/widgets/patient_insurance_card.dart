@@ -1,12 +1,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'metric_tile_item.dart';
 import 'patient_info_card.dart';
 
 class PatientInsuranceCard extends StatelessWidget {
-  final PatientProfileEntity patient;
+  final InsuranceEntity patient;
   final bool isTab;
   const PatientInsuranceCard({super.key, required this.patient, required  this.isTab});
 

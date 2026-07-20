@@ -13,7 +13,13 @@ class OnBoardingState extends Equatable {
   // Gender & Age Data
   final String selectedGender;
   final int selectedAge;
-  final DateTime? selectedDob; // Added for DOB Selection
+  final DateTime? selectedDob;
+
+  // New Blood Group Data
+  final String selectedBloodGroup;
+
+  // New Emergency Contact Data (Optional)
+  final String selectedEmergencyRelation;
 
   // Status Data
   final bool isLoading;
@@ -27,7 +33,9 @@ class OnBoardingState extends Equatable {
     this.currentHeightUnit = 'cm',
     this.selectedGender = "Male",
     this.selectedAge = 25,
-    this.selectedDob, // Default will be set in Bloc or remain null until picked
+    this.selectedDob,
+    this.selectedBloodGroup = 'Select Blood Group',
+    this.selectedEmergencyRelation = 'Select Relation Type',
     this.isLoading = false,
     this.errorMessage,
     this.successMessage,
@@ -40,7 +48,9 @@ class OnBoardingState extends Equatable {
     String? currentHeightUnit,
     String? selectedGender,
     int? selectedAge,
-    DateTime? selectedDob, // Added to copyWith
+    DateTime? selectedDob,
+    String? selectedBloodGroup,
+    String? selectedEmergencyRelation,
     bool? isLoading,
     String? errorMessage,
     String? successMessage,
@@ -52,8 +62,10 @@ class OnBoardingState extends Equatable {
       currentHeightUnit: currentHeightUnit ?? this.currentHeightUnit,
       selectedGender: selectedGender ?? this.selectedGender,
       selectedAge: selectedAge ?? this.selectedAge,
-      selectedDob: selectedDob ?? this.selectedDob, // Support for DOB update
-      isLoading: isLoading ?? false,
+      selectedDob: selectedDob ?? this.selectedDob,
+      selectedBloodGroup: selectedBloodGroup ?? this.selectedBloodGroup, // Support for Blood Group update
+      selectedEmergencyRelation: selectedEmergencyRelation ?? this.selectedEmergencyRelation, // Support for Emergency Contact update
+      isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       successMessage: successMessage,
     );
@@ -67,7 +79,9 @@ class OnBoardingState extends Equatable {
     currentHeightUnit,
     selectedGender,
     selectedAge,
-    selectedDob, // Added to Equatable props
+    selectedDob,
+    selectedBloodGroup,
+    selectedEmergencyRelation,
     isLoading,
     errorMessage,
     successMessage,

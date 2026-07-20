@@ -11,6 +11,7 @@ const Color darkModeInnerCardColor = Color(0xff0D0D0D);
 const Color authScreenTitleColor = Color(0xff1F2A37);
 const Color secondaryColor = Color(0xff020617);
 const Color primaryColor = Color(0xFF2563EB);
+const Color lightGreenColor = Color(0xFF10B981);
 // i have finalized
 // const Color primaryColor = Color(0xFF29468C);
 

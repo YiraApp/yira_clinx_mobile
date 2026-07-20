@@ -4,19 +4,18 @@ import 'package:yiraclinics/config/yira_colors/yira_colors.dart'
 import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../../../core/colors/colors.dart';
-import '../../../domain/entities/role/role_entity.dart';
+import '../../../domain/entities/login/login_entity.dart';
 
 class DialogRoleCard extends StatelessWidget {
-  final RoleEntity role;
+
   final bool isSelected, isTablet;
   final VoidCallback onTap;
-
+final RoleEntity roleEntity;
   const DialogRoleCard({
     super.key,
-    required this.role,
     required this.isSelected,
     required this.onTap,
-    required this.isTablet,
+    required this.isTablet, required this.roleEntity,
   });
 
   @override
@@ -85,7 +84,7 @@ class DialogRoleCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                 boxShadow: const [],
               ),
-              child: Icon(role.icon, color: iconColor, size: iconSize),
+              child: Icon(Icons.person, color: iconColor, size: iconSize),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -94,7 +93,7 @@ class DialogRoleCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    role.title,
+                    roleEntity.roleName ?? '',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: titleFontSize,
@@ -104,7 +103,7 @@ class DialogRoleCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    role.subtitle,
+                     'Authorised access',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: subtitleFontSize,

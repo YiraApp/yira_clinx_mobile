@@ -1,48 +1,26 @@
-import 'package:country_code_picker/country_code_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
-import 'config/app_route/app_router.dart';
-import 'config/app_route/app_routes.dart';
-import 'config/app_theme/app_theme.dart';
-import 'core/global_scaffold_key/global_scaffold_key.dart';
-import 'features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
-
-// Theme Imports
-import 'features/presentation/theme/theme_bloc/theme_bloc.dart';
+import 'core/api/base_api_configuration.dart';
+import 'core/local/global_session.dart';
+import 'core/services/notification_services/notification_services.dart';
+import 'features/app_gate_way/app_gate_way.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await init();
-  runApp(const MyApp());
-}
+  EnvironmentService.setEnvironment(Environment.qa);
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<OnBoardingBloc>(create: (_) => sl<OnBoardingBloc>()),
-        BlocProvider<ThemeBloc>(create: (_) => sl<ThemeBloc>()..add(LoadThemeEvent())),
-      ],
-      child: BlocBuilder<ThemeBloc, ThemeState>(
-        buildWhen: (previous, current) => previous.themeMode != current.themeMode,
-        builder: (context, themeState) {
-          return MaterialApp(
-            supportedLocales: const [Locale("en")],
-            localizationsDelegates: const [CountryLocalizations.delegate],
-            scaffoldMessengerKey: Globals.scaffoldMessengerKey,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeState.themeMode,
-            initialRoute: AppRoutes.initial,
-            onGenerateRoute: AppRouter.onGenerateRoute,
-          );
-        },
-      ),
-    );
+  try {
+    await Future.wait([
+      Firebase.initializeApp(),
+      NotificationService.instance.registerBackgroundHandler(),
+    ]);
+    await init();
+    GlobalSession.instance.initializePlatformTelemetry();
+    runApp(const AppGateway());
+  } catch (e) {
+    debugPrint('Initialization error: $e');
   }
+
+  runApp(const AppGateway());
 }
