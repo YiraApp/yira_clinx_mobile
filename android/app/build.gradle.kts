@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.paccore.yiralife"
+    namespace = "com.yira.yiraclinx"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.paccore.yiralife"
+        applicationId = "com.yira.yiraclinx"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = 1
