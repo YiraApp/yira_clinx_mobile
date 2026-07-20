@@ -31,7 +31,7 @@ class CloseAccountButtonSection extends StatelessWidget {
             const SizedBox(
               height: 48,
               child: Center(
-                child: CircularProgressIndicator(
+                child: CircularProgressIndicator.adaptive(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                 ),
               ),

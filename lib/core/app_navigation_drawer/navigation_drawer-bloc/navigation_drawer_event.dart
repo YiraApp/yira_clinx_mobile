@@ -17,7 +17,9 @@ class NavItemChanged extends NavigationDrawerEvent {
 class DashBoardNav extends NavigationDrawerEvent {
   const DashBoardNav();
 }
-
+class OrgSwitchNav extends NavigationDrawerEvent {
+  const OrgSwitchNav();
+}
 class AppointmentsNav extends NavigationDrawerEvent {
   const AppointmentsNav();
 }

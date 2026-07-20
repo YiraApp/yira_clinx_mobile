@@ -8,7 +8,7 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<PatientProfileEntity> getPatientProfile(String patientId) async {
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
+      // await Future.delayed(const Duration(milliseconds: 800));
 
       return const PatientProfileEntity(
         id: '3456',

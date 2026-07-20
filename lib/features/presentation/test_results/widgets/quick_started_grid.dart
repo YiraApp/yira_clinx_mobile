@@ -8,7 +8,7 @@ import '../test_result_bloc/test_result_bloc.dart';
 
 class QuickStatsGrid extends StatelessWidget {
   final TestResultsLoaded state;
-  const QuickStatsGrid({required this.state});
+  const QuickStatsGrid({super.key, required this.state});
 
   @override
   Widget build(BuildContext context) {

@@ -214,7 +214,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: state is MedicalRecordLoading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Center(child: CircularProgressIndicator.adaptive())
                             : CustomElevatedButton(
                                 noElevation: true,
                                 height: buttonHeight,

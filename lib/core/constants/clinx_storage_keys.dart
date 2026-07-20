@@ -11,4 +11,6 @@ class ClinxStorageKeys {
   static const String medicalReportsConfig = 'clinx_medical_reports_cfg_v1';
   static const String clinicSettings = 'clinx_settings_v1';
   static const String appVersionInfo = 'app_version_info';
+  static const String userData = 'user_data';
+  static const String isUserLoggedIn = 'is_logged_in';
 }

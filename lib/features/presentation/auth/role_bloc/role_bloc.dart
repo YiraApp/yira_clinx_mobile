@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 
 import '../../../domain/entities/role/role_entity.dart';
 import '../use_case/role_use_case.dart';
@@ -15,17 +16,17 @@ class RoleBloc extends Bloc<RoleEvent, RoleState> {
     on<LoadRolesEvent>(_onLoadRoles);
     on<ChooseRoleEvent>(_onChooseRole);
     on<RoleSelected>((event, emit) {
-      emit(RoleSelectedState());
+      emit(RoleSelectedState(event.roleEntity));
     },);
+    on<ClearRoleSelectionEvent>((event, emit) {
+      emit(RolesLoaded(roles: []));
+    });
   }
 
   Future<void> _onLoadRoles(LoadRolesEvent event, Emitter<RoleState> emit) async {
-    emit(RoleLoading()); // Shows the progress indicator
+    emit(RoleLoading());
     try {
-      // 1. Await data from your usecase
       final rolesList = await selectRoleUseCase.getAvailableRoles();
-
-      // 2. Emit the Loaded state with data
       emit(RolesLoaded(
         roles: rolesList,
         selectedRole: rolesList.isNotEmpty ? rolesList.first.type : null,

@@ -62,7 +62,7 @@ final isTab = isTablet(context);
 
   Widget _buildBody(BuildContext context, MedicalHistoryState state,bool isTab) {
     if (state is MedicalHistoryLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator.adaptive());
     }
 
     if (state is MedicalHistoryError) {
