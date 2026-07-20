@@ -1,7 +1,6 @@
-
-
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:flutter/services.dart';
+import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 class PrescriptionRecordFab extends StatefulWidget {
@@ -18,165 +17,198 @@ class PrescriptionRecordFab extends StatefulWidget {
 
 class _PrescriptionRecordFabState extends State<PrescriptionRecordFab> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
-  late AnimationController _animationController;
-  late Animation<double> _animateIcon;
-  late Animation<double> _translateButton;
+  late AnimationController _controller;
+  late Animation<double> _iconRotation;
+  late Animation<double> _menuScale;
+  late Animation<double> _menuOpacity;
 
   @override
   void initState() {
-    _animationController = AnimationController(
+    super.initState();
+    _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
-    )..addListener(() => setState(() {}));
-
-    _animateIcon = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
-    _translateButton = Tween<double>(begin: 56.0, end: -14.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOutCubic,
-      ),
     );
-    super.initState();
+
+    _iconRotation = Tween<double>(begin: 0, end: 0.125).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _menuScale = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    _menuOpacity = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _toggleMenu() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+
     if (_isExpanded) {
-      _animationController.reverse();
+      _controller.forward();
     } else {
-      _animationController.forward();
+      _controller.reverse();
     }
-    _isExpanded = !_isExpanded;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isTab = isTablet(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildChildOption(
-          label: 'Add Prescription',
-          icon: Icons.note_add_outlined,
-          color: primaryColor,
-          onTap: widget.onAddRecordTapped,
-          offsetMultiplier: 1,
-          isDark: isDark,
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            if (!_isExpanded && _controller.value == 0) {
+              return const SizedBox.shrink();
+            }
+
+            return FadeTransition(
+              opacity: _menuOpacity,
+              child: ScaleTransition(
+                scale: _menuScale,
+                alignment: Alignment.bottomRight,
+                child: Container(
+                  margin: EdgeInsets.only(bottom: isTab ? 18 : 14, right: 2),
+                  padding: EdgeInsets.all(isTab ? 14 : 10),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: theme.dividerColor.withOpacity(0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.25 : 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: _buildChildOption(
+                    context,
+                    label: "Add Prescription",
+                    icon: Icons.note_add_outlined,
+                    color: theme.primaryColor,
+                    onTap: widget.onAddRecordTapped,
+                    isDark: isDark,
+                    isTab: isTab,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-        FloatingActionButton(
-          backgroundColor: primaryColor,
-          elevation: _isExpanded ? 4 : 2,
-          onPressed: _toggleMenu,
-          shape: const CircleBorder(),
-          foregroundColor: Colors.white,
-          child: RotationTransition(
-            turns: _animateIcon,
-            child: Icon(
-              _isExpanded ? Icons.close_rounded : Icons.description_outlined,
-              size: 24,
-            ),
-          ),
-        ),
+        _buildFab(context, isTab),
       ],
     );
   }
 
-  Widget _buildChildOption({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    required int offsetMultiplier,
-    required bool isDark,
-  }) {
-    final cardBgColor = isDark ? Colors.grey[900]! : Colors.white;
-    final cardTextColor = isDark ? Colors.grey[200]! : Colors.black87;
-    final cardBorderColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+  Widget _buildFab(BuildContext context, bool isTab) {
+    final theme = Theme.of(context);
+    final fabSize = isTab ? 68.0 : 60.0;
 
-    return Transform(
-      transform: Matrix4.translationValues(
-        0.0,
-        _translateButton.value * offsetMultiplier,
-        0.0,
+    return Container(
+      width: fabSize,
+      height: fabSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primaryColor.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Opacity(
-        opacity: _animationController.value,
-        child: Visibility(
-          visible: _animationController.value > 0.0,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12, right: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(fieldBorderRadius),
-                    border: Border.all(color: cardBorderColor, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: cardTextColor,
-                    ),
-                  ),
-                ),
-
-                // Small Action Circle Container
-                InkWell(
-                  onTap: () {
-                    _toggleMenu();
-                    onTap();
-                  },
-                  borderRadius: BorderRadius.circular(fieldBorderRadius),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDark ? color.withOpacity(0.18) : color,
-                      shape: BoxShape.circle,
-                      border: isDark ? Border.all(color: color.withOpacity(0.4), width: 1.2) : null,
-                      boxShadow: !isDark
-                          ? [
-                        BoxShadow(
-                          color: color.withOpacity(0.25),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        )
-                      ]
-                          : null,
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: isDark ? color : Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(100),
+          onTap: _toggleMenu,
+          child: RotationTransition(
+            turns: _iconRotation,
+            child: Icon(
+              _isExpanded ? Icons.close_rounded : Icons.description_outlined,
+              color: Colors.white,
+              size: isTab ? 28 : 24,
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildChildOption(
+      BuildContext context, {
+        required String label,
+        required IconData icon,
+        required Color color,
+        required VoidCallback onTap,
+        required bool isDark,
+        required bool isTab,
+      }) {
+    final theme = Theme.of(context);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+        _toggleMenu();
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: isTab ? 50 : 44,
+            height: isTab ? 50 : 44,
+            child: Icon(icon, color: color, size: isTab ? 22 : 20),
+          ),
+          SizedBox(width: isTab ? 14 : 0),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isTab ? 16 : 12,
+              vertical: isTab ? 10 : 8,
+            ),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: isTab ? 14 : 13,
+                fontWeight: FontWeight.w600,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
+            ),
+          ),
+          SizedBox(width: isTab ? 14 : 12),
+          const Icon(Icons.keyboard_arrow_right, size: 18),
+        ],
       ),
     );
   }

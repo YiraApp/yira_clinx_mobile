@@ -18,6 +18,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -28,25 +29,6 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
           actions: [],
           titleText: "Create Prescription Record",
         ),
-        /*appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          titleSpacing: 0,
-          centerTitle: false,
-          title: CommonText(
-            "Create Prescription Record",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.045,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, size: 20),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [],
-        ),*/
         bottomNavigationBar: Container(
           padding: EdgeInsets.only(
             left: 20,
@@ -108,18 +90,18 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   children: [
-                    // Patient Demographics Card
                     CustomCardSection(
                       child: Row(
                         children: [
                           CircleAvatar(
-                            radius: isTablet(context) ? 32 : 20,
+                            radius: isTablet(context) ? 28 : 22,
                             backgroundColor: theme.primaryColor,
                             child: CommonText(
                               'DM',
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.032,
+                                fontSize:isTab
+                                    ? displayWidth(context) * 0.018 :displayWidth(context) * 0.032,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
@@ -136,7 +118,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                       'Demo Manikanta',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.035,
+                                        fontSize:isTab
+                                            ? displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -155,7 +138,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize:
-                                              displayWidth(context) * 0.03,
+                                          isTab
+                                              ? displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.white,
                                         ),
@@ -176,7 +160,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                       'neelimanikanta02@gmail.com',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.03,
+                                        fontSize:isTab
+                                            ? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                                         fontWeight: FontWeight.normal,
                                         color: Colors.grey,
                                       ),
@@ -196,7 +181,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                       '+91 9908875796',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
-                                        fontSize: displayWidth(context) * 0.03,
+                                        fontSize:isTab
+                                            ? displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                                         fontWeight: FontWeight.normal,
                                         color: Colors.grey,
                                       ),
@@ -213,6 +199,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                     // Diagnosis Card
                     CustomCardSection(
                       child: InputSearchChipField(
+                        isTab: isTab,
                         title: 'Diagnosis',
                         subtitle:
                             'Search and add diagnoses — press Enter to add custom, click X to remove',
@@ -232,9 +219,9 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Add Medications Card
                     CustomCardSection(
                       child: InputSearchChipField(
+                        isTab: isTab,
                         title: 'Add Medications',
                         subtitle:
                             'Search and add medications — press Enter to add custom, click X to remove',
@@ -259,7 +246,6 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // 🚀 ULTRA-SMOOTH EXPANDABLE PRESCRIBED MEDICATIONS SECTION
                     CustomCardSection(
                       child: Column(
                         children: [
@@ -281,7 +267,8 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontFamily: appPoppinFont,
-                                      fontSize: displayWidth(context) * 0.038,
+                                      fontSize:isTab
+                                          ? displayWidth(context) * 0.02: displayWidth(context) * 0.038,
                                     ),
                                   ),
                                   AnimatedRotation(
@@ -320,6 +307,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                         itemBuilder: (context, index) {
                                           final item = state.medications[index];
                                           return PrescribedPrescriptionCard(
+                                            isTab: isTab,
                                             key: ValueKey(item.id),
                                             medicineName: item.name,
                                             currentDosage: item.dosage,
@@ -378,8 +366,6 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
-                    // Additional Notes Card
                     CustomCardSection(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +383,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.038,
+                                  fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.038,
                                 ),
                               ),
                             ],
@@ -413,7 +399,7 @@ class AddPrescriptionRecordScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.028,
+                                fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.028,
                                 color: Colors.grey,
                               ),
                             ),

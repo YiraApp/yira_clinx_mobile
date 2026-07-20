@@ -8,11 +8,12 @@ import '../../../../core/constants/constants.dart';
 class DiagnosisTreatmentSection extends StatelessWidget {
   final TextEditingController diagnosisController;
   final TextEditingController treatmentPlanController;
+  final bool isTab;
 
   const DiagnosisTreatmentSection({
     super.key,
     required this.diagnosisController,
-    required this.treatmentPlanController,
+    required this.treatmentPlanController, required this.isTab,
   });
 
   @override
@@ -21,14 +22,14 @@ class DiagnosisTreatmentSection extends StatelessWidget {
     final labelStyle = TextStyle(
       fontWeight: FontWeight.w500,
       fontFamily: appPoppinFont,color: Colors.grey,
-      fontSize: displayWidth(context) * 0.032,
+      fontSize:isTab? displayWidth(context) * 0.018:  displayWidth(context) * 0.032,
     );
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: "Diagnosis & Treatment"),
+         SectionHeader(title: "Diagnosis & Treatment", isTab: isTab,),
         const SizedBox(height: 16),
 
         Container(

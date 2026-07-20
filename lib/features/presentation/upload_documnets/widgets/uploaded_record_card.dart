@@ -14,13 +14,13 @@ class UploadedRecordCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onDownload;
   final VoidCallback onView;
-
+final bool isTab;
   const UploadedRecordCard({
     super.key,
     required this.record,
     required this.onDelete,
     required this.onDownload,
-    required this.onView,
+    required this.onView, required this.isTab,
   });
 
   @override
@@ -59,8 +59,6 @@ class UploadedRecordCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Metadata Information Layout Panel
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14.0),
@@ -75,7 +73,7 @@ class UploadedRecordCard extends StatelessWidget {
                             record.fileName,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.035,
+                              fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.035,
                               fontWeight: FontWeight.w500,
                               color: theme.textTheme.titleMedium?.color,
                             ),
@@ -95,7 +93,7 @@ class UploadedRecordCard extends StatelessWidget {
                                 fontFamily: appPoppinFont,
                                 color: isDark ? currentPrimary.withOpacity(0.9) : currentPrimary,
                                 fontWeight: FontWeight.w700,
-                                fontSize: displayWidth(context) * 0.022,
+                                fontSize: isTab?  displayWidth(context) * 0.014:displayWidth(context) * 0.022,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -115,7 +113,7 @@ class UploadedRecordCard extends StatelessWidget {
                             DateFormat('MMM dd, yyyy').format(record.uploadDate),
                             style: TextStyle(
                               color: theme.hintColor.withOpacity(0.7),
-                              fontSize: displayWidth(context) * 0.031,
+                              fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.031,
                               fontFamily: appPoppinFont,
                             ),
                           ),
@@ -134,7 +132,7 @@ class UploadedRecordCard extends StatelessWidget {
                             '${record.fileSizeKB} KB',
                             style: TextStyle(
                               color: theme.hintColor.withOpacity(0.7),
-                              fontSize: displayWidth(context) * 0.031,
+                              fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.031,
                               fontFamily: appPoppinFont,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -148,7 +146,6 @@ class UploadedRecordCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
 
-              // Visual Vertical Divider
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 14.0),
                 child: VerticalDivider(
@@ -157,7 +154,6 @@ class UploadedRecordCard extends StatelessWidget {
                   thickness: 1,
                 ),
               ),
-
               CommonCustomPopupMenu(
                 items: [
                   AppPopupItemModel(
@@ -174,7 +170,7 @@ class UploadedRecordCard extends StatelessWidget {
                     icon: Icons.delete_outline_rounded,
                     title: 'Delete',
                     onTap: onDelete,
-                    isDestructive: true, // Auto-renders custom line separation and red tints
+                    isDestructive: true,
                   ),
                 ],
                 child: Padding(

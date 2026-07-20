@@ -50,7 +50,7 @@ class _PatientAppointmentListViewState
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: const Center(
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
               ),
             ),
@@ -142,6 +142,7 @@ class _PatientAppointmentListViewState
                 itemBuilder: (context, index) {
                   final appointment = state.appointments[index];
                   return AppointmentCard(
+                    isTab: isTablet(context),
                     isPatientProfile: true,
                     appointment: appointment,
                     isTeleConsultation: true,

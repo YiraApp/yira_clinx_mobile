@@ -28,7 +28,7 @@ class TestResultsScreen extends StatelessWidget {
         body: BlocConsumer<TestResultsBloc, TestResultsState>(
           builder: (context, state) {
             if (state is TestResultsLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
             if (state is TestResultsLoaded) return _buildUI(context, state);
             return const SizedBox();
@@ -167,7 +167,7 @@ class TestResultsScreen extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: state.labResults.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, i) => ReusableTestCard(
               title: state.labResults[i]['title'],
               doctorName: state.labResults[i]['doctor'],

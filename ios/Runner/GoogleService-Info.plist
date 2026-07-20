@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>13608445650-tl2jcvrdfnbl1fdm501n229vgvluc9g6.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.13608445650-tl2jcvrdfnbl1fdm501n229vgvluc9g6</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>13608445650-0mq8vgf7v7agmth8rpa4tc93ovfgqc9n.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBXDTQeZLt_wMdRwX_A6esdWnbLOIcaLY4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>13608445650</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.paccore.yiralife</string>
+	<key>PROJECT_ID</key>
+	<string>yiralife-85a1f</string>
+	<key>STORAGE_BUCKET</key>
+	<string>yiralife-85a1f.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:13608445650:ios:de713b201c960bd4992f0b</string>
+</dict>
+</plist>

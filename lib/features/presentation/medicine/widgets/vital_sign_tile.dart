@@ -10,13 +10,14 @@ class VitalSignTile extends StatelessWidget {
   final String value;
   final String? unit;
   final Color accentColor;
+  final bool isTab;
 
   const VitalSignTile({
     super.key,
     required this.label,
     required this.value,
     this.unit,
-    required this.accentColor,
+    required this.accentColor, required this.isTab,
   });
 
   @override
@@ -43,7 +44,7 @@ class VitalSignTile extends StatelessWidget {
               fontFamily: appPoppinFont,
               color: accentColor,
               fontWeight: FontWeight.w700,
-              fontSize: isTab ? displayWidth(context) * 0.012 : displayWidth(context) * 0.028,
+              fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.028,
             ),
           ),
           const SizedBox(height: 6),
@@ -55,8 +56,8 @@ class VitalSignTile extends StatelessWidget {
                 value,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w500,
-                  fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.032,
+                  fontWeight: FontWeight.w400,
+                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
                 ),
               ),
               if (unit != null) ...[

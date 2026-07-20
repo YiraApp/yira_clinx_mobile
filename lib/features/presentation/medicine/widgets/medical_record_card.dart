@@ -17,6 +17,7 @@ class MedicalRecordCard extends StatelessWidget {
   final VoidCallback onDetailsPressed;
   final VoidCallback onDeletePressed;
   final VoidCallback onEditPressed;
+  final bool isTab;
 
   const MedicalRecordCard({
     super.key,
@@ -28,14 +29,13 @@ class MedicalRecordCard extends StatelessWidget {
     required this.diagnosis,
     required this.vitalsSummary,
     required this.onDetailsPressed,
-    required this.onDeletePressed, required this.onEditPressed,
+    required this.onDeletePressed, required this.onEditPressed, required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bool isTab = isTablet(context);
 
     return Container(
       width: double.infinity,
@@ -156,7 +156,7 @@ class MedicalRecordCard extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.bold,
-                          fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.032,
+                          fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                         ),
                       ),
                       SizedBox(width: 10,),
@@ -167,7 +167,7 @@ class MedicalRecordCard extends StatelessWidget {
                             fontFamily: appPoppinFont,
                             fontStyle: FontStyle.italic,
                             color: Colors.grey.shade600,
-                            fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.032,
+                            fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
                           ),
                         ),
                       ),
@@ -222,7 +222,7 @@ class MedicalRecordCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w600,
-                fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.032,
+                fontSize: isTab ? displayWidth(context) * 0.017 : displayWidth(context) * 0.032,
               ),
             ),
           ),
@@ -246,7 +246,7 @@ class MedicalRecordCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 color: Colors.grey.shade600,
-                fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.032,
+                fontSize: isTab ? displayWidth(context) * 0.017 : displayWidth(context) * 0.032,
               ),
             ),
           ),

@@ -36,7 +36,7 @@ class UnSyncedDataDialog extends StatelessWidget {
             Image.asset(
               'assets/icons/export_img.png',
               width: width * 0.16,
-              errorBuilder: (_, __, ___) => const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.orange),
+              errorBuilder: (_, _, _) => const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.orange),
             ),
             const SizedBox(height: 16),
             Text(

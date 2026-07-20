@@ -14,13 +14,13 @@ class SinglePrescriptionCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onView;
-
+final bool isTab;
   const SinglePrescriptionCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.date,
-    this.onEdit, this.onDelete, this.onView,
+    this.onEdit, this.onDelete, this.onView, required this.isTab,
   });
 
   @override
@@ -145,7 +145,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * (isTab ? 0.022 : 0.035),
+                              fontSize: displayWidth(context) * (isTab ? 0.018 : 0.035),
                               fontWeight: FontWeight.w500,
                               color: isDark ? sideMenuDividerColor : cardPopUpMenuColor,
                               letterSpacing: -0.2,
@@ -158,7 +158,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * (isTab ? 0.017 : 0.03),
+                              fontSize: displayWidth(context) * (isTab ? 0.015 : 0.03),
                               fontWeight: FontWeight.w400,
                               height: 1.35,
                               color: isDark ? textLightDarkColor : scoreSubTextColor,
@@ -188,7 +188,7 @@ class SinglePrescriptionCard extends StatelessWidget {
                                   date.toUpperCase(),
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * (isTab ? 0.015 : 0.026),
+                                    fontSize: displayWidth(context) * (isTab ? 0.012 : 0.026),
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.6,
                                     color: isDark ? textLightDarkColor : dialogueSubTextColor,

@@ -33,6 +33,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    bool isTab = isTablet(context);
 
     return BlocConsumer<UploadedBloc, UploadedBlocState>(
       buildWhen: (previous, current)=> current is! UploadRecordScreenNavState,
@@ -57,9 +58,9 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
               ),
               child: Column(
                 children: [
-                  _buildCategoryFilter(context, state),
+                  _buildCategoryFilter(context, state,isTab),
                   const SizedBox(height: 20),
-                  Expanded(child: _buildRecordsList(context, state)),
+                  Expanded(child: _buildRecordsList(context, state,isTab)),
                 ],
               ),
             ),
@@ -69,7 +70,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
     );
   }
 
-  Widget _buildCategoryFilter(BuildContext context, UploadedBlocState state) {
+  Widget _buildCategoryFilter(BuildContext context, UploadedBlocState state,bool isTab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
@@ -117,7 +118,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                         ? Colors.white
                         : (isDark ? Colors.white70 : Colors.black87),
                     fontWeight: FontWeight.w600,
-                    fontSize: displayWidth(context) * 0.03,
+                    fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                   ),
                 ),
               ),
@@ -128,7 +129,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
     );
   }
 
-  Widget _buildRecordsList(BuildContext context, UploadedBlocState state) {
+  Widget _buildRecordsList(BuildContext context, UploadedBlocState state,isTab) {
     if (state.status == UploadedStatus.loading) {
       return const Center(child: CircularProgressIndicator.adaptive());
     }
@@ -152,6 +153,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
           },
           onDownload: () {},
           onView: () {},
+            isTab:isTab
         );
       },
     );

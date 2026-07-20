@@ -27,12 +27,17 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+final isTab = isTablet(context);
     return BlocConsumer<MedicalHistoryBloc, MedicalHistoryState>(
-      buildWhen: (previous, current) => current is! AddMedicalRecordNavState || current is SingleMedicineDetailsNavState,
-      listener: (BuildContext context, MedicalHistoryState state) {
+      buildWhen: (previous, current) =>
+      current is MedicalHistoryLoading ||
+          current is MedicalHistoryError ||
+          current is MedicalHistoryLoaded,
+      listenWhen: (previous, current) =>
+      current is AddMedicalRecordNavState ||
+          current is SingleMedicineDetailsNavState, listener: (BuildContext context, MedicalHistoryState state) {
         if (state is AddMedicalRecordNavState) {
-          Navigator.pushNamed(context, AppRoutes.addPrescriptionScreen);
+          Navigator.pushNamed(context, AppRoutes.addMedicalRecordScreen);
         } else if(state is SingleMedicineDetailsNavState){
           Navigator.pushNamed(context, AppRoutes.medicalRecordDetailsScreen);
         }
@@ -49,15 +54,15 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                   },
                 )
               : null,
-          body: _buildBody(context, state),
+          body: _buildBody(context, state,isTab),
         );
       },
     );
   }
 
-  Widget _buildBody(BuildContext context, MedicalHistoryState state) {
+  Widget _buildBody(BuildContext context, MedicalHistoryState state,bool isTab) {
     if (state is MedicalHistoryLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator.adaptive());
     }
 
     if (state is MedicalHistoryError) {
@@ -82,6 +87,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: fieldSpace),
             child: MedicalRecordCard(
+              isTab: isTab,
               title: item.title,
               formattedDate: DateFormat(
                 'MMMM dd, yyyy',
@@ -93,7 +99,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
               vitalsSummary: item.vitalsSummary,
               onDetailsPressed: () {
                 context.read<MedicalHistoryBloc>().add(
-                  SingleMedicineDetailsNavEvent(),
+                  SingleMedicineDetailsNavEvent(recordId: item.id),
                 );
               },
               onDeletePressed: () {

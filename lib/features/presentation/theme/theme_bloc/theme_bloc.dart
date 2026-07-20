@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
 
 import '../../../use_cases/cached_theme_use_case.dart';
 import '../../../use_cases/get_theme_use_case.dart';

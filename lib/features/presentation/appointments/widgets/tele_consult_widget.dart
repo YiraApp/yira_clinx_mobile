@@ -10,12 +10,13 @@ class TeleconsultationCard extends StatelessWidget {
   final bool isSelected;
   final ValueChanged<bool?> onChanged;
   final bool isDark;
+  final bool isTab;
 
   const TeleconsultationCard({
     super.key,
     required this.isSelected,
     required this.onChanged,
-    this.isDark = false,
+    this.isDark = false, required this.isTab,
   });
 
   @override
@@ -59,7 +60,7 @@ class TeleconsultationCard extends StatelessWidget {
                     'Teleconsultation',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.035,
+                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.035,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -70,7 +71,7 @@ class TeleconsultationCard extends StatelessWidget {
                     'Virtual video call via secure link',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.028,
+                      fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.028,
                       fontWeight: FontWeight.w400,
                     ),
                     overflow: TextOverflow.ellipsis,

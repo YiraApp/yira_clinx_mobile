@@ -38,7 +38,7 @@ class MedicalHistoryBloc extends Bloc<MedicalHistoryEvent, MedicalHistoryState> 
       emit(AddMedicalRecordNavState());
     });
     on<SingleMedicineDetailsNavEvent>((event, emit) async {
-      emit(SingleMedicineDetailsNavState());
+      emit(SingleMedicineDetailsNavState(recordId: event.recordId));
     });
   }
 }

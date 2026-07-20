@@ -14,17 +14,19 @@ import '../../../core/common_widgets/custom_button.dart';
 class UploadDocumentsScreen extends StatefulWidget {
   final String? patientName;
 
-  const UploadDocumentsScreen({
-    super.key,
-    required this.patientName,
-  });
+  const UploadDocumentsScreen({super.key, required this.patientName});
 
   @override
   State<UploadDocumentsScreen> createState() => _UploadDocumentsScreenState();
 }
 
 class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
-  final List<String> categoriesList = ['Imaging / Radiology', 'Appointments', 'General', 'Self(Patient)'];
+  final List<String> categoriesList = [
+    'Imaging / Radiology',
+    'Appointments',
+    'General',
+    'Self(Patient)',
+  ];
   late String selectedCategory;
   List<Map<String, dynamic>> stagedFiles = [];
   bool isUploading = false;
@@ -36,16 +38,18 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
   }
 
   void _simulateFileSelection() {
-    final mockFileNames = ['Xray_Chest_AP.jpg', 'MRI_Brain_T2.png', 'Ultrasound_Abdomen.jpg', 'CT_Scan_Spine.pdf'];
+    final mockFileNames = [
+      'Xray_Chest_AP.jpg',
+      'MRI_Brain_T2.png',
+      'Ultrasound_Abdomen.jpg',
+      'CT_Scan_Spine.pdf',
+    ];
     final selectedName = mockFileNames[Random().nextInt(mockFileNames.length)];
     final mockSizes = [1024, 2048, 4500, 8120];
     final selectedSize = mockSizes[Random().nextInt(mockSizes.length)];
 
     setState(() {
-      stagedFiles.add({
-        'name': selectedName,
-        'size': selectedSize,
-      });
+      stagedFiles.add({'name': selectedName, 'size': selectedSize});
     });
   }
 
@@ -69,19 +73,17 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
+    final bool isTab = isTablet(context);
     return Scaffold(
-      backgroundColor:  theme.scaffoldBackgroundColor ,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: primaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back,size: 20,color: Colors.white,),
+          icon: const Icon(Icons.arrow_back, size: 20, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-
-        ],
+        actions: [],
       ),
       body: SafeArea(
         bottom: false,
@@ -89,7 +91,12 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(screenHorizontalSpacePadding, 0, screenHorizontalSpacePadding, 28),
+              padding: const EdgeInsets.fromLTRB(
+                screenHorizontalSpacePadding,
+                0,
+                screenHorizontalSpacePadding,
+                28,
+              ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [primaryColor, primaryColor],
@@ -100,12 +107,13 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   CommonText(
                     "Upload Clinical Documents",
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.054,
+                      fontSize: isTab
+                          ? displayWidth(context) * 0.032
+                          : displayWidth(context) * 0.054,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                       letterSpacing: -0.3,
@@ -116,7 +124,9 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                     "For patient: ${widget.patientName}",
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.034,
+                      fontSize: isTab
+                          ? displayWidth(context) * 0.022
+                          : displayWidth(context) * 0.034,
                       color: Colors.white.withOpacity(0.85),
                       fontWeight: FontWeight.w500,
                     ),
@@ -128,7 +138,10 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 26.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: screenHorizontalSpacePadding,
+                  vertical: 26.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -136,7 +149,9 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                       "Document Category",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: displayWidth(context) * 0.035,
+                        fontSize: isTab
+                            ? displayWidth(context) * 0.02
+                            : displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -145,7 +160,10 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                       title: "Select Doctor",
                       selectedValue: selectedCategory,
                       options: const [
-                        'Imaging / Radiology', 'Appointments', 'General', 'Self(Patient)'
+                        'Imaging / Radiology',
+                        'Appointments',
+                        'General',
+                        'Self(Patient)',
                       ],
                       onSelected: (value) {},
                     ),
@@ -158,18 +176,25 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                           "Selected Files",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.035,
+                            fontSize: isTab
+                                ? displayWidth(context) * 0.02
+                                : displayWidth(context) * 0.035,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
 
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           child: CommonText(
                             "${stagedFiles.length} Files",
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * 0.026,
+                              fontSize: isTab
+                                  ? displayWidth(context) * 0.018
+                                  : displayWidth(context) * 0.026,
                               color: primaryColor,
                               fontWeight: FontWeight.w800,
                             ),
@@ -179,87 +204,111 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    stagedFiles.isEmpty? GestureDetector(
-                      onTap: _simulateFileSelection,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.transparent :Colors.white,
-                          borderRadius: BorderRadius.circular(fieldBorderRadius),
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.2),
-                            width: 0.5,
-                          ),
+                    stagedFiles.isEmpty
+                        ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 36,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.transparent
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(
+                          fieldBorderRadius,
                         ),
-                        child: Column(
-                          children: [
-                             Container(
-                               padding: const EdgeInsets.all(12),
-                               decoration: BoxDecoration(
-                                 color: primaryColor.withOpacity(0.1),
-                                 borderRadius: BorderRadius.circular(fieldBorderRadius),
-                               ),
-                               child: const Icon(
-                                 Icons.note_add_rounded,
-                                 color: Color(0xFF0066FF),
-                                 size: 26,
-                               ),
-                             ),
-                             const SizedBox(height: 16),
-                             CommonText(
-                               "Drag and drop files here",
-                               style: TextStyle(
-                                 fontFamily: appPoppinFont,
-                                 fontSize: displayWidth(context) * 0.035,
-                                 fontWeight: FontWeight.w700,
-                               ),
-                             ),
-                             const SizedBox(height: 6),
-                             CommonText(
-                               "Support for PDF, JPG, PNG up to 10MB",
-                               style: TextStyle(
-                                 fontFamily: appPoppinFont,
-                                 fontSize: displayWidth(context) * 0.03,
-                                 color: Colors.grey,
-                                 fontWeight: FontWeight.w500,
-                               ),
-                               textAlign: TextAlign.center,
-                             ),
-                             const SizedBox(height: 20),
-                             Container(
-                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                               decoration: BoxDecoration(
-                                   color:isDark? Colors.transparent: Colors.white,
-                                   borderRadius: BorderRadius.circular(fieldBorderRadius),
-                                   border: Border.all(
-                                     color:isDark? Colors.grey.withOpacity(0.2):primaryColor,
-                                     width: 0.5,
-                                   ),
-                                   boxShadow: [
-                                     BoxShadow(
-                                       color: Colors.black.withOpacity(0.03),
-                                       blurRadius: 6,
-                                       offset: const Offset(0, 2),
-                                     )
-                                   ]
-                               ),
-                               child:  CommonText(
-                                 "Browse Files",
-                                 style: TextStyle(
-                                   fontFamily: appPoppinFont,
-                                   color: primaryColor,
-                                   fontWeight: FontWeight.w600,
-                                   fontSize: displayWidth(context)*0.032,
-                                 ),
-                               ),
-                             ),
-
-
-                          ],
+                        border: Border.all(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 0.5,
                         ),
                       ),
-                    ):SizedBox.shrink(),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(
+                                fieldBorderRadius,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.note_add_rounded,
+                              color: Color(0xFF0066FF),
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          CommonText(
+                            "Drag and drop files here",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab
+                                  ? displayWidth(context) * 0.02
+                                  : displayWidth(context) * 0.035,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          CommonText(
+                            "Support for PDF, JPG, PNG up to 10MB",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab
+                                  ? displayWidth(context) * 0.018
+                                  : displayWidth(context) * 0.03,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: _simulateFileSelection,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.transparent
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  fieldBorderRadius,
+                                ),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.grey.withOpacity(0.2)
+                                      : primaryColor,
+                                  width: 0.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: CommonText(
+                                "Browse Files",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: isTab
+                                      ? displayWidth(context) * 0.018
+                                      : displayWidth(context) * 0.032,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        : SizedBox.shrink(),
                     const SizedBox(height: fieldSpace),
                     ListView.builder(
                       shrinkWrap: true,
@@ -271,21 +320,31 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isDark ? theme.colorScheme.surface : const Color(0xFFFAFBFC),
+                            color: isDark
+                                ? theme.colorScheme.surface
+                                : const Color(0xFFFAFBFC),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFEDEFF3)),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white10
+                                  : const Color(0xFFEDEFF3),
+                            ),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: primaryColor.withOpacity(isDark ? 0.15 : 0.06),
+                                  color: primaryColor.withOpacity(
+                                    isDark ? 0.15 : 0.06,
+                                  ),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
                                   Icons.description_outlined,
-                                  color: isDark ? primaryColor.withOpacity(0.9) : primaryColor,
+                                  color: isDark
+                                      ? primaryColor.withOpacity(0.9)
+                                      : primaryColor,
                                   size: 18,
                                 ),
                               ),
@@ -299,14 +358,23 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontWeight: FontWeight.w600,
-                                        fontSize: displayWidth(context)*0.03,
+                                        fontSize: isTab
+                                            ? displayWidth(context) * 0.018
+                                            : displayWidth(context) * 0.03,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     CommonText(
                                       '${(file['size'] / 1024).toStringAsFixed(1)} MB',
-                                      style: TextStyle(fontFamily: appPoppinFont,color: theme.hintColor, fontSize:  displayWidth(context)*0.028, fontWeight: FontWeight.w500),
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        color: theme.hintColor,
+                                        fontSize: isTab
+                                            ? displayWidth(context) * 0.018
+                                            : displayWidth(context) * 0.028,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -314,7 +382,11 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                               IconButton(
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
-                                icon: const Icon(Icons.cancel_rounded, color: Colors.redAccent, size: 20),
+                                icon: const Icon(
+                                  Icons.cancel_rounded,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     stagedFiles.removeAt(index);
@@ -332,19 +404,35 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                         child: Center(
                           child: OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              side: const BorderSide(color: primaryColor, width: 0.5),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              side: const BorderSide(
+                                color: primaryColor,
+                                width: 0.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  fieldBorderRadius,
+                                ),
+                              ),
                             ),
                             onPressed: _simulateFileSelection,
-                            icon: const Icon(Icons.add_circle_outline_rounded, color: primaryColor, size: 18),
+                            icon: const Icon(
+                              Icons.add_circle_outline_rounded,
+                              color: primaryColor,
+                              size: 18,
+                            ),
                             label: CommonText(
                               "Add More Files",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 color: primaryColor,
                                 fontWeight: FontWeight.w600,
-                                fontSize: displayWidth(context) * 0.035,
+                                fontSize: isTab
+                                    ? displayWidth(context) * 0.02
+                                    : displayWidth(context) * 0.035,
                               ),
                             ),
                           ),
@@ -360,32 +448,46 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               decoration: BoxDecoration(
                 // color: isDark ? theme.colorScheme.surface : const Color(0xFFF4F5F7),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(fieldBorderRadius)),
-                border: Border(top: BorderSide(color: isDark ? Colors.white10 : const Color(0xFFE5E9F0), width: 1)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(fieldBorderRadius),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? Colors.white10 : const Color(0xFFE5E9F0),
+                    width: 1,
+                  ),
+                ),
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: CommonBorderButton(height: 40, text: 'Cancel', onPressed: () {})
+                    child: CommonBorderButton(
+                      height: 40,
+                      text: 'Cancel',
+                      onPressed: () {},
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: isUploading
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                    ):CustomElevatedButton(
-                      text: "Confirm Upload",
-                      onPressed: () {
-                        stagedFiles.isEmpty || isUploading
-                            ? null
-                            : () => _handleUploadConfirmation(context);
-                      },
-                      width: double.infinity,
-                      height: 40,
-                      borderRadius: 8,
-                    ),
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator.adaptive(
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : CustomElevatedButton(
+                            text: "Confirm Upload",
+                            onPressed: () {
+                              stagedFiles.isEmpty || isUploading
+                                  ? null
+                                  : () => _handleUploadConfirmation(context);
+                            },
+                            width: double.infinity,
+                            height: 40,
+                            borderRadius: 8,
+                          ),
                   ),
                 ],
               ),

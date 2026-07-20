@@ -6,6 +6,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_list_screen.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/clinical_notes/clinical_notes_screen.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_header.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
@@ -29,7 +30,7 @@ class DoctorPatientProfileScreen extends StatefulWidget {
 
 class _DoctorPatientProfileScreenState
     extends State<DoctorPatientProfileScreen> {
-  int _activeTabIndex = 0;
+  final int _activeTabIndex = 0;
 
   final List<String> _tabs = [
     'Overview',
@@ -39,11 +40,15 @@ class _DoctorPatientProfileScreenState
     'Documents',
     'Appointments',
   ];
-
+  @override
+  void initState() {
+    super.initState();
+    context.read<PatientProfileBloc>().add(const TabChanged(0));
+  }
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -56,11 +61,11 @@ class _DoctorPatientProfileScreenState
             context.read<PatientProfileBloc>().add(
               const LoadPatientProfile('3456'),
             );
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
 
           if (state is PatientProfileLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator.adaptive());
           }
           if (state is PatientProfileError) {
             return Center(
@@ -82,10 +87,11 @@ class _DoctorPatientProfileScreenState
             return Column(
               children: [
                 SizedBox(height: screenTopPadding,),
-                PatientProfileHeader(patient: patient),
+                PatientProfileHeader(patient: patient,isTab:isTab),
                 PatientProfileTabBar(
                   tabs: _tabs,
                   selectedIndex: currentTab,
+                  isTab:isTab,
                   onTabSelected: (index) {
                     context.read<PatientProfileBloc>().add(TabChanged(index));
                   },
@@ -93,14 +99,14 @@ class _DoctorPatientProfileScreenState
                 Expanded(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    child: _buildActiveTabContent(context, patient, currentTab),
+                    child: _buildActiveTabContent(context, patient, currentTab, isTab),
                   ),
                 ),
               ],
             );
           }
 
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator.adaptive());
         },
       ),
     );
@@ -110,21 +116,26 @@ class _DoctorPatientProfileScreenState
       BuildContext context,
       PatientProfileEntity patient,
       int activeTab,
+      bool isTab
       ) {
     switch (activeTab) {
       case 0:
-        return OverviewScreen(
-          key: const ValueKey('OverviewTabContentFrame'),
-          patient: patient,
-          onPrescribeTap: () {
-            context.read<PatientProfileBloc>().add(const TabChanged(3));
-          },
-          onNoteTap: () {
-            context.read<PatientProfileBloc>().add(const TabChanged(1));
-          },
-          onScheduleTap: () {
-            context.read<PatientProfileBloc>().add(const TabChanged(5));
-          },
+        return BlocProvider<PatientOverViewBloc>(
+          create: (_) => sl<PatientOverViewBloc>(),
+          child: OverviewScreen(
+            isTab: isTab,
+            key: const ValueKey('OverviewTabContentFrame'),
+            patient: patient,
+            onPrescribeTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(3));
+            },
+            onNoteTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(1));
+            },
+            onScheduleTap: () {
+              context.read<PatientProfileBloc>().add(const TabChanged(5));
+            },
+          ),
         );
       case 1:
         return const ClinicalNotesScreen(

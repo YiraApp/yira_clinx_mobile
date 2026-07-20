@@ -6,8 +6,9 @@ import '../../../../core/constants/constants.dart';
 
 class SettingsGroupCard extends StatelessWidget {
   final List<Widget> children;
+  final bool isTab;
 
-  const SettingsGroupCard({super.key, required this.children});
+  const SettingsGroupCard({super.key, required this.children, required this.isTab});
 
   @override
   Widget build(BuildContext context) {

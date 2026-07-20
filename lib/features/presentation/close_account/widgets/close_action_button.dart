@@ -31,7 +31,7 @@ class CloseAccountButtonSection extends StatelessWidget {
             const SizedBox(
               height: 48,
               child: Center(
-                child: CircularProgressIndicator(
+                child: CircularProgressIndicator.adaptive(
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
                 ),
               ),
@@ -55,7 +55,7 @@ class CloseAccountButtonSection extends StatelessWidget {
                   'Confirm & Close Account',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: isTab ? width * 0.025 : width * 0.038,
+                    fontSize: isTab ? width * 0.02 : width * 0.038,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -78,7 +78,7 @@ class CloseAccountButtonSection extends StatelessWidget {
                 'Cancel',
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: isTab ? width * 0.025 : width * 0.038,
+                  fontSize: isTab ? width * 0.02 : width * 0.038,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade600,
                 ),

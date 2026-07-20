@@ -64,12 +64,13 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
-        titleText:"Create New Medical Record",
+        titleText:"Create Medical Record",
         actions: [],
       ),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
@@ -101,11 +102,12 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SectionHeader(title: "Patient Information"),
+                        SectionHeader(title: "Patient Information", isTab: isTab,),
                         const SizedBox(height: 12),
                         MedicalPatientInfoCard(
                           name: "Demo Manikanta",
                           patientId: '1434',
+                            isTab:isTab
                         ),
                         const SizedBox(height: fieldSpace),
                         Row(
@@ -121,14 +123,14 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       fontWeight: FontWeight.w500,
                                       fontFamily: appPoppinFont,
                                       color: Colors.grey,
-                                      fontSize: displayWidth(context) * 0.032,
+                                      fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
                                   _buildDOBPicker(
                                     context,
                                     state.selectedDate ?? DateTime(2000, 1, 1),
-                                    isDark,
+                                    isDark,isTab
                                   ),
                                 ],
                               ),
@@ -144,7 +146,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       fontWeight: FontWeight.w500,
                                       fontFamily: appPoppinFont,
                                       color: Colors.grey,
-                                      fontSize: displayWidth(context) * 0.032,
+                                      fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -171,11 +173,12 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                         ClinicalInfoSection(
                           chiefComplaintController: _chiefComplaintController,
                           symptomsController: _symptomsController,
-                          physicalExamController: _physicalExamController,
+                          physicalExamController: _physicalExamController, isTab: isTab,
                         ),
                         const SizedBox(height: 24),
 
                         VitalSignsSection(
+                         isTab: isTab,
                           bpController: _bpController,
                           hrController: _hrController,
                           tempController: _tempController,
@@ -186,6 +189,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                         ),
                         const SizedBox(height: 24),
                         DiagnosisTreatmentSection(
+                         isTab: isTab,
                           diagnosisController: _diagnosisController,
                           treatmentPlanController: _treatmentPlanController,
                         ),
@@ -210,7 +214,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: state is MedicalRecordLoading
-                            ? const Center(child: CircularProgressIndicator())
+                            ? const Center(child: CircularProgressIndicator.adaptive())
                             : CustomElevatedButton(
                                 noElevation: true,
                                 height: buttonHeight,
@@ -329,6 +333,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
     BuildContext context,
     DateTime? currentDob,
     bool isDark,
+      bool isTab
   ) {
     final DateTime displayDate = currentDob ?? DateTime(2000, 1, 1);
     final age = DateTime.now().year - displayDate.year;
@@ -340,8 +345,8 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          border: Border.all(color: Colors.grey.withOpacity(0.2)),
+          color:  isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
+          border: Border.all(color: isDark ? darkModeBorderColor : lightModeBorderColor, width: 1.0),
           borderRadius: BorderRadius.circular(fieldBorderRadius),
         ),
         child: Row(
@@ -354,7 +359,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                 Text(
                   DateFormat('MMMM dd, yyyy').format(displayDate),
                   style: TextStyle(
-                    fontSize: displayWidth(context) * 0.032,
+                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                   ),

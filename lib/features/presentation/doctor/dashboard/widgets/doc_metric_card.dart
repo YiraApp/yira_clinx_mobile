@@ -10,6 +10,7 @@ class DocMetricCard extends StatelessWidget {
   final String subtext;
   final IconData icon;
   final Color iconColor;
+  final bool isTab;
 
   const DocMetricCard({
     super.key,
@@ -17,7 +18,7 @@ class DocMetricCard extends StatelessWidget {
     required this.value,
     required this.subtext,
     required this.icon,
-    required this.iconColor,
+    required this.iconColor, required this.isTab,
   });
 
   @override
@@ -42,7 +43,7 @@ class DocMetricCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.grey[400] : Colors.grey[500],
                 ),
@@ -55,7 +56,7 @@ class DocMetricCard extends StatelessWidget {
             value,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.045,
+              fontSize:isTab? displayWidth(context) * 0.022:  displayWidth(context) * 0.045,
               fontWeight: FontWeight.w700,
               color: isDark ? Colors.white : Colors.black87,
             ),
@@ -64,7 +65,7 @@ class DocMetricCard extends StatelessWidget {
             subtext,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.03,
+              fontSize: isTab? displayWidth(context) * 0.015: displayWidth(context) * 0.03,
               color: iconColor == Colors.green
                   ? Colors.green
                   : Colors.grey[500],

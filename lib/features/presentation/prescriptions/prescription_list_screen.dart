@@ -15,14 +15,17 @@ class PrescriptionListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+final bool isTab= isTablet(context);
     return BlocProvider(
       create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData()),
       child: SafeArea(
         child: BlocConsumer<PrescriptionBloc, PrescriptionState>(
           buildWhen: (previous, current) =>
-              current is! AddPrescriptionRecordNavState ||
+          current is! AddPrescriptionRecordNavState &&
               current is! SinglePrescriptionDetailsNavState,
+          listenWhen: (previous, current) =>
+          current is AddPrescriptionRecordNavState ||
+              current is SinglePrescriptionDetailsNavState,
           listener: (context, state) {
             if (state is AddPrescriptionRecordNavState) {
               Navigator.pushNamed(context, AppRoutes.addPrescriptionScreen);
@@ -50,7 +53,7 @@ class PrescriptionListScreen extends StatelessWidget {
               );
             }
             final prescriptionItems = [
-              {
+              {'id':'1',
                 'title': state.diagnoses.isNotEmpty
                     ? state.diagnoses.last
                     : 'Index hypermetropia',
@@ -59,6 +62,7 @@ class PrescriptionListScreen extends StatelessWidget {
                 'date': 'JUN 03, 2026',
               },
               {
+                'id':'2',
                 'title': state.diagnoses.join(', ').isNotEmpty
                     ? state.diagnoses.join(', ')
                     : 'Hyperoxia, Hypermetropia',
@@ -92,9 +96,10 @@ class PrescriptionListScreen extends StatelessWidget {
                     onDelete: () {},
                     onView: () {
                       context.read<PrescriptionBloc>().add(
-                        SinglePrescriptionDetailsNavEvent(),
+                        SinglePrescriptionDetailsNavEvent(prescriptionId: itemData['id']!),
                       );
                     },
+                    isTab:isTab
                   );
                 },
               ),

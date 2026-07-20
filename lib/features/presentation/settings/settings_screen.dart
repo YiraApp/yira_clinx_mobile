@@ -16,7 +16,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final width = displayWidth(context);
-
+final isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -43,11 +43,13 @@ class SettingsScreen extends StatelessWidget {
               vertical: screenTopPadding,
             ),
             children: [
-              _buildSectionHeader(context, "ACCOUNT SECURITY"),
+              _buildSectionHeader(context, "Account Security",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
+                isTab: isTab,
                 children: [
                   CustomSettingTile(
+                    isTab: isTab,
                     icon: Icons.lock_outline_rounded,
                     title: "Password and security",
                     subtitle: "Manage passwords",
@@ -61,11 +63,13 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "COMMUNICATIONS"),
+              _buildSectionHeader(context, "Communications",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
+                isTab: isTab,
                 children: [
                   CustomSettingTile(
+                    isTab: isTab,
                     icon: Icons.notifications_none_rounded,
                     title: "Notification settings",
                     subtitle: "Push, email, and alert triggers",
@@ -77,11 +81,13 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "APP PREFERENCES"),
+              _buildSectionHeader(context, "App Preferences",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
+                isTab: isTab,
                 children: [
                   CustomSettingTile(
+                    isTab: isTab,
                     icon: Icons.language_rounded,
                     title: "Language settings",
                     subtitle: activeLanguageString,
@@ -91,6 +97,7 @@ class SettingsScreen extends StatelessWidget {
                     },
                   ),
                   CustomSettingTile(
+                    isTab: isTab,
                     icon: Icons.palette_outlined,
                     title: "Theme settings",
                     subtitle: activeThemeModeString,
@@ -102,11 +109,13 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: fieldSpace),
 
-              _buildSectionHeader(context, "TERMINATE ACCOUNT"),
+              _buildSectionHeader(context, "Terminate Account",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
+                isTab: isTab,
                 children: [
                   CustomSettingTile(
+                    isTab: isTab,
                     icon: Icons.delete_forever_rounded,
                     title: "Delete Account",
                     subtitle: "Permanently erase your data",
@@ -125,6 +134,12 @@ class SettingsScreen extends StatelessWidget {
             current is! LanguageNavState &&
             current is! ThemeNavState &&
             current is! DeleteAccountNavState,
+        listenWhen: (previous, current) =>
+        current is PasswordAndSecurityNavState ||
+            current is NotificationNavState ||
+            current is LanguageNavState ||
+            current is ThemeNavState ||
+            current is DeleteAccountNavState,
         listener: (BuildContext context, SettingsState state) {
           switch (state) {
             case PasswordAndSecurityNavState():
@@ -151,21 +166,21 @@ class SettingsScreen extends StatelessWidget {
               break;
 
             default:
-              Navigator.pushNamed(context, AppRoutes.changePasswordScreen);
+              break;
           }
         },
       ),
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title,bool isTab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final width = displayWidth(context);
     return Text(
       title,
       style: TextStyle(
         fontFamily: appPoppinFont,
-        fontSize: width * 0.031,
+        fontSize: isTab?width*0.02:width * 0.031,
         fontWeight: FontWeight.w600,
         color: (isDark ? textLightDarkColor : scoreSubTextColor),
         letterSpacing: 1.1,

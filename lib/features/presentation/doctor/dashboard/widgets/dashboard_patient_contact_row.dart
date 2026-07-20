@@ -8,11 +8,12 @@ import '../../../../../core/constants/constants.dart';
 class DashBoardPatientContactRow extends StatelessWidget {
   final IconData icon;
   final String value;
+  final bool isTab;
 
   const DashBoardPatientContactRow({
     super.key,
     required this.icon,
-    required this.value,
+    required this.value, required this.isTab,
   });
 
   @override
@@ -26,7 +27,7 @@ class DashBoardPatientContactRow extends StatelessWidget {
             value,
             style:  TextStyle(fontFamily: appPoppinFont,
               fontWeight: FontWeight.w500,
-              fontSize: displayWidth(context)*0.032,),
+              fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context)*0.032,),
             overflow: TextOverflow.ellipsis,
           ),
         ),

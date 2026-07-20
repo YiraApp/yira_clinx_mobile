@@ -9,11 +9,12 @@ import '../../../../core/constants/constants.dart';
 class MedicalPatientInfoCard extends StatelessWidget {
   final String name;
   final String patientId;
+  final bool isTab;
 
   const MedicalPatientInfoCard({
     super.key,
     required this.name,
-    required this.patientId,
+    required this.patientId, required  this.isTab,
   });
 
   @override
@@ -47,7 +48,7 @@ class MedicalPatientInfoCard extends StatelessWidget {
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
                 fontSize: isTab
-                    ? displayWidth(context) * 0.016
+                    ? displayWidth(context) * 0.018
                     : displayWidth(context) * 0.035,
               ),
             ),
@@ -64,7 +65,7 @@ class MedicalPatientInfoCard extends StatelessWidget {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w600,
                     fontSize: isTab
-                        ? displayWidth(context) * 0.018
+                        ? displayWidth(context) * 0.02
                         : displayWidth(context) * 0.035,
                   ),
                 ),
@@ -77,7 +78,7 @@ class MedicalPatientInfoCard extends StatelessWidget {
                         ? Colors.white.withOpacity(0.5)
                         : Colors.grey.shade600,
                     fontSize: isTab
-                        ? displayWidth(context) * 0.014
+                        ? displayWidth(context) * 0.018
                         : displayWidth(context) * 0.03,
                   ),
                 ),

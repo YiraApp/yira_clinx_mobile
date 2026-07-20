@@ -27,7 +27,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
         body: BlocBuilder<MedicationBloc, MedicationState>(
           builder: (context, state) {
             if (state.status == MedicationStatus.loading || state.status == MedicationStatus.initial) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
 
             final data = state.selectedPrescriptionDetail;

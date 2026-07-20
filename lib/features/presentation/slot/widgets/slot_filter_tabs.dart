@@ -10,6 +10,7 @@ class SlotFilterTabs extends StatelessWidget {
   final int bookedCount;
   final int availableCount;
   final ValueChanged<int> onTabSelected;
+  final bool isTab;
 
   const SlotFilterTabs({
     super.key,
@@ -17,7 +18,7 @@ class SlotFilterTabs extends StatelessWidget {
     required this.allCount,
     required this.bookedCount,
     required this.availableCount,
-    required this.onTabSelected,
+    required this.onTabSelected, required this.isTab,
   });
 
   @override
@@ -66,7 +67,7 @@ class SlotFilterTabs extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context)*0.03,
+              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context)*0.03,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected
                   ? theme.colorScheme.primary

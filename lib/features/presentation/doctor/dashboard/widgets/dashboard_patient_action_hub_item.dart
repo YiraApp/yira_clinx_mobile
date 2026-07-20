@@ -10,13 +10,14 @@ class DashBoardPatientActionHubItem extends StatelessWidget {
   final String label;
   final Color iconColor;
   final VoidCallback? onTap;
+  final bool isTab;
 
   const DashBoardPatientActionHubItem({
     super.key,
     required this.icon,
     required this.label,
     required this.iconColor,
-    this.onTap,
+    this.onTap, required this.isTab,
   });
 
   @override
@@ -52,7 +53,7 @@ class DashBoardPatientActionHubItem extends StatelessWidget {
           const SizedBox(height: 6),
           CommonText(
             label,
-            style: TextStyle(fontWeight: FontWeight.w500,fontFamily: appPoppinFont,fontSize: displayWidth(context)*0.03),
+            style: TextStyle(fontWeight: FontWeight.w500,fontFamily: appPoppinFont,fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.03),
           ),
         ],
       ),

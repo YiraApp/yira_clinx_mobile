@@ -8,6 +8,7 @@ class TimelineSegmentItem extends StatelessWidget {
   final IconData icon;
   final bool isLast;
   final Color? valueColor;
+  final bool isTab;
 
   const TimelineSegmentItem({
     super.key,
@@ -15,7 +16,7 @@ class TimelineSegmentItem extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.isLast,
-    this.valueColor,
+    this.valueColor, required this.isTab,
   });
 
   @override
@@ -56,7 +57,7 @@ class TimelineSegmentItem extends StatelessWidget {
                 label.toUpperCase(),
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.024,
+                  fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.024,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                   color: isDark ? Colors.grey[500] : Colors.grey[400],
@@ -67,7 +68,7 @@ class TimelineSegmentItem extends StatelessWidget {
                 value,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
-                  fontSize: displayWidth(context) * 0.032,
+                  fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.032,
                   fontWeight: FontWeight.w500,
                   color: valueColor ?? (isDark ? Colors.white.withOpacity(0.9) : Colors.black87),
                 ),

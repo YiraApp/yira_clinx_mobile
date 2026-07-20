@@ -29,6 +29,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isTab = isTablet(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -45,7 +46,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   'Schedule Deployed Successfully!',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.03,
+                    fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.03,
                     color: Colors.white,
                   ),
                 ),
@@ -56,7 +57,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
         builder: (context, state) {
           if (state is! SlotDataState) {
             return Center(
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
               ),
             );
@@ -66,7 +67,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
 
           if (dataState.isLoading) {
             return Center(
-              child: CircularProgressIndicator(
+              child: CircularProgressIndicator.adaptive(
                 valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
               ),
             );
@@ -88,7 +89,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           'Configure Optimization Engine',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.045,
+                            fontSize: isTab?  displayWidth(context) * 0.022:displayWidth(context) * 0.045,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -97,7 +98,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           'Adjust algorithm parameters for the upcoming clinical block.',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.03,
+                            fontSize:  isTab?  displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                             color: isDark
                                 ? Colors.white60
                                 : Colors.grey.shade600,
@@ -107,9 +108,9 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           softWrap: true,
                         ),
                         const SizedBox(height: 24),
-                        ExecutionCard(state: dataState),
+                        ExecutionCard(state: dataState,isTab: isTab,),
                         const SizedBox(height: fieldSpace),
-                        ParametersCard(state: dataState),
+                        ParametersCard(state: dataState,isTab: isTab,),
                         const SizedBox(height: inputFieldBorderRadius),
                         if (dataState.isSingleDay &&
                             dataState.slots.isNotEmpty) ...[
@@ -120,7 +121,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                 'Daily Slots',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
+                                  fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.03,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -130,7 +131,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                 ).format(dataState.targetDate).toUpperCase(),
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
+                                  fontSize: isTab?  displayWidth(context) * 0.018:displayWidth(context) * 0.03,
                                   color: isDark
                                       ? Colors.white60
                                       : Colors.grey.shade500,
@@ -146,7 +147,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: dataState.slots.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                             const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               return SlotConfigurationCard(
@@ -184,7 +185,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                   'Add Custom Slot',
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * 0.035,
+                                    fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.035,
                                     color: theme.primaryColor,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -199,6 +200,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(24.0),
+                  width: displayWidth(context),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     boxShadow: [
@@ -210,14 +212,8 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                     ],
                   ),
                   child: dataState.isDeploying
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
+                      ?  Center(child: CircularProgressIndicator.adaptive(
+                  ),)
                       : CustomElevatedButton(
                           noElevation: true,
                           height: 50,

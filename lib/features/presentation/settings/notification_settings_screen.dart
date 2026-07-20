@@ -14,7 +14,7 @@ class NotificationSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
+final bool isTab =  isTablet(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -37,23 +37,27 @@ class NotificationSettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCardGroup(
+                  isTab:isTab,
                   context,
                   theme: theme,
                   title: "Notification Channels",
                   children: [
                     _NotificationTile(
+                      isTab: isTab,
                       title: "Email Notifications",
                       subtitle: "Receive updates via email",
                       value: state.emailEnabled,
                       onChanged: (val) => context.read<SettingsBloc>().add(NotificationToggleChanged('email', val)),
                     ),
                     _NotificationTile(
+                      isTab: isTab,
                       title: "SMS Notifications",
                       subtitle: "Receive updates via SMS",
                       value: state.smsEnabled,
                       onChanged: (val) => context.read<SettingsBloc>().add(NotificationToggleChanged('sms', val)),
                     ),
                     _NotificationTile(
+                      isTab: isTab,
                       title: "Push Notifications",
                       subtitle: "Receive in-app push notifications",
                       value: state.pushEnabled,
@@ -63,23 +67,27 @@ class NotificationSettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: fieldSpace),
                 _buildCardGroup(
+                  isTab:isTab,
                   context,
                   theme: theme,
                   title: "Notification Types",
                   children: [
                     _NotificationTile(
+                      isTab: isTab,
                       title: "Appointment Reminders",
                       subtitle: "Get reminded about upcoming appointments",
                       value: state.appointmentReminders,
                       onChanged: (val) => context.read<SettingsBloc>().add(NotificationToggleChanged('appointment', val)),
                     ),
                     _NotificationTile(
+                      isTab: isTab,
                       title: "Lab Results",
                       subtitle: "Get notified when lab results are ready",
                       value: state.labResultsNotif,
                       onChanged: (val) => context.read<SettingsBloc>().add(NotificationToggleChanged('lab', val)),
                     ),
                     _NotificationTile(
+                      isTab: isTab,
                       title: "Prescription Refills",
                       subtitle: "Reminders for medication refills",
                       value: state.prescriptionReminders,
@@ -95,7 +103,7 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCardGroup(BuildContext context, {required ThemeData theme, required String title, required List<Widget> children}) {
+  Widget _buildCardGroup(BuildContext context, {required ThemeData theme, required String title, required List<Widget> children, required bool isTab}) {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -114,7 +122,7 @@ class NotificationSettingsScreen extends StatelessWidget {
             title,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.036,
+              fontSize:isTab?displayWidth(context) * 0.022: displayWidth(context) * 0.036,
               fontWeight: FontWeight.w600,
               color: theme.textTheme.titleLarge?.color,
             ),
@@ -132,12 +140,13 @@ class _NotificationTile extends StatelessWidget {
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final bool isTab;
 
   const _NotificationTile({
     required this.title,
     required this.subtitle,
     required this.value,
-    required this.onChanged,
+    required this.onChanged, required this.isTab,
   });
 
   @override
@@ -156,7 +165,7 @@ class _NotificationTile extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.038,
+                    fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.038,
                     fontWeight: FontWeight.w500,
                     color: theme.textTheme.bodyLarge?.color,
                   ),
@@ -167,7 +176,7 @@ class _NotificationTile extends StatelessWidget {
                   softWrap: true,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.029,
+                    fontSize:isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.029,
                     color: theme.textTheme.labelSmall?.color,
                   ),
                 ),
@@ -179,7 +188,7 @@ class _NotificationTile extends StatelessWidget {
             child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: theme.primaryColor,
+              activeThumbColor: theme.primaryColor,
               activeTrackColor: theme.primaryColor.withOpacity(0.5),
               inactiveTrackColor: theme.brightness == Brightness.dark
                   ? Colors.white10

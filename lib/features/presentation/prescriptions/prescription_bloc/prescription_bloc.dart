@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../../../domain/entities/prescriptions/prescription_item.dart';
@@ -28,7 +27,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
       emit(AddPrescriptionRecordNavState());
     });
     on<SinglePrescriptionDetailsNavEvent>((event, emit) async {
-      emit(SinglePrescriptionDetailsNavState());
+      emit(SinglePrescriptionDetailsNavState(event.prescriptionId));
     });
   }
 

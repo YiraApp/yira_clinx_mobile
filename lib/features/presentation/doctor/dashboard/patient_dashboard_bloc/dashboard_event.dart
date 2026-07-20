@@ -30,10 +30,13 @@ class FilterPatients extends DashboardEvent {
   @override
   List<Object?> get props => [status, gender];
 }
-class ViewPatientDetailsEvent extends DashboardEvent{
+class ViewPatientDetailsEvent extends DashboardEvent {
+  final String patientId;
+
+  const ViewPatientDetailsEvent({required this.patientId});
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [patientId];
 }
 
 

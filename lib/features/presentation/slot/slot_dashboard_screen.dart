@@ -31,12 +31,13 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     context.read<SlotBloc>().add(InitializeSlotsEvent());
     super.initState();
   }
-  void _openSlotDetailsDialog(BuildContext context, SlotEntity legacySlot) {
+  void _openSlotDetailsDialog(BuildContext context, SlotEntity legacySlot,bool isTab) {
     SlotDetailsDialog.show(context, legacySlot);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isTab = isTablet(context);
     return BlocConsumer<SlotBloc, SlotState>(
       buildWhen: (previous, current) => current is SlotDataState || current is! OnTapSlotCardState,
       listener: (context, state) async {
@@ -69,7 +70,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
               "Ocimum, Jubileehils",
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: displayWidth(context) * 0.04,
+                fontSize: isTab?displayWidth(context) * 0.022: displayWidth(context) * 0.04,
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white
                     : Colors.black,
@@ -95,7 +96,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           ),
           body: SafeArea(
             child: state is SlotDataState
-                ? _buildBodyContent(context, state)
+                ? _buildBodyContent(context, state,isTab)
                 : const Center(child: CircularProgressIndicator.adaptive()),
           ),
         );
@@ -103,7 +104,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     );
   }
 
-  Widget _buildBodyContent(BuildContext context, SlotDataState state) {
+  Widget _buildBodyContent(BuildContext context, SlotDataState state,bool isTab) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator.adaptive());
     }
@@ -135,7 +136,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             weekFontSize: displayWidth(context) * 0.025,
             todayStyle: const TextStyle(fontSize: 0),
             headerStyle: TextStyle(
-              fontSize: displayWidth(context) * 0.045,
+              fontSize:  isTab?displayWidth(context) * 0.022:displayWidth(context) * 0.045,
               fontFamily: appPoppinFont,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white
@@ -162,6 +163,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             children: [
               SizedBox(height: fieldSpace),
               SlotFilterTabs(
+                isTab: isTab,
                 selectedIndex: state.selectedTabIndex,
                 allCount: totalCount,
                 bookedCount: bookedCount,
@@ -171,7 +173,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 },
               ),
               const SizedBox(height: fieldSpace),
-              _buildTimeSlotHeaderRow(Theme.of(context)),
+              _buildTimeSlotHeaderRow(Theme.of(context),isTab),
               const SizedBox(height: 12),
             ],
           ),
@@ -192,13 +194,14 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 0.0),
                       child: TimeSlotCard(
+                        isTab:isTab,
                         slot: visibleSlots[index],
                         bookSlot: () {
                           try {
                             final legacySlot = state.slots.firstWhere(
                                   (s) => s.id == visibleSlots[index].id,
                             );
-                            _openSlotDetailsDialog(context, legacySlot);
+                            _openSlotDetailsDialog(context, legacySlot,isTab);
                           } catch (_) {
                             final customLegacySlot = SlotEntity(
                               id: visibleSlots[index].id,
@@ -213,7 +216,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                               )
                                   : null,
                             );
-                            _openSlotDetailsDialog(context, customLegacySlot);
+                            _openSlotDetailsDialog(context, customLegacySlot,isTab);
                           }
                         },
                         viewSlotDetails: () {},
@@ -226,7 +229,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     );
   }
 
-  Widget _buildTimeSlotHeaderRow(ThemeData theme) {
+  Widget _buildTimeSlotHeaderRow(ThemeData theme,bool isTab) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -234,7 +237,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           "Time Slots",
           style: TextStyle(
             fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.039,
+            fontSize:  isTab?displayWidth(context) * 0.02:displayWidth(context) * 0.039,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -248,7 +251,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             "Availability: 9:00 AM - 5:00 PM",
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.022,
+              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.022,
               fontWeight: FontWeight.w600,
               color: Colors.green,
             ),

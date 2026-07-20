@@ -1,26 +1,29 @@
 
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'metric_tile_item.dart';
 import 'patient_info_card.dart';
 
 class PatientInsuranceCard extends StatelessWidget {
-  final PatientProfileEntity patient;
-
-  const PatientInsuranceCard({super.key, required this.patient});
+  final InsuranceEntity patient;
+  final bool isTab;
+  const PatientInsuranceCard({super.key, required this.patient, required  this.isTab});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PatientInfoCard(
+      isTab: isTab,
       title: 'Insurance',
       titleIcon: Icons.shield_outlined,
       child: (patient.policyName != null && patient.policyNumber != null)
           ? Column(
         children: [
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.verified_user_outlined,
             label: 'Policy Name',
             value: patient.policyName ?? 'N/A',
@@ -28,6 +31,7 @@ class PatientInsuranceCard extends StatelessWidget {
           ),
           _buildDivider(isDark),
           MetricTileItem(
+            isTab: isTab,
             icon: Icons.tag,
             label: 'Policy Number',
             value: patient.policyNumber ?? 'N/A',

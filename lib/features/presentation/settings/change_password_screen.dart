@@ -82,7 +82,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   'Change Password',
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize: isTablet ? screenWidth * 0.045 : screenWidth * 0.065,
+                                    fontSize: isTablet ? screenWidth * 0.035 : screenWidth * 0.065,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -250,7 +250,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     icon: Icon(
                                       _isConfirmPasswordObscured ? Icons.visibility_off : Icons.visibility,
                                       color: Colors.grey,
-                                      size: screenHeight * 0.025,
+                                      size:isTablet? 18: screenHeight * 0.025,
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -278,7 +278,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           child: state is ChangePasswordLoading
                               ? const SizedBox(
                             height: 50,
-                            child: Center(child: CircularProgressIndicator()),
+                            child: Center(child: CircularProgressIndicator.adaptive()),
                           )
                               : CustomElevatedButton(
                             noElevation: true,
