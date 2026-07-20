@@ -1,7 +1,7 @@
 
 
 <p align="center">
-  <img src="https://yiraapp.blob.core.windows.net/appassets/yiraai.png" alt="Yira Clinx Logo" width="120" />
+  <img src="https://drive.google.com/file/d/121QzHJJe-CduIR-YPNG045qfTOwOzTIe/view?usp=sharing" alt="Yira Clinx Logo" width="120" />
 </p>
 
 <h1 align="center">Yira Clinx</h1>
@@ -157,15 +157,6 @@ Patients who can:
 - Access medical records
 - Manage profile information
 - Communicate with care teams
-
-## Organization Admin
-
-Administrators who can:
-
-- Manage hospitals
-- Manage memberships
-- Configure access permissions
-- Monitor organizational operations
 
 ---
 
