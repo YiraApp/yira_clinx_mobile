@@ -6,8 +6,11 @@ abstract class AppointmentEvent {}
 class LoadAppointmentsEvent extends AppointmentEvent {
   final String? status;
   final String? search;
+  final String? date;
+  final String? dateFrom;
+  final String? dateTo;
 
-  LoadAppointmentsEvent({this.status, this.search});
+  LoadAppointmentsEvent({this.status, this.search, this.date, this.dateFrom, this.dateTo});
 }
 
 class OnAddAppointmentEvent extends AppointmentEvent {}
@@ -33,5 +36,15 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.reason,
     this.appointmentType,
     this.isTeleConsultation,
+  });
+}
+
+class UpdateAppointmentStatusEvent extends AppointmentEvent {
+  final String appointmentId;
+  final String status;
+
+  UpdateAppointmentStatusEvent({
+    required this.appointmentId,
+    required this.status,
   });
 }

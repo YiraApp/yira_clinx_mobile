@@ -136,6 +136,7 @@ class _DoctorPatientProfileScreenState
                 PatientProfileHeader(
                   patient: patient,
                   isTab: isTab,
+                  appointmentId: widget.appointmentId,
                   onBack: () {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
@@ -167,7 +168,10 @@ class _DoctorPatientProfileScreenState
             );
           }
 
-          return const Center(child: CircularProgressIndicator.adaptive());
+          return PatientProfileScreenShimmer(
+            isDark: Theme.of(context).brightness == Brightness.dark,
+            isTab: isTab,
+          );
         },
       ),
     );

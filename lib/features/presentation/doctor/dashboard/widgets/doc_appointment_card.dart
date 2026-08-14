@@ -16,6 +16,7 @@ class DocAppointmentCard extends StatelessWidget {
   final Color statusColor;
   final Color statusTextColor;
   final VoidCallback? onTap;
+  final VoidCallback? onStatusTap;
   final bool isTab;
   final bool isTeleConsultation;
   final VoidCallback? onJoinCall;
@@ -31,6 +32,7 @@ class DocAppointmentCard extends StatelessWidget {
     required this.statusColor,
     required this.statusTextColor,
     this.onTap,
+    this.onStatusTap,
     required this.isTab,
     this.isTeleConsultation = false,
     this.onJoinCall,
@@ -194,19 +196,35 @@ class DocAppointmentCard extends StatelessWidget {
                   )
                 else
                   const SizedBox.shrink(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Text(
-                    statusLabel.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: isTab ? displayWidth(context) * 0.01 : 10,
-                      fontWeight: FontWeight.w800,
-                      color: statusTextColor,
-                      letterSpacing: 0.3,
+                GestureDetector(
+                  onTap: onStatusTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          statusLabel.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: isTab ? displayWidth(context) * 0.01 : 10,
+                            fontWeight: FontWeight.w800,
+                            color: statusTextColor,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        if (onStatusTap != null) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.arrow_drop_down,
+                            size: 14,
+                            color: statusTextColor,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

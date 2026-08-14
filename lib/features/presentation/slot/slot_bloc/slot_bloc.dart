@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:meta/meta.dart';
 
 import '../../../domain/entities/slot/slot_appointment_entity.dart';
 import '../../../domain/entities/slot/time_slot_entity.dart';
@@ -250,8 +250,16 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
 
     emit(currentState.copyWith(isDeploying: true));
 
-    final outcomeLegacy = await schedulerRepository.deploySchedule(currentState.slots);
-    final outcomeModern = await schedulerRepository.deployTimeSchedule(currentState.timeSlots);
+    final outcomeLegacy = await schedulerRepository.deploySchedule(
+      currentState.slots,
+      targetDate: DateFormat('yyyy-MM-dd').format(currentState.targetDate),
+      isSingleDay: currentState.isSingleDay,
+    );
+    final outcomeModern = await schedulerRepository.deployTimeSchedule(
+      currentState.timeSlots,
+      targetDate: DateFormat('yyyy-MM-dd').format(currentState.targetDate),
+      isSingleDay: currentState.isSingleDay,
+    );
 
     emit(currentState.copyWith(
       isDeploying: false,

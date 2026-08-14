@@ -30,6 +30,9 @@ class AppointmentRepoImpl implements AppointmentRepo {
     required int hospitalId,
     String? status,
     String? search,
+    String? date,
+    String? dateFrom,
+    String? dateTo,
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final endPoint = URLs.appointmentDashboardUrl;
@@ -39,6 +42,9 @@ class AppointmentRepoImpl implements AppointmentRepo {
       "hospitalId": hospitalId,
       if (status != null && status.isNotEmpty) "status": status,
       if (search != null && search.isNotEmpty) "search": search,
+      if (date != null && date.isNotEmpty) "date": date,
+      if (dateFrom != null && dateFrom.isNotEmpty) "dateFrom": dateFrom,
+      if (dateTo != null && dateTo.isNotEmpty) "dateTo": dateTo,
     };
 
     final String fullCacheKey = _generateDeterministicCacheKey(
@@ -144,12 +150,55 @@ class AppointmentRepoImpl implements AppointmentRepo {
         ),
       );
 
-      if (response.data != null && response.data is Map<String, dynamic>) {
-        final rawData = response.data as Map<String, dynamic>;
-        return rawData['status'] == true || rawData['success'] == true;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data != null && response.data is Map<String, dynamic>) {
+          final rawData = response.data as Map<String, dynamic>;
+          if (rawData['status'] == false || rawData['success'] == false) {
+            return false;
+          }
+        }
+        return true;
       }
     } catch (e) {
       developer.log("Error booking appointment", error: e, name: "AppointmentRepoImpl");
+    }
+    return false;
+  }
+
+  @override
+  Future<bool> updateAppointmentStatus({
+    required String appointmentId,
+    required String status,
+  }) async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final endPoint = URLs.updateAppointmentStatusUrl;
+    final Map<String, dynamic> requestBody = {
+      "appointmentId": appointmentId,
+      "status": status,
+    };
+
+    try {
+      final String token = currentUser?.data?.accessToken ?? '';
+
+      final response = await _apiClient.account(showSuccessSnack: true).post(
+        endPoint,
+        data: requestBody,
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data != null && response.data is Map<String, dynamic>) {
+          final rawData = response.data as Map<String, dynamic>;
+          if (rawData['status'] == false || rawData['success'] == false) {
+            return false;
+          }
+        }
+        return true;
+      }
+    } catch (e) {
+      developer.log("Error updating appointment status", error: e, name: "AppointmentRepoImpl");
     }
     return false;
   }

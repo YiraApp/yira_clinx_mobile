@@ -11,6 +11,11 @@ class AppointmentModel extends Appointment {
     required super.type,
     required super.category,
     required super.status,
+    super.statusRaw = '',
+    super.patientUserId,
+    super.orgId,
+    super.hospitalId,
+    super.reason,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +43,11 @@ class AppointmentModel extends Appointment {
       type: appType,
       category: (json['category'] ?? 'Consultation').toString(),
       status: appStatus,
+      statusRaw: (json['status'] ?? '').toString(),
+      patientUserId: json['patientUserId']?.toString(),
+      orgId: json['orgId'] is int ? json['orgId'] : int.tryParse((json['orgId'] ?? '').toString()),
+      hospitalId: json['hospitalId'] is int ? json['hospitalId'] : int.tryParse((json['hospitalId'] ?? '').toString()),
+      reason: (json['reason'] ?? '').toString(),
     );
   }
 }

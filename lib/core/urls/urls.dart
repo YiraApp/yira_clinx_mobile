@@ -22,6 +22,10 @@ class URLs {
   static const doctorDashBoardUrl = "/v1/api/auth/dashboard";
   static const appointmentDashboardUrl = "/v1/api/auth/appointment-dashboard";
   static const bookAppointmentUrl = "/v1/api/auth/book-appointment";
+  static const updateAppointmentStatusUrl = "/v1/api/auth/update-appointment-status";
+  static const doctorSlotsUrl = "/v1/api/auth/doctor-slots";
+  static const doctorSlotsDeployUrl = "/v1/api/auth/doctor-slots/deploy";
+  static const patientsListUrl = "/v1/api/auth/patients";
   static const dashboardPatientDetailsUrl = "/v1/api/auth/patient/details";
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
 

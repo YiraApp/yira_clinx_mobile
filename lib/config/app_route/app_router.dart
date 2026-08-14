@@ -173,10 +173,15 @@ class AppRouter {
           ),
         );
       case AppRoutes.addAppointmentScreen:
-        return MaterialPageRoute(settings: settings, 
+        final appointmentArgs = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
-            child: AddNewAppointmentScreen(),
+            child: AddNewAppointmentScreen(
+              initialPatientName: appointmentArgs?['patientName'],
+              initialPatientPhone: appointmentArgs?['patientPhone'],
+            ),
           ),
         );
       case AppRoutes.appointmentDashboardScreen:

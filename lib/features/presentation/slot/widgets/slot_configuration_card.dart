@@ -35,7 +35,7 @@ class SlotConfigurationCard extends StatelessWidget {
           color: isDark? darkModeCardColor:Colors.white,
           borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
-            color: slot.hasAppointment
+            color: (slot.hasAppointment || slot.label == 'Booked')
                 ? primary.withOpacity(.25)
                 : isDark
                 ? Colors.white10
@@ -57,7 +57,7 @@ class SlotConfigurationCard extends StatelessWidget {
               width: 4,
               height: 70,
               decoration: BoxDecoration(
-                color: slot.hasAppointment
+                color: (slot.hasAppointment || slot.label == 'Booked')
                     ? primary
                     : Colors.green,
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -193,7 +193,7 @@ class SlotConfigurationCard extends StatelessWidget {
         vertical: 8,
       ),
       decoration: BoxDecoration(
-        color: slot.hasAppointment
+        color: (slot.hasAppointment || slot.label == 'Booked')
             ? theme.primaryColor.withOpacity(.12)
             : Colors.green.withOpacity(.12),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -201,25 +201,25 @@ class SlotConfigurationCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            slot.hasAppointment
+            (slot.hasAppointment || slot.label == 'Booked')
                 ? Icons.event_available
                 : Icons.check_circle,
             size: 16,
-            color: slot.hasAppointment
+            color: (slot.hasAppointment || slot.label == 'Booked')
                 ? theme.primaryColor
                 : Colors.green,
           ),
           const SizedBox(width: 6),
           Expanded(
             child: CommonText(
-              slot.hasAppointment
+              (slot.hasAppointment || slot.label == 'Booked')
                   ? "Booked"
                   : "Available",
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
-                color: slot.hasAppointment
+                color: (slot.hasAppointment || slot.label == 'Booked')
                     ? theme.primaryColor
                     : Colors.green,
               ),

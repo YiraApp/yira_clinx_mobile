@@ -1238,8 +1238,7 @@ class _SnomedMultiFullScreenSearchState
 }
 
 class _SnomedSearchShimmer extends StatelessWidget {
-  final int count;
-  const _SnomedSearchShimmer({this.count = 5});
+  const _SnomedSearchShimmer();
 
   @override
   Widget build(BuildContext context) {
@@ -1249,7 +1248,7 @@ class _SnomedSearchShimmer extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: count,
+      itemCount: 5,
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
         return Container(
@@ -1259,7 +1258,7 @@ class _SnomedSearchShimmer extends StatelessWidget {
             color: cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
+              color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200,
             ),
           ),
           child: BaseShimmer(

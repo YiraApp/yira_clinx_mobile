@@ -67,7 +67,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             centerTitle: false,
             leading: const BackButton(),
             title: CommonText(
-              "Ocimum, Jubileehils",
+              "Doctor Slots",
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab?displayWidth(context) * 0.022: displayWidth(context) * 0.04,
@@ -128,7 +128,10 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             color: Theme.of(context).scaffoldBackgroundColor,
           ),
           child: AdvancedCalendar(
-            onDateChanged: (date) async {},
+            onDateChanged: (date) {
+              context.read<SlotBloc>().add(UpdateTargetDateEvent(date));
+              context.read<SlotBloc>().add(InitializeSlotsEvent());
+            },
             handlerColor: Theme.of(context).brightness == Brightness.dark
                 ? Colors.white.withOpacity(0.2)
                 : Colors.black.withOpacity(0.2),
@@ -239,22 +242,6 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             fontFamily: appPoppinFont,
             fontSize:  isTab?displayWidth(context) * 0.02:displayWidth(context) * 0.039,
             fontWeight: FontWeight.w600,
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: CommonText(
-            "Availability: 9:00 AM - 5:00 PM",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.022,
-              fontWeight: FontWeight.w600,
-              color: Colors.green,
-            ),
           ),
         ),
       ],

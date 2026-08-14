@@ -12,6 +12,9 @@ class GetAppointmentDashboardUseCase {
     required int hospitalId,
     String? status,
     String? search,
+    String? date,
+    String? dateFrom,
+    String? dateTo,
   }) {
     return repository.fetchAppointmentDashboard(
       doctorId: doctorId,
@@ -19,6 +22,9 @@ class GetAppointmentDashboardUseCase {
       hospitalId: hospitalId,
       status: status,
       search: search,
+      date: date,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
     );
   }
 }

@@ -7,6 +7,9 @@ abstract class AppointmentRepo {
     required int hospitalId,
     String? status,
     String? search,
+    String? date,
+    String? dateFrom,
+    String? dateTo,
   });
 
   Future<bool> bookAppointment({
@@ -22,5 +25,10 @@ abstract class AppointmentRepo {
     String? reason,
     String? appointmentType,
     bool? isTeleConsultation,
+  });
+
+  Future<bool> updateAppointmentStatus({
+    required String appointmentId,
+    required String status,
   });
 }

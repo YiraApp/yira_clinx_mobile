@@ -21,7 +21,11 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
       emit(AppointmentLoading());
       try {
         final currentUser = GlobalSession.instance.userNotifier.value;
-        final doctorId = currentUser?.data?.id ?? '';
+        final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+            ? currentUser.data!.id!.trim()
+            : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+                ? currentUser.data!.navigationId!.trim()
+                : '1';
         final int orgId = currentUser?.data?.latestOrgId ?? 1;
         final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
 
@@ -31,6 +35,9 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           hospitalId: hospitalId,
           status: event.status,
           search: event.search,
+          date: event.date,
+          dateFrom: event.dateFrom,
+          dateTo: event.dateTo,
         );
 
         if (result != null) {
@@ -62,7 +69,11 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     on<SubmitBookAppointmentEvent>((event, emit) async {
       try {
         final currentUser = GlobalSession.instance.userNotifier.value;
-        final doctorId = currentUser?.data?.id ?? '';
+        final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+            ? currentUser.data!.id!.trim()
+            : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+                ? currentUser.data!.navigationId!.trim()
+                : '1';
         final int orgId = currentUser?.data?.latestOrgId ?? 1;
         final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
 
@@ -89,6 +100,23 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         }
       } catch (e) {
         emit(AppointmentError("Failed to book appointment: $e"));
+      }
+    });
+
+    on<UpdateAppointmentStatusEvent>((event, emit) async {
+      try {
+        final success = await appointmentRepo.updateAppointmentStatus(
+          appointmentId: event.appointmentId,
+          status: event.status,
+        );
+
+        if (success) {
+          add(LoadAppointmentsEvent());
+        } else {
+          emit(AppointmentError("Failed to update appointment status"));
+        }
+      } catch (e) {
+        emit(AppointmentError("Failed to update appointment status: $e"));
       }
     });
   }

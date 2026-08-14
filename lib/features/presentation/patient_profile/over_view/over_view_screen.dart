@@ -7,7 +7,6 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../patient_over_view_bloc/patient_over_view_bloc.dart';
-import '../widgets/add_records_buttons.dart';
 
 class OverviewScreen extends StatefulWidget {
   final PatientProfileEntity patient;
@@ -57,11 +56,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: ClinicalSpeedDialFab(
-        onAddNoteTapped: widget.onNoteTap,
-        onScheduleTapped: widget.onScheduleTap,
-        onPrescribeTapped: widget.onPrescribeTap,
-      ),
       body: BlocConsumer<PatientOverViewBloc, PatientOverViewState>(
         listener: (context, state) {
 
