@@ -17,6 +17,8 @@ class DocAppointmentCard extends StatelessWidget {
   final Color statusTextColor;
   final VoidCallback? onTap;
   final bool isTab;
+  final bool isTeleConsultation;
+  final VoidCallback? onJoinCall;
 
   const DocAppointmentCard({
     super.key,
@@ -28,7 +30,10 @@ class DocAppointmentCard extends StatelessWidget {
     required this.statusLabel,
     required this.statusColor,
     required this.statusTextColor,
-    this.onTap, required this.isTab,
+    this.onTap,
+    required this.isTab,
+    this.isTeleConsultation = false,
+    this.onJoinCall,
   });
 
   @override
@@ -156,21 +161,56 @@ class DocAppointmentCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 5,),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Text(
-                statusLabel.toUpperCase(),
-                style: TextStyle(
-                  fontSize:isTab? displayWidth(context)*0.01: 10,
-                  fontWeight: FontWeight.w800,
-                  color: statusTextColor,
-                  letterSpacing: 0.3,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (isTeleConsultation)
+                  InkWell(
+                    onTap: onJoinCall,
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0066FF),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.videocam_rounded, size: 14, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Join Call",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab ? displayWidth(context) * 0.012 : 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Text(
+                    statusLabel.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: isTab ? displayWidth(context) * 0.01 : 10,
+                      fontWeight: FontWeight.w800,
+                      color: statusTextColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

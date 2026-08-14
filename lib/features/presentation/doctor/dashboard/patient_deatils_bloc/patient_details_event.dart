@@ -9,7 +9,17 @@ abstract class PatientDetailsEvent extends Equatable {
 
 class LoadPatientScreenData extends PatientDetailsEvent {
   final String appointmentId;
-  const LoadPatientScreenData({required this.appointmentId});
+  final String patientId;
+  final String orgId;
+  final String hospitalId;
+
+  const LoadPatientScreenData({
+    required this.appointmentId,
+    required this.patientId,
+    required this.orgId,
+    required this.hospitalId,
+  });
+
   @override
-  List<Object?> get props => [appointmentId];
+  List<Object?> get props => [appointmentId, patientId, orgId, hospitalId];
 }

@@ -45,11 +45,16 @@ class DashboardState extends Equatable {
   List<Object?> get props => [status, patients, allPatients, selectedStatus, selectedGender, errorMessage];
 }
 class ViewPatientDetailsState extends DashboardState {
-
+  final String? patientId;
+  final String? patientName;
   final DateTime timestamp;
 
-  ViewPatientDetailsState({DateTime? time}) : timestamp = time ?? DateTime.now();
+  ViewPatientDetailsState({
+    this.patientId,
+    this.patientName,
+    DateTime? time,
+  }) : timestamp = time ?? DateTime.now();
 
   @override
-  List<Object?> get props => [timestamp];
+  List<Object?> get props => [patientId, patientName, timestamp];
 }

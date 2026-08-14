@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/detailed_prescription_expandable_card.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../core/common_widgets/custom_button.dart';
+import '../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PrescriptionViewDetailsScreen extends StatelessWidget {
-  const PrescriptionViewDetailsScreen({super.key});
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
+
+  const PrescriptionViewDetailsScreen({
+    super.key,
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +30,20 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
     final bool isTab = isTablet(context);
 
     return BlocProvider(
-      create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData()),
+      create: (context) => sl<PrescriptionBloc>()..add(LoadPrescriptionData(
+        patientId: patientId,
+        appointmentId: appointmentId,
+        hospitalId: hospitalId,
+        orgId: orgId,
+      )),
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: BlocBuilder<PrescriptionBloc, PrescriptionState>(
             builder: (context, state) {
-              if (state.status == PrescriptionStatus.loading) {
-                return const Center(child: CircularProgressIndicator.adaptive());
-              }
-
               return Column(
                 children: [
+                  // ── Header ──
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     child: Row(
@@ -39,7 +52,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: theme.primaryColor.withOpacity(0.1),
+                            color: theme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(fieldBorderRadius),
                           ),
                           child: Icon(
@@ -53,7 +66,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CommonText(
+                              Text(
                                 'Details',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
@@ -63,9 +76,9 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              CommonText(
-                                'Prescription View ID: 8r793049884',
-                                maxLines: 2,
+                              Text(
+                                'Prescription Details',
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
@@ -88,123 +101,101 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: ListView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: 24),
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 10),
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: isDark ? darkModeCardColor : Colors.white,
-                            borderRadius: BorderRadius.circular(fieldBorderRadius),
-                            border: Border.all(
-                              color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade200.withOpacity(0.5),
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonText(
-                                'Diagnosis',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * (isTab ? 0.014 : 0.035),
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: theme.primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              CommonText(
-                                state.diagnoses.isNotEmpty
-                                    ? state.diagnoses.join(', ')
-                                    : 'Hyperoxia, Hypermetropia',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * (isTab ? 0.02 : 0.031),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: screenHorizontalSpacePadding, top: fieldSpace, bottom: 6),
-                          child: CommonText(
-                            'Prescription Details',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
 
-                        state.medications.isEmpty
-                            ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 30),
-                            child: CommonText('No medications mapped.', style: TextStyle(fontFamily: appPoppinFont, color: Colors.grey.shade400)),
-                          ),
-                        )
-                            : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: state.medications.length,
-                          itemBuilder: (context, index) {
-                            return DetailedPrescriptionExpandableCard(
-                              key: ValueKey(state.medications[index].id),
-                              item: state.medications[index],
-                            );
-                          },
-                        ),
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: isDark ? darkModeCardColor : Colors.white,
-                            borderRadius: BorderRadius.circular(fieldBorderRadius),
-                            border: Border.all(
-                              color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade200.withOpacity(0.5),
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  // ── Body ──
+                  Expanded(
+                    child: state.status == PrescriptionStatus.loading
+                        ? _buildShimmerLoading(isDark)
+                        : ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: 24),
                             children: [
-                              CommonText(
-                                'Additional Notes',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * (isTab ? 0.014 : 0.035),
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade400,
+                              Padding(
+                                padding: const EdgeInsets.only(left: screenHorizontalSpacePadding, top: 12, bottom: 6),
+                                child: Text(
+                                  'Prescribed Medications',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade500,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              CommonText(
-                                'Personal & Clinical Data: If you are a patient, access your medical records directly through your local healthcare provider, or check health insurance portals (such as those tied to Ayushman Bharat or local state programs) for digital health records.',
-                                softWrap: true,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * (isTab ? 0.016 : 0.031),
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.45,
-                                  color: isDark ? Colors.grey.shade400 : additionalNotesColor,
+
+                              state.medications.where((m) => m.name.trim().isNotEmpty).isEmpty
+                                  ? Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 30),
+                                        child: Text(
+                                          'No medications mapped.',
+                                          style: TextStyle(fontFamily: appPoppinFont, color: Colors.grey.shade400),
+                                        ),
+                                      ),
+                                    )
+                                  : ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: state.medications.where((m) => m.name.trim().isNotEmpty).length,
+                                      itemBuilder: (context, index) {
+                                        final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
+                                        return DetailedPrescriptionExpandableCard(
+                                          key: ValueKey(validMeds[index].id),
+                                          item: validMeds[index],
+                                        );
+                                      },
+                                    ),
+
+                              if (state.additionalNotes.trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Notes',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? darkModeCardColor : Colors.white,
+                                          borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? Colors.white.withValues(alpha: 0.06)
+                                                : Colors.grey.shade200,
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          state.additionalNotes,
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: displayWidth(context) * (isTab ? 0.016 : 0.031),
+                                            fontWeight: FontWeight.w400,
+                                            color: isDark ? Colors.white70 : Colors.black87,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
+
+                  // ── Close Button ──
                   Container(
                     padding: EdgeInsets.only(
                       left: screenHorizontalSpacePadding,
@@ -217,17 +208,18 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isDark ? theme.scaffoldBackgroundColor : Colors.white,
                       border: Border.all(
-                        color: isDark ? Colors.white.withOpacity(0.03) : Colors.grey.shade100,
+                        color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.grey.shade100,
                         width: 1,
                       ),
                     ),
-                    child:CustomElevatedButton(
+                    child: CustomElevatedButton(
                       noElevation: true,
                       backgroundColor: Colors.black,
                       height: 50,
                       width: double.infinity,
                       text: "Close View",
                       onPressed: () {
+                        Navigator.pop(context);
                       },
                     ),
                   ),
@@ -237,6 +229,62 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Shimmer loading placeholder
+  Widget _buildShimmerLoading(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      children: List.generate(3, (index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[900] : Colors.white,
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
+            border: Border.all(
+              color: isDark ? Colors.white12 : Colors.grey.shade200,
+            ),
+          ),
+          child: BaseShimmer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(width: 160, height: 14, color: Colors.white),
+                          const SizedBox(height: 8),
+                          Container(width: 120, height: 10, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(width: 80, height: 10, color: Colors.white),
+                const SizedBox(height: 8),
+                Container(width: double.infinity, height: 12, color: Colors.white),
+                const SizedBox(height: 6),
+                Container(width: 200, height: 12, color: Colors.white),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 }

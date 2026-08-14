@@ -67,6 +67,7 @@ class TodaysScheduleEntity {
   final String? consultationType;
   final String? reason;
   final String? statusTag;
+  final String? meetingUrl;
 
   const TodaysScheduleEntity({
     this.patientUserId,
@@ -78,6 +79,7 @@ class TodaysScheduleEntity {
     this.consultationType,
     this.reason,
     this.statusTag,
+    this.meetingUrl,
   });
 }
 

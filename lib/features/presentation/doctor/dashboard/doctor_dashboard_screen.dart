@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/services/network_services/network_listener/network_listener.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custom_chart.dart';
@@ -155,10 +156,34 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   _dashboardBloc.add(ClearNavigationTriggerEvent());
                 }
               } else if (state is DocAndAppPatientDetailsNavState) {
+                final isRecent = state.patientDetails.isRecent == true;
+                final pid = isRecent
+                    ? state.patientDetails.recentPatients?.patientUserId
+                    : state.patientDetails.todaysSchedule?.patientUserId;
+                final aid = isRecent
+                    ? state.patientDetails.recentPatients?.appointmentId
+                    : state.patientDetails.todaysSchedule?.appointmentId;
+                final hid = isRecent
+                    ? state.patientDetails.recentPatients?.hospitalId
+                    : state.patientDetails.todaysSchedule?.hospitalId;
+                final oid = isRecent
+                    ? state.patientDetails.recentPatients?.orgId
+                    : state.patientDetails.todaysSchedule?.orgId;
+                final name = isRecent
+                    ? state.patientDetails.recentPatients?.name
+                    : state.patientDetails.todaysSchedule?.patientName;
+
                 await Navigator.pushNamed(
                   context,
-                  AppRoutes.dashboardPatientDetails,
-                  arguments: state.patientDetails,
+                  AppRoutes.doctorPatientProfileScreen,
+                  arguments: {
+                    'patientId': pid?.toString(),
+                    'appointmentId': aid?.toString(),
+                    'hospitalId': hid?.toString(),
+                    'orgId': oid?.toString(),
+                    'patientName': name,
+                    'initialTabIndex': 0,
+                  },
                 );
                 if (context.mounted) {
                   _dashboardBloc.add(ClearNavigationTriggerEvent());
@@ -222,17 +247,37 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 final dashboard = workingEntity.data;
 
                 if (dashboard == null) {
-                  return Center(
-                    child: _buildEmptyState(
-                      context,
-                      'Dashboard parameters uninitialized.',
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      _dashboardBloc.add(const FetchDoctorDashboardData(isRefresh: true));
+                      await _dashboardBloc.stream.firstWhere(
+                        (state) => state is DoctorDashboardSuccessState || state is DoctorDashboardError,
+                      ).timeout(const Duration(seconds: 10), onTimeout: () => state);
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Container(
+                        height: displayHeight(context) * 0.7,
+                        alignment: Alignment.center,
+                        child: _buildEmptyState(
+                          context,
+                          'Dashboard parameters uninitialized.',
+                        ),
+                      ),
                     ),
                   );
                 }
 
-                return CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    _dashboardBloc.add(const FetchDoctorDashboardData(isRefresh: true));
+                    await _dashboardBloc.stream.firstWhere(
+                      (state) => state is DoctorDashboardSuccessState || state is DoctorDashboardError,
+                    ).timeout(const Duration(seconds: 10), onTimeout: () => state);
+                  },
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: screenHorizontalSpacePadding,
@@ -358,6 +403,33 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                   );
                                 },
                                 isTab: isTabletDevice,
+                                isTeleConsultation: isVideo,
+                                onJoinCall: () async {
+                                  final meetingUrl = appointment?.meetingUrl;
+                                  if (meetingUrl != null && meetingUrl.isNotEmpty) {
+                                    final uri = Uri.parse(meetingUrl);
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.inAppBrowserView,
+                                        webViewConfiguration: const WebViewConfiguration(
+                                          enableJavaScript: true,
+                                          enableDomStorage: true,
+                                        ),
+                                      );
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Could not open meeting link.')),
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
+                                    );
+                                  }
+                                },
                               ),
                             );
                           }, childCount: dashboard.todaysSchedule?.length),
@@ -513,8 +585,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                     ),
                   ],
-                );
-              }
+                ),
+              );
+            }
 
               return const Center(child: CircularProgressIndicator.adaptive());
             },

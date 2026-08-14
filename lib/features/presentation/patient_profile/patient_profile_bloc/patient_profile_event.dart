@@ -10,11 +10,12 @@ abstract class PatientProfileEvent extends Equatable {
 
 class LoadPatientProfile extends PatientProfileEvent {
   final String patientId;
+  final String? patientName;
 
-  const LoadPatientProfile(this.patientId);
+  const LoadPatientProfile(this.patientId, {this.patientName});
 
   @override
-  List<Object?> get props => [patientId];
+  List<Object?> get props => [patientId, patientName];
 }
 
 class TabChanged extends PatientProfileEvent {

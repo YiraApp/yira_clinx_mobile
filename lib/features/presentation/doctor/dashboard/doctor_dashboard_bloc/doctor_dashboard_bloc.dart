@@ -25,7 +25,9 @@ class DoctorDashboardBloc
     : super(const DoctorDashboardInitial()) {
     on<FetchDoctorDashboardData>((event, emit) async {
       try {
-        emit(const DoctorDashboardLoading());
+        if (!event.isRefresh) {
+          emit(const DoctorDashboardLoading());
+        }
         final currentUser = GlobalSession.instance.userNotifier.value;
         var params = UpdateLatestDetailsRequest(
           userId: currentUser?.data?.id ?? '',

@@ -14,6 +14,11 @@ class ChangeSelectedDateEvent extends MedicalRecordEvent {
 
 /// Form entry completion submittal matching entity creation expectations
 class SaveMedicalRecordEvent extends MedicalRecordEvent {
+  final String? recordId;
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
   final String visitType;
   final String chiefComplaint;
   final String symptoms;
@@ -27,6 +32,11 @@ class SaveMedicalRecordEvent extends MedicalRecordEvent {
   final String treatmentPlan;
 
   const SaveMedicalRecordEvent({
+    this.recordId,
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
     required this.visitType,
     required this.chiefComplaint,
     required this.symptoms,

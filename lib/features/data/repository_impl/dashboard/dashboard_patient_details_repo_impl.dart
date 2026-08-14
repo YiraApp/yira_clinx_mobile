@@ -26,11 +26,17 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
   @override
   Future<DashBoardPatientDetailsEntity?> fetchPatientData({
     required String appointmentId,
+    required String patientId,
+    required String orgId,
+    required String hospitalId,
   })  async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     var endPoint = URLs.dashboardPatientDetailsUrl;
     final Map<String, dynamic> requestBody = {
       "userId": currentUser?.data?.id ?? '',
+      "patientId": patientId,
+      "orgId": orgId,
+      "hospitalId": hospitalId,
       "appointmentId": appointmentId
     };
     final String fullCacheKey = _generateDeterministicCacheKey(
@@ -54,7 +60,7 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
     try {
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).get(
+      final response = await _apiClient.account(showSuccessSnack: false).post(
         endPoint,
         data: requestBody,
         options: Options(
@@ -100,6 +106,12 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
       final String? cachedJsonString = await _localCache.getCachedResponse(
         cacheKey,
       );
+      if (cachedJsonString != null) {
+        final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
+        developer.log("Direct cache key fetch execution hit success.", name: "DoctorDashboardRepoImpl");
+        return DashBoardPatientDetailsModel.fromJson(decodedData);
+      }
+
       final Map<String, dynamic> mockJsonResponse = {
         "status": true,
         "message": "Patient profile data retrieved successfully",
@@ -155,11 +167,6 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
       };
 
       return DashBoardPatientDetailsModel.fromJson(mockJsonResponse);
-      /*if (cachedJsonString != null) {
-        final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
-        developer.log("Direct cache key fetch execution hit success.", name: "DoctorDashboardRepoImpl");
-        return DashBoardPatientDetailsModel.fromJson(decodedData);
-      }*/
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",

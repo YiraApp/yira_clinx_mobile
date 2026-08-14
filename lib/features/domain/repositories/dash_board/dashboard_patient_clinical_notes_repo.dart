@@ -3,6 +3,9 @@ import 'package:yiraclinics/features/domain/entities/dashboard/dashboard_patient
 abstract class DashboardPatientClinicalNotesRepo {
   Future<DashBoardPatientDetailsClinicalNotesEntity?> fetchPatientClinicalData({
     required String appointmentId,
+    required String patientId,
+    required String orgId,
+    required String hospitalId,
   });
   Future<DashBoardPatientDetailsClinicalNotesEntity?> fetchPatientClinicalDataDirectFromKey(String cacheKey);
 }

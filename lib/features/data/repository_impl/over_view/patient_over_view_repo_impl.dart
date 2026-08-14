@@ -1,5 +1,3 @@
-
-
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
@@ -16,29 +14,46 @@ import '../../../../core/local/cache/local_cache_data_source.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/urls/urls.dart';
 
-class PatientOverViewRepoImpl extends PatientOverViewRepo{
+class PatientOverViewRepoImpl extends PatientOverViewRepo {
   final ApiClient _apiClient;
   final LocalCacheDataSource _localCache;
   final Connectivity _connectivity;
 
   PatientOverViewRepoImpl(
-      this._apiClient,
-      this._localCache, [
-        Connectivity? connectivity,
-      ]) : _connectivity = connectivity ?? Connectivity();
+    this._apiClient,
+    this._localCache, [
+    Connectivity? connectivity,
+  ]) : _connectivity = connectivity ?? Connectivity();
+
   @override
-  Future<PatientOverViewEntity?> fetchOverViewData({required String userId}) async {
+  Future<PatientOverViewEntity?> fetchOverViewData({
+    required String userId,
+    String? orgId,
+    String? hospitalId,
+  }) async {
     var endPoint = URLs.patientOverViewUrl;
+    final currentUser = GlobalSession.instance.userNotifier.value;
+
+    final dynamic finalOrgId = (orgId != null && orgId.trim().isNotEmpty)
+        ? (int.tryParse(orgId.trim()) ?? orgId.trim())
+        : 1;
+    final dynamic finalHospId = (hospitalId != null && hospitalId.trim().isNotEmpty)
+        ? (int.tryParse(hospitalId.trim()) ?? hospitalId.trim())
+        : 1;
+
     var requestBody = {
-      "userId": userId,
+      "patientId": userId,
+      "orgId": finalOrgId,
+      "hospitalId": finalHospId,
     };
+
     final String fullCacheKey = _generateDeterministicCacheKey(
       customPrefix: patientOverViewKey,
       baseUrl: endPoint,
       params: requestBody,
     );
-    final List<ConnectivityResult> connectivityResults = await _connectivity
-        .checkConnectivity();
+    final List<ConnectivityResult> connectivityResults =
+        await _connectivity.checkConnectivity();
     final bool isHardwareOffline = connectivityResults.contains(
       ConnectivityResult.none,
     );
@@ -51,10 +66,9 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
     }
 
     try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).get(
+      final response = await _apiClient.account(showSuccessSnack: false).post(
         endPoint,
         data: requestBody,
         options: Options(
@@ -64,7 +78,7 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
 
       if (response.data != null && response.data is Map<String, dynamic>) {
         final Map<String, dynamic> rawData =
-        response.data as Map<String, dynamic>;
+            response.data as Map<String, dynamic>;
 
         final bool isSuccessStatus =
             rawData['status'] == true || rawData['success'] == true;
@@ -94,12 +108,18 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
   }
 
   @override
-  Future<PatientOverViewEntity?> fetchOverViewDirectFromKey(String cacheKey)
-  async {
+  Future<PatientOverViewEntity?> fetchOverViewDirectFromKey(
+      String cacheKey) async {
     try {
-      final String? cachedJsonString = await _localCache.getCachedResponse(
-        cacheKey,
-      );
+      final String? cachedJsonString =
+          await _localCache.getCachedResponse(cacheKey);
+      if (cachedJsonString != null) {
+        final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
+        developer.log("Direct cache key fetch execution hit success.",
+            name: "PatientOverViewRepoImpl");
+        return PatientOverViewModel.fromJson(decodedData);
+      }
+
       final Map<String, dynamic> mockJsonResponse = {
         "status": true,
         "message": "Overview details fetched successfully",
@@ -107,14 +127,13 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
           "contact_information": {
             "phone": "6303012453",
             "email_address": "teja@gmail.com",
-            "residential_address": "Sandhya techno 1, Hyderabad, pin code - 500081",
-            "emergency_contact": {
-              "name": "Rajesh",
-              "phone": "9908875796"
-            }
+            "residential_address":
+                "Sandhya techno 1, Hyderabad, pin code - 500081",
+            "emergency_contact": {"name": "Rajesh", "phone": "9908875796"}
           },
           "medical_information": {
-            "condition": "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints.",
+            "condition":
+                "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints.",
             "allergies": "illness",
             "blood_group": "B+",
             "total_visits": 0
@@ -128,16 +147,12 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
             "last_check_in_visit": "May 26, 2026",
             "next_scheduled_appointment": "July 16, 2026"
           },
-          "summary": "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints."
+          "summary":
+              "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints."
         }
       };
 
       return PatientOverViewModel.fromJson(mockJsonResponse);
-      /*if (cachedJsonString != null) {
-        final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
-        developer.log("Direct cache key fetch execution hit success.", name: "SideMenuRepoImpl");
-        return PatientOverViewModel.fromJson(decodedData);
-      }*/
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",
@@ -148,6 +163,7 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo{
     }
     return null;
   }
+
   String _generateDeterministicCacheKey({
     required String customPrefix,
     required String baseUrl,

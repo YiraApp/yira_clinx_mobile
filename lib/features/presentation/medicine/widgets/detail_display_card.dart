@@ -25,6 +25,9 @@ class DetailDisplayCard extends StatelessWidget {
       ),
       child: CommonText(
         text,
+        maxLines: null,
+        softWrap: true,
+        overflow: TextOverflow.visible,
         style: TextStyle(
           fontFamily: appPoppinFont,
           fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,

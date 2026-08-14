@@ -1,9 +1,10 @@
-
 import 'package:yiraclinics/features/domain/entities/over_view/over_view_entity.dart';
 
 abstract class PatientOverViewRepo {
   Future<PatientOverViewEntity?> fetchOverViewData({
     required String userId,
+    String? orgId,
+    String? hospitalId,
   });
 
   Future<PatientOverViewEntity?> fetchOverViewDirectFromKey(String cacheKey);

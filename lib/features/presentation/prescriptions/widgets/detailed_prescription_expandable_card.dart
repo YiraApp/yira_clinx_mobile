@@ -27,9 +27,9 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bool isTab = isTablet(context);
-    final String doseAmount = widget.item.dosage ?? '20';
-    final String frequencyStr = widget.item.frequency ?? '0-1-0 (Afternoon)';
-    final String durationStr = widget.item.duration ?? '5 days';
+    final String doseAmount = (widget.item.dosage != null && widget.item.dosage!.trim().isNotEmpty) ? widget.item.dosage! : 'N/A';
+    final String frequencyStr = (widget.item.frequency != null && widget.item.frequency!.trim().isNotEmpty) ? widget.item.frequency! : 'N/A';
+    final String durationStr = (widget.item.duration != null && widget.item.duration!.trim().isNotEmpty) ? widget.item.duration! : 'N/A';
     final String visualSummary = '$doseAmount • $frequencyStr • $durationStr';
 
     return Container(
@@ -82,7 +82,8 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                       children: [
                         CommonText(
                           widget.item.name,
-                          maxLines: 2,
+                          maxLines: 3,
+                          softWrap: true,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
@@ -94,6 +95,8 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                         const SizedBox(height: 4),
                         CommonText(
                           visualSummary,
+                          softWrap: true,
+                          maxLines: 3,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: displayWidth(context) * (isTab ? 0.016 : 0.03),
@@ -144,7 +147,9 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                   ),
                   const SizedBox(height: 4),
                   CommonText(
-                    widget.item.route ?? 'Oral',
+                    (widget.item.route != null && widget.item.route!.trim().isNotEmpty) ? widget.item.route! : 'N/A',
+                    softWrap: true,
+                    maxLines: 3,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: displayWidth(context) * (isTab ? 0.018 : 0.034),
@@ -152,30 +157,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                       color: isDark ? Colors.grey.shade300 : borderSurfaceColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  CommonText(
-                    'INSTRUCTIONS',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * (isTab ? 0.014 : 0.026),
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  CommonText(
-                    'Personal & Clinical Data: If you are a patient, access your medical records directly through your local healthcare provider, or check health insurance portals (such as those tied to Ayushman Bharat or local state programs) for digital health records.',
-                    maxLines: 10,
-                    softWrap: true,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * (isTab ? 0.016 : 0.031),
-                      fontWeight: FontWeight.w400,
-                      height: 1.45,
-                      color: isDark ? Colors.grey.shade400 : dialogueSubTextColor,
-                    ),
-                  ),
+
                 ],
               ),
             )

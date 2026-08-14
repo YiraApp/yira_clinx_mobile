@@ -59,7 +59,7 @@ class SideMenuRepoImpl extends SideMenuRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).get(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         endPoint,
         data: requestBody,
         options: Options(

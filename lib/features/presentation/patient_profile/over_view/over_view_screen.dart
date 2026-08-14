@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_contact_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_medical_card.dart';
-import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_insurance_card.dart';
-import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_history_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_summary_card.dart';
 
 import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
@@ -13,6 +11,10 @@ import '../widgets/add_records_buttons.dart';
 
 class OverviewScreen extends StatefulWidget {
   final PatientProfileEntity patient;
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
   final VoidCallback onPrescribeTap;
   final VoidCallback onNoteTap;
   final VoidCallback onScheduleTap;
@@ -21,6 +23,10 @@ class OverviewScreen extends StatefulWidget {
   const OverviewScreen({
     super.key,
     required this.patient,
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
     required this.onPrescribeTap,
     required this.onNoteTap,
     required this.onScheduleTap,
@@ -39,8 +45,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
   }
 
   void _loadPatientData() {
-    final String patientId = widget.patient.id?.toString() ?? '';
-    context.read<PatientOverViewBloc>().add(LoadPatientData(patientId));
+    final String pid = widget.patientId ?? widget.patient.id?.toString() ?? '';
+    context.read<PatientOverViewBloc>().add(LoadPatientData(
+          pid,
+          orgId: widget.orgId,
+          hospitalId: widget.hospitalId,
+        ));
   }
 
   @override
@@ -106,12 +116,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
                     if (fetchedData.medicalInformation != null)
                       PatientMedicalCard(patient: fetchedData.medicalInformation!, isTab: widget.isTab),
-
-                    if (fetchedData.insurance != null)
-                      PatientInsuranceCard(patient: fetchedData.insurance!, isTab: widget.isTab),
-
-                    if (fetchedData.visitHistory != null)
-                      PatientHistoryCard(patient: fetchedData.visitHistory!, isTab: widget.isTab),
 
                     if (fetchedData.summary != null && fetchedData.summary!.isNotEmpty)
                       PatientSummaryCard(summary: fetchedData.summary!, isTab: widget.isTab),

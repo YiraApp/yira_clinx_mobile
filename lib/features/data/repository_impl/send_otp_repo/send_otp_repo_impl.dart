@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 
 import '../../../../core/api/api_client.dart';
@@ -42,6 +43,16 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         stackTrace: stackTrace,
         name: "SendOtpRepositoryImpl",
       );
+      if (error is DioException && error.response?.data != null) {
+        final responseData = error.response!.data;
+        if (responseData is Map<String, dynamic>) {
+          try {
+            return SendOtpModel.fromJson(responseData);
+          } catch (e) {
+            developer.log("Failed parsing error response JSON", error: e);
+          }
+        }
+      }
       return null;
     }
   }

@@ -1,79 +1,78 @@
-
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/common_input_fields/common_input_field_unlimited.dart';
+import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/section_header.dart';
-
-import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
+
 class ClinicalInfoSection extends StatelessWidget {
   final TextEditingController chiefComplaintController;
   final TextEditingController symptomsController;
   final TextEditingController physicalExamController;
   final bool isTab;
+  final Function(String term, String? code)? onChiefComplaintConceptSelected;
+  final Function(String term, String? code)? onSymptomConceptSelected;
+  final Function(String term, String? code)? onExamConceptSelected;
 
   const ClinicalInfoSection({
     super.key,
     required this.chiefComplaintController,
     required this.symptomsController,
-    required this.physicalExamController, required this.isTab,
+    required this.physicalExamController,
+    required this.isTab,
+    this.onChiefComplaintConceptSelected,
+    this.onSymptomConceptSelected,
+    this.onExamConceptSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = TextStyle(
-      fontWeight: FontWeight.w500,
-      fontFamily: appPoppinFont,color: Colors.grey,
-      fontSize: isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         SectionHeader(title: "Clinical Information", isTab: isTab,),
+        SectionHeader(title: "Clinical Information", isTab: isTab),
         const SizedBox(height: 12),
 
-        CommonText("Chief Complaint", style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontFamily: appPoppinFont,color: Colors.grey,
-          fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
-        )),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 80,
-          child: CommonInputFieldUnlimited(
-            suffixIcon: null,
-            borderRadius: 8,
-            controller: chiefComplaintController,
-            hintText: "Search complaints...",
-            textInputAction: TextInputAction.next,
-          ),
+        SnomedMultiSearchPicker(
+          label: "Chief Complaint",
+          hintText: "Search chief complaints (SNOMED CT)...",
+          initialValue: chiefComplaintController.text,
+          snomedType: "finding",
+          isRequired: true,
+          onSelected: (selectedTerms) {
+            chiefComplaintController.text = selectedTerms.join(', ');
+            if (onChiefComplaintConceptSelected != null && selectedTerms.isNotEmpty) {
+              onChiefComplaintConceptSelected!(selectedTerms.last, null);
+            }
+          },
         ),
 
         const SizedBox(height: fieldSpace),
 
-        CommonText("Symptoms", style: labelStyle),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 80,
-          child: CommonInputFieldUnlimited(
-            suffixIcon: null,
-            borderRadius: 8,
-            controller: symptomsController,
-            hintText: "Search Symptoms...",
-            textInputAction: TextInputAction.next,
-          ),
+        SnomedMultiSearchPicker(
+          label: "Symptoms",
+          hintText: "Search symptoms (SNOMED CT)...",
+          initialValue: symptomsController.text,
+          snomedType: "finding",
+          onSelected: (selectedTerms) {
+            symptomsController.text = selectedTerms.join(', ');
+            if (onSymptomConceptSelected != null && selectedTerms.isNotEmpty) {
+              onSymptomConceptSelected!(selectedTerms.last, null);
+            }
+          },
         ),
+
         const SizedBox(height: fieldSpace),
 
-        CommonText("Physical Examination", style: labelStyle),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 80,
-          child: CommonInputFieldUnlimited(
-            controller: physicalExamController,
-            hintText: "Search examination findings...",
-          ),
+        SnomedMultiSearchPicker(
+          label: "Physical Examination",
+          hintText: "Search examination findings (SNOMED CT)...",
+          initialValue: physicalExamController.text,
+          snomedType: "finding",
+          onSelected: (selectedTerms) {
+            physicalExamController.text = selectedTerms.join(', ');
+            if (onExamConceptSelected != null && selectedTerms.isNotEmpty) {
+              onExamConceptSelected!(selectedTerms.last, null);
+            }
+          },
         ),
       ],
     );

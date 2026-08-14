@@ -6,8 +6,20 @@ abstract class MedicalHistoryEvent extends Equatable {
 }
 
 class LoadMedicalHistoryRecords extends MedicalHistoryEvent {
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
+
+  const LoadMedicalHistoryRecords({
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
+  });
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [patientId, appointmentId, hospitalId, orgId];
 }
 
 class DeleteMedicalHistoryRecord extends MedicalHistoryEvent {
@@ -24,8 +36,10 @@ class AddMedicalRecordNavEvent extends MedicalHistoryEvent {
 
 class SingleMedicineDetailsNavEvent extends MedicalHistoryEvent {
   final String recordId;
-  const SingleMedicineDetailsNavEvent({required this.recordId});
+  final MedicalRecordBriefEntity? record;
+
+  const SingleMedicineDetailsNavEvent({required this.recordId, this.record});
 
   @override
-  List<Object?> get props => [recordId];
+  List<Object?> get props => [recordId, record];
 }

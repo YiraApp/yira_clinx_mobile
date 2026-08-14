@@ -55,12 +55,17 @@ import 'package:yiraclinics/features/domain/repositories/slot/slot_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/token/get_version_and_token_status_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medication/medication_repository.dart';
+import 'package:yiraclinics/features/domain/repositories/snomed/snomed_repository.dart';
+import 'package:yiraclinics/features/data/repository_impl/snomed/snomed_repository_impl.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/get_work_space_details_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/work_space/update_latest_org_details_repo.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
+import 'package:yiraclinics/features/data/repository_impl/appointments/appointment_repo_impl.dart';
+import 'package:yiraclinics/features/domain/repositories/appointments/appointment_repo.dart';
+import 'package:yiraclinics/features/use_cases/get_appointment_dashboard_use_case.dart';
 import 'package:yiraclinics/features/use_cases/auth_use_case.dart';
 
 // Use Cases Imports
@@ -182,16 +187,16 @@ Future<void> init() async {
     () => MedicationRepositoryImpl(),
   );
   sl.registerLazySingleton<MedicalHistoryRepository>(
-    () => MedicalHistoryRepositoryImpl(),
+    () => MedicalHistoryRepositoryImpl(sl<ApiClient>()),
   );
 
-  sl.registerLazySingleton<RecordsRepository>(() => RecordsRepositoryImpl());
+  sl.registerLazySingleton<RecordsRepository>(() => RecordsRepositoryImpl(sl<ApiClient>()));
   sl.registerLazySingleton<SlotRepository>(() => const SlotRepositoryImpl());
   sl.registerLazySingleton<SchedulerRepository>(
     () => SchedulerRepositoryImpl(),
   );
   sl.registerLazySingleton<PrescriptionRepository>(
-    () => PrescriptionRepositoryImpl(),
+    () => PrescriptionRepositoryImpl(sl<ApiClient>()),
   );
   sl.registerLazySingleton<SendOtpRepo>(
     () => SendOtpRepositoryImpl(apiClient: sl<ApiClient>()),
@@ -250,9 +255,21 @@ Future<void> init() async {
       sl<LocalCacheDataSource>(),
     ),
   );
+  sl.registerLazySingleton<SnomedRepository>(
+    () => SnomedRepositoryImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AppointmentRepo>(
+    () => AppointmentRepoImpl(
+      sl<ApiClient>(),
+      sl<LocalCacheDataSource>(),
+    ),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
+  sl.registerLazySingleton<GetAppointmentDashboardUseCase>(
+    () => GetAppointmentDashboardUseCase(sl<AppointmentRepo>()),
+  );
   sl.registerLazySingleton<AuthUseCase>(
     () => AuthUseCase(sl<AuthRepository>()),
   );
@@ -370,13 +387,20 @@ Future<void> init() async {
       updateLatestOrgDetailsUseCase: sl<UpdateLatestOrgDetailsUseCase>(),
     ),
   );
-  sl.registerFactory(() => AppointmentBloc());
+  sl.registerFactory(
+    () => AppointmentBloc(
+      getAppointmentDashboardUseCase: sl<GetAppointmentDashboardUseCase>(),
+      appointmentRepo: sl<AppointmentRepo>(),
+    ),
+  );
   sl.registerFactory(() => PermissionsBloc());
   sl.registerLazySingleton(() => ChangePasswordBloc());
   sl.registerLazySingleton<NavigationDrawerBloc>(
     () => NavigationDrawerBloc(sl<SecureStorageService>()),
   );
-  sl.registerLazySingleton(() => MedicalRecordBloc());
+  sl.registerFactory(
+    () => MedicalRecordBloc(repository: sl<MedicalHistoryRepository>()),
+  );
   sl.registerFactory(
     () => DoctorDashboardBloc(
       doctorDashboardUseCase: sl<DoctorDashboardUseCase>()

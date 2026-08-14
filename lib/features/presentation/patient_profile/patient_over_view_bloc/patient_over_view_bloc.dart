@@ -11,16 +11,19 @@ class PatientOverViewBloc
     extends Bloc<PatientOverViewEvent, PatientOverViewState> {
   final PatientOverViewUseCase patientOverViewUseCase;
   PatientOverViewBloc({required this.patientOverViewUseCase})
-    : super(PatientOverViewInitial()) {
-    on<PatientOverViewEvent>((event, emit) {});
+      : super(PatientOverViewInitial()) {
     on<LoadPatientData>((event, emit) async {
       emit(LoadingPatientViewDetails());
       try {
-        final data = await patientOverViewUseCase.call(event.patientId);
+        final data = await patientOverViewUseCase.call(
+          event.patientId,
+          orgId: event.orgId,
+          hospitalId: event.hospitalId,
+        );
 
         if (data == null || !(data.status ?? false)) {
           final failureMessage =
-              data?.message ?? "Failed to fetch patient over view details.";
+              data?.message ?? "Failed to fetch patient overview details.";
           emit(LoadPatientDataFailureState(failureMessage));
           return;
         }
@@ -31,7 +34,7 @@ class PatientOverViewBloc
         );
         emit(
           LoadPatientDataFailureState(
-            "CRITICAL: Telemetry evaluation failed: $versionError\n$stackTrace",
+            "Failed to fetch patient overview details.",
           ),
         );
       }

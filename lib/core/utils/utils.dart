@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -126,22 +127,24 @@ class Utils {
     BuildContext context,
     Color buttonPrimaryColor,
   ) async {
-    bool isPermissionGranted = false;
     var status = await Permission.camera.status;
 
     if (status.isGranted) {
-      isPermissionGranted = true;
-      return isPermissionGranted;
-    } else if (status.isDenied || status.isPermanentlyDenied) {
-      PermissionStatus newStatus = await Permission.camera.request();
+      return true;
+    }
 
+    if (status.isDenied) {
+      PermissionStatus newStatus = await Permission.camera.request();
       if (newStatus.isGranted) {
-        isPermissionGranted = true;
-        return isPermissionGranted;
-      } else if (newStatus.isPermanentlyDenied) {
-        isPermissionGranted = false;
+        return true;
+      }
+      status = newStatus;
+    }
+
+    if (status.isPermanentlyDenied) {
+      if (context.mounted) {
         if (Platform.isAndroid) {
-          androidDialogue(
+          await androidDialogue(
             context,
             'Camera permission needed',
             'To take photos, please grant access to your device\'s camera.',
@@ -152,17 +155,95 @@ class Utils {
             2.0,
           );
         } else {
-          showAlertDialog(
+          await showAlertDialog(
             context,
             'Camera permission needed',
             'To take photos, please grant access to your device\'s camera.',
           );
         }
-        return isPermissionGranted;
       }
     }
 
-    return isPermissionGranted;
+    return await Permission.camera.isGranted;
+  }
+
+  static Future<bool> getStoragePermission(
+    BuildContext context,
+    Color buttonPrimaryColor,
+  ) async {
+    Permission permission = Permission.storage;
+
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt > 32) {
+        permission = Permission.photos;
+      }
+    }
+
+    var status = await permission.status;
+    if (status.isGranted) {
+      return true;
+    }
+
+    if (status.isDenied) {
+      PermissionStatus newStatus = await permission.request();
+      if (newStatus.isGranted) {
+        return true;
+      }
+      status = newStatus;
+    }
+
+    if (status.isPermanentlyDenied) {
+      if (context.mounted) {
+        if (Platform.isAndroid) {
+          await androidDialogue(
+            context,
+            'Storage permission needed',
+            'To pick files and documents, please grant storage access.',
+            buttonPrimaryColor,
+            Theme.of(context).brightness == Brightness.dark
+                ? 'assets/images/ic_dark.png'
+                : 'assets/images/ic_light.png',
+            2.0,
+          );
+        } else {
+          await showAlertDialog(
+            context,
+            'Storage permission needed',
+            'To pick files and documents, please grant storage access.',
+          );
+        }
+      }
+    }
+
+    return await permission.isGranted;
+  }
+
+  static Future<bool> getStoragePermissionIOS(BuildContext context) async {
+    var status = await Permission.photos.status;
+    if (status.isGranted) {
+      return true;
+    }
+
+    if (status.isDenied) {
+      PermissionStatus newStatus = await Permission.photos.request();
+      if (newStatus.isGranted) {
+        return true;
+      }
+      status = newStatus;
+    }
+
+    if (status.isPermanentlyDenied) {
+      if (context.mounted) {
+        await showAlertDialog(
+          context,
+          'Photo permission needed',
+          'To select photos, please grant photo access in settings.',
+        );
+      }
+    }
+
+    return await Permission.photos.isGranted;
   }
 
   static Future<void> showAlertDialog(context, String title, String reason) =>

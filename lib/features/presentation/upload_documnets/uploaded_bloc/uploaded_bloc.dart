@@ -12,6 +12,7 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
 
   UploadedBloc({required this.repository}) : super(const UploadedBlocState()) {
     on<FetchUploadedRecords>(_onFetchUploadedRecords);
+    on<AddUploadedRecord>(_onAddUploadedRecord);
     on<FilterCategoryChanged>(_onFilterCategoryChanged);
     on<DeleteUploadedRecordItem>(_onDeleteUploadedRecordItem);
     on<UploadRecordScreenNavEvent>((event, emit) async {
@@ -22,15 +23,37 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
   Future<void> _onFetchUploadedRecords(FetchUploadedRecords event, Emitter<UploadedBlocState> emit) async {
     emit(state.copyWith(status: UploadedStatus.loading));
     try {
-      final data = await repository.getUploadedRecords();
+      final data = await repository.getUploadedRecords(
+        patientId: event.patientId,
+        appointmentId: event.appointmentId,
+        hospitalId: event.hospitalId,
+        orgId: event.orgId,
+      );
+      final Map<String, UploadedRecord> recordMap = {};
+      for (final r in state.allRecords) {
+        recordMap[r.id] = r;
+      }
+      for (final r in data) {
+        recordMap[r.id] = r;
+      }
+      final merged = recordMap.values.toList();
       emit(state.copyWith(
         status: UploadedStatus.success,
-        allRecords: data,
-        filteredRecords: _filterData(data, state.selectedCategory),
+        allRecords: merged,
+        filteredRecords: _filterData(merged, state.selectedCategory),
       ));
     } catch (_) {
       emit(state.copyWith(status: UploadedStatus.failure));
     }
+  }
+
+  void _onAddUploadedRecord(AddUploadedRecord event, Emitter<UploadedBlocState> emit) {
+    final updatedAll = List<UploadedRecord>.from(state.allRecords)..insert(0, event.record);
+    emit(state.copyWith(
+      status: UploadedStatus.success,
+      allRecords: updatedAll,
+      filteredRecords: _filterData(updatedAll, state.selectedCategory),
+    ));
   }
 
   void _onFilterCategoryChanged(FilterCategoryChanged event, Emitter<UploadedBlocState> emit) {
@@ -48,6 +71,7 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
       filteredRecords: _filterData(updatedList, state.selectedCategory),
     ));
   }
+
   List<UploadedRecord> _filterData(List<UploadedRecord> list, String category) {
     if (category.toLowerCase() == 'all') {
       return list;

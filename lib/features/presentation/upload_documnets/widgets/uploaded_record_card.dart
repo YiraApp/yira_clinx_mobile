@@ -11,16 +11,15 @@ import 'common_custom_pop_up_menu.dart';
 
 class UploadedRecordCard extends StatelessWidget {
   final UploadedRecord record;
-  final VoidCallback onDelete;
-  final VoidCallback onDownload;
-  final VoidCallback onView;
-final bool isTab;
+  final VoidCallback? onDelete;
+  final VoidCallback? onView;
+  final bool isTab;
   const UploadedRecordCard({
     super.key,
     required this.record,
-    required this.onDelete,
-    required this.onDownload,
-    required this.onView, required this.isTab,
+    this.onDelete,
+    this.onView,
+    required this.isTab,
   });
 
   @override
@@ -129,7 +128,9 @@ final bool isTab;
                           ),
                           const SizedBox(width: 4),
                           CommonText(
-                            '${record.fileSizeKB} KB',
+                            record.fileSizeKB >= 1024
+                                ? '${(record.fileSizeKB / 1024).toStringAsFixed(1)} MB'
+                                : '${record.fileSizeKB} KB',
                             style: TextStyle(
                               color: theme.hintColor.withOpacity(0.7),
                               fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.031,
@@ -159,17 +160,12 @@ final bool isTab;
                   AppPopupItemModel(
                     icon: Icons.visibility_outlined,
                     title: 'View Document',
-                    onTap: onView,
-                  ),
-                  AppPopupItemModel(
-                    icon: Icons.download_rounded,
-                    title: 'Download',
-                    onTap: onDownload,
+                    onTap: onView ?? () {},
                   ),
                   AppPopupItemModel(
                     icon: Icons.delete_outline_rounded,
                     title: 'Delete',
-                    onTap: onDelete,
+                    onTap: onDelete ?? () {},
                     isDestructive: true,
                   ),
                 ],

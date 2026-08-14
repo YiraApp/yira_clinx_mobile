@@ -17,7 +17,12 @@ class MedicalHistoryBloc extends Bloc<MedicalHistoryEvent, MedicalHistoryState> 
     on<LoadMedicalHistoryRecords>((event, emit) async {
       emit(MedicalHistoryLoading());
       try {
-        final data = await getMedicalRecordsUseCase();
+        final data = await getMedicalRecordsUseCase(
+          patientId: event.patientId,
+          appointmentId: event.appointmentId,
+          hospitalId: event.hospitalId,
+          orgId: event.orgId,
+        );
         emit(MedicalHistoryLoaded(data));
       } catch (e) {
         emit(const MedicalHistoryError("Failed to synchronize records history log."));
@@ -38,7 +43,7 @@ class MedicalHistoryBloc extends Bloc<MedicalHistoryEvent, MedicalHistoryState> 
       emit(AddMedicalRecordNavState());
     });
     on<SingleMedicineDetailsNavEvent>((event, emit) async {
-      emit(SingleMedicineDetailsNavState(recordId: event.recordId));
+      emit(SingleMedicineDetailsNavState(recordId: event.recordId, record: event.record));
     });
   }
 }

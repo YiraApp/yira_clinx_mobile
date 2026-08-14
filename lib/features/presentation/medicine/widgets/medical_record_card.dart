@@ -74,6 +74,8 @@ class MedicalRecordCard extends StatelessWidget {
                           Expanded(
                             child: CommonText(
                               title,
+                              maxLines: 2,
+                              softWrap: true,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.042,
@@ -82,11 +84,20 @@ class MedicalRecordCard extends StatelessWidget {
                             ),
                           ),
                           GestureDetector(
-                              onTap: onEditPressed,
-                              child: Padding(
-                                padding: const EdgeInsets.all(2.0),
-                                child: Icon(Icons.edit_outlined, color: Colors.grey.shade600, size: 18),
-                              )),
+                            onTap: onEditPressed,
+                            child: const Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: onDeletePressed,
+                            child: const Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -131,49 +142,10 @@ class MedicalRecordCard extends StatelessWidget {
                 _buildDynamicRow(context, "Chief Complaint", chiefComplaint, isTab),
                 const SizedBox(height: 12),
                 _buildDynamicRow(context, "Diagnosis", diagnosis, isTab),
-                const SizedBox(height: 16),
-
-                // Blue Highlight Vitals Bar Strip matching design standard
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(fieldBorderRadius),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(fieldBorderRadius), bottomLeft: Radius.circular(fieldBorderRadius)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      CommonText(
-                        "Vitals: ",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.bold,
-                          fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
-                        ),
-                      ),
-                      SizedBox(width: 10,),
-                      Expanded(
-                        child: CommonText(
-                          vitalsSummary,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey.shade600,
-                            fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                if (vitalsSummary.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildDynamicRow(context, "Vitals", vitalsSummary, isTab),
+                ],
               ],
             ),
           ),
@@ -185,25 +157,14 @@ class MedicalRecordCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(fieldBorderRadius)),
               border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.15))),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: onDeletePressed,
-                  icon: Container(
-                    padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(width: 1,color: Colors.red.withOpacity(0.5))
-                      ),
-                      child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18)),
-                ),
-                const SizedBox(width: 8),
-                CommonBorderButton(height: 35, icon: Icons.remove_red_eye_outlined,text: 'View Details', onPressed: onDetailsPressed),
-              ],
+            child: CommonBorderButton(
+              height: 38,
+              width: double.infinity,
+              icon: Icons.remove_red_eye_outlined,
+              text: 'View Details',
+              onPressed: onDetailsPressed,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -214,9 +175,9 @@ class MedicalRecordCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: displayWidth(context)/3,
+          width: displayWidth(context) / 3,
           child: Container(
-            padding: EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: 2),
             child: CommonText(
               titlePrefix,
               style: TextStyle(
@@ -229,20 +190,18 @@ class MedicalRecordCard extends StatelessWidget {
         ),
         Text(': ',
             style: TextStyle(
-              color: Theme.of(context)
-                  .brightness ==
-                  Brightness.dark
+              color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white
                   : Colors.black,
             )),
         Flexible(
           child: Container(
-            padding: EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.only(top: 2),
             child: CommonText(
               bodyText,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
+              maxLines: null,
               softWrap: true,
+              overflow: TextOverflow.visible,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 color: Colors.grey.shade600,

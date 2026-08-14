@@ -21,6 +21,6 @@ void main() async {
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
-
+  GlobalSession.instance.initializePlatformTelemetry();
   runApp(const AppGateway());
 }

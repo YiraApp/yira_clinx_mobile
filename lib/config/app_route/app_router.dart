@@ -4,6 +4,7 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
+import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/domain/entities/slot/slot_appointment_entity.dart';
 import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart';
@@ -83,103 +84,103 @@ class AppRouter {
   static Route onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
-        return MaterialPageRoute(builder: (_) => SplashScreen());
+        return MaterialPageRoute(settings: settings, builder: (_) => SplashScreen());
       case AppRoutes.signIn:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) =>
               BlocProvider.value(value: sl<LoginBloc>(), child: LoginScreen()),
         );
       case AppRoutes.signup:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) =>
               BlocProvider.value(value: sl<LoginBloc>(), child: SignupScreen()),
         );
       case AppRoutes.weightScale:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
             child: WeightScaleScreen(),
           ),
         );
       case AppRoutes.heightScale:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
             child: HeightScaleScreen(),
           ),
         );
       case AppRoutes.genderSelection:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
             child: GenderAgeSelectionScreen(),
           ),
         );
       case AppRoutes.userConfiguration:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<ConfigBloc>(),
             child: UserConfigurationScreen(),
           ),
         );
       case AppRoutes.patientManagementScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<DashboardBloc>(),
             child: PatientManagementScreen(),
           ),
         );
       case AppRoutes.userPrescriptionManagement:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionManagementScreen(),
           ),
         );
       case AppRoutes.userPrescriptionDetailScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionDetailScreen(prescriptionId: '1'),
           ),
         );
       case AppRoutes.languageSelectionScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SettingsBloc>(),
             child: LanguageSettingsScreen(),
           ),
         );
       case AppRoutes.appearanceScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SettingsBloc>(),
             child: AppearanceScreen(),
           ),
         );
       case AppRoutes.notificationSettingsScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SettingsBloc>(),
             child: NotificationSettingsScreen(),
           ),
         );
       case AppRoutes.userTestResultScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<TestResultsBloc>(),
             child: TestResultsScreen(),
           ),
         );
       case AppRoutes.addAppointmentScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
             child: AddNewAppointmentScreen(),
           ),
         );
       case AppRoutes.appointmentDashboardScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
             child: AppointmentDashboardScreen(),
@@ -187,7 +188,7 @@ class AppRouter {
         );
       case AppRoutes.selectRoleScreen:
         final args = settings.arguments as SelectRoleModel;
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<RoleBloc>(),
             child: SelectRoleScreen(roles: args),
@@ -195,14 +196,14 @@ class AppRouter {
         );
       case AppRoutes.workSpaceScreen:
         WorkSpaceModel workSpaceModel = settings.arguments as WorkSpaceModel;
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<WorkspaceBloc>(),
             child: WorkspaceScreen(roleEntity: workSpaceModel,),
           ),
         );
       case AppRoutes.doctorDashboard:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => MultiBlocProvider(
             providers: [
               BlocProvider<NavigationDrawerBloc>.value(
@@ -216,7 +217,7 @@ class AppRouter {
           ),
         );
       case AppRoutes.settingsScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SettingsBloc>(),
             child: SettingsScreen(),
@@ -224,49 +225,58 @@ class AppRouter {
         );
       case AppRoutes.verifyOtp:
         final SendOtpEntity sendOtpData = settings.arguments as SendOtpEntity;
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<LoginBloc>(),
             child: VerifyOtpScreen(sendOtpEntity: sendOtpData,),
           ),
         );
       case AppRoutes.changePasswordScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<ChangePasswordBloc>(),
             child: ChangePasswordScreen(),
           ),
         );
       case AppRoutes.onSuccessChangePassword:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<ChangePasswordBloc>(),
             child: PasswordChangeSuccessScreen(),
           ),
         );
       case AppRoutes.doctorPatientProfileScreen:
-        return MaterialPageRoute(
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PatientProfileBloc>(),
-            child: DoctorPatientProfileScreen(),
+            child: DoctorPatientProfileScreen(
+              patientId: args?['patientId'] as String?,
+              appointmentId: args?['appointmentId'] as String?,
+              hospitalId: args?['hospitalId'] as String?,
+              orgId: args?['orgId'] as String?,
+              patientName: args?['patientName'] as String?,
+              initialTabIndex: args?['initialTabIndex'] as int? ?? 0,
+            ),
           ),
         );
       case AppRoutes.addMedicalRecordScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalRecordBloc>(),
             child: CreateMedicalRecordScreen(),
           ),
         );
       case AppRoutes.medicalRecordDetailsScreen:
-        return MaterialPageRoute(
+        final record = settings.arguments as MedicalRecordBriefEntity?;
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalRecordBloc>(),
-            child: MedicalRecordDetailsScreen(),
+            child: MedicalRecordDetailsScreen(record: record),
           ),
         );
       case AppRoutes.medicalHistoryScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalHistoryBloc>(),
             child: MedicalRecordsListScreen(),
@@ -274,35 +284,35 @@ class AppRouter {
         );
 
       case AppRoutes.doctorPatientAppointmentListScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
             child: PatientAppointmentList(),
           ),
         );
       case AppRoutes.uploadedRecordScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<UploadedBloc>(),
             child: UploadedRecordsScreen(),
           ),
         );
       case AppRoutes.uploadRecordScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<UploadedBloc>(),
             child: UploadDocumentsScreen(patientName: 'Ch. Raja Vardan'),
           ),
         );
       case AppRoutes.smartSlotSchedulerScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SlotBloc>(),
             child: SmartSchedulerScreen(),
           ),
         );
       case AppRoutes.singleSlotAppointmentDetails:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SlotBloc>(),
             child: SlotDetailsDialog(
@@ -316,35 +326,41 @@ class AppRouter {
           ),
         );
       case AppRoutes.slotDashboard:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SlotBloc>(),
             child: SlotDashBoardScreen(),
           ),
         );
       case AppRoutes.addPrescriptionScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: AddPrescriptionRecordScreen(),
           ),
         );
       case AppRoutes.prescriptionListScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionListScreen(),
           ),
         );
       case AppRoutes.prescriptionViewDetailsScreen:
-        return MaterialPageRoute(
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
-            child: PrescriptionViewDetailsScreen(),
+            child: PrescriptionViewDetailsScreen(
+              patientId: args['patientId'] as String?,
+              appointmentId: args['appointmentId'] as String?,
+              hospitalId: args['hospitalId'] as String?,
+              orgId: args['orgId'] as String?,
+            ),
           ),
         );
       case AppRoutes.closeAccountScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<CloseAccountBloc>(),
             child: CloseAccountScreen(),
@@ -353,7 +369,7 @@ class AppRouter {
       case AppRoutes.dashboardPatientDetails:
         final DashboardPatientDetails dashboardPatientDetails = settings.arguments as DashboardPatientDetails;
 
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PatientDetailsBloc>(),
             child: DashboardPatientDetailsScreen(dashboardPatientDetails: dashboardPatientDetails,),
@@ -361,14 +377,14 @@ class AppRouter {
           ),
         );
       case AppRoutes.forgotPassword:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<ForgotPasswordBloc>(),
             child: ForgotPasswordScreen(),
           ),
         );
         case AppRoutes.permissionScreen:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PermissionsBloc>(),
             child: PermissionsScreen(),
@@ -376,26 +392,26 @@ class AppRouter {
         );
       case AppRoutes.forceUpdateScreen:
         final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
-        return MaterialPageRoute(builder: (_) => ForceUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
+        return MaterialPageRoute(settings: settings, builder: (_) => ForceUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
       case AppRoutes.softUpdateScreen:
         final GetVersionTokenStatusEntity getVersionTokenStatusData = settings.arguments as GetVersionTokenStatusEntity;
-        return MaterialPageRoute(builder: (_) => SoftUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
+        return MaterialPageRoute(settings: settings, builder: (_) => SoftUpdateView(getVersionTokenStatusEntity: getVersionTokenStatusData,));
       case AppRoutes.maintenanceScreen:
-        return MaterialPageRoute(builder: (_) => MaintenanceView());
+        return MaterialPageRoute(settings: settings, builder: (_) => MaintenanceView());
       case AppRoutes.sessionExpired:
-        return MaterialPageRoute(builder: (_) => SessionExpiredScreen());
+        return MaterialPageRoute(settings: settings, builder: (_) => SessionExpiredScreen());
       case AppRoutes.serverDown:
-        return MaterialPageRoute(builder: (_) => ServerDownScreen());
+        return MaterialPageRoute(settings: settings, builder: (_) => ServerDownScreen());
       case AppRoutes.unsupportedRole:
         final LoginEntity loginData = settings.arguments as LoginEntity;
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (context) => UnsupportedRoleScreen(loginEntity: loginData),
         );
       case AppRoutes.logOutScreen:
-        return MaterialPageRoute(builder: (_) => LogoutScreen());
+        return MaterialPageRoute(settings: settings, builder: (_) => LogoutScreen());
       //appointmentDetails
       default:
-        return MaterialPageRoute(
+        return MaterialPageRoute(settings: settings, 
           builder: (_) =>
               const Scaffold(body: Center(child: Text('No route defined'))),
         );

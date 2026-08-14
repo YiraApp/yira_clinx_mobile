@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
@@ -49,10 +48,31 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
     super.dispose();
   }
 
+  IconData _getTabIcon(String tabName) {
+    switch (tabName.toLowerCase()) {
+      case 'info':
+        return Icons.info_outline_rounded;
+      case 'medical record':
+      case 'medical records':
+        return Icons.medical_services_outlined;
+      case 'prescribe':
+      case 'prescriptions':
+        return Icons.medication_outlined;
+      case 'notes':
+      case 'clinical notes':
+        return Icons.sticky_note_2_outlined;
+      case 'documents':
+      case 'records':
+        return Icons.folder_open_rounded;
+      default:
+        return Icons.tab_rounded;
+    }
+  }
+
   void _scrollToIndex(int index) {
     if (!_scrollController.hasClients) return;
 
-    const double estimatedItemWidth = 110.0;
+    const double estimatedItemWidth = 130.0;
     final double screenWidth = MediaQuery.of(context).size.width;
 
     final double targetOffset = (index * estimatedItemWidth) - (screenWidth / 2) + (estimatedItemWidth / 2);
@@ -69,43 +89,53 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: fieldSpace),
-      height: widget.isTab? 50:40,
+    return SizedBox(
+      height: widget.isTab ? 50 : 40,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         itemCount: widget.tabs.length,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.zero,
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, idx) {
           final isActive = widget.selectedIndex == idx;
-          final activeBgColor = primaryColor.withOpacity(0.15);
-          final activeTextColor = isDark ? Colors.blue[300]! : const Color(0xFF1A73E8);
-          final inactiveTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+          final activeBgColor = Colors.white.withOpacity(0.2);
+          final activeTextColor = Colors.white;
+          final inactiveTextColor = Colors.white.withOpacity(0.7);
 
           return GestureDetector(
             onTap: () => widget.onTabSelected(idx),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isActive ? activeBgColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: Center(
-                child: Text(
-                  widget.tabs[idx],
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize:widget.isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                    color: isActive ? activeTextColor : inactiveTextColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _getTabIcon(widget.tabs[idx]),
+                      size: widget.isTab ? 18 : 15,
+                      color: isActive ? activeTextColor : inactiveTextColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.tabs[idx],
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: widget.isTab
+                            ? displayWidth(context) * 0.02
+                            : displayWidth(context) * 0.032,
+                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                        color: isActive ? activeTextColor : inactiveTextColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

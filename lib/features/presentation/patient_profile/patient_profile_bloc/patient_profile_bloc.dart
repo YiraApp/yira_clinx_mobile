@@ -30,7 +30,10 @@ class PatientProfileBloc extends Bloc<PatientProfileEvent, PatientProfileState> 
       ) async {
     emit(PatientProfileLoading());
     try {
-      final patient = await repository.getPatientProfile(event.patientId);
+      final patient = await repository.getPatientProfile(
+        event.patientId,
+        patientName: event.patientName,
+      );
 
       // Explicitly pass activeTabIndex: 0 to ensure Overview is the starting tab
       emit(PatientProfileLoaded(patient: patient, activeTabIndex: 0));

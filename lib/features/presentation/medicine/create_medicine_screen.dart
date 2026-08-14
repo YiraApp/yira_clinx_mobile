@@ -2,11 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_info_session.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/diagnosis_treatment_section.dart';
-import 'package:yiraclinics/features/presentation/medicine/widgets/medical_patient_info_card.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/section_header.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/vital_signs_section.dart';
 
@@ -18,8 +16,26 @@ import '../../../core/common_widgets/custom_border_button.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import 'medical_record_bloc/medical_record_bloc.dart';
 
+import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
+import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
+
 class CreateMedicalRecordScreen extends StatefulWidget {
-  const CreateMedicalRecordScreen({super.key});
+  final PatientProfileEntity? patient;
+  final MedicalRecordBriefEntity? recordToEdit;
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
+
+  const CreateMedicalRecordScreen({
+    super.key,
+    this.patient,
+    this.recordToEdit,
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
+  });
 
   @override
   State<CreateMedicalRecordScreen> createState() =>
@@ -47,6 +63,27 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
   String _selectedVisitType = "New Consultation";
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.recordToEdit != null) {
+      final rec = widget.recordToEdit!;
+      _chiefComplaintController.text = rec.chiefComplaint;
+      _symptomsController.text = rec.symptoms ?? '';
+      _physicalExamController.text = rec.physicalExamination ?? '';
+      _diagnosisController.text = rec.diagnosis;
+      _treatmentPlanController.text = rec.treatmentPlan ?? '';
+      _bpController.text = rec.bloodPressure ?? '';
+      _hrController.text = rec.heartRate ?? '';
+      _tempController.text = rec.temperature ?? '';
+      _weightController.text = rec.weight ?? '';
+      _heightController.text = rec.height ?? '';
+      if (rec.title.isNotEmpty) {
+        _selectedVisitType = rec.title;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _dateController.dispose();
     _chiefComplaintController.dispose();
@@ -69,10 +106,6 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: CommonAppBar(
-        titleText:"Create Medical Record",
-        actions: [],
-      ),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
         listener: (context, state) {
           if (state is MedicalRecordSuccess) {
@@ -93,6 +126,50 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
             key: _formKey,
             child: Column(
               children: [
+                // Top Sheet Header Design
+                SafeArea(
+                  bottom: false,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                    ),
+                    child: Column(
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              widget.recordToEdit != null
+                                  ? "Edit Medical Record"
+                                  : "Create Medical Record",
+                              style: const TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
@@ -102,14 +179,6 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SectionHeader(title: "Patient Information", isTab: isTab,),
-                        const SizedBox(height: 12),
-                        MedicalPatientInfoCard(
-                          name: "Demo Manikanta",
-                          patientId: '1434',
-                            isTab:isTab
-                        ),
-                        const SizedBox(height: fieldSpace),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -201,14 +270,13 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   color: theme.colorScheme.surface,
-
                   child: Row(
                     children: [
                       Expanded(
                         child: CommonBorderButton(
                           height: buttonHeight,
                           text: 'Cancel',
-                          onPressed: () {},
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -219,8 +287,52 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                 noElevation: true,
                                 height: buttonHeight,
                                 width: displayWidth(context),
-                                text: "Create Record",
-                                onPressed: () {},
+                                text: widget.recordToEdit != null
+                                    ? "Update Record"
+                                    : "Create Record",
+                                onPressed: () {
+                                  if (_chiefComplaintController.text.trim().isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Row(
+                                          children: [
+                                            Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                                            SizedBox(width: 8),
+                                            Text("Chief Complaint is mandatory"),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.red.shade600,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (_formKey.currentState!.validate()) {
+                                     context.read<MedicalRecordBloc>().add(
+                                       SaveMedicalRecordEvent(
+                                         recordId: widget.recordToEdit?.id,
+                                         patientId: widget.patientId ?? widget.patient?.id,
+                                         appointmentId: widget.appointmentId,
+                                         hospitalId: widget.hospitalId,
+                                         orgId: widget.orgId,
+                                         visitType: _selectedVisitType,
+                                         chiefComplaint: _chiefComplaintController.text,
+                                         symptoms: _symptomsController.text,
+                                         physicalExamination: _physicalExamController.text,
+                                         bp: _bpController.text,
+                                         hr: _hrController.text,
+                                         temperature: _tempController.text,
+                                         weight: _weightController.text,
+                                         height: _heightController.text,
+                                         diagnosis: _diagnosisController.text,
+                                         treatmentPlan: _treatmentPlanController.text,
+                                       ),
+                                     );
+                                  }
+                                },
                               ),
                       ),
                     ],

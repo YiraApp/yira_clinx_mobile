@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -35,11 +36,43 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTab = isTablet(context);
 
+    final isRecent = dashboardPatientDetails?.isRecent ?? false;
+    final appointmentId = (isRecent
+            ? dashboardPatientDetails?.recentPatients?.appointmentId
+            : dashboardPatientDetails?.todaysSchedule?.appointmentId)
+        ?.toString() ??
+        '';
+
+    final patientId = isRecent
+        ? (dashboardPatientDetails?.recentPatients?.patientUserId ?? '')
+        : (dashboardPatientDetails?.todaysSchedule?.patientUserId ?? '');
+
+    final orgId = (isRecent
+            ? dashboardPatientDetails?.recentPatients?.orgId
+            : dashboardPatientDetails?.todaysSchedule?.orgId)
+        ?.toString() ??
+        '';
+
+    final hospitalId = (isRecent
+            ? dashboardPatientDetails?.recentPatients?.hospitalId
+            : dashboardPatientDetails?.todaysSchedule?.hospitalId)
+        ?.toString() ??
+        '';
+
+    final patientName = isRecent
+        ? dashboardPatientDetails?.recentPatients?.name
+        : dashboardPatientDetails?.todaysSchedule?.patientName;
+
     return BlocProvider<PatientDetailsBloc>(
       create: (context) => PatientDetailsBloc(
         detailsUseCase: sl(),
         clinicalUseCase: sl(),
-      )..add(const LoadPatientScreenData(appointmentId: '1')),
+      )..add(LoadPatientScreenData(
+          appointmentId: appointmentId,
+          patientId: patientId,
+          orgId: orgId,
+          hospitalId: hospitalId,
+        )),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: BlocBuilder<PatientDetailsBloc, PatientDetailsState>(
@@ -63,7 +96,6 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
             final contact = details.data?.contactInformation;
             final vitals = details.data?.latestVitals;
             final medical = details.data?.medicalInformation;
-            final insurance = details.data?.insurance;
 
             final clinicalNotesEntity = state.clinicalNotesData;
 
@@ -168,10 +200,86 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            DashBoardPatientActionHubItem(icon: Icons.calendar_month, label: "Schedule", iconColor: Colors.blue, onTap: () {}, isTab: isTab),
-                            DashBoardPatientActionHubItem(isTab: isTab, icon: Icons.science_outlined, label: "Prescribe", iconColor: Colors.green, onTap: () {}),
-                            DashBoardPatientActionHubItem(isTab: isTab, icon: Icons.assignment_outlined, label: "Records", iconColor: Colors.teal, onTap: () {}),
-                            DashBoardPatientActionHubItem(isTab: isTab, icon: Icons.cloud_upload_outlined, label: "Documents", iconColor: Colors.orange, onTap: () {}),
+                            DashBoardPatientActionHubItem(
+                              icon: Icons.calendar_month,
+                              label: "Schedule",
+                              iconColor: Colors.blue,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': patientId,
+                                    'appointmentId': appointmentId,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialTabIndex': 1,
+                                  },
+                                );
+                              },
+                              isTab: isTab,
+                            ),
+                            DashBoardPatientActionHubItem(
+                              isTab: isTab,
+                              icon: Icons.science_outlined,
+                              label: "Prescribe",
+                              iconColor: Colors.green,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': patientId,
+                                    'appointmentId': appointmentId,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialTabIndex': 2,
+                                  },
+                                );
+                              },
+                            ),
+                            DashBoardPatientActionHubItem(
+                              isTab: isTab,
+                              icon: Icons.assignment_outlined,
+                              label: "Records",
+                              iconColor: Colors.teal,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': patientId,
+                                    'appointmentId': appointmentId,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialTabIndex': 3,
+                                  },
+                                );
+                              },
+                            ),
+                            DashBoardPatientActionHubItem(
+                              isTab: isTab,
+                              icon: Icons.cloud_upload_outlined,
+                              label: "Documents",
+                              iconColor: Colors.orange,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': patientId,
+                                    'appointmentId': appointmentId,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialTabIndex': 4,
+                                  },
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ],
@@ -244,142 +352,12 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                 ),
 
                 SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: fieldSpace, bottom: fieldSpace),
-                    child: DashBoardPatientDetailCardWrapper(
-                      isTab: isTab,
-                      title: "Insurance",
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.shield_outlined, color: Color(0xFF0066FF), size: 22),
-                              const SizedBox(width: 8),
-                              CommonText(
-                                insurance?.provider ?? "No Insurance Provider",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: appPoppinFont,
-                                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: fieldSpace),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  CommonText(
-                                    "Policy Number",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  CommonText(
-                                    insurance?.policyNumber ?? "-",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  CommonText(
-                                    "Valid Till",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  CommonText(
-                                    insurance?.validTill ?? "-",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
                   child: DashBoardPatientDetailCardWrapper(
                     isTab: isTab,
                     title: "Clinical Notes",
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: 120,
-                          child: CommonInputFieldUnlimited(
-                            hintText: "Enter clinical notes...",
-                            borderRadius: fieldBorderRadius,
-                            validator: (value) => null,
-                            onChanged: (text) {},
-                          ),
-                        ),
-                        const SizedBox(height: titleSpace),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CommonText(
-                              "Adding as Dr. Rajesh Nagalingam",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.028,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                            const SizedBox(height: fieldSpace),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: CommonBorderButton(
-                                    isPatientDetail: true,
-                                    height: 35,
-                                    text: 'Clear',
-                                    onPressed: () {},
-                                  ),
-                                ),
-                                const SizedBox(width: 15),
-                                Expanded(
-                                  child: CustomElevatedButton(
-                                    text: "Save Note",
-                                    noElevation: true,
-                                    onPressed: () {},
-                                    width: double.infinity,
-                                    height: 35,
-                                    borderRadius: 8,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
                         if (state is PatientDetailsLoading && clinicalNotesEntity == null)
                           Center(
                             child: Padding(

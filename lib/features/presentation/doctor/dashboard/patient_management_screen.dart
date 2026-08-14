@@ -35,6 +35,11 @@ class PatientManagementScreen extends StatelessWidget {
                   Navigator.pushNamed(
                     context,
                     AppRoutes.doctorPatientProfileScreen,
+                    arguments: {
+                      'patientId': state.patientId,
+                      'patientName': state.patientName,
+                      'initialTabIndex': 0,
+                    },
                   );
                 }
               },
@@ -286,8 +291,7 @@ class PatientManagementScreen extends StatelessWidget {
                                       bottom: 12.0,
                                     ),
                                     key: ValueKey(
-                                      state.patients[index].id ??
-                                          index.toString(),
+                                      state.patients[index].id,
                                     ),
                                     child: PatientCard(
                                       isTab: isTab,
@@ -296,7 +300,9 @@ class PatientManagementScreen extends StatelessWidget {
                                         context.read<DashboardBloc>().add(
                                           ViewPatientDetailsEvent(
                                             patientId:
-                                                state.patients[index].id ?? '1',
+                                                state.patients[index].id,
+                                            patientName:
+                                                state.patients[index].name,
                                           ),
                                         );
                                       },

@@ -22,9 +22,15 @@ class PatientDetailsBloc extends Bloc<PatientDetailsEvent, PatientDetailsState> 
       emit(PatientDetailsLoading(patientData: state.patientData, clinicalNotesData: state.clinicalNotesData));
 
       try {
+        final params = PatientDetailsParams(
+          appointmentId: event.appointmentId,
+          patientId: event.patientId,
+          orgId: event.orgId,
+          hospitalId: event.hospitalId,
+        );
         final results = await Future.wait([
-          detailsUseCase.call(event.appointmentId),
-          clinicalUseCase.call(event.appointmentId),
+          detailsUseCase.call(params),
+          clinicalUseCase.call(params),
         ]);
 
         final detailsRes = results[0] as DashBoardPatientDetailsEntity?;

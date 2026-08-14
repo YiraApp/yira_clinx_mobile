@@ -13,21 +13,56 @@ import '../../../core/common_widgets/common_text.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 
-class AddNewAppointmentScreen extends StatelessWidget {
-  AddNewAppointmentScreen({super.key});
+class AddNewAppointmentScreen extends StatefulWidget {
+  const AddNewAppointmentScreen({super.key});
+
+  @override
+  State<AddNewAppointmentScreen> createState() => _AddNewAppointmentScreenState();
+}
+
+class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
+  final TextEditingController _patientSearchController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _reasonController = TextEditingController();
+
+  DateTime _selectedDate = DateTime.now();
+  String _selectedSlot = "10:00 - 10:30";
+  String _selectedDuration = "30 minutes";
+  String _selectedVisitType = "Consultation";
+  String _selectedDoctor = "Dr. Doctor";
+  bool _isTeleConsultation = false;
+
+  @override
+  void dispose() {
+    _patientSearchController.dispose();
+    _phoneController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
-    final double width = displayWidth(context);
     final bool isTab = isTablet(context);
+
     return BlocConsumer<AppointmentBloc, AppointmentState>(
-      listener: (context, state) {},
+      listener: (context, state) {
+        if (state is OnAddAppointmentState) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Appointment booked successfully!")),
+          );
+          Navigator.pop(context);
+        } else if (state is AppointmentError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
       builder: (context, state) {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: CommonAppBar(
+          appBar: const CommonAppBar(
             actions: [],
             titleText: "Book Appointment",
           ),
@@ -38,45 +73,39 @@ class AddNewAppointmentScreen extends StatelessWidget {
                 vertical: screenTopPadding,
               ),
               child: Column(
-                crossAxisAlignment: .start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CommonText(
-                    'Patient Search *',
+                    'Patient Name *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   TextField(
-                    onChanged: (val) {},
+                    controller: _patientSearchController,
                     style: TextStyle(
                       decorationThickness: 0,
                       fontFamily: appPoppinFont,
-                      fontSize: isTab?displayWidth(context) * 0.018: displayWidth(context) * 0.03,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
                     ),
                     decoration: InputDecoration(
                       hintStyle: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
                       ),
-                      hintText: "Search Patient...",
+                      hintText: "Enter Patient Name...",
                       prefixIcon: const Icon(
-                        Icons.search,
+                        Icons.person_outline,
                         color: Colors.blueGrey,
                         size: 18,
                       ),
                       filled: true,
-                      fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 16,
-                      ),
-
+                      fillColor: isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
@@ -84,7 +113,6 @@ class AddNewAppointmentScreen extends StatelessWidget {
                           width: 1.0,
                         ),
                       ),
-
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
@@ -92,7 +120,6 @@ class AddNewAppointmentScreen extends StatelessWidget {
                           width: 1.0,
                         ),
                       ),
-
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(fieldBorderRadius),
                         borderSide: BorderSide(
@@ -102,34 +129,91 @@ class AddNewAppointmentScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
+                  CommonText(
+                    'Patient Phone Number *',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: titleSpace),
+                  TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: TextStyle(
+                      decorationThickness: 0,
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
+                    ),
+                    decoration: InputDecoration(
+                      hintStyle: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                      ),
+                      hintText: "Enter 10-digit Phone Number...",
+                      prefixIcon: const Icon(
+                        Icons.phone_outlined,
+                        color: Colors.blueGrey,
+                        size: 18,
+                      ),
+                      filled: true,
+                      fillColor: isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
+                        borderSide: BorderSide(
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                          width: 1.0,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
+                        borderSide: BorderSide(
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                          width: 1.0,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(fieldBorderRadius),
+                        borderSide: BorderSide(
+                          color: isDark ? darkModeBorderColor : lightModeBorderColor,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: fieldSpace),
                   CommonText(
                     'Date *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   _buildDOBPicker(
                     context,
-                    state.selectedDob ?? DateTime(2000, 1, 1),
-                    isDark,isTab
+                    _selectedDate,
+                    isDark,
+                    isTab,
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
                   CommonText(
                     'Available slot *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   CommonDropdown(
                     title: "Select Slot",
-                    selectedValue: state.selectedSlot,
+                    selectedValue: _selectedSlot,
                     options: const [
                       "9:00 - 9:30",
                       "9:30 - 10:00",
@@ -137,76 +221,79 @@ class AddNewAppointmentScreen extends StatelessWidget {
                       "10:30 - 11:00",
                       "11:00 - 11:30",
                       "11:30 - 12:00",
+                      "14:00 - 14:30",
+                      "15:00 - 15:30",
                     ],
-                    onSelected: (value) {},
+                    onSelected: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedSlot = value;
+                        });
+                      }
+                    },
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
                   CommonText(
                     'Duration',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   CommonDropdown(
                     title: "Select Duration",
-                    selectedValue: state.selectedSlot,
+                    selectedValue: _selectedDuration,
                     options: const ["30 minutes", "45 minutes", "1 hour"],
-                    onSelected: (value) {},
+                    onSelected: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedDuration = value;
+                        });
+                      }
+                    },
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
                   CommonText(
                     'Visit Type *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   CommonDropdown(
                     title: "Select type",
-                    selectedValue: state.selectedSlot,
+                    selectedValue: _selectedVisitType,
                     options: const [
                       "Consultation",
                       "Follow-up",
                       "Check-up",
                       "Tele-Consult",
                     ],
-                    onSelected: (value) {},
+                    onSelected: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedVisitType = value;
+                          if (value == "Tele-Consult") {
+                            _isTeleConsultation = true;
+                          }
+                        });
+                      }
+                    },
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
                   CommonText(
-                    'Assign Doctor *',
+                    'Reason / Chief Complaint *',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(height: titleSpace),
-                  CommonDropdown(
-                    title: "Select Doctor",
-                    selectedValue: state.selectedSlot,
-                    options: const [
-                      "Dr. Madhu - Dentist",
-                      "Dr. Surya - Dentist",
-                      "Dr. Bhargava - Dentist",
-                    ],
-                    onSelected: (value) {},
-                  ),
-                  SizedBox(height: fieldSpace),
-                  CommonText(
-                    'Reason/ Chief Complaint *',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize:isTab?displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: titleSpace),
+                  const SizedBox(height: titleSpace),
                   SizedBox(
                     height: 120,
                     child: CommonInputFieldUnlimited(
@@ -222,29 +309,65 @@ class AddNewAppointmentScreen extends StatelessWidget {
                       onChanged: (text) {},
                     ),
                   ),
-                  SizedBox(height: fieldSpace),
+                  const SizedBox(height: fieldSpace),
                   TeleconsultationCard(
                     isTab: isTab,
                     isDark: isDark,
-                    isSelected: true,
-                    onChanged: (bool? newValue) {},
+                    isSelected: _isTeleConsultation,
+                    onChanged: (bool? newValue) {
+                      setState(() {
+                        _isTeleConsultation = newValue ?? false;
+                      });
+                    },
                   ),
-                  SizedBox(height: fieldSpace*3),
+                  const SizedBox(height: fieldSpace * 3),
                   CustomElevatedButton(
                     text: "Book Appointment",
                     onPressed: () {
-                      Navigator.pop(context);
+                      final name = _patientSearchController.text.trim();
+                      final phone = _phoneController.text.trim();
+
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Please enter patient name")),
+                        );
+                        return;
+                      }
+
+                      if (phone.isEmpty || phone.length < 10) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Please enter a valid 10-digit phone number")),
+                        );
+                        return;
+                      }
+
+                      final startTimeStr = _selectedSlot.split(" - ").first.trim();
+                      final formattedTime = startTimeStr.contains(":") ? "$startTimeStr:00" : "10:00:00";
+
+                      context.read<AppointmentBloc>().add(
+                        SubmitBookAppointmentEvent(
+                          patientName: name,
+                          phoneNumber: phone,
+                          appointmentDate: DateFormat('yyyy-MM-dd').format(_selectedDate),
+                          startTime: formattedTime,
+                          reason: _reasonController.text.trim(),
+                          appointmentType: _selectedVisitType,
+                          isTeleConsultation: _isTeleConsultation,
+                        ),
+                      );
                     },
                     width: double.infinity,
                     height: 50,
                     borderRadius: 8,
                   ),
-                  SizedBox(height: fieldSpace*1.5),
+                  const SizedBox(height: fieldSpace * 1.5),
                   SizedBox(
                     height: 50,
                     width: displayWidth(context),
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: isDark ? darkModeBorderColor : lightModeBorderColor),
                         foregroundColor: Colors.grey,
@@ -257,18 +380,76 @@ class AddNewAppointmentScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w500,
-                          fontSize: isTab?displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                          fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDOBPicker(
+    BuildContext context,
+    DateTime currentDob,
+    bool isDark,
+    bool isTab,
+  ) {
+    final TextEditingController dobController = TextEditingController(
+      text: DateFormat('dd-MM-yyyy').format(currentDob),
+    );
+
+    return TextField(
+      controller: dobController,
+      readOnly: true,
+      onTap: () => _showDatePicker(context, currentDob, isDark),
+      style: TextStyle(
+        decorationThickness: 0,
+        fontFamily: appPoppinFont,
+        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
+      ),
+      decoration: InputDecoration(
+        hintStyle: TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: displayWidth(context) * 0.03,
+          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+        ),
+        suffixIcon: const Icon(
+          Icons.calendar_today,
+          color: Colors.blueGrey,
+          size: 18,
+        ),
+        filled: true,
+        fillColor: isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
+          borderSide: BorderSide(
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
+            width: 1.0,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
+          borderSide: BorderSide(
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
+            width: 1.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
+          borderSide: BorderSide(
+            color: isDark ? darkModeBorderColor : lightModeBorderColor,
+            width: 1.5,
+          ),
+        ),
+      ),
     );
   }
 
@@ -333,8 +514,8 @@ class AddNewAppointmentScreen extends StatelessWidget {
                       child: CupertinoDatePicker(
                         mode: CupertinoDatePickerMode.date,
                         initialDateTime: initialDate,
-                        maximumDate: DateTime.now(),
-                        minimumYear: 1900,
+                        minimumYear: 2024,
+                        maximumYear: 2030,
                         itemExtent: 50,
                         onDateTimeChanged: (DateTime newDate) {
                           tempSelectedDate = newDate;
@@ -350,6 +531,9 @@ class AddNewAppointmentScreen extends StatelessWidget {
                     child: CustomElevatedButton(
                       text: "Confirm",
                       onPressed: () {
+                        setState(() {
+                          _selectedDate = tempSelectedDate;
+                        });
                         Navigator.pop(context);
                       },
                       width: double.infinity,
@@ -363,69 +547,6 @@ class AddNewAppointmentScreen extends StatelessWidget {
           },
         );
       },
-    );
-  }
-
-  Widget _buildDOBPicker(
-    BuildContext context,
-    DateTime? currentDob,
-    bool isDark,
-      bool isTab
-  ) {
-    final DateTime displayDate = currentDob ?? DateTime(2000, 1, 1);
-
-    final TextEditingController dobController = TextEditingController(
-      text: DateFormat('dd-MM-yyyy').format(displayDate),
-    );
-
-    return TextField(
-      controller: dobController,
-      readOnly: true,
-      onTap: () => _showDatePicker(context, displayDate, isDark),
-      style: TextStyle(
-        decorationThickness: 0,
-        fontFamily: appPoppinFont,
-        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.03,
-      ),
-
-      decoration: InputDecoration(
-        hintStyle: TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: displayWidth(context) * 0.03,
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurfaceVariant.withOpacity(0.6),
-        ),
-        suffixIcon: const Icon(
-          Icons.calendar_today,
-          color: Colors.blueGrey,
-          size: 18,
-        ),
-        filled: true,
-        fillColor: isDark? darkModeCardColor.withOpacity(0.8):lightModeTextFieldBgColor,
-        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          borderSide: BorderSide(
-            color: isDark ? darkModeBorderColor : lightModeBorderColor,
-            width: 1.0,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          borderSide: BorderSide(
-            color: isDark ? darkModeBorderColor : lightModeBorderColor,
-            width: 1.0,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          borderSide: BorderSide(
-            color: isDark ? darkModeBorderColor : lightModeBorderColor,
-            width: 1.5,
-          ),
-        ),
-      ),
     );
   }
 }

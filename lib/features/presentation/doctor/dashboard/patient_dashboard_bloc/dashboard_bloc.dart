@@ -13,8 +13,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<GetDashboardData>(_onGetDashboardData);
     on<SearchPatients>(_onSearchPatients);
     on<FilterPatients>(_onFilterPatients);
-    on<ViewPatientDetailsEvent>((event,emit)async{
-      emit(ViewPatientDetailsState());
+    on<ViewPatientDetailsEvent>((event, emit) async {
+      emit(ViewPatientDetailsState(
+        patientId: event.patientId,
+        patientName: event.patientName,
+      ));
     });
   }
 

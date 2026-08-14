@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -24,6 +25,17 @@ class AppointmentDashboardScreen extends StatefulWidget {
 class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _debounce;
+
+  void _onSearchChanged(String val) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      final query = val.trim();
+      if (query.isEmpty || query.length >= 3) {
+        context.read<AppointmentBloc>().add(LoadAppointmentsEvent(search: query));
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -35,6 +47,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -242,7 +255,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                     ),
                     const SizedBox(height: fieldSpace),
                     TextField(
-                      onChanged: (val) {},
+                      onChanged: _onSearchChanged,
                       style: TextStyle(
                         decorationThickness: 0,
                         decoration: TextDecoration.none,
@@ -316,7 +329,11 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                               "In-Progress",
                               "Completed",
                             ],
-                            onSelected: (value) {},
+                            onSelected: (value) {
+                              context.read<AppointmentBloc>().add(
+                                    LoadAppointmentsEvent(status: value),
+                                  );
+                            },
                           ),
                         ),
                         const SizedBox(width: 12),

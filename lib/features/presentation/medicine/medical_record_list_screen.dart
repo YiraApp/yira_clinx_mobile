@@ -2,15 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/medical_record_card.dart';
-import 'package:yiraclinics/features/presentation/medicine/widgets/medical_record_tab.dart';
+import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
+import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
+import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
+import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import 'medical_history_bloc/medical_history_bloc.dart';
 
 class MedicalRecordsListScreen extends StatefulWidget {
-  const MedicalRecordsListScreen({super.key});
+  final PatientProfileEntity? patient;
+  final String? patientId;
+  final String? appointmentId;
+  final String? hospitalId;
+  final String? orgId;
+
+  const MedicalRecordsListScreen({
+    super.key,
+    this.patient,
+    this.patientId,
+    this.appointmentId,
+    this.hospitalId,
+    this.orgId,
+  });
 
   @override
   State<MedicalRecordsListScreen> createState() =>
@@ -21,13 +40,164 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords());
+    context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
+          patientId: widget.patientId ?? widget.patient?.id,
+          appointmentId: widget.appointmentId,
+          hospitalId: widget.hospitalId,
+          orgId: widget.orgId,
+        ));
+  }
+
+  void _refreshRecords() {
+    context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
+          patientId: widget.patientId ?? widget.patient?.id,
+          appointmentId: widget.appointmentId,
+          hospitalId: widget.hospitalId,
+          orgId: widget.orgId,
+        ));
+  }
+
+  void _openRecordFormModal([MedicalRecordBriefEntity? recordToEdit]) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.9,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: BlocProvider<MedicalRecordBloc>(
+            create: (_) => sl<MedicalRecordBloc>(),
+            child: Scaffold(
+              body: CreateMedicalRecordScreen(
+                patient: widget.patient,
+                recordToEdit: recordToEdit,
+                patientId: widget.patientId ?? widget.patient?.id,
+                appointmentId: widget.appointmentId,
+                hospitalId: widget.hospitalId,
+                orgId: widget.orgId,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ).then((_) {
+      if (context.mounted) {
+        _refreshRecords();
+      }
+    });
+  }
+
+  void _confirmDeleteRecord(MedicalRecordBriefEntity item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 8,
+        backgroundColor: isDark ? darkModeCardColor : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Colors.redAccent,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 18),
+              CommonText(
+                "Delete Medical Record?",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              CommonText(
+                "Are you sure you want to delete this medical record? This action is permanent and cannot be undone.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: CommonText(
+                        "Cancel",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: Colors.redAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        context.read<MedicalHistoryBloc>().add(
+                          DeleteMedicalHistoryRecord(item.id),
+                        );
+                      },
+                      child: const CommonText(
+                        "Delete",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-final isTab = isTablet(context);
+    final isTab = isTablet(context);
     return BlocConsumer<MedicalHistoryBloc, MedicalHistoryState>(
       buildWhen: (previous, current) =>
       current is MedicalHistoryLoading ||
@@ -35,26 +205,35 @@ final isTab = isTablet(context);
           current is MedicalHistoryLoaded,
       listenWhen: (previous, current) =>
       current is AddMedicalRecordNavState ||
-          current is SingleMedicineDetailsNavState, listener: (BuildContext context, MedicalHistoryState state) {
+          current is SingleMedicineDetailsNavState,
+      listener: (BuildContext context, MedicalHistoryState state) {
         if (state is AddMedicalRecordNavState) {
-          Navigator.pushNamed(context, AppRoutes.addMedicalRecordScreen);
-        } else if(state is SingleMedicineDetailsNavState){
-          Navigator.pushNamed(context, AppRoutes.medicalRecordDetailsScreen);
+          _openRecordFormModal();
+        } else if (state is SingleMedicineDetailsNavState) {
+          Navigator.pushNamed(
+            context,
+            AppRoutes.medicalRecordDetailsScreen,
+            arguments: state.record,
+          );
         }
       },
       builder: (context, state) {
+        final bool hasRecord = (state is MedicalHistoryLoaded && state.records.isNotEmpty);
+
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          floatingActionButton: state is MedicalHistoryLoaded
-              ? MedicalRecordFab(
-                  onAddRecordTapped: () {
+          floatingActionButton: hasRecord
+              ? null
+              : FloatingActionButton(
+                  backgroundColor: primaryColor,
+                  child: const Icon(Icons.add, color: Colors.white),
+                  onPressed: () {
                     context.read<MedicalHistoryBloc>().add(
                       AddMedicalRecordNavEvent(),
                     );
                   },
-                )
-              : null,
-          body: _buildBody(context, state,isTab),
+                ),
+          body: _buildBody(context, state, isTab),
         );
       },
     );
@@ -62,7 +241,7 @@ final isTab = isTablet(context);
 
   Widget _buildBody(BuildContext context, MedicalHistoryState state,bool isTab) {
     if (state is MedicalHistoryLoading) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const ListCardShimmer(itemCount: 4);
     }
 
     if (state is MedicalHistoryError) {
@@ -99,15 +278,11 @@ final isTab = isTablet(context);
               vitalsSummary: item.vitalsSummary,
               onDetailsPressed: () {
                 context.read<MedicalHistoryBloc>().add(
-                  SingleMedicineDetailsNavEvent(recordId: item.id),
+                  SingleMedicineDetailsNavEvent(recordId: item.id, record: item),
                 );
               },
-              onDeletePressed: () {
-                context.read<MedicalHistoryBloc>().add(
-                  DeleteMedicalHistoryRecord(item.id),
-                );
-              },
-              onEditPressed: () {},
+              onDeletePressed: () => _confirmDeleteRecord(item),
+              onEditPressed: () => _openRecordFormModal(item),
             ),
           );
         },

@@ -3,7 +3,7 @@ import 'package:meta/meta.dart';
 
 import '../../../domain/entities/prescriptions/prescription_item.dart';
 import '../../../domain/entities/prescriptions/prescription_entity.dart';
-import '../../../use_cases/save_prescription_use_case.dart'; // Verify this path matches your project structure
+import '../../../use_cases/save_prescription_use_case.dart';
 
 part 'prescription_event.dart';
 part 'prescription_state.dart';
@@ -12,14 +12,15 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
   final SavePrescriptionUseCase? _savePrescriptionUseCase;
 
   PrescriptionBloc({
-     SavePrescriptionUseCase? savePrescriptionUseCase,
+    SavePrescriptionUseCase? savePrescriptionUseCase,
   })  : _savePrescriptionUseCase = savePrescriptionUseCase,
-        super(const PrescriptionState()) {
+        super(PrescriptionState()) {
     on<LoadPrescriptionData>(_onLoadPrescriptionData);
     on<SubmitPrescription>(_onSubmitPrescription);
     on<AddDiagnosis>(_onAddDiagnosis);
     on<RemoveDiagnosis>(_onRemoveDiagnosis);
     on<AddMedication>(_onAddMedication);
+    on<AddEmptyMedication>(_onAddEmptyMedication);
     on<RemoveMedication>(_onRemoveMedication);
     on<UpdateMedicationDetails>(_onUpdateMedicationDetails);
     on<TogglePrescriptionExpansion>(_onTogglePrescriptionExpansion);
@@ -31,51 +32,63 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     });
   }
 
-  void _onLoadPrescriptionData(LoadPrescriptionData event, Emitter<PrescriptionState> emit) {
-    emit(state.copyWith(status: PrescriptionStatus.loading));
-    emit(state.copyWith(
-      status: PrescriptionStatus.success,
-      diagnoses: ['Hypermetropia', 'Axial hypermetropia'],
-      medications: [
-        MedicationItem(
-          id: '1',
-          name: 'Acetaminophen-containing product',
-          dosage: '500mg',
-          frequency: 'Once daily (OD)',
-          duration: '7 Days',
-          route: 'Oral',
-        ),
-        const MedicationItem(
-          id: '2',
-          name: 'Acetaminophen-containing product',
-        ),
-      ],
-    ));
+  Future<void> _onLoadPrescriptionData(
+    LoadPrescriptionData event,
+    Emitter<PrescriptionState> emit,
+  ) async {
+    if (event.patientId == null || event.patientId!.trim().isEmpty) {
+      return;
+    }
+    try {
+      final data = await _savePrescriptionUseCase?.repository.getPrescriptionByPatientId(
+        event.patientId!.trim(),
+        appointmentId: event.appointmentId,
+        hospitalId: event.hospitalId,
+        orgId: event.orgId,
+      );
+      if (data != null && (data.medications.isNotEmpty || data.diagnoses.isNotEmpty || data.additionalNotes.isNotEmpty)) {
+        emit(state.copyWith(
+          status: PrescriptionStatus.success,
+          diagnoses: data.diagnoses,
+          medications: data.medications.isEmpty
+              ? [MedicationItem(id: DateTime.now().millisecondsSinceEpoch.toString(), name: '')]
+              : data.medications,
+          additionalNotes: data.additionalNotes,
+        ));
+      }
+    } catch (_) {}
   }
 
-  /// 🚀 NEW: Event handler that executes both repository actions sequentially via the use case
-  Future<void> _onSubmitPrescription(SubmitPrescription event, Emitter<PrescriptionState> emit) async {
-    emit(state.copyWith(status: PrescriptionStatus.loading));
+  Future<void> _onSubmitPrescription(
+    SubmitPrescription event,
+    Emitter<PrescriptionState> emit,
+  ) async {
+    emit(state.copyWith(status: PrescriptionStatus.submitLoading));
     try {
+      final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
+
       final payload = PrescriptionEntity(
         patientId: event.patientId,
+        appointmentId: event.appointmentId,
+        hospitalId: event.hospitalId,
+        orgId: event.orgId,
         diagnoses: state.diagnoses,
-        medications: state.medications,
+        medications: validMeds,
         additionalNotes: event.additionalNotes,
       );
 
-      // Executes Method 1 (Save) and Method 2 (Fetch) sequentially inside your UseCase
       final PrescriptionEntity synchronizedData = await _savePrescriptionUseCase!.call(payload);
 
       emit(state.copyWith(
-        status: PrescriptionStatus.success,
+        status: PrescriptionStatus.submitSuccess,
         diagnoses: synchronizedData.diagnoses,
         medications: synchronizedData.medications,
+        additionalNotes: synchronizedData.additionalNotes,
       ));
     } catch (e) {
       emit(state.copyWith(
-        status: PrescriptionStatus.failure,
-        errorMessage: e.toString(),
+        status: PrescriptionStatus.submitFailure,
+        errorMessage: e.toString().replaceAll("Exception: ", ""),
       ));
     }
   }
@@ -101,6 +114,15 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     emit(state.copyWith(medications: updated));
   }
 
+  void _onAddEmptyMedication(AddEmptyMedication event, Emitter<PrescriptionState> emit) {
+    final newItem = MedicationItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: '',
+    );
+    final updated = List<MedicationItem>.from(state.medications)..add(newItem);
+    emit(state.copyWith(medications: updated));
+  }
+
   void _onRemoveMedication(RemoveMedication event, Emitter<PrescriptionState> emit) {
     final updated = List<MedicationItem>.from(state.medications)
       ..removeWhere((item) => item.id == event.id);
@@ -111,6 +133,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     final updated = state.medications.map((item) {
       if (item.id == event.id) {
         return item.copyWith(
+          name: event.name ?? item.name,
           dosage: event.dosage ?? item.dosage,
           frequency: event.frequency ?? item.frequency,
           duration: event.duration ?? item.duration,

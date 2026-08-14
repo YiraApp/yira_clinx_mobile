@@ -36,70 +36,85 @@ class MedicationDropdownSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CommonText(
-          label,
-          style: TextStyle(
-            letterSpacing: 0.5,
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.033,
-            fontWeight: FontWeight.w500,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        PopupMenuButton<String>(
-          onSelected: (String newValue) => onChanged(newValue),
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          offset: const Offset(0, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(computedRadius)),
-          itemBuilder: (context) => items.map((String item) {
-            return PopupMenuItem<String>(
-              value: item,
-              child: CommonText(
-                item,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            );
-          }).toList(),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), // Identical field bounds
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(computedRadius),
-              border: Border.all(
-                color: inactiveBorderColor,
-                width: 1.0,
-              ),
+        if (label.isNotEmpty) ...[
+          CommonText(
+            label,
+            style: TextStyle(
+              letterSpacing: 0.5,
+              fontFamily: appPoppinFont,
+              fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.033,
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onSurface,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
+          ),
+          const SizedBox(height: 6),
+        ],
+
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return PopupMenuButton<String>(
+              constraints: BoxConstraints(
+                minWidth: constraints.maxWidth,
+                maxWidth: constraints.maxWidth > 0 ? constraints.maxWidth : 200,
+              ),
+              onSelected: (String newValue) => onChanged(newValue),
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              offset: const Offset(0, 46),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(computedRadius)),
+              itemBuilder: (context) => items.map((String item) {
+                return PopupMenuItem<String>(
+                  value: item,
                   child: CommonText(
-                    (value != null && value!.isNotEmpty) ? value! : 'Select',
+                    item,
+                    maxLines: 2,
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
-                      fontWeight: (value != null && value!.isNotEmpty) ? FontWeight.w500 : FontWeight.w400,
-                      color: (value != null && value!.isNotEmpty)
-                          ? (isDark ? Colors.white : textLightModeColor)
-                          : (isDark ? Colors.white.withOpacity(0.5) : textLightModeColor.withOpacity(0.5)),
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
+                );
+              }).toList(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(computedRadius),
+                  border: Border.all(
+                    color: inactiveBorderColor,
+                    width: 1.0,
+                  ),
                 ),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 20,
-                  color: isDark ? Colors.white54 : Colors.grey[600],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: CommonText(
+                        (value != null && value!.isNotEmpty) ? value! : 'Select',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                          fontWeight: (value != null && value!.isNotEmpty) ? FontWeight.w500 : FontWeight.w400,
+                          color: (value != null && value!.isNotEmpty)
+                              ? (isDark ? Colors.white : textLightModeColor)
+                              : (isDark ? Colors.white.withOpacity(0.5) : textLightModeColor.withOpacity(0.5)),
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: isDark ? Colors.white54 : Colors.grey[600],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

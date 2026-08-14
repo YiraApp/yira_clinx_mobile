@@ -55,15 +55,31 @@ class MetricTileItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
-                value,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.032,
-                  fontWeight: FontWeight.w500,
-                  height: 1.3,
-                  color: valueColor ?? (isDark ? Colors.white.withOpacity(0.9) : Colors.black87),
-                ),
+              Builder(
+                builder: (context) {
+                  final trimmed = value.trim();
+                  final displayVal = (trimmed.isEmpty ||
+                          trimmed.toLowerCase() == 'none' ||
+                          trimmed.toLowerCase() == 'none scheduled' ||
+                          trimmed == '-')
+                      ? 'N/A'
+                      : value;
+                  return Text(
+                    displayVal,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab
+                          ? displayWidth(context) * 0.02
+                          : displayWidth(context) * 0.032,
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
+                      color: valueColor ??
+                          (isDark
+                              ? Colors.white.withOpacity(0.9)
+                              : Colors.black87),
+                    ),
+                  );
+                },
               ),
             ],
           ),

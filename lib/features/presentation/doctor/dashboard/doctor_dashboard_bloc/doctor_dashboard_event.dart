@@ -9,8 +9,11 @@ abstract class DoctorDashboardEvent extends Equatable {
 }
 
 class FetchDoctorDashboardData extends DoctorDashboardEvent {
+  final bool isRefresh;
+  const FetchDoctorDashboardData({this.isRefresh = false});
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [isRefresh];
 }
 
 class ViewCalendarEvent extends DoctorDashboardEvent {

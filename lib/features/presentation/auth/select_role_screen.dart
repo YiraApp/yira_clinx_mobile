@@ -95,6 +95,24 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
               elevation: 0,
             )
           : AppBar(
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: mainHeadingColor,
+                  size: 20,
+                ),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.initial,
+                      (route) => false,
+                    );
+                  }
+                },
+              ),
               automaticallyImplyLeading: true,
               backgroundColor: Colors.transparent,
               elevation: 0,

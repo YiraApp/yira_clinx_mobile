@@ -32,11 +32,12 @@ class FilterPatients extends DashboardEvent {
 }
 class ViewPatientDetailsEvent extends DashboardEvent {
   final String patientId;
+  final String? patientName;
 
-  const ViewPatientDetailsEvent({required this.patientId});
+  const ViewPatientDetailsEvent({required this.patientId, this.patientName});
 
   @override
-  List<Object?> get props => [patientId];
+  List<Object?> get props => [patientId, patientName];
 }
 
 

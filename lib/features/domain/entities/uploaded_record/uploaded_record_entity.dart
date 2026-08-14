@@ -7,6 +7,8 @@ class UploadedRecord {
   final String category;
   final DateTime uploadDate;
   final int fileSizeKB;
+  final String? fileUrl;
+  final String? filePath;
 
   const UploadedRecord({
     required this.id,
@@ -14,5 +16,7 @@ class UploadedRecord {
     required this.category,
     required this.uploadDate,
     required this.fileSizeKB,
+    this.fileUrl,
+    this.filePath,
   });
 }

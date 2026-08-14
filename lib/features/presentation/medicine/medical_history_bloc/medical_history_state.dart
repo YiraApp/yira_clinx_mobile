@@ -36,5 +36,6 @@ class AddMedicalRecordNavState extends MedicalHistoryState {}
 
 class SingleMedicineDetailsNavState extends MedicalHistoryState {
   final String recordId;
-  const SingleMedicineDetailsNavState({required this.recordId});
+  final MedicalRecordBriefEntity? record;
+  const SingleMedicineDetailsNavState({required this.recordId, this.record});
 }

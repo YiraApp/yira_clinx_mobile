@@ -77,7 +77,7 @@ class ApiClient {
   Dio _createDio(String baseUrl, bool showSuccessSnack) {
     final dio = Dio(
       BaseOptions(
-        baseUrl: "https://$baseUrl",
+        baseUrl: "http://$baseUrl",
         connectTimeout: const Duration(seconds: 60),
         receiveTimeout: const Duration(seconds: 60),
         headers: {

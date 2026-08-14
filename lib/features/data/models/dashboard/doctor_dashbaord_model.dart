@@ -159,6 +159,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
     super.consultationType,
     super.reason,
     super.statusTag,
+    super.meetingUrl,
   });
 
   factory TodaysScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -172,6 +173,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       consultationType: json['consultationType'] as String?,
       reason: json['reason'] as String?,
       statusTag: json['statusTag'] as String?,
+      meetingUrl: json['meetingUrl'] as String?,
     );
   }
 
@@ -186,6 +188,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       'consultationType': consultationType,
       'reason': reason,
       'statusTag': statusTag,
+      'meetingUrl': meetingUrl,
     };
   }
 }

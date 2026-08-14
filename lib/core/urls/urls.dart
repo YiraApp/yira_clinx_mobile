@@ -20,11 +20,29 @@ class URLs {
 
   /*Dashboard*/
   static const doctorDashBoardUrl = "/v1/api/auth/dashboard";
-  static const dashboardPatientDetailsUrl = "/v1/api/dashboardPatientDetailsUrl";
-  static const dashboardPatientClinicalDetailsUrl = "/v1/api/dashboardPatientClinicalDetailsUrl";
-  /*Side menu*/
-  static const sideMenuUrl = "/v1/api/side_menu";
-  /*Patient Profile*/
-  static const patientOverViewUrl = "/v1/api/patientOverViewUrl";
+  static const appointmentDashboardUrl = "/v1/api/auth/appointment-dashboard";
+  static const bookAppointmentUrl = "/v1/api/auth/book-appointment";
+  static const dashboardPatientDetailsUrl = "/v1/api/auth/patient/details";
+  static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
 
+  /*Side menu*/
+  static const sideMenuUrl = "/v1/api/auth/sidebar";
+
+  /*Patient Profile*/
+  static const patientOverViewUrl = "/v1/api/auth/patient/overview";
+
+  /*SNOMED CT Search*/
+  static const snomedSearchUrl = "/v1/api/auth/snomed/search";
+
+  /*Clinical Notes*/
+  static const clinicalNotesUrl = "/v1/api/auth/clinical-notes";
+
+  /*Medical Records*/
+  static const medicalRecordsUrl = "/v1/api/auth/medical-records";
+
+  /*Prescriptions*/
+  static const prescriptionsUrl = "/v1/api/auth/prescriptions";
+
+  /*Medical Documents*/
+  static const medicalDocumentsUrl = "/v1/api/auth/medical-documents";
 }
