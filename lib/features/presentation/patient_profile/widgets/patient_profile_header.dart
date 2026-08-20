@@ -10,12 +10,20 @@ import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 
+import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_bloc.dart';
+import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_state.dart';
+import 'request_access_duration_modal.dart';
+
 class PatientProfileHeader extends StatefulWidget {
   final PatientProfileEntity patient;
   final bool isTab;
   final VoidCallback? onBack;
   final Widget? tabBar;
   final String? appointmentId;
+  final String? patientId;
+  final int? hospitalId;
+  final PatientAccessConsentBloc? consentBloc;
+  final DoctorAccessStatusLoaded? accessStatus;
 
   const PatientProfileHeader({
     super.key,
@@ -24,6 +32,10 @@ class PatientProfileHeader extends StatefulWidget {
     this.onBack,
     this.tabBar,
     this.appointmentId,
+    this.patientId,
+    this.hospitalId,
+    this.consentBloc,
+    this.accessStatus,
   });
 
   @override
@@ -363,8 +375,129 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                 ),
               ],
             ),
+            if (widget.consentBloc != null) ...[
+              const SizedBox(height: 10),
+              _buildConsentAccessButton(context),
+            ],
             const SizedBox(height: 12),
             if (widget.tabBar != null) widget.tabBar!,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConsentAccessButton(BuildContext context) {
+    final status = widget.accessStatus?.status.toUpperCase() ?? 'NO_REQUEST';
+    final hasAccess = widget.accessStatus?.hasAccess ?? false;
+    final isPending = status == 'PENDING';
+
+    if (hasAccess) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withOpacity(0.25),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 14),
+            const SizedBox(width: 5),
+            Text(
+              "Access Granted • ${widget.accessStatus?.durationLabel ?? 'Active'}",
+              style: const TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (isPending) {
+      return InkWell(
+        onTap: () {
+          RequestAccessDurationModal.show(
+            context: context,
+            patient: widget.patient,
+            patientId: widget.patientId ?? widget.patient.id,
+            appointmentId: widget.appointmentId,
+            hospitalId: widget.hospitalId,
+            consentBloc: widget.consentBloc!,
+          );
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.25),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.orange.withOpacity(0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.hourglass_top_rounded, color: Colors.amberAccent, size: 13),
+              SizedBox(width: 5),
+              Text(
+                "Access Request Pending (Tap to Change)",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: () {
+        RequestAccessDurationModal.show(
+          context: context,
+          patient: widget.patient,
+          patientId: widget.patientId ?? widget.patient.id,
+          appointmentId: widget.appointmentId,
+          hospitalId: widget.hospitalId,
+          consentBloc: widget.consentBloc!,
+        );
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.vpn_key_rounded, color: primaryColor, size: 14),
+            SizedBox(width: 6),
+            Text(
+              "Request Access to Patient Information",
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: primaryColor,
+              ),
+            ),
           ],
         ),
       ),

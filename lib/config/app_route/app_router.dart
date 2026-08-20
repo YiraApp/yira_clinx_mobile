@@ -24,8 +24,10 @@ import 'package:yiraclinics/features/presentation/configure_screens/maintance_sc
 import 'package:yiraclinics/features/presentation/configure_screens/soft_update_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_main_shell_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
+import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
@@ -65,6 +67,10 @@ import '../../features/presentation/auth/login_screen.dart';
 import '../../features/presentation/auth/signup_screen.dart';
 import '../../features/presentation/auth/work_space/work_space_bloc/work_space_bloc.dart';
 import '../../features/presentation/configuration/configuration_screen.dart';
+import '../../features/domain/entities/provider_profile/provider_profile_entity.dart';
+import '../../features/presentation/doctor/profile/edit_provider_profile_screen.dart';
+import '../../features/presentation/consent/patient_consent_approval_screen.dart';
+import '../../features/presentation/doctor/profile/provider_profile_bloc/provider_profile_bloc.dart';
 import '../../features/presentation/doctor/dashboard/doctor_dashboard_screen.dart';
 import '../../features/presentation/doctor/dashboard/patient_management_screen.dart';
 import '../../features/presentation/doctor/patient_appoinment_list/patient_appoinment_list.dart';
@@ -85,6 +91,25 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.initial:
         return MaterialPageRoute(settings: settings, builder: (_) => SplashScreen());
+      case AppRoutes.profile:
+        final profileArgs = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => ProviderProfileScreen(
+            userId: profileArgs?['userId'] as String?,
+            hospitalId: profileArgs?['hospitalId'] as int?,
+            orgId: profileArgs?['orgId'] as int?,
+          ),
+        );
+      case AppRoutes.editDoctorProfile:
+        final editArgs = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => EditProviderProfileScreen(
+            profile: editArgs['profile'] as ProviderProfileEntity,
+            bloc: editArgs['bloc'] as ProviderProfileBloc,
+          ),
+        );
       case AppRoutes.signIn:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>
@@ -125,10 +150,7 @@ class AppRouter {
         );
       case AppRoutes.patientManagementScreen:
         return MaterialPageRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<DashboardBloc>(),
-            child: PatientManagementScreen(),
-          ),
+          builder: (_) => const DoctorMainShellScreen(initialIndex: 2),
         );
       case AppRoutes.userPrescriptionManagement:
         return MaterialPageRoute(settings: settings, 
@@ -186,10 +208,7 @@ class AppRouter {
         );
       case AppRoutes.appointmentDashboardScreen:
         return MaterialPageRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<AppointmentBloc>(),
-            child: AppointmentDashboardScreen(),
-          ),
+          builder: (_) => const DoctorMainShellScreen(initialIndex: 1),
         );
       case AppRoutes.selectRoleScreen:
         final args = settings.arguments as SelectRoleModel;
@@ -209,17 +228,7 @@ class AppRouter {
         );
       case AppRoutes.doctorDashboard:
         return MaterialPageRoute(settings: settings, 
-          builder: (_) => MultiBlocProvider(
-            providers: [
-              BlocProvider<NavigationDrawerBloc>.value(
-                value: sl<NavigationDrawerBloc>(),
-              ),
-              BlocProvider<DoctorDashboardBloc>.value(
-                value: sl<DoctorDashboardBloc>(),
-              ),
-            ],
-            child: const DoctorDashboardScreen(),
-          ),
+          builder: (_) => const DoctorMainShellScreen(initialIndex: 0),
         );
       case AppRoutes.settingsScreen:
         return MaterialPageRoute(settings: settings, 
@@ -332,10 +341,7 @@ class AppRouter {
         );
       case AppRoutes.slotDashboard:
         return MaterialPageRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<SlotBloc>(),
-            child: SlotDashBoardScreen(),
-          ),
+          builder: (_) => const DoctorMainShellScreen(initialIndex: 3),
         );
       case AppRoutes.addPrescriptionScreen:
         return MaterialPageRoute(settings: settings, 
@@ -372,13 +378,16 @@ class AppRouter {
           ),
         );
       case AppRoutes.dashboardPatientDetails:
-        final DashboardPatientDetails dashboardPatientDetails = settings.arguments as DashboardPatientDetails;
+        final DashboardPatientDetails? dashboardPatientDetails =
+            settings.arguments is DashboardPatientDetails
+                ? settings.arguments as DashboardPatientDetails
+                : null;
 
-        return MaterialPageRoute(settings: settings, 
+        return MaterialPageRoute(
+          settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PatientDetailsBloc>(),
-            child: DashboardPatientDetailsScreen(dashboardPatientDetails: dashboardPatientDetails,),
-
+            child: DashboardPatientDetailsScreen(dashboardPatientDetails: dashboardPatientDetails),
           ),
         );
       case AppRoutes.forgotPassword:
@@ -414,6 +423,12 @@ class AppRouter {
         );
       case AppRoutes.logOutScreen:
         return MaterialPageRoute(settings: settings, builder: (_) => LogoutScreen());
+      case AppRoutes.patientConsentsScreen:
+        final String? patientId = settings.arguments as String?;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => PatientConsentApprovalScreen(patientId: patientId),
+        );
       //appointmentDetails
       default:
         return MaterialPageRoute(settings: settings, 

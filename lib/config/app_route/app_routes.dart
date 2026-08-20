@@ -53,4 +53,6 @@ class AppRoutes {
   static const String unsupportedRole= '/unsupportedRole';
   static const String logOutScreen= '/logOutScreen';
   static const String permissionScreen= '/permissionScreen';
+  static const String editDoctorProfile = '/editDoctorProfile';
+  static const String patientConsentsScreen = '/patientConsentsScreen';
 }

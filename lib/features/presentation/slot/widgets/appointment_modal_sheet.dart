@@ -30,8 +30,7 @@ class AppointmentModalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final nameController = TextEditingController();
-    final contactController = TextEditingController();
+    final isBlocked = currentSlot.label == 'Blocked';
 
     return Padding(
       padding: EdgeInsets.only(
@@ -48,7 +47,7 @@ class AppointmentModalSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               CommonText(
-                currentSlot.hasAppointment ? 'Appointment Info' : 'Book Appointment',
+                currentSlot.hasAppointment ? 'Appointment Info' : 'Slot Details',
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
@@ -96,7 +95,10 @@ class AppointmentModalSheet extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                     ),
                     onPressed: () {
-                      slotBloc.add(CancelAppointmentEvent(currentSlot.id));
+                      slotBloc.add(CancelAppointmentEvent(
+                        slotId: currentSlot.id,
+                        appointmentId: currentSlot.appointment?.id,
+                      ));
                       Navigator.pop(context);
                     },
                     child: const CommonText('Cancel Appointment', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -119,33 +121,86 @@ class AppointmentModalSheet extends StatelessWidget {
               ],
             )
           ] else ...[
-            CommonText('Patient Name', style: textTheme.bodyMedium),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: nameController,
-              decoration: const InputDecoration(hintText: 'Enter complete name'),
-            ),
-            const SizedBox(height: 16),
-            CommonText('Contact Mobile Number', style: textTheme.bodyMedium),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: contactController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(hintText: 'Enter phone number'),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isBlocked ? const Color(0xFFFFF1F2) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                border: Border.all(
+                  color: isBlocked ? Colors.redAccent.withOpacity(0.3) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isBlocked ? Icons.block : Icons.check_circle_outline,
+                        color: isBlocked ? Colors.redAccent : Colors.green,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      CommonText(
+                        isBlocked ? 'Status: Blocked / Offline' : 'Status: Available for Booking',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isBlocked ? Colors.redAccent : Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  CommonText(
+                    isBlocked
+                        ? 'This slot is marked offline and patients cannot book appointments during this time.'
+                        : 'This slot is open and available for patient appointments.',
+                    style: textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                if (nameController.text.isNotEmpty && contactController.text.isNotEmpty) {
-                  slotBloc.add(BookAppointmentEvent(
-                    slotId: currentSlot.id,
-                    patientName: nameController.text,
-                    contactNumber: contactController.text,
-                  ));
-                  Navigator.pop(context);
-                }
-              },
-              child: const CommonText('CONFIRM BOOKING', style: TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isBlocked ? Colors.green : Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      slotBloc.add(BlockSlotEvent(
+                        slotId: currentSlot.id,
+                        block: !isBlocked,
+                      ));
+                      Navigator.pop(context);
+                    },
+                    child: CommonText(
+                      isBlocked ? 'Unblock Slot' : 'Block Slot',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade200,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+                      elevation: 0,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const CommonText('Close', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

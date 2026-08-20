@@ -11,22 +11,29 @@ class FcmTokenHelper {
         final String? androidToken = await messaging.getToken();
         return androidToken ?? '';
       } else if (Platform.isIOS) {
+        String? apnsToken;
         int retryCount = 0;
-        while (retryCount < 6) {
-          final apnsToken = await messaging.getAPNSToken();
-          if (apnsToken != null) break;
-
-          await Future.delayed(const Duration(milliseconds: 500));
+        while (retryCount < 4) {
+          try {
+            apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null) break;
+          } catch (_) {}
+          await Future.delayed(const Duration(milliseconds: 400));
           retryCount++;
         }
-        final String? iosToken = await messaging.getToken();
-        return iosToken ?? '';
+        if (apnsToken != null) {
+          try {
+            final String? iosToken = await messaging.getToken();
+            return iosToken ?? '';
+          } catch (_) {
+            return '';
+          }
+        }
+        return '';
       }
       return '';
-    } catch (error, stackTrace) {
-      debugPrint(
-        "FcmTokenHelper Error - Falling back gracefully: $error\n$stackTrace",
-      );
+    } catch (error) {
+      debugPrint("FcmTokenHelper - Graceful token fallback: $error");
       return '';
     }
   }

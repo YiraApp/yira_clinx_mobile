@@ -37,9 +37,9 @@ class SlotConfigurationCard extends StatelessWidget {
           border: Border.all(
             color: (slot.hasAppointment || slot.label == 'Booked')
                 ? primary.withOpacity(.25)
-                : isDark
-                ? Colors.white10
-                : Colors.grey.shade200,
+                : (slot.label == 'Blocked'
+                    ? Colors.redAccent.withOpacity(.3)
+                    : (isDark ? Colors.white10 : Colors.grey.shade200)),
           ),
           boxShadow: [
             BoxShadow(
@@ -59,7 +59,7 @@ class SlotConfigurationCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: (slot.hasAppointment || slot.label == 'Booked')
                     ? primary
-                    : Colors.green,
+                    : (slot.label == 'Blocked' ? Colors.redAccent : Colors.green),
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
             ),
@@ -186,6 +186,26 @@ class SlotConfigurationCard extends StatelessWidget {
 
   Widget _statusCard(BuildContext context) {
     final theme = Theme.of(context);
+    final isBooked = slot.hasAppointment || slot.label == 'Booked';
+    final isBlocked = slot.label == 'Blocked';
+
+    Color color;
+    IconData icon;
+    String text;
+
+    if (isBooked) {
+      color = theme.primaryColor;
+      icon = Icons.event_available;
+      text = "Booked";
+    } else if (isBlocked) {
+      color = Colors.redAccent;
+      icon = Icons.block;
+      text = "Blocked";
+    } else {
+      color = Colors.green;
+      icon = Icons.check_circle;
+      text = "Available";
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -193,35 +213,25 @@ class SlotConfigurationCard extends StatelessWidget {
         vertical: 8,
       ),
       decoration: BoxDecoration(
-        color: (slot.hasAppointment || slot.label == 'Booked')
-            ? theme.primaryColor.withOpacity(.12)
-            : Colors.green.withOpacity(.12),
+        color: color.withOpacity(.12),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(
         children: [
           Icon(
-            (slot.hasAppointment || slot.label == 'Booked')
-                ? Icons.event_available
-                : Icons.check_circle,
+            icon,
             size: 16,
-            color: (slot.hasAppointment || slot.label == 'Booked')
-                ? theme.primaryColor
-                : Colors.green,
+            color: color,
           ),
           const SizedBox(width: 6),
           Expanded(
             child: CommonText(
-              (slot.hasAppointment || slot.label == 'Booked')
-                  ? "Booked"
-                  : "Available",
+              text,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
-                color: (slot.hasAppointment || slot.label == 'Booked')
-                    ? theme.primaryColor
-                    : Colors.green,
+                color: color,
               ),
             ),
           ),

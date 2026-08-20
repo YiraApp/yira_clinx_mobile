@@ -25,6 +25,7 @@ class URLs {
   static const updateAppointmentStatusUrl = "/v1/api/auth/update-appointment-status";
   static const doctorSlotsUrl = "/v1/api/auth/doctor-slots";
   static const doctorSlotsDeployUrl = "/v1/api/auth/doctor-slots/deploy";
+  static const doctorSlotBlockUrl = "/v1/api/auth/doctor-slots/block";
   static const patientsListUrl = "/v1/api/auth/patients";
   static const dashboardPatientDetailsUrl = "/v1/api/auth/patient/details";
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
@@ -47,6 +48,17 @@ class URLs {
   /*Prescriptions*/
   static const prescriptionsUrl = "/v1/api/auth/prescriptions";
 
+  /*Provider Profile*/
+  static const providerProfileUrl = "/v1/api/auth/provider/profile";
+  static const providerProfileUpdateUrl = "/v1/api/auth/provider/profile/update";
+  static const providerProfileUploadPhotoUrl = "/v1/api/auth/provider/profile/upload-photo";
+
   /*Medical Documents*/
   static const medicalDocumentsUrl = "/v1/api/auth/medical-documents";
+
+  /*Patient Medical Record Access Consents*/
+  static const patientAccessRequestUrl = "/v1/api/auth/patient-access/request";
+  static const patientAccessCheckUrl = "/v1/api/auth/patient-access/check";
+  static const patientConsentsListUrl = "/v1/api/auth/patient-access/patient-consents";
+  static const patientConsentRespondUrl = "/v1/api/auth/patient-access/respond";
 }

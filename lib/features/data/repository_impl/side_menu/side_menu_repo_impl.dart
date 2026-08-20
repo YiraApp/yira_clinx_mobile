@@ -34,8 +34,11 @@ class SideMenuRepoImpl extends SideMenuRepo {
     var endPoint = URLs.sideMenuUrl;
     var requestBody = {
       "userId": userId.trim(),
+      "roleId": latestRoleId.trim(),
       "latestRoleId": latestRoleId.trim(),
+      "orgId": latestOrgId,
       "latestOrgId": latestOrgId,
+      "hospitalId": latestHospitalId,
       "latestHospitalId": latestHospitalId,
     };
     final String fullCacheKey = _generateDeterministicCacheKey(
@@ -99,12 +102,15 @@ class SideMenuRepoImpl extends SideMenuRepo {
   }
 
   @override
-  Future<SideMenuEntity?> fetchDirectFromKey(String cacheKey)
-  async {
+  Future<SideMenuEntity?> fetchDirectFromKey(String cacheKey) async {
     try {
       final String? cachedJsonString = await _localCache.getCachedResponse(
         cacheKey,
       );
+      if (cachedJsonString != null && cachedJsonString.isNotEmpty) {
+        final decoded = jsonDecode(cachedJsonString) as Map<String, dynamic>;
+        return SideMenuModel.fromJson(decoded);
+      }
       final Map<String, dynamic> mockJsonResponse = {
         "status": true,
         "message": "SideMenu Details fetched successfully",

@@ -7,6 +7,7 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custo
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_metric_grid.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/welocme_card.dart';
+import '../../../../core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
 import '../../../../core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
@@ -21,7 +22,8 @@ import 'widgets/dashboard_section_header.dart';
 import 'widgets/dashboard_chart_card.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
-  const DoctorDashboardScreen({super.key});
+  final bool isShellChild;
+  const DoctorDashboardScreen({super.key, this.isShellChild = false});
 
   @override
   State<DoctorDashboardScreen> createState() => _DoctorDashboardScreenState();
@@ -94,6 +96,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         child: Scaffold(
           backgroundColor: scaffoldBg,
           drawer: const AppNavigationDrawer(),
+          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 0),
           appBar: AppBar(
             elevation: 0,
             backgroundColor: scaffoldBg,
@@ -118,12 +121,17 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 ),
                 onPressed: () {},
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: screenHorizontalSpacePadding),
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, color: Colors.white, size: 18),
+              Padding(
+                padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.profile);
+                  },
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: primaryColor.withOpacity(0.15),
+                    child: Icon(Icons.person, color: primaryColor, size: 18),
+                  ),
                 ),
               ),
             ],

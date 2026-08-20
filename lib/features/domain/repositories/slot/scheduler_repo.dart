@@ -21,4 +21,21 @@ abstract class SchedulerRepository {
   });
 
   Future<bool> deployTimeSchedule(List<TimeSlot> slots, {required String targetDate, required bool isSingleDay});
+
+  Future<bool> blockSlot({required String slotId, bool block = true});
+
+  Future<bool> bookSlotAppointment({
+    required String slotId,
+    required String patientName,
+    required String patientPhone,
+    required String appointmentDate,
+    required String startTime,
+    String? reason,
+    String? appointmentType,
+  });
+
+  Future<bool> cancelSlotAppointment({
+    required String appointmentId,
+    String? slotId,
+  });
 }

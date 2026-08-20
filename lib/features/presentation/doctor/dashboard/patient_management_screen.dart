@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
@@ -10,7 +13,8 @@ import '../../../../core/common_drop_down/common_drop_down.dart';
 import '../../../../core/constants/constants.dart';
 
 class PatientManagementScreen extends StatelessWidget {
-  const PatientManagementScreen({super.key});
+  final bool isShellChild;
+  const PatientManagementScreen({super.key, this.isShellChild = false});
 
   @override
   Widget build(BuildContext context) {
@@ -22,22 +26,24 @@ class PatientManagementScreen extends StatelessWidget {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          appBar: CommonAppBar(
-            actions: const [],
-            onBackPressed: () => Navigator.pop(context),
-          ),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          bottomNavigationBar: isShellChild ? null : const AppBottomNavBar(currentIndex: 2),
           body: SafeArea(
             child: BlocConsumer<DashboardBloc, DashboardState>(
               buildWhen: (previous, state) => state is! ViewPatientDetailsState,
               listener: (context, state) {
                 if (state is ViewPatientDetailsState) {
+                  final currentUser = GlobalSession.instance.userNotifier.value;
+                  final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
+                  final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
                   Navigator.pushNamed(
                     context,
                     AppRoutes.doctorPatientProfileScreen,
                     arguments: {
                       'patientId': state.patientId,
                       'patientName': state.patientName,
+                      'hospitalId': hospitalId,
+                      'orgId': orgId,
                       'initialTabIndex': 0,
                     },
                   );
@@ -45,10 +51,12 @@ class PatientManagementScreen extends StatelessWidget {
               },
               builder: (context, state) {
                 if (state.status == DashboardStatus.loading) {
-                  return const Center(
-                    child: CircularProgressIndicator.adaptive(),
-                  );
+                  return const ListCardShimmer(itemCount: 5);
                 }
+
+                final totalPatients = state.allPatients.length.toString();
+                final activeCases = state.allPatients.where((p) => p.status.toLowerCase() == 'active').length.toString();
+                final totalVisits = state.allPatients.fold(0, (sum, p) => sum + p.visits).toString();
 
                 return NestedScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -145,7 +153,7 @@ class PatientManagementScreen extends StatelessWidget {
                                               child: _buildMetricCard(
                                                 context: context,
                                                 title: "Total Patients",
-                                                value: "3",
+                                                value: totalPatients,
                                                 icon: Icons
                                                     .person_outline_rounded,
                                                 iconColor: Colors
@@ -163,7 +171,7 @@ class PatientManagementScreen extends StatelessWidget {
                                                 isTab: isTab,
                                                 context: context,
                                                 title: "Active Cases",
-                                                value: "3",
+                                                value: activeCases,
                                                 icon: Icons.timeline_rounded,
                                                 iconColor: Colors.green
                                                     .withOpacity(0.6),
@@ -190,8 +198,8 @@ class PatientManagementScreen extends StatelessWidget {
                                               child: _buildMetricCard(
                                                 isTab: isTab,
                                                 context: context,
-                                                title: "Medical Records",
-                                                value: "0",
+                                                title: "Total Visits",
+                                                value: totalVisits,
                                                 icon:
                                                     Icons.description_outlined,
                                                 iconColor: Colors.indigoAccent
@@ -212,7 +220,7 @@ class PatientManagementScreen extends StatelessWidget {
                                               child: _buildMetricCard(
                                                 context: context,
                                                 title: "Total Patients",
-                                                value: "3",
+                                                value: totalPatients,
                                                 icon: Icons
                                                     .person_outline_rounded,
                                                 iconColor: Colors
@@ -231,7 +239,7 @@ class PatientManagementScreen extends StatelessWidget {
                                                 isTab: isTab,
                                                 context: context,
                                                 title: "Active Cases",
-                                                value: "3",
+                                                value: activeCases,
                                                 icon: Icons.timeline_rounded,
                                                 iconColor: Colors.green
                                                     .withOpacity(0.6),
@@ -260,8 +268,8 @@ class PatientManagementScreen extends StatelessWidget {
                                               child: _buildMetricCard(
                                                 isTab: isTab,
                                                 context: context,
-                                                title: "Medical Records",
-                                                value: "0",
+                                                title: "Total Visits",
+                                                value: totalVisits,
                                                 icon:
                                                     Icons.description_outlined,
                                                 iconColor: Colors.indigoAccent
@@ -300,7 +308,7 @@ class PatientManagementScreen extends StatelessWidget {
                                         context.read<DashboardBloc>().add(
                                           ViewPatientDetailsEvent(
                                             patientId:
-                                                state.patients[index].id,
+                                                state.patients[index].userId,
                                             patientName:
                                                 state.patients[index].name,
                                           ),
@@ -340,103 +348,89 @@ class PatientManagementScreen extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isTab ? 10 : 16,
+        horizontal: isTab ? 12 : 14,
         vertical: isTab ? 10 : 12,
       ),
       decoration: BoxDecoration(
-        color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        gradient: isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  darkModeCardColor,
+                  darkModeCardColor.withOpacity(0.8),
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  iconColor.withOpacity(0.03),
+                ],
+              ),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? darkModeBorderColor : lightModeBorderColor,
+          color: isDark
+              ? iconColor.withOpacity(0.15)
+              : iconColor.withOpacity(0.12),
           width: 1,
         ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.grey.withOpacity(0.04),
-              spreadRadius: 1,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: iconColor.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
         ],
       ),
-      child: isTab
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(icon, size: 20, color: iconColor),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab
-                              ? displayWidth(context) * 0.018
-                              : displayWidth(context) * 0.03,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab
-                              ? displayWidth(context) * 0.022
-                              : displayWidth(context) * 0.045,
-                          fontWeight: FontWeight.w600,
-                          color: valueColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.03,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        value,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: displayWidth(context) * 0.045,
-                          fontWeight: FontWeight.w600,
-                          color: valueColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(icon, size: 20, color: iconColor),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withOpacity(isDark ? 0.2 : 0.12),
+                  iconColor.withOpacity(isDark ? 0.08 : 0.04),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, size: isTab ? 18 : 16, color: iconColor),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab
+                  ? displayWidth(context) * 0.024
+                  : displayWidth(context) * 0.055,
+              fontWeight: FontWeight.w700,
+              color: valueColor,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab
+                  ? displayWidth(context) * 0.014
+                  : displayWidth(context) * 0.026,
+              color: isDark ? Colors.white60 : Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

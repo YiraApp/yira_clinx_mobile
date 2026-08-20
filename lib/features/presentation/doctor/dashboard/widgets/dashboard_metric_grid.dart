@@ -19,35 +19,27 @@ class DashboardMetricsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> metricCards = [
       DocMetricCard(
-        title: metrics.today?.title ?? '',
-        value: '${metrics.today?.value}',
-        subtext: metrics.today?.subtext ??'',
+        title: metrics.today?.title ?? 'Today',
+        value: '${metrics.today?.value ?? 0}',
+        subtext: metrics.today?.subtext ?? '',
         icon: Icons.calendar_today_outlined,
         iconColor: primaryColor,
         isTab: isTab,
       ),
       DocMetricCard(
-        title: metrics.patients?.title ?? '',
-        value: '${metrics.patients?.value}',
+        title: metrics.patients?.title ?? 'Patients',
+        value: '${metrics.patients?.value ?? 0}',
         subtext: metrics.patients?.subtext ?? '',
         icon: Icons.person_outline_rounded,
         iconColor: primaryColor,
         isTab: isTab,
       ),
       DocMetricCard(
-        title: metrics.done?.title ?? '',
-        value: '${metrics.done?.value}',
+        title: metrics.done?.title ?? 'Completed',
+        value: '${metrics.done?.value ?? 0}',
         subtext: metrics.done?.subtext ?? '',
         icon: Icons.check_circle_outline_rounded,
         iconColor: Colors.teal,
-        isTab: isTab,
-      ),
-      DocMetricCard(
-        title: metrics.stats?.title ?? '',
-        value: '${metrics.stats?.value}',
-        subtext: metrics.stats?.subtext ??'',
-        icon: Icons.analytics_outlined,
-        iconColor: primaryColor,
         isTab: isTab,
       ),
     ];
@@ -66,15 +58,16 @@ class DashboardMetricsGrid extends StatelessWidget {
       );
     }
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: fieldSpace,
-      crossAxisSpacing: fieldSpace,
-      childAspectRatio: 1.5,
-      children: metricCards,
+    return Row(
+      children: List.generate(metricCards.length, (index) {
+        final bool isLast = index == metricCards.length - 1;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: isLast ? 0.0 : 8.0),
+            child: metricCards[index],
+          ),
+        );
+      }),
     );
   }
 }

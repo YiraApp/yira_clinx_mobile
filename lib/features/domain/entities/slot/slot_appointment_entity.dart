@@ -3,11 +3,13 @@ class SlotAppointmentEntity {
   final String id;
   final String patientName;
   final String contactNumber;
+  final String? reason;
 
   SlotAppointmentEntity({
     required this.id,
     required this.patientName,
     required this.contactNumber,
+    this.reason,
   });
 }
 

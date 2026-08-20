@@ -54,6 +54,26 @@ class AppTheme {
     elevatedButtonTheme: _buttonTheme(),
     chipTheme: _chipTheme(Colors.grey.shade300),
     inputDecorationTheme: _inputTheme(lightBackGroundColor, Colors.grey.shade200),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: primaryTeal,
+      unselectedItemColor: Colors.grey,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    dividerTheme: DividerThemeData(
+      color: Colors.grey.shade200,
+      thickness: 0.8,
+    ),
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -93,6 +113,31 @@ class AppTheme {
     elevatedButtonTheme: _buttonTheme(),
     chipTheme: _chipTheme(Colors.white10),
     inputDecorationTheme: _inputTheme(darkSurface, Colors.transparent),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: darkModeCardColor,
+      selectedItemColor: primaryTeal,
+      unselectedItemColor: Colors.white54,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: darkModeCardColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
+    cardTheme: CardThemeData(
+      color: darkModeCardColor,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Colors.white10,
+      thickness: 0.8,
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: darkModeCardColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
   );
 
   static ElevatedButtonThemeData _buttonTheme() => ElevatedButtonThemeData(

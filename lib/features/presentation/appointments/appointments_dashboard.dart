@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
+import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/common_drop_down/common_drop_down.dart';
 import 'package:yiraclinics/features/presentation/appointments/widgets/stat_card.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
@@ -16,7 +18,8 @@ import '../../domain/entities/appointments/appointment_entity.dart';
 import 'appointment_bloc/appointment_bloc.dart';
 
 class AppointmentDashboardScreen extends StatefulWidget {
-  const AppointmentDashboardScreen({super.key});
+  final bool isShellChild;
+  const AppointmentDashboardScreen({super.key, this.isShellChild = false});
 
   @override
   State<AppointmentDashboardScreen> createState() =>
@@ -226,7 +229,10 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 1),
       appBar: CommonAppBar(
+        showBackButton: false,
+        titleText: "",
         actions: [
           Container(
             margin: EdgeInsets.only(right: screenHorizontalSpacePadding, bottom: 10),
@@ -266,7 +272,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
           listener: (BuildContext context, AppointmentState state) {},
           builder: (context, state) {
             if (state is AppointmentLoading) {
-              return const Center(child: CircularProgressIndicator.adaptive());
+              return const ListCardShimmer(itemCount: 4);
             }
 
             if (state is AppointmentLoaded) {

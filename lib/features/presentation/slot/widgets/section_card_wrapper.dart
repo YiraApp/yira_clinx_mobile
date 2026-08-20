@@ -20,7 +20,6 @@ class SectionCardWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(

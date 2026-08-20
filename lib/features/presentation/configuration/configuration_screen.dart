@@ -62,7 +62,7 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
               final payload = state.coreData.data;
               final navigationId = payload?.navigationId;
               final navigationRoutes = const {
-                '1': AppRoutes.dashboardPatientDetails,
+                '1': AppRoutes.doctorDashboard,
                 '2': AppRoutes.doctorDashboard,
               };
 
@@ -71,6 +71,12 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   coreRoute,
+                  (route) => false,
+                );
+              } else if (payload != null && ((payload.roles != null && payload.roles!.isNotEmpty) || (payload.id != null && payload.id!.isNotEmpty))) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.doctorDashboard,
                   (route) => false,
                 );
               } else {

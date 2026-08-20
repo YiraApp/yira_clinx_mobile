@@ -1,7 +1,13 @@
+import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
-
+import 'package:dio/dio.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/data/models/dashboard/patient_model.dart';
 import '../../../../domain/entities/dashboard/patient_entity.dart';
 
 part 'dashboard_event.dart';
@@ -28,18 +34,46 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(state.copyWith(status: DashboardStatus.loading));
 
     try {
-      final List<PatientEntity> mockData = [
-        PatientEntity(id: "YRA0001", name: "Rajesh Kumar", condition: "Hypertension", lastVisit: "Jan 15", status: "Active", gender: "Male", visits: 8, age: 45, allergy: "Penicillin"),
-        PatientEntity(id: "YRA0002", name: "Priya Sharma", condition: "Arrhythmia", lastVisit: "Jan 14", status: "Monitoring", gender: "Female", visits: 5, age: 38),
-        PatientEntity(id: "YRA0003", name: "Amit Patel", condition: "Post-surgery recovery", lastVisit: "Jan 13", status: "Recovering", gender: "Male", visits: 12, age: 52, allergy: "Aspirin"),        PatientEntity(id: "YRA0004", name: "Rajesh Kumar", condition: "Hypertension", lastVisit: "Jan 15", status: "Active", gender: "Male", visits: 8, age: 45, allergy: "Penicillin"),
-        PatientEntity(id: "YRA0005", name: "Priya Sharma", condition: "Arrhythmia", lastVisit: "Jan 14", status: "Monitoring", gender: "Female", visits: 5, age: 38),
-        PatientEntity(id: "YRA0006", name: "Amit Patel", condition: "Post-surgery recovery", lastVisit: "Jan 13", status: "Recovering", gender: "Male", visits: 12, age: 52, allergy: "Aspirin"),
-      ];
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+          ? currentUser.data!.id!.trim()
+          : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+              ? currentUser.data!.navigationId!.trim()
+              : '1';
+      final int orgId = currentUser?.data?.latestOrgId ?? 1;
+      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+      final String token = currentUser?.data?.accessToken ?? '';
+
+      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.patientsListUrl,
+        data: {
+          "doctorId": doctorId,
+          "orgId": orgId,
+          "hospitalId": hospitalId,
+        },
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      List<PatientEntity> patients = [];
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        final rawData = response.data as Map<String, dynamic>;
+        final rawList = rawData['data'];
+        List<dynamic> list = [];
+        if (rawList is List) {
+          list = rawList;
+        } else if (rawList is Map<String, dynamic> && rawList['patients'] is List) {
+          list = rawList['patients'] as List;
+        }
+
+        patients = list.map((item) => PatientModel.fromJson(item as Map<String, dynamic>)).toList();
+      }
 
       emit(state.copyWith(
         status: DashboardStatus.success,
-        patients: mockData,
-        allPatients: mockData,
+        patients: patients,
+        allPatients: patients,
       ));
     } catch (e) {
       emit(state.copyWith(status: DashboardStatus.failure, errorMessage: e.toString()));

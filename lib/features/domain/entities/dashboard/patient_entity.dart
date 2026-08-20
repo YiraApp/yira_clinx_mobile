@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 
 class PatientEntity extends Equatable {
   final String id;
+  final String userId;
   final String name;
   final String condition;
   final String lastVisit;
@@ -16,6 +17,7 @@ class PatientEntity extends Equatable {
 
   const PatientEntity({
     required this.id,
+    required this.userId,
     required this.name,
     required this.condition,
     required this.lastVisit,
@@ -27,5 +29,5 @@ class PatientEntity extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, status, condition];
+  List<Object?> get props => [id, userId, name, status, condition];
 }

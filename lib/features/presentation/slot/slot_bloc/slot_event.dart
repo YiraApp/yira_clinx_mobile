@@ -31,7 +31,20 @@ class ChangeBufferEvent extends SlotEvent {
   ChangeBufferEvent(this.buffer);
 }
 
-class AddCustomSlotEvent extends SlotEvent {}
+class UpdateTimeRangeEvent extends SlotEvent {
+  final String fromTime;
+  final String toTime;
+  UpdateTimeRangeEvent({required this.fromTime, required this.toTime});
+}
+
+class GenerateTemplateSlotsEvent extends SlotEvent {}
+
+class AddCustomSlotEvent extends SlotEvent {
+  final String? startTime;
+  final String? endTime;
+  final String? label;
+  AddCustomSlotEvent({this.startTime, this.endTime, this.label});
+}
 
 class RemoveSlotEvent extends SlotEvent {
   final String slotId;
@@ -49,23 +62,31 @@ class UpdateSlotDetailsEvent extends SlotEvent {
 // --- ADDED EXPLICIT MISSING EVENT FOR BLOCKING SLOTS ---
 class BlockSlotEvent extends SlotEvent {
   final String slotId;
-  BlockSlotEvent({required this.slotId});
+  final bool block;
+  BlockSlotEvent({required this.slotId, this.block = true});
 }
 
 class BookAppointmentEvent extends SlotEvent {
   final String slotId;
   final String patientName;
   final String contactNumber;
+  final String? startTime;
+  final String? reason;
+  final String? appointmentType;
   BookAppointmentEvent({
     required this.slotId,
     required this.patientName,
     required this.contactNumber,
+    this.startTime,
+    this.reason,
+    this.appointmentType,
   });
 }
 
 class CancelAppointmentEvent extends SlotEvent {
   final String slotId;
-  CancelAppointmentEvent(this.slotId);
+  final String? appointmentId;
+  CancelAppointmentEvent({required this.slotId, this.appointmentId});
 }
 
 class DeployScheduleEvent extends SlotEvent {}

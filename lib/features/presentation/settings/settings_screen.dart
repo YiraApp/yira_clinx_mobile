@@ -43,11 +43,31 @@ final isTab = isTablet(context);
               vertical: screenTopPadding,
             ),
             children: [
-              _buildSectionHeader(context, "Account Security",isTab),
+              _buildSectionHeader(context, "Account & Profile", isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
                 isTab: isTab,
                 children: [
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.person_outline_rounded,
+                    title: "Doctor Profile",
+                    subtitle: "View credentials & clinic details",
+                    showDivider: true,
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.profile);
+                    },
+                  ),
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.vpn_key_outlined,
+                    title: "Medical Record Consents",
+                    subtitle: "Manage doctor access requests & approvals",
+                    showDivider: true,
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.patientConsentsScreen);
+                    },
+                  ),
                   CustomSettingTile(
                     isTab: isTab,
                     icon: Icons.lock_outline_rounded,

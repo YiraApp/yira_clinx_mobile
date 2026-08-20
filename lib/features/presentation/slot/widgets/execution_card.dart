@@ -127,18 +127,18 @@ class ExecutionCard extends StatelessWidget {
           selectedDate: dataState.startDate,
           onDateSelected: (DateTime chosen) {
             final difference = dataState.endDate.difference(chosen).inDays;
-
             if (difference > 7) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'The date range cannot be greater than 7 days.',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab?  displayWidth(context) * 0.018:displayWidth(context) * 0.032,
-                      fontWeight: FontWeight.w600,
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Invalid Date Range'),
+                  content: const Text('The date range cannot be greater than 7 days.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('OK'),
                     ),
-                  ),
+                  ],
                 ),
               );
               return;
@@ -169,11 +169,17 @@ class ExecutionCard extends StatelessWidget {
             final difference = chosen.difference(dataState.startDate).inDays;
 
             if (difference > 7) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'The date range cannot be greater than 7 days.',
-                  ),
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Invalid Date Range'),
+                  content: const Text('The date range cannot be greater than 7 days.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('OK'),
+                    ),
+                  ],
                 ),
               );
               return;

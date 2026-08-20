@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
+import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_details_screen.dart';
-import 'package:yiraclinics/features/presentation/slot/widgets/add_slot_fab.dart';
+
 import 'package:yiraclinics/features/presentation/slot/widgets/slot_filter_tabs.dart';
 import 'package:yiraclinics/features/presentation/slot/widgets/time_slot_card.dart';
 import '../../../core/colors/colors.dart' hide darkModeBgColor;
@@ -16,7 +18,8 @@ import '../../domain/entities/slot/slot_appointment_entity.dart';
 import '../../domain/entities/slot/time_slot_entity.dart';
 
 class SlotDashBoardScreen extends StatefulWidget {
-  const SlotDashBoardScreen({super.key});
+  final bool isShellChild;
+  const SlotDashBoardScreen({super.key, this.isShellChild = false});
 
   @override
   State<SlotDashBoardScreen> createState() => _SlotDashBoardScreenState();
@@ -39,65 +42,30 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
     return BlocConsumer<SlotBloc, SlotState>(
-      buildWhen: (previous, current) => current is SlotDataState || current is! OnTapSlotCardState,
-      listener: (context, state) async {
-        if (state is SlotGenNavState) {
-          await Navigator.pushNamed(
-            context,
-            AppRoutes.smartSlotSchedulerScreen,
-          );
-          if (context.mounted) {
-            context.read<SlotBloc>().add(InitializeSlotsEvent());
-          }
-        } else if(state is OnTapSlotCardState){
-        }
-      },
+      buildWhen: (previous, current) => current is SlotDataState,
+      listener: (context, state) {},
       builder: (context, state) {
         return Scaffold(
-          floatingActionButton: AddSlotFab(
-            onAddSlot: () {
-              context.read<SlotBloc>().add(SlotGenNavEvent());
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: primaryColor,
+            shape: const CircleBorder(),
+            onPressed: () async {
+              await Navigator.pushNamed(
+                context,
+                AppRoutes.smartSlotSchedulerScreen,
+              );
+              if (context.mounted) {
+                context.read<SlotBloc>().add(InitializeSlotsEvent());
+              }
             },
+            child: const Icon(Icons.event, color: Colors.white),
           ),
+          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            elevation: 0,
-            titleSpacing: 0,
-            centerTitle: false,
-            leading: const BackButton(),
-            title: CommonText(
-              "Doctor Slots",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: isTab?displayWidth(context) * 0.022: displayWidth(context) * 0.04,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).primaryColor.withOpacity(0.15),
-                  child: Icon(
-                    Icons.person,
-                    size: 20,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
           body: SafeArea(
             child: state is SlotDataState
                 ? _buildBodyContent(context, state,isTab)
-                : const Center(child: CircularProgressIndicator.adaptive()),
+                : const ListCardShimmer(itemCount: 5),
           ),
         );
       },
@@ -106,7 +74,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
 
   Widget _buildBodyContent(BuildContext context, SlotDataState state,bool isTab) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator.adaptive());
+      return const ListCardShimmer(itemCount: 5);
     }
 
     final totalCount = state.timeSlots.length;
@@ -115,6 +83,9 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
         .length;
     final availableCount = state.timeSlots
         .where((s) => s.status == SlotStatus.available)
+        .length;
+    final blockedCount = state.timeSlots
+        .where((s) => s.status == SlotStatus.blocked)
         .length;
 
     final visibleSlots = state.filteredSlots;
@@ -171,6 +142,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 allCount: totalCount,
                 bookedCount: bookedCount,
                 availableCount: availableCount,
+                blockedCount: blockedCount,
                 onTabSelected: (index) {
                   context.read<SlotBloc>().add(ChangeFilterTabUiEvent(index));
                 },
@@ -194,32 +166,41 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                   ),
                   itemCount: visibleSlots.length,
                   itemBuilder: (context, index) {
+                    final item = visibleSlots[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 0.0),
                       child: TimeSlotCard(
-                        isTab:isTab,
-                        slot: visibleSlots[index],
+                        isTab: isTab,
+                        slot: item,
                         bookSlot: () {
                           try {
                             final legacySlot = state.slots.firstWhere(
-                                  (s) => s.id == visibleSlots[index].id,
+                              (s) => s.id == item.id,
                             );
-                            _openSlotDetailsDialog(context, legacySlot,isTab);
+                            _openSlotDetailsDialog(context, legacySlot, isTab);
                           } catch (_) {
+                            String slotLabel = 'Available';
+                            if (item.status == SlotStatus.booked) {
+                              slotLabel = 'Booked';
+                            } else if (item.status == SlotStatus.blocked) {
+                              slotLabel = 'Blocked';
+                            }
+
                             final customLegacySlot = SlotEntity(
-                              id: visibleSlots[index].id,
-                              startTime: visibleSlots[index].time,
-                              endTime: visibleSlots[index].time,
-                              label: visibleSlots[index].status == SlotStatus.booked ? 'Booked' : 'Available',
-                              appointment: visibleSlots[index].status == SlotStatus.booked
+                              id: item.id,
+                              startTime: item.time,
+                              endTime: item.time,
+                              label: slotLabel,
+                              appointment: item.status == SlotStatus.booked
                                   ? SlotAppointmentEntity(
-                                id: visibleSlots[index].id,
-                                patientName: visibleSlots[index].patientName ?? '',
-                                contactNumber: 'N/A',
-                              )
+                                      id: item.appointmentId ?? item.id,
+                                      patientName: item.patientName ?? '',
+                                      contactNumber: 'N/A',
+                                      reason: item.reason,
+                                    )
                                   : null,
                             );
-                            _openSlotDetailsDialog(context, customLegacySlot,isTab);
+                            _openSlotDetailsDialog(context, customLegacySlot, isTab);
                           }
                         },
                         viewSlotDetails: () {},

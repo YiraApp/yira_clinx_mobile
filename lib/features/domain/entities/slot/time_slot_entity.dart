@@ -1,7 +1,7 @@
 
 import 'package:equatable/equatable.dart';
 
-enum SlotStatus { available, booked }
+enum SlotStatus { available, booked, blocked }
 enum AppointmentType { consult, review, regularCheckUp, followUp }
 
 class TimeSlot extends Equatable {
@@ -12,6 +12,8 @@ class TimeSlot extends Equatable {
   final String? patientName;
   final AppointmentType? type;
   final bool isVerified;
+  final String? appointmentId;
+  final String? reason;
 
   const TimeSlot({
     required this.id,
@@ -21,8 +23,10 @@ class TimeSlot extends Equatable {
     this.patientName,
     this.type,
     this.isVerified = false,
+    this.appointmentId,
+    this.reason,
   });
 
   @override
-  List<Object?> get props => [id, time, duration, status, patientName, type, isVerified];
+  List<Object?> get props => [id, time, duration, status, patientName, type, isVerified, appointmentId, reason];
 }

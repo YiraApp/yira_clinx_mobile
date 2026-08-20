@@ -11,8 +11,8 @@ class EnvironmentService {
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.68.69:5000",
-          healthCampBaseUrl: "192.168.68.69:5000",
+          accountBaseUrl: "172.29.244.92:5000",
+          healthCampBaseUrl: "172.29.244.92:5000",
         );
       case Environment.production:
         return const EnvironmentConfig(

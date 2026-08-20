@@ -23,6 +23,7 @@ import 'package:yiraclinics/features/data/repository_impl/login/login_repo_impl.
 import 'package:yiraclinics/features/data/repository_impl/app_theme/theme_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/medicine/medical_histoy_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/patient_profile_repo_impl/patient_profile_repo_impl.dart';
+import 'package:yiraclinics/features/data/repository_impl/provider_profile_repo_impl/provider_profile_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/prescriptions/prescriptions_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/send_otp_repo/send_otp_repo_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/side_menu/side_menu_repo_impl.dart';
@@ -34,9 +35,11 @@ import 'package:yiraclinics/features/data/repository_impl/medication/medication_
 import 'package:yiraclinics/features/data/repository_impl/work_space/get_work_space_details_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/work_space/update_latest_org_details_repo_impl.dart';
 
-// Domain Layer (Repositories & Entities) Imports
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
 import 'package:yiraclinics/features/domain/repositories/auth/auth_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/consent/patient_access_consent_repo.dart';
+import 'package:yiraclinics/features/data/repository_impl/consent/patient_access_consent_repo_impl.dart';
+import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_bloc.dart';
 import 'package:yiraclinics/features/domain/repositories/configuration/configuration_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/dash_board/dashboard_patient_details_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/dash_board/doctor_dashboard_repo.dart';
@@ -47,6 +50,11 @@ import 'package:yiraclinics/features/domain/repositories/login/login_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_over_view_repo/patient_over_view_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/patient_profile/patient_profile_repo.dart';
+import 'package:yiraclinics/features/domain/repositories/provider_profile/provider_profile_repo.dart';
+import 'package:yiraclinics/features/domain/use_cases/provider_profile/get_provider_profile_use_case.dart';
+import 'package:yiraclinics/features/domain/use_cases/provider_profile/update_provider_profile_use_case.dart';
+import 'package:yiraclinics/features/domain/use_cases/provider_profile/upload_provider_photo_use_case.dart';
+import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_bloc/provider_profile_bloc.dart';
 import 'package:yiraclinics/features/domain/repositories/prescritpions/prescriptions_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/send_otp/send_otp_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/side_menu/side_menu_repo.dart';
@@ -442,5 +450,30 @@ Future<void> init() async {
     () => PrescriptionBloc(
       savePrescriptionUseCase: sl<SavePrescriptionUseCase>(),
     ),
+  );
+  sl.registerLazySingleton<ProviderProfileRepo>(
+    () => ProviderProfileRepoImpl(sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<GetProviderProfileUseCase>(
+    () => GetProviderProfileUseCase(repository: sl<ProviderProfileRepo>()),
+  );
+  sl.registerLazySingleton<UpdateProviderProfileUseCase>(
+    () => UpdateProviderProfileUseCase(repository: sl<ProviderProfileRepo>()),
+  );
+  sl.registerLazySingleton<UploadProviderPhotoUseCase>(
+    () => UploadProviderPhotoUseCase(repository: sl<ProviderProfileRepo>()),
+  );
+  sl.registerFactory(
+    () => ProviderProfileBloc(
+      getProviderProfileUseCase: sl<GetProviderProfileUseCase>(),
+      updateProviderProfileUseCase: sl<UpdateProviderProfileUseCase>(),
+      uploadProviderPhotoUseCase: sl<UploadProviderPhotoUseCase>(),
+    ),
+  );
+  sl.registerLazySingleton<PatientAccessConsentRepository>(
+    () => PatientAccessConsentRepoImpl(sl<ApiClient>()),
+  );
+  sl.registerFactory(
+    () => PatientAccessConsentBloc(sl<PatientAccessConsentRepository>()),
   );
 }

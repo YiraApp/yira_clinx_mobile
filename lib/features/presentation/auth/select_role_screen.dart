@@ -69,7 +69,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   final payload = currentUser?.data;
                   final navigationId = payload?.navigationId;
                   final navigationRoutes = const {
-                    '1': AppRoutes.dashboardPatientDetails,
+                    '1': AppRoutes.doctorDashboard,
                     '2': AppRoutes.doctorDashboard,
                   };
 

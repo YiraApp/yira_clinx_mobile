@@ -16,8 +16,6 @@ class ForceUpdateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.sizeOf(context);
-
     final bool isTab = isTablet(context);
     final double contentMaxWidth = isTab ? 450 : double.infinity;
 
@@ -68,15 +66,14 @@ class ForceUpdateView extends StatelessWidget {
                     text: 'Update Now',
                     borderRadius: fieldBorderRadius,
                     onPressed: () {
-                      if (Platform.isAndroid) {
-                        Utils.launchURL(
-                          getVersionTokenStatusEntity.playStoreLink,
-                        );
-                      } else {
-                        Utils.launchURL(
-                          getVersionTokenStatusEntity.appStoreLink,
-                        );
-                      }
+                      final String storeUrl = Platform.isAndroid
+                          ? (getVersionTokenStatusEntity.playStoreLink.isNotEmpty
+                              ? getVersionTokenStatusEntity.playStoreLink
+                              : 'https://play.google.com/store/apps/details?id=ai.yira.clinicx')
+                          : (getVersionTokenStatusEntity.appStoreLink.isNotEmpty
+                              ? getVersionTokenStatusEntity.appStoreLink
+                              : 'https://apps.apple.com/app/yira-clinx/id6741477759');
+                      Utils.launchURL(storeUrl);
                     },
                   ),
                 ],

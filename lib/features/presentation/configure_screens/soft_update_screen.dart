@@ -1,51 +1,86 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/core/utils/utils.dart';
-import 'package:yiraclinics/features/presentation/configure_screens/widgets/update_illustration.dart';
-import '../../../config/app_route/app_routes.dart';
-import '../../../core/common_widgets/common_text.dart';
-import '../../../core/common_widgets/custom_button.dart';
-import '../../../core/local/global_session.dart';
-import '../../domain/entities/token/get_version_and_token_status_entity.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/common_widgets/common_text.dart';
+import 'package:yiraclinics/core/common_widgets/custom_button.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/features/domain/entities/token/get_version_and_token_status_entity.dart';
+
+import '../../../../core/common_size_helpers/common_size_helpers.dart';
+import '../../../../core/constants/constants.dart';
+import '../../../../core/utils/utils.dart';
 
 class SoftUpdateView extends StatelessWidget {
   final GetVersionTokenStatusEntity getVersionTokenStatusEntity;
   const SoftUpdateView({super.key, required this.getVersionTokenStatusEntity});
 
+  void _onLaterPressed(BuildContext context) {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final payload = currentUser?.data;
+    final navigationId = payload?.navigationId;
+    final navigationRoutes = const {
+      '1': AppRoutes.doctorDashboard,
+      '2': AppRoutes.doctorDashboard,
+    };
+    final coreRoute = navigationRoutes[navigationId] ?? AppRoutes.doctorDashboard;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      coreRoute,
+      (route) => false,
+    );
+  }
+
+  void _onUpdatePressed() {
+    final String storeUrl = Platform.isAndroid
+        ? (getVersionTokenStatusEntity.playStoreLink.isNotEmpty
+            ? getVersionTokenStatusEntity.playStoreLink
+            : 'https://play.google.com/store/apps/details?id=ai.yira.clinicx')
+        : (getVersionTokenStatusEntity.appStoreLink.isNotEmpty
+            ? getVersionTokenStatusEntity.appStoreLink
+            : 'https://apps.apple.com/app/yira-clinx/id6741477759');
+    Utils.launchURL(storeUrl);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.sizeOf(context);
+    final isDark = theme.brightness == Brightness.dark;
     final bool isTab = isTablet(context);
-
-    final double contentMaxWidth = isTab ? 420.0 : double.infinity;
-
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Container(
-              width: contentMaxWidth,
-              padding: EdgeInsets.symmetric(
-                horizontal: isTab ? 32.0 : 24.0,
-                vertical: 24.0,
+            padding: EdgeInsets.symmetric(
+              horizontal: displayWidth(context) * (isTab ? 0.08 : 0.06),
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isTab ? 500 : double.infinity,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const UpdateIllustration(),
-                  SizedBox(height: isTab ? 48 : 40),
+                  Center(
+                    child: Image.asset(
+                      'assets/images/soft_update_img.png',
+                      height: displayHeight(context) * (isTab ? 0.28 : 0.22),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.system_update_rounded,
+                        size: 80,
+                        color: theme.primaryColor,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isTab ? 36 : 28),
                   CommonText(
-                    'New Update Available',
+                    'Time to Upgrade!',
                     textAlign: TextAlign.center,
-                    maxLines: null,
-                    softWrap: true,
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: displayWidth(context) * (isTab ? 0.045 : 0.05),
@@ -60,7 +95,7 @@ class SoftUpdateView extends StatelessWidget {
                     softWrap: true,
                     style: TextStyle(
                       fontSize: displayWidth(context) * (isTab ? 0.022 : 0.03),
-                      color: Colors.grey.shade500,
+                      color: isDark ? Colors.white70 : Colors.grey.shade600,
                       fontFamily: appPoppinFont,
                     ),
                   ),
@@ -70,31 +105,7 @@ class SoftUpdateView extends StatelessWidget {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {
-                              final currentUser =
-                                  GlobalSession.instance.userNotifier.value;
-                              final payload = currentUser?.data;
-                              final navigationId = payload?.navigationId;
-                              final navigationRoutes = const {
-                                '1': AppRoutes.dashboardPatientDetails,
-                                '2': AppRoutes.doctorDashboard,
-                              };
-                              final coreRoute = navigationRoutes[navigationId];
-                              if (coreRoute != null) {
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  coreRoute,
-                                  (route) => false,
-                                );
-                              } else {
-                                Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  AppRoutes.unsupportedRole,
-                                  (route) => false,
-                                  arguments: currentUser?.data,
-                                );
-                              }
-                            },
+                            onPressed: () => _onLaterPressed(context),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
                                 color: theme.primaryColor,
@@ -102,7 +113,7 @@ class SoftUpdateView extends StatelessWidget {
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  fieldBorderRadius ?? 8.0,
+                                  fieldBorderRadius,
                                 ),
                               ),
                             ),
@@ -122,13 +133,7 @@ class SoftUpdateView extends StatelessWidget {
                             height: 48,
                             text: 'Update Now',
                             borderRadius: fieldBorderRadius,
-                            onPressed: () {
-                              if (Platform.isAndroid) {
-                                Utils.launchURL(getVersionTokenStatusEntity.playStoreLink);
-                              } else {
-                                Utils.launchURL(getVersionTokenStatusEntity.appStoreLink);
-                              }
-                            },
+                            onPressed: _onUpdatePressed,
                           ),
                         ),
                       ],
@@ -140,41 +145,11 @@ class SoftUpdateView extends StatelessWidget {
                           height: 50,
                           text: 'Update Now',
                           borderRadius: fieldBorderRadius,
-                          onPressed: () {
-                            if (Platform.isAndroid) {
-                              Utils.launchURL(getVersionTokenStatusEntity.playStoreLink);
-                            } else {
-                              Utils.launchURL(getVersionTokenStatusEntity.appStoreLink);
-                            }
-                          },
+                          onPressed: _onUpdatePressed,
                         ),
                         const SizedBox(height: 12),
                         TextButton(
-                          onPressed: () {
-                            final currentUser =
-                                GlobalSession.instance.userNotifier.value;
-                            final payload = currentUser?.data;
-                            final navigationId = payload?.navigationId;
-                            final navigationRoutes = const {
-                              '1': AppRoutes.dashboardPatientDetails,
-                              '2': AppRoutes.doctorDashboard,
-                            };
-                            final coreRoute = navigationRoutes[navigationId];
-                            if (coreRoute != null) {
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                coreRoute,
-                                (route) => false,
-                              );
-                            } else {
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                AppRoutes.unsupportedRole,
-                                (route) => false,
-                                arguments: currentUser?.data,
-                              );
-                            }
-                          },
+                          onPressed: () => _onLaterPressed(context),
                           style: TextButton.styleFrom(
                             minimumSize: const Size(double.infinity, 48),
                           ),
@@ -183,8 +158,9 @@ class SoftUpdateView extends StatelessWidget {
                             style: TextStyle(
                               fontSize:
                                   displayWidth(context) *
-                                  (isTab ? 0.026 : 0.036),
-                              color: Colors.grey.shade500,
+                                  (isTab ? 0.022 : 0.035),
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.w600,
                               fontFamily: appPoppinFont,
                             ),
                           ),

@@ -18,7 +18,8 @@ class StatCard extends StatelessWidget {
     required this.count,
     required this.subtitle,
     required this.icon,
-    required this.iconColor, required this.isTab,
+    required this.iconColor,
+    required this.isTab,
   });
 
   @override
@@ -26,57 +27,104 @@ class StatCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        color: isDark?darkModeCardColor:Colors.white,
-        border: Border.all(width: 0.5,color: Colors.grey.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(16),
+        gradient: isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  darkModeCardColor,
+                  darkModeCardColor.withOpacity(0.8),
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  iconColor.withOpacity(0.03),
+                ],
+              ),
+        border: Border.all(
+          width: 1,
+          color: isDark
+              ? iconColor.withOpacity(0.15)
+              : iconColor.withOpacity(0.12),
+        ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
+              color: iconColor.withOpacity(0.08),
+              blurRadius: 12,
               offset: const Offset(0, 4),
-            )
+            ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distributes text evenly vertically
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontWeight: FontWeight.w600,
-              fontSize:isTab? displayWidth(context)*0.018: displayWidth(context)*0.032
-            ),
-          ),
-          Text(
-            count,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontWeight: FontWeight.w600,
-                fontSize:isTab? displayWidth(context)*0.02: displayWidth(context)*0.045,
-              color: iconColor
-            ),
-          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontWeight: FontWeight.normal,
-                    fontSize: isTab? displayWidth(context)*0.015:displayWidth(context)*0.025,),
-                  overflow: TextOverflow.ellipsis,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      iconColor.withOpacity(isDark ? 0.2 : 0.12),
+                      iconColor.withOpacity(isDark ? 0.08 : 0.04),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: isTab ? 16 : 14, color: iconColor),
+              ),
+              Text(
+                count,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w700,
+                  fontSize: isTab
+                      ? displayWidth(context) * 0.022
+                      : displayWidth(context) * 0.05,
+                  color: iconColor,
+                  height: 1.1,
                 ),
               ),
-              Icon(icon, size: 15, color: iconColor),
             ],
-          )
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w600,
+                  fontSize: isTab
+                      ? displayWidth(context) * 0.015
+                      : displayWidth(context) * 0.03,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w400,
+                  fontSize: isTab
+                      ? displayWidth(context) * 0.013
+                      : displayWidth(context) * 0.024,
+                  color: isDark ? Colors.white54 : Colors.grey.shade500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ],
       ),
     );

@@ -9,6 +9,7 @@ class SlotFilterTabs extends StatelessWidget {
   final int allCount;
   final int bookedCount;
   final int availableCount;
+  final int blockedCount;
   final ValueChanged<int> onTabSelected;
   final bool isTab;
 
@@ -18,12 +19,13 @@ class SlotFilterTabs extends StatelessWidget {
     required this.allCount,
     required this.bookedCount,
     required this.availableCount,
-    required this.onTabSelected, required this.isTab,
+    this.blockedCount = 0,
+    required this.onTabSelected,
+    required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 45,
@@ -38,6 +40,8 @@ class SlotFilterTabs extends StatelessWidget {
           _buildTab(context, 0, "All ($allCount)"),
           _buildTab(context, 1, "Booked ($bookedCount)"),
           _buildTab(context, 2, "Available ($availableCount)"),
+          if (blockedCount > 0)
+            _buildTab(context, 3, "Blocked ($blockedCount)"),
         ],
       ),
     );

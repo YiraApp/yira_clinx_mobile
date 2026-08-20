@@ -23,7 +23,101 @@ final bool isTab;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isBooked = slot.status == SlotStatus.booked;
+    final isBlocked = slot.status == SlotStatus.blocked;
     final primaryColor = theme.primaryColor;
+
+    if (isBlocked) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6.0),
+        child: InkWell(
+          onTap: bookSlot,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A1515) : const Color(0xFFFFF5F5),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(
+                color: Colors.redAccent.withOpacity(0.3),
+                width: 0.8,
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CommonText(
+                        slot.time,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.035,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      CommonText(
+                        slot.duration,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.block,
+                        color: Colors.redAccent.withOpacity(0.8),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      CommonText(
+                        "Blocked / Offline",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.024,
+                          color: Colors.redAccent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: CommonText(
+                    "Blocked",
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.023,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     if (isBooked) {
       return Padding(

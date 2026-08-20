@@ -5,8 +5,7 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../core/common_input_fields/common_input_field.dart';
-import '../../../core/common_input_fields/common_input_field_unlimited.dart';
+import '../../../../di/dependency_injection.dart';
 import '../../domain/entities/slot/slot_appointment_entity.dart';
 
 class SlotDetailsDialog extends StatefulWidget {
@@ -14,10 +13,20 @@ class SlotDetailsDialog extends StatefulWidget {
   const SlotDetailsDialog({super.key, required this.slot});
 
   static Future<void> show(BuildContext context, SlotEntity slot) {
+    SlotBloc bloc;
+    try {
+      bloc = context.read<SlotBloc>();
+    } catch (_) {
+      bloc = sl<SlotBloc>();
+    }
+
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
-      builder: (context) => SlotDetailsDialog(slot: slot,),
+      builder: (dialogContext) => BlocProvider.value(
+        value: bloc,
+        child: SlotDetailsDialog(slot: slot),
+      ),
     );
   }
 
@@ -26,29 +35,19 @@ class SlotDetailsDialog extends StatefulWidget {
 }
 
 class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _patientNameController = TextEditingController();
-  final TextEditingController _contactController = TextEditingController();
   bool _isBlocked = false;
 
   @override
   void initState() {
     super.initState();
-
-  }
-
-  @override
-  void dispose() {
-    _patientNameController.dispose();
-    _contactController.dispose();
-    super.dispose();
+    _isBlocked = widget.slot.label == 'Blocked';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-final bool isTab = isTablet(context);
+    final bool isTab = isTablet(context);
     final double headlineSize = isTab? displayWidth(context) * 0.022:  displayWidth(context) * 0.042;
     final double labelSize = isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032;
     final double valueSize = isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.04;
@@ -90,7 +89,7 @@ final bool isTab = isTablet(context);
                 ),
                 const SizedBox(height: 2),
                 CommonText(
-                  widget.slot.hasAppointment ? 'Tuesday, May 26' : 'Monday, May 1',
+                  widget.slot.hasAppointment ? 'Booked Session' : (widget.slot.label == 'Blocked' ? 'Blocked Session' : 'Available Session'),
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w600,
@@ -203,6 +202,7 @@ final bool isTab = isTablet(context);
       ),
     );
   }
+
   Widget _buildBookedAppointmentView(BuildContext context, double labelSize,bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -296,11 +296,11 @@ final bool isTab = isTablet(context);
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: Colors.green,
                           borderRadius: BorderRadius.circular(fieldBorderRadius),
                         ),
                         child: CommonText(
-                          'Payment pending',
+                          'Confirmed',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize:isTab? displayWidth(context) * 0.016: displayWidth(context) * 0.02,
@@ -319,7 +319,7 @@ final bool isTab = isTablet(context);
           _buildAppointmentMetaBox(
             context,
             title: 'Reason for visit',
-            value: '"fever"',
+            value: appointment.reason ?? 'General Consultation',
             labelSize: labelSize,
             isFullWidth: true,
             isTab: isTab
@@ -328,7 +328,12 @@ final bool isTab = isTablet(context);
           Center(
             child: InkWell(
               onTap: () {
-                context.read<SlotBloc>().add(CancelAppointmentEvent(widget.slot.id));
+                context.read<SlotBloc>().add(
+                  CancelAppointmentEvent(
+                    slotId: widget.slot.id,
+                    appointmentId: appointment.id,
+                  ),
+                );
                 Navigator.of(context).pop();
               },
               borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -359,216 +364,234 @@ final bool isTab = isTablet(context);
       ),
     );
   }
-  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize,bool isTab) {
+
+  Widget _buildUnbookedSlotForm(BuildContext context, ThemeData theme, double labelSize, bool isTab) {
     final isDark = theme.brightness == Brightness.dark;
+    final bool isAlreadyBlocked = widget.slot.label == 'Blocked';
 
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => setState(() => _isBlocked = false),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: !_isBlocked
-                          ? (isDark ? Colors.green.withOpacity(0.1) : Colors.greenAccent.withOpacity(0.1))
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(fieldBorderRadius),
-                      border: Border.all(
-                        color: !_isBlocked ? Colors.green : (isDark ? Colors.white10 : Colors.grey.shade200),
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: CommonText(
-                        'Available',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w600,
-                          fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.034,
-                          color: !_isBlocked ? Colors.green : Colors.grey,
-                        ),
-                      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _isBlocked = false),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: !_isBlocked
+                        ? (isDark ? Colors.green.withOpacity(0.1) : Colors.greenAccent.withOpacity(0.1))
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
+                    border: Border.all(
+                      color: !_isBlocked ? Colors.green : (isDark ? Colors.white10 : Colors.grey.shade200),
+                      width: 1,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () => setState(() => _isBlocked = true),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _isBlocked
-                          ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2))
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(fieldBorderRadius),
-                      border: Border.all(
-                        color: _isBlocked ? Colors.redAccent : (isDark ? Colors.white10 : Colors.grey.shade200),
-                        width: 1,
-                      ),
-                    ),
-                    child: Center(
-                      child: CommonText(
-                        'Block Slot',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w600,
-                          fontSize: isTab? displayWidth(context) * 0.02:displayWidth(context) * 0.034,
-                          color: _isBlocked ? Colors.redAccent : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          if (!_isBlocked) ...[
-            CommonText(
-              'Book Appointment',
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: labelSize,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF4F46E5),
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 10),
-            CommonInputAddRecordTextField(
-              isRecord: true,
-              controller: _patientNameController,
-              hintText: 'Search Patient Name or Phone...',
-              borderRadius: 14,
-              validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter patient name' : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
-            ),
-            const SizedBox(height: 18),
-            RichText(
-              text: TextSpan(
-                text: 'Reason For Visit',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: labelSize,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white54 : Colors.grey.shade500,
-                  letterSpacing: 0.5,
-                ),
-                children: const [
-                  TextSpan(text: '*', style: TextStyle(color: Colors.redAccent)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 100,
-              child: CommonInputFieldUnlimited(
-                controller: _contactController,
-                hintText: 'Enter clinical reason...',
-                borderRadius: fieldBorderRadius,
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please provide visit context' : null,
-                contentPadding: const EdgeInsets.all(16),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  context.read<SlotBloc>().add(
-                    BookAppointmentEvent(
-                      slotId: widget.slot.id,
-                      patientName: _patientNameController.text.trim(),
-                      contactNumber: _contactController.text.trim(),
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
-                elevation: 0,
-              ),
-              child: CommonText(
-                'Confirm Booking',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize:isTab? displayWidth(context) * 0.02:  displayWidth(context) * 0.035,
-                  fontFamily: appPoppinFont,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ] else ...[
-            // 2. EXPLICIT BLOCKED SLOT SUB-FORM SUMMARY PROFILE
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF1F2),
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
-                border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline_rounded, color: Colors.redAccent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  child: Center(
                     child: CommonText(
-                      'This slot will be marked unavailable for external patient booking sessions.',
+                      'Available',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: isTab?displayWidth(context) * 0.018:displayWidth(context) * 0.030,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white70 : const Color(0xFF991B1B),
+                        fontWeight: FontWeight.w600,
+                        fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.034,
+                        color: !_isBlocked ? Colors.green : Colors.grey,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                context.read<SlotBloc>().add(
-                  BlockSlotEvent(slotId: widget.slot.id),
-                );
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
-                elevation: 0,
-              ),
-              child: CommonText(
-                'Block This Slot',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize:isTab?  displayWidth(context) * 0.022: displayWidth(context) * 0.035,
-                  fontFamily: appPoppinFont,
-                  letterSpacing: 0.5,
+            const SizedBox(width: 12),
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _isBlocked = true),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _isBlocked
+                        ? (isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2))
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(fieldBorderRadius),
+                    border: Border.all(
+                      color: _isBlocked ? Colors.redAccent : (isDark ? Colors.white10 : Colors.grey.shade200),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: CommonText(
+                      'Block Slot',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.w600,
+                        fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.034,
+                        color: _isBlocked ? Colors.redAccent : Colors.grey,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 24),
+
+        if (isAlreadyBlocked) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(color: Colors.green.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CommonText(
+                    'This slot is currently blocked. Click below to unblock it and make it available for patient bookings.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.030,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : const Color(0xFF065F46),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<SlotBloc>().add(
+                BlockSlotEvent(slotId: widget.slot.id, block: false),
+              );
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+              elevation: 0,
+            ),
+            child: CommonText(
+              'Unblock This Slot',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.035,
+                fontFamily: appPoppinFont,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ] else if (_isBlocked) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, color: Colors.redAccent, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CommonText(
+                    'This slot will be marked unavailable for patient booking sessions.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.030,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : const Color(0xFF991B1B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<SlotBloc>().add(
+                BlockSlotEvent(slotId: widget.slot.id, block: true),
+              );
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+              elevation: 0,
+            ),
+            child: CommonText(
+              'Block This Slot',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.035,
+                fontFamily: appPoppinFont,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ] else ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: Colors.green.shade600, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CommonText(
+                    'This slot is currently active and available for patient bookings. You can switch to "Block Slot" above to disable it.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.030,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? Colors.white12 : Colors.grey.shade200,
+              foregroundColor: isDark ? Colors.white : Colors.black87,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+              elevation: 0,
+            ),
+            child: CommonText(
+              'Close',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.035,
+                fontFamily: appPoppinFont,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 

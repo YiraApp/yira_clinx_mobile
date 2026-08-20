@@ -32,13 +32,7 @@ class ErrorInterceptor extends Interceptor {
         ),
       );
     }
-    if (showSuccessSnack && serverMessage != null && serverMessage.trim().isNotEmpty) {
-      ExceptionHandler.processException(
-        status: true,
-        statusCode: HttpStatus.ok,
-        message: serverMessage,
-      );
-    }
+    // Success toasts intentionally disabled — only error toasts are shown
     return handler.next(response);
   }
 

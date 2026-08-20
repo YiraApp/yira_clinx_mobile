@@ -20,8 +20,12 @@ class GetVersionAndTokenStatusRepoImpl extends GetVersionAndTokenStatusRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';
       final platFormData = GlobalSession.instance.platformNotifier.value;
+      final String osPlatform = Platform.isIOS ? 'ios' : 'android';
+      final String platform = (platFormData?.platform != null && platFormData!.platform.isNotEmpty)
+          ? (platFormData.platform.toLowerCase().contains('ios') ? 'ios' : 'android')
+          : osPlatform;
       final Map<String, dynamic> requestBody = {
-        "platform": platFormData?.platform ?? Platform.operatingSystem,
+        "platform": platform,
         "currentVersion": platFormData?.version ?? '1.0.0',
         "deviceId": platFormData?.deviceId ?? 'unknown_id',
       };

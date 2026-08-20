@@ -151,6 +151,8 @@ class SlotDataState extends SlotState {
   final DateTime endDate;
   final int durationMinutes;
   final String bufferType;
+  final String fromTime;
+  final String toTime;
   final bool isLoading;
   final bool isDeploying;
   final bool deploySuccess;
@@ -166,6 +168,8 @@ class SlotDataState extends SlotState {
     required this.endDate,
     required this.durationMinutes,
     required this.bufferType,
+    this.fromTime = '09:00 AM',
+    this.toTime = '05:00 PM',
     required this.slots,
     required this.timeSlots,
     this.isLoading = false,
@@ -183,6 +187,8 @@ class SlotDataState extends SlotState {
       endDate: now.add(const Duration(days: 7)),
       durationMinutes: 20,
       bufferType: '5 Minutes',
+      fromTime: '09:00 AM',
+      toTime: '05:00 PM',
       slots: const [],
       timeSlots: const [],
       selectedTabIndex: 0,
@@ -201,7 +207,7 @@ class SlotDataState extends SlotState {
   bool isTimeSlotBlocked(String slotId) {
     try {
       final slot = timeSlots.firstWhere((s) => s.id == slotId);
-      return slot.duration == 'Blocked';
+      return slot.status == SlotStatus.blocked || slot.duration == 'Blocked';
     } catch (_) {
       return false;
     }
@@ -214,6 +220,10 @@ class SlotDataState extends SlotState {
       case 2:
         return timeSlots
             .where((s) => s.status == SlotStatus.available)
+            .toList();
+      case 3:
+        return timeSlots
+            .where((s) => s.status == SlotStatus.blocked)
             .toList();
       case 0:
       default:
@@ -228,6 +238,8 @@ class SlotDataState extends SlotState {
     DateTime? endDate,
     int? durationMinutes,
     String? bufferType,
+    String? fromTime,
+    String? toTime,
     List<SlotEntity>? slots,
     List<TimeSlot>? timeSlots,
     bool? isLoading,
@@ -242,6 +254,8 @@ class SlotDataState extends SlotState {
       endDate: endDate ?? this.endDate,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       bufferType: bufferType ?? this.bufferType,
+      fromTime: fromTime ?? this.fromTime,
+      toTime: toTime ?? this.toTime,
       isLoading: isLoading ?? this.isLoading,
       isDeploying: isDeploying ?? this.isDeploying,
       deploySuccess: deploySuccess ?? this.deploySuccess,
