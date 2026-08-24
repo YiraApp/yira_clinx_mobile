@@ -18,10 +18,15 @@ class RecordsRepositoryImpl implements RecordsRepository {
     String? appointmentId,
     String? hospitalId,
     String? orgId,
+    int? limit,
   }) async {
     try {
-      if (patientId != null && patientId.trim().isNotEmpty) {
-        final currentUser = GlobalSession.instance.userNotifier.value;
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final effectivePatientId = (patientId != null && patientId.trim().isNotEmpty)
+          ? patientId.trim()
+          : (currentUser?.data?.id ?? '');
+
+      if (effectivePatientId.isNotEmpty) {
         final token = currentUser?.data?.accessToken ?? '';
 
         final queryParams = <String, dynamic>{};
@@ -34,9 +39,12 @@ class RecordsRepositoryImpl implements RecordsRepository {
         if (orgId != null && orgId.trim().isNotEmpty) {
           queryParams['organizationId'] = orgId.trim();
         }
+        if (limit != null && limit > 0) {
+          queryParams['limit'] = limit;
+        }
 
         final response = await _apiClient.account(showSuccessSnack: false).get(
-          '${URLs.medicalDocumentsUrl}/patient/$patientId',
+          '${URLs.medicalDocumentsUrl}/patient/$effectivePatientId',
           queryParameters: queryParams,
           options: Options(
             headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},

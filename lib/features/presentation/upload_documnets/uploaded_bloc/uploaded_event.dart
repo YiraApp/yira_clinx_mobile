@@ -8,12 +8,14 @@ class FetchUploadedRecords extends UploadedBlocEvent {
   final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
+  final int? limit;
 
   FetchUploadedRecords({
     this.patientId,
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.limit,
   });
 }
 

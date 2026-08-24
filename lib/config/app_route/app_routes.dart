@@ -55,4 +55,12 @@ class AppRoutes {
   static const String permissionScreen= '/permissionScreen';
   static const String editDoctorProfile = '/editDoctorProfile';
   static const String patientConsentsScreen = '/patientConsentsScreen';
+  static const String patientDashboard = '/patientDashboard';
+  static const String patientAppointments = '/patientAppointments';
+  static const String patientDocuments = '/patientDocuments';
+  static const String patientProfile = '/patientProfile';
+  static const String uploadDocumentsViaLink = '/uploadDocumentsViaLink';
+  static const String viewConsultationSummary = '/viewConsultationSummary';
+  static const String onlineBillPayment = '/onlineBillPayment';
+  static const String digitalConsentSign = '/digitalConsentSign';
 }

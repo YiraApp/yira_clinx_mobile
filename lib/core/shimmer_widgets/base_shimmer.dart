@@ -22,6 +22,34 @@ class BaseShimmer extends StatelessWidget {
   }
 }
 
+class ValueShimmer extends StatelessWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const ValueShimmer({
+    super.key,
+    this.width = 60,
+    this.height = 14,
+    this.borderRadius = 4,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BaseShimmer(
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[300],
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+      ),
+    );
+  }
+}
+
 class WelcomeCardShimmer extends StatelessWidget {
   const WelcomeCardShimmer({super.key});
 

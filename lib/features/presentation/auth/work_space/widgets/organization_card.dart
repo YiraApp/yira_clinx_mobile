@@ -154,11 +154,13 @@ class OrganizationCard extends StatelessWidget {
                                     : const Color(0xFFEDF2F7),
                               ),
                             ),
-                            child: ListTile(
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: isTab ? 20 : 16,
-                                vertical: isTab ? 8 : 4,
-                              ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isTab ? 20 : 16,
+                                  vertical: isTab ? 8 : 4,
+                                ),
                               leading: Icon(
                                 Icons.wb_sunny_outlined,
                                 color: theme.primaryColor,
@@ -197,7 +199,8 @@ class OrganizationCard extends StatelessWidget {
                                 );
                               },*/
                             ),
-                          );
+                          ),
+                        );
                         }).toList() ??
                         [],
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
+import '../../di/dependency_injection.dart';
 import '../../features/domain/entities/side_menu/side_menu_entity.dart';
 import '../../features/presentation/auth/select_role_screen.dart';
 import '../colors/colors.dart';
@@ -35,7 +36,9 @@ class AppNavigationDrawer extends StatelessWidget {
     final bool isTab = isTablet(context);
     final containerBgColor = isDark ? darkModeBgColor : lightModeBgColor;
 
-    return LayoutBuilder(
+    return BlocProvider<NavigationDrawerBloc>.value(
+      value: sl<NavigationDrawerBloc>()..add(const InitializeDrawerData()),
+      child: LayoutBuilder(
       builder: (context, parentConstraints) {
         final double targetWidth = isTab ? 360.0 : displayWidth(context) * 0.82;
 
@@ -56,22 +59,23 @@ class AppNavigationDrawer extends StatelessWidget {
             buildWhen: (previous, current) => previous.selectedIndex != current.selectedIndex,
             listenWhen: (previous, current) => previous != current,
             listener: (BuildContext context, NavigationDrawerState state) async {
+              final isPatient = (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains('patient');
               switch (state) {
                 case DashboardNavState():
-                  _navigateToCleanRoot(context, AppRoutes.doctorDashboard);
+                  _navigateToCleanRoot(context, isPatient ? AppRoutes.patientDashboard : AppRoutes.doctorDashboard);
                   break;
                 case OrgSwitchNavState():
                   SelectRoleModel data = SelectRoleModel(currentUser?.data?.roles ?? [], true);
                   Navigator.pushNamed(context, AppRoutes.selectRoleScreen, arguments: data);
                   break;
                 case AppointmentsNavState():
-                  _navigateToCleanRoot(context, AppRoutes.appointmentDashboardScreen);
+                  _navigateToCleanRoot(context, isPatient ? AppRoutes.patientAppointments : AppRoutes.appointmentDashboardScreen);
                   break;
                 case PatientsNavState():
-                  _navigateToCleanRoot(context, AppRoutes.patientManagementScreen);
+                  _navigateToCleanRoot(context, isPatient ? AppRoutes.patientDocuments : AppRoutes.patientManagementScreen);
                   break;
                 case DoctorSlotNavState():
-                  _navigateToCleanRoot(context, AppRoutes.slotDashboard);
+                  _navigateToCleanRoot(context, isPatient ? AppRoutes.patientProfile : AppRoutes.slotDashboard);
                   break;
                 case SettingsNavState():
                   _navigateToCleanRoot(context, AppRoutes.settingsScreen);
@@ -149,6 +153,7 @@ class AppNavigationDrawer extends StatelessWidget {
           ),
         );
       },
+    ),
     );
   }
 }

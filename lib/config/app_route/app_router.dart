@@ -25,6 +25,11 @@ import 'package:yiraclinics/features/presentation/configure_screens/soft_update_
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_main_shell_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/patient_main_shell_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/self_service/consultation_summary_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/self_service/digital_consent_sign_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/self_service/online_bill_payment_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/self_service/upload_via_link_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
@@ -429,7 +434,26 @@ class AppRouter {
           settings: settings,
           builder: (_) => PatientConsentApprovalScreen(patientId: patientId),
         );
-      //appointmentDetails
+      case AppRoutes.patientDashboard:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 0));
+      case AppRoutes.patientAppointments:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 1));
+      case AppRoutes.patientDocuments:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
+      case AppRoutes.patientProfile:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
+      case AppRoutes.uploadDocumentsViaLink:
+        final token = settings.arguments as String?;
+        return MaterialPageRoute(settings: settings, builder: (_) => DocumentUploadViaLinkScreen(token: token));
+      case AppRoutes.viewConsultationSummary:
+        final token = settings.arguments as String?;
+        return MaterialPageRoute(settings: settings, builder: (_) => ViewConsultationSummaryScreen(token: token));
+      case AppRoutes.onlineBillPayment:
+        final txnId = settings.arguments as String?;
+        return MaterialPageRoute(settings: settings, builder: (_) => OnlineBillPaymentScreen(transactionId: txnId));
+      case AppRoutes.digitalConsentSign:
+        final link = settings.arguments as String?;
+        return MaterialPageRoute(settings: settings, builder: (_) => DigitalConsentSignScreen(link: link));
       default:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>

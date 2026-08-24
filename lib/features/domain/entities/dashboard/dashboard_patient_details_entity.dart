@@ -13,6 +13,7 @@ class PatientDashboardDataEntity {
   final LatestVitalsEntity? latestVitals;
   final MedicalInformationEntity? medicalInformation;
   final InsuranceEntity? insurance;
+  final NextAppointmentEntity? nextAppointment;
 
   const PatientDashboardDataEntity({
     this.patientInfo,
@@ -20,6 +21,47 @@ class PatientDashboardDataEntity {
     this.latestVitals,
     this.medicalInformation,
     this.insurance,
+    this.nextAppointment,
+  });
+}
+
+class NextAppointmentEntity {
+  final dynamic id;
+  final String? appointmentId;
+  final String? doctorName;
+  final String? doctorId;
+  final int? hospitalId;
+  final String? hospitalName;
+  final int? orgId;
+  final String? orgName;
+  final String? appointmentDate;
+  final String? formattedDate;
+  final String? startTime;
+  final String? formattedTime;
+  final String? consultationType;
+  final bool? isTeleconsultation;
+  final String? reason;
+  final String? status;
+  final String? meetingUrl;
+
+  const NextAppointmentEntity({
+    this.id,
+    this.appointmentId,
+    this.doctorName,
+    this.doctorId,
+    this.hospitalId,
+    this.hospitalName,
+    this.orgId,
+    this.orgName,
+    this.appointmentDate,
+    this.formattedDate,
+    this.startTime,
+    this.formattedTime,
+    this.consultationType,
+    this.isTeleconsultation,
+    this.reason,
+    this.status,
+    this.meetingUrl,
   });
 }
 

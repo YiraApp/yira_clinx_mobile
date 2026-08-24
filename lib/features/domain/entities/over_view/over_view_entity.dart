@@ -13,6 +13,9 @@ class DataEntity {
   final InsuranceEntity? insurance;
   final VisitHistoryEntity? visitHistory;
   final String? summary;
+  final NextAppointmentEntity? nextAppointment;
+  final List<NextAppointmentEntity>? upcomingAppointments;
+  final LatestVitalsEntity? latestVitals;
 
   const DataEntity({
     this.contactInformation,
@@ -20,7 +23,77 @@ class DataEntity {
     this.insurance,
     this.visitHistory,
     this.summary,
+    this.nextAppointment,
+    this.upcomingAppointments,
+    this.latestVitals,
   });
+}
+
+class NextAppointmentEntity {
+  final dynamic id;
+  final String? appointmentId;
+  final String? doctorName;
+  final String? doctorId;
+  final String? doctorSpecialty;
+  final int? hospitalId;
+  final String? hospitalName;
+  final int? orgId;
+  final String? orgName;
+  final String? appointmentDate;
+  final String? formattedDate;
+  final String? startTime;
+  final String? formattedTime;
+  final String? consultationType;
+  final bool? isTeleconsultation;
+  final String? reason;
+  final String? status;
+  final String? meetingUrl;
+
+  const NextAppointmentEntity({
+    this.id,
+    this.appointmentId,
+    this.doctorName,
+    this.doctorId,
+    this.doctorSpecialty,
+    this.hospitalId,
+    this.hospitalName,
+    this.orgId,
+    this.orgName,
+    this.appointmentDate,
+    this.formattedDate,
+    this.startTime,
+    this.formattedTime,
+    this.consultationType,
+    this.isTeleconsultation,
+    this.reason,
+    this.status,
+    this.meetingUrl,
+  });
+}
+
+class LatestVitalsEntity {
+  final VitalMeasurementEntity? bloodPressure;
+  final VitalMeasurementEntity? pulse;
+  final VitalMeasurementEntity? temperature;
+  final VitalMeasurementEntity? spo2;
+  final VitalMeasurementEntity? weight;
+  final VitalMeasurementEntity? height;
+
+  const LatestVitalsEntity({
+    this.bloodPressure,
+    this.pulse,
+    this.temperature,
+    this.spo2,
+    this.weight,
+    this.height,
+  });
+}
+
+class VitalMeasurementEntity {
+  final String? value;
+  final String? unit;
+
+  const VitalMeasurementEntity({this.value, this.unit});
 }
 
 class ContactInformationEntity {

@@ -119,40 +119,6 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo {
             name: "PatientOverViewRepoImpl");
         return PatientOverViewModel.fromJson(decodedData);
       }
-
-      final Map<String, dynamic> mockJsonResponse = {
-        "status": true,
-        "message": "Overview details fetched successfully",
-        "data": {
-          "contact_information": {
-            "phone": "6303012453",
-            "email_address": "teja@gmail.com",
-            "residential_address":
-                "Sandhya techno 1, Hyderabad, pin code - 500081",
-            "emergency_contact": {"name": "Rajesh", "phone": "9908875796"}
-          },
-          "medical_information": {
-            "condition":
-                "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints.",
-            "allergies": "illness",
-            "blood_group": "B+",
-            "total_visits": 0
-          },
-          "insurance": {
-            "policy_name": "Star Health Premier",
-            "policy_number": "ST-99482-XYZ"
-          },
-          "visit_history": {
-            "initial_registration": "May 26, 2026",
-            "last_check_in_visit": "May 26, 2026",
-            "next_scheduled_appointment": "July 16, 2026"
-          },
-          "summary":
-              "Severe persistent hand pain in the right distal radius extending up through the metacarpal joints."
-        }
-      };
-
-      return PatientOverViewModel.fromJson(mockJsonResponse);
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",

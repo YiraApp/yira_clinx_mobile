@@ -61,9 +61,21 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
             } else {
               final payload = state.coreData.data;
               final navigationId = payload?.navigationId;
+              final roleName = (payload?.latestUserRole ?? '').toLowerCase();
+
+              if (roleName.contains('patient') || roleName == 'user') {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.patientDashboard,
+                  (route) => false,
+                );
+                return;
+              }
+
               final navigationRoutes = const {
                 '1': AppRoutes.doctorDashboard,
                 '2': AppRoutes.doctorDashboard,
+                '3': AppRoutes.patientDashboard,
               };
 
               final coreRoute = navigationRoutes[navigationId];
