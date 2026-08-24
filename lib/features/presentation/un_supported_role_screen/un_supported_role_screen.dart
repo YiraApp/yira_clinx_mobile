@@ -29,8 +29,6 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
     });
 
     try {
-      final String userId = widget.loginEntity.data?.id ?? '';
-
       await Future.wait([
         GlobalSession.instance.clear(),
         sl<SharedPrefsService>().setValue<bool>(
@@ -93,7 +91,7 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
                 height: iconSize,
                 width: iconSize,
                 decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.1),
+                  color: theme.primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -130,6 +128,23 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
               ),
 
               const Spacer(),
+              if (widget.loginEntity.data?.roles?.any((r) =>
+                  r.roleName?.toLowerCase().contains('provider') == true ||
+                  r.roleName?.toLowerCase().contains('doctor') == true ||
+                  r.roleId?.toUpperCase() == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C') ?? false) ...[
+                CustomElevatedButton(
+                  text: 'Switch to Doctor Profile',
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.doctorDashboard,
+                      (route) => false,
+                    );
+                  },
+                  borderRadius: 25.0,
+                ),
+                const SizedBox(height: 12),
+              ],
               _isLoading
                   ? const SizedBox(
                       height: 20,
@@ -139,10 +154,26 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : CustomElevatedButton(
-                      text: 'Sign Out of Account',
+                  : OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25.0),
+                        ),
+                        side: BorderSide(color: theme.primaryColor),
+                      ),
                       onPressed: _isLoading ? null : _handleLogout,
-                      borderRadius: 25.0,
+                      child: CommonText(
+                        'Sign Out of Account',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w600,
+                          fontSize: isTab
+                              ? displayWidth(context) * 0.02
+                              : displayWidth(context) * 0.035,
+                          color: theme.primaryColor,
+                        ),
+                      ),
                     ),
               const SizedBox(height: 24),
             ],

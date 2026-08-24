@@ -176,3 +176,47 @@ class OnAddAppointmentState extends AppointmentState {
     int? aiOptimizationScore,
   }) => this;
 }
+
+class BookAppointmentLoadingState extends AppointmentState {
+  const BookAppointmentLoadingState();
+
+  @override
+  AppointmentState copyWith({
+    DateTime? selectedDob,
+    List<String>? availableSlots,
+    String? Function()? selectedSlot,
+    List<Appointment>? appointments,
+    int? todayCount,
+    int? confirmedCount,
+    int? pendingCount,
+    int? aiOptimizationScore,
+  }) => this;
+}
+
+class BookAppointmentSuccessState extends AppointmentState {
+  final String message;
+  final String? patientName;
+  final String? appointmentDate;
+  final String? time;
+  final bool isTeleConsultation;
+
+  const BookAppointmentSuccessState({
+    this.message = "Appointment booked successfully!",
+    this.patientName,
+    this.appointmentDate,
+    this.time,
+    this.isTeleConsultation = false,
+  });
+
+  @override
+  AppointmentState copyWith({
+    DateTime? selectedDob,
+    List<String>? availableSlots,
+    String? Function()? selectedSlot,
+    List<Appointment>? appointments,
+    int? todayCount,
+    int? confirmedCount,
+    int? pendingCount,
+    int? aiOptimizationScore,
+  }) => this;
+}

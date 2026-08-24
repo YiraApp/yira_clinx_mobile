@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'package:yiraclinics/config/yira_colors/yira_colors.dart' hide textLightModeColor;
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../../../../core/colors/colors.dart';
 
-class DocAppointmentCard extends StatelessWidget {
+class DocAppointmentCard extends StatefulWidget {
   final String initials;
   final String name;
   final String subtitle;
@@ -15,6 +14,7 @@ class DocAppointmentCard extends StatelessWidget {
   final String statusLabel;
   final Color statusColor;
   final Color statusTextColor;
+  final String? patientStatus;
   final VoidCallback? onTap;
   final VoidCallback? onStatusTap;
   final bool isTab;
@@ -31,6 +31,7 @@ class DocAppointmentCard extends StatelessWidget {
     required this.statusLabel,
     required this.statusColor,
     required this.statusTextColor,
+    this.patientStatus,
     this.onTap,
     this.onStatusTap,
     required this.isTab,
@@ -38,257 +39,407 @@ class DocAppointmentCard extends StatelessWidget {
     this.onJoinCall,
   });
 
-  Color _avatarColor(String name) {
-    final colors = [
-      const Color(0xFF2563EB),
-      const Color(0xFF7C3AED),
-      const Color(0xFF059669),
-      const Color(0xFFDC2626),
-      const Color(0xFFD97706),
-      const Color(0xFF0891B2),
-      const Color(0xFFDB2777),
-    ];
-    if (name.isEmpty) return colors[0];
-    return colors[name.codeUnitAt(0) % colors.length];
+  @override
+  State<DocAppointmentCard> createState() => _DocAppointmentCardState();
+}
+
+class _DocAppointmentCardState extends State<DocAppointmentCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.985).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
+    final width = displayWidth(context);
     final containerBg = isDark ? darkModeCardColor : Colors.white;
-    final secondaryText = isDark ? textLightDarkColor : scoreSubTextColor;
-    final avatarClr = _avatarColor(name);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.all(14.0),
-        decoration: BoxDecoration(
-          color: containerBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            width: 1,
-            color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade100,
-          ),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Gradient avatar
-                Container(
-                  width: isTab ? 48 : 44,
-                  height: isTab ? 48 : 44,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        avatarClr,
-                        avatarClr.withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.034,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
+    return AnimatedBuilder(
+      animation: _scaleAnim,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnim.value,
+          child: child,
+        );
+      },
+      child: GestureDetector(
+        onTapDown: (_) => _animController.forward(),
+        onTapUp: (_) {
+          _animController.reverse();
+          widget.onTap?.call();
+        },
+        onTapCancel: () => _animController.reverse(),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14.0),
+          decoration: BoxDecoration(
+            color: containerBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              width: 1,
+              color: isDark
+                  ? Colors.white.withOpacity(0.08)
+                  : const Color(0xFFE2E8F0),
+            ),
+            boxShadow: [
+              if (!isDark)
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withOpacity(0.025),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.035,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.3,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row: Avatar + Name & Subtitle + Chevron
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Clean soft avatar
+                  Container(
+                    width: widget.isTab ? 44 : 40,
+                    height: widget.isTab ? 44 : 40,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(isDark ? 0.18 : 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      widget.initials,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: widget.isTab ? width * 0.015 : 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: primaryColor,
                       ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 12,
-                            color: isDark ? Colors.white54 : Colors.grey.shade500,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Name + time/category
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: widget.isTab
+                                ? width * 0.017
+                                : width * 0.035,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            timeOrDate,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.028,
-                              fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white54 : Colors.grey.shade500,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 12,
+                              color: isDark
+                                  ? Colors.white38
+                                  : const Color(0xFF94A3B8),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 3,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white30 : Colors.grey.shade400,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              subtitle,
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.timeOrDate,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.028,
+                                fontSize: widget.isTab
+                                    ? width * 0.013
+                                    : width * 0.026,
                                 fontWeight: FontWeight.w500,
-                                color: Theme.of(context).primaryColor,
+                                color: isDark
+                                    ? Colors.white54
+                                    : const Color(0xFF64748B),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
+                            if (widget.subtitle.isNotEmpty) ...[
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                child: Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white24
+                                        : const Color(0xFFCBD5E1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  widget.subtitle,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: widget.isTab
+                                        ? width * 0.013
+                                        : width * 0.026,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : const Color(0xFF64748B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                    size: 18.0,
+                  ),
+                ],
+              ),
+
+              // Description row (if present)
+              if (widget.description.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.03)
+                        : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : const Color(0xFFF1F5F9),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.notes_rounded,
+                        size: 13,
+                        color: isDark
+                            ? Colors.white30
+                            : const Color(0xFF94A3B8),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.description,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: widget.isTab
+                                ? width * 0.013
+                                : width * 0.026,
+                            fontWeight: FontWeight.w400,
+                            color: isDark
+                                ? Colors.white60
+                                : const Color(0xFF64748B),
                           ),
-                        ],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: isDark ? Colors.grey[600] : Colors.grey[400],
-                  size: 18.0,
-                ),
               ],
-            ),
 
-            if (description.isNotEmpty) ...[
+              // Bottom row: teleconsultation / patient status + appointment status
               const SizedBox(height: 10),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.04)
-                      : Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  description,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.028,
-                    fontWeight: FontWeight.w500,
-                    color: secondaryText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (isTeleConsultation)
-                  InkWell(
-                    onTap: onJoinCall,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Left items: Video Call button + Patient Status pill
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Video call badge
+                      if (widget.isTeleConsultation) ...[
+                        InkWell(
+                          onTap: widget.onJoinCall,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: widget.isTab ? 16.0 : 13.0,
+                              vertical: widget.isTab ? 8.0 : 6.5,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF2563EB),
+                                  Color(0xFF1D4ED8),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.videocam_rounded,
+                                  size: widget.isTab ? 18 : 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  "Join Call",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: widget.isTab
+                                        ? width * 0.014
+                                        : 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+
+                      // Patient Status Pill (e.g. New Patient / Follow-up / Active)
+                      if (widget.patientStatus != null &&
+                          widget.patientStatus!.trim().isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7.5, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF334155)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white12
+                                  : const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_outline_rounded,
+                                size: 11,
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.patientStatus!,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: widget.isTab
+                                      ? width * 0.01
+                                      : 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? const Color(0xFFCBD5E1)
+                                      : const Color(0xFF475569),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+
+                  // Right item: Clean Appointment Status pill badge
+                  GestureDetector(
+                    onTap: widget.onStatusTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
+                      decoration: BoxDecoration(
+                        color: widget.statusColor.withOpacity(isDark ? 0.2 : 0.12),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.videocam_rounded, size: 14, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Join Call",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: isTab ? displayWidth(context) * 0.012 : 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: BoxDecoration(
+                              color: widget.statusTextColor,
+                              shape: BoxShape.circle,
                             ),
                           ),
+                          const SizedBox(width: 5),
+                          Text(
+                            widget.statusLabel.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: widget.isTab
+                                  ? width * 0.01
+                                  : 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: widget.statusTextColor,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          if (widget.onStatusTap != null) ...[
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              size: 13,
+                              color: widget.statusTextColor,
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                  )
-                else
-                  const SizedBox.shrink(),
-                GestureDetector(
-                  onTap: onStatusTap,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          statusLabel.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: isTab ? displayWidth(context) * 0.01 : 10,
-                            fontWeight: FontWeight.w700,
-                            color: statusTextColor,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                        if (onStatusTap != null) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_drop_down,
-                            size: 14,
-                            color: statusTextColor,
-                          ),
-                        ],
-                      ],
-                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

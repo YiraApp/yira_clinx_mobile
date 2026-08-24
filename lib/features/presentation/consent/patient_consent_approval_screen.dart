@@ -89,7 +89,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           child: BlocBuilder<PatientAccessConsentBloc, PatientAccessConsentState>(
             builder: (context, state) {
               if (state is PatientAccessConsentLoading) {
-                return const ListCardShimmer(itemCount: 4);
+                return ConsentApprovalListShimmer(itemCount: 3, isTab: isTab);
               }
 
               if (state is PatientAccessConsentError) {

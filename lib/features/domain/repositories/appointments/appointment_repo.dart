@@ -25,6 +25,10 @@ abstract class AppointmentRepo {
     String? reason,
     String? appointmentType,
     bool? isTeleConsultation,
+    int? parentAppointmentId,
+    List<String>? treatmentPlanIds,
+    List<Map<String, dynamic>>? customTreatmentPlans,
+    double? discountAmount,
   });
 
   Future<bool> updateAppointmentStatus({

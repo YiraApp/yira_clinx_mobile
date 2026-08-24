@@ -64,19 +64,15 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: state is SlotDataState
-                ? _buildBodyContent(context, state,isTab)
-                : const ListCardShimmer(itemCount: 5),
+                ? _buildBodyContent(context, state, isTab)
+                : SlotDashboardShimmer(isTab: isTab),
           ),
         );
       },
     );
   }
 
-  Widget _buildBodyContent(BuildContext context, SlotDataState state,bool isTab) {
-    if (state.isLoading) {
-      return const ListCardShimmer(itemCount: 5);
-    }
-
+  Widget _buildBodyContent(BuildContext context, SlotDataState state, bool isTab) {
     final totalCount = state.timeSlots.length;
     final bookedCount = state.timeSlots
         .where((s) => s.status == SlotStatus.booked)
@@ -110,7 +106,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             weekFontSize: displayWidth(context) * 0.025,
             todayStyle: const TextStyle(fontSize: 0),
             headerStyle: TextStyle(
-              fontSize:  isTab?displayWidth(context) * 0.022:displayWidth(context) * 0.045,
+              fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045,
               fontFamily: appPoppinFont,
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.white
@@ -148,17 +144,19 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 },
               ),
               const SizedBox(height: fieldSpace),
-              _buildTimeSlotHeaderRow(Theme.of(context),isTab),
+              _buildTimeSlotHeaderRow(Theme.of(context), isTab),
               const SizedBox(height: 12),
             ],
           ),
         ),
         Expanded(
-          child: visibleSlots.isEmpty
-              ? const Center(
-                  child: CommonText("No time slots found for this selection."),
-                )
-              : ListView.builder(
+          child: state.isLoading
+              ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
+              : visibleSlots.isEmpty
+                  ? const Center(
+                      child: CommonText("No time slots found for this selection."),
+                    )
+                  : ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: screenHorizontalSpacePadding,

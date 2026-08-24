@@ -52,6 +52,9 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
     switch (tabName.toLowerCase()) {
       case 'info':
         return Icons.info_outline_rounded;
+      case 'appointments':
+      case 'appointment':
+        return Icons.calendar_month_outlined;
       case 'medical record':
       case 'medical records':
         return Icons.medical_services_outlined;
@@ -99,9 +102,9 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, idx) {
           final isActive = widget.selectedIndex == idx;
-          final activeBgColor = Colors.white.withOpacity(0.2);
+          final activeBgColor = Colors.white.withValues(alpha: 0.2);
           final activeTextColor = Colors.white;
-          final inactiveTextColor = Colors.white.withOpacity(0.7);
+          final inactiveTextColor = Colors.white.withValues(alpha: 0.7);
 
           return GestureDetector(
             onTap: () => widget.onTabSelected(idx),

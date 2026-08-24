@@ -1,30 +1,15 @@
 import 'dart:convert';
-import 'dart:isolate';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-}
-
-class IsolateInitConfig {
-  final RootIsolateToken token;
-  final SendPort port;
-  IsolateInitConfig({required this.token, required this.port});
-}
-
-void productionFirebaseInitializer(IsolateInitConfig config) async {
-  BackgroundIsolateBinaryMessenger.ensureInitialized(config.token);
-  try {
-    await Firebase.initializeApp();
-    config.port.send(true);
-  } catch (e) {
-    config.port.send(false);
-  }
 }
 
 class NotificationService {
@@ -37,70 +22,89 @@ class NotificationService {
   static const AndroidNotificationChannel _highImportanceChannel = AndroidNotificationChannel(
     'high_importance_channel',
     'High Importance Notifications',
-    description: 'This channel delivers high importance pushes directly to viewports.',
+    description: 'This channel delivers high importance clinical pushes and alerts directly to viewports.',
     importance: Importance.max,
     playSound: true,
+    enableVibration: true,
   );
 
   Future<void> initializeNotificationPipeline(
-      BuildContext context,
-      Function(String) onPayloadReceived,
-      ) async {
-    await _fcm.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    BuildContext context,
+    Function(String) onPayloadReceived,
+  ) async {
+    try {
+      await requestNotificationPermissions();
 
-    const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      await _fcm.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+      const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    await _localNotifications.initialize(
-      settings: initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload != null) onPayloadReceived(response.payload!);
-      },
-    );
+      const InitializationSettings initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_highImportanceChannel);
+      await _localNotifications.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (response.payload != null) onPayloadReceived(response.payload!);
+        },
+      );
 
-    _listenToActiveStateNotifications();
-    _listenToBackgroundInteractions(onPayloadReceived);
-    _checkSuspendedOrTerminatedStateBoot(onPayloadReceived);
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_highImportanceChannel);
+
+      _listenToActiveStateNotifications();
+      _listenToBackgroundInteractions(onPayloadReceived);
+      _checkSuspendedOrTerminatedStateBoot(onPayloadReceived);
+      _listenToTokenRefresh();
+
+      // Initial token sync
+      syncFcmTokenWithBackend();
+    } catch (e) {
+      debugPrint("NotificationService initialization error: $e");
+    }
   }
 
   Future<bool> requestNotificationPermissions() async {
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      provisional: false,
-      sound: true,
-    );
-    return settings.authorizationStatus == AuthorizationStatus.authorized;
+    try {
+      NotificationSettings settings = await _fcm.requestPermission(
+        alert: true,
+        badge: true,
+        provisional: false,
+        sound: true,
+      );
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (e) {
+      debugPrint("requestNotificationPermissions error: $e");
+      return false;
+    }
   }
 
   void _listenToActiveStateNotifications() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
+      final RemoteNotification? notification = message.notification;
+      final String title = notification?.title ?? message.data['title'] ?? 'Yira Clinx';
+      final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
 
-      if (notification != null && android != null) {
+      if (title.isNotEmpty || body.isNotEmpty) {
         _localNotifications.show(
-          id: notification.hashCode,
-          title: notification.title,
-          body: notification.body,
+          id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: title,
+          body: body,
           notificationDetails: NotificationDetails(
             android: AndroidNotificationDetails(
               _highImportanceChannel.id,
@@ -108,7 +112,9 @@ class NotificationService {
               channelDescription: _highImportanceChannel.description,
               importance: Importance.max,
               priority: Priority.high,
-              icon: android.smallIcon,
+              playSound: true,
+              enableVibration: true,
+              icon: '@mipmap/ic_launcher',
             ),
             iOS: const DarwinNotificationDetails(
               presentAlert: true,
@@ -124,16 +130,52 @@ class NotificationService {
 
   void _listenToBackgroundInteractions(Function(String) onPayloadReceived) {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      onPayloadReceived(jsonEncode(message.data));
+      if (message.data.isNotEmpty) {
+        onPayloadReceived(jsonEncode(message.data));
+      }
     });
   }
 
   void _checkSuspendedOrTerminatedStateBoot(Function(String) onPayloadReceived) async {
-    RemoteMessage? initialMessage = await _fcm.getInitialMessage();
-    if (initialMessage != null) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        onPayloadReceived(jsonEncode(initialMessage.data));
-      });
+    try {
+      RemoteMessage? initialMessage = await _fcm.getInitialMessage();
+      if (initialMessage != null && initialMessage.data.isNotEmpty) {
+        Future.delayed(const Duration(milliseconds: 600), () {
+          onPayloadReceived(jsonEncode(initialMessage.data));
+        });
+      }
+    } catch (e) {
+      debugPrint("checkSuspendedOrTerminatedStateBoot error: $e");
+    }
+  }
+
+  void _listenToTokenRefresh() {
+    _fcm.onTokenRefresh.listen((String newToken) {
+      debugPrint("FCM token refreshed: $newToken");
+      _sendTokenToBackend(newToken);
+    });
+  }
+
+  /// Explicitly sync current FCM token with backend
+  Future<void> syncFcmTokenWithBackend() async {
+    try {
+      final String token = await FcmTokenHelper.getProductionFcmToken();
+      if (token.isNotEmpty && token != 'no_token_available') {
+        await _sendTokenToBackend(token);
+      }
+    } catch (e) {
+      debugPrint("syncFcmTokenWithBackend error: $e");
+    }
+  }
+
+  Future<void> _sendTokenToBackend(String token) async {
+    try {
+      if (sl.isRegistered<UpdateFcmTokenUseCase>()) {
+        await sl<UpdateFcmTokenUseCase>().call(token);
+        debugPrint("FCM token registered with backend successfully");
+      }
+    } catch (e) {
+      debugPrint("Error sending FCM token to backend: $e");
     }
   }
 

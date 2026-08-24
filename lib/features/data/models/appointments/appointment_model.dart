@@ -12,10 +12,12 @@ class AppointmentModel extends Appointment {
     required super.category,
     required super.status,
     super.statusRaw = '',
+    super.patientStatus,
     super.patientUserId,
     super.orgId,
     super.hospitalId,
     super.reason,
+    super.meetingUrl,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,19 @@ class AppointmentModel extends Appointment {
       appStatus = AppointmentStatus.pendingInfo;
     }
 
+    String patientStatusStr = (json['patientStatus'] ?? json['patient_status'] ?? '').toString();
+    if (patientStatusStr.isEmpty) {
+      final cat = (json['category'] ?? json['type'] ?? '').toString().toLowerCase();
+      final reas = (json['reason'] ?? '').toString().toLowerCase();
+      if (cat.contains('follow') || reas.contains('follow')) {
+        patientStatusStr = 'Follow-up';
+      } else if (cat.contains('new') || reas.contains('new')) {
+        patientStatusStr = 'New Patient';
+      } else {
+        patientStatusStr = 'Active';
+      }
+    }
+
     return AppointmentModel(
       id: (json['id'] ?? '').toString(),
       tokenNumber: (json['tokenNumber'] ?? 'Token #1').toString(),
@@ -44,10 +59,12 @@ class AppointmentModel extends Appointment {
       category: (json['category'] ?? 'Consultation').toString(),
       status: appStatus,
       statusRaw: (json['status'] ?? '').toString(),
+      patientStatus: patientStatusStr,
       patientUserId: json['patientUserId']?.toString(),
       orgId: json['orgId'] is int ? json['orgId'] : int.tryParse((json['orgId'] ?? '').toString()),
       hospitalId: json['hospitalId'] is int ? json['hospitalId'] : int.tryParse((json['hospitalId'] ?? '').toString()),
       reason: (json['reason'] ?? '').toString(),
+      meetingUrl: (json['meetingUrl'] ?? json['meeting_url'] ?? json['videoCallUrl'] ?? json['MeetingUrl'])?.toString(),
     );
   }
 }

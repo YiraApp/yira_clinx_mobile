@@ -27,6 +27,16 @@
     <key>LSRequiresIPhoneOS</key>
     <true/>
 
+    <!-- URL Launcher Queries Schemes -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>https</string>
+        <string>http</string>
+        <string>zoomus</string>
+        <string>tel</string>
+        <string>mailto</string>
+    </array>
+
     <!-- Photo Library Permissions -->
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Yira Clinx needs access to your photo library to allow you to select and upload profile pictures and documents.</string>

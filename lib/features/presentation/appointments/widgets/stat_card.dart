@@ -25,40 +25,25 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final width = displayWidth(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: isDark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  darkModeCardColor,
-                  darkModeCardColor.withOpacity(0.8),
-                ],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white,
-                  iconColor.withOpacity(0.03),
-                ],
-              ),
+        color: isDark ? darkModeCardColor : Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           width: 1,
           color: isDark
-              ? iconColor.withOpacity(0.15)
-              : iconColor.withOpacity(0.12),
+              ? Colors.white.withOpacity(0.08)
+              : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: iconColor.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF0F172A).withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
         ],
       ),
@@ -66,36 +51,43 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // Top row: soft icon badge + count
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Clean icon container
               Container(
-                padding: const EdgeInsets.all(6),
+                width: isTab ? 34 : 30,
+                height: isTab ? 34 : 30,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      iconColor.withOpacity(isDark ? 0.2 : 0.12),
-                      iconColor.withOpacity(isDark ? 0.08 : 0.04),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
+                  color: iconColor.withOpacity(isDark ? 0.15 : 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: isTab ? 16 : 14, color: iconColor),
+                alignment: Alignment.center,
+                child: Icon(
+                  icon,
+                  size: isTab ? 17 : 15,
+                  color: iconColor,
+                ),
               ),
+              // Clean count
               Text(
                 count,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w700,
-                  fontSize: isTab
-                      ? displayWidth(context) * 0.022
-                      : displayWidth(context) * 0.05,
-                  color: iconColor,
-                  height: 1.1,
+                  fontSize: isTab ? width * 0.022 : width * 0.048,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  height: 1.0,
                 ),
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          // Bottom: title + subtitle
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -104,23 +96,24 @@ class StatCard extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w600,
-                  fontSize: isTab
-                      ? displayWidth(context) * 0.015
-                      : displayWidth(context) * 0.03,
-                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: isTab ? width * 0.014 : width * 0.028,
+                  color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF334155),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w400,
-                  fontSize: isTab
-                      ? displayWidth(context) * 0.013
-                      : displayWidth(context) * 0.024,
-                  color: isDark ? Colors.white54 : Colors.grey.shade500,
+                  fontSize: isTab ? width * 0.012 : width * 0.022,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.4)
+                      : const Color(0xFF94A3B8),
                 ),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],

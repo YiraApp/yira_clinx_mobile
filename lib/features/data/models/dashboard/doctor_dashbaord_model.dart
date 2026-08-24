@@ -41,9 +41,9 @@ class DashboardDataModel extends DashboardDataEntity {
 
   factory DashboardDataModel.fromJson(Map<String, dynamic> json) {
     return DashboardDataModel(
-      orgId: json['orgId'] as int?,
+      orgId: (json['orgId'] as num?)?.toInt(),
       orgName: json['orgName'] as String?,
-      hospitalId: json['hospitalId'] as int?,
+      hospitalId: (json['hospitalId'] as num?)?.toInt(),
       hospitalName: json['hospitalName'] as String?,
       profile: json['profile'] != null ? DoctorProfileModel.fromJson(json['profile']) : null,
       metrics: json['metrics'] != null ? DashboardMetricsModel.fromJson(json['metrics']) : null,
@@ -82,13 +82,25 @@ class DashboardDataModel extends DashboardDataEntity {
 }
 
 class DoctorProfileModel extends DoctorProfileEntity {
-  DoctorProfileModel({super.name, super.specialty, super.clinicAddress});
+  DoctorProfileModel({
+    super.name,
+    super.specialty,
+    super.clinicAddress,
+    super.profileImageUrl,
+    super.imagePath,
+  });
 
   factory DoctorProfileModel.fromJson(Map<String, dynamic> json) {
+    final photo = json['profileImageUrl']?.toString() ??
+        json['imagePath']?.toString() ??
+        json['ImagePath']?.toString() ??
+        json['photoUrl']?.toString();
     return DoctorProfileModel(
       name: json['name'] as String?,
       specialty: json['specialty'] as String?,
       clinicAddress: json['clinicAddress'] as String?,
+      profileImageUrl: photo,
+      imagePath: photo,
     );
   }
 
@@ -97,6 +109,8 @@ class DoctorProfileModel extends DoctorProfileEntity {
       'name': name,
       'specialty': specialty,
       'clinicAddress': clinicAddress,
+      'profileImageUrl': profileImageUrl,
+      'imagePath': imagePath,
     };
   }
 }
@@ -134,7 +148,7 @@ class MetricItemModel extends MetricItemEntity {
   factory MetricItemModel.fromJson(Map<String, dynamic> json) {
     return MetricItemModel(
       title: json['title'] as String?,
-      value: json['value'] as int?,
+      value: (json['value'] as num?)?.toInt(),
       subtext: json['subtext'] as String?,
     );
   }
@@ -160,20 +174,35 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
     super.reason,
     super.statusTag,
     super.meetingUrl,
+    super.patientStatus,
   });
 
   factory TodaysScheduleModel.fromJson(Map<String, dynamic> json) {
+    String? patientStatusStr = (json['patientStatus'] ?? json['patient_status']) as String?;
+    if (patientStatusStr == null || patientStatusStr.isEmpty) {
+      final cat = (json['consultationType'] ?? '').toString().toLowerCase();
+      final reas = (json['reason'] ?? '').toString().toLowerCase();
+      if (cat.contains('follow') || reas.contains('follow')) {
+        patientStatusStr = 'Follow-up';
+      } else if (cat.contains('new') || reas.contains('new')) {
+        patientStatusStr = 'New Patient';
+      } else {
+        patientStatusStr = 'Active';
+      }
+    }
+
     return TodaysScheduleModel(
       patientUserId: json['patientUserId'],
-      orgId: json['orgId'] as int?,
-      hospitalId: json['hospitalId'] as int?,
-      appointmentId: json['appointmentId'] as int?,
+      orgId: (json['orgId'] as num?)?.toInt(),
+      hospitalId: (json['hospitalId'] as num?)?.toInt(),
+      appointmentId: (json['appointmentId'] as num?)?.toInt(),
       patientName: json['patientName'] as String?,
       time: json['time'] as String?,
       consultationType: json['consultationType'] as String?,
       reason: json['reason'] as String?,
       statusTag: json['statusTag'] as String?,
       meetingUrl: json['meetingUrl'] as String?,
+      patientStatus: patientStatusStr,
     );
   }
 
@@ -189,6 +218,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       'reason': reason,
       'statusTag': statusTag,
       'meetingUrl': meetingUrl,
+      'patientStatus': patientStatus,
     };
   }
 }
@@ -208,10 +238,10 @@ class RecentPatientsModel extends RecentPatientsEntity {
 
   factory RecentPatientsModel.fromJson(Map<String, dynamic> json) {
     return RecentPatientsModel(
-      patientUserId: json['patientUserId']  as String?,
-      orgId: json['orgId'] as int?,
-      hospitalId: json['hospitalId'] as int?,
-      appointmentId: json['appointmentId'] as int?,
+      patientUserId: json['patientUserId'] as String?,
+      orgId: (json['orgId'] as num?)?.toInt(),
+      hospitalId: (json['hospitalId'] as num?)?.toInt(),
+      appointmentId: (json['appointmentId'] as num?)?.toInt(),
       name: json['name'] as String?,
       date: json['date'] as String?,
       consultationType: json['consultationType'] as String?,
@@ -240,7 +270,7 @@ class WeeklyAppointmentsModel extends WeeklyAppointmentsEntity {
 
   factory WeeklyAppointmentsModel.fromJson(Map<String, dynamic> json) {
     return WeeklyAppointmentsModel(
-      averagePerDay: json['averagePerDay'] as int?,
+      averagePerDay: (json['averagePerDay'] as num?)?.toInt(),
       dailyData: json['dailyData'] != null
           ? (json['dailyData'] as List).map((v) => DailyDataModel.fromJson(v)).toList()
           : null,
@@ -261,7 +291,7 @@ class DailyDataModel extends DailyDataEntity {
   factory DailyDataModel.fromJson(Map<String, dynamic> json) {
     return DailyDataModel(
       label: json['label'] as String?,
-      value: json['value'] as int?,
+      value: (json['value'] as num?)?.toInt(),
     );
   }
 
@@ -278,7 +308,7 @@ class MonthlyPatientsModel extends MonthlyPatientsEntity {
 
   factory MonthlyPatientsModel.fromJson(Map<String, dynamic> json) {
     return MonthlyPatientsModel(
-      yearlyTotal: json['yearlyTotal'] as int?,
+      yearlyTotal: (json['yearlyTotal'] as num?)?.toInt(),
       monthlyData: json['monthlyData'] != null
           ? (json['monthlyData'] as List).map((v) => MonthlyDataModel.fromJson(v)).toList()
           : null,
@@ -299,7 +329,7 @@ class MonthlyDataModel extends MonthlyDataEntity {
   factory MonthlyDataModel.fromJson(Map<String, dynamic> json) {
     return MonthlyDataModel(
       label: json['label'] as String?,
-      value: json['value'] as int?,
+      value: (json['value'] as num?)?.toInt(),
     );
   }
 

@@ -26,14 +26,14 @@ class PatientInfoCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(left: screenHorizontalSpacePadding,right: screenHorizontalSpacePadding, top: 0,bottom: fieldSpace),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: fieldSpace),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
-          color: Colors.grey.withOpacity(0.2),
-          width: 0.5,
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+          width: 1,
         ),
       ),
       child: Column(

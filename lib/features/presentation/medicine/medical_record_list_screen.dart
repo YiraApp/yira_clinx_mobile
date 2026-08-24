@@ -241,7 +241,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
 
   Widget _buildBody(BuildContext context, MedicalHistoryState state,bool isTab) {
     if (state is MedicalHistoryLoading) {
-      return const ListCardShimmer(itemCount: 4);
+      return MedicalRecordListShimmer(itemCount: 4, isTab: isTab);
     }
 
     if (state is MedicalHistoryError) {

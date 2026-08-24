@@ -77,11 +77,12 @@ class CustomBarChart extends StatelessWidget {
       color: theme.textTheme.bodyMedium?.color?.withOpacity(0.85),
     );
 
+    final int count = values.length < labels.length ? values.length : labels.length;
     final List<_ChartDataPoint> chartData = List.generate(
-      values.length,
+      count,
       (index) => _ChartDataPoint(
         xLabel: labels[index] ?? '',
-        yValue: values[index] ?? 0.0,
+        yValue: (values[index] ?? 0.0).toDouble(),
         index: index,
       ),
     );

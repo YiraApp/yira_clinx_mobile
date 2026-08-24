@@ -11,6 +11,7 @@ import '../../../di/dependency_injection.dart';
 import '../../domain/entities/medication/medication_entity.dart';
 
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 
 class PrescriptionManagementScreen extends StatelessWidget {
   const PrescriptionManagementScreen({super.key});
@@ -42,7 +43,9 @@ class PrescriptionManagementScreen extends StatelessWidget {
           ),
           actions: [
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.recentNotifications);
+              },
               icon: Icon(
                 Icons.notifications_none,
                 size: 20,

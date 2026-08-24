@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
+import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/test_result_bloc.dart';
 import 'package:yiraclinics/features/presentation/test_results/widgets/ai_insites_widget.dart';
 import 'package:yiraclinics/features/presentation/test_results/widgets/badge_widget.dart';
@@ -18,7 +19,7 @@ class TestResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isTab = isTablet(context);
     return BlocProvider(
       create: (context) => TestResultsBloc()..add(LoadTestResults()),
       child: Scaffold(
@@ -28,7 +29,7 @@ class TestResultsScreen extends StatelessWidget {
         body: BlocConsumer<TestResultsBloc, TestResultsState>(
           builder: (context, state) {
             if (state is TestResultsLoading) {
-              return const Center(child: CircularProgressIndicator.adaptive());
+              return TestResultsShimmer(isTab: isTab);
             }
             if (state is TestResultsLoaded) return _buildUI(context, state);
             return const SizedBox();

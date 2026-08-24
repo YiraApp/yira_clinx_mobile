@@ -121,6 +121,10 @@ class AppointmentRepoImpl implements AppointmentRepo {
     String? reason,
     String? appointmentType,
     bool? isTeleConsultation,
+    int? parentAppointmentId,
+    List<String>? treatmentPlanIds,
+    List<Map<String, dynamic>>? customTreatmentPlans,
+    double? discountAmount,
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final endPoint = URLs.bookAppointmentUrl;
@@ -137,6 +141,10 @@ class AppointmentRepoImpl implements AppointmentRepo {
       if (reason != null && reason.isNotEmpty) "reason": reason,
       if (appointmentType != null && appointmentType.isNotEmpty) "appointmentType": appointmentType,
       if (isTeleConsultation != null) "isTeleConsultation": isTeleConsultation,
+      if (parentAppointmentId != null) "parentAppointmentId": parentAppointmentId,
+      if (treatmentPlanIds != null && treatmentPlanIds.isNotEmpty) "treatmentPlanIds": treatmentPlanIds,
+      if (customTreatmentPlans != null && customTreatmentPlans.isNotEmpty) "customTreatmentPlans": customTreatmentPlans,
+      if (discountAmount != null && discountAmount > 0) "discountAmount": discountAmount,
     };
 
     try {

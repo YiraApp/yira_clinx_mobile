@@ -95,7 +95,7 @@ class PrescriptionListScreen extends StatelessWidget {
           Widget bodyWidget;
 
           if (state.status == PrescriptionStatus.loading) {
-            bodyWidget = _buildShimmerLoading(Theme.of(context).brightness == Brightness.dark);
+            bodyWidget = PrescriptionListShimmer(itemCount: 4, isTab: isTab);
           } else {
             if (validMeds.isEmpty) {
               bodyWidget = Center(
@@ -291,60 +291,6 @@ class PrescriptionListScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  static Widget _buildShimmerLoading(bool isDark) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 8),
-      children: List.generate(3, (index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.grey[900] : Colors.white,
-            borderRadius: BorderRadius.circular(fieldBorderRadius),
-            border: Border.all(
-              color: isDark ? Colors.white12 : Colors.grey.shade200,
-            ),
-          ),
-          child: BaseShimmer(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(width: 160, height: 14, color: Colors.white),
-                      const SizedBox(height: 10),
-                      Container(width: 220, height: 10, color: Colors.white),
-                      const SizedBox(height: 14),
-                      Container(
-                        width: 80,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(fieldBorderRadius),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
     );
   }
 }

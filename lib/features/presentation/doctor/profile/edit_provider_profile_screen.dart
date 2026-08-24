@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -42,7 +41,6 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
   late TextEditingController _qualificationController;
   late TextEditingController _regNumberController;
   late TextEditingController _experienceController;
-  late TextEditingController _feeController;
   late TextEditingController _bioController;
 
   final List<String> _genders = ['Male', 'Female', 'Other', 'Prefer not to say'];
@@ -68,7 +66,6 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
     _qualificationController = TextEditingController(text: p.qualification);
     _regNumberController = TextEditingController(text: p.registrationNumber);
     _experienceController = TextEditingController(text: p.experience);
-    _feeController = TextEditingController(text: p.consultationFee?.toStringAsFixed(0) ?? '500');
     _bioController = TextEditingController(text: p.bio);
   }
 
@@ -86,7 +83,6 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
     _qualificationController.dispose();
     _regNumberController.dispose();
     _experienceController.dispose();
-    _feeController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -146,7 +142,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
       qualification: _qualificationController.text.trim(),
       registrationNumber: _regNumberController.text.trim(),
       experience: _experienceController.text.trim(),
-      consultationFee: double.tryParse(_feeController.text.trim()) ?? 500.0,
+      consultationFee: widget.profile.consultationFee,
       bio: _bioController.text.trim(),
     );
 
@@ -560,31 +556,13 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           ],
         ),
         const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTextField(
-                label: "Experience",
-                controller: _experienceController,
-                icon: Icons.timeline_rounded,
-                isDark: isDark,
-                primaryColor: primaryColor,
-                hint: "e.g. 10+ Years",
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildTextField(
-                label: "Consultation Fee (₹)",
-                controller: _feeController,
-                icon: Icons.currency_rupee_rounded,
-                isDark: isDark,
-                primaryColor: primaryColor,
-                keyboardType: TextInputType.number,
-                hint: "500",
-              ),
-            ),
-          ],
+        _buildTextField(
+          label: "Experience",
+          controller: _experienceController,
+          icon: Icons.timeline_rounded,
+          isDark: isDark,
+          primaryColor: primaryColor,
+          hint: "e.g. 10+ Years",
         ),
         const SizedBox(height: 18),
         _buildSectionHeader("About & Clinical Bio", Icons.description_outlined, Colors.orange, isDark),

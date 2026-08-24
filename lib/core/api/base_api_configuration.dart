@@ -1,23 +1,22 @@
-
 class EnvironmentService {
-  static Environment _currentEnv = Environment.production;
+  static Environment _currentEnv = Environment.qa;
   static void setEnvironment(Environment env) => _currentEnv = env;
   static EnvironmentConfig get config {
     switch (_currentEnv) {
       case Environment.dev:
         return const EnvironmentConfig(
-          accountBaseUrl: "",
-          healthCampBaseUrl: "",
+          accountBaseUrl: "192.168.68.72:5000",
+          healthCampBaseUrl: "192.168.68.72:5000",
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "172.29.244.92:5000",
-          healthCampBaseUrl: "172.29.244.92:5000",
+          accountBaseUrl: "192.168.68.72:5000",
+          healthCampBaseUrl: "192.168.68.72:5000",
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "",
-          healthCampBaseUrl: ""
+          accountBaseUrl: "192.168.68.72:5000",
+          healthCampBaseUrl: "192.168.68.72:5000",
         );
     }
   }

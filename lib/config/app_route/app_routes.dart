@@ -14,6 +14,7 @@ class AppRoutes {
   static const String genderSelection= '/genderSelection';
   static const String userConfiguration= '/userConfiguration';
   static const String patientManagementScreen= '/patientManagementScreen';
+  static const String favoritePatientsScreen= '/favoritePatientsScreen';
   static const String userPrescriptionManagement= '/userPrescriptionManagement';
   static const String userPrescriptionDetailScreen= '/userPrescriptionDetailScreen';
   static const String languageSelectionScreen= '/languageSelectionScreen';
@@ -55,4 +56,5 @@ class AppRoutes {
   static const String permissionScreen= '/permissionScreen';
   static const String editDoctorProfile = '/editDoctorProfile';
   static const String patientConsentsScreen = '/patientConsentsScreen';
+  static const String recentNotifications = '/recentNotifications';
 }

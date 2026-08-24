@@ -204,50 +204,61 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                           padding: const EdgeInsets.symmetric(
                             horizontal: screenHorizontalSpacePadding,
                           ),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final role = widget.roles?.roles[index];
-                              final isSelected =
-                                  state is RoleSelectedState &&
-                                  state.roleEntity.roleId == role?.roleId;
+                          sliver: Builder(
+                            builder: (context) {
+                              final allowedRoles = (widget.roles?.roles ?? [])
+                                  .where((r) {
+                                    final name = r.roleName?.toLowerCase() ?? '';
+                                    return name.contains('provider') ||
+                                        name.contains('doctor') ||
+                                        name.contains('physician') ||
+                                        name.contains('user') ||
+                                        name.contains('patient');
+                                  })
+                                  .toList();
 
-                              return Padding(
-                                padding: const EdgeInsets.only(
-                                  bottom: fieldSpace,
-                                ),
-                                child: DialogRoleCard(
-                                  isTablet: isTab,
-                                  isSelected: isSelected,
-                                  roleEntity: role!,
-                                  onTap: () async {
-                                    final selectedRole =
-                                        widget.roles?.roles[index];
-                                    if (selectedRole == null) return;
+                              return SliverList(
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  final role = allowedRoles[index];
+                                  final isSelected =
+                                      state is RoleSelectedState &&
+                                      state.roleEntity.roleId == role.roleId;
 
-                                    context.read<RoleBloc>().add(
-                                      RoleSelected(selectedRole),
-                                    );
-                                    WorkSpaceModel data = WorkSpaceModel(
-                                      widget.roles?.inApp ?? false,
-                                      selectedRole,
-                                    );
-                                    await Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.workSpaceScreen,
-                                      arguments: data,
-                                    );
-                                    if (context.mounted) {
-                                      context.read<RoleBloc>().add(
-                                        ClearRoleSelectionEvent(),
-                                      );
-                                    }
-                                  },
-                                ),
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: fieldSpace,
+                                    ),
+                                    child: DialogRoleCard(
+                                      isTablet: isTab,
+                                      isSelected: isSelected,
+                                      roleEntity: role,
+                                      onTap: () async {
+                                        context.read<RoleBloc>().add(
+                                          RoleSelected(role),
+                                        );
+                                        WorkSpaceModel data = WorkSpaceModel(
+                                          widget.roles?.inApp ?? false,
+                                          role,
+                                        );
+                                        await Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.workSpaceScreen,
+                                          arguments: data,
+                                        );
+                                        if (context.mounted) {
+                                          context.read<RoleBloc>().add(
+                                            ClearRoleSelectionEvent(),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                }, childCount: allowedRoles.length),
                               );
-                            }, childCount: widget.roles?.roles.length ?? 0),
+                            },
                           ),
                         ),
                         SliverFillRemaining(

@@ -35,6 +35,12 @@ import 'package:yiraclinics/features/data/repository_impl/medication/medication_
 import 'package:yiraclinics/features/data/repository_impl/work_space/get_work_space_details_impl.dart';
 import 'package:yiraclinics/features/data/repository_impl/work_space/update_latest_org_details_repo_impl.dart';
 
+import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+import 'package:yiraclinics/features/domain/repositories/notifications/notifications_repo.dart';
+import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
+import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
+import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_bloc.dart';
+
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
 import 'package:yiraclinics/features/domain/repositories/auth/auth_repo.dart';
 import 'package:yiraclinics/features/domain/repositories/consent/patient_access_consent_repo.dart';
@@ -272,9 +278,18 @@ Future<void> init() async {
       sl<LocalCacheDataSource>(),
     ),
   );
+  sl.registerLazySingleton<NotificationsRepository>(
+    () => NotificationsRepositoryImpl(apiClient: sl<ApiClient>()),
+  );
   // ==========================================
   // 2. Use Cases
   // ==========================================
+  sl.registerLazySingleton<GetNotificationsUseCase>(
+    () => GetNotificationsUseCase(repository: sl<NotificationsRepository>()),
+  );
+  sl.registerLazySingleton<MarkNotificationReadUseCase>(
+    () => MarkNotificationReadUseCase(repository: sl<NotificationsRepository>()),
+  );
   sl.registerLazySingleton<GetAppointmentDashboardUseCase>(
     () => GetAppointmentDashboardUseCase(sl<AppointmentRepo>()),
   );
@@ -475,5 +490,11 @@ Future<void> init() async {
   );
   sl.registerFactory(
     () => PatientAccessConsentBloc(sl<PatientAccessConsentRepository>()),
+  );
+  sl.registerFactory(
+    () => NotificationsBloc(
+      getNotificationsUseCase: sl<GetNotificationsUseCase>(),
+      markNotificationReadUseCase: sl<MarkNotificationReadUseCase>(),
+    ),
   );
 }

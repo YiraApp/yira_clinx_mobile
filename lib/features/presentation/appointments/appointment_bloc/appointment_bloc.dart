@@ -67,6 +67,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     });
 
     on<SubmitBookAppointmentEvent>((event, emit) async {
+      emit(const BookAppointmentLoadingState());
       try {
         final currentUser = GlobalSession.instance.userNotifier.value;
         final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
@@ -90,13 +91,23 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           reason: event.reason,
           appointmentType: event.appointmentType,
           isTeleConsultation: event.isTeleConsultation,
+          parentAppointmentId: event.parentAppointmentId,
+          treatmentPlanIds: event.treatmentPlanIds,
+          customTreatmentPlans: event.customTreatmentPlans,
+          discountAmount: event.discountAmount,
         );
 
         if (success) {
-          emit(OnAddAppointmentState());
+          emit(BookAppointmentSuccessState(
+            message: "Appointment booked successfully!",
+            patientName: event.patientName,
+            appointmentDate: event.appointmentDate,
+            time: event.startTime,
+            isTeleConsultation: event.isTeleConsultation ?? false,
+          ));
           add(LoadAppointmentsEvent());
         } else {
-          emit(AppointmentError("Failed to book appointment"));
+          emit(const AppointmentError("Failed to book appointment. Please try again."));
         }
       } catch (e) {
         emit(AppointmentError("Failed to book appointment: $e"));

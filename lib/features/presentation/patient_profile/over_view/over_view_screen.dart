@@ -4,6 +4,7 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_medical_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_summary_card.dart';
 
+import '../../../../core/constants/constants.dart';
 import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../patient_over_view_bloc/patient_over_view_bloc.dart';
@@ -44,22 +45,23 @@ class _OverviewScreenState extends State<OverviewScreen> {
   }
 
   void _loadPatientData() {
-    final String pid = widget.patientId ?? widget.patient.id?.toString() ?? '';
-    context.read<PatientOverViewBloc>().add(LoadPatientData(
-          pid,
-          orgId: widget.orgId,
-          hospitalId: widget.hospitalId,
-        ));
+    final patientId = widget.patientId ?? widget.patient.id;
+    if (patientId.isNotEmpty) {
+      context.read<PatientOverViewBloc>().add(
+            LoadPatientData(
+              patientId,
+              hospitalId: widget.hospitalId,
+              orgId: widget.orgId,
+            ),
+          );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: BlocConsumer<PatientOverViewBloc, PatientOverViewState>(
-        listener: (context, state) {
-
-        },
+      backgroundColor: Colors.transparent,
+      body: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
         builder: (context, state) {
           if (state is LoadingPatientViewDetails) {
             return const PatientOverviewShimmer();
@@ -70,20 +72,32 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
-                    const SizedBox(height: 16),
+                    Icon(Icons.error_outline_rounded,
+                        size: 48, color: Colors.red.shade300),
+                    const SizedBox(height: 12),
                     Text(
                       state.error,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        color: Colors.red.shade400,
+                        fontSize: 14,
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: _loadPatientData,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text("Retry"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -102,19 +116,25 @@ class _OverviewScreenState extends State<OverviewScreen> {
               onRefresh: () async => _loadPatientData(),
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: screenHorizontalSpacePadding,
+                  vertical: 12,
+                ),
                 child: Column(
                   children: [
-                    // Safe parsing: Only display cards if the model data exists
+                    // 1. Contact Information
                     if (fetchedData.contactInformation != null)
                       PatientContactCard(patient: fetchedData.contactInformation!, isTab: widget.isTab),
 
+                    // 2. Medical Information (Allergies, Blood Group, Visits)
                     if (fetchedData.medicalInformation != null)
                       PatientMedicalCard(patient: fetchedData.medicalInformation!, isTab: widget.isTab),
 
+                    // 3. Clinical Summary (if present)
                     if (fetchedData.summary != null && fetchedData.summary!.isNotEmpty)
                       PatientSummaryCard(summary: fetchedData.summary!, isTab: widget.isTab),
 
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

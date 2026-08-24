@@ -14,6 +14,9 @@ class PatientEntity extends Equatable {
   final String allergy;
   final int age;
   final int visits;
+  final bool? isFavoriteRaw;
+
+  bool get isFavorite => isFavoriteRaw ?? false;
 
   const PatientEntity({
     required this.id,
@@ -26,8 +29,37 @@ class PatientEntity extends Equatable {
     required this.visits,
     required this.age,
     this.allergy = "",
-  });
+    bool? isFavorite,
+  }) : isFavoriteRaw = isFavorite ?? false;
+
+  PatientEntity copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? condition,
+    String? lastVisit,
+    String? status,
+    String? gender,
+    String? allergy,
+    int? age,
+    int? visits,
+    bool? isFavorite,
+  }) {
+    return PatientEntity(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      condition: condition ?? this.condition,
+      lastVisit: lastVisit ?? this.lastVisit,
+      status: status ?? this.status,
+      gender: gender ?? this.gender,
+      allergy: allergy ?? this.allergy,
+      age: age ?? this.age,
+      visits: visits ?? this.visits,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, userId, name, status, condition];
+  List<Object?> get props => [id, userId, name, status, condition, isFavorite];
 }

@@ -46,13 +46,13 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
         },
         builder: (context, state) {
           if (state is! SlotDataState) {
-            return const ListCardShimmer(itemCount: 4);
+            return SmartSchedulerShimmer(isTab: isTab);
           }
 
           final dataState = state;
 
           if (dataState.isLoading) {
-            return const ListCardShimmer(itemCount: 4);
+            return SmartSchedulerShimmer(isTab: isTab);
           }
 
           return SafeArea(

@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/services/network_services/network_listener/network_listener.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custom_chart.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_metric_grid.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/welocme_card.dart';
 import '../../../../core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
-import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
 import '../../../../core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import '../../../../core/shimmer_widgets/docor_dashboard_shimmer.dart';
+import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/utils/utils.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
 import 'dashboard_patient_details_screen.dart';
 import 'doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 
+import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
+import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+
 import 'widgets/dashboard_section_header.dart';
 import 'widgets/dashboard_chart_card.dart';
+import '../profile/widgets/profile_switcher_sheet.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -32,6 +38,7 @@ class DoctorDashboardScreen extends StatefulWidget {
 class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   late final DoctorDashboardBloc _dashboardBloc;
   late final NavigationDrawerBloc _navigationDrawerBloc;
+  final ValueNotifier<int> _unreadNotificationsCount = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -39,6 +46,33 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     _navigationDrawerBloc = sl<NavigationDrawerBloc>()
       ..add(const InitializeDrawerData());
     _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
+    _fetchUnreadNotificationsCount();
+    NotificationService.instance.syncFcmTokenWithBackend();
+  }
+
+  Future<void> _fetchUnreadNotificationsCount() async {
+    try {
+      GetNotificationsUseCase useCase;
+      if (sl.isRegistered<GetNotificationsUseCase>()) {
+        useCase = sl<GetNotificationsUseCase>();
+      } else {
+        useCase = GetNotificationsUseCase(
+          repository: NotificationsRepositoryImpl(apiClient: sl<ApiClient>()),
+        );
+      }
+      final result = await useCase.call(page: 1, limit: 1);
+      if (result != null && mounted) {
+        _unreadNotificationsCount.value = result.unreadCount;
+      }
+    } catch (e) {
+      debugPrint("Error fetching unread notifications count: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    _unreadNotificationsCount.dispose();
+    super.dispose();
   }
 
   double _calculateResponsiveChartHeight(BuildContext context) {
@@ -95,43 +129,185 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         },
         child: Scaffold(
           backgroundColor: scaffoldBg,
-          drawer: const AppNavigationDrawer(),
           bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 0),
           appBar: AppBar(
             elevation: 0,
             backgroundColor: scaffoldBg,
-            iconTheme: IconThemeData(color: adaptiveTextColor),
+            automaticallyImplyLeading: false,
+            titleSpacing: screenHorizontalSpacePadding,
             centerTitle: false,
-            titleSpacing: 0,
-            title: Text(
-              projectTitle,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: isTabletDevice ? width * 0.022 : width * 0.046,
-                fontWeight: FontWeight.w700,
-                color: adaptiveTextColor,
-                letterSpacing: -0.5,
-              ),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SvgPicture.asset(
+                    appLogo,
+                    width: isTabletDevice ? 32 : 28,
+                    height: isTabletDevice ? 32 : 28,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                    bloc: _dashboardBloc,
+                    builder: (context, state) {
+                      if (state is! DoctorDashboardSuccessState) {
+                        return BaseShimmer(
+                          child: Container(
+                            width: isTabletDevice ? 160 : 130,
+                            height: isTabletDevice ? 20 : 16,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final hName = state.dashboardEntity.data?.hospitalName;
+                      final hospitalTitle = (hName != null && hName.trim().isNotEmpty)
+                          ? hName.trim()
+                          : 'Healthcare Facility';
+
+                      return GestureDetector(
+                        onTap: () => ProfileSwitcherSheet.show(context),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                hospitalTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: isTabletDevice ? width * 0.022 : 18.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: adaptiveTextColor,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 20,
+                              color: adaptiveTextColor.withValues(alpha: 0.7),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             actions: [
-              IconButton(
-                icon: Icon(
-                  Icons.notifications_none_outlined,
-                  color: adaptiveTextColor,
-                ),
-                onPressed: () {},
+              ValueListenableBuilder<int>(
+                valueListenable: _unreadNotificationsCount,
+                builder: (context, count, _) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        tooltip: "Notifications",
+                        icon: Icon(
+                          Icons.notifications_none_outlined,
+                          color: adaptiveTextColor,
+                          size: isTabletDevice ? 24 : 22,
+                        ),
+                        onPressed: () async {
+                          await Navigator.pushNamed(context, AppRoutes.recentNotifications);
+                          _fetchUnreadNotificationsCount();
+                        },
+                      ),
+                      if (count > 0)
+                        Positioned(
+                          top: 7,
+                          right: 7,
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: scaffoldBg,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  count > 99 ? "99+" : "$count",
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               Padding(
                 padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.profile);
+                child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                  bloc: _dashboardBloc,
+                  builder: (context, state) {
+                    String? photoUrl;
+                    if (state is DoctorDashboardSuccessState) {
+                      photoUrl = state.dashboardEntity.data?.profile?.profileImageUrl ??
+                          state.dashboardEntity.data?.profile?.imagePath;
+                    }
+                    final double size = isTabletDevice ? 38 : 34;
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.profile);
+                      },
+                      child: Container(
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                            ? Image.network(
+                                photoUrl.trim(),
+                                width: size,
+                                height: size,
+                                fit: BoxFit.cover,
+                                errorBuilder: (ctx, err, stack) => Icon(
+                                  Icons.person_rounded,
+                                  color: primaryColor,
+                                  size: isTabletDevice ? 20 : 18,
+                                ),
+                              )
+                            : Icon(
+                                Icons.person_rounded,
+                                color: primaryColor,
+                                size: isTabletDevice ? 20 : 18,
+                              ),
+                      ),
+                    );
                   },
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: primaryColor.withOpacity(0.15),
-                    child: Icon(Icons.person, color: primaryColor, size: 18),
-                  ),
                 ),
               ),
             ],
@@ -257,6 +433,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 if (dashboard == null) {
                   return RefreshIndicator(
                     onRefresh: () async {
+                      _fetchUnreadNotificationsCount();
+                      NotificationService.instance.syncFcmTokenWithBackend();
                       _dashboardBloc.add(const FetchDoctorDashboardData(isRefresh: true));
                       await _dashboardBloc.stream.firstWhere(
                         (state) => state is DoctorDashboardSuccessState || state is DoctorDashboardError,
@@ -278,6 +456,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
+                    _fetchUnreadNotificationsCount();
+                    NotificationService.instance.syncFcmTokenWithBackend();
                     _dashboardBloc.add(const FetchDoctorDashboardData(isRefresh: true));
                     await _dashboardBloc.stream.firstWhere(
                       (state) => state is DoctorDashboardSuccessState || state is DoctorDashboardError,
@@ -292,37 +472,19 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          const SizedBox(height: 8.0),
-
-                          WelcomeCard(
-                            name: dashboard.profile?.name?.isNotEmpty ?? false
-                                ? dashboard.profile?.name ?? ''
-                                : "Doctor",
-                            specialty:
-                                '${dashboard.hospitalName} - ${dashboard.profile?.specialty ?? 'Medical Professional'}',
-                            clinicAddress:
-                                dashboard.profile?.clinicAddress?.isNotEmpty ??
-                                    false ??
-                                    false
-                                ? dashboard.profile?.clinicAddress ?? ''
-                                : "Clinic Location N/A",
-                            primaryColor: primaryColor,
-                            isDark: isDark,
-                            isTab: isTabletDevice,
-                            fontFamily: appPoppinFont,
-                          ),
-                          const SizedBox(height: fieldSpace),
+                          const SizedBox(height: 12.0),
 
                           DashboardMetricsGrid(
                             metrics: dashboard.metrics!,
                             primaryColor: primaryColor,
                             isTab: isTabletDevice,
                           ),
-                          const SizedBox(height: fieldSpace),
+                          const SizedBox(height: 20.0),
 
                           DashboardSectionHeader(
                             title: "Today's Schedule",
-                            actionText: "View Calendar",
+                            countBadge: "${dashboard.todaysSchedule?.length ?? 0}",
+                            actionText: "View Appointments",
                             isDark: isDark,
                             primaryColor: primaryColor,
                             onTap: () => context
@@ -331,12 +493,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             isTab: isTabletDevice,
                             fontFamily: appPoppinFont,
                           ),
-                          const SizedBox(height: 8.0),
+                          const SizedBox(height: 10.0),
                         ]),
                       ),
                     ),
 
-                    if (dashboard.todaysSchedule?.isEmpty ?? false)
+                    if (dashboard.todaysSchedule?.isEmpty ?? true)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: screenHorizontalSpacePadding,
@@ -390,16 +552,16 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                     : '--:-- AM',
                                 statusLabel:
                                     appointment?.statusTag?.isNotEmpty ??
-                                        false ??
                                         false
                                     ? appointment?.statusTag ?? ''
                                     : 'Confirmed',
                                 statusColor: isVideo
-                                    ? Colors.amber.withOpacity(0.15)
-                                    : Colors.green.withOpacity(0.15),
+                                    ? Colors.amber.withValues(alpha: 0.15)
+                                    : Colors.green.withValues(alpha: 0.15),
                                 statusTextColor: isVideo
                                     ? Colors.amber[800]!
                                     : Colors.green[700]!,
+                                patientStatus: appointment?.patientStatus ?? 'Active',
                                 onTap: () {
                                   var data = DashboardPatientDetails(
                                     appointment,
@@ -415,23 +577,16 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 onJoinCall: () async {
                                   final meetingUrl = appointment?.meetingUrl;
                                   if (meetingUrl != null && meetingUrl.isNotEmpty) {
-                                    final uri = Uri.parse(meetingUrl);
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(
-                                        uri,
-                                        mode: LaunchMode.inAppBrowserView,
-                                        webViewConfiguration: const WebViewConfiguration(
-                                          enableJavaScript: true,
-                                          enableDomStorage: true,
-                                        ),
-                                      );
-                                    } else {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Could not open meeting link.')),
-                                        );
-                                      }
-                                    }
+                                    await Utils.launchURL(
+                                      meetingUrl,
+                                      onLaunchFailure: (err) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(err)),
+                                          );
+                                        }
+                                      },
+                                    );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
@@ -444,12 +599,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                       ),
 
-
-
                     SliverPadding(
                       padding: const EdgeInsets.only(
                         left: screenHorizontalSpacePadding,
                         right: screenHorizontalSpacePadding,
+                        top: 14.0,
                         bottom: 40.0,
                       ),
                       sliver: SliverList(
@@ -591,10 +745,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       isDark ? const Color(0xFF14B8A6) : const Color(0xFF0F766E),
       isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
     ];
-    final highestValue = values.isEmpty ?? false
-        ? 10.0
-        : values.reduce((a, b) => a! > b! ? a : b);
-    final double computedMaxY = highestValue == 0 ? 12.0 : highestValue! * 1.25;
+    double highestValue = 0.0;
+    for (final v in values) {
+      if (v != null && v > highestValue) {
+        highestValue = v;
+      }
+    }
+    final double computedMaxY = highestValue <= 0 ? 12.0 : highestValue * 1.25;
 
     return CustomBarChart(
       values: values,
@@ -624,10 +781,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         progress,
       )!;
     });
-    final highestValue = values.isEmpty
-        ? 50.0
-        : values.reduce((a, b) => a! > b! ? a : b);
-    final double computedMaxY = highestValue == 0 ? 40.0 : highestValue! * 1.30;
+    double highestValue = 0.0;
+    for (final v in values) {
+      if (v != null && v > highestValue) {
+        highestValue = v;
+      }
+    }
+    final double computedMaxY = highestValue <= 0 ? 40.0 : highestValue * 1.30;
 
     return CustomBarChart(
       isTab: isTablet(context),

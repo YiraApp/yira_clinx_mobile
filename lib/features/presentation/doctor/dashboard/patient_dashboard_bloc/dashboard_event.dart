@@ -40,4 +40,13 @@ class ViewPatientDetailsEvent extends DashboardEvent {
   List<Object?> get props => [patientId, patientName];
 }
 
+class ToggleFavoritePatientEvent extends DashboardEvent {
+  final String patientId;
+  final String? alternateId;
+  const ToggleFavoritePatientEvent({required this.patientId, this.alternateId});
+
+  @override
+  List<Object?> get props => [patientId, alternateId];
+}
+
 

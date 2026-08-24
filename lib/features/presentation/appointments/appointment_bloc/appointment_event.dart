@@ -25,6 +25,10 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   final String? reason;
   final String? appointmentType;
   final bool? isTeleConsultation;
+  final int? parentAppointmentId;
+  final List<String>? treatmentPlanIds;
+  final List<Map<String, dynamic>>? customTreatmentPlans;
+  final double? discountAmount;
 
   SubmitBookAppointmentEvent({
     required this.patientName,
@@ -36,6 +40,10 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.reason,
     this.appointmentType,
     this.isTeleConsultation,
+    this.parentAppointmentId,
+    this.treatmentPlanIds,
+    this.customTreatmentPlans,
+    this.discountAmount,
   });
 }
 

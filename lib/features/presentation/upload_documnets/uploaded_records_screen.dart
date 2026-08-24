@@ -317,7 +317,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
   Widget _buildRecordsList(
       BuildContext context, UploadedBlocState state, bool isTab) {
     if (state.status == UploadedStatus.loading) {
-      return const ListCardShimmer(itemCount: 4);
+      return UploadedRecordListShimmer(itemCount: 4, isTab: isTab);
     }
 
     if (state.allRecords.isEmpty) {

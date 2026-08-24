@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/appointments/appointment_entity.dart';
 
 class AppointmentCard extends StatelessWidget {
@@ -233,7 +234,25 @@ final bool isTab;
                                  Padding(
                                   padding: const EdgeInsets.only(right: 4.0),
                                   child: IconButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      final url = appointment.meetingUrl;
+                                      if (url != null && url.isNotEmpty) {
+                                        Utils.launchURL(
+                                          url,
+                                          onLaunchFailure: (err) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text(err)),
+                                              );
+                                            }
+                                          },
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('No meeting link available for this appointment.')),
+                                        );
+                                      }
+                                    },
                                     icon: Icon(
                                       Icons.video_call_rounded,
                                       color: isDark ? const Color(0xFF64B5F6) : theme.primaryColor,

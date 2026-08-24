@@ -12,12 +12,12 @@ class PatientOverviewShimmer extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bool isTab = isTablet(context);
 
-    final baseColor = isDark ? darkModeCardColor.withOpacity(0.1) : lightModeBaseColor;
-    final highlightColor = isDark ? whiteColor.withOpacity(0.08) : darkModeBaseColor;
+    final baseColor = isDark ? darkModeCardColor.withValues(alpha: 0.1) : lightModeBaseColor;
+    final highlightColor = isDark ? whiteColor.withValues(alpha: 0.08) : darkModeBaseColor;
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(isTab ? 24.0 : 16.0),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
       child: Shimmer.fromColors(
         baseColor: baseColor,
         highlightColor: highlightColor,
@@ -42,26 +42,7 @@ class PatientOverviewShimmer extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: isTab ? 20.0 : 16.0),
-
-            _buildResponsiveRow(
-              isTab: isTab,
-              children: [
-                _buildProfileCardPlaceholder(
-                  context,
-                  isDark,
-                  headerWidth: 110,
-                  lineCount: 2,
-                ),
-                _buildProfileCardPlaceholder(
-                  context,
-                  isDark,
-                  headerWidth: 120,
-                  lineCount: 3,
-                ),
-              ],
-            ),
-            const SizedBox(height: 80.0), // Padding matching screen bottom constraint
+            const SizedBox(height: 40.0),
           ],
         ),
       ),
@@ -172,7 +153,7 @@ class PatientOverviewShimmer extends StatelessWidget {
               width: double.infinity,
               height: 54,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12.0),
               ),
             ),

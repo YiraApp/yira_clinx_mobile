@@ -25,6 +25,7 @@ import 'package:yiraclinics/features/presentation/configure_screens/soft_update_
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_main_shell_screen.dart';
+import 'package:yiraclinics/features/presentation/doctor/dashboard/favorite_patients_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
@@ -37,6 +38,7 @@ import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/m
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
+import 'package:yiraclinics/features/presentation/notifications/recent_notifications_screen.dart';
 import 'package:yiraclinics/features/presentation/permisions/permissions_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
@@ -151,6 +153,10 @@ class AppRouter {
       case AppRoutes.patientManagementScreen:
         return MaterialPageRoute(settings: settings, 
           builder: (_) => const DoctorMainShellScreen(initialIndex: 2),
+        );
+      case AppRoutes.favoritePatientsScreen:
+        return MaterialPageRoute(settings: settings, 
+          builder: (_) => const FavoritePatientsScreen(),
         );
       case AppRoutes.userPrescriptionManagement:
         return MaterialPageRoute(settings: settings, 
@@ -428,6 +434,11 @@ class AppRouter {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => PatientConsentApprovalScreen(patientId: patientId),
+        );
+      case AppRoutes.recentNotifications:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const RecentNotificationsScreen(),
         );
       //appointmentDetails
       default:

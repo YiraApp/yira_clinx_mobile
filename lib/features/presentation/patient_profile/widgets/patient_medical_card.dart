@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
-import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'metric_tile_item.dart';
 import 'patient_info_card.dart';
 
@@ -22,26 +20,20 @@ class PatientMedicalCard extends StatelessWidget {
         children: [
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.healing_outlined,
-            label: 'Condition',
-            value: patient.condition ?? '',
-            accentColor: Colors.orange,
-          ),
-          _buildDivider(isDark),
-          MetricTileItem(
-            isTab: isTab,
             icon: Icons.warning_amber_rounded,
             label: 'Allergies',
-            value: patient.allergies ?? '',
+            value: (patient.allergies?.isNotEmpty == true && patient.allergies != 'None') ? patient.allergies! : 'None Reported',
             accentColor: Colors.red,
-            valueColor: isDark ? Colors.red[300] : Colors.red[700],
+            valueColor: (patient.allergies?.isNotEmpty == true && patient.allergies != 'None')
+                ? (isDark ? Colors.red[300] : Colors.red[700])
+                : null,
           ),
           _buildDivider(isDark),
           MetricTileItem(
             isTab: isTab,
             icon: Icons.bloodtype_outlined,
             label: 'Blood Group',
-            value: patient.bloodGroup ?? '',
+            value: patient.bloodGroup ?? 'Not Set',
             accentColor: Colors.red,
           ),
           _buildDivider(isDark),
@@ -49,7 +41,7 @@ class PatientMedicalCard extends StatelessWidget {
             isTab: isTab,
             icon: Icons.calendar_today_outlined,
             label: 'Total Visits',
-            value: '${patient.totalVisits}',
+            value: '${patient.totalVisits ?? 0}',
             accentColor: Colors.purple,
           ),
         ],

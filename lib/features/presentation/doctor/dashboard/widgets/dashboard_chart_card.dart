@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/colors/colors.dart';
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../../core/constants/constants.dart';
 
 class DashboardChartCard extends StatelessWidget {
   final String title;
@@ -24,14 +22,17 @@ class DashboardChartCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(isTab ? 20.0 : 16.0),
       decoration: BoxDecoration(
-        color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(width: 0.5, color: Colors.grey.withOpacity(0.2)),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          width: 1,
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.1) : Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.025),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -47,30 +48,33 @@ class DashboardChartCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontFamily: fontFamily,
-                  fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.036,
+                  fontSize: isTab ? displayWidth(context) * 0.02 : 15.5,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  letterSpacing: -0.2,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[800]!.withOpacity(0.5) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
+                  color: isDark
+                      ? const Color(0xFF334155).withValues(alpha: 0.6)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   badgeText,
                   style: TextStyle(
                     fontFamily: fontFamily,
-                    fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.026,
-                    color: isDark ? Colors.grey[400] : const Color(0xFF64748B),
-                    fontWeight: FontWeight.w500,
+                    fontSize: isTab ? displayWidth(context) * 0.014 : 11.5,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20.0),
+          const SizedBox(height: 16.0),
           chartContent,
         ],
       ),

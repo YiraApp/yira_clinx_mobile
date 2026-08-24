@@ -29,26 +29,54 @@ class Utils {
       return;
     }
 
-    final Uri? parsedUri = Uri.tryParse(trimmedUrl);
+    String formattedUrl = trimmedUrl;
+    if (!formattedUrl.startsWith("http://") &&
+        !formattedUrl.startsWith("https://") &&
+        !formattedUrl.contains("://")) {
+      formattedUrl = "https://$formattedUrl";
+    }
+
+    final Uri? parsedUri = Uri.tryParse(formattedUrl);
     if (parsedUri == null) {
-      _handleError('Could not parse invalid URL: $trimmedUrl', onLaunchFailure);
+      _handleError('Could not parse invalid URL: $formattedUrl', onLaunchFailure);
       return;
     }
 
     try {
-      final bool canOpen = await canLaunchUrl(parsedUri);
-
-      if (canOpen) {
-        final bool success = await launchUrl(
+      bool launched = false;
+      try {
+        launched = await launchUrl(
           parsedUri,
           mode: LaunchMode.externalApplication,
         );
+      } catch (e) {
+        debugPrint('[Utils.launchURL] externalApplication attempt error: $e');
+      }
 
-        if (!success) {
-          _handleError('System failed to launch URL: $trimmedUrl', onLaunchFailure);
+      if (!launched) {
+        try {
+          launched = await launchUrl(
+            parsedUri,
+            mode: LaunchMode.platformDefault,
+          );
+        } catch (e) {
+          debugPrint('[Utils.launchURL] platformDefault attempt error: $e');
         }
-      } else {
-        _handleError('No application found capable of launching URL: $trimmedUrl', onLaunchFailure);
+      }
+
+      if (!launched) {
+        try {
+          launched = await launchUrl(
+            parsedUri,
+            mode: LaunchMode.inAppBrowserView,
+          );
+        } catch (e) {
+          debugPrint('[Utils.launchURL] inAppBrowserView attempt error: $e');
+        }
+      }
+
+      if (!launched) {
+        _handleError('Could not launch URL: $formattedUrl', onLaunchFailure);
       }
     } catch (e, stackTrace) {
       _handleError(

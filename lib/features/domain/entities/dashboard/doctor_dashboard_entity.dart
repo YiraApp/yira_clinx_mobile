@@ -36,8 +36,16 @@ class DoctorProfileEntity {
   final String? name;
   final String? specialty;
   final String? clinicAddress;
+  final String? profileImageUrl;
+  final String? imagePath;
 
-  const DoctorProfileEntity({this.name, this.specialty, this.clinicAddress});
+  const DoctorProfileEntity({
+    this.name,
+    this.specialty,
+    this.clinicAddress,
+    this.profileImageUrl,
+    this.imagePath,
+  });
 }
 
 class DashboardMetricsEntity {
@@ -68,6 +76,7 @@ class TodaysScheduleEntity {
   final String? reason;
   final String? statusTag;
   final String? meetingUrl;
+  final String? patientStatus;
 
   const TodaysScheduleEntity({
     this.patientUserId,
@@ -80,6 +89,7 @@ class TodaysScheduleEntity {
     this.reason,
     this.statusTag,
     this.meetingUrl,
+    this.patientStatus,
   });
 }
 
@@ -110,8 +120,8 @@ class RecentPatientsEntity {
 class WeeklyAppointmentsEntity {
   final int? averagePerDay;
   final List<DailyDataEntity>? dailyData;
-  List<String?> get xLabels => dailyData!.map((e) => e.label).toList();
-  List<double?> get yValues => dailyData!.map((e) => e.value!.toDouble()).toList() ?? [];
+  List<String?> get xLabels => dailyData?.map((e) => e.label).toList() ?? [];
+  List<double?> get yValues => dailyData?.map((e) => (e.value ?? 0).toDouble()).toList() ?? [];
   const WeeklyAppointmentsEntity({this.averagePerDay, this.dailyData});
 }
 
@@ -125,8 +135,8 @@ class DailyDataEntity {
 class MonthlyPatientsEntity {
   final int? yearlyTotal;
   final List<MonthlyDataEntity>? monthlyData;
-  List<String?> get xLabels => monthlyData!.map((e) => e.label).toList();
-  List<double> get yValues => monthlyData?.map((e) => e.value!.toDouble()).toList() ?? [];
+  List<String?> get xLabels => monthlyData?.map((e) => e.label).toList() ?? [];
+  List<double?> get yValues => monthlyData?.map((e) => (e.value ?? 0).toDouble()).toList() ?? [];
   const MonthlyPatientsEntity({this.yearlyTotal, this.monthlyData});
 }
 

@@ -33,13 +33,13 @@ class ProfileStatItem extends StatelessWidget {
           color: isDark ? darkModeCardColor : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.12),
+            color: color.withValues(alpha: isDark ? 0.2 : 0.15),
             width: 1,
           ),
           boxShadow: [
             if (!isDark)
               BoxShadow(
-                color: color.withOpacity(0.06),
+                color: color.withValues(alpha: 0.06),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -50,7 +50,7 @@ class ProfileStatItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: color.withOpacity(isDark ? 0.2 : 0.1),
+                color: color.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: isTab ? 18 : 16, color: color),
@@ -78,9 +78,9 @@ class ProfileStatItem extends StatelessWidget {
                 fontFamily: appPoppinFont,
                 fontSize: isTab
                     ? displayWidth(context) * 0.012
-                    : displayWidth(context) * 0.024,
+                    : displayWidth(context) * 0.026,
                 fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                color: isDark ? Colors.white54 : Colors.black45,
               ),
             ),
           ],

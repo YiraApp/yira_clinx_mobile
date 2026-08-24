@@ -105,7 +105,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                   // ── Body ──
                   Expanded(
                     child: state.status == PrescriptionStatus.loading
-                        ? _buildShimmerLoading(isDark)
+                        ? const DetailedPrescriptionCardShimmer(itemCount: 3)
                         : ListView(
                             physics: const BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(bottom: 24),
@@ -229,62 +229,6 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  /// Shimmer loading placeholder
-  Widget _buildShimmerLoading(bool isDark) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      children: List.generate(3, (index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.grey[900] : Colors.white,
-            borderRadius: BorderRadius.circular(fieldBorderRadius),
-            border: Border.all(
-              color: isDark ? Colors.white12 : Colors.grey.shade200,
-            ),
-          ),
-          child: BaseShimmer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(width: 160, height: 14, color: Colors.white),
-                          const SizedBox(height: 8),
-                          Container(width: 120, height: 10, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(width: 80, height: 10, color: Colors.white),
-                const SizedBox(height: 8),
-                Container(width: double.infinity, height: 12, color: Colors.white),
-                const SizedBox(height: 6),
-                Container(width: 200, height: 12, color: Colors.white),
-              ],
-            ),
-          ),
-        );
-      }),
     );
   }
 }

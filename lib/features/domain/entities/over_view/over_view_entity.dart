@@ -1,10 +1,13 @@
-
 class PatientOverViewEntity {
   final bool? status;
   final String? message;
   final DataEntity? data;
 
-  const PatientOverViewEntity({this.status, this.message, this.data});
+  const PatientOverViewEntity({
+    this.status,
+    this.message,
+    this.data,
+  });
 }
 
 class DataEntity {
@@ -13,6 +16,7 @@ class DataEntity {
   final InsuranceEntity? insurance;
   final VisitHistoryEntity? visitHistory;
   final String? summary;
+  final List<PatientAppointmentEntity>? appointments;
 
   const DataEntity({
     this.contactInformation,
@@ -20,6 +24,167 @@ class DataEntity {
     this.insurance,
     this.visitHistory,
     this.summary,
+    this.appointments,
+  });
+}
+
+class PatientAppointmentEntity {
+  final String id;
+  final String appointmentNumber;
+  final String tokenNumber;
+  final String appointmentDate;
+  final dynamic rawDate;
+  final String startTime;
+  final String endTime;
+  final String duration;
+  final String condition;
+  final String chiefComplaint;
+  final String reason;
+  final String status;
+  final String appointmentType;
+  final bool isTeleConsultation;
+  final String meetingUrl;
+  final String location;
+  final String hospitalName;
+  final String hospitalAddress;
+  final String hospitalPhone;
+  final String doctorId;
+  final String doctorName;
+  final String doctorEmail;
+  final String doctorPhone;
+  final String notes;
+  final String createdAt;
+  final String createdBy;
+  final List<AppointmentPrescriptionEntity> prescriptions;
+  final List<AppointmentClinicalNoteEntity> clinicalNotes;
+  final List<AppointmentDocumentEntity> documents;
+  final List<AppointmentMedicalRecordEntity> medicalRecords;
+
+  const PatientAppointmentEntity({
+    required this.id,
+    this.appointmentNumber = '',
+    this.tokenNumber = '',
+    this.appointmentDate = '',
+    this.rawDate,
+    this.startTime = '',
+    this.endTime = '',
+    this.duration = '15 mins',
+    this.condition = '',
+    this.chiefComplaint = '',
+    this.reason = '',
+    this.status = 'Confirmed',
+    this.appointmentType = 'In-Clinic',
+    this.isTeleConsultation = false,
+    this.meetingUrl = '',
+    this.location = '',
+    this.hospitalName = '',
+    this.hospitalAddress = '',
+    this.hospitalPhone = '',
+    this.doctorId = '',
+    this.doctorName = '',
+    this.doctorEmail = '',
+    this.doctorPhone = '',
+    this.notes = '',
+    this.createdAt = '',
+    this.createdBy = '',
+    this.prescriptions = const [],
+    this.clinicalNotes = const [],
+    this.documents = const [],
+    this.medicalRecords = const [],
+  });
+}
+
+class AppointmentPrescriptionEntity {
+  final String id;
+  final String date;
+  final String notes;
+  final String doctorName;
+  final List<AppointmentMedicationEntity> medications;
+  final List<AppointmentDiagnosisEntity> diagnoses;
+
+  const AppointmentPrescriptionEntity({
+    required this.id,
+    this.date = '',
+    this.notes = '',
+    this.doctorName = '',
+    this.medications = const [],
+    this.diagnoses = const [],
+  });
+}
+
+class AppointmentMedicationEntity {
+  final String id;
+  final String name;
+  final String dosage;
+  final String frequency;
+  final String duration;
+  final String instructions;
+
+  const AppointmentMedicationEntity({
+    required this.id,
+    this.name = '',
+    this.dosage = '',
+    this.frequency = '',
+    this.duration = '',
+    this.instructions = '',
+  });
+}
+
+class AppointmentDiagnosisEntity {
+  final String id;
+  final String name;
+  final String icd10;
+
+  const AppointmentDiagnosisEntity({
+    required this.id,
+    this.name = '',
+    this.icd10 = '',
+  });
+}
+
+class AppointmentClinicalNoteEntity {
+  final String id;
+  final String notes;
+  final String doctorName;
+  final String createdAt;
+
+  const AppointmentClinicalNoteEntity({
+    required this.id,
+    this.notes = '',
+    this.doctorName = '',
+    this.createdAt = '',
+  });
+}
+
+class AppointmentDocumentEntity {
+  final String id;
+  final String fileName;
+  final String category;
+  final String type;
+  final String fileUrl;
+  final String createdAt;
+
+  const AppointmentDocumentEntity({
+    required this.id,
+    this.fileName = '',
+    this.category = '',
+    this.type = '',
+    this.fileUrl = '',
+    this.createdAt = '',
+  });
+}
+
+class AppointmentMedicalRecordEntity {
+  final String id;
+  final String recordType;
+  final String fileUrl;
+  final String createdAt;
+
+  const AppointmentMedicalRecordEntity({
+    required this.id,
+    this.recordType = '',
+    this.fileUrl = '',
+    this.createdAt = '',
   });
 }
 

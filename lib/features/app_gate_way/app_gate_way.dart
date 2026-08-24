@@ -88,6 +88,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
     AppRoutes.genderSelection: 'lib/features/presentation/auth/on_boarding/gender_selection_screen.dart',
     AppRoutes.userConfiguration: 'lib/features/presentation/configuration/configuration_screen.dart',
     AppRoutes.patientManagementScreen: 'lib/features/presentation/doctor/dashboard/patient_management_screen.dart',
+    AppRoutes.favoritePatientsScreen: 'lib/features/presentation/doctor/dashboard/favorite_patients_screen.dart',
     AppRoutes.userPrescriptionManagement: 'lib/features/presentation/user_prescription/prescription_screen.dart',
     AppRoutes.userPrescriptionDetailScreen: 'lib/features/presentation/user_prescription/prescription_details_screen.dart',
     AppRoutes.languageSelectionScreen: 'lib/features/presentation/settings/language_setting_screen.dart',

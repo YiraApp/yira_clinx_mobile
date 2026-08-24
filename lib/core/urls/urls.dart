@@ -27,8 +27,12 @@ class URLs {
   static const doctorSlotsDeployUrl = "/v1/api/auth/doctor-slots/deploy";
   static const doctorSlotBlockUrl = "/v1/api/auth/doctor-slots/block";
   static const patientsListUrl = "/v1/api/auth/patients";
+  static const favoritePatientsListUrl = "/v1/api/auth/favorite-patients/list";
+  static const toggleFavoritePatientUrl = "/v1/api/auth/favorite-patients/toggle";
   static const dashboardPatientDetailsUrl = "/v1/api/auth/patient/details";
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
+  static const treatmentPlansUrl = "/v1/api/auth/treatment-plans";
+  static const patientAppointmentsUrl = "/v1/api/auth/patient-appointments";
 
   /*Side menu*/
   static const sideMenuUrl = "/v1/api/auth/sidebar";
@@ -61,4 +65,9 @@ class URLs {
   static const patientAccessCheckUrl = "/v1/api/auth/patient-access/check";
   static const patientConsentsListUrl = "/v1/api/auth/patient-access/patient-consents";
   static const patientConsentRespondUrl = "/v1/api/auth/patient-access/respond";
+
+  /*In-App Notifications*/
+  static const notificationsListUrl = "/v1/api/auth/notifications";
+  static const markNotificationReadUrl = "/v1/api/auth/notifications";
+  static const markAllNotificationsReadUrl = "/v1/api/auth/notifications/mark-all-read";
 }

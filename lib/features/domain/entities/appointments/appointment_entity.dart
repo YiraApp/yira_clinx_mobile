@@ -15,10 +15,12 @@ class Appointment {
   final String category;
   final AppointmentStatus status;
   final String statusRaw;
+  final String? patientStatus;
   final String? patientUserId;
   final int? orgId;
   final int? hospitalId;
   final String? reason;
+  final String? meetingUrl;
 
   const Appointment({
     required this.id,
@@ -31,10 +33,12 @@ class Appointment {
     required this.category,
     required this.status,
     this.statusRaw = '',
+    this.patientStatus,
     this.patientUserId,
     this.orgId,
     this.hospitalId,
     this.reason,
+    this.meetingUrl,
   });
 }
 

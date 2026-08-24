@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/appointments/appointment_entity.dart';
 import '../../doctor/dashboard/widgets/doc_appointment_card.dart';
 
@@ -191,7 +192,27 @@ class AppointmentTabContent extends StatelessWidget {
                   statusLabel: statusLabel,
                   statusColor: statusColor,
                   statusTextColor: statusTextColor,
+                  patientStatus: appointment.patientStatus,
                   isTeleConsultation: isVideo,
+                  onJoinCall: () async {
+                    final meetingUrl = appointment.meetingUrl;
+                    if (meetingUrl != null && meetingUrl.isNotEmpty) {
+                      await Utils.launchURL(
+                        meetingUrl,
+                        onLaunchFailure: (err) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(err)),
+                            );
+                          }
+                        },
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
+                      );
+                    }
+                  },
                   onTap: () {
                     onCardTap?.call(appointment);
                   },

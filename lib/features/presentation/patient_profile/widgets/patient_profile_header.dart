@@ -9,6 +9,7 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
+import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 
 import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_bloc.dart';
 import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_state.dart';
@@ -45,6 +46,33 @@ class PatientProfileHeader extends StatefulWidget {
 class _PatientProfileHeaderState extends State<PatientProfileHeader> {
   String _currentStatus = 'CONFIRMED';
   bool _isUpdating = false;
+  bool _isFav = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavorite();
+  }
+
+  void _checkFavorite() {
+    final pId = widget.patientId ?? '';
+    final altId = widget.patient.id;
+    _isFav = FavoritePatientsService().isFavorite(pId.isNotEmpty ? pId : altId, altId);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final pId = widget.patientId ?? widget.patient.id;
+    final altId = widget.patient.id;
+    final isNowFav = await FavoritePatientsService().toggleFavorite(
+      patientId: pId,
+      alternateId: altId,
+    );
+    if (mounted) {
+      setState(() {
+        _isFav = isNowFav;
+      });
+    }
+  }
 
   void _showStatusPicker(BuildContext context) {
     showModalBottomSheet(
@@ -151,7 +179,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         : 'PT';
 
     return Container(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 12),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 10),
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: const BorderRadius.only(
@@ -160,7 +188,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.3),
+            color: primaryColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -181,7 +209,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -235,9 +263,9 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -270,6 +298,30 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                               ),
                             ],
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Favorite Star Button
+                    GestureDetector(
+                      onTap: _toggleFavorite,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: _isFav
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _isFav
+                                ? const Color(0xFFFDE68A)
+                                : Colors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Icon(
+                          _isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                          color: _isFav ? const Color(0xFFD97706) : Colors.white,
+                          size: 16,
                         ),
                       ),
                     ),
@@ -327,7 +379,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                               widget.patient.dob,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: widget.isTab ? 13 : 11,
                               ),
                             ),
@@ -335,13 +387,13 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                             if (widget.patient.dob.isNotEmpty)
                               Text(
                                 ' • ',
-                                style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                               ),
                             Text(
                               widget.patient.gender,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: widget.isTab ? 13 : 11,
                               ),
                             ),
@@ -349,12 +401,12 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                           if (widget.patient.bloodGroup.isNotEmpty) ...[
                             Text(
                               ' • ',
-                              style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -375,11 +427,11 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                 ),
               ],
             ),
-            if (widget.consentBloc != null) ...[
+            if (widget.consentBloc != null && (widget.appointmentId == null || widget.appointmentId!.isEmpty)) ...[
               const SizedBox(height: 10),
               _buildConsentAccessButton(context),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             if (widget.tabBar != null) widget.tabBar!,
           ],
         ),
@@ -396,9 +448,9 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFF10B981).withOpacity(0.25),
+          color: const Color(0xFF10B981).withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -435,9 +487,9 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.25),
+            color: Colors.orange.withValues(alpha: 0.25),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.orange.withOpacity(0.4)),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -478,7 +530,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

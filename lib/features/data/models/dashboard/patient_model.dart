@@ -14,10 +14,11 @@ class PatientModel extends PatientEntity {
     required super.age,
     required super.visits,
     super.allergy,
+    super.isFavorite,
   });
 
   // Convert JSON from API to Model
-  factory PatientModel.fromJson(Map<String, dynamic> json) {
+  factory PatientModel.fromJson(Map<String, dynamic> json, {bool isFavorite = false}) {
     String allergyStr = '';
     if (json['allergies'] is List) {
       allergyStr = (json['allergies'] as List).join(', ');
@@ -26,6 +27,8 @@ class PatientModel extends PatientEntity {
     } else if (json['allergy'] != null) {
       allergyStr = json['allergy'].toString();
     }
+
+    final bool fav = (json['isFavorite'] == true) || (json['is_favorite'] == true) || isFavorite;
 
     return PatientModel(
       id: json['id'] ?? '',
@@ -38,6 +41,7 @@ class PatientModel extends PatientEntity {
       age: json['age'] ?? 0,
       visits: json['total_visits'] ?? json['visits'] ?? 0,
       allergy: allergyStr,
+      isFavorite: fav,
     );
   }
 
@@ -54,6 +58,7 @@ class PatientModel extends PatientEntity {
       'age': age,
       'visits': visits,
       'allergy': allergy,
+      'isFavorite': isFavorite,
     };
   }
 }
