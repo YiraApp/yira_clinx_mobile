@@ -48,6 +48,44 @@ class PatientOption {
     this.pastAppointmentsCount = 0,
     this.lastVisitDate,
   });
+
+  String get displayAge {
+    if (dob.isEmpty) return '';
+    try {
+      DateTime? parsed;
+      if (dob.contains('-')) {
+        final parts = dob.split('-');
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            // YYYY-MM-DD
+            parsed = DateTime.tryParse(dob);
+          } else if (parts[2].length == 4) {
+            // DD-MM-YYYY
+            final day = int.tryParse(parts[0]) ?? 1;
+            final month = int.tryParse(parts[1]) ?? 1;
+            final year = int.tryParse(parts[2]) ?? 2000;
+            parsed = DateTime(year, month, day);
+          }
+        }
+      }
+      parsed ??= DateTime.tryParse(dob);
+      if (parsed != null) {
+        final now = DateTime.now();
+        int age = now.year - parsed.year;
+        if (now.month < parsed.month || (now.month == parsed.month && now.day < parsed.day)) {
+          age--;
+        }
+        if (age >= 0 && age < 150) {
+          return '$age Yrs';
+        }
+      }
+    } catch (_) {}
+    final directAge = int.tryParse(dob);
+    if (directAge != null && directAge > 0 && directAge < 150) {
+      return '$directAge Yrs';
+    }
+    return '';
+  }
 }
 
 class DoctorSlotItem {
@@ -769,7 +807,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           final dob = (map['dob'] ?? '').toString();
           final emailStr = (map['email'] ?? map['patientEmail'] ?? '').toString().trim();
           final email = emailStr.isNotEmpty && !emailStr.endsWith('@yira.ai') ? emailStr : null;
-          return PatientOption(id: id, name: name, phone: phone, gender: gender, dob: dob, email: email);
+          final String userId = (map['userId'] ?? map['id'] ?? id).toString();
+          final String relation = (map['relation'] ?? 'Self').toString();
+          final bool isPrimary = map['isPrimary'] == true || relation.toLowerCase() == 'self';
+          return PatientOption(
+            id: id,
+            userId: userId,
+            name: name,
+            phone: phone,
+            gender: gender,
+            dob: dob,
+            email: email,
+            relation: relation,
+            isPrimary: isPrimary,
+            parentUserId: map['parentUserId']?.toString(),
+          );
         }).where((p) => p.name.trim().isNotEmpty && p.name != 'Patient').toList();
 
         if (mounted) {
@@ -779,6 +831,72 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         }
       }
     } catch (_) {}
+  }
+
+  Future<PatientOption> _createDependentInBackend({
+    required String name,
+    required String relation,
+    required String gender,
+    required String dob,
+    String? parentUserId,
+  }) async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value?.data;
+      final String token = currentUser?.accessToken ?? '';
+      final orgId = currentUser?.latestOrgId ?? 1;
+      final hospitalId = currentUser?.latestHospitalId ?? 1;
+
+      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.addDependentPatientUrl,
+        data: {
+          "primaryPhone": _phoneController.text.trim(),
+          "parentUserId": parentUserId,
+          "name": name,
+          "relation": relation,
+          "gender": gender,
+          "dob": dob.isNotEmpty ? dob : null,
+          "orgId": orgId,
+          "hospitalId": hospitalId,
+        },
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        final Map<String, dynamic> rawData = response.data as Map<String, dynamic>;
+        final dynamic data = rawData['data'];
+        if (data is Map<String, dynamic>) {
+          return PatientOption(
+            id: (data['id'] ?? data['userId'] ?? 'DEP').toString(),
+            userId: (data['userId'] ?? data['id'] ?? '').toString(),
+            name: (data['name'] ?? name).toString(),
+            phone: (data['phone'] ?? _phoneController.text.trim()).toString(),
+            gender: (data['gender'] ?? gender).toString(),
+            dob: (data['dob'] ?? dob).toString(),
+            relation: (data['relation'] ?? relation).toString(),
+            isPrimary: false,
+            parentUserId: data['parentUserId']?.toString() ?? parentUserId,
+            accountType: "Dependent",
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error creating dependent in backend: $e");
+    }
+
+    return PatientOption(
+      id: 'DEP-${DateTime.now().millisecondsSinceEpoch}',
+      userId: '',
+      name: name,
+      phone: _phoneController.text.trim(),
+      gender: gender,
+      dob: dob,
+      relation: relation,
+      isPrimary: false,
+      parentUserId: parentUserId,
+      accountType: "Dependent",
+    );
   }
 
   void _onPatientSearchChanged(String query) {
@@ -902,10 +1020,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     context.read<AppointmentBloc>().add(
       SubmitBookAppointmentEvent(
-        patientUserId: _selectedPatient?.userId.isNotEmpty == true ? _selectedPatient!.userId : null,
+        patientUserId: _selectedPatient?.userId.isNotEmpty == true
+            ? _selectedPatient!.userId
+            : (_selectedPatient?.id.isNotEmpty == true ? _selectedPatient!.id : null),
         parentUserId: _selectedPatient?.parentUserId,
         relation: _selectedPatient?.relation ?? "Self",
-        isPrimary: _selectedPatient?.isPrimary ?? true,
+        isPrimary: _selectedPatient?.isPrimary ?? (_selectedPatient == null ? true : _selectedPatient!.relation.toLowerCase() == "self"),
         patientName: name,
         phoneNumber: digitsPhone,
         patientEmail: _selectedPatient?.email,
@@ -3132,7 +3252,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               color: isDark ? Colors.white70 : const Color(0xFF475569),
                             ),
                           ),
-                          if (patient.dob.isNotEmpty) ...[
+                          if (patient.displayAge.isNotEmpty) ...[
                             Container(
                               width: 1,
                               height: 12,
@@ -3140,13 +3260,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
                             ),
                             Icon(
-                              Icons.cake_rounded,
-                              size: 13,
+                              Icons.calendar_today_rounded,
+                              size: 12,
                               color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              patient.dob,
+                              patient.displayAge,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: 11.5,
@@ -3620,7 +3740,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             itemBuilder: (context, index) {
               final account = _matchingAccountsList[index];
               final bool isIndependent = account.isPrimary || account.relation.toLowerCase() == 'self';
-              final bool isSelected = _selectedPatient?.id == account.id;
+              final bool isSelected = (_selectedPatient?.id.isNotEmpty == true && _selectedPatient?.id == account.id) ||
+                  (_selectedPatient?.userId.isNotEmpty == true && _selectedPatient?.userId == account.userId) ||
+                  (_selectedPatient != null && _selectedPatient!.name == account.name && _selectedPatient!.relation.toLowerCase() == account.relation.toLowerCase());
               final Color tileAccent = isIndependent ? const Color(0xFF2563EB) : const Color(0xFF059669);
 
               // Relation-specific icon
@@ -3764,7 +3886,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 const SizedBox(width: 3),
                                 Flexible(
                                   child: Text(
-                                    "${account.gender}${account.dob.isNotEmpty ? ' · ${account.dob}' : ''}${account.pastAppointmentsCount > 0 ? ' · ${account.pastAppointmentsCount} visit(s)' : ''}",
+                                    "${account.gender}${account.displayAge.isNotEmpty ? ' · ${account.displayAge}' : ''}${account.pastAppointmentsCount > 0 ? ' · ${account.pastAppointmentsCount} visit(s)' : ''}",
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -3889,6 +4011,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   // ── 4. Add Dependent / Family Member Dialog ──
   void _showAddDependentDialog(BuildContext context, bool isDark, {String initialRelation = "Spouse"}) {
+    final int dependentsCount = _matchingAccountsList.where((a) => !a.isPrimary).length;
+    if (dependentsCount >= 6) {
+      _showValidationBanner("Maximum limit of 6 family relations reached for this primary account.");
+      return;
+    }
+
     final nameController = TextEditingController();
     final ageController = TextEditingController();
     String selectedRelation = initialRelation;
@@ -3898,6 +4026,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ? "Male"
             : (initialRelation == "Spouse" ? "Female" : "Male");
     String? localError;
+    bool isSavingDependent = false;
 
     final List<Map<String, dynamic>> relations = [
       {"label": "Spouse", "icon": Icons.favorite_rounded, "color": const Color(0xFFE11D48)},
@@ -3992,7 +4121,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "Add dependent under +91 ${_phoneController.text.trim()}",
+                                      "Add dependent ($dependentsCount/6) under +91 ${_phoneController.text.trim()}",
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 11,
@@ -4217,12 +4346,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: isSavingDependent ? null : () async {
                                 final depName = nameController.text.trim();
                                 if (depName.isEmpty || depName.length < 2) {
                                   setDialogState(() => localError = "Please enter a valid name (min 2 chars)");
                                   return;
                                 }
+
+                                setDialogState(() => isSavingDependent = true);
 
                                 final primaryAccount = _matchingAccountsList.firstWhere(
                                   (a) => a.isPrimary,
@@ -4242,25 +4373,26 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   }
                                 }
 
-                                final newDependent = PatientOption(
-                                  id: 'DEP-${DateTime.now().millisecondsSinceEpoch}',
-                                  userId: '',
+                                final createdDependent = await _createDependentInBackend(
                                   name: depName,
-                                  phone: _phoneController.text.trim(),
+                                  relation: selectedRelation,
                                   gender: selectedGender,
                                   dob: dob,
-                                  relation: selectedRelation,
-                                  isPrimary: false,
                                   parentUserId: primaryAccount.userId.isNotEmpty ? primaryAccount.userId : null,
-                                  accountType: "Dependent",
                                 );
 
-                                setState(() {
-                                  _matchingAccountsList.add(newDependent);
-                                  _selectPatientAccount(newDependent);
-                                });
+                                if (mounted) {
+                                  setState(() {
+                                    // Remove any temporary entry with same name if existing
+                                    _matchingAccountsList.removeWhere((a) => !a.isPrimary && a.name.toLowerCase() == createdDependent.name.toLowerCase());
+                                    _matchingAccountsList.add(createdDependent);
+                                    _selectPatientAccount(createdDependent);
+                                  });
+                                }
 
-                                Navigator.pop(sheetContext);
+                                if (sheetContext.mounted) {
+                                  Navigator.pop(sheetContext);
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryColor,
@@ -4268,21 +4400,30 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Add ${selectedRelation != 'Other' ? selectedRelation : 'Dependent'} & Schedule",
-                                    style: const TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
+                              child: isSavingDependent
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "Add ${selectedRelation != 'Other' ? selectedRelation : 'Dependent'} & Schedule",
+                                          style: const TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],

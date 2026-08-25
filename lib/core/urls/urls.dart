@@ -34,6 +34,7 @@ class URLs {
   static const treatmentPlansUrl = "/v1/api/auth/treatment-plans";
   static const patientAppointmentsUrl = "/v1/api/auth/patient-appointments";
   static const patientAccountsByPhoneUrl = "/v1/api/auth/patients/accounts-by-phone";
+  static const addDependentPatientUrl = "/v1/api/auth/patients/add-dependent";
 
   /*Side menu*/
   static const sideMenuUrl = "/v1/api/auth/sidebar";
