@@ -68,26 +68,22 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   final currentUser = GlobalSession.instance.userNotifier.value;
                   final payload = currentUser?.data;
                   final navigationId = payload?.navigationId;
+                  final roleName = (payload?.latestUserRole ?? '').toLowerCase();
                   final navigationRoutes = const {
-                    '1': AppRoutes.doctorDashboard,
+                    '1': AppRoutes.patientDashboard,
                     '2': AppRoutes.doctorDashboard,
+                    '3': AppRoutes.patientDashboard,
                   };
 
-                  final coreRoute = navigationRoutes[navigationId];
-                  if (coreRoute != null) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      coreRoute,
-                      (route) => false,
-                    );
-                  } else {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.unsupportedRole,
-                      (route) => false,
-                      arguments: currentUser?.data,
-                    );
-                  }
+                  final coreRoute = navigationRoutes[navigationId] ??
+                      (roleName.contains('patient') || roleName == 'user'
+                          ? AppRoutes.patientDashboard
+                          : AppRoutes.doctorDashboard);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    coreRoute,
+                    (route) => false,
+                  );
                 },
               ),
               automaticallyImplyLeading: true,

@@ -28,19 +28,12 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
         appointmentId: event.appointmentId,
         hospitalId: event.hospitalId,
         orgId: event.orgId,
+        limit: event.limit,
       );
-      final Map<String, UploadedRecord> recordMap = {};
-      for (final r in state.allRecords) {
-        recordMap[r.id] = r;
-      }
-      for (final r in data) {
-        recordMap[r.id] = r;
-      }
-      final merged = recordMap.values.toList();
       emit(state.copyWith(
         status: UploadedStatus.success,
-        allRecords: merged,
-        filteredRecords: _filterData(merged, state.selectedCategory),
+        allRecords: data,
+        filteredRecords: _filterData(data, state.selectedCategory),
       ));
     } catch (_) {
       emit(state.copyWith(status: UploadedStatus.failure));

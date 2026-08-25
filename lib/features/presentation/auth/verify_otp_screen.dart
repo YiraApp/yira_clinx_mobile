@@ -6,7 +6,6 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
-import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -89,29 +88,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                             payload.roleCount == 1 &&
                             payload.hospitalCount == 1 &&
                             payload.organizationCount == 1) {
-                          final String role = (payload.navigationId ?? '')
-                              .toLowerCase()
-                              .trim();
-                          if (role == "2") {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              AppRoutes.doctorDashboard,
-                              (route) => false,
-                            );
-                          } else if (role == "1") {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              AppRoutes.dashboardPatientDetails,
-                              (route) => false,
-                            );
-                          } else {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              AppRoutes.unsupportedRole,
-                              (route) => false,
-                              arguments: state.loginEntity,
-                            );
-                          }
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            AppRoutes.userConfiguration,
+                            (route) => false,
+                          );
                         } else {
                           SelectRoleModel data = SelectRoleModel(
                             state.loginEntity.data?.roles ?? [],

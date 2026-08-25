@@ -127,6 +127,10 @@ class _RouteLoggingObserver extends NavigatorObserver {
     AppRoutes.serverDown: 'lib/core/server_down/server_down_screen.dart',
     AppRoutes.unsupportedRole: 'lib/features/presentation/un_supported_role_screen/un_supported_role_screen.dart',
     AppRoutes.logOutScreen: 'lib/features/presentation/configure_screens/log_out_screen.dart',
+    AppRoutes.patientDashboard: 'lib/features/presentation/patient/dashboard/patient_dashboard_screen.dart',
+    AppRoutes.patientAppointments: 'lib/features/presentation/patient/appointments/patient_appointments_screen.dart',
+    AppRoutes.patientDocuments: 'lib/features/presentation/patient/documents/patient_documents_screen.dart',
+    AppRoutes.patientProfile: 'lib/features/presentation/patient/profile/patient_profile_passport_screen.dart',
   };
 
   String _getFilePath(String? routeName) {

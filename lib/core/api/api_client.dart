@@ -65,8 +65,8 @@ import 'base_api_configuration.dart';
 enum ApiType { account, health }
 
 class ApiClient {
-  final String _accountBaseUrl = EnvironmentService.config.accountBaseUrl;
-  final String _healthBaseUrl = EnvironmentService.config.healthCampBaseUrl;
+  String get _accountBaseUrl => EnvironmentService.config.accountBaseUrl;
+  String get _healthBaseUrl => EnvironmentService.config.healthCampBaseUrl;
 
   final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 

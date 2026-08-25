@@ -35,9 +35,9 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
     final Map<String, dynamic> requestBody = {
       "userId": currentUser?.data?.id ?? '',
       "patientId": patientId,
-      "orgId": orgId,
-      "hospitalId": hospitalId,
-      "appointmentId": appointmentId
+      if (orgId.isNotEmpty && orgId != '0') "orgId": orgId,
+      if (hospitalId.isNotEmpty && hospitalId != '0') "hospitalId": hospitalId,
+      if (appointmentId.isNotEmpty) "appointmentId": appointmentId
     };
     final String fullCacheKey = _generateDeterministicCacheKey(
       customPrefix: dashboardPatientDetailsKey,
@@ -100,73 +100,16 @@ class DashboardPatientDetailsRepoImpl extends DashboardPatientDetailsRepo {
   }
 
   @override
-  Future<DashBoardPatientDetailsEntity?> fetchPatientDataDirectFromKey(String cacheKey)
-  async {
+  Future<DashBoardPatientDetailsEntity?> fetchPatientDataDirectFromKey(
+      String cacheKey) async {
     try {
-      final String? cachedJsonString = await _localCache.getCachedResponse(
-        cacheKey,
-      );
+      final String? cachedJsonString =
+          await _localCache.getCachedResponse(cacheKey);
       if (cachedJsonString != null) {
         final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
         developer.log("Direct cache key fetch execution hit success.", name: "DoctorDashboardRepoImpl");
         return DashBoardPatientDetailsModel.fromJson(decodedData);
       }
-
-      final Map<String, dynamic> mockJsonResponse = {
-        "status": true,
-        "message": "Patient profile data retrieved successfully",
-        "data": {
-          "patient_info": {
-            "patient_id": "gsdfds",
-            "appointment_id": "12",
-            "name": "Mani N",
-            "age": "25 yrs",
-            "gender": "Male",
-            "last_visit": "4/6/2026"
-          },
-          "contact_information": {
-            "phone": "9908875796",
-            "email": "jmani83280@gmail.com",
-            "location": ""
-          },
-          "latest_vitals": {
-            "blood_pressure": {
-              "value": "120/80",
-              "unit": "mmHg"
-            },
-            "pulse": {
-              "value": "78",
-              "unit": "bpm"
-            },
-            "temperature": {
-              "value": "98.4",
-              "unit": "°F"
-            },
-            "spo2": {
-              "value": "98",
-              "unit": "%"
-            },
-            "weight": {
-              "value": "82",
-              "unit": "kg"
-            },
-            "height": {
-              "value": "168",
-              "unit": "cm"
-            }
-          },
-          "medical_information": {
-            "blood_group": "B+"
-          },
-          "insurance": {
-            "provider": "sbi",
-            "policy_number": "12345",
-            "valid_till": "12-08-2046"
-          }
-        }
-      };
-
-      return DashBoardPatientDetailsModel.fromJson(mockJsonResponse);
     } catch (cacheError, stackTrace) {
       developer.log(
         "Critical failure resolving direct database registers.",

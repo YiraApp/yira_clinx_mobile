@@ -19,11 +19,16 @@ class SoftUpdateView extends StatelessWidget {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final payload = currentUser?.data;
     final navigationId = payload?.navigationId;
+    final roleName = (payload?.latestUserRole ?? '').toLowerCase();
     final navigationRoutes = const {
-      '1': AppRoutes.doctorDashboard,
+      '1': AppRoutes.patientDashboard,
       '2': AppRoutes.doctorDashboard,
+      '3': AppRoutes.patientDashboard,
     };
-    final coreRoute = navigationRoutes[navigationId] ?? AppRoutes.doctorDashboard;
+    final coreRoute = navigationRoutes[navigationId] ??
+        (roleName.contains('patient') || roleName == 'user'
+            ? AppRoutes.patientDashboard
+            : AppRoutes.doctorDashboard);
 
     Navigator.pushNamedAndRemoveUntil(
       context,

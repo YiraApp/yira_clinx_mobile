@@ -60,10 +60,33 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
               }
             } else {
               final payload = state.coreData.data;
-              final navigationId = payload?.navigationId;
+              final navigationId = payload?.navigationId?.toString().trim();
+              final roleName = (payload?.latestUserRole ?? '').toLowerCase().trim();
+
+              final isPatient = roleName.contains('patient') ||
+                  roleName == 'user' ||
+                  roleName.contains('consumer') ||
+                  roleName.contains('client') ||
+                  navigationId == '1';
+
+              final isDoctor = roleName.contains('doctor') ||
+                  roleName.contains('provider') ||
+                  roleName.contains('physician') ||
+                  navigationId == '2';
+
+              if (isPatient && !isDoctor) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.patientDashboard,
+                  (route) => false,
+                );
+                return;
+              }
+
               final navigationRoutes = const {
-                '1': AppRoutes.doctorDashboard,
+                '1': AppRoutes.patientDashboard,
                 '2': AppRoutes.doctorDashboard,
+                '3': AppRoutes.patientDashboard,
               };
 
               final coreRoute = navigationRoutes[navigationId];
@@ -73,10 +96,16 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
                   coreRoute,
                   (route) => false,
                 );
+              } else if (isPatient) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.patientDashboard,
+                  (route) => false,
+                );
               } else if (payload != null && ((payload.roles != null && payload.roles!.isNotEmpty) || (payload.id != null && payload.id!.isNotEmpty))) {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
-                  AppRoutes.doctorDashboard,
+                  isDoctor ? AppRoutes.doctorDashboard : AppRoutes.patientDashboard,
                   (route) => false,
                 );
               } else {

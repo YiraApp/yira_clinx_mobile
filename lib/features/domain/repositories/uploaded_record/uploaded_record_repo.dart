@@ -6,6 +6,7 @@ abstract class RecordsRepository {
     String? appointmentId,
     String? hospitalId,
     String? orgId,
+    int? limit,
   });
   Future<UploadedRecord?> uploadDocument({
     required String filePath,

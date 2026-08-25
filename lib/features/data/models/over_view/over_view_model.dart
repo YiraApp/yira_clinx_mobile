@@ -28,13 +28,26 @@ class PatientOverViewModel extends PatientOverViewEntity {
 
 class DataModel extends DataEntity {
   const DataModel({
-    ContactInformationModel? super.contactInformation,
-    MedicalInformationModel? super.medicalInformation,
-    InsuranceModel? super.insurance,
-    VisitHistoryModel? super.visitHistory,
-    super.summary,
-    List<PatientAppointmentModel>? super.appointments,
-  });
+    ContactInformationModel? contactInformation,
+    MedicalInformationModel? medicalInformation,
+    InsuranceModel? insurance,
+    VisitHistoryModel? visitHistory,
+    String? summary,
+    List<PatientAppointmentModel>? appointments,
+    NextAppointmentModel? nextAppointment,
+    List<NextAppointmentModel>? upcomingAppointments,
+    LatestVitalsModel? latestVitals,
+  }) : super(
+    contactInformation: contactInformation,
+    medicalInformation: medicalInformation,
+    insurance: insurance,
+    visitHistory: visitHistory,
+    summary: summary,
+    appointments: appointments,
+    nextAppointment: nextAppointment,
+    upcomingAppointments: upcomingAppointments,
+    latestVitals: latestVitals,
+  );
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
     return DataModel(
@@ -56,6 +69,17 @@ class DataModel extends DataEntity {
               .map((i) => PatientAppointmentModel.fromJson(i as Map<String, dynamic>))
               .toList()
           : null,
+      nextAppointment: json['next_appointment'] != null
+          ? NextAppointmentModel.fromJson(json['next_appointment'] as Map<String, dynamic>)
+          : null,
+      upcomingAppointments: json['upcoming_appointments'] != null
+          ? (json['upcoming_appointments'] as List)
+              .map((e) => NextAppointmentModel.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
+      latestVitals: json['latest_vitals'] != null
+          ? LatestVitalsModel.fromJson(json['latest_vitals'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -68,6 +92,12 @@ class DataModel extends DataEntity {
       'summary': summary,
       if (appointments != null)
         'appointments': appointments?.map((a) => (a as PatientAppointmentModel).toJson()).toList(),
+      if (nextAppointment != null)
+        'next_appointment': (nextAppointment as NextAppointmentModel).toJson(),
+      if (upcomingAppointments != null)
+        'upcoming_appointments': upcomingAppointments?.map((a) => (a as NextAppointmentModel).toJson()).toList(),
+      if (latestVitals != null)
+        'latest_vitals': (latestVitals as LatestVitalsModel).toJson(),
     };
   }
 }
@@ -490,6 +520,133 @@ class VisitHistoryModel extends VisitHistoryEntity {
       'initial_registration': initialRegistration,
       'last_check_in_visit': lastCheckInVisit,
       'next_scheduled_appointment': nextScheduledAppointment,
+    };
+  }
+}
+
+class NextAppointmentModel extends NextAppointmentEntity {
+  const NextAppointmentModel({
+    super.id,
+    super.appointmentId,
+    super.doctorName,
+    super.doctorId,
+    super.doctorSpecialty,
+    super.hospitalId,
+    super.hospitalName,
+    super.orgId,
+    super.orgName,
+    super.appointmentDate,
+    super.formattedDate,
+    super.startTime,
+    super.formattedTime,
+    super.consultationType,
+    super.isTeleconsultation,
+    super.reason,
+    super.status,
+    super.meetingUrl,
+  });
+
+  factory NextAppointmentModel.fromJson(Map<String, dynamic> json) {
+    return NextAppointmentModel(
+      id: json['id'],
+      appointmentId: json['appointment_id']?.toString(),
+      doctorName: json['doctor_name'],
+      doctorId: json['doctor_id']?.toString(),
+      doctorSpecialty: json['doctor_specialty']?.toString(),
+      hospitalId: json['hospital_id'],
+      hospitalName: json['hospital_name'],
+      orgId: json['org_id'],
+      orgName: json['org_name'],
+      appointmentDate: json['appointment_date'],
+      formattedDate: json['formatted_date'],
+      startTime: json['start_time'],
+      formattedTime: json['formatted_time'],
+      consultationType: json['consultation_type'],
+      isTeleconsultation: json['is_teleconsultation'],
+      reason: json['reason'],
+      status: json['status'],
+      meetingUrl: json['meeting_url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'appointment_id': appointmentId,
+      'doctor_name': doctorName,
+      'doctor_id': doctorId,
+      'doctor_specialty': doctorSpecialty,
+      'hospital_id': hospitalId,
+      'hospital_name': hospitalName,
+      'org_id': orgId,
+      'org_name': orgName,
+      'appointment_date': appointmentDate,
+      'formatted_date': formattedDate,
+      'start_time': startTime,
+      'formatted_time': formattedTime,
+      'consultation_type': consultationType,
+      'is_teleconsultation': isTeleconsultation,
+      'reason': reason,
+      'status': status,
+      'meeting_url': meetingUrl,
+    };
+  }
+}
+
+class LatestVitalsModel extends LatestVitalsEntity {
+  const LatestVitalsModel({
+    VitalMeasurementModel? bloodPressure,
+    VitalMeasurementModel? pulse,
+    VitalMeasurementModel? temperature,
+    VitalMeasurementModel? spo2,
+    VitalMeasurementModel? weight,
+    VitalMeasurementModel? height,
+  }) : super(
+    bloodPressure: bloodPressure,
+    pulse: pulse,
+    temperature: temperature,
+    spo2: spo2,
+    weight: weight,
+    height: height,
+  );
+
+  factory LatestVitalsModel.fromJson(Map<String, dynamic> json) {
+    return LatestVitalsModel(
+      bloodPressure: json['blood_pressure'] != null ? VitalMeasurementModel.fromJson(json['blood_pressure'] as Map<String, dynamic>) : null,
+      pulse: json['pulse'] != null ? VitalMeasurementModel.fromJson(json['pulse'] as Map<String, dynamic>) : null,
+      temperature: json['temperature'] != null ? VitalMeasurementModel.fromJson(json['temperature'] as Map<String, dynamic>) : null,
+      spo2: json['spo2'] != null ? VitalMeasurementModel.fromJson(json['spo2'] as Map<String, dynamic>) : null,
+      weight: json['weight'] != null ? VitalMeasurementModel.fromJson(json['weight'] as Map<String, dynamic>) : null,
+      height: json['height'] != null ? VitalMeasurementModel.fromJson(json['height'] as Map<String, dynamic>) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (bloodPressure != null) 'blood_pressure': (bloodPressure as VitalMeasurementModel).toJson(),
+      if (pulse != null) 'pulse': (pulse as VitalMeasurementModel).toJson(),
+      if (temperature != null) 'temperature': (temperature as VitalMeasurementModel).toJson(),
+      if (spo2 != null) 'spo2': (spo2 as VitalMeasurementModel).toJson(),
+      if (weight != null) 'weight': (weight as VitalMeasurementModel).toJson(),
+      if (height != null) 'height': (height as VitalMeasurementModel).toJson(),
+    };
+  }
+}
+
+class VitalMeasurementModel extends VitalMeasurementEntity {
+  const VitalMeasurementModel({super.value, super.unit});
+
+  factory VitalMeasurementModel.fromJson(Map<String, dynamic> json) {
+    return VitalMeasurementModel(
+      value: json['value']?.toString(),
+      unit: json['unit']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'unit': unit,
     };
   }
 }

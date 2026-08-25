@@ -31,6 +31,7 @@ class PatientDashboardDataModel extends PatientDashboardDataEntity {
     LatestVitalsModel? super.latestVitals,
     MedicalInformationModel? super.medicalInformation,
     InsuranceModel? super.insurance,
+    NextAppointmentModel? super.nextAppointment,
   });
 
   factory PatientDashboardDataModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +41,7 @@ class PatientDashboardDataModel extends PatientDashboardDataEntity {
       latestVitals: json['latest_vitals'] != null ? LatestVitalsModel.fromJson(json['latest_vitals']) : null,
       medicalInformation: json['medical_information'] != null ? MedicalInformationModel.fromJson(json['medical_information']) : null,
       insurance: json['insurance'] != null ? InsuranceModel.fromJson(json['insurance']) : null,
+      nextAppointment: json['next_appointment'] != null ? NextAppointmentModel.fromJson(json['next_appointment']) : null,
     );
   }
 
@@ -50,6 +52,73 @@ class PatientDashboardDataModel extends PatientDashboardDataEntity {
       'latest_vitals': (latestVitals as LatestVitalsModel?)?.toJson(),
       'medical_information': (medicalInformation as MedicalInformationModel?)?.toJson(),
       'insurance': (insurance as InsuranceModel?)?.toJson(),
+      'next_appointment': (nextAppointment as NextAppointmentModel?)?.toJson(),
+    };
+  }
+}
+
+class NextAppointmentModel extends NextAppointmentEntity {
+  const NextAppointmentModel({
+    super.id,
+    super.appointmentId,
+    super.doctorName,
+    super.doctorId,
+    super.hospitalId,
+    super.hospitalName,
+    super.orgId,
+    super.orgName,
+    super.appointmentDate,
+    super.formattedDate,
+    super.startTime,
+    super.formattedTime,
+    super.consultationType,
+    super.isTeleconsultation,
+    super.reason,
+    super.status,
+    super.meetingUrl,
+  });
+
+  factory NextAppointmentModel.fromJson(Map<String, dynamic> json) {
+    return NextAppointmentModel(
+      id: json['id'],
+      appointmentId: json['appointment_id']?.toString(),
+      doctorName: json['doctor_name'],
+      doctorId: json['doctor_id']?.toString(),
+      hospitalId: json['hospital_id'],
+      hospitalName: json['hospital_name'],
+      orgId: json['org_id'],
+      orgName: json['org_name'],
+      appointmentDate: json['appointment_date'],
+      formattedDate: json['formatted_date'],
+      startTime: json['start_time'],
+      formattedTime: json['formatted_time'],
+      consultationType: json['consultation_type'],
+      isTeleconsultation: json['is_teleconsultation'],
+      reason: json['reason'],
+      status: json['status'],
+      meetingUrl: json['meeting_url'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'appointment_id': appointmentId,
+      'doctor_name': doctorName,
+      'doctor_id': doctorId,
+      'hospital_id': hospitalId,
+      'hospital_name': hospitalName,
+      'org_id': orgId,
+      'org_name': orgName,
+      'appointment_date': appointmentDate,
+      'formatted_date': formattedDate,
+      'start_time': startTime,
+      'formatted_time': formattedTime,
+      'consultation_type': consultationType,
+      'is_teleconsultation': isTeleconsultation,
+      'reason': reason,
+      'status': status,
+      'meeting_url': meetingUrl,
     };
   }
 }

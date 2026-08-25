@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.paccore.yiralife"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
