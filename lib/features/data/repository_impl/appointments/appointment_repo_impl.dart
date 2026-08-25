@@ -113,7 +113,12 @@ class AppointmentRepoImpl implements AppointmentRepo {
     required int orgId,
     required int hospitalId,
     required String patientPhone,
+    String? patientUserId,
+    String? parentUserId,
+    String? relation,
+    bool? isPrimary,
     String? patientName,
+    String? patientEmail,
     String? gender,
     String? dob,
     String? appointmentDate,
@@ -125,6 +130,8 @@ class AppointmentRepoImpl implements AppointmentRepo {
     List<String>? treatmentPlanIds,
     List<Map<String, dynamic>>? customTreatmentPlans,
     double? discountAmount,
+    bool? includeConsultationFee,
+    double? consultationFee,
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final endPoint = URLs.bookAppointmentUrl;
@@ -133,7 +140,12 @@ class AppointmentRepoImpl implements AppointmentRepo {
       "orgId": orgId,
       "hospitalId": hospitalId,
       "patientPhone": patientPhone,
+      if (patientUserId != null && patientUserId.isNotEmpty) "patientUserId": patientUserId,
+      if (parentUserId != null && parentUserId.isNotEmpty) "parentUserId": parentUserId,
+      if (relation != null && relation.isNotEmpty) "relation": relation,
+      if (isPrimary != null) "isPrimary": isPrimary,
       if (patientName != null && patientName.isNotEmpty) "patientName": patientName,
+      if (patientEmail != null && patientEmail.isNotEmpty) "patientEmail": patientEmail,
       if (gender != null && gender.isNotEmpty) "gender": gender,
       if (dob != null && dob.isNotEmpty) "dob": dob,
       if (appointmentDate != null && appointmentDate.isNotEmpty) "appointmentDate": appointmentDate,
@@ -145,6 +157,8 @@ class AppointmentRepoImpl implements AppointmentRepo {
       if (treatmentPlanIds != null && treatmentPlanIds.isNotEmpty) "treatmentPlanIds": treatmentPlanIds,
       if (customTreatmentPlans != null && customTreatmentPlans.isNotEmpty) "customTreatmentPlans": customTreatmentPlans,
       if (discountAmount != null && discountAmount > 0) "discountAmount": discountAmount,
+      if (includeConsultationFee != null) "includeConsultationFee": includeConsultationFee,
+      if (consultationFee != null) "consultationFee": consultationFee,
     };
 
     try {

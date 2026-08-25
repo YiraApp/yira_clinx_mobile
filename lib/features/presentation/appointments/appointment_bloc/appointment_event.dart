@@ -18,6 +18,11 @@ class OnAddAppointmentEvent extends AppointmentEvent {}
 class SubmitBookAppointmentEvent extends AppointmentEvent {
   final String patientName;
   final String phoneNumber;
+  final String? patientUserId;
+  final String? parentUserId;
+  final String? relation;
+  final bool? isPrimary;
+  final String? patientEmail;
   final String? gender;
   final String? dob;
   final String? appointmentDate;
@@ -29,10 +34,17 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   final List<String>? treatmentPlanIds;
   final List<Map<String, dynamic>>? customTreatmentPlans;
   final double? discountAmount;
+  final bool? includeConsultationFee;
+  final double? consultationFee;
 
   SubmitBookAppointmentEvent({
     required this.patientName,
     required this.phoneNumber,
+    this.patientUserId,
+    this.parentUserId,
+    this.relation,
+    this.isPrimary,
+    this.patientEmail,
     this.gender,
     this.dob,
     this.appointmentDate,
@@ -44,6 +56,8 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.treatmentPlanIds,
     this.customTreatmentPlans,
     this.discountAmount,
+    this.includeConsultationFee,
+    this.consultationFee,
   });
 }
 

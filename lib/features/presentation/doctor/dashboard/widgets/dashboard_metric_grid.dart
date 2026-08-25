@@ -169,7 +169,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                       isTab: isTab,
                       title: "Completed",
                       value: "$doneCount",
-                      subtext: metrics.done?.subtext ?? "All Time",
+                      subtext: metrics.done?.subtext ?? "Today",
                       icon: Icons.task_alt_rounded,
                       accentColor: const Color(0xFF10B981), // Emerald
                     ),
@@ -248,7 +248,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           isTab: isTab,
                           title: "Completed",
                           value: "$doneCount",
-                          subtext: metrics.done?.subtext ?? "All Time",
+                          subtext: metrics.done?.subtext ?? "Today",
                           icon: Icons.task_alt_rounded,
                           accentColor: const Color(0xFF10B981), // Emerald
                         ),

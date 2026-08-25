@@ -444,7 +444,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   isTab: isTab,
                                   title: "Completed",
                                   count: "$completedCount",
-                                  subtitle: "Finished",
+                                  subtitle: "Today",
                                   icon: Icons.check_circle_outline,
                                   iconColor: const Color(0xFF059669),
                                 ),
@@ -480,7 +480,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   isTab: isTab,
                                   title: "Completed",
                                   count: "$completedCount",
-                                  subtitle: "Finished",
+                                  subtitle: "Today",
                                   icon: Icons.check_circle_outline,
                                   iconColor: const Color(0xFF059669),
                                 ),
@@ -897,6 +897,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                     duration: const Duration(milliseconds: 350),
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
+                    layoutBuilder: (currentChild, previousChildren) {
+                      return Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          ...previousChildren,
+                          if (currentChild != null) currentChild,
+                        ],
+                      );
+                    },
                     child: _buildListContent(
                         state, appointments, isDark, theme, isTab, width),
                   ),
@@ -919,7 +928,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     double width,
   ) {
     if (state is AppointmentLoading) {
-      return AppointmentListShimmer(key: const ValueKey('loading'), itemCount: 4, isTab: isTab);
+      return AppointmentListShimmer(itemCount: 4, isTab: isTab);
     }
 
     if (state is AppointmentLoaded) {
@@ -928,14 +937,12 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
       }
 
       return RefreshIndicator(
-        key: const ValueKey('loaded'),
         color: primaryColor,
         onRefresh: () async {
           _loadWithDateFilter();
           await Future.delayed(const Duration(milliseconds: 500));
         },
         child: ListView.builder(
-          key: const ValueKey('appointment_list'),
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
           ),
@@ -1055,7 +1062,6 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
 
     if (state is AppointmentError) {
       return Center(
-        key: const ValueKey('error'),
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: Column(
@@ -1118,7 +1124,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
       );
     }
 
-    return const SizedBox.shrink(key: ValueKey('initial'));
+    return const SizedBox.shrink();
   }
 
   Widget _buildEmptyState(

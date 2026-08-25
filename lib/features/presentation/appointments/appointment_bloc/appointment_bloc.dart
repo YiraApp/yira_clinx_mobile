@@ -82,8 +82,13 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           doctorId: doctorId,
           orgId: orgId,
           hospitalId: hospitalId,
+          patientUserId: event.patientUserId,
+          parentUserId: event.parentUserId,
+          relation: event.relation,
+          isPrimary: event.isPrimary,
           patientName: event.patientName,
           patientPhone: event.phoneNumber,
+          patientEmail: event.patientEmail,
           gender: event.gender,
           dob: event.dob,
           appointmentDate: event.appointmentDate,
@@ -95,6 +100,8 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           treatmentPlanIds: event.treatmentPlanIds,
           customTreatmentPlans: event.customTreatmentPlans,
           discountAmount: event.discountAmount,
+          includeConsultationFee: event.includeConsultationFee,
+          consultationFee: event.consultationFee,
         );
 
         if (success) {

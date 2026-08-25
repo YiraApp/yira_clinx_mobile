@@ -33,6 +33,7 @@ class URLs {
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
   static const treatmentPlansUrl = "/v1/api/auth/treatment-plans";
   static const patientAppointmentsUrl = "/v1/api/auth/patient-appointments";
+  static const patientAccountsByPhoneUrl = "/v1/api/auth/patients/accounts-by-phone";
 
   /*Side menu*/
   static const sideMenuUrl = "/v1/api/auth/sidebar";

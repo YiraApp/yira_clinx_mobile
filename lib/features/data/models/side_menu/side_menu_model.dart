@@ -10,12 +10,14 @@ class SideMenuModel extends SideMenuEntity {
 
   factory SideMenuModel.fromJson(Map<String, dynamic> json) {
     return SideMenuModel(
-      status: json['status'] ?? false,
-      message: json['message'] ?? '',
-      data: json['data'] != null
+      status: json['status'] == true || json['success'] == true,
+      message: json['message']?.toString() ?? '',
+      data: json['data'] != null && json['data'] is List
           ? List<SideMenuItemModel>.from(
-        json['data'].map((x) => SideMenuItemModel.fromJson(x)),
-      )
+              (json['data'] as List)
+                  .whereType<Map<String, dynamic>>()
+                  .map((x) => SideMenuItemModel.fromJson(x)),
+            )
           : [],
     );
   }
@@ -49,10 +51,12 @@ class SideMenuItemModel extends SideMenuItemEntity {
 
   factory SideMenuItemModel.fromJson(Map<String, dynamic> json) {
     return SideMenuItemModel(
-      title: json['title'] ?? '',
-      taskCode: json['taskCode'] ?? '',
-      taskId: json['taskId'] ?? 0,
-      imagePath: json['ImagePath'] ?? '',
+      title: json['title']?.toString() ?? '',
+      taskCode: json['taskCode']?.toString() ?? '',
+      taskId: json['taskId'] is int
+          ? (json['taskId'] as int)
+          : int.tryParse(json['taskId']?.toString() ?? '') ?? 0,
+      imagePath: (json['ImagePath'] ?? json['imagePath'] ?? '')?.toString() ?? '',
     );
   }
 
