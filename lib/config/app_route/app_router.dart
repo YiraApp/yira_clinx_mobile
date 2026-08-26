@@ -31,6 +31,7 @@ import 'package:yiraclinics/features/presentation/patient/self_service/consultat
 import 'package:yiraclinics/features/presentation/patient/self_service/digital_consent_sign_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/online_bill_payment_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/upload_via_link_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/doctors/patient_my_doctors_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
@@ -465,6 +466,8 @@ class AppRouter {
       case AppRoutes.digitalConsentSign:
         final link = settings.arguments as String?;
         return MaterialPageRoute(settings: settings, builder: (_) => DigitalConsentSignScreen(link: link));
+      case AppRoutes.patientMyDoctors:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
       default:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>

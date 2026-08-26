@@ -201,35 +201,39 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: ListTile(
-                    dense: true,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    title: Text(
-                      s,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                        fontSize: 15,
-                        color: isCurrent
-                            ? Theme.of(context).primaryColor
-                            : (isDark ? Colors.white70 : Colors.black87),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    child: ListTile(
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    trailing: isCurrent
-                        ? Icon(Icons.check_circle_rounded,
-                            color: Theme.of(context).primaryColor, size: 22)
-                        : null,
-                    onTap: () {
-                      Navigator.pop(dialogContext);
-                      context.read<AppointmentBloc>().add(
-                        UpdateAppointmentStatusEvent(
-                          appointmentId: appointment.id,
-                          status: s,
+                      title: Text(
+                        s,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                          fontSize: 15,
+                          color: isCurrent
+                              ? Theme.of(context).primaryColor
+                              : (isDark ? Colors.white70 : Colors.black87),
                         ),
-                      );
-                    },
+                      ),
+                      trailing: isCurrent
+                          ? Icon(Icons.check_circle_rounded,
+                              color: Theme.of(context).primaryColor, size: 22)
+                          : null,
+                      onTap: () {
+                        Navigator.pop(dialogContext);
+                        context.read<AppointmentBloc>().add(
+                          UpdateAppointmentStatusEvent(
+                            appointmentId: appointment.id,
+                            status: s,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 );
               }),

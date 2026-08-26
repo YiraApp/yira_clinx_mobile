@@ -441,35 +441,39 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           width: 1,
                         ),
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(10),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
                           ),
-                          child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
-                        ),
-                        title: const Text(
-                          'Sign Out',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14.5,
-                            color: Colors.redAccent,
+                          title: const Text(
+                            'Sign Out',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.5,
+                              color: Colors.redAccent,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          'Log out of your patient account',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            color: isDark ? Colors.white54 : Colors.grey[600],
+                          subtitle: Text(
+                            'Log out of your patient account',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : Colors.grey[600],
+                            ),
                           ),
+                          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.redAccent),
+                          onTap: () => SignOutAlert.showSignCustomDialog(context, primaryColor),
                         ),
-                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.redAccent),
-                        onTap: () => SignOutAlert.showSignCustomDialog(context, primaryColor),
                       ),
                     ),
                   ],
@@ -820,8 +824,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-            onTap: () => Navigator.pushNamed(context, AppRoutes.appearanceScreen),
           ),
           Divider(height: 1, color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9)),
           ListTile(

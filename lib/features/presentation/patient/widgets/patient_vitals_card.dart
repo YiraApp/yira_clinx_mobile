@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PatientVitalsCard extends StatelessWidget {
   final Map<String, String> vitals;
   final VoidCallback onUpdateVitals;
   final String? patientName;
+  final bool isLoading;
 
   const PatientVitalsCard({
     super.key,
     required this.vitals,
     required this.onUpdateVitals,
     this.patientName,
+    this.isLoading = false,
   });
 
   @override
@@ -248,23 +251,50 @@ class PatientVitalsCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab ? 16 : 14,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+          if (isLoading)
+            BaseShimmer(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 2, bottom: 4),
+                    width: 48,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  Container(
+                    width: 32,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: isTab ? 16 : 14,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
             ),
-          ),
-          Text(
-            unit,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 10,
-              color: isDark ? Colors.white38 : Colors.grey[500],
+            Text(
+              unit,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 10,
+                color: isDark ? Colors.white38 : Colors.grey[500],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

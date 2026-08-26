@@ -65,4 +65,5 @@ class AppRoutes {
   static const String viewConsultationSummary = '/viewConsultationSummary';
   static const String onlineBillPayment = '/onlineBillPayment';
   static const String digitalConsentSign = '/digitalConsentSign';
+  static const String patientMyDoctors = '/patientMyDoctors';
 }

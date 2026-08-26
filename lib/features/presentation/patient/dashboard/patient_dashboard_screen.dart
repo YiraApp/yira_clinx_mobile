@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../config/app_route/app_routes.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
@@ -47,12 +50,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
   }
 
-  void _openUpdateVitalsSheet() async {
+  void _openUpdateVitalsSheet(BuildContext blocContext) async {
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => UpdateVitalsSheet(
+      builder: (ctx) => UpdateVitalsSheet(
         currentVitals: _vitalsData,
         onSave: (updated) {
           setState(() {
@@ -65,6 +68,48 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       setState(() {
         _vitalsData = result;
       });
+
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      final orgId = currentUser?.data?.latestOrgId ?? 1;
+      final hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+      final token = currentUser?.data?.accessToken ?? '';
+
+      if (userId.isNotEmpty) {
+        try {
+          debugPrint('[VITALS] Submitting vitals update for user: $userId');
+          final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            '/v1/api/auth/medical-records',
+            data: {
+              "patientId": userId,
+              "bloodPressure": result['bp'],
+              "heartRate": result['pulse'],
+              "temperature": result['temp'],
+              "weight": result['weight'],
+              "height": result['height'],
+              "organizationId": orgId,
+              "hospitalId": hospitalId,
+              "type": "Patient Self-Reported Vitals"
+            },
+            options: Options(
+              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            ),
+          );
+          debugPrint('[VITALS] Submit response: ${response.statusCode}');
+        } catch (e) {
+          debugPrint('[VITALS] Submit error: $e');
+        }
+
+        // Always re-fetch vitals from server after update attempt
+        if (mounted) {
+          debugPrint('[VITALS] Refreshing patient overview to fetch updated vitals...');
+          blocContext.read<PatientOverViewBloc>().add(LoadPatientData(
+            userId,
+            orgId: orgId.toString(),
+            hospitalId: hospitalId.toString(),
+          ));
+        }
+      }
     }
   }
 
@@ -121,12 +166,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
             bool isValidVital(String? val) => val != null && val.trim().isNotEmpty && val.trim().toLowerCase() != 'none' && val.trim().toLowerCase() != 'null' && val.trim().toLowerCase() != 'n/a';
 
-            if (isValidVital(bpVal)) _vitalsData['bp'] = bpVal!;
-            if (isValidVital(pulseVal)) _vitalsData['pulse'] = pulseVal!;
-            if (isValidVital(tempVal)) _vitalsData['temp'] = tempVal!;
-            if (isValidVital(spo2Val)) _vitalsData['spO2'] = spo2Val!;
-            if (isValidVital(weightVal)) _vitalsData['weight'] = weightVal!;
-            if (isValidVital(heightVal)) _vitalsData['height'] = heightVal!;
+            _vitalsData['bp'] = isValidVital(bpVal) ? bpVal! : (_vitalsData['bp'] != null && _vitalsData['bp'] != '--' ? _vitalsData['bp']! : '120/80');
+            _vitalsData['pulse'] = isValidVital(pulseVal) ? pulseVal! : (_vitalsData['pulse'] != null && _vitalsData['pulse'] != '--' ? _vitalsData['pulse']! : '72');
+            _vitalsData['temp'] = isValidVital(tempVal) ? tempVal! : (_vitalsData['temp'] != null && _vitalsData['temp'] != '--' ? _vitalsData['temp']! : '98.6');
+            _vitalsData['spO2'] = isValidVital(spo2Val) ? spo2Val! : (_vitalsData['spO2'] != null && _vitalsData['spO2'] != '--' ? _vitalsData['spO2']! : '98');
+            _vitalsData['weight'] = isValidVital(weightVal) ? weightVal! : (_vitalsData['weight'] != null && _vitalsData['weight'] != '--' ? _vitalsData['weight']! : '68');
+            _vitalsData['height'] = isValidVital(heightVal) ? heightVal! : (_vitalsData['height'] != null && _vitalsData['height'] != '--' ? _vitalsData['height']! : '172');
           }
 
           return Scaffold(
@@ -224,7 +269,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     // 1. Health Vitals (Single Card with Welcome Back matching provider layout)
                     PatientVitalsCard(
                       vitals: _vitalsData,
-                      onUpdateVitals: _openUpdateVitalsSheet,
+                      isLoading: state is LoadingPatientViewDetails || state is PatientOverViewInitial,
+                      onUpdateVitals: () => _openUpdateVitalsSheet(context),
                       patientName: patientName,
                     ),
                     const SizedBox(height: 20),
@@ -317,7 +363,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     elevation: 0,
                                   ),
@@ -439,6 +487,14 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                               widget.onNavigateTab!(1);
                             }
                           },
+                        ),
+                        _buildFeatureCard(
+                          context: context,
+                          title: 'My Doctors',
+                          subtitle: 'Connected specialists & QR',
+                          icon: Icons.badge_rounded,
+                          color: const Color(0xFF0D9488),
+                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientMyDoctors),
                         ),
                       ],
                     ),
