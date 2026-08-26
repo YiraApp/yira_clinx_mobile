@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
-import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/consent/patient_access_consent_entity.dart';
 import 'bloc/patient_access_consent_bloc.dart';
@@ -15,25 +13,27 @@ import 'bloc/patient_access_consent_state.dart';
 
 class PatientConsentApprovalScreen extends StatefulWidget {
   final String? patientId;
+  final bool showBackButton;
 
   const PatientConsentApprovalScreen({
     super.key,
     this.patientId,
+    this.showBackButton = true,
   });
 
   @override
   State<PatientConsentApprovalScreen> createState() => _PatientConsentApprovalScreenState();
 }
 
-class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScreen> {
   late PatientAccessConsentBloc _consentBloc;
+  String _selectedFilter = 'All';
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     final targetPatientId = widget.patientId ??
         GlobalSession.instance.userNotifier.value?.data?.id ??
         '';
@@ -44,7 +44,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _searchController.dispose();
     _consentBloc.close();
     super.dispose();
   }
@@ -52,6 +52,53 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
   String _formatDate(DateTime? dt) {
     if (dt == null) return "N/A";
     return DateFormat('MMM dd, yyyy • hh:mm a').format(dt);
+  }
+
+  void _respondToConsent(int? consentId, String action, String patientId) {
+    if (consentId == null) return;
+    _consentBloc.add(RespondToConsentEvent(
+      consentId: consentId,
+      patientId: patientId,
+      action: action,
+    ));
+  }
+
+  void _showRevokeConfirmationDialog(
+    BuildContext context,
+    PatientAccessConsentEntity item,
+    String patientId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Revoke Record Access?",
+          style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "Are you sure you want to revoke medical record access for ${item.doctorName ?? 'this provider'}? They will no longer be able to view your past medical history.",
+          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _respondToConsent(item.id, "REVOKE", patientId);
+            },
+            child: const Text("Revoke", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -71,7 +118,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: CommonAppBar(
           titleText: "Medical Record Consents",
-          showBackButton: true,
+          showBackButton: widget.showBackButton,
           actions: [
             IconButton(
               icon: Icon(
@@ -86,115 +133,185 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           ],
         ),
         body: SafeArea(
-          child: BlocBuilder<PatientAccessConsentBloc, PatientAccessConsentState>(
+          child: BlocConsumer<PatientAccessConsentBloc, PatientAccessConsentState>(
+            listener: (context, state) {
+              if (state is PatientAccessConsentError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+                );
+              }
+            },
             builder: (context, state) {
               if (state is PatientAccessConsentLoading) {
-                return ConsentApprovalListShimmer(itemCount: 3, isTab: isTab);
+                return _buildLoadingShimmer(isDark);
               }
 
-              if (state is PatientAccessConsentError) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Failed to load consent requests",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black87,
+              List<PatientAccessConsentEntity> allConsents = [];
+              if (state is PatientConsentsListLoaded) {
+                allConsents = state.consents;
+              }
+
+              List<PatientAccessConsentEntity> filteredConsents = allConsents.where((c) {
+                final q = _searchQuery.toLowerCase();
+                final matchesSearch = (c.doctorName ?? '').toLowerCase().contains(q) ||
+                    (c.hospitalName ?? '').toLowerCase().contains(q) ||
+                    (c.specialty ?? '').toLowerCase().contains(q);
+
+                if (!matchesSearch) return false;
+
+                final status = (c.status ?? '').toUpperCase();
+                if (_selectedFilter == 'Pending') {
+                  return status == 'PENDING';
+                } else if (_selectedFilter == 'Approved') {
+                  return status == 'APPROVED';
+                } else if (_selectedFilter == 'History') {
+                  return status != 'PENDING' && status != 'APPROVED';
+                }
+                return true;
+              }).toList();
+
+              return Column(
+                children: [
+                  // Search Field
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 8),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search doctor, hospital, or specialty...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            _consentBloc.add(LoadPatientConsentsEvent(patientId: currentPatientId));
-                          },
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text("Retry"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                );
-              }
 
-              if (state is PatientConsentsListLoaded) {
-                final pending = state.pendingConsents;
-                final active = state.activeConsents;
-                final history = state.historyConsents;
-
-                return Column(
-                  children: [
-                    // Segmented Tab Bar
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2538) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
-                        ),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
+                  // Filter Chips
+                  SizedBox(
+                    height: 38,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                      children: ['All', 'Pending', 'Approved', 'History'].map((filter) {
+                        final isSelected = _selectedFilter == filter;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: FilterChip(
+                            label: Text(
+                              filter,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              ),
                             ),
-                          ],
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        dividerColor: Colors.transparent,
-                        labelColor: Colors.white,
-                        unselectedLabelColor: isDark ? Colors.white60 : const Color(0xFF64748B),
-                        labelStyle: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 13.5 : 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        tabs: [
-                          Tab(text: "Pending (${pending.length})"),
-                          Tab(text: "Active (${active.length})"),
-                          Tab(text: "History (${history.length})"),
-                        ],
-                      ),
+                            selected: isSelected,
+                            onSelected: (_) => setState(() => _selectedFilter = filter),
+                            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            selectedColor: primaryColor,
+                            checkmarkColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: isSelected ? primaryColor : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                              ),
+                            ),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }).toList(),
                     ),
+                  ),
+                  const SizedBox(height: 10),
 
-                    // Tab View
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          // 1. Pending Tab
-                          _buildPendingList(pending, isDark, primaryColor, isTab, currentPatientId),
-                          // 2. Active Tab
-                          _buildActiveList(active, isDark, primaryColor, isTab, currentPatientId),
-                          // 3. History Tab
-                          _buildHistoryList(history, isDark, primaryColor, isTab),
-                        ],
-                      ),
+                  // Consent Cards List
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        _consentBloc.add(LoadPatientConsentsEvent(patientId: currentPatientId));
+                        await Future.delayed(const Duration(milliseconds: 600));
+                      },
+                      child: filteredConsents.isEmpty
+                          ? Center(
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.verified_user_outlined,
+                                        size: isTab ? 80 : 64,
+                                        color: theme.hintColor.withValues(alpha: 0.3),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        "No Consent Requests Found",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: isTab ? 18 : 15,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'When doctors request access to your records, they will appear here.',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTab ? 14 : 12,
+                                          color: theme.hintColor,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: screenHorizontalSpacePadding,
+                                vertical: 6,
+                              ),
+                              itemCount: filteredConsents.length,
+                              itemBuilder: (context, index) {
+                                final item = filteredConsents[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12.0),
+                                  child: _buildConsentCard(
+                                    context: context,
+                                    item: item,
+                                    isDark: isDark,
+                                    primaryColor: primaryColor,
+                                    isTab: isTab,
+                                    patientId: currentPatientId,
+                                  ),
+                                );
+                              },
+                            ),
                     ),
-                  ],
-                );
-              }
-
-              return const ListCardShimmer(itemCount: 4);
+                  ),
+                ],
+              );
             },
           ),
         ),
@@ -202,444 +319,58 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     );
   }
 
-  Widget _buildPendingList(
-    List<PatientAccessConsentEntity> list,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-    String currentPatientId,
-  ) {
-    if (list.isEmpty) {
-      return _buildEmptyView(
-        icon: Icons.check_circle_outline_rounded,
-        title: "No Pending Consent Requests",
-        subtitle: "When doctors request access to view your complete medical records, their requests will appear here for your approval.",
-        isDark: isDark,
-      );
-    }
+  Widget _buildConsentCard({
+    required BuildContext context,
+    required PatientAccessConsentEntity item,
+    required bool isDark,
+    required Color primaryColor,
+    required bool isTab,
+    required String patientId,
+  }) {
+    final status = (item.status ?? 'PENDING').toUpperCase();
+    final isPending = status == 'PENDING';
+    final isApproved = status == 'APPROVED';
+    final isRevoked = status == 'REVOKED';
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = list[index];
+    final Color statusColor = isPending
+        ? Colors.orange
+        : isApproved
+            ? const Color(0xFF059669)
+            : isRevoked
+                ? Colors.red
+                : const Color(0xFF64748B);
 
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1B2234) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.orange.withOpacity(isDark ? 0.35 : 0.3),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.orange.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    final statusBg = statusColor.withValues(alpha: isDark ? 0.2 : 0.12);
+
+    return Container(
+      padding: EdgeInsets.all(isTab ? 18 : 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPending
+              ? Colors.orange.withValues(alpha: 0.4)
+              : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          child: Column(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Doctor Info & Status Badge Row
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Doctor Header Info
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: primaryColor.withOpacity(0.15),
-                    child: Icon(Icons.medical_services_rounded, color: primaryColor, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.doctorName ?? "Dr. Healthcare Provider",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 16 : 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "${item.specialty ?? 'General Medicine'} • ${item.hospitalName ?? 'Clinical Care'}",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 12.5 : 11.5,
-                            color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      "Pending",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Request Details Card
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF161B2B) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Requested Access Duration:",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          ),
-                        ),
-                        Text(
-                          item.durationLabel ?? "1 Day",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Requested On:",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          ),
-                        ),
-                        Text(
-                          _formatDate(item.requestedAt),
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Approve / Reject Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        if (item.id != null) {
-                          _consentBloc.add(RespondToConsentEvent(
-                            consentId: item.id!,
-                            patientId: currentPatientId,
-                            action: 'REJECT',
-                          ));
-                        }
-                      },
-                      icon: const Icon(Icons.close_rounded, size: 16, color: Colors.red),
-                      label: const Text(
-                        "Reject",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: Colors.red.withOpacity(0.4)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (item.id != null) {
-                          _consentBloc.add(RespondToConsentEvent(
-                            consentId: item.id!,
-                            patientId: currentPatientId,
-                            action: 'APPROVE',
-                          ));
-                        }
-                      },
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: const Text(
-                        "Approve",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF10B981),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildActiveList(
-    List<PatientAccessConsentEntity> list,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-    String currentPatientId,
-  ) {
-    if (list.isEmpty) {
-      return _buildEmptyView(
-        icon: Icons.shield_outlined,
-        title: "No Active Access Permissions",
-        subtitle: "No doctors currently have approved access to your complete medical records.",
-        isDark: isDark,
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = list[index];
-
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1B2234) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF10B981).withOpacity(isDark ? 0.35 : 0.3),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF10B981).withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Doctor Info
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: const Color(0xFF10B981).withOpacity(0.15),
-                    child: const Icon(Icons.verified_user_rounded, color: Color(0xFF10B981), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.doctorName ?? "Dr. Healthcare Provider",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        Text(
-                          "${item.specialty ?? 'General Practice'} • ${item.hospitalName ?? 'Hospital'}",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      "Active",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF10B981),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Access Validity Info
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF161B2B) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Access Valid Until:",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: isDark ? Colors.white60 : Colors.grey.shade600,
-                      ),
-                    ),
-                    Text(
-                      item.expiresAt != null ? _formatDate(item.expiresAt) : "Permanent (Until Revoked)",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // Revoke Button
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () {
-                    if (item.id != null) {
-                      _consentBloc.add(RespondToConsentEvent(
-                        consentId: item.id!,
-                        patientId: currentPatientId,
-                        action: 'REVOKE',
-                      ));
-                    }
-                  },
-                  icon: const Icon(Icons.block_rounded, size: 16, color: Colors.red),
-                  label: const Text(
-                    "Revoke Access Permission",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.red,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    backgroundColor: Colors.red.withOpacity(0.08),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHistoryList(
-    List<PatientAccessConsentEntity> list,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
-    if (list.isEmpty) {
-      return _buildEmptyView(
-        icon: Icons.history_rounded,
-        title: "No Consent History",
-        subtitle: "Past expired, declined, and revoked access logs will be archived here.",
-        isDark: isDark,
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: list.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final item = list[index];
-        final isRejected = item.isRejected;
-        final isExpired = item.isExpired;
-
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1B2234) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? Colors.white10 : Colors.grey.shade200,
-            ),
-          ),
-          child: Row(
             children: [
               CircleAvatar(
-                radius: 18,
-                backgroundColor: (isRejected ? Colors.red : Colors.grey).withOpacity(0.15),
-                child: Icon(
-                  isRejected ? Icons.cancel_outlined : Icons.timer_off_outlined,
-                  color: isRejected ? Colors.red : Colors.grey,
-                  size: 18,
-                ),
+                radius: isTab ? 26 : 22,
+                backgroundColor: primaryColor.withValues(alpha: 0.12),
+                child: Icon(Icons.medical_services_rounded, color: primaryColor, size: isTab ? 22 : 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -647,90 +378,186 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.doctorName ?? "Doctor Access",
+                      item.doctorName ?? 'Healthcare Provider',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: isTab ? 16 : 15,
+                        fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                     ),
                     Text(
-                      "${item.durationLabel ?? 'Duration'} • ${_formatDate(item.requestedAt)}",
+                      item.specialty ?? 'Specialist Physician',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                        fontSize: 12,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (isRejected ? Colors.red : Colors.grey).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(6),
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  item.status ?? (isExpired ? "Expired" : "Closed"),
+                  status,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: isRejected ? Colors.red : Colors.grey,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
                   ),
                 ),
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+          const SizedBox(height: 12),
 
-  Widget _buildEmptyView({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isDark,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade100,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 40, color: isDark ? Colors.white38 : Colors.grey.shade400),
+          // Hospital / Facility Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 16),
+            child: Row(
+              children: [
+                Icon(Icons.local_hospital_rounded, size: 14, color: primaryColor),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    item.hospitalName ?? 'Yira Hospitals',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  item.durationLabel ?? 'Duration: 7 Days',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Date Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Requested: ${_formatDate(item.requestedAt)}',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 11,
+                  color: isDark ? Colors.white54 : Colors.grey[600],
+                ),
+              ),
+              if (item.expiresAt != null && isApproved)
+                Text(
+                  'Expires: ${DateFormat('MMM dd, yyyy').format(item.expiresAt!)}',
+                  style: const TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+            ],
+          ),
+
+          if (item.notes != null && item.notes!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
             Text(
-              title,
+              'Reason: ${item.notes}',
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0A2540),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12.5,
-                height: 1.5,
-                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                fontSize: 11.5,
+                color: isDark ? Colors.white70 : const Color(0xFF475569),
               ),
             ),
           ],
+
+          // Inline Action Buttons
+          if (isPending) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onPressed: () => _respondToConsent(item.id, "REJECT", patientId),
+                    child: const Text('Deny Access', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      elevation: 0,
+                    ),
+                    onPressed: () => _respondToConsent(item.id, "APPROVE", patientId),
+                    child: const Text('Grant Access', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (isApproved) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => _showRevokeConfirmationDialog(context, item, patientId),
+                icon: const Icon(Icons.block_rounded, size: 16),
+                label: const Text('Revoke Doctor Access', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingShimmer(bool isDark) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(screenHorizontalSpacePadding),
+      itemCount: 3,
+      itemBuilder: (_, __) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 140,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     );

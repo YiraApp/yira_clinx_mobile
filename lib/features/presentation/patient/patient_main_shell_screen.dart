@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../di/dependency_injection.dart';
+import '../appointments/appointment_bloc/appointment_bloc.dart';
+import '../consent/patient_consent_approval_screen.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'dashboard/patient_dashboard_screen.dart';
-import 'documents/patient_documents_screen.dart';
 import 'profile/patient_profile_passport_screen.dart';
 
 class PatientMainShellScreen extends StatefulWidget {
@@ -36,72 +39,79 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
 
     final List<Widget> pages = [
       PatientDashboardScreen(onNavigateTab: _onTabSelected),
-      const PatientAppointmentsScreen(),
-      const PatientDocumentsScreen(),
+      PatientAppointmentsScreen(onNavigateTab: _onTabSelected),
+      const PatientConsentApprovalScreen(showBackButton: false),
       const PatientProfilePassportScreen(),
     ];
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AppointmentBloc>(
+          create: (_) => sl<AppointmentBloc>()..add(LoadAppointmentsEvent()),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabSelected,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: primaryColor,
-          unselectedItemColor: isDark ? Colors.white54 : Colors.grey[500],
-          selectedLabelStyle: const TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
+      ],
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: pages,
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200,
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: _onTabSelected,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: primaryColor,
+            unselectedItemColor: isDark ? Colors.white54 : Colors.grey[500],
+            selectedLabelStyle: const TextStyle(
+              fontFamily: appPoppinFont,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontFamily: appPoppinFont,
+              fontWeight: FontWeight.w500,
+              fontSize: 11,
+            ),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard_rounded),
+                activeIcon: Icon(Icons.dashboard_rounded),
+                label: 'Dashboard',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.calendar_month_rounded),
+                activeIcon: Icon(Icons.calendar_month_rounded),
+                label: 'Appointments',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.verified_user_rounded),
+                activeIcon: Icon(Icons.verified_user_rounded),
+                label: 'Consents',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_rounded),
+                activeIcon: Icon(Icons.person_rounded),
+                label: 'Profile',
+              ),
+            ],
           ),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_rounded),
-              activeIcon: Icon(Icons.dashboard_rounded),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded),
-              activeIcon: Icon(Icons.calendar_month_rounded),
-              label: 'Appointments',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.folder_shared_rounded),
-              activeIcon: Icon(Icons.folder_shared_rounded),
-              label: 'Documents',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.badge_rounded),
-              activeIcon: Icon(Icons.badge_rounded),
-              label: 'Passport',
-            ),
-          ],
         ),
       ),
     );

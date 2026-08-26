@@ -84,7 +84,6 @@ import '../../features/presentation/doctor/patient_appoinment_list/patient_appoi
 import '../../features/presentation/medicine/medical_record_list_screen.dart';
 import '../../features/presentation/settings/language_setting_screen.dart';
 import '../../features/presentation/settings/notification_settings_screen.dart';
-import '../../features/presentation/slot/slot_dashboard_screen.dart';
 import '../../features/presentation/slot/slot_details_screen.dart';
 import '../../features/presentation/splash/splash_screen.dart';
 import '../../features/presentation/un_supported_role_screen/un_supported_role_screen.dart';
@@ -212,8 +211,8 @@ class AppRouter {
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
             child: AddNewAppointmentScreen(
-              initialPatientName: appointmentArgs?['patientName'],
-              initialPatientPhone: appointmentArgs?['patientPhone'],
+              initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
+              initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
             ),
           ),
         );
@@ -222,12 +221,11 @@ class AppRouter {
           builder: (_) => const DoctorMainShellScreen(initialIndex: 1),
         );
       case AppRoutes.selectRoleScreen:
-        final args = settings.arguments as SelectRoleModel;
+        final args = settings.arguments is SelectRoleModel
+            ? settings.arguments as SelectRoleModel
+            : null;
         return MaterialPageRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<RoleBloc>(),
-            child: SelectRoleScreen(roles: args),
-          ),
+          builder: (_) => SelectRoleScreen(roles: args),
         );
       case AppRoutes.workSpaceScreen:
         WorkSpaceModel workSpaceModel = settings.arguments as WorkSpaceModel;
@@ -281,6 +279,7 @@ class AppRouter {
               hospitalId: args?['hospitalId'] as String?,
               orgId: args?['orgId'] as String?,
               patientName: args?['patientName'] as String?,
+              initialStatus: (args?['initialStatus'] ?? args?['status']) as String?,
               initialTabIndex: args?['initialTabIndex'] as int? ?? 0,
             ),
           ),

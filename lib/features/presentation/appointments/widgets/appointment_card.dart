@@ -8,14 +8,19 @@ import '../../../domain/entities/appointments/appointment_entity.dart';
 class AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final VoidCallback? onEdit;
+  final VoidCallback? onTap;
   final bool isTeleConsultation;
   final bool isPatientProfile;
-final bool isTab;
+  final bool isTab;
+
   const AppointmentCard({
     super.key,
     required this.appointment,
     this.onEdit,
-    required this.isTeleConsultation,  this.isPatientProfile = false, required this.isTab,
+    this.onTap,
+    required this.isTeleConsultation,
+    this.isPatientProfile = false,
+    required this.isTab,
   });
 
   @override
@@ -28,49 +33,54 @@ final bool isTab;
 
     switch (appointment.status) {
       case AppointmentStatus.confirmed:
-        statusBgColor = isDark ? const Color(0xFF2E7D32).withOpacity(0.2) : const Color(0xFFE8F5E9);
+        statusBgColor = isDark ? const Color(0xFF2E7D32).withValues(alpha: 0.2) : const Color(0xFFE8F5E9);
         statusTextColor = isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32);
         statusLabel = "Confirmed";
         break;
       case AppointmentStatus.paymentPending:
-        statusBgColor = isDark ? const Color(0xFFC62828).withOpacity(0.2) : const Color(0xFFFFEBEE);
+        statusBgColor = isDark ? const Color(0xFFC62828).withValues(alpha: 0.2) : const Color(0xFFFFEBEE);
         statusTextColor = isDark ? const Color(0xFFE57373) : const Color(0xFFC62828);
         statusLabel = "Payment Pending";
         break;
       case AppointmentStatus.pendingInfo:
-        statusBgColor = isDark ? const Color(0xFFEF6C00).withOpacity(0.2) : const Color(0xFFFFF3E0);
+        statusBgColor = isDark ? const Color(0xFFEF6C00).withValues(alpha: 0.2) : const Color(0xFFFFF3E0);
         statusTextColor = isDark ? const Color(0xFFFFB74D) : const Color(0xFFEF6C00);
         statusLabel = "Need Info";
         break;
     }
 
-    final tokenBgColor = isDark ? Colors.white.withOpacity(0.1) : theme.primaryColor.withOpacity(0.15);
+    final tokenBgColor = isDark ? Colors.white.withValues(alpha: 0.1) : theme.primaryColor.withValues(alpha: 0.15);
 
     return Container(
       margin: const EdgeInsets.only(bottom: fieldSpace),
       decoration: BoxDecoration(
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: isDark ? Border.all(color: Colors.white.withOpacity(0.2), width: 0.5) : null,
+        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.2), width: 0.5) : null,
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 12,
               offset: const Offset(0, 4),
             )
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 2.5, color: theme.primaryColor),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, top: 10, right: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(fieldBorderRadius),
+          onTap: onTap,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(fieldBorderRadius),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 2.5, color: theme.primaryColor),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 10, top: 10, right: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -186,23 +196,45 @@ final bool isTab;
                                   ],
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      appointment.type == AppointmentType.videoCall ? Icons.videocam : Icons.location_on_outlined,
-                                      size: 14,
-                                      color: theme.hintColor,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      appointment.type == AppointmentType.videoCall ? "Video Call" : "In-Clinic",
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontFamily: appPoppinFont,
-                                        fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.032,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                 Row(
+                                   children: [
+                                     Icon(
+                                       appointment.type == AppointmentType.videoCall ? Icons.videocam : Icons.location_on_outlined,
+                                       size: 14,
+                                       color: theme.hintColor,
+                                     ),
+                                     const SizedBox(width: 4),
+                                     Text(
+                                       appointment.type == AppointmentType.videoCall ? "Video Call" : "In-Clinic",
+                                       style: theme.textTheme.bodyMedium?.copyWith(
+                                         fontFamily: appPoppinFont,
+                                         fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.032,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                                 if (appointment.hospitalName != null && appointment.hospitalName!.isNotEmpty) ...[
+                                   const SizedBox(height: 4),
+                                   Row(
+                                     children: [
+                                       Icon(Icons.local_hospital_rounded, size: 14, color: theme.primaryColor),
+                                       const SizedBox(width: 4),
+                                       Expanded(
+                                         child: Text(
+                                           appointment.hospitalName!,
+                                           style: TextStyle(
+                                             fontFamily: appPoppinFont,
+                                             fontWeight: FontWeight.w600,
+                                             fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.031,
+                                             color: theme.primaryColor,
+                                           ),
+                                           maxLines: 1,
+                                           overflow: TextOverflow.ellipsis,
+                                         ),
+                                       ),
+                                     ],
+                                   ),
+                                 ],
                               ],
                             ),
                           )
@@ -230,7 +262,10 @@ final bool isTab;
                           ),
                           isPatientProfile? SizedBox.shrink():  Row(
                             children: [
-                              if (isTeleConsultation)
+                              if (isTeleConsultation &&
+                                  !appointment.statusRaw.toLowerCase().contains('completed') &&
+                                  !appointment.statusRaw.toLowerCase().contains('cancelled') &&
+                                  !appointment.statusRaw.toLowerCase().contains('past'))
                                  Padding(
                                   padding: const EdgeInsets.only(right: 4.0),
                                   child: IconButton(
@@ -270,7 +305,7 @@ final bool isTab;
                           )
                         ],
                       ),
-                      isPatientProfile? SizedBox(height: 10,):SizedBox.shrink()
+                      isPatientProfile ? const SizedBox(height: 10) : const SizedBox.shrink(),
                     ],
                   ),
                 ),
@@ -279,6 +314,8 @@ final bool isTab;
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

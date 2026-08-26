@@ -303,16 +303,19 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isWideScreen = screenWidth > 650;
+    final bool isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          _showNoteOverlay(context);
-        },
-      ),
+      floatingActionButton: isPatient
+          ? null
+          : FloatingActionButton(
+              backgroundColor: primaryColor,
+              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () {
+                _showNoteOverlay(context);
+              },
+            ),
       body: RefreshIndicator.adaptive(
         onRefresh: _fetchClinicalNotes,
         child: CustomScrollView(
@@ -343,7 +346,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                           left: isWideScreen ? 24.0 : screenHorizontalSpacePadding,
                           bottom: 16,
                         ),
-                        child: _buildHistoricalNoteCard(context, item, isWideScreen),
+                        child: _buildHistoricalNoteCard(context, item, isWideScreen, isPatient),
                       );
                     },
                     childCount: _notesList.length,
@@ -356,7 +359,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     );
   }
 
-  Widget _buildHistoricalNoteCard(BuildContext context, dynamic noteItem, bool isWideScreen) {
+  Widget _buildHistoricalNoteCard(BuildContext context, dynamic noteItem, bool isWideScreen, bool isPatient) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final int noteId = noteItem['Id'] ?? noteItem['id'] ?? 0;
     final String notesText = noteItem['Notes'] ?? noteItem['notes'] ?? '';
@@ -410,20 +413,22 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                   color: isDark ? Colors.white54 : Colors.black45,
                 ),
               ),
-              const Spacer(),
-              IconButton(
-                icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade600),
-                onPressed: () => _startEditing(noteItem),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const SizedBox(width: 14),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                onPressed: () => _deleteNote(noteId),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              if (!isPatient) ...[
+                const Spacer(),
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade600),
+                  onPressed: () => _startEditing(noteItem),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 14),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                  onPressed: () => _deleteNote(noteId),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 14),

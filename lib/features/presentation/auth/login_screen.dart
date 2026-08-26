@@ -135,7 +135,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 }*/
               } else {
-                SelectRoleModel data = SelectRoleModel(payload?.roles ?? [],false);
+                SelectRoleModel data = SelectRoleModel(
+                  payload?.roles ?? [],
+                  false,
+                  profiles: payload?.profiles,
+                );
                 Navigator.pushNamed(
                   context,
                   AppRoutes.selectRoleScreen,

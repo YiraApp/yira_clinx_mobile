@@ -17,18 +17,21 @@ class UpdateLatestOrgDetailsUseCase
     UpdateLatestOrgDetailsModelParams params,
   ) {
     return updateLatestOrgDetailsRepo.updateLatestOrgDetails(
-      latestRoleId: params.latestRoleId ?? '1',
-      latestOrgId: params.latestOrgId ?? 1,
-      latestHospitalId: params.latestHospitalId ?? 1,
+      userId: params.userId,
+      latestRoleId: params.latestRoleId,
+      latestOrgId: params.latestOrgId,
+      latestHospitalId: params.latestHospitalId,
     );
   }
 }
 
 class UpdateLatestOrgDetailsModelParams {
+  String? userId;
   String latestRoleId;
   int latestOrgId;
   int latestHospitalId;
   UpdateLatestOrgDetailsModelParams({
+    this.userId,
     required this.latestRoleId,
     required this.latestOrgId,
     required this.latestHospitalId,

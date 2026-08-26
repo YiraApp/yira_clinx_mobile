@@ -22,6 +22,7 @@ class PatientProfileHeader extends StatefulWidget {
   final Widget? tabBar;
   final String? appointmentId;
   final String? patientId;
+  final String? initialStatus;
   final int? hospitalId;
   final PatientAccessConsentBloc? consentBloc;
   final DoctorAccessStatusLoaded? accessStatus;
@@ -34,6 +35,7 @@ class PatientProfileHeader extends StatefulWidget {
     this.tabBar,
     this.appointmentId,
     this.patientId,
+    this.initialStatus,
     this.hospitalId,
     this.consentBloc,
     this.accessStatus,
@@ -44,13 +46,16 @@ class PatientProfileHeader extends StatefulWidget {
 }
 
 class _PatientProfileHeaderState extends State<PatientProfileHeader> {
-  String _currentStatus = 'CONFIRMED';
+  late String _currentStatus;
   bool _isUpdating = false;
   bool _isFav = false;
 
   @override
   void initState() {
     super.initState();
+    _currentStatus = (widget.initialStatus != null && widget.initialStatus!.trim().isNotEmpty)
+        ? widget.initialStatus!.trim().toUpperCase()
+        : 'CONFIRMED';
     _checkFavorite();
   }
 
@@ -131,24 +136,22 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
   }
 
   Future<void> _updateStatus(String newStatus) async {
-    final aptId = widget.appointmentId;
-    if (aptId == null || aptId.isEmpty) {
-      setState(() {
-        _currentStatus = newStatus.toUpperCase();
-      });
-      return;
-    }
-
     setState(() {
       _isUpdating = true;
     });
 
     try {
       final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+      final doctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+      final aptId = widget.appointmentId;
+      final patientId = widget.patientId ?? widget.patient.id;
+
       final response = await sl<ApiClient>().account(showSuccessSnack: true).post(
         URLs.updateAppointmentStatusUrl,
         data: {
-          'appointmentId': aptId,
+          if (aptId != null && aptId.isNotEmpty) 'appointmentId': aptId,
+          'patientId': patientId,
+          if (doctorId.isNotEmpty) 'doctorId': doctorId,
           'status': newStatus,
         },
         options: Options(
@@ -162,7 +165,9 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         });
       }
     } catch (e) {
-      // Handled by ApiClient or fallback silently
+      setState(() {
+        _currentStatus = newStatus.toUpperCase();
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -174,6 +179,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
     final initials = widget.patient.name.trim().isNotEmpty
         ? widget.patient.name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
         : 'PT';
@@ -259,7 +265,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: _isUpdating ? null : () => _showStatusPicker(context),
+                      onTap: (_isUpdating || isPatient) ? null : () => _showStatusPicker(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
@@ -290,41 +296,45 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.arrow_drop_down_rounded,
-                                color: Colors.white,
-                                size: 14,
-                              ),
+                              if (!isPatient) ...[
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_drop_down_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                              ],
                             ],
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    // Favorite Star Button
-                    GestureDetector(
-                      onTap: _toggleFavorite,
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: _isFav
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
+                    if (!isPatient) ...[
+                      const SizedBox(width: 8),
+                      // Favorite Star Button
+                      GestureDetector(
+                        onTap: _toggleFavorite,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
                             color: _isFav
-                                ? const Color(0xFFFDE68A)
-                                : Colors.white.withValues(alpha: 0.3),
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _isFav
+                                  ? const Color(0xFFFDE68A)
+                                  : Colors.white.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Icon(
+                            _isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                            color: _isFav ? const Color(0xFFD97706) : Colors.white,
+                            size: 16,
                           ),
                         ),
-                        child: Icon(
-                          _isFav ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: _isFav ? const Color(0xFFD97706) : Colors.white,
-                          size: 16,
-                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ],
@@ -427,7 +437,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                 ),
               ],
             ),
-            if (widget.consentBloc != null && (widget.appointmentId == null || widget.appointmentId!.isEmpty)) ...[
+            if (!isPatient && widget.consentBloc != null && (widget.appointmentId == null || widget.appointmentId!.isEmpty)) ...[
               const SizedBox(height: 10),
               _buildConsentAccessButton(context),
             ],

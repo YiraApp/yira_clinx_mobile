@@ -27,6 +27,7 @@ class ConfigurationRepoImpl extends ConfigurationRepo {
       };
       final response = await _apiClient.account(showSuccessSnack: true).get(
         URLs.getUserDataUrl,
+        queryParameters: requestBody,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
         ),

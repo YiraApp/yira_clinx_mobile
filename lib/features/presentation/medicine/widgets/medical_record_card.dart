@@ -15,8 +15,8 @@ class MedicalRecordCard extends StatelessWidget {
   final String diagnosis;
   final String vitalsSummary;
   final VoidCallback onDetailsPressed;
-  final VoidCallback onDeletePressed;
-  final VoidCallback onEditPressed;
+  final VoidCallback? onDeletePressed;
+  final VoidCallback? onEditPressed;
   final bool isTab;
 
   const MedicalRecordCard({
@@ -29,7 +29,9 @@ class MedicalRecordCard extends StatelessWidget {
     required this.diagnosis,
     required this.vitalsSummary,
     required this.onDetailsPressed,
-    required this.onDeletePressed, required this.onEditPressed, required this.isTab,
+    this.onDeletePressed,
+    this.onEditPressed,
+    required this.isTab,
   });
 
   @override
@@ -83,21 +85,25 @@ class MedicalRecordCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          GestureDetector(
-                            onTap: onEditPressed,
-                            child: const Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
+                          if (onEditPressed != null) ...[
+                            GestureDetector(
+                              onTap: onEditPressed,
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(Icons.edit_outlined, color: primaryColor, size: 20),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: onDeletePressed,
-                            child: const Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                            const SizedBox(width: 6),
+                          ],
+                          if (onDeletePressed != null) ...[
+                            GestureDetector(
+                              onTap: onDeletePressed,
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 2),
