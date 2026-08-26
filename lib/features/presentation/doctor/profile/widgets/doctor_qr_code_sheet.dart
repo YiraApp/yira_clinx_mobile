@@ -43,12 +43,14 @@ class DoctorQrCodeSheet extends StatelessWidget {
     final String hospitalName = profile.hospitalName?.isNotEmpty == true ? profile.hospitalName! : "Healthcare Facility";
     final String? photoUrl = profile.profileImageUrl ?? profile.imagePath;
 
-    // Unique Doctor Profile Payload
+    // Unique Doctor Profile Payload with Hospital and Org Context
     final String doctorUniqueId = profile.userId ??
         profile.id?.toString() ??
         profile.registrationNumber ??
         doctorName.replaceAll(' ', '_');
-    final String qrPayload = "https://yiraclinics.com/doctor/$doctorUniqueId";
+    final int hospitalId = profile.hospitalId ?? 19;
+    final int orgId = profile.orgId ?? 1;
+    final String qrPayload = "https://yiraclinics.com/doctor/$doctorUniqueId?hospitalId=$hospitalId&orgId=$orgId&name=${Uri.encodeComponent(doctorName)}";
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),

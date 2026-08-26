@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
 import '../../../../core/constants/constants.dart';
 
 class PatientManagementScreen extends StatefulWidget {
@@ -39,8 +40,8 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     final bool isTab = isTablet(context);
     final primaryColor = Theme.of(context).primaryColor;
 
-    return BlocProvider(
-      create: (context) => DashboardBloc()..add(const GetDashboardData()),
+    return BlocProvider<DashboardBloc>.value(
+      value: sl<DashboardBloc>()..add(const GetDashboardData()),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(

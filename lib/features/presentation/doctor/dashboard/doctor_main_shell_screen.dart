@@ -38,6 +38,13 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
       setState(() {
         _currentIndex = index;
       });
+      if (index == 2) {
+        sl<DashboardBloc>().add(const GetDashboardData());
+      } else if (index == 1) {
+        sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+      } else if (index == 0) {
+        sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+      }
     }
   }
 

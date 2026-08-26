@@ -8,7 +8,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
@@ -160,23 +159,53 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
     });
 
     String cleanDoctorId = raw;
-    if (cleanDoctorId.contains('/doctor/')) {
-      cleanDoctorId = cleanDoctorId.split('/doctor/')[1].split('?')[0].split('/')[0].trim();
+    int? parsedHospitalId;
+    int? parsedOrgId;
+    String? parsedDocName;
+
+    // Check if JSON format
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          cleanDoctorId = (decoded['doctorId'] ?? decoded['userId'] ?? decoded['id'] ?? cleanDoctorId).toString().trim();
+          if (decoded['hospitalId'] != null) parsedHospitalId = int.tryParse(decoded['hospitalId'].toString());
+          if (decoded['orgId'] != null) parsedOrgId = int.tryParse(decoded['orgId'].toString());
+          if (decoded['name'] != null) parsedDocName = decoded['name'].toString();
+        }
+      } catch (_) {}
+    } else {
+      // Check if URL with parameters
+      final uri = Uri.tryParse(raw);
+      if (uri != null && uri.hasQuery) {
+        if (uri.queryParameters.containsKey('hospitalId')) {
+          parsedHospitalId = int.tryParse(uri.queryParameters['hospitalId']!);
+        }
+        if (uri.queryParameters.containsKey('orgId')) {
+          parsedOrgId = int.tryParse(uri.queryParameters['orgId']!);
+        }
+        if (uri.queryParameters.containsKey('name')) {
+          parsedDocName = Uri.decodeComponent(uri.queryParameters['name']!);
+        }
+      }
+      if (cleanDoctorId.contains('/doctor/')) {
+        cleanDoctorId = cleanDoctorId.split('/doctor/')[1].split('?')[0].split('/')[0].trim();
+      }
     }
-    cleanDoctorId = cleanDoctorId.replaceAll(RegExp(r'^[/#]+|[/#]+$'), '');
+    cleanDoctorId = cleanDoctorId.replaceAll(RegExp(r'^[/#]+|[/#]+$'), '').trim();
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final token = currentUser?.data?.accessToken ?? '';
-    final orgId = currentUser?.data?.latestOrgId ?? 9;
-    final hospitalId = currentUser?.data?.latestHospitalId ?? 11;
+    final defaultOrgId = currentUser?.data?.latestOrgId ?? 1;
+    final defaultHospitalId = currentUser?.data?.latestHospitalId ?? 19;
 
     try {
       final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
         '/v1/api/auth/provider/profile',
         data: {
           "doctorId": cleanDoctorId,
-          "hospitalId": hospitalId,
-          "orgId": orgId,
+          "hospitalId": parsedHospitalId ?? defaultHospitalId,
+          "orgId": parsedOrgId ?? defaultOrgId,
         },
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -188,13 +217,30 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
         final docData = resData['data'] is Map<String, dynamic> ? resData['data'] : (resData is Map<String, dynamic> ? resData : null);
 
         if (docData != null) {
+          final targetDocUserId = (docData['userId'] ?? cleanDoctorId).toString().trim();
+          final int targetDocHospitalId = docData['hospitalId'] != null
+              ? (int.tryParse(docData['hospitalId'].toString()) ?? parsedHospitalId ?? defaultHospitalId)
+              : (parsedHospitalId ?? defaultHospitalId);
+          final int targetDocOrgId = docData['orgId'] != null
+              ? (int.tryParse(docData['orgId'].toString()) ?? parsedOrgId ?? defaultOrgId)
+              : (parsedOrgId ?? defaultOrgId);
+
+          final String docName = docData['name'] ??
+              docData['displayName'] ??
+              parsedDocName ??
+              'Dr. ${docData['firstName'] ?? ''} ${docData['lastName'] ?? ''}'.trim();
+
           final realDoctor = {
-            'id': docData['id'] ?? docData['doctorId'] ?? cleanDoctorId,
-            'doctorId': docData['doctorId'] ?? docData['id'] ?? cleanDoctorId,
-            'name': docData['displayName'] ?? docData['name'] ?? 'Dr. ${docData['firstName'] ?? ''} ${docData['lastName'] ?? ''}'.trim(),
+            'id': targetDocUserId,
+            'userId': targetDocUserId,
+            'doctorId': targetDocUserId,
+            'name': docName.isNotEmpty ? docName : 'Dr. Specialist',
             'specialty': docData['specialty'] ?? 'Specialist',
             'department': docData['department'] ?? 'General Outpatient',
+            'hospitalId': targetDocHospitalId,
             'hospitalName': docData['hospitalName'] ?? 'Yira Clinx Medical Center',
+            'orgId': targetDocOrgId,
+            'orgName': docData['orgName'] ?? 'Yira Health Network',
             'qualification': docData['qualification'] ?? 'MBBS',
             'experience': docData['experience'] ?? '',
             'consultationFee': docData['consultationFee'] ?? 500,
@@ -206,27 +252,22 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
 
           await _saveDoctorLocally(realDoctor);
 
-          // Register patient under doctor's patient list on backend so doctor also sees this patient
+          // Connect patient under doctor's patient list on backend without requiring an appointment
           try {
-            final patientPhone = (currentUser?.data?.phoneNumber ?? currentUser?.data?.phone ?? '').toString().trim();
+            final patientPhone = (currentUser?.data?.phoneNumber ?? '').toString().trim();
             final patientName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim();
-            if (patientPhone.isNotEmpty) {
+            if (patientPhone.isNotEmpty || (currentUser?.data?.id != null && currentUser!.data!.id!.isNotEmpty)) {
               await sl<ApiClient>().account(showSuccessSnack: false).post(
-                '/v1/api/auth/book-appointment',
+                '/v1/api/auth/doctor/connect-patient',
                 data: {
-                  "doctorId": cleanDoctorId,
-                  "hospitalId": hospitalId,
-                  "orgId": orgId,
+                  "doctorId": targetDocUserId,
+                  "hospitalId": targetDocHospitalId,
+                  "orgId": targetDocOrgId,
+                  "patientUserId": currentUser?.data?.id,
                   "patientName": patientName.isNotEmpty ? patientName : 'Patient',
                   "patientPhone": patientPhone,
                   "patientEmail": currentUser?.data?.email ?? '',
                   "gender": currentUser?.data?.gender ?? 'Other',
-                  "appointmentDate": DateTime.now().toIso8601String().split('T')[0],
-                  "startTime": "09:00:00",
-                  "reason": "Connected via Doctor QR Scan",
-                  "appointmentType": "General Consultation",
-                  "isTeleConsultation": false,
-                  "includeConsultationFee": false,
                 },
                 options: Options(
                   headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -287,15 +328,22 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
       final prefs = await SharedPreferences.getInstance();
       final existingStr = prefs.getString('patient_linked_doctors') ?? '[]';
       final List<dynamic> list = jsonDecode(existingStr);
-      list.removeWhere((item) => item['doctorId'] == doctor['doctorId'] || item['id'] == doctor['id']);
+      final docId = (doctor['doctorId'] ?? doctor['userId'] ?? doctor['id'] ?? '').toString().trim();
+      final docName = (doctor['name'] ?? '').toString().trim();
+
+      list.removeWhere((item) =>
+          item['doctorId']?.toString() == docId ||
+          item['userId']?.toString() == docId ||
+          item['id']?.toString() == docId ||
+          (item['name']?.toString().toLowerCase() == docName.toLowerCase() && docName.isNotEmpty));
       list.insert(0, doctor);
       await prefs.setString('patient_linked_doctors', jsonEncode(list));
 
       // Remove from unlinked blacklist so re-scanned doctor displays properly
       final unlinkedList = prefs.getStringList('patient_unlinked_doctors') ?? [];
-      final docId = (doctor['doctorId'] ?? doctor['id'] ?? '').toString().trim();
-      final docName = (doctor['name'] ?? '').toString().trim();
-      unlinkedList.removeWhere((item) => item == docId || item == docName);
+      unlinkedList.removeWhere((item) =>
+          item == docId ||
+          (item.toLowerCase() == docName.toLowerCase() && docName.isNotEmpty));
       await prefs.setStringList('patient_unlinked_doctors', unlinkedList);
     } catch (_) {}
   }

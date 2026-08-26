@@ -37,8 +37,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final patientId = currentUser?.data?.id ?? '6CDE8235-B520-4442-B912-9622A9D357D0';
     final token = currentUser?.data?.accessToken ?? '';
-    final orgId = currentUser?.data?.latestOrgId ?? 9;
-    final hospitalId = currentUser?.data?.latestHospitalId ?? 11;
+    final orgId = currentUser?.data?.latestOrgId ?? 1;
 
     List<Map<String, dynamic>> fetchedDoctors = [];
 
@@ -59,19 +58,18 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         for (final item in localList) {
           final map = Map<String, dynamic>.from(item);
           final name = (map['name'] ?? '').toString().trim();
-          final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
+          final docId = (map['doctorId'] ?? map['userId'] ?? map['id'] ?? '').toString().trim();
 
           // Filter out legacy dummy Sarah Jenkins or previously unlinked
           if (name.toLowerCase().contains('sarah jenkins') ||
               name.toLowerCase().contains('robert miller') ||
               unlinkedKeys.contains(name.toLowerCase()) ||
-              unlinkedKeys.contains(docId.toLowerCase())) {
+              (docId.isNotEmpty && unlinkedKeys.contains(docId.toLowerCase()))) {
             continue;
           }
           if (!fetchedDoctors.any((d) =>
-              (d['doctorId'] != null && d['doctorId'] == map['doctorId']) ||
-              (d['id'] != null && d['id'] == map['id']) ||
-              (d['name'] != null && d['name'].toString().toLowerCase() == name.toLowerCase()))) {
+              (docId.isNotEmpty && (d['doctorId']?.toString() == docId || d['userId']?.toString() == docId || d['id']?.toString() == docId)) ||
+              (d['name'] != null && name.isNotEmpty && d['name'].toString().toLowerCase() == name.toLowerCase()))) {
             fetchedDoctors.add(map);
           }
         }
@@ -430,7 +428,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: filteredDoctors.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 14),
+                        separatorBuilder: (_, _) => const SizedBox(height: 14),
                         itemBuilder: (context, index) {
                           return _buildDoctorCard(context, filteredDoctors[index], isDark, primaryColor, isTab);
                         },
@@ -456,7 +454,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final hospital = (doctor['hospitalName'] ?? 'Yira Clinx Medical Center').toString();
     final experience = (doctor['experience'] ?? '10+ Years Exp.').toString();
     final fee = doctor['consultationFee'] != null ? '₹${doctor['consultationFee']}' : '₹500';
-    final docId = (doctor['doctorId'] ?? doctor['id'] ?? '').toString();
 
     return Container(
       padding: EdgeInsets.all(isTab ? 18 : 16),
