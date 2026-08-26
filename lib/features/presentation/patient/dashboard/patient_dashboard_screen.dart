@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
-import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../di/dependency_injection.dart';
+import '../../../domain/entities/appointments/appointment_entity.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
+import '../../appointments/appointment_bloc/appointment_bloc.dart';
+import '../../doctor/dashboard/widgets/doc_appointment_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
-import '../widgets/patient_appointment_card.dart';
-import '../widgets/patient_vitals_grid.dart';
+import '../documents/patient_documents_screen.dart';
+import '../widgets/patient_vitals_card.dart';
 import '../widgets/update_vitals_sheet.dart';
-import '../../upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
@@ -67,6 +68,15 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     }
   }
 
+  void _openProfileSwitcher() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ProfileSwitcherSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -81,15 +91,15 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
     final firstName = currentUser?.data?.firstName ?? '';
     final lastName = currentUser?.data?.lastName ?? '';
-    final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Ch. Raja Vardan';
+    final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Patient';
 
     return MultiBlocProvider(
       providers: [
         BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>()..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
         ),
-        BlocProvider<UploadedBloc>(
-          create: (_) => sl<UploadedBloc>()..add(FetchUploadedRecords(patientId: userId, limit: 2)),
+        BlocProvider<AppointmentBloc>(
+          create: (_) => sl<AppointmentBloc>()..add(LoadAppointmentsEvent()),
         ),
       ],
       child: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
@@ -99,88 +109,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             overViewEntity = state.patientOverViewEntity;
           }
 
-          final isLoading = state is LoadingPatientViewDetails || state is PatientOverViewInitial || overViewEntity == null;
           final data = overViewEntity?.data;
-          DateTime? parseDate(String? dStr) {
-            if (dStr == null || dStr.trim().isEmpty || dStr.trim().toLowerCase() == 'null' || dStr.trim().toLowerCase() == 'none') return null;
-            final dt = DateTime.tryParse(dStr);
-            if (dt != null) return dt;
-            final parts = dStr.replaceAll(',', '').trim().split(RegExp(r'\s+'));
-            if (parts.length >= 3) {
-              int? day = int.tryParse(parts[0]);
-              int? year = int.tryParse(parts[2]);
-              String monthStr = parts[1].toLowerCase();
-              if (day == null) {
-                monthStr = parts[0].toLowerCase();
-                day = int.tryParse(parts[1]);
-                year = int.tryParse(parts[2]);
-              }
-              if (day != null && year != null) {
-                const months = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12};
-                for (final entry in months.entries) {
-                  if (monthStr.startsWith(entry.key)) return DateTime(year, entry.value, day);
-                }
-              }
-            }
-            return null;
-          }
-
-          bool isUpcomingDate(String? dStr) {
-            if (dStr == null || dStr.isEmpty) return false;
-            final parsed = parseDate(dStr);
-            if (parsed == null) return true;
-            final now = DateTime.now();
-            final todayMidnight = DateTime(now.year, now.month, now.day);
-            return !DateTime(parsed.year, parsed.month, parsed.day).isBefore(todayMidnight);
-          }
-
-          NextAppointmentEntity? nextAppointment;
-          if (data?.nextAppointment != null) {
-            final dateCandidate = data!.nextAppointment!.formattedDate ?? data.nextAppointment!.appointmentDate;
-            if (isUpcomingDate(dateCandidate)) {
-              nextAppointment = data.nextAppointment;
-            }
-          }
-
-          if (nextAppointment == null && data?.upcomingAppointments != null && data!.upcomingAppointments!.isNotEmpty) {
-            try {
-              final candidate = data.upcomingAppointments!.firstWhere(
-                (u) => isUpcomingDate(u.formattedDate ?? u.appointmentDate),
-              );
-              nextAppointment = candidate;
-            } catch (_) {}
-          }
-
-          if (nextAppointment == null && data?.appointments != null && data!.appointments!.isNotEmpty) {
-            try {
-              final appt = data.appointments!.firstWhere(
-                (a) => isUpcomingDate(a.appointmentDate),
-              );
-              nextAppointment = NextAppointmentEntity(
-                id: appt.id,
-                appointmentId: appt.id,
-                doctorName: appt.doctorName,
-                doctorId: appt.doctorId,
-                doctorSpecialty: appt.reason.isNotEmpty ? appt.reason : appt.appointmentType,
-                hospitalName: appt.hospitalName,
-                appointmentDate: appt.appointmentDate,
-                formattedDate: appt.appointmentDate,
-                startTime: appt.startTime,
-                formattedTime: appt.startTime,
-                consultationType: appt.appointmentType,
-                isTeleconsultation: appt.isTeleConsultation,
-                reason: appt.reason,
-                status: appt.status,
-                meetingUrl: appt.meetingUrl,
-              );
-            } catch (_) {}
-          }
-
-          final nextAppointmentDate = nextAppointment?.formattedDate ?? nextAppointment?.appointmentDate ?? data?.visitHistory?.nextScheduledAppointment;
-          final hasNextAppointment = nextAppointment != null && isUpcomingDate(nextAppointmentDate);
-
-
-
           final latestVitals = data?.latestVitals;
           if (latestVitals != null) {
             final bpVal = latestVitals.bloodPressure?.value;
@@ -202,7 +131,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-            drawer: const AppNavigationDrawer(),
             appBar: AppBar(
               elevation: 0,
               backgroundColor: theme.scaffoldBackgroundColor,
@@ -223,43 +151,29 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                   const SizedBox(width: 10),
                   Flexible(
                     child: GestureDetector(
-                      onTap: () => ProfileSwitcherSheet.show(context),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      onTap: _openProfileSwitcher,
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Welcome back,',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 10.5,
-                              color: isDark ? Colors.white60 : Colors.grey[600],
+                          Flexible(
+                            child: Text(
+                              patientName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 18.0 : 16.0,
+                                fontWeight: FontWeight.w700,
+                                color: adaptiveTextColor,
+                                letterSpacing: -0.4,
+                              ),
                             ),
                           ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  patientName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab ? 16 : 14.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: adaptiveTextColor,
-                                    letterSpacing: -0.3,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 18,
-                                color: adaptiveTextColor.withValues(alpha: 0.7),
-                              ),
-                            ],
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 20,
+                            color: adaptiveTextColor.withValues(alpha: 0.7),
                           ),
                         ],
                       ),
@@ -269,15 +183,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
               ),
               actions: [
                 IconButton(
-                  tooltip: "Notifications",
-                  icon: Icon(
-                    Icons.notifications_none_outlined,
-                    color: adaptiveTextColor,
-                    size: isTab ? 24 : 22,
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.notificationSettingsScreen);
-                  },
+                  tooltip: 'Switch Family Member',
+                  icon: Icon(Icons.people_outline_rounded, color: primaryColor),
+                  onPressed: _openProfileSwitcher,
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
@@ -289,27 +197,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                         Navigator.pushNamed(context, AppRoutes.patientProfile);
                       }
                     },
-                    child: Container(
-                      width: isTab ? 38 : 34,
-                      height: isTab ? 38 : 34,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.4),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(patientName),
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 14 : 12,
-                            fontWeight: FontWeight.w700,
-                            color: primaryColor,
-                          ),
-                        ),
+                    child: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: primaryColor.withValues(alpha: 0.15),
+                      child: Text(
+                        patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
+                        style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13, color: primaryColor),
                       ),
                     ),
                   ),
@@ -319,101 +212,29 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             body: RefreshIndicator(
               onRefresh: () async {
                 context.read<PatientOverViewBloc>().add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
-                context.read<UploadedBloc>().add(FetchUploadedRecords(patientId: userId, limit: 2));
+                context.read<AppointmentBloc>().add(LoadAppointmentsEvent());
                 await Future.delayed(const Duration(milliseconds: 600));
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 12),
-
-                    // 1. Health Vitals Overview Grid (First)
-                    isLoading
-                        ? _buildVitalsGridShimmer(context, isDark)
-                        : PatientVitalsGrid(
-                            vitals: _vitalsData,
-                            onUpdateVitals: _openUpdateVitalsSheet,
-                          ),
-                    const SizedBox(height: 24),
-
-                    // 2. Upcoming / New Appointment Card (Below Vitals if exists)
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      child: isLoading
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildNextAppointmentShimmer(context, isDark),
-                                const SizedBox(height: 24),
-                              ],
-                            )
-                          : hasNextAppointment
-                              ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Next Appointment',
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: isTab ? 18 : 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: adaptiveTextColor,
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        if (widget.onNavigateTab != null) {
-                                          widget.onNavigateTab!(1);
-                                        }
-                                      },
-                                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                                      child: Text(
-                                        'View All',
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: primaryColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                PatientAppointmentCard(
-                                  doctorName: nextAppointment?.doctorName ?? 'Attending Physician',
-                                  specialty: nextAppointment?.doctorSpecialty ?? nextAppointment?.reason ?? nextAppointment?.consultationType ?? data?.summary ?? 'General Practitioner',
-                                  hospitalName: nextAppointment?.hospitalName ?? 'ClinicX Health Center',
-                                  date: nextAppointment?.formattedDate ?? nextAppointmentDate ?? 'Scheduled Visit',
-                                  time: nextAppointment?.formattedTime ?? nextAppointment?.startTime ?? 'Scheduled Slot',
-                                  status: nextAppointment?.status ?? 'Scheduled',
-                                  isTeleconsultation: nextAppointment?.isTeleconsultation ?? false,
-                                  meetingUrl: nextAppointment?.meetingUrl,
-                                  onTap: () {
-                                    if (widget.onNavigateTab != null) {
-                                      widget.onNavigateTab!(1);
-                                    }
-                                  },
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                            )
-                          : const SizedBox.shrink(),
+                    // 1. Health Vitals (Single Card with Welcome Back matching provider layout)
+                    PatientVitalsCard(
+                      vitals: _vitalsData,
+                      onUpdateVitals: _openUpdateVitalsSheet,
+                      patientName: patientName,
                     ),
+                    const SizedBox(height: 20),
 
-                    // 3. Recent Clinical Records Section (Below Next Appointment)
+                    // 2. Upcoming / Today Appointments (Show up to 2 appointments)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Recent Clinical Records',
+                          'Upcoming Appointments',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 18 : 16,
@@ -424,12 +245,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                         TextButton(
                           onPressed: () {
                             if (widget.onNavigateTab != null) {
-                              widget.onNavigateTab!(2);
+                              widget.onNavigateTab!(1);
                             }
                           },
                           style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                           child: Text(
-                            'View Vault',
+                            'View All',
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 13,
@@ -442,44 +263,121 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    BlocBuilder<UploadedBloc, UploadedBlocState>(
-                      builder: (context, state) {
-                        if (state.status == UploadedStatus.initial || state.status == UploadedStatus.loading) {
-                          return _buildRecentRecordsShimmer(context, isDark);
+                    BlocBuilder<AppointmentBloc, AppointmentState>(
+                      builder: (context, aptState) {
+                        if (aptState is AppointmentLoading) {
+                          return _buildAppointmentsShimmer(context, isDark);
                         }
-                        final docs = state.allRecords.take(2).toList();
-                        if (docs.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              'No recent clinical documents available',
-                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.grey[500]),
+
+                        List<Appointment> upcomingAppointments = [];
+                        if (aptState is AppointmentLoaded) {
+                          upcomingAppointments = aptState.appointments
+                              .where((a) => (a.statusRaw.toLowerCase() != 'completed' && a.statusRaw.toLowerCase() != 'cancelled'))
+                              .take(2)
+                              .toList();
+                        }
+
+                        if (upcomingAppointments.isEmpty) {
+                          return Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.event_available_rounded, color: primaryColor, size: 22),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'No appointments scheduled today',
+                                        style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13, color: adaptiveTextColor),
+                                      ),
+                                      Text(
+                                        'Book a consultation with your doctor',
+                                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {
+                                    if (widget.onNavigateTab != null) {
+                                      widget.onNavigateTab!(1);
+                                    }
+                                  },
+                                  child: const Text('Book', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                ),
+                              ],
                             ),
                           );
                         }
 
                         return Column(
-                          children: docs.map((doc) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: _buildClinicalRecordItem(
-                                context: context,
-                                title: doc.fileName,
-                                date: '${doc.uploadDate.day}/${doc.uploadDate.month}/${doc.uploadDate.year}',
-                                hospital: '🏥 Yira Health Network',
-                                type: doc.category.isNotEmpty ? doc.category : 'Medical Report',
-                                typeColor: doc.category.toLowerCase().contains('lab') ? Colors.purple : Colors.blue,
-                              ),
+                          children: upcomingAppointments.map((apt) {
+                            final docName = apt.doctorName ?? 'Consulting Doctor';
+                            final initials = docName.isNotEmpty ? docName[0].toUpperCase() : 'DR';
+                            final hospitalName = (apt.hospitalName != null && apt.hospitalName!.isNotEmpty)
+                                ? apt.hospitalName!
+                                : ((apt.hospitalId != null && apt.hospitalId == 19) ? 'Yira Hospitals' : 'Yira Clinx Medical Center');
+                            final statusLabel = apt.statusRaw.isNotEmpty ? apt.statusRaw : 'Confirmed';
+
+                            return DocAppointmentCard(
+                              initials: initials,
+                              name: docName,
+                              subtitle: hospitalName,
+                              description: apt.category.isNotEmpty ? apt.category : 'General Consultation',
+                              timeOrDate: '${apt.time} • ${apt.duration}',
+                              statusLabel: statusLabel,
+                              statusColor: const Color(0xFF059669),
+                              statusTextColor: Colors.white,
+                              isTab: isTab,
+                              isTeleConsultation: apt.type == AppointmentType.videoCall,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': apt.patientUserId ?? userId,
+                                    'appointmentId': apt.id,
+                                    'hospitalId': apt.hospitalId?.toString() ?? '1',
+                                    'orgId': apt.orgId?.toString() ?? '1',
+                                    'patientName': apt.patientName.isNotEmpty ? apt.patientName : patientName,
+                                    'initialStatus': apt.statusRaw,
+                                    'initialTabIndex': 0,
+                                  },
+                                );
+                              },
                             );
                           }).toList(),
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // 4. Quick Action Shortcuts Grid (At Last)
+                    // 3. Four Core Feature Navigation Cards
                     Text(
-                      'Quick Actions',
+                      'Medical Services & Records',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 18 : 16,
@@ -487,233 +385,148 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                         color: adaptiveTextColor,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Column(
+                    const SizedBox(height: 12),
+
+                    GridView.count(
+                      crossAxisCount: isTab ? 4 : 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: isTab ? 1.3 : 1.15,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildActionShortcut(
-                                context: context,
-                                title: 'Book Visit',
-                                icon: Icons.calendar_month_rounded,
-                                color: Colors.blue,
-                                onTap: () {
-                                  if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(1);
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildActionShortcut(
-                                context: context,
-                                title: 'My Records',
-                                icon: Icons.folder_shared_rounded,
-                                color: Colors.teal,
-                                onTap: () {
-                                  if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(2);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
+                        _buildFeatureCard(
+                          context: context,
+                          title: 'Prescriptions',
+                          subtitle: 'Active medicines & rx',
+                          icon: Icons.medication_rounded,
+                          color: const Color(0xFF8B5CF6),
+                          onTap: () => Navigator.pushNamed(context, AppRoutes.userPrescriptionManagement),
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildActionShortcut(
-                                context: context,
-                                title: 'Log Vitals',
-                                icon: Icons.edit_note_rounded,
-                                color: const Color(0xFFE11D48),
-                                onTap: _openUpdateVitalsSheet,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildActionShortcut(
-                                context: context,
-                                title: 'My Profile',
-                                icon: Icons.person_pin_rounded,
-                                color: Colors.indigo,
-                                onTap: () {
-                                  if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(3);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
+                        _buildFeatureCard(
+                          context: context,
+                          title: 'My Health Checkups',
+                          subtitle: 'Visits & clinic summaries',
+                          icon: Icons.health_and_safety_rounded,
+                          color: const Color(0xFF059669),
+                          onTap: () {
+                            if (widget.onNavigateTab != null) {
+                              widget.onNavigateTab!(1);
+                            }
+                          },
+                        ),
+                        _buildFeatureCard(
+                          context: context,
+                          title: 'My Records & Reports',
+                          subtitle: 'Lab tests, scans & PDFs',
+                          icon: Icons.folder_shared_rounded,
+                          color: const Color(0xFF0284C7),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
+                            );
+                          },
+                        ),
+                        _buildFeatureCard(
+                          context: context,
+                          title: 'Appointments View',
+                          subtitle: 'Full visit schedule',
+                          icon: Icons.calendar_month_rounded,
+                          color: const Color(0xFFEA580C),
+                          onTap: () {
+                            if (widget.onNavigateTab != null) {
+                              widget.onNavigateTab!(1);
+                            }
+                          },
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
-            ],
-          ),
-        ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
-  },
-),
-);
   }
 
-  Widget _buildActionShortcut({
+  Widget _buildFeatureCard({
     required BuildContext context,
     required String title,
+    required String subtitle,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTab = isTablet(context);
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
           ),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: isTab ? 26 : 22),
+                ),
+                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: isDark ? Colors.white38 : Colors.grey[400]),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : const Color(0xFF334155),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildClinicalRecordItem({
-    required BuildContext context,
-    required String title,
-    required String date,
-    required String hospital,
-    required String type,
-    required Color typeColor,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: typeColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.description_rounded, color: typeColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 13,
+                    fontSize: isTab ? 15 : 13,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$hospital • $date',
+                  subtitle,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 11,
+                    fontSize: 10,
                     color: isDark ? Colors.white54 : Colors.grey[600],
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: typeColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              type,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: typeColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-
-  Widget _buildNextAppointmentShimmer(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200),
-      ),
-      child: BaseShimmer(
-        child: Row(
-          children: [
-            Container(width: 48, height: 48, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(width: 140, height: 16, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 6),
-                  Container(width: 100, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 8),
-                  Container(width: 160, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                ],
-              ),
             ),
           ],
         ),
@@ -721,95 +534,27 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionsShimmer(BuildContext context, bool isDark) {
-    return Row(
-      children: List.generate(4, (index) {
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: index == 3 ? 0 : 10),
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200),
-            ),
-            child: BaseShimmer(
-              child: Column(
-                children: [
-                  Container(width: 32, height: 32, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                  const SizedBox(height: 8),
-                  Container(width: 45, height: 10, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                ],
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildVitalsGridShimmer(BuildContext context, bool isDark) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.55,
-      ),
-      itemCount: 4,
-      itemBuilder: (context, index) {
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200),
-          ),
-          child: BaseShimmer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(width: 24, height: 24, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                    Container(width: 40, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                  ],
-                ),
-                Container(width: 70, height: 18, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                Container(width: 90, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildRecentRecordsShimmer(BuildContext context, bool isDark) {
+  Widget _buildAppointmentsShimmer(BuildContext context, bool isDark) {
     return Column(
       children: List.generate(2, (index) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
           ),
           child: BaseShimmer(
             child: Row(
               children: [
-                Container(width: 36, height: 36, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10))),
+                Container(width: 44, height: 44, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(width: 160, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                      Container(width: 140, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
                       const SizedBox(height: 6),
                       Container(width: 100, height: 11, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
                     ],

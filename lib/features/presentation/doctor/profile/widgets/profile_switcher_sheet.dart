@@ -5,6 +5,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
@@ -219,6 +220,56 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       final response = await updateUseCase(params);
 
       if (response != null && response.status == true && response.data != null) {
+        final currentSession = GlobalSession.instance.userNotifier.value;
+        final bool isPatientRole = item.roleId.toUpperCase() ==
+                "4FC67429-28AE-4106-93EF-436228282ED0" ||
+            item.roleName.toLowerCase().contains("patient") ||
+            item.roleName.toLowerCase().contains("user");
+        final String navigationId = isPatientRole ? "1" : "2";
+        final String latestUserRole = isPatientRole ? "Patient" : "Provider";
+
+        if (currentSession?.data != null) {
+          final oldData = currentSession!.data!;
+          final updatedData = DataEntity(
+            id: oldData.id,
+            accessToken: oldData.accessToken,
+            refreshToken: oldData.refreshToken,
+            accessTokenExpiry: oldData.accessTokenExpiry,
+            refreshTokenExpiry: oldData.refreshTokenExpiry,
+            isMobileVerified: oldData.isMobileVerified,
+            isEmailVerified: oldData.isEmailVerified,
+            roleCount: oldData.roleCount,
+            hospitalCount: oldData.hospitalCount,
+            organizationCount: oldData.organizationCount,
+            roles: oldData.roles,
+            firstName: oldData.firstName,
+            lastName: oldData.lastName,
+            email: oldData.email,
+            phoneNumber: oldData.phoneNumber,
+            countryCode: oldData.countryCode,
+            gender: oldData.gender,
+            dob: oldData.dob,
+            height: oldData.height,
+            weight: oldData.weight,
+            heightUnit: oldData.heightUnit,
+            weightUnit: oldData.weightUnit,
+            latestRoleId: item.roleId,
+            latestOrgId: item.orgId,
+            latestHospitalId: item.hospitalId,
+            latestUserRole: latestUserRole,
+            navigationId: navigationId,
+            profiles: oldData.profiles,
+          );
+
+          await GlobalSession.instance.update(
+            LoginEntity(
+              status: true,
+              message: "Session updated",
+              data: updatedData,
+            ),
+          );
+        }
+
         if (mounted) {
           Navigator.of(context, rootNavigator: true).pop();
           Navigator.pushNamedAndRemoveUntil(

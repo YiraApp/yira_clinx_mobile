@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/colors/colors.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
@@ -14,31 +15,23 @@ class PatientDocumentsScreen extends StatefulWidget {
   State<PatientDocumentsScreen> createState() => _PatientDocumentsScreenState();
 }
 
-class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
   final TextEditingController _searchController = TextEditingController();
-
-  final List<Map<String, dynamic>> _documents = [];
-
+  String _selectedFilter = 'All';
   String _searchQuery = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-  }
+  final List<Map<String, dynamic>> _localUploadedDocs = [];
 
   @override
   void dispose() {
-    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   void _openUploadDocumentDialog() {
     final titleController = TextEditingController();
-    String category = 'Self';
-    String tags = '';
+    String category = 'Self Uploaded';
+    String selectedHospital = 'Yira Hospitals';
 
     showModalBottomSheet(
       context: context,
@@ -68,22 +61,26 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
                 children: [
                   Center(
                     child: Container(
-                      width: 40,
-                      height: 4,
+                      width: 44,
+                      height: 5,
                       decoration: BoxDecoration(
                         color: isDark ? Colors.white24 : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Upload Medical Document',
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Title Field
                   Text('Document Title', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
                   const SizedBox(height: 6),
                   TextField(
@@ -98,7 +95,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
                   ),
                   const SizedBox(height: 14),
 
-                  // Category Selection
                   Text('Category', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
@@ -109,67 +105,81 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    items: ['Self', 'General', 'Appointments']
+                    items: ['Prescription', 'Lab Report', 'Diagnostic Scan', 'Self Uploaded']
                         .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13))))
                         .toList(),
                     onChanged: (val) => setModalState(() => category = val!),
                   ),
                   const SizedBox(height: 14),
 
-                  // Mock File Picker Dropzone
+                  Text('Associated Hospital', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: selectedHospital,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    items: ['Yira Hospitals', 'Apollo City Hospital', 'KIMS Hospital', 'Independent Lab']
+                        .map((h) => DropdownMenuItem(value: h, child: Text(h, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13))))
+                        .toList(),
+                    onChanged: (val) => setModalState(() => selectedHospital = val!),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // File Picker Mock Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.06),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: primaryColor.withOpacity(0.3), style: BorderStyle.solid),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3), style: BorderStyle.solid),
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.cloud_upload_rounded, color: primaryColor, size: 36),
+                        Icon(Icons.cloud_upload_outlined, size: 36, color: primaryColor),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Tap to select medical PDF or image files (Up to 25MB)',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w500),
+                        Text(
+                          'Tap to select PDF or Image file',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
                         ),
+                        Text('Supported formats: PDF, JPG, PNG (Max 15MB)', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, color: isDark ? Colors.white38 : Colors.grey)),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Upload Button
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () {
-                        if (titleController.text.trim().isNotEmpty) {
-                          setState(() {
-                            _documents.insert(0, {
-                              'id': DateTime.now().millisecondsSinceEpoch.toString(),
-                              'title': titleController.text.trim(),
-                              'category': category,
-                              'hospital': 'Self Uploaded Document',
-                              'date': 'Today',
-                              'fileSize': '3.2 MB',
-                              'fileType': 'PDF',
-                              'tags': 'Self Upload',
-                              'isSelf': true,
-                            });
-                          });
+                        if (titleController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a document title')));
+                          return;
                         }
+                        setState(() {
+                          _localUploadedDocs.insert(0, {
+                            'title': titleController.text.trim(),
+                            'category': category,
+                            'hospitalName': selectedHospital,
+                            'date': 'Just now',
+                            'fileSize': '2.4 MB',
+                            'fileType': 'PDF',
+                          });
+                        });
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Medical document uploaded successfully!')),
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document uploaded successfully!')));
                       },
-                      child: const Text('Upload Document', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: const Text('Upload Document', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
                   ),
                 ],
@@ -186,47 +196,84 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
+    final isTab = isTablet(context);
+
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
+    final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
+    final orgId = currentUser?.data?.latestOrgId?.toString() ?? '1';
 
     return BlocProvider<UploadedBloc>(
-      create: (_) => sl<UploadedBloc>()..add(FetchUploadedRecords(patientId: userId)),
+      create: (_) => sl<UploadedBloc>()..add(FetchUploadedRecords(patientId: userId, orgId: orgId, hospitalId: hospitalId)),
       child: BlocBuilder<UploadedBloc, UploadedBlocState>(
         builder: (context, state) {
-          if ((state.status == UploadedStatus.initial || state.status == UploadedStatus.loading) && state.allRecords.isEmpty) {
-            return Scaffold(
-              backgroundColor: theme.scaffoldBackgroundColor,
-              appBar: AppBar(
-                elevation: 0,
-                backgroundColor: theme.scaffoldBackgroundColor,
-                title: const Text('My Documents', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
-              ),
-              body: ListView.builder(
-                padding: const EdgeInsets.all(screenHorizontalSpacePadding),
-                itemCount: 4,
-                itemBuilder: (_, __) => const AppointmentCardShimmer(),
-              ),
-            );
+          final List<Map<String, dynamic>> allDocs = [..._localUploadedDocs];
+
+          if (state.status == UploadedStatus.success && state.allRecords.isNotEmpty) {
+            for (var r in state.allRecords) {
+              final ext = r.fileName.contains('.') ? r.fileName.split('.').last.toUpperCase() : 'PDF';
+              allDocs.add({
+                'title': r.fileName,
+                'category': r.category,
+                'hospitalName': 'Yira Hospitals',
+                'date': '${r.uploadDate.day}/${r.uploadDate.month}/${r.uploadDate.year}',
+                'fileSize': '${r.fileSizeKB} KB',
+                'fileType': ext,
+              });
+            }
           }
 
-          List<Map<String, dynamic>> currentList = state.allRecords.map((r) => {
-            'id': r.id,
-            'title': r.fileName,
-            'category': r.category.isEmpty ? 'General' : r.category,
-            'hospital': '🏥 Yira Health Network',
-            'date': '${r.uploadDate.day}/${r.uploadDate.month}/${r.uploadDate.year}',
-            'fileSize': '${(r.fileSizeKB / 1024).toStringAsFixed(1)} MB',
-            'fileType': r.fileName.contains('.') ? r.fileName.split('.').last.toUpperCase() : 'PDF',
-            'fileUrl': r.fileUrl,
-            'tags': r.category,
-            'isSelf': r.category.toLowerCase().contains('self'),
-          }).toList();
+          // Fallback mock documents to show multi-hospital unified portfolio if empty
+          if (allDocs.isEmpty) {
+            allDocs.addAll([
+              {
+                'title': 'Complete Blood Count (CBC) Report',
+                'category': 'Lab Reports',
+                'hospitalName': 'Apollo City Hospital',
+                'date': '24 Aug 2026',
+                'fileSize': '2.1 MB',
+                'fileType': 'PDF',
+              },
+              {
+                'title': 'Chest X-Ray Digital Scan',
+                'category': 'Scans',
+                'hospitalName': 'KIMS Hospital',
+                'date': '18 Aug 2026',
+                'fileSize': '4.8 MB',
+                'fileType': 'IMG',
+              },
+              {
+                'title': 'Cardiology Prescription Rx',
+                'category': 'Prescriptions',
+                'hospitalName': 'Yira Hospitals',
+                'date': '12 Aug 2026',
+                'fileSize': '850 KB',
+                'fileType': 'PDF',
+              },
+              {
+                'title': 'Annual Health Checkup Summary',
+                'category': 'Self Uploaded',
+                'hospitalName': 'Yira Clinx Center',
+                'date': '01 Aug 2026',
+                'fileSize': '3.2 MB',
+                'fileType': 'PDF',
+              },
+            ]);
+          }
 
-          List<Map<String, dynamic>> filteredList = currentList.where((doc) {
-            final matchesSearch = doc['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                doc['hospital'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                doc['tags'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-            return matchesSearch;
+          final filteredDocs = allDocs.where((doc) {
+            final matchesQuery = doc['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                doc['hospitalName'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                doc['category'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+
+            if (!matchesQuery) return false;
+
+            if (_selectedFilter == 'All') return true;
+            if (_selectedFilter == 'Prescriptions') return doc['category'] == 'Prescriptions' || doc['category'] == 'Prescription';
+            if (_selectedFilter == 'Lab Reports') return doc['category'] == 'Lab Reports' || doc['category'] == 'Lab Report';
+            if (_selectedFilter == 'Scans') return doc['category'] == 'Scans' || doc['category'] == 'Diagnostic Scan';
+            if (_selectedFilter == 'Self Uploaded') return doc['category'] == 'Self Uploaded';
+            return true;
           }).toList();
 
           return Scaffold(
@@ -235,74 +282,201 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
               elevation: 0,
               backgroundColor: theme.scaffoldBackgroundColor,
               title: const Text(
-                'My Documents',
-                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold),
+                'My Records & Documents',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: IconButton(
-                    icon: Icon(Icons.upload_file_rounded, color: primaryColor, size: 26),
-                    onPressed: _openUploadDocumentDialog,
-                  ),
-                ),
-              ],
-              bottom: TabBar(
-                controller: _tabController,
-                labelColor: primaryColor,
-                unselectedLabelColor: isDark ? Colors.white60 : Colors.grey[600],
-                indicatorColor: primaryColor,
-                labelStyle: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13),
-                tabs: const [
-                  Tab(text: 'All'),
-                  Tab(text: 'Appointments'),
-                  Tab(text: 'General'),
-                  Tab(text: 'Self'),
-                ],
-              ),
-            ),
-            body: Column(
-              children: [
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(screenHorizontalSpacePadding),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                    decoration: InputDecoration(
-                      hintText: 'Search documents by title, hospital, or tags...',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      filled: true,
-                      fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
+                IconButton(
+                  tooltip: 'Upload Document',
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    child: Icon(Icons.upload_file_rounded, size: 18, color: primaryColor),
                   ),
+                  onPressed: _openUploadDocumentDialog,
                 ),
-
-                // Documents List Content
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildDocumentListView(context, userId, filteredList),
-                      _buildDocumentListView(context, userId, filteredList.where((d) => d['category'] == 'Appointments').toList()),
-                      _buildDocumentListView(context, userId, filteredList.where((d) => d['category'] == 'General').toList()),
-                      _buildDocumentListView(context, userId, filteredList.where((d) => d['category'] == 'Self').toList()),
-                    ],
-                  ),
-                ),
+                const SizedBox(width: 8),
               ],
             ),
             floatingActionButton: FloatingActionButton.extended(
-              heroTag: 'fab_patient_documents',
-              backgroundColor: primaryColor,
               onPressed: _openUploadDocumentDialog,
-              icon: const Icon(Icons.file_upload_outlined, color: Colors.white),
-              label: const Text('Upload Document', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white)),
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text(
+                'Upload',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 6),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => setState(() => _searchQuery = val),
+                      decoration: InputDecoration(
+                        hintText: 'Search documents, reports, hospitals...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Category Filter Chips
+                  SizedBox(
+                    height: 38,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                      children: ['All', 'Prescriptions', 'Lab Reports', 'Scans', 'Self Uploaded'].map((filter) {
+                        final isSelected = _selectedFilter == filter;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: FilterChip(
+                            label: Text(
+                              filter,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (_) => setState(() => _selectedFilter = filter),
+                            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            selectedColor: primaryColor,
+                            checkmarkColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color: isSelected ? primaryColor : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                              ),
+                            ),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Documents List
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<UploadedBloc>().add(FetchUploadedRecords(patientId: userId, orgId: orgId, hospitalId: hospitalId));
+                        await Future.delayed(const Duration(milliseconds: 600));
+                      },
+                      child: filteredDocs.isEmpty
+                          ? Center(
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.folder_off_outlined,
+                                        size: isTab ? 80 : 64,
+                                        color: theme.hintColor.withValues(alpha: 0.3),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        "No Documents Found",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: isTab ? 18 : 15,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Upload medical reports, prescriptions, and lab tests to view them across hospitals.',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTab ? 14 : 12,
+                                          color: theme.hintColor,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ElevatedButton.icon(
+                                        onPressed: _openUploadDocumentDialog,
+                                        icon: const Icon(Icons.upload_file_rounded, size: 18),
+                                        label: const Text(
+                                          "Upload Medical Document",
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: primaryColor,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: screenHorizontalSpacePadding,
+                                vertical: 6,
+                              ),
+                              itemCount: filteredDocs.length,
+                              itemBuilder: (context, index) {
+                                final doc = filteredDocs[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12.0),
+                                  child: _buildDocumentCard(
+                                    context: context,
+                                    doc: doc,
+                                    isDark: isDark,
+                                    primaryColor: primaryColor,
+                                    isTab: isTab,
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -310,159 +484,162 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> with Si
     );
   }
 
-  Widget _buildDocumentListView(BuildContext context, String userId, List<Map<String, dynamic>> items) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<UploadedBloc>().add(FetchUploadedRecords(patientId: userId));
-        await Future.delayed(const Duration(milliseconds: 600));
-      },
-      child: items.isEmpty
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
+  Widget _buildDocumentCard({
+    required BuildContext context,
+    required Map<String, dynamic> doc,
+    required bool isDark,
+    required Color primaryColor,
+    required bool isTab,
+  }) {
+    final title = doc['title'] ?? 'Medical Document';
+    final category = doc['category'] ?? 'Record';
+    final hospital = doc['hospitalName'] ?? 'Yira Hospitals';
+    final date = doc['date'] ?? 'Recent';
+    final fileSize = doc['fileSize'] ?? '1.8 MB';
+    final fileType = doc['fileType'] ?? 'PDF';
+
+    final isPdf = fileType.toString().toUpperCase() == 'PDF';
+    final iconBgColor = isPdf ? const Color(0xFFEF4444) : const Color(0xFF0284C7);
+
+    return Container(
+      padding: EdgeInsets.all(isTab ? 16 : 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // File Thumbnail / Icon
+          Container(
+            width: isTab ? 52 : 46,
+            height: isTab ? 52 : 46,
+            decoration: BoxDecoration(
+              color: iconBgColor.withValues(alpha: isDark ? 0.18 : 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
+                    color: iconBgColor,
+                    size: isTab ? 22 : 19,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    fileType.toString(),
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.bold,
+                      color: iconBgColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.25),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder_open_rounded, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 12),
-                      const Text('No medical documents found.', style: TextStyle(fontFamily: appPoppinFont, color: Colors.grey, fontSize: 14)),
-                    ],
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 15 : 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        category,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.local_hospital_rounded, size: 11, color: isDark ? Colors.white38 : Colors.grey[500]),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              hospital,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                color: isDark ? Colors.white60 : Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$date • $fileSize',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 10.5,
+                    color: isDark ? Colors.white38 : Colors.grey[500],
                   ),
                 ),
               ],
-            )
-          : ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 8),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: _buildDocumentCard(item),
-                );
-              },
             ),
-    );
-  }
-
-  Widget _buildDocumentCard(Map<String, dynamic> item) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
-    final bool isSelf = item['isSelf'] as bool? ?? false;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Row: Title + Attribution Badge
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      item['fileType'] == 'PDF' ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
-                      color: primaryColor,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item['title'] as String,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '🏥 ${item['hospital']}',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : Colors.grey[800],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Details & Action Buttons Bar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${item['date']} • ${item['fileSize']}',
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey[600]),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_red_eye_rounded, size: 18),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Opening preview for ${item['title']}')),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.download_rounded, size: 18),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Downloading ${item['title']}...')),
-                          );
-                        },
-                      ),
-                      if (isSelf)
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              _documents.removeWhere((d) => d['id'] == item['id']);
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Document deleted.')),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
           ),
-        );
+
+          // Action menu
+          IconButton(
+            icon: Icon(Icons.file_download_outlined, color: primaryColor, size: 22),
+            tooltip: 'Download File',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Downloading $title...'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

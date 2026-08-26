@@ -46,6 +46,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
             todayCount: result.todayCount,
             confirmedCount: result.confirmedCount,
             pendingCount: result.pendingCount,
+            completedCount: result.completedCount,
             aiOptimizationScore: result.aiOptimizationScore,
           ));
         } else {
@@ -54,6 +55,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
             todayCount: 0,
             confirmedCount: 0,
             pendingCount: 0,
+            completedCount: 0,
             aiOptimizationScore: 94,
           ));
         }

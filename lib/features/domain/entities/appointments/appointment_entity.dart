@@ -17,8 +17,13 @@ class Appointment {
   final String statusRaw;
   final String? patientStatus;
   final String? patientUserId;
+  final String? doctorName;
+  final String? relation;
+  final bool? isPrimary;
   final int? orgId;
   final int? hospitalId;
+  final String? hospitalName;
+  final String? organizationName;
   final String? reason;
   final String? meetingUrl;
 
@@ -35,8 +40,13 @@ class Appointment {
     this.statusRaw = '',
     this.patientStatus,
     this.patientUserId,
+    this.doctorName = 'Doctor',
+    this.relation = 'Self',
+    this.isPrimary = true,
     this.orgId,
     this.hospitalId,
+    this.hospitalName,
+    this.organizationName,
     this.reason,
     this.meetingUrl,
   });

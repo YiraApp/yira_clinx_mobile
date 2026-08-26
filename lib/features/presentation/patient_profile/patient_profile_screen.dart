@@ -29,6 +29,7 @@ class DoctorPatientProfileScreen extends StatefulWidget {
   final String? hospitalId;
   final String? orgId;
   final String? patientName;
+  final String? initialStatus;
   final int initialTabIndex;
 
   const DoctorPatientProfileScreen({
@@ -38,6 +39,7 @@ class DoctorPatientProfileScreen extends StatefulWidget {
     this.hospitalId,
     this.orgId,
     this.patientName,
+    this.initialStatus,
     this.initialTabIndex = 0,
   });
 
@@ -161,6 +163,7 @@ class _DoctorPatientProfileScreenState
                         isTab: isTab,
                         appointmentId: widget.appointmentId,
                         patientId: widget.patientId ?? patient.id,
+                        initialStatus: widget.initialStatus,
                         hospitalId: int.tryParse(widget.hospitalId ?? ''),
                         consentBloc: _consentBloc,
                         accessStatus: accessStatus,

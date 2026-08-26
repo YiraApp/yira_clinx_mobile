@@ -7,6 +7,7 @@ import 'package:yiraclinics/features/presentation/medicine/widgets/medical_recor
 import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
@@ -219,10 +220,11 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
       },
       builder: (context, state) {
         final bool hasRecord = (state is MedicalHistoryLoaded && state.records.isNotEmpty);
+        final bool isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          floatingActionButton: hasRecord
+          floatingActionButton: (hasRecord || isPatient)
               ? null
               : FloatingActionButton(
                   backgroundColor: primaryColor,
@@ -233,13 +235,13 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                     );
                   },
                 ),
-          body: _buildBody(context, state, isTab),
+          body: _buildBody(context, state, isTab, isPatient),
         );
       },
     );
   }
 
-  Widget _buildBody(BuildContext context, MedicalHistoryState state,bool isTab) {
+  Widget _buildBody(BuildContext context, MedicalHistoryState state, bool isTab, bool isPatient) {
     if (state is MedicalHistoryLoading) {
       return MedicalRecordListShimmer(itemCount: 4, isTab: isTab);
     }
@@ -281,8 +283,8 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                   SingleMedicineDetailsNavEvent(recordId: item.id, record: item),
                 );
               },
-              onDeletePressed: () => _confirmDeleteRecord(item),
-              onEditPressed: () => _openRecordFormModal(item),
+              onDeletePressed: isPatient ? null : () => _confirmDeleteRecord(item),
+              onEditPressed: isPatient ? null : () => _openRecordFormModal(item),
             ),
           );
         },

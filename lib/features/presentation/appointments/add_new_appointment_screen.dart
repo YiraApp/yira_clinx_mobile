@@ -197,6 +197,7 @@ class PreviousAppointmentOption {
   final String reason;
   final String doctorName;
   final String patientName;
+  final String? hospitalName;
 
   const PreviousAppointmentOption({
     required this.id,
@@ -207,6 +208,7 @@ class PreviousAppointmentOption {
     required this.reason,
     required this.doctorName,
     required this.patientName,
+    this.hospitalName,
   });
 }
 
@@ -613,14 +615,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     });
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final int orgId = currentUser?.data?.latestOrgId ?? 1;
       final String token = currentUser?.data?.accessToken ?? '';
 
       final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
         URLs.patientAppointmentsUrl,
         data: {
           "patientPhone": cleanPhone,
-          "orgId": orgId,
         },
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -645,6 +645,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   reason: (item['reason'] ?? '').toString(),
                   doctorName: (item['doctorName'] ?? 'Doctor').toString(),
                   patientName: (item['patientName'] ?? 'Patient').toString(),
+                  hospitalName: (item['hospitalName'] ?? '').toString(),
                 ));
               }
             }
@@ -909,6 +910,67 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     });
   }
 
+  Future<void> _lookupAndAutoSelectPatient(
+    String cleanPhone, {
+    String? preferredName,
+  }) async {
+    await _lookupAccountsByPhone(cleanPhone);
+    if (!mounted) return;
+
+    if (_matchingAccountsList.isNotEmpty) {
+      PatientOption match = _matchingAccountsList.first;
+      if (preferredName != null && preferredName.trim().isNotEmpty) {
+        final target = preferredName.trim().toLowerCase();
+        final found = _matchingAccountsList.where(
+          (a) =>
+              a.name.trim().toLowerCase() == target ||
+              a.name.toLowerCase().contains(target) ||
+              target.contains(a.name.toLowerCase()),
+        ).toList();
+        if (found.isNotEmpty) {
+          match = found.first;
+        }
+      }
+      _selectPatientAccount(match);
+    } else if (preferredName != null && preferredName.trim().isNotEmpty) {
+      _selectPatientAccount(PatientOption(
+        id: '',
+        userId: '',
+        name: preferredName.trim(),
+        phone: cleanPhone,
+        gender: _selectedGender,
+        dob: '',
+        email: '',
+        relation: 'Self',
+        isPrimary: true,
+        accountType: 'New Patient',
+      ));
+    }
+  }
+
+  bool _hasParsedRouteArgs = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasParsedRouteArgs) {
+      _hasParsedRouteArgs = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final phone = (args['patientPhone'] ?? args['phone'] ?? args['phoneNumber'] ?? '').toString().replaceAll(RegExp(r'\D'), '');
+        final name = (args['patientName'] ?? args['name'] ?? '').toString().trim();
+        if (phone.length >= 10 && _selectedPatient == null) {
+          setState(() {
+            _patientSearchMode = PatientSearchMode.byPhone;
+            _phoneController.text = phone;
+            _hasSearchedPhone = true;
+          });
+          _lookupAndAutoSelectPatient(phone, preferredName: name.isNotEmpty ? name : widget.initialPatientName);
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -926,13 +988,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         _selectedDoctor = "Dr. $name";
       }
     }
-    if (widget.initialPatientName != null && widget.initialPatientName!.isNotEmpty) {
+    final initialPhone = widget.initialPatientPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+    if (initialPhone.length >= 10) {
+      _patientSearchMode = PatientSearchMode.byPhone;
+      _phoneController.text = initialPhone;
+      _hasSearchedPhone = true;
+    } else if (widget.initialPatientName != null && widget.initialPatientName!.isNotEmpty) {
       _patientSearchController.text = widget.initialPatientName!;
       _isExistingPatient = true;
     }
-    if (widget.initialPatientPhone != null && widget.initialPatientPhone!.isNotEmpty) {
-      _phoneController.text = widget.initialPatientPhone!;
-    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AppointmentBloc>().add(LoadAppointmentsEvent());
@@ -940,7 +1005,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         _fetchDoctorSlots(_selectedDate);
         _fetchTreatmentPlans();
         if (_phoneController.text.trim().isNotEmpty) {
-          _fetchPatientPreviousAppointments(_phoneController.text.trim());
+          final phone = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
+          if (phone.length >= 10) {
+            _lookupAndAutoSelectPatient(phone, preferredName: widget.initialPatientName);
+          }
         }
       }
     });
@@ -962,10 +1030,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     bool hasError = false;
 
     if (digitsPhone.isEmpty) {
-      setState(() => _phoneError = "10-digit mobile number is required");
+      setState(() => _phoneError = "Please enter a valid 10-digit mobile number");
       hasError = true;
     } else if (digitsPhone.length != 10) {
-      setState(() => _phoneError = "Mobile number must be exactly 10 digits");
+      setState(() => _phoneError = "Mobile number must contain exactly 10 digits");
       hasError = true;
     } else if (!RegExp(r'^[6-9]\d{9}$').hasMatch(digitsPhone)) {
       setState(() => _phoneError = "Mobile number must start with 6, 7, 8, or 9");
@@ -973,29 +1041,31 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     }
 
     if (name.isEmpty) {
-      setState(() => _nameError = "Patient name is required");
+      setState(() => _nameError = "Please enter the patient's full name");
       hasError = true;
     } else if (name.length < 2) {
-      setState(() => _nameError = "Name must be at least 2 characters");
+      setState(() => _nameError = "Patient name must be at least 2 characters long");
       hasError = true;
     }
 
     final hasValidSlot = _allDoctorSlots.any((s) => s.label == _selectedSlot && s.isSelectableForDate(_selectedDate));
     if (!hasValidSlot || _selectedSlot.trim().isEmpty) {
-      setState(() => _slotError = "Please select an upcoming available consultation slot");
+      setState(() => _slotError = "Please select an available consultation time slot");
       hasError = true;
     }
 
     if (reason.isEmpty) {
-      setState(() => _reasonError = "Consultation reason is required");
+      setState(() => _reasonError = "Please enter the reason for consultation");
       hasError = true;
     } else if (reason.length < 2) {
-      setState(() => _reasonError = "Reason must be at least 2 characters");
+      setState(() => _reasonError = "Consultation reason must be at least 2 characters long");
       hasError = true;
     }
 
-    final double discount = double.tryParse(_discountController.text.trim()) ?? 0.0;
-    final double consultationFeeAmt = _includeConsultationFee ? _consultationFee : 0.0;
+    final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+    final double discount = !isPatient ? (double.tryParse(_discountController.text.trim()) ?? 0.0) : 0.0;
+    final bool effectiveIncludeConsultationFee = isPatient ? true : _includeConsultationFee;
+    final double consultationFeeAmt = effectiveIncludeConsultationFee ? _consultationFee : 0.0;
     double treatmentTotal = 0;
     for (final planId in _selectedTreatmentPlanIds) {
       final plan = _allTreatmentPlans.firstWhere(
@@ -1006,12 +1076,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     }
     final double grossTotal = consultationFeeAmt + treatmentTotal;
     if (discount > grossTotal) {
-      _showValidationBanner("Discount (₹${discount.toStringAsFixed(0)}) cannot exceed total bill (₹${grossTotal.toStringAsFixed(0)})");
+      _showValidationBanner("The discount amount (₹${discount.toStringAsFixed(0)}) cannot exceed the total bill of ₹${grossTotal.toStringAsFixed(0)}.");
       return;
     }
 
     if (hasError) {
-      _showValidationBanner("Please correct the highlighted fields before booking");
+      _showValidationBanner("Please fill in all required fields correctly before confirming.");
       return;
     }
 
@@ -1038,9 +1108,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         isTeleConsultation: _isTeleConsultation,
         parentAppointmentId: (_isExistingPatient && _linkToExistingAppointment) ? _selectedParentAppointmentId : null,
         treatmentPlanIds: _selectedTreatmentPlanIds.isNotEmpty ? _selectedTreatmentPlanIds.toList() : null,
-        discountAmount: discount > 0 ? discount : null,
-        includeConsultationFee: _includeConsultationFee,
-        consultationFee: _includeConsultationFee ? _consultationFee : 0.0,
+        discountAmount: (!isPatient && discount > 0) ? discount : null,
+        includeConsultationFee: effectiveIncludeConsultationFee,
+        consultationFee: consultationFeeAmt,
       ),
     );
   }
@@ -1899,144 +1969,198 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       _buildSectionHeader(5, "Billing & Payment", isDark),
                       const SizedBox(height: 14),
 
-                      // Consultation fee toggle row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                      // Consultation fee row
+                      Builder(
+                        builder: (context) {
+                          final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+                          if (isPatient) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Consultation Fee",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    Text(
+                                      "Doctor Fee: ₹${_consultationFee.toStringAsFixed(0)}",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 11,
+                                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    "₹${_consultationFee.toStringAsFixed(0)}",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                "Include Consultation Fee",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Include Consultation Fee",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  Text(
+                                    _includeConsultationFee ? "Doctor Fee: ₹${_consultationFee.toStringAsFixed(0)}" : "Fee excluded / waived",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 11,
+                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                _includeConsultationFee ? "Doctor Fee: ₹${_consultationFee.toStringAsFixed(0)}" : "Fee excluded / waived",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    "₹${_consultationFee.toStringAsFixed(0)}",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: _includeConsultationFee
+                                          ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                                          : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                                      decoration: !_includeConsultationFee ? TextDecoration.lineThrough : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Switch.adaptive(
+                                    value: _includeConsultationFee,
+                                    activeTrackColor: primaryColor,
+                                    activeThumbColor: Colors.white,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _includeConsultationFee = val;
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "₹${_consultationFee.toStringAsFixed(0)}",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: _includeConsultationFee
-                                      ? (isDark ? Colors.white : const Color(0xFF1E293B))
-                                      : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                                  decoration: !_includeConsultationFee ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Switch.adaptive(
-                                value: _includeConsultationFee,
-                                activeTrackColor: primaryColor,
-                                activeThumbColor: Colors.white,
-                                onChanged: (val) {
-                                  setState(() {
-                                    _includeConsultationFee = val;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildInputLabel("Discount Amount (₹)", isDark, isTab),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _discountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                          LengthLimitingTextInputFormatter(6),
-                        ],
-                        onChanged: (val) => setState(() {}),
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
-                        ),
-                        decoration: _inputDecoration(
-                          hintText: "Enter discount (e.g. 100)",
-                          prefixIcon: Icons.local_offer_outlined,
-                          isDark: isDark,
-                          suffixIcon: _discountController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 16),
-                                  onPressed: () => setState(() => _discountController.clear()),
-                                )
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Quick Discount Chips
-                      Wrap(
-                        spacing: 8,
-                        children: [50, 100, 200, 500].map((amt) {
-                          final isCurrent = _discountController.text == amt.toString();
-                          return InkWell(
-                            onTap: () {
-                              setState(() {
-                                if (isCurrent) {
-                                  _discountController.clear();
-                                } else {
-                                  _discountController.text = amt.toString();
-                                }
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                              decoration: BoxDecoration(
-                                color: isCurrent
-                                    ? primaryColor.withValues(alpha: 0.12)
-                                    : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isCurrent
-                                      ? primaryColor
-                                      : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-                                ),
-                              ),
-                              child: Text(
-                                "₹$amt Off",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                                  color: isCurrent
-                                      ? primaryColor
-                                      : (isDark ? Colors.white70 : const Color(0xFF64748B)),
-                                ),
-                              ),
-                            ),
                           );
-                        }).toList(),
+                        },
                       ),
+
+                      if (GlobalSession.instance.userNotifier.value?.data?.navigationId != "1") ...[
+                        const SizedBox(height: 12),
+                        _buildInputLabel("Discount Amount (₹)", isDark, isTab),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _discountController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                            LengthLimitingTextInputFormatter(6),
+                          ],
+                          onChanged: (val) => setState(() {}),
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : const Color(0xFF1E293B),
+                          ),
+                          decoration: _inputDecoration(
+                            hintText: "Enter discount (e.g. 100)",
+                            prefixIcon: Icons.local_offer_outlined,
+                            isDark: isDark,
+                            suffixIcon: _discountController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear_rounded, size: 16),
+                                    onPressed: () => setState(() => _discountController.clear()),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Quick Discount Chips
+                        Wrap(
+                          spacing: 8,
+                          children: [50, 100, 200, 500].map((amt) {
+                            final isCurrent = _discountController.text == amt.toString();
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isCurrent) {
+                                    _discountController.clear();
+                                  } else {
+                                    _discountController.text = amt.toString();
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                                decoration: BoxDecoration(
+                                  color: isCurrent
+                                      ? primaryColor.withValues(alpha: 0.12)
+                                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isCurrent
+                                        ? primaryColor
+                                        : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+                                  ),
+                                ),
+                                child: Text(
+                                  "₹$amt Off",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11,
+                                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                                    color: isCurrent
+                                        ? primaryColor
+                                        : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
                       const SizedBox(height: 14),
 
                       // Compact Bill Summary
                       Builder(
                         builder: (context) {
-                          final double discount = double.tryParse(_discountController.text.trim()) ?? 0.0;
-                          final double consultationFeeAmt = _includeConsultationFee ? _consultationFee : 0.0;
+                          final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+                          final double discount = !isPatient ? (double.tryParse(_discountController.text.trim()) ?? 0.0) : 0.0;
+                          final double consultationFeeAmt = (isPatient || _includeConsultationFee) ? _consultationFee : 0.0;
 
                           double treatmentTotal = 0;
                           for (final planId in _selectedTreatmentPlanIds) {
@@ -2882,9 +3006,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   color: isDark ? Colors.white : const Color(0xFF1E293B),
                                 ),
                               ),
-                              if (appt.doctorName.isNotEmpty)
+                              if (appt.doctorName.isNotEmpty || (appt.hospitalName != null && appt.hospitalName!.isNotEmpty))
                                 Text(
-                                  "Doctor: ${appt.doctorName}",
+                                  [
+                                    if (appt.doctorName.isNotEmpty) "Doctor: ${appt.doctorName}",
+                                    if (appt.hospitalName != null && appt.hospitalName!.isNotEmpty) appt.hospitalName!,
+                                  ].join(' • '),
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: 11,
@@ -4013,7 +4140,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   void _showAddDependentDialog(BuildContext context, bool isDark, {String initialRelation = "Spouse"}) {
     final int dependentsCount = _matchingAccountsList.where((a) => !a.isPrimary).length;
     if (dependentsCount >= 6) {
-      _showValidationBanner("Maximum limit of 6 family relations reached for this primary account.");
+      _showValidationBanner("You have reached the maximum limit of 6 family members for this account.");
       return;
     }
 
@@ -4349,7 +4476,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               onPressed: isSavingDependent ? null : () async {
                                 final depName = nameController.text.trim();
                                 if (depName.isEmpty || depName.length < 2) {
-                                  setDialogState(() => localError = "Please enter a valid name (min 2 chars)");
+                                  setDialogState(() => localError = "Please enter a valid name with at least 2 characters.");
                                   return;
                                 }
 
@@ -4441,142 +4568,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 );
 }
 
-  // ── 5. Add Custom Treatment Plan Dialog ──
-  void _showAddCustomTreatmentPlanDialog(BuildContext context, bool isDark) {
-    final nameController = TextEditingController();
-    final amountController = TextEditingController();
-    String? localError;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-              ),
-              child: SafeArea(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Add Custom Procedure / Plan",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF1E293B),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 20),
-                              onPressed: () => Navigator.pop(sheetContext),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInputLabel("Procedure / Service Name *", isDark, false),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: nameController,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: _inputDecoration(
-                            hintText: "e.g. Root Canal Treatment, Blood Test",
-                            prefixIcon: Icons.medical_services_outlined,
-                            isDark: isDark,
-                            errorText: localError,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _buildInputLabel("Fee Amount (₹) *", isDark, false),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: amountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: _inputDecoration(
-                            hintText: "Enter amount (e.g. 1500)",
-                            prefixIcon: Icons.currency_rupee_rounded,
-                            isDark: isDark,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final name = nameController.text.trim();
-                              final amt = double.tryParse(amountController.text.trim()) ?? 0.0;
-                              if (name.isEmpty) {
-                                setDialogState(() => localError = "Procedure name is required");
-                                return;
-                              }
-                              if (amt <= 0) {
-                                setDialogState(() => localError = "Please enter a valid amount");
-                                return;
-                              }
-
-                              final newPlan = TreatmentPlanOption(
-                                id: "custom-${DateTime.now().millisecondsSinceEpoch}",
-                                name: name,
-                                description: "Custom procedure added during booking",
-                                amount: amt,
-                                status: "Active",
-                              );
-
-                              setState(() {
-                                _allTreatmentPlans.insert(0, newPlan);
-                                _selectedTreatmentPlanIds.add(newPlan.id);
-                              });
-
-                              Navigator.pop(sheetContext);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text(
-                              "Add & Include Procedure",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ── 6. Treatment Plans & Procedures Section (Always Available) ──
+  // ── 5. Treatment Plans & Procedures Section (Always Available) ──
   Widget _buildTreatmentPlansSection(bool isDark, bool isTab) {
     final query = _treatmentPlanSearchController.text.trim().toLowerCase();
     final displayedPlans = query.isEmpty
@@ -4586,62 +4578,27 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _treatmentPlanSearchController,
-                onChanged: (val) => setState(() {}),
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12.5,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                ),
-                decoration: _inputDecoration(
-                  hintText: "Search clinical procedures / packages...",
-                  prefixIcon: Icons.search_rounded,
-                  isDark: isDark,
-                  suffixIcon: _treatmentPlanSearchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 16),
-                          onPressed: () {
-                            setState(() => _treatmentPlanSearchController.clear());
-                          },
-                        )
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: () => _showAddCustomTreatmentPlanDialog(context, isDark),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.add_rounded, size: 16, color: primaryColor),
-                    SizedBox(width: 4),
-                    Text(
-                      "Custom",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        TextField(
+          controller: _treatmentPlanSearchController,
+          onChanged: (val) => setState(() {}),
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: 12.5,
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+          ),
+          decoration: _inputDecoration(
+            hintText: "Search clinical procedures / packages...",
+            prefixIcon: Icons.search_rounded,
+            isDark: isDark,
+            suffixIcon: _treatmentPlanSearchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear_rounded, size: 16),
+                    onPressed: () {
+                      setState(() => _treatmentPlanSearchController.clear());
+                    },
+                  )
+                : null,
+          ),
         ),
         const SizedBox(height: 10),
 
@@ -4681,7 +4638,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ),
             child: Text(
               query.isNotEmpty
-                  ? "No procedure found matching '$query'. Use '+ Custom' to add one."
+                  ? "No procedure found matching '$query'."
                   : "No configured treatment plans found.",
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -4730,6 +4687,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ],
           Container(
             constraints: const BoxConstraints(maxHeight: 250),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: Scrollbar(
               controller: _treatmentPlanScrollCtrl,
               thumbVisibility: displayedPlans.length > 3,

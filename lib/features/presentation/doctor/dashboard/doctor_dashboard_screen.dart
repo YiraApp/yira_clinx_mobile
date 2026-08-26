@@ -510,7 +510,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           ),
                         ),
                       )
-                    else
+                    else ...[
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: screenHorizontalSpacePadding,
@@ -520,40 +520,41 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             context,
                             index,
                           ) {
-                            final appointment =
-                                dashboard.todaysSchedule?[index];
+                            final displayedAppointments =
+                                (dashboard.todaysSchedule ?? []).take(2).toList();
+                            final appointment = displayedAppointments[index];
                             final bool isVideo =
-                                appointment?.statusTag?.toUpperCase() ==
+                                appointment.statusTag?.toUpperCase() ==
                                 'LIVE VIDEO';
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: DocAppointmentCard(
                                 initials: _getInitials(
-                                  appointment?.patientName ?? '',
+                                  appointment.patientName ?? '',
                                 ),
                                 name:
-                                    appointment?.patientName?.isNotEmpty ??
+                                    appointment.patientName?.isNotEmpty ??
                                         false
-                                    ? appointment?.patientName ?? ''
+                                    ? appointment.patientName ?? ''
                                     : 'Unknown Patient',
                                 subtitle:
-                                    appointment?.consultationType?.isNotEmpty ??
+                                    appointment.consultationType?.isNotEmpty ??
                                         false
-                                    ? appointment?.consultationType ?? ''
+                                    ? appointment.consultationType ?? ''
                                     : 'Consultation',
                                 description:
-                                    appointment?.reason?.isNotEmpty ?? false
-                                    ? appointment?.reason ?? ''
+                                    appointment.reason?.isNotEmpty ?? false
+                                    ? appointment.reason ?? ''
                                     : 'General Checkup',
                                 timeOrDate:
-                                    appointment?.time?.isNotEmpty ?? false
-                                    ? appointment?.time ?? ''
+                                    appointment.time?.isNotEmpty ?? false
+                                    ? appointment.time ?? ''
                                     : '--:-- AM',
                                 statusLabel:
-                                    appointment?.statusTag?.isNotEmpty ??
+                                    appointment.statusTag?.isNotEmpty ??
                                         false
-                                    ? appointment?.statusTag ?? ''
+                                    ? appointment.statusTag ?? ''
                                     : 'Confirmed',
                                 statusColor: isVideo
                                     ? Colors.amber.withValues(alpha: 0.15)
@@ -561,12 +562,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 statusTextColor: isVideo
                                     ? Colors.amber[800]!
                                     : Colors.green[700]!,
-                                patientStatus: appointment?.patientStatus ?? 'Active',
+                                patientStatus: appointment.patientStatus,
                                 onTap: () {
                                   var data = DashboardPatientDetails(
                                     appointment,
                                     null,
-                                    false
+                                    false,
                                   );
                                   context.read<DoctorDashboardBloc>().add(
                                     DocAndAppPatientDetailsNavEvent(data),
@@ -575,7 +576,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 isTab: isTabletDevice,
                                 isTeleConsultation: isVideo,
                                 onJoinCall: () async {
-                                  final meetingUrl = appointment?.meetingUrl;
+                                  final meetingUrl = appointment.meetingUrl;
                                   if (meetingUrl != null && meetingUrl.isNotEmpty) {
                                     await Utils.launchURL(
                                       meetingUrl,
@@ -595,9 +596,66 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                 },
                               ),
                             );
-                          }, childCount: dashboard.todaysSchedule?.length),
+                          }, childCount: (dashboard.todaysSchedule ?? []).take(2).length),
                         ),
                       ),
+                      if ((dashboard.todaysSchedule?.length ?? 0) > 2)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: screenHorizontalSpacePadding,
+                              vertical: 4.0,
+                            ),
+                            child: Center(
+                              child: InkWell(
+                                onTap: () => context
+                                    .read<DoctorDashboardBloc>()
+                                    .add(ViewCalendarEvent()),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_month_rounded,
+                                        size: 16,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        "View All (${dashboard.todaysSchedule?.length}) Appointments",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTabletDevice ? 13 : 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 11,
+                                        color: primaryColor,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
 
                     SliverPadding(
                       padding: const EdgeInsets.only(

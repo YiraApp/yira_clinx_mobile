@@ -289,8 +289,11 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Video call badge
-                      if (widget.isTeleConsultation) ...[
+                      // Video call badge (Only for upcoming/active appointments, not past/completed/cancelled)
+                      if (widget.isTeleConsultation &&
+                          !widget.statusLabel.toLowerCase().contains('completed') &&
+                          !widget.statusLabel.toLowerCase().contains('cancelled') &&
+                          !widget.statusLabel.toLowerCase().contains('past')) ...[
                         InkWell(
                           onTap: widget.onJoinCall,
                           borderRadius: BorderRadius.circular(10),
@@ -343,9 +346,11 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                         const SizedBox(width: 8),
                       ],
 
-                      // Patient Status Pill (e.g. New Patient / Follow-up / Active)
+                      // Patient Status Pill (e.g. New Patient / Follow-up)
                       if (widget.patientStatus != null &&
-                          widget.patientStatus!.trim().isNotEmpty)
+                          widget.patientStatus!.trim().isNotEmpty &&
+                          widget.patientStatus!.trim().toLowerCase() != 'active' &&
+                          widget.patientStatus!.trim().toLowerCase() != 'inactive')
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7.5, vertical: 3.5),

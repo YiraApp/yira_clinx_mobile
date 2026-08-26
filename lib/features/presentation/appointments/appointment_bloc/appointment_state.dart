@@ -12,6 +12,7 @@ abstract class AppointmentState {
   final int todayCount;
   final int confirmedCount;
   final int pendingCount;
+  final int completedCount;
   final int aiOptimizationScore;
 
   const AppointmentState({
@@ -22,6 +23,7 @@ abstract class AppointmentState {
     this.todayCount = 0,
     this.confirmedCount = 0,
     this.pendingCount = 0,
+    this.completedCount = 0,
     this.aiOptimizationScore = 0,
   });
 
@@ -34,6 +36,7 @@ abstract class AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   });
 }
@@ -51,6 +54,7 @@ final class AppointmentInitial extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) {
     return AppointmentLoaded(
@@ -61,6 +65,7 @@ final class AppointmentInitial extends AppointmentState {
       todayCount: todayCount ?? this.todayCount,
       confirmedCount: confirmedCount ?? this.confirmedCount,
       pendingCount: pendingCount ?? this.pendingCount,
+      completedCount: completedCount ?? this.completedCount,
       aiOptimizationScore: aiOptimizationScore ?? this.aiOptimizationScore,
     );
   }
@@ -76,6 +81,7 @@ final class AppointmentLoading extends AppointmentState {
     super.todayCount,
     super.confirmedCount,
     super.pendingCount,
+    super.completedCount,
     super.aiOptimizationScore,
   });
 
@@ -88,6 +94,7 @@ final class AppointmentLoading extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) {
     return AppointmentLoading(
@@ -98,6 +105,7 @@ final class AppointmentLoading extends AppointmentState {
       todayCount: todayCount ?? this.todayCount,
       confirmedCount: confirmedCount ?? this.confirmedCount,
       pendingCount: pendingCount ?? this.pendingCount,
+      completedCount: completedCount ?? this.completedCount,
       aiOptimizationScore: aiOptimizationScore ?? this.aiOptimizationScore,
     );
   }
@@ -113,6 +121,7 @@ final class AppointmentLoaded extends AppointmentState {
     super.todayCount,
     super.confirmedCount,
     super.pendingCount,
+    super.completedCount,
     super.aiOptimizationScore,
   });
 
@@ -125,6 +134,7 @@ final class AppointmentLoaded extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) {
     return AppointmentLoaded(
@@ -135,6 +145,7 @@ final class AppointmentLoaded extends AppointmentState {
       todayCount: todayCount ?? this.todayCount,
       confirmedCount: confirmedCount ?? this.confirmedCount,
       pendingCount: pendingCount ?? this.pendingCount,
+      completedCount: completedCount ?? this.completedCount,
       aiOptimizationScore: aiOptimizationScore ?? this.aiOptimizationScore,
     );
   }
@@ -159,6 +170,7 @@ final class AppointmentError extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) => this;
 }
@@ -173,6 +185,7 @@ class OnAddAppointmentState extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) => this;
 }
@@ -189,6 +202,7 @@ class BookAppointmentLoadingState extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) => this;
 }
@@ -217,6 +231,7 @@ class BookAppointmentSuccessState extends AppointmentState {
     int? todayCount,
     int? confirmedCount,
     int? pendingCount,
+    int? completedCount,
     int? aiOptimizationScore,
   }) => this;
 }

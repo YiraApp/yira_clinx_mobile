@@ -179,6 +179,9 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
 
   factory TodaysScheduleModel.fromJson(Map<String, dynamic> json) {
     String? patientStatusStr = (json['patientStatus'] ?? json['patient_status']) as String?;
+    if (patientStatusStr != null && (patientStatusStr.toLowerCase() == 'active' || patientStatusStr.toLowerCase() == 'inactive')) {
+      patientStatusStr = '';
+    }
     if (patientStatusStr == null || patientStatusStr.isEmpty) {
       final cat = (json['consultationType'] ?? '').toString().toLowerCase();
       final reas = (json['reason'] ?? '').toString().toLowerCase();
@@ -187,7 +190,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       } else if (cat.contains('new') || reas.contains('new')) {
         patientStatusStr = 'New Patient';
       } else {
-        patientStatusStr = 'Active';
+        patientStatusStr = '';
       }
     }
 

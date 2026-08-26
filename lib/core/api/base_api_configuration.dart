@@ -5,6 +5,7 @@ class EnvironmentService {
     switch (_currentEnv) {
       case Environment.dev:
         return const EnvironmentConfig(
+<<<<<<< HEAD
           accountBaseUrl: "192.168.68.78:5000",
           healthCampBaseUrl: "192.168.68.78:5000",
         );
@@ -17,6 +18,20 @@ class EnvironmentService {
         return const EnvironmentConfig(
           accountBaseUrl: "192.168.68.78:5000",
           healthCampBaseUrl: "192.168.68.78:5000",
+=======
+          accountBaseUrl: "192.168.0.103:5000",
+          healthCampBaseUrl: "192.168.0.103:5000",
+        );
+      case Environment.qa:
+        return const EnvironmentConfig(
+          accountBaseUrl: "192.168.0.103:5000",
+          healthCampBaseUrl: "192.168.0.103:5000",
+        );
+      case Environment.production:
+        return const EnvironmentConfig(
+          accountBaseUrl: "192.168.0.103:5000",
+          healthCampBaseUrl: "192.168.0.103:5000",
+>>>>>>> 99e3a37a0a89507b29eeb97d9710867810e54811
         );
     }
   }

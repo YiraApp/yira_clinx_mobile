@@ -22,16 +22,25 @@ class VerifyOtpScreen extends StatefulWidget {
   State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
 }
 
-class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
+class _VerifyOtpScreenState extends State<VerifyOtpScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController otpController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
   String _cachedFcmToken = '';
+  bool _showError = false;
+  String _errorText = '';
+  bool _isSubmitting = false;
+  bool _isVerified = false;
+  late AnimationController _shakeController;
 
   @override
   void initState() {
     super.initState();
     _loadDeviceToken();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
   }
 
   Future<void> _loadDeviceToken() async {
@@ -40,8 +49,56 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       setState(() {
         _cachedFcmToken = token;
       });
-      debugPrint("Auth Configuration - Device token initialized successfully.");
+      debugPrint(
+          "Auth Configuration - Device token initialized successfully.");
     }
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    otpController.dispose();
+    super.dispose();
+  }
+
+  void _clearError() {
+    if (_showError) {
+      setState(() {
+        _showError = false;
+        _errorText = '';
+      });
+    }
+  }
+
+  void _showErrorMessage(String msg) {
+    setState(() {
+      _showError = true;
+      _errorText = msg;
+    });
+    _shakeController.forward(from: 0);
+  }
+
+  void _submitOtp() {
+    if (_isSubmitting) return; // Prevent double submission
+    _clearError();
+    if (otpController.text.length < 6) {
+      _showErrorMessage('Please enter a valid 6-digit OTP');
+      return;
+    }
+    setState(() {
+      _isSubmitting = true;
+    });
+    final String activeCountryCode =
+        context.read<LoginBloc>().currentCountryCode;
+    context.read<LoginBloc>().add(
+          OnTapMobileSignInEvent(
+            mobileNumber: widget.sendOtpEntity.data?.contact ?? '',
+            otp: otpController.text,
+            sessionId: widget.sendOtpEntity.data?.sessionId ?? '',
+            countryCode: activeCountryCode,
+            fcmToken: _cachedFcmToken,
+          ),
+        );
   }
 
   @override
@@ -50,6 +107,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = displayHeight(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -67,9 +125,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final double referenceWidth = isTab
-                    ? constraints.maxWidth
-                    : screenWidth;
+                final double referenceWidth =
+                    isTab ? constraints.maxWidth : screenWidth;
 
                 return BlocConsumer<LoginBloc, LogInState>(
                   buildWhen: (previous, current) =>
@@ -77,37 +134,80 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                       current is TimerFinished ||
                       current is SendOtpLoading ||
                       current is ReSendOtpLoading ||
+                      current is ReSendOtpSuccessState ||
+                      current is ReSendOtpFailureState ||
                       current is SignInLoading ||
                       current is LoginLoading ||
+                      current is LoginSuccess ||
+                      current is LoginFailure ||
                       current is SignInError,
                   listener: (context, state) {
-                    switch (state) {
-                      case LoginSuccess():
-                        final payload = state.loginEntity.data;
-                        if (payload != null &&
-                            payload.roleCount == 1 &&
-                            payload.hospitalCount == 1 &&
-                            payload.organizationCount == 1) {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            AppRoutes.userConfiguration,
-                            (route) => false,
-                          );
-                        } else {
-                          SelectRoleModel data = SelectRoleModel(
-                            state.loginEntity.data?.roles ?? [],
-                            false,
-                          );
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            AppRoutes.selectRoleScreen,
-                            (route) => false,
-                            arguments: data,
-                          );
-                        }
-                        break;
-                      default:
-                        break;
+                    if (state is LoginSuccess) {
+                      _clearError();
+                      setState(() {
+                        _isVerified = true;
+                        _isSubmitting = false;
+                      });
+                      final payload = state.loginEntity.data;
+                      final profiles = payload?.profiles ?? [];
+                      final hasMultipleProfiles = profiles.length > 1;
+                      final hasMultipleRolesOrHospitals =
+                          (payload?.roleCount ?? 0) > 1 ||
+                              (payload?.hospitalCount ?? 0) > 1;
+
+                      if (!hasMultipleProfiles &&
+                          !hasMultipleRolesOrHospitals &&
+                          (payload?.roleCount == 1 &&
+                              payload?.hospitalCount == 1)) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.userConfiguration,
+                          (route) => false,
+                        );
+                      } else {
+                        SelectRoleModel data = SelectRoleModel(
+                          state.loginEntity.data?.roles ?? [],
+                          false,
+                          profiles: payload?.profiles,
+                        );
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.selectRoleScreen,
+                          (route) => false,
+                          arguments: data,
+                        );
+                      }
+                    } else if (state is SignInError) {
+                      _isSubmitting = false;
+                      _isVerified = false;
+                      _showErrorMessage(
+                          _parseErrorMessage(state.errorMessage));
+                    } else if (state is LoginFailure) {
+                      _isSubmitting = false;
+                      _isVerified = false;
+                      _showErrorMessage(
+                          _parseErrorMessage(state.errorMessage ?? 'Verification failed'));
+                    } else if (state is ReSendOtpSuccessState) {
+                      _clearError();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'OTP resent successfully!',
+                              style: TextStyle(fontFamily: appPoppinFont),
+                            ),
+                            backgroundColor: Colors.green.shade600,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            margin: const EdgeInsets.all(16),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    } else if (state is ReSendOtpFailureState) {
+                      _showErrorMessage(
+                          _parseErrorMessage(state.errorMessage));
                     }
                   },
                   builder: (context, state) {
@@ -125,10 +225,15 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     } else {
                       isButtonActive = true;
                     }
+
+                    final bool isVerifying =
+                        (_isSubmitting || state is LoginLoading || state is SignInLoading) && !_isVerified;
+                    final bool isResending = state is ReSendOtpLoading;
+
                     return SingleChildScrollView(
                       physics: const ClampingScrollPhysics(),
                       child: Padding(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: screenHorizontalSpacePadding,
                         ),
                         child: ConstrainedBox(
@@ -139,60 +244,99 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                             child: Form(
                               key: _formKey,
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.center,
                                 children: [
                                   SizedBox(height: screenHeight * 0.02),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    child: SvgPicture.asset(
-                                      'assets/images/svgs/ic_apps_logo.svg',
-                                      width: isTab ? 65 : 60,
-                                      height: isTab ? 65 : 60,
+
+                                  // ── App Logo ──
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor
+                                          .withValues(alpha: 0.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius:
+                                          BorderRadius.circular(12.0),
+                                      child: SvgPicture.asset(
+                                        'assets/images/svgs/ic_apps_logo.svg',
+                                        width: isTab ? 55 : 48,
+                                        height: isTab ? 55 : 48,
+                                      ),
                                     ),
                                   ),
 
-                                  SizedBox(height: screenHeight * 0.03),
+                                  SizedBox(height: screenHeight * 0.025),
+
+                                  // ── Title ──
                                   Text(
                                     'Verification Code',
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: isTab
                                           ? referenceWidth * 0.035
-                                          : displayWidth(context) * 0.065,
-                                      fontWeight: FontWeight.w600,
+                                          : displayWidth(context) * 0.06,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.3,
                                     ),
                                   ),
 
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: isTab
-                                          ? referenceWidth * 0.02
-                                          : screenHorizontalSpacePadding,
+                                  const SizedBox(height: 8),
+
+                                  // ── Subtitle with phone ──
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white
+                                              .withValues(alpha: 0.05)
+                                          : Colors.grey.shade50,
+                                      borderRadius:
+                                          BorderRadius.circular(12),
                                     ),
-                                    child: Wrap(
-                                      alignment: WrapAlignment.center,
-                                      crossAxisAlignment:
-                                          WrapCrossAlignment.center,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          "We've sent a 6-digit code to ",
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: isTab
-                                                ? referenceWidth * 0.022
-                                                : screenWidth * 0.033,
-                                          ),
+                                        Icon(
+                                          Icons.sms_outlined,
+                                          size: isTab ? 18 : 16,
+                                          color: primaryColor,
                                         ),
-                                        Text(
-                                          '${context.read<LoginBloc>().currentCountryCode}-${widget.sendOtpEntity.data?.contact}',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: isTab
-                                                ? referenceWidth * 0.022
-                                                : screenWidth * 0.033,
-                                            fontWeight: FontWeight.w600,
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: RichText(
+                                            textAlign: TextAlign.center,
+                                            text: TextSpan(
+                                              style: TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontSize: isTab
+                                                    ? referenceWidth *
+                                                        0.022
+                                                    : screenWidth * 0.032,
+                                                color: isDark
+                                                    ? Colors.white70
+                                                    : Colors.black54,
+                                              ),
+                                              children: [
+                                                const TextSpan(
+                                                    text:
+                                                        'Code sent to '),
+                                                TextSpan(
+                                                  text:
+                                                      '${context.read<LoginBloc>().currentCountryCode}-${widget.sendOtpEntity.data?.contact}',
+                                                  style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: isDark
+                                                        ? Colors.white
+                                                        : Colors.black87,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -200,258 +344,489 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                                   ),
 
                                   SizedBox(
-                                    height:
-                                        screenHeight * (isTab ? 0.05 : 0.045),
+                                    height: screenHeight *
+                                        (isTab ? 0.045 : 0.04),
                                   ),
 
-                                  SizedBox(
-                                    width: isTab
-                                        ? referenceWidth * 0.7
-                                        : screenWidth * 0.82,
-                                    child: PinCodeTextField(
-                                      backgroundColor: Colors.transparent,
-                                      autoDisposeControllers: false,
-                                      controller: otpController,
-                                      appContext: context,
-                                      pastedTextStyle: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        color: Colors.green.shade600,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      length: 6,
-                                      obscureText: true,
-                                      obscuringCharacter: '*',
-                                      hintCharacter: '*',
-                                      hintStyle: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: isTab
-                                            ? referenceWidth * 0.022
-                                            : screenWidth * 0.03,
-                                      ),
-                                      animationType: AnimationType.fade,
-                                      validator: (v) {
-                                        if (v == null || v.length < 6) {
-                                          return "Please enter a valid 6-digit OTP";
-                                        }
-                                        return null;
-                                      },
-                                      pinTheme: PinTheme(
-                                        borderRadius: BorderRadius.circular(
-                                          fieldBorderRadius,
+                                  // ── OTP Pin Fields ──
+                                  AnimatedBuilder(
+                                    animation: _shakeController,
+                                    builder: (context, child) {
+                                      final shakeOffset =
+                                          _shakeController.isAnimating
+                                              ? 10 *
+                                                  (0.5 -
+                                                      _shakeController
+                                                          .value) *
+                                                  (_shakeController
+                                                              .value <
+                                                          0.5
+                                                      ? 1
+                                                      : -1)
+                                              : 0.0;
+                                      return Transform.translate(
+                                        offset: Offset(shakeOffset, 0),
+                                        child: child,
+                                      );
+                                    },
+                                    child: SizedBox(
+                                      width: isTab
+                                          ? referenceWidth * 0.7
+                                          : screenWidth * 0.82,
+                                      child: PinCodeTextField(
+                                        backgroundColor:
+                                            Colors.transparent,
+                                        autoDisposeControllers: false,
+                                        controller: otpController,
+                                        appContext: context,
+                                        pastedTextStyle: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          color: Colors.green.shade600,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                        inactiveColor: notificationSwitchColor,
-                                        activeColor: primaryColor,
-                                        selectedColor: primaryColor,
-                                        shape: PinCodeFieldShape.box,
-                                        borderWidth: 1.0,
-                                        fieldHeight: isTab
-                                            ? referenceWidth * 0.09
-                                            : screenWidth * 0.11,
-                                        fieldWidth: isTab
-                                            ? referenceWidth * 0.09
-                                            : screenWidth * 0.11,
-                                        inactiveFillColor: Theme.of(
-                                          context,
-                                        ).cardColor,
-                                        activeFillColor: Theme.of(
-                                          context,
-                                        ).cardColor,
-                                        selectedFillColor: Theme.of(
-                                          context,
-                                        ).cardColor,
-                                      ),
-                                      cursorColor: Colors.grey,
-                                      animationDuration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      textStyle: TextStyle(
-                                        fontSize: isTab
-                                            ? referenceWidth * 0.03
-                                            : 16,
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      onCompleted: (pinCode) {
-                                        final String activeCountryCode = context
-                                            .read<LoginBloc>()
-                                            .currentCountryCode;
-                                        context.read<LoginBloc>().add(
-                                          OnTapMobileSignInEvent(
-                                            mobileNumber:
-                                                widget
-                                                    .sendOtpEntity
-                                                    .data
-                                                    ?.contact ??
-                                                '',
-                                            otp: pinCode,
-                                            sessionId:
-                                                widget
-                                                    .sendOtpEntity
-                                                    .data
-                                                    ?.sessionId ??
-                                                '',
-                                            countryCode: activeCountryCode,
-                                            fcmToken: _cachedFcmToken,
-                                          ),
-                                        );
-                                      },
-                                      onChanged: (value) {},
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.02),
-
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.chat_bubble_outline,
-                                        size: isTab
-                                            ? referenceWidth * 0.038
-                                            : 16,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "Didn't receive the code?",
-                                        style: TextStyle(
+                                        length: 6,
+                                        obscureText: true,
+                                        obscuringCharacter: '●',
+                                        hintCharacter: '•',
+                                        hintStyle: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab
-                                              ? referenceWidth * 0.028
-                                              : screenWidth * 0.035,
+                                              ? referenceWidth * 0.022
+                                              : screenWidth * 0.03,
+                                          color: Colors.grey.shade300,
                                         ),
+                                        animationType: AnimationType.scale,
+                                        pinTheme: PinTheme(
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          inactiveColor: _showError
+                                              ? Colors.red.shade300
+                                              : (isDark
+                                                  ? Colors.white24
+                                                  : Colors.grey.shade300),
+                                          activeColor: _showError
+                                              ? Colors.red
+                                              : primaryColor,
+                                          selectedColor: primaryColor,
+                                          errorBorderColor: Colors.red,
+                                          shape: PinCodeFieldShape.box,
+                                          borderWidth: 1.5,
+                                          fieldHeight: isTab
+                                              ? referenceWidth * 0.09
+                                              : screenWidth * 0.12,
+                                          fieldWidth: isTab
+                                              ? referenceWidth * 0.09
+                                              : screenWidth * 0.12,
+                                          inactiveFillColor:
+                                              Theme.of(context).cardColor,
+                                          activeFillColor:
+                                              Theme.of(context).cardColor,
+                                          selectedFillColor:
+                                              Theme.of(context).cardColor,
+                                        ),
+                                        cursorColor: primaryColor,
+                                        cursorHeight: 18,
+                                        enableActiveFill: true,
+                                        animationDuration:
+                                            const Duration(
+                                                milliseconds: 200),
+                                        textStyle: TextStyle(
+                                          fontSize: isTab
+                                              ? referenceWidth * 0.032
+                                              : 18,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: appPoppinFont,
+                                        ),
+                                        keyboardType:
+                                            TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                        onCompleted: (pinCode) {
+                                          _submitOtp();
+                                        },
+                                        onChanged: (value) {
+                                          _clearError();
+                                        },
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
 
-                                  // 6. Resend Engine Handler UI
-                                  state is ReSendOtpLoading
-                                      ? const Padding(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: 8.0,
-                                          ),
-                                          child: SizedBox(
-                                            height: 40,
-                                            child: Center(
-                                              child:
-                                                  CircularProgressIndicator.adaptive(),
-                                            ),
-                                          ),
-                                        )
-                                      : isButtonActive
-                                      ? TextButton(
-                                          onPressed: () {
-                                            final String activeCountryCode =
-                                                context
-                                                    .read<LoginBloc>()
-                                                    .currentCountryCode;
-                                            context.read<LoginBloc>().add(
-                                              OnReSendOtp(
-                                                widget
-                                                        .sendOtpEntity
-                                                        .data
-                                                        ?.contact ??
-                                                    '',
-                                                activeCountryCode,
+                                  // ── Error Message ──
+                                  AnimatedSize(
+                                    duration:
+                                        const Duration(milliseconds: 250),
+                                    curve: Curves.easeOut,
+                                    child: _showError
+                                        ? Padding(
+                                            padding:
+                                                const EdgeInsets.only(
+                                                    top: 4, bottom: 8),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red
+                                                    .withValues(
+                                                        alpha: 0.08),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        10),
+                                                border: Border.all(
+                                                    color: Colors.red
+                                                        .withValues(
+                                                            alpha: 0.2)),
                                               ),
-                                            );
-                                          },
-                                          child: Text(
-                                            'Re-send',
-                                            style: TextStyle(
-                                              fontFamily: appPoppinFont,
-                                              fontSize: isTab
-                                                  ? referenceWidth * 0.034
-                                                  : screenWidth * 0.035,
-                                              fontWeight: FontWeight.w600,
-                                              color: primaryColor,
-                                            ),
-                                          ),
-                                        )
-                                      : Column(
-                                          children: [
-                                            const SizedBox(height: 10),
-                                            Text(
-                                              'Resend available in',
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: isTab
-                                                    ? referenceWidth * 0.025
-                                                    : screenWidth * 0.032,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '00:${displaySeconds.toString().padLeft(2, '0')}',
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: isTab
-                                                    ? referenceWidth * 0.028
-                                                    : screenWidth * 0.034,
-                                                fontWeight: FontWeight.w600,
-                                                color: primaryColor,
+                                              child: Row(
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                      Icons
+                                                          .error_outline_rounded,
+                                                      size: 16,
+                                                      color: Colors
+                                                          .red.shade600),
+                                                  const SizedBox(
+                                                      width: 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      _errorText,
+                                                      style: TextStyle(
+                                                        fontFamily:
+                                                            appPoppinFont,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight
+                                                                .w500,
+                                                        color: Colors.red
+                                                            .shade700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+
+                                  SizedBox(
+                                      height: screenHeight * 0.012),
+
+                                  // ── Resend Section ──
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white
+                                              .withValues(alpha: 0.03)
+                                          : Colors.grey.shade50,
+                                      borderRadius:
+                                          BorderRadius.circular(14),
+                                    ),
+                                    child: isResending
+                                        ? Row(
+                                            mainAxisSize:
+                                                MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation(
+                                                          primaryColor),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Sending new code...',
+                                                style: TextStyle(
+                                                  fontFamily:
+                                                      appPoppinFont,
+                                                  fontSize: 13,
+                                                  color: isDark
+                                                      ? Colors.white60
+                                                      : Colors.black54,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : isButtonActive
+                                            ? Row(
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    "Didn't receive the code?",
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                          appPoppinFont,
+                                                      fontSize: isTab
+                                                          ? referenceWidth *
+                                                              0.024
+                                                          : 13,
+                                                      color: isDark
+                                                          ? Colors
+                                                              .white60
+                                                          : Colors
+                                                              .black54,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(
+                                                      width: 6),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      _clearError();
+                                                      final String
+                                                          activeCountryCode =
+                                                          context
+                                                              .read<
+                                                                  LoginBloc>()
+                                                              .currentCountryCode;
+                                                      context
+                                                          .read<
+                                                              LoginBloc>()
+                                                          .add(
+                                                            OnReSendOtp(
+                                                              widget
+                                                                      .sendOtpEntity
+                                                                      .data
+                                                                      ?.contact ??
+                                                                  '',
+                                                              activeCountryCode,
+                                                            ),
+                                                          );
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                              horizontal:
+                                                                  12,
+                                                              vertical:
+                                                                  4),
+                                                      decoration:
+                                                          BoxDecoration(
+                                                        color: primaryColor
+                                                            .withValues(
+                                                                alpha:
+                                                                    0.1),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                                    8),
+                                                      ),
+                                                      child: Text(
+                                                        'Resend',
+                                                        style: TextStyle(
+                                                          fontFamily:
+                                                              appPoppinFont,
+                                                          fontSize: isTab
+                                                              ? referenceWidth *
+                                                                  0.026
+                                                              : 13,
+                                                          fontWeight:
+                                                              FontWeight
+                                                                  .w600,
+                                                          color:
+                                                              primaryColor,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            : Row(
+                                                mainAxisSize:
+                                                    MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.timer_outlined,
+                                                    size: 16,
+                                                    color: isDark
+                                                        ? Colors.white38
+                                                        : Colors.grey,
+                                                  ),
+                                                  const SizedBox(
+                                                      width: 6),
+                                                  Text(
+                                                    'Resend in ',
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                          appPoppinFont,
+                                                      fontSize: 13,
+                                                      color: isDark
+                                                          ? Colors
+                                                              .white38
+                                                          : Colors.grey,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 2),
+                                                    decoration:
+                                                        BoxDecoration(
+                                                      color: primaryColor
+                                                          .withValues(
+                                                              alpha:
+                                                                  0.08),
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(
+                                                                  6),
+                                                    ),
+                                                    child: Text(
+                                                      '00:${displaySeconds.toString().padLeft(2, '0')}',
+                                                      style: TextStyle(
+                                                        fontFamily:
+                                                            appPoppinFont,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight
+                                                                .w700,
+                                                        color:
+                                                            primaryColor,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                  ),
 
                                   const Spacer(),
 
-                                  state is LoginLoading
-                                      ? Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: screenHeight * 0.04,
-                                          ),
-                                          child: SizedBox(
-                                            width: displayWidth(context),
-                                            height: 50,
-                                            child: Center(
-                                              child:
-                                                  CircularProgressIndicator.adaptive(),
-                                            ),
-                                          ),
-                                        )
-                                      : Padding(
-                                          padding: EdgeInsets.only(
-                                            bottom: isTab
-                                                ? screenHeight * 0.04
-                                                : 24.0,
-                                          ),
-                                          child: CustomElevatedButton(
-                                            noElevation: true,
-                                            height: 50,
-                                            width: double.infinity,
-                                            text: "Verify & Continue",
-                                            onPressed: () {
-                                              final String activeCountryCode =
-                                                  context
-                                                      .read<LoginBloc>()
-                                                      .currentCountryCode;
-                                              context.read<LoginBloc>().add(
-                                                OnTapMobileSignInEvent(
-                                                  mobileNumber:
-                                                      widget
-                                                          .sendOtpEntity
-                                                          .data
-                                                          ?.contact ??
-                                                      '',
-                                                  otp: otpController.text,
-                                                  sessionId:
-                                                      widget
-                                                          .sendOtpEntity
-                                                          .data
-                                                          ?.sessionId ??
-                                                      '',
-                                                  countryCode:
-                                                      activeCountryCode,
-                                                  fcmToken: _cachedFcmToken,
+                                  // ── Verify Button ──
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: isTab
+                                          ? screenHeight * 0.04
+                                          : 24.0,
+                                    ),
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                          milliseconds: 250),
+                                      child: (_isVerified || state is LoginSuccess)
+                                          ? SizedBox(
+                                              key: const ValueKey('verified'),
+                                              width: displayWidth(context),
+                                              height: 52,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green
+                                                      .withValues(alpha: 0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  border: Border.all(
+                                                    color: Colors.green
+                                                        .withValues(alpha: 0.3),
+                                                  ),
                                                 ),
-                                              );
-                                            },
-                                          ),
-                                        ),
+                                                child: Center(
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .check_circle_rounded,
+                                                        color: Colors
+                                                            .green.shade600,
+                                                        size: 22,
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Text(
+                                                        'Verified!',
+                                                        style: TextStyle(
+                                                          fontFamily:
+                                                              appPoppinFont,
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors
+                                                              .green.shade700,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                          : isVerifying
+                                              ? SizedBox(
+                                                  key: const ValueKey(
+                                                      'loading'),
+                                                  width:
+                                                      displayWidth(context),
+                                                  height: 52,
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: primaryColor
+                                                          .withValues(
+                                                              alpha: 0.1),
+                                                      borderRadius:
+                                                          BorderRadius
+                                                              .circular(14),
+                                                    ),
+                                                    child: Center(
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                              strokeWidth:
+                                                                  2.5,
+                                                              valueColor:
+                                                                  AlwaysStoppedAnimation(
+                                                                      primaryColor),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 12),
+                                                          Text(
+                                                            'Verifying...',
+                                                            style: TextStyle(
+                                                              fontFamily:
+                                                                  appPoppinFont,
+                                                              fontSize: 15,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color:
+                                                                  primaryColor,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              : CustomElevatedButton(
+                                                  key: const ValueKey(
+                                                      'button'),
+                                                  noElevation: true,
+                                                  height: 52,
+                                                  width: double.infinity,
+                                                  text: "Verify & Continue",
+                                                  onPressed: _submitOtp,
+                                                ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -467,5 +842,33 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
         ),
       ),
     );
+  }
+
+  /// Parse backend error messages into user-friendly text
+  String _parseErrorMessage(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('invalid otp') || lower.contains('invalid code')) {
+      return 'Invalid OTP. Please check and try again.';
+    }
+    if (lower.contains('expired')) {
+      return 'OTP has expired. Please request a new one.';
+    }
+    if (lower.contains('too many') || lower.contains('rate limit')) {
+      return 'Too many attempts. Please wait and try again.';
+    }
+    if (lower.contains('network') ||
+        lower.contains('timeout') ||
+        lower.contains('connection')) {
+      return 'Network error. Please check your connection.';
+    }
+    if (lower.contains('exception') ||
+        lower.contains('error') && raw.length > 80) {
+      return 'Verification failed. Please try again.';
+    }
+    // Truncate very long messages
+    if (raw.length > 60) {
+      return '${raw.substring(0, 57)}...';
+    }
+    return raw;
   }
 }

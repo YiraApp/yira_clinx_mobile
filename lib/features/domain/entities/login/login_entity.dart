@@ -23,6 +23,7 @@ class DataEntity {
 
   final String? latestRoleId;
   final List<RoleEntity>? roles;
+  final List<ProfileEntity>? profiles;
   final String? firstName;
   final String? lastName;
   final String? email;
@@ -48,6 +49,7 @@ class DataEntity {
     this.hospitalCount,
     this.organizationCount,
     this.roles,
+    this.profiles,
     this.firstName,
     this.lastName,
     this.email,
@@ -58,7 +60,38 @@ class DataEntity {
     this.height,
     this.weight,
     this.heightUnit,
-    this.weightUnit, this.latestUserRole, this.latestOrgId, this.latestHospitalId, this.latestRoleId, this.navigationId,
+    this.weightUnit,
+    this.latestUserRole,
+    this.latestOrgId,
+    this.latestHospitalId,
+    this.latestRoleId,
+    this.navigationId,
+  });
+}
+
+class ProfileEntity {
+  final String? id;
+  final String? firstName;
+  final String? lastName;
+  final String? name;
+  final String? phoneNumber;
+  final String? relation;
+  final bool? isPrimary;
+  final String? gender;
+  final String? dob;
+  final String? accountType;
+
+  ProfileEntity({
+    this.id,
+    this.firstName,
+    this.lastName,
+    this.name,
+    this.phoneNumber,
+    this.relation,
+    this.isPrimary,
+    this.gender,
+    this.dob,
+    this.accountType,
   });
 }
 

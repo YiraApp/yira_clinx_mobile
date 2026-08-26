@@ -25,8 +25,6 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   final List<String> _statusFilters = const [
     "All",
     "Favorites",
-    "Active",
-    "Inactive",
   ];
 
   @override

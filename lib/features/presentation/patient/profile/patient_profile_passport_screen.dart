@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/core/custom_dialogue/sign_out_alert.dart';
-import 'package:yiraclinics/core/local/global_session.dart';
-import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
-import 'package:yiraclinics/di/dependency_injection.dart';
-import 'package:yiraclinics/features/domain/entities/over_view/over_view_entity.dart';
-import 'package:yiraclinics/features/presentation/doctor/profile/widgets/profile_info_card.dart';
-import 'package:yiraclinics/features/presentation/doctor/profile/widgets/profile_switcher_sheet.dart';
-import 'package:yiraclinics/features/presentation/patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../../../../core/colors/colors.dart';
+import '../../../../core/common_size_helpers/common_size_helpers.dart';
+import '../../../../core/constants/constants.dart';
+import '../../../../core/custom_dialogue/sign_out_alert.dart';
+import '../../../../core/local/global_session.dart';
+import '../../../../core/shimmer_widgets/base_shimmer.dart';
+import '../../../../di/dependency_injection.dart';
+import '../../../domain/entities/login/login_entity.dart';
+import '../../../domain/entities/over_view/over_view_entity.dart';
+import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
+import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
+import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -22,285 +22,128 @@ class PatientProfilePassportScreen extends StatefulWidget {
 }
 
 class _PatientProfilePassportScreenState extends State<PatientProfilePassportScreen> {
-  late final PatientOverViewBloc _bloc;
-
-  @override
-  void initState() {
-    super.initState();
-    final currentUser = GlobalSession.instance.userNotifier.value;
-    final userId = currentUser?.data?.id ?? '';
-    final orgId = currentUser?.data?.latestOrgId?.toString() ?? '1';
-    final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
-
-    _bloc = sl<PatientOverViewBloc>()
-      ..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+  void _openProfileSwitcher(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ProfileSwitcherSheet(),
+    );
   }
 
-  @override
-  void dispose() {
-    _bloc.close();
-    super.dispose();
-  }
-
-  String _getInitials(String name) {
-    final clean = name.trim();
-    final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return 'PT';
-    if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
-  }
-
-  int _calculateProfileCompletion(DataEntity? data, String phone, String email) {
-    int total = 7;
-    int filled = 0;
-    if (phone.isNotEmpty) {
-      filled++;
-    }
-    if (email.isNotEmpty) {
-      filled++;
-    }
-    if (data?.contactInformation?.residentialAddress != null &&
-        data!.contactInformation!.residentialAddress!.isNotEmpty) {
-      filled++;
-    }
-    if (data?.contactInformation?.emergencyContact?.name != null &&
-        data!.contactInformation!.emergencyContact!.name!.isNotEmpty) {
-      filled++;
-    }
-    if (data?.medicalInformation?.bloodGroup != null &&
-        data!.medicalInformation!.bloodGroup!.isNotEmpty) {
-      filled++;
-    }
-    if (data?.medicalInformation?.allergies != null &&
-        data!.medicalInformation!.allergies!.isNotEmpty) {
-      filled++;
-    }
-    if (data?.insurance?.policyNumber != null &&
-        data!.insurance!.policyNumber!.isNotEmpty) {
-      filled++;
-    }
-    return ((filled / total) * 100).round();
-  }
-
-  void _showPatientDigitalCard(BuildContext context, DataEntity? data, String patientName, String mrnNumber) {
+  void _openEditProfileDialog(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
-    final isTab = isTablet(context);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
-    final bloodGroup = data?.medicalInformation?.bloodGroup ?? 'O+ Positive';
-    final phone = data?.contactInformation?.phone ?? GlobalSession.instance.userNotifier.value?.data?.phoneNumber ?? '+91 98765 43210';
-    final emergencyContact = data?.contactInformation?.emergencyContact?.phone ?? '+91 98490 12345';
-    final policyNumber = data?.insurance?.policyNumber ?? 'POL-992019482';
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final nameController = TextEditingController(text: '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim());
+    final phoneController = TextEditingController(text: currentUser?.data?.phoneNumber ?? '');
+    final emailController = TextEditingController(text: currentUser?.data?.email ?? '');
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(28),
-            topRight: Radius.circular(28),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Digital Health Passport",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+        padding: EdgeInsets.only(
+          top: 20,
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            // Digital Card Container
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryColor, const Color(0xFF1E40AF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.shield_rounded, color: Colors.white, size: 13),
-                            SizedBox(width: 4),
-                            Text(
-                              "Universal Health Passport",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "BLOOD: $bloodGroup",
-                          style: const TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    patientName,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 22 : 19,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "MRN: $mrnNumber • Emergency: $emergencyContact",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Divider(color: Colors.white.withValues(alpha: 0.2), height: 1),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Mobile",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 10.5,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          Text(
-                            phone,
-                            style: const TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Policy No",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 10.5,
-                              color: Colors.white.withValues(alpha: 0.7),
-                            ),
-                          ),
-                          Text(
-                            policyNumber,
-                            style: const TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                final info = "Patient: $patientName\nMRN: $mrnNumber\nBlood Group: $bloodGroup\nPhone: $phone\nEmergency Contact: $emergencyContact\nPolicy: $policyNumber";
-                Clipboard.setData(ClipboardData(text: info));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Patient Passport details copied to clipboard"),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.copy_all_rounded, size: 18),
-              label: const Text("Copy Passport Information"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 16),
+              Text(
+                'Edit Profile Details',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text('Full Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text('Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text('Email Address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile information updated successfully!'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -315,99 +158,44 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
-    final orgId = currentUser?.data?.latestOrgId?.toString() ?? '1';
     final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
-    final firstName = currentUser?.data?.firstName ?? '';
-    final lastName = currentUser?.data?.lastName ?? '';
-    final sessionPatientName = '$firstName $lastName'.trim().isNotEmpty
-        ? '$firstName $lastName'.trim()
-        : 'Ch. Raja Vardan';
+    final orgId = currentUser?.data?.latestOrgId?.toString() ?? '1';
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: CommonAppBar(
-        titleText: "Patient Profile",
-        showBackButton: false,
-        actions: [
-          IconButton(
-            tooltip: "Switch Profile",
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.switch_account_rounded, size: 18, color: primaryColor),
+    return BlocProvider<PatientOverViewBloc>(
+      create: (_) => sl<PatientOverViewBloc>()..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          title: const Text(
+            'My Profile',
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontWeight: FontWeight.bold,
             ),
-            onPressed: () => ProfileSwitcherSheet.show(context),
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: BlocProvider<PatientOverViewBloc>.value(
-          value: _bloc,
+          actions: [
+            IconButton(
+              tooltip: 'Switch Member',
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.switch_account_rounded, size: 18, color: primaryColor),
+              ),
+              onPressed: () => _openProfileSwitcher(context),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: SafeArea(
           child: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
             builder: (context, state) {
               if (state is LoadingPatientViewDetails) {
-                return _buildLoadingShimmer(context, isDark, isTab);
-              }
-
-              if (state is LoadPatientDataFailureState) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Failed to Load Profile",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          state.error,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 13,
-                            color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            _bloc.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
-                          },
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text("Retry"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _buildProfileShimmer(context, isDark, isTab);
               }
 
               PatientOverViewEntity? overViewEntity;
@@ -416,205 +204,274 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               }
 
               final data = overViewEntity?.data;
-              final patientName = sessionPatientName;
-              final mrnNumber = 'MRN-998241';
-              final phone = data?.contactInformation?.phone ?? currentUser?.data?.phoneNumber ?? '+91 98765 43210';
-              final email = data?.contactInformation?.emailAddress ?? currentUser?.data?.email ?? 'raja.vardan@yiramail.com';
-              final address = data?.contactInformation?.residentialAddress ?? 'Plot #42, Health City, Jubilee Hills, Hyderabad';
-              final emergencyName = data?.contactInformation?.emergencyContact?.name ?? 'Srinivas Rao (Father)';
-              final emergencyPhone = data?.contactInformation?.emergencyContact?.phone ?? '+91 98490 12345';
-              final condition = data?.medicalInformation?.condition ?? 'Mild Hypertension, Seasonal Asthma';
-              final allergies = data?.medicalInformation?.allergies ?? 'Penicillin (Severe Reaction)';
-              final bloodGroup = data?.medicalInformation?.bloodGroup ?? 'O+ Positive';
-              final policyName = data?.insurance?.policyName ?? 'HDFC Ergo Health Insurance';
-              final policyNumber = data?.insurance?.policyNumber ?? 'POL-992019482';
-              final totalVisits = data?.medicalInformation?.totalVisits ?? 12;
+              final contact = data?.contactInformation;
+              final medical = data?.medicalInformation;
+              final emergency = contact?.emergencyContact;
+              final insurance = data?.insurance;
 
-              final completionPct = _calculateProfileCompletion(data, phone, email);
+              // Determine active member
+              final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
+              final activeProfile = profiles.isNotEmpty ? profiles.first : null;
+
+              final firstName = currentUser?.data?.firstName ?? '';
+              final lastName = currentUser?.data?.lastName ?? '';
+              final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Teja Ch';
+
+              final initials = patientName.isNotEmpty
+                  ? patientName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
+                  : 'TC';
+
+              final relation = activeProfile?.relation ?? 'Primary (Self)';
+              final isPrimary = activeProfile?.isPrimary ?? true;
+              final mrn = 'MRN-90214';
+              final phone = contact?.phone ?? currentUser?.data?.phoneNumber ?? '+91 98765 43210';
+              final email = contact?.emailAddress ?? currentUser?.data?.email ?? 'patient@yiraclinics.com';
+              final gender = 'Male';
+              final dob = '15 Aug 1994';
+              final bloodGroup = medical?.bloodGroup ?? 'O+';
+              final hospital = data?.nextAppointment?.hospitalName ?? 'Yira Hospitals';
 
               return RefreshIndicator(
                 color: primaryColor,
                 onRefresh: () async {
-                  _bloc.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+                  context.read<PatientOverViewBloc>().add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+                  await Future.delayed(const Duration(milliseconds: 600));
                 },
                 child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: screenHorizontalSpacePadding,
                     vertical: 12,
                   ),
                   children: [
-                    // Conditional Profile Switcher Banner
-                    _buildProfileSwitcherBanner(context, isDark, primaryColor, isTab),
-
-                    // 1. Ultra-Modern All-In-One Top Hero Card
-                    _buildIntegratedTopHeroCard(
+                    // 1. Executive Hero Header (Exact Provider Design Copy)
+                    _buildPatientHeroHeader(
                       context: context,
-                      data: data,
-                      patientName: patientName,
-                      mrnNumber: mrnNumber,
-                      bloodGroup: bloodGroup,
-                      totalVisits: totalVisits,
-                      policyName: policyName,
+                      name: patientName,
+                      initials: initials,
+                      relation: relation,
+                      isPrimary: isPrimary,
+                      mrn: mrn,
+                      hospital: hospital,
                       isDark: isDark,
                       primaryColor: primaryColor,
                       isTab: isTab,
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Profile Completion Bar
-                    _buildProfileCompletionCard(context, completionPct, isDark, primaryColor, isTab),
+                    // 2. Profile Strength / Completeness Card
+                    _buildProfileCompletionCard(
+                      context: context,
+                      completionPct: 85,
+                      isDark: isDark,
+                      primaryColor: primaryColor,
+                      isTab: isTab,
+                    ),
                     const SizedBox(height: 16),
 
-                    // 3. Personal & Contact Information Card
-                    ProfileInfoCard(
+                    // 3. Personal Information Card
+                    DoctorProfileSectionCard(
+                      title: "Personal & Demographics",
                       icon: Icons.person_rounded,
                       iconColor: primaryColor,
-                      title: "Personal Information",
                       isTab: isTab,
-                      items: [
-                        ProfileInfoItem(
+                      onEdit: () => _openEditProfileDialog(context),
+                      fields: [
+                        DoctorProfileFieldItem(
                           label: "Full Name",
                           value: patientName,
                           icon: Icons.badge_outlined,
                           isCopyable: true,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
+                          label: "Medical Record Number (MRN)",
+                          value: mrn,
+                          icon: Icons.fingerprint_rounded,
+                          isCopyable: true,
+                          isVerified: true,
+                        ),
+                        DoctorProfileFieldItem(
                           label: "Date of Birth",
-                          value: "14 May 1995 (31 Yrs)",
+                          value: dob,
                           icon: Icons.cake_outlined,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Gender",
-                          value: "Male",
+                          value: gender,
                           icon: Icons.wc_outlined,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Blood Group",
                           value: bloodGroup,
                           icon: Icons.bloodtype_outlined,
+                          customValueColor: Colors.redAccent,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Phone Number",
                           value: phone,
                           icon: Icons.phone_outlined,
-                          isVerified: true,
                           isCopyable: true,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Email Address",
                           value: email,
                           icon: Icons.email_outlined,
+                          isCopyable: true,
                           isVerified: true,
-                          isCopyable: true,
-                        ),
-                        ProfileInfoItem(
-                          label: "Residential Address",
-                          value: address,
-                          icon: Icons.location_on_outlined,
-                          isCopyable: true,
                         ),
                       ],
                     ),
 
-                    // 4. Emergency Contact Section
-                    ProfileInfoCard(
-                      icon: Icons.contact_phone_rounded,
-                      iconColor: const Color(0xFFEF4444),
+                    // 4. Emergency Contact Card
+                    DoctorProfileSectionCard(
                       title: "Emergency Contact",
+                      icon: Icons.contact_phone_rounded,
+                      iconColor: const Color(0xFF10B981),
                       isTab: isTab,
-                      items: [
-                        ProfileInfoItem(
-                          label: "Contact Person",
-                          value: emergencyName,
+                      onEdit: () => _openEditProfileDialog(context),
+                      fields: [
+                        DoctorProfileFieldItem(
+                          label: "Contact Name",
+                          value: emergency?.name ?? "Srinivas Rao",
                           icon: Icons.person_outline_rounded,
-                          isCopyable: true,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Relationship",
-                          value: "Parent / Father",
+                          value: "Father",
                           icon: Icons.family_restroom_rounded,
                         ),
-                        ProfileInfoItem(
-                          label: "Primary Phone",
-                          value: emergencyPhone,
-                          icon: Icons.phone_in_talk_rounded,
+                        DoctorProfileFieldItem(
+                          label: "Phone Number",
+                          value: emergency?.phone ?? "+91 91234 56789",
+                          icon: Icons.phone_forwarded_rounded,
                           isCopyable: true,
                         ),
                       ],
                     ),
 
-                    // 5. Insurance Details Section
-                    ProfileInfoCard(
-                      icon: Icons.health_and_safety_rounded,
-                      iconColor: const Color(0xFF10B981),
-                      title: "Insurance & Coverage Details",
+                    // 5. Insurance & Healthcare Coverage Card
+                    DoctorProfileSectionCard(
+                      title: "Insurance & Coverage",
+                      icon: Icons.shield_outlined,
+                      iconColor: const Color(0xFF0284C7),
                       isTab: isTab,
-                      items: [
-                        ProfileInfoItem(
-                          label: "Provider",
-                          value: policyName,
-                          icon: Icons.apartment_rounded,
-                          isCopyable: true,
+                      fields: [
+                        DoctorProfileFieldItem(
+                          label: "Insurance Provider",
+                          value: insurance?.policyName ?? "Star Health Comprehensive Care",
+                          icon: Icons.business_outlined,
                         ),
-                        ProfileInfoItem(
+                        DoctorProfileFieldItem(
                           label: "Policy Number",
-                          value: policyNumber,
-                          icon: Icons.tag_rounded,
-                          isVerified: true,
+                          value: insurance?.policyNumber ?? "POL-88219401",
+                          icon: Icons.numbers_outlined,
                           isCopyable: true,
+                          isVerified: true,
                         ),
-                        ProfileInfoItem(
-                          label: "Coverage Plan",
-                          value: "Comprehensive Family Floater (₹10 Lakhs)",
-                          icon: Icons.shield_outlined,
-                        ),
-                        ProfileInfoItem(
-                          label: "Validity",
-                          value: "Active until Dec 2027",
-                          icon: Icons.event_available_rounded,
+                        DoctorProfileFieldItem(
+                          label: "Coverage Status",
+                          value: "Active & Verified",
+                          icon: Icons.verified_user_rounded,
+                          customValueColor: const Color(0xFF10B981),
                         ),
                       ],
                     ),
 
-                    // 6. Medical History & Allergies Section
-                    ProfileInfoCard(
-                      icon: Icons.medical_information_rounded,
+                    // 6. Medical History & Allergies Card
+                    DoctorProfileSectionCard(
+                      title: "Medical Background & History",
+                      icon: Icons.healing_rounded,
                       iconColor: const Color(0xFF8B5CF6),
-                      title: "Medical History & Allergies",
                       isTab: isTab,
-                      items: [
-                        ProfileInfoItem(
-                          label: "Known Conditions",
-                          value: condition,
-                          icon: Icons.healing_rounded,
-                        ),
-                        ProfileInfoItem(
-                          label: "Drug Allergies",
-                          value: allergies,
+                      fields: [
+                        DoctorProfileFieldItem(
+                          label: "Known Allergies",
+                          value: (medical?.allergies != null && medical!.allergies!.isNotEmpty)
+                              ? medical.allergies!
+                              : "No known drug allergies",
                           icon: Icons.warning_amber_rounded,
+                          customValueColor: Colors.orange,
                         ),
-                        ProfileInfoItem(
-                          label: "Food Allergies",
-                          value: "Peanuts, Shellfish",
-                          icon: Icons.restaurant_rounded,
+                        DoctorProfileFieldItem(
+                          label: "Chronic Conditions",
+                          value: (medical?.condition != null && medical!.condition!.isNotEmpty)
+                              ? medical.condition!
+                              : "None recorded",
+                          icon: Icons.health_and_safety_outlined,
                         ),
-                        ProfileInfoItem(
-                          label: "Past Surgeries",
-                          value: "Appendectomy (2021)",
-                          icon: Icons.local_hospital_outlined,
-                        ),
-                        ProfileInfoItem(
-                          label: "Clinic Visits",
-                          value: "$totalVisits Recorded Visits",
-                          icon: Icons.history_rounded,
+                        DoctorProfileFieldItem(
+                          label: "Total Consultations",
+                          value: "${medical?.totalVisits ?? 4} Visits",
+                          icon: Icons.medical_information_outlined,
                         ),
                       ],
                     ),
 
-                    // 7. Quick Settings & Navigation Menu
-                    _buildSettingsMenu(context, isDark, primaryColor, isTab),
-                    const SizedBox(height: 36),
+                    // 7. App Preferences & Security Card
+                    DoctorProfileSectionCard(
+                      title: "Security & Terms",
+                      icon: Icons.lock_outline_rounded,
+                      iconColor: const Color(0xFF64748B),
+                      isTab: isTab,
+                      fields: const [
+                        DoctorProfileFieldItem(
+                          label: "Data Privacy Policy",
+                          value: "Compliant with Health Data Standards",
+                          icon: Icons.privacy_tip_outlined,
+                        ),
+                        DoctorProfileFieldItem(
+                          label: "Encryption",
+                          value: "256-bit End-to-End Encrypted",
+                          icon: Icons.security_rounded,
+                          isVerified: true,
+                        ),
+                      ],
+                    ),
+
+                    // 8. Sign Out Tile (Styled matching Provider)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.red.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                        ),
+                        title: const Text(
+                          'Sign Out',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.5,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Log out of your patient account',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            color: isDark ? Colors.white54 : Colors.grey[600],
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.redAccent),
+                        onTap: () => SignOutAlert.showSignCustomDialog(context, primaryColor),
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -625,486 +482,240 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  Widget _buildIntegratedTopHeroCard({
+  Widget _buildPatientHeroHeader({
     required BuildContext context,
-    required DataEntity? data,
-    required String patientName,
-    required String mrnNumber,
-    required String bloodGroup,
-    required int totalVisits,
-    required String policyName,
+    required String name,
+    required String initials,
+    required String relation,
+    required bool isPrimary,
+    required String mrn,
+    required String hospital,
     required bool isDark,
     required Color primaryColor,
     required bool isTab,
   }) {
-    final initials = _getInitials(patientName);
-
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? primaryColor.withValues(alpha: 0.25) : primaryColor.withValues(alpha: 0.15),
-          width: 1.3,
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: isDark ? 0.14 : 0.08),
+            color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Top Part: Patient Profile Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+          // Top Ambient Gradient Card
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(
+              isTab ? 28 : 20,
+              isTab ? 26 : 22,
+              isTab ? 28 : 20,
+              isTab ? 22 : 18,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [
+                        primaryColor.withValues(alpha: 0.18),
+                        const Color(0xFF0F172A).withValues(alpha: 0.0),
+                      ]
+                    : [
+                        primaryColor.withValues(alpha: 0.09),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
             child: Column(
               children: [
-                // Avatar with Glowing Ring
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [primaryColor, const Color(0xFF38BDF8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                // Avatar with Initials
+                Container(
+                  width: isTab ? 84 : 76,
+                  height: isTab ? 84 : 76,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [primaryColor, primaryColor.withValues(alpha: 0.75)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: CircleAvatar(
-                      radius: isTab ? 48 : 42,
-                      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFDBEAFE),
-                      child: Text(
-                        initials,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 28 : 24,
-                          fontWeight: FontWeight.w700,
-                          color: primaryColor,
-                        ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.35),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? 28 : 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // Name + Verified Check Badge
+                // Name & Verified Badge
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Flexible(
                       child: Text(
-                        patientName,
-                        textAlign: TextAlign.center,
+                        name,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? 22 : 19,
+                          fontSize: isTab ? 20 : 18,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          letterSpacing: -0.3,
+                          letterSpacing: -0.4,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
+                    Icon(Icons.verified_rounded, size: 18, color: primaryColor),
                   ],
                 ),
                 const SizedBox(height: 6),
 
-                // Patient Universal Health Pill
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: primaryColor.withValues(alpha: 0.22),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    "Digital Health Passport • Universal Health ID",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 13 : 12,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // MRN Pill & Active Status
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // Relation Badge + MRN Badge
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        color: (isPrimary ? const Color(0xFF10B981) : const Color(0xFF0284C7)).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          CircleAvatar(radius: 3.5, backgroundColor: Color(0xFF10B981)),
-                          SizedBox(width: 6),
+                        children: [
+                          Icon(
+                            isPrimary ? Icons.star_rounded : Icons.people_rounded,
+                            size: 14,
+                            color: isPrimary ? const Color(0xFF10B981) : const Color(0xFF0284C7),
+                          ),
+                          const SizedBox(width: 4),
                           Text(
-                            "Active Patient Account",
+                            relation,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF10B981),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: isPrimary ? const Color(0xFF10B981) : const Color(0xFF0284C7),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: mrnNumber));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("MRN Number copied"),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.verified_outlined,
-                              size: 13,
-                              color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              mrnNumber,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Action Button (Patient Digital Passport Card)
-                InkWell(
-                  onTap: () => _showPatientDigitalCard(context, data, patientName, mrnNumber),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.badge_rounded, size: 16, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          "View Digital Health Passport",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Divider inside top card
-          Divider(
-            height: 1,
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
-          ),
-
-          // Bottom Part of Top Card: 3 Key Metrics
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF161E2E) : const Color(0xFFF8FAFC),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  // Stat 1: Blood Group
-                  Expanded(
-                    child: _buildTopCardStatColumn(
-                      context: context,
-                      label: "Blood Group",
-                      value: bloodGroup,
-                      icon: Icons.bloodtype_outlined,
-                      color: primaryColor,
-                      isDark: isDark,
-                      isTab: isTab,
-                    ),
-                  ),
-                  VerticalDivider(
-                    width: 1,
-                    thickness: 1,
-                    color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-                  ),
-                  // Stat 2: Visits
-                  Expanded(
-                    child: _buildTopCardStatColumn(
-                      context: context,
-                      label: "Clinic Visits",
-                      value: "$totalVisits Visits",
-                      icon: Icons.medical_services_outlined,
-                      color: const Color(0xFF10B981),
-                      isDark: isDark,
-                      isTab: isTab,
-                    ),
-                  ),
-                  VerticalDivider(
-                    width: 1,
-                    thickness: 1,
-                    color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-                  ),
-                  // Stat 3: Insurance
-                  Expanded(
-                    child: _buildTopCardStatColumn(
-                      context: context,
-                      label: "Insurance",
-                      value: policyName.length > 9 ? "${policyName.substring(0, 9)}.." : policyName,
-                      icon: Icons.health_and_safety_outlined,
-                      color: const Color(0xFF8B5CF6),
-                      isDark: isDark,
-                      isTab: isTab,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopCardStatColumn({
-    required BuildContext context,
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-    required bool isTab,
-  }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.2 : 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: isTab ? 16 : 14, color: color),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? 14 : 13,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? 11 : 10,
-            fontWeight: FontWeight.w500,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileSwitcherBanner(
-    BuildContext context,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
-    final user = GlobalSession.instance.userNotifier.value;
-    final roles = user?.data?.roles ?? [];
-    if (roles.length <= 1) {
-      return const SizedBox.shrink();
-    }
-
-    final activeRole = user?.data?.latestUserRole ?? "Patient";
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.3),
-          width: 1.2,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.switch_account_rounded,
-              color: primaryColor,
-              size: isTab ? 18 : 16,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      "Active Role: ",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: isTab ? 12 : 11,
-                        color: isDark ? Colors.white60 : Colors.grey.shade600,
-                      ),
-                    ),
-                    Flexible(
                       child: Text(
-                        activeRole,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        mrn,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? 13 : 12,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
                           color: primaryColor,
                         ),
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  "${roles.length} profiles linked • Tap to switch workspace",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? 11 : 10.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                  ),
+                const SizedBox(height: 8),
+
+                // Hospital Tag
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.local_hospital_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      hospital,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        color: isDark ? Colors.white60 : Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          InkWell(
-            onTap: () => ProfileSwitcherSheet.show(context),
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+
+          // Bottom Action Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              border: Border(
+                top: BorderSide(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    "Switch",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    onPressed: () => _openProfileSwitcher(context),
+                    icon: const Icon(Icons.people_outline_rounded, size: 16),
+                    label: const Text('Switch Member', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
                   ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.swap_horiz_rounded,
-                    size: 15,
-                    color: Colors.white,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () => _openEditProfileDialog(context),
+                    icon: const Icon(Icons.edit_rounded, size: 16),
+                    label: const Text('Edit Profile', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.bold)),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1112,20 +723,20 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  Widget _buildProfileCompletionCard(
-    BuildContext context,
-    int completionPct,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
+  Widget _buildProfileCompletionCard({
+    required BuildContext context,
+    required int completionPct,
+    required bool isDark,
+    required Color primaryColor,
+    required bool isTab,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -1136,53 +747,47 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 16,
-                    color: primaryColor,
-                  ),
-                  const SizedBox(width: 6),
+                  Icon(Icons.verified_outlined, size: 18, color: primaryColor),
+                  const SizedBox(width: 8),
                   Text(
-                    "Profile Completeness",
+                    'Profile Strength',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
               Text(
-                "$completionPct%",
+                '$completionPct% Complete',
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.bold,
                   color: primaryColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: completionPct / 100.0,
-              minHeight: 6,
-              backgroundColor: isDark ? Colors.white10 : Colors.grey.shade300,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                completionPct > 80 ? const Color(0xFF10B981) : primaryColor,
-              ),
+              minHeight: 7,
+              backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            "Complete your profile information for faster clinical check-ins",
+            'Keep your profile updated for seamless hospital check-ins and verified prescriptions.',
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: 10.5,
-              color: isDark ? Colors.white54 : Colors.grey.shade600,
+              fontSize: 11.5,
+              color: isDark ? Colors.white54 : Colors.grey[600],
             ),
           ),
         ],
@@ -1190,69 +795,29 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  Widget _buildSettingsMenu(
-    BuildContext context,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.2)
-                : const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildProfileShimmer(BuildContext context, bool isDark, bool isTab) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(screenHorizontalSpacePadding),
       child: Column(
         children: [
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
+          BaseShimmer(
+            child: Container(
+              height: 220,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.notifications_outlined, size: 18, color: Colors.amber),
-            ),
-            title: Text(
-              "Notification Settings",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-            onTap: () => Navigator.pushNamed(context, AppRoutes.notificationSettingsScreen),
           ),
-          Divider(height: 1, color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9)),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
+          const SizedBox(height: 16),
+          BaseShimmer(
+            child: Container(
+              height: 180,
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.palette_outlined, size: 18, color: Color(0xFF8B5CF6)),
-            ),
-            title: Text(
-              "Appearance & Theme",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, size: 20),

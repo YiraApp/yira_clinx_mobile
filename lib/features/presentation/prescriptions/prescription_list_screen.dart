@@ -4,6 +4,7 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/single_prescription_card.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/constants/constants.dart';
@@ -33,6 +34,7 @@ class PrescriptionListScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final bool isTab = isTablet(context);
     final String effectivePatientId = patientId ?? patient?.id ?? '';
+    final bool isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
 
     return BlocConsumer<PrescriptionBloc, PrescriptionState>(
         buildWhen: (previous, current) =>
@@ -123,38 +125,42 @@ class PrescriptionListScreen extends StatelessWidget {
                     title: cardTitle,
                     subtitle: cardSubtitle,
                     date: 'Today',
-                    onEdit: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => FractionallySizedBox(
-                          heightFactor: 0.9,
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                            child: AddPrescriptionRecordScreen(
-                              patient: patient,
-                              patientId: effectivePatientId,
-                              appointmentId: appointmentId,
-                              hospitalId: hospitalId,
-                              orgId: orgId,
-                            ),
-                          ),
-                        ),
-                      ).then((_) {
-                        if (context.mounted) {
-                          context.read<PrescriptionBloc>().add(LoadPrescriptionData(
-                            patientId: effectivePatientId,
-                            appointmentId: appointmentId,
-                            hospitalId: hospitalId,
-                            orgId: orgId,
-                          ));
-                        }
-                      });
-                    },
-                    onDelete: () {
-                      _confirmDeletePrescription(context, validMeds);
-                    },
+                    onEdit: isPatient
+                        ? null
+                        : () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => FractionallySizedBox(
+                                heightFactor: 0.9,
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                  child: AddPrescriptionRecordScreen(
+                                    patient: patient,
+                                    patientId: effectivePatientId,
+                                    appointmentId: appointmentId,
+                                    hospitalId: hospitalId,
+                                    orgId: orgId,
+                                  ),
+                                ),
+                              ),
+                            ).then((_) {
+                              if (context.mounted) {
+                                context.read<PrescriptionBloc>().add(LoadPrescriptionData(
+                                  patientId: effectivePatientId,
+                                  appointmentId: appointmentId,
+                                  hospitalId: hospitalId,
+                                  orgId: orgId,
+                                ));
+                              }
+                            });
+                          },
+                    onDelete: isPatient
+                        ? null
+                        : () {
+                            _confirmDeletePrescription(context, validMeds);
+                          },
                     onView: () {
                       context.read<PrescriptionBloc>().add(
                             SinglePrescriptionDetailsNavEvent(
@@ -170,7 +176,7 @@ class PrescriptionListScreen extends StatelessWidget {
 
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-            floatingActionButton: hasPrescription
+            floatingActionButton: (hasPrescription || isPatient)
                 ? null
                 : FloatingActionButton(
                     backgroundColor: primaryColor,

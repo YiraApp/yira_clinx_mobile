@@ -203,22 +203,25 @@ final bool isTab;
                     const SizedBox(width: 8),
                     CommonCustomPopupMenu(
                       items: [
-                        AppPopupItemModel(
-                          icon: Icons.visibility_outlined,
-                          title: 'View Details',
-                          onTap: onView!,
-                        ),
-                        AppPopupItemModel(
-                          icon: Icons.edit_outlined,
-                          title: 'Edit',
-                          onTap: onEdit!,
-                        ),
-                        AppPopupItemModel(
-                          icon: Icons.delete_outline_rounded,
-                          title: 'Delete',
-                          onTap: onDelete!,
-                          isDestructive: true, // Auto-renders custom line separation and red tints
-                        ),
+                        if (onView != null)
+                          AppPopupItemModel(
+                            icon: Icons.visibility_outlined,
+                            title: 'View Details',
+                            onTap: onView!,
+                          ),
+                        if (onEdit != null)
+                          AppPopupItemModel(
+                            icon: Icons.edit_outlined,
+                            title: 'Edit',
+                            onTap: onEdit!,
+                          ),
+                        if (onDelete != null)
+                          AppPopupItemModel(
+                            icon: Icons.delete_outline_rounded,
+                            title: 'Delete',
+                            onTap: onDelete!,
+                            isDestructive: true,
+                          ),
                       ],
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12.0),

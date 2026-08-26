@@ -16,6 +16,7 @@ class UpdateLatestOrgDetailsRepoImpl extends UpdateLatestOrgDetailsRepo {
   UpdateLatestOrgDetailsRepoImpl(this.apiClient);
   @override
   Future<UpdateLatestOrgDetailsEntity?> updateLatestOrgDetails({
+    String? userId,
     required String latestRoleId,
     required int latestOrgId,
     required int latestHospitalId,
@@ -25,7 +26,7 @@ class UpdateLatestOrgDetailsRepoImpl extends UpdateLatestOrgDetailsRepo {
       String token = currentUser?.data?.accessToken ?? '';
 
       final Map<String, dynamic> requestBody = {
-        "userId": currentUser?.data?.id,
+        "userId": userId ?? currentUser?.data?.id,
         "latestRoleId": latestRoleId,
         "latestOrgId": latestOrgId,
         "latestHospitalId": latestHospitalId,
