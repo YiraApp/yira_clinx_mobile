@@ -112,45 +112,10 @@ class ParametersCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(Icons.schedule_rounded, size: 18, color: primaryColor),
-                const SizedBox(width: 6),
-                _buildCardLabel(context, 'Break Times (Optional)', isTab),
-              ],
-            ),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                debugPrint("ParametersCard: Tap on top Add Break");
-                _showAddBreakDialog(context);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_rounded, size: 16, color: primaryColor),
-                    const SizedBox(width: 4),
-                    CommonText(
-                      'Add Break',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.03,
-                        fontWeight: FontWeight.w600,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            Icon(Icons.schedule_rounded, size: 18, color: primaryColor),
+            const SizedBox(width: 6),
+            _buildCardLabel(context, 'Break Times (Optional)', isTab),
           ],
         ),
         const SizedBox(height: 4),
@@ -164,38 +129,91 @@ class ParametersCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (state.breakTimes.isEmpty)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              debugPrint("ParametersCard: Tap on central + Add Break Time");
-              _showAddBreakDialog(context);
-            },
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
-                border: Border.all(
-                  color: isDark ? Colors.white12 : Colors.grey.shade300,
-                ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_rounded, color: primaryColor, size: 20),
-                  const SizedBox(width: 8),
-                  CommonText(
-                    '+ Add Break Time (From - To)',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.coffee_rounded, size: 14, color: primaryColor),
+                          const SizedBox(width: 4),
+                          CommonText(
+                            'Break 1',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CommonText(
+                            'From Time',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white60 : Colors.blueGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          _buildTimeSelector(context, '01:00 PM', (newFrom) {
+                            _validateAndAddNewBreakInline(context, newFrom, '02:00 PM');
+                          }),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CommonText(
+                            'To Time',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white60 : Colors.blueGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          _buildTimeSelector(context, '02:00 PM', (newTo) {
+                            _validateAndAddNewBreakInline(context, '01:00 PM', newTo);
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           )
         else ...[
@@ -221,28 +239,51 @@ class ParametersCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.schedule_rounded, size: 14, color: primaryColor),
-                              const SizedBox(width: 4),
-                              CommonText(
-                                'Break ${index + 1}',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: primaryColor,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.coffee_rounded, size: 14, color: primaryColor),
+                                  const SizedBox(width: 4),
+                                  CommonText(
+                                    'Break ${index + 1}',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_calculateDurationStr(b.fromTime, b.toTime).isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: CommonText(
+                                  _calculateDurationStr(b.fromTime, b.toTime),
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white70 : Colors.grey.shade700,
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
+                          ],
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
@@ -306,7 +347,6 @@ class ParametersCard extends StatelessWidget {
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () {
-              debugPrint("ParametersCard: Tap on + Add Another Break");
               _showAddBreakDialog(context);
             },
             icon: Icon(Icons.add_rounded, size: 18, color: primaryColor),
@@ -375,8 +415,6 @@ class ParametersCard extends StatelessWidget {
       final dt = DateTime(2000, 1, 1, t.hour, t.minute);
       return DateFormat('hh:mm a').format(dt);
     }
-
-    int toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
     showDialog(
       context: context,
@@ -582,8 +620,27 @@ class ParametersCard extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    final fromMin = toMinutes(fromTime);
-                    final toMin = toMinutes(toTime);
+                    final fromMin = _parseTimeToMinutes(formatTime(fromTime));
+                    final toMin = _parseTimeToMinutes(formatTime(toTime));
+                    final now = DateTime.now();
+                    final bool isToday = state.isSingleDay &&
+                        state.targetDate.year == now.year &&
+                        state.targetDate.month == now.month &&
+                        state.targetDate.day == now.day;
+                    final int nowMinutes = now.hour * 60 + now.minute;
+
+                    // Validation 0: Past break time today
+                    if (isToday && toMin <= nowMinutes) {
+                      setDialogState(() {
+                        dialogError = 'Cannot add break for a past time (${formatTime(fromTime)} - ${formatTime(toTime)}).';
+                      });
+                      _showWarningDialog(
+                        context,
+                        'Past Time Selected',
+                        'Cannot add break for a past time. The selected time (${formatTime(fromTime)} - ${formatTime(toTime)}) has already passed today.',
+                      );
+                      return;
+                    }
 
                     // Validation 1: From < To
                     if (fromMin >= toMin) {
@@ -798,9 +855,176 @@ class ParametersCard extends StatelessWidget {
     }
   }
 
+  String _calculateDurationStr(String from, String to) {
+    final fromMin = _parseTimeToMinutes(from);
+    final toMin = _parseTimeToMinutes(to);
+    if (toMin <= fromMin) return '';
+    final diff = toMin - fromMin;
+    final hours = diff ~/ 60;
+    final mins = diff % 60;
+    if (hours > 0 && mins > 0) return '${hours}h ${mins}m';
+    if (hours > 0) return '${hours}h';
+    return '${mins}m';
+  }
+
+  void _validateAndAddNewBreakInline(BuildContext context, String from, String to) {
+    final state = context.read<SlotBloc>().state;
+    if (state is! SlotDataState) return;
+
+    final fromMin = _parseTimeToMinutes(from);
+    final toMin = _parseTimeToMinutes(to);
+
+    final now = DateTime.now();
+    final bool isToday = state.isSingleDay &&
+        state.targetDate.year == now.year &&
+        state.targetDate.month == now.month &&
+        state.targetDate.day == now.day;
+    final int nowMinutes = now.hour * 60 + now.minute;
+
+    if (isToday && toMin <= nowMinutes) {
+      _showWarningDialog(
+        context,
+        'Past Time Selected',
+        'Cannot add break for a past time. The selected time ($from - $to) has already passed today.',
+      );
+      return;
+    }
+
+    if (fromMin >= toMin) {
+      _showWarningDialog(
+        context,
+        'Invalid Break Time',
+        'Break From Time ($from) must be earlier than To Time ($to).',
+      );
+      return;
+    }
+
+    final workStart = _parseTimeToMinutes(state.fromTime);
+    final workEnd = _parseTimeToMinutes(state.toTime);
+
+    if (fromMin < workStart || toMin > workEnd) {
+      _showWarningDialog(
+        context,
+        'Break Outside Working Hours',
+        'Break time ($from - $to) must fall within working shift hours (${state.fromTime} - ${state.toTime}).',
+      );
+      return;
+    }
+
+    // Check overlap with other breaks
+    for (final other in state.breakTimes) {
+      final oStart = _parseTimeToMinutes(other.fromTime);
+      final oEnd = _parseTimeToMinutes(other.toTime);
+      if (fromMin < oEnd && toMin > oStart) {
+        _showWarningDialog(
+          context,
+          'Overlapping Breaks',
+          'This break ($from - $to) overlaps with existing ${other.label} (${other.fromTime} - ${other.toTime}).',
+        );
+        return;
+      }
+    }
+
+    final overlappingSlots = state.slots.where((s) {
+      final sStart = _parseTimeToMinutes(s.startTime);
+      final sEnd = _parseTimeToMinutes(s.endTime);
+      return _isOverlapping(fromMin, toMin, sStart, sEnd);
+    }).toList();
+
+    if (overlappingSlots.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (confirmContext) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+          title: const Row(
+            children: [
+              Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
+              SizedBox(width: 10),
+              Expanded(
+                child: CommonText(
+                  'Remove Overlapping Slots?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CommonText(
+                'Break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).',
+                style: const TextStyle(fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 10),
+              const CommonText(
+                'Overlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
+                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(confirmContext),
+              child: const CommonText('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                Navigator.pop(confirmContext);
+                context.read<SlotBloc>().add(
+                  AddBreakTimeEvent(
+                    fromTime: from,
+                    toTime: to,
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
+                    backgroundColor: Colors.green.shade700,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const CommonText('OK, Remove & Re-align', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    context.read<SlotBloc>().add(
+      AddBreakTimeEvent(
+        fromTime: from,
+        toTime: to,
+      ),
+    );
+  }
+
   void _validateAndUpdateBreak(BuildContext context, dynamic b, String from, String to) {
     final fromMin = _parseTimeToMinutes(from);
     final toMin = _parseTimeToMinutes(to);
+
+    final now = DateTime.now();
+    final bool isToday = state.isSingleDay &&
+        state.targetDate.year == now.year &&
+        state.targetDate.month == now.month &&
+        state.targetDate.day == now.day;
+    final int nowMinutes = now.hour * 60 + now.minute;
+
+    if (isToday && toMin <= nowMinutes) {
+      _showWarningDialog(
+        context,
+        'Past Time Selected',
+        'Cannot update break for a past time. The selected time ($from - $to) has already passed today.',
+      );
+      return;
+    }
 
     if (fromMin >= toMin) {
       _showWarningDialog(
@@ -991,6 +1215,25 @@ class ParametersCard extends StatelessWidget {
         'Working From Time ($from) must be earlier than To Time ($to).',
       );
       return;
+    }
+
+    final state = context.read<SlotBloc>().state;
+    if (state is SlotDataState) {
+      final now = DateTime.now();
+      final bool isToday = state.isSingleDay &&
+          state.targetDate.year == now.year &&
+          state.targetDate.month == now.month &&
+          state.targetDate.day == now.day;
+      final int nowMinutes = now.hour * 60 + now.minute;
+
+      if (isToday && toMin <= nowMinutes) {
+        _showWarningDialog(
+          context,
+          'Past Time Selected',
+          'Cannot generate slots for past time. The entire shift ($from - $to) has already passed today. Please select a future time range.',
+        );
+        return;
+      }
     }
 
     context.read<SlotBloc>().add(

@@ -72,6 +72,65 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     );
   }
 
+  int _timeToMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
+    try {
+      final cleaned = timeStr.replaceAll(RegExp(r'[\s\u00A0\u2000-\u200B\u202F]+'), ' ').trim();
+      final match = RegExp(r'^(\d{1,2}):(\d{2})\s*([a-zA-Z]{2})?', caseSensitive: false).firstMatch(cleaned);
+      if (match != null) {
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+        String? ampm = match.group(3)?.toUpperCase();
+        if (ampm == 'PM' && hour < 12) hour += 12;
+        if (ampm == 'AM' && hour == 12) hour = 0;
+        return hour * 60 + minute;
+      }
+      return 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  List<dynamic> _buildVisibleItems(SlotDataState state) {
+    final List<dynamic> items = [];
+    final selectedTab = state.selectedTabIndex;
+
+    // Filter timeSlots that don't fall into any break period
+    final nonBreakTimeSlots = state.timeSlots.where((s) {
+      final sMin = _timeToMinutes(s.time);
+      for (final b in state.breakTimes) {
+        final bStart = _timeToMinutes(b.fromTime);
+        final bEnd = _timeToMinutes(b.toTime);
+        if (bStart < bEnd && sMin >= bStart && sMin < bEnd) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    if (selectedTab == 0) {
+      // All tab: include non-break slots + break periods
+      items.addAll(nonBreakTimeSlots);
+      items.addAll(state.breakTimes);
+    } else if (selectedTab == 1) {
+      items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.booked));
+    } else if (selectedTab == 2) {
+      items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.available));
+    } else if (selectedTab == 3) {
+      items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.blocked));
+    } else if (selectedTab == 4) {
+      items.addAll(state.breakTimes);
+    }
+
+    items.sort((a, b) {
+      final aTime = a is TimeSlot ? a.time : (a as BreakTimeEntity).fromTime;
+      final bTime = b is TimeSlot ? b.time : (b as BreakTimeEntity).fromTime;
+      return _timeToMinutes(aTime).compareTo(_timeToMinutes(bTime));
+    });
+
+    return items;
+  }
+
   Widget _buildBodyContent(BuildContext context, SlotDataState state, bool isTab) {
     final totalCount = state.timeSlots.length;
     final bookedCount = state.timeSlots
@@ -83,8 +142,10 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     final blockedCount = state.timeSlots
         .where((s) => s.status == SlotStatus.blocked)
         .length;
+    final breakCount = state.breakTimes.length;
 
-    final visibleSlots = state.filteredSlots;
+    final visibleItems = _buildVisibleItems(state);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,18 +160,16 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
               context.read<SlotBloc>().add(UpdateTargetDateEvent(date));
               context.read<SlotBloc>().add(InitializeSlotsEvent());
             },
-            handlerColor: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white.withOpacity(0.2)
-                : Colors.black.withOpacity(0.2),
+            handlerColor: isDark
+                ? Colors.white.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.2),
             buttonPrimaryColor: primaryColor,
             weekFontSize: displayWidth(context) * 0.025,
             todayStyle: const TextStyle(fontSize: 0),
             headerStyle: TextStyle(
               fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045,
               fontFamily: appPoppinFont,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.black,
+              color: isDark ? Colors.white : Colors.black,
               fontWeight: FontWeight.w500,
             ),
             innerDot: false,
@@ -118,9 +177,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
             controller: _calendarControllerToday,
             events: events,
             startWeekDay: 1,
-            weekColor: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
+            weekColor: isDark ? Colors.white : Colors.black,
           ),
         ),
         Padding(
@@ -135,10 +192,11 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
               SlotFilterTabs(
                 isTab: isTab,
                 selectedIndex: state.selectedTabIndex,
-                allCount: totalCount,
+                allCount: totalCount + breakCount,
                 bookedCount: bookedCount,
                 availableCount: availableCount,
                 blockedCount: blockedCount,
+                breakCount: breakCount,
                 onTabSelected: (index) {
                   context.read<SlotBloc>().add(ChangeFilterTabUiEvent(index));
                 },
@@ -152,66 +210,147 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
         Expanded(
           child: state.isLoading
               ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
-              : visibleSlots.isEmpty
+              : visibleItems.isEmpty
                   ? const Center(
                       child: CommonText("No time slots found for this selection."),
                     )
                   : ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: screenHorizontalSpacePadding,
-                    vertical: 0.0,
-                  ),
-                  itemCount: visibleSlots.length,
-                  itemBuilder: (context, index) {
-                    final item = visibleSlots[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 0.0),
-                      child: TimeSlotCard(
-                        isTab: isTab,
-                        slot: item,
-                        bookSlot: () {
-                          try {
-                            final legacySlot = state.slots.firstWhere(
-                              (s) => s.id == item.id,
-                            );
-                            _openSlotDetailsDialog(context, legacySlot, isTab);
-                          } catch (_) {
-                            String slotLabel = 'Available';
-                            if (item.status == SlotStatus.booked) {
-                              slotLabel = 'Booked';
-                            } else if (item.status == SlotStatus.blocked) {
-                              slotLabel = 'Blocked';
-                            }
-
-                            final customLegacySlot = SlotEntity(
-                              id: item.id,
-                              startTime: item.time,
-                              endTime: item.time,
-                              label: slotLabel,
-                              appointment: item.status == SlotStatus.booked
-                                  ? SlotAppointmentEntity(
-                                      id: item.appointmentId ?? item.id,
-                                      patientName: item.patientName ?? '',
-                                      contactNumber: 'N/A',
-                                      reason: item.reason,
-                                    )
-                                  : null,
-                            );
-                            _openSlotDetailsDialog(context, customLegacySlot, isTab);
-                          }
-                        },
-                        viewSlotDetails: () {},
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: screenHorizontalSpacePadding,
+                        vertical: 0.0,
                       ),
-                    );
-                  },
-                ),
+                      itemCount: visibleItems.length,
+                      itemBuilder: (context, index) {
+                        final item = visibleItems[index];
+                        if (item is BreakTimeEntity) {
+                          return _buildDashboardBreakCard(context, item, isDark, isTab);
+                        }
+                        final timeSlotItem = item as TimeSlot;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 0.0),
+                          child: TimeSlotCard(
+                            isTab: isTab,
+                            slot: timeSlotItem,
+                            bookSlot: () {
+                              try {
+                                final legacySlot = state.slots.firstWhere(
+                                  (s) => s.id == timeSlotItem.id,
+                                );
+                                _openSlotDetailsDialog(context, legacySlot, isTab);
+                              } catch (_) {
+                                String slotLabel = 'Available';
+                                if (timeSlotItem.status == SlotStatus.booked) {
+                                  slotLabel = 'Booked';
+                                } else if (timeSlotItem.status == SlotStatus.blocked) {
+                                  slotLabel = 'Blocked';
+                                }
+
+                                final customLegacySlot = SlotEntity(
+                                  id: timeSlotItem.id,
+                                  startTime: timeSlotItem.time,
+                                  endTime: timeSlotItem.time,
+                                  label: slotLabel,
+                                  appointment: timeSlotItem.status == SlotStatus.booked
+                                      ? SlotAppointmentEntity(
+                                          id: timeSlotItem.appointmentId ?? timeSlotItem.id,
+                                          patientName: timeSlotItem.patientName ?? '',
+                                          contactNumber: 'N/A',
+                                          reason: timeSlotItem.reason,
+                                        )
+                                      : null,
+                                );
+                                _openSlotDetailsDialog(context, customLegacySlot, isTab);
+                              }
+                            },
+                            viewSlotDetails: () {},
+                          ),
+                        );
+                      },
+                    ),
         ),
       ],
     );
   }
 
-  Widget _buildTimeSlotHeaderRow(ThemeData theme,bool isTab) {
+  Widget _buildDashboardBreakCard(BuildContext context, BreakTimeEntity b, bool isDark, bool isTab) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        border: Border.all(
+          color: isDark ? Colors.amber.withValues(alpha: 0.3) : const Color(0xFFFDE68A),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.coffee_rounded,
+              color: Colors.amber,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CommonText(
+                      b.label.isNotEmpty ? b.label : 'Break Period',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.034,
+                        color: isDark ? Colors.amber.shade300 : const Color(0xFFB45309),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: (isDark ? Colors.amber : const Color(0xFFB45309)).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: CommonText(
+                        'Break',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.amber.shade300 : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                CommonText(
+                  '${b.fromTime} - ${b.toTime} • Break Period (No appointments)',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.026,
+                    color: isDark ? Colors.white60 : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSlotHeaderRow(ThemeData theme, bool isTab) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -219,7 +358,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           "Time Slots",
           style: TextStyle(
             fontFamily: appPoppinFont,
-            fontSize:  isTab?displayWidth(context) * 0.02:displayWidth(context) * 0.039,
+            fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.039,
             fontWeight: FontWeight.w600,
           ),
         ),

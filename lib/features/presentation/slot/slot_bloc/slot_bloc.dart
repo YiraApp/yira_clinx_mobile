@@ -100,9 +100,27 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     String toTime = '05:00 PM',
     List<BreakTimeEntity> breakTimes = const [],
     List<SlotEntity>? existingSlots,
+    DateTime? targetDate,
+    bool isSingleDay = true,
   }) {
     final int bufferMinutes = _bufferStringToMinutes(bufferType);
     final int effectiveDuration = durationMinutes > 0 ? durationMinutes : 20;
+
+    final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+
+    // If targetDate is in the past, no slots can be generated
+    if (targetDate != null && isSingleDay && DateTime(targetDate.year, targetDate.month, targetDate.day).isBefore(todayMidnight)) {
+      return [];
+    }
+
+    final bool isToday = isSingleDay &&
+        targetDate != null &&
+        targetDate.year == now.year &&
+        targetDate.month == now.month &&
+        targetDate.day == now.day;
+
+    final int nowMinutes = now.hour * 60 + now.minute;
 
     final int dayStart = _timeStringToMinutes(fromTime);
     final int dayEnd = _timeStringToMinutes(toTime);
@@ -136,6 +154,12 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       iterations++;
       final int slotStart = current;
       final int slotEnd = current + effectiveDuration;
+
+      // Filter out past time slots if scheduling for today
+      if (isToday && slotStart < nowMinutes) {
+        current = slotEnd + bufferMinutes;
+        continue;
+      }
 
       // 1. Check if this candidate slot overlaps with ANY break interval
       BreakTimeEntity? overlappingBreak;
@@ -222,7 +246,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         ? state as SlotDataState
         : SlotDataState.initial();
 
-    emit(currentState.copyWith(isLoading: true));
+    emit(currentState.copyWith(isLoading: true, deploySuccess: false));
 
     final dateString = currentState.isSingleDay
         ? DateFormat('yyyy-MM-dd').format(currentState.targetDate)
@@ -254,6 +278,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
           fromTime: currentState.fromTime,
           toTime: currentState.toTime,
           breakTimes: currentState.breakTimes,
+          targetDate: currentState.targetDate,
+          isSingleDay: currentState.isSingleDay,
         );
         timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
       }
@@ -262,6 +288,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         slots: slots,
         timeSlots: timeSlots,
         isLoading: false,
+        deploySuccess: false,
       ));
     } catch (e) {
       debugPrint('SlotBloc: InitializeSlots fallback to frontend calculation: $e');
@@ -271,12 +298,15 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         fromTime: currentState.fromTime,
         toTime: currentState.toTime,
         breakTimes: currentState.breakTimes,
+        targetDate: currentState.targetDate,
+        isSingleDay: currentState.isSingleDay,
       );
       final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
       emit(currentState.copyWith(
         slots: slots,
         timeSlots: timeSlots,
         isLoading: false,
+        deploySuccess: false,
       ));
     }
   }
@@ -293,6 +323,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final templateModernSlots = _mapSlotsToTimeSlots(templateSlots, currentState.durationMinutes);
 
@@ -300,6 +332,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       slots: templateSlots,
       timeSlots: templateModernSlots,
       isLoading: false,
+      deploySuccess: false,
     ));
   }
 
@@ -315,6 +348,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: event.toTime,
       breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
 
@@ -368,6 +403,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: updatedBreaks,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
 
@@ -405,6 +442,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: updatedBreaks,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
 
@@ -433,6 +472,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: updatedBreaks,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
 
@@ -459,6 +500,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         fromTime: currentState.fromTime,
         toTime: currentState.toTime,
         breakTimes: currentState.breakTimes,
+        targetDate: currentState.targetDate,
+        isSingleDay: event.isSingleDay,
       );
     }
     final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
@@ -474,7 +517,24 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     final SlotDataState currentState = state is SlotDataState
         ? state as SlotDataState
         : SlotDataState.initial();
-    emit(currentState.copyWith(targetDate: event.selectedDate));
+
+    final newSlots = _generateScheduleSlots(
+      durationMinutes: currentState.durationMinutes,
+      bufferType: currentState.bufferType,
+      fromTime: currentState.fromTime,
+      toTime: currentState.toTime,
+      breakTimes: currentState.breakTimes,
+      existingSlots: currentState.slots,
+      targetDate: event.selectedDate,
+      isSingleDay: currentState.isSingleDay,
+    );
+    final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
+
+    emit(currentState.copyWith(
+      targetDate: event.selectedDate,
+      slots: newSlots,
+      timeSlots: newTimeSlots,
+    ));
   }
 
   void _onUpdateDateRange(UpdateDateRangeEvent event, Emitter<SlotState> emit) {
@@ -490,6 +550,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         fromTime: currentState.fromTime,
         toTime: currentState.toTime,
         breakTimes: currentState.breakTimes,
+        targetDate: event.startDate,
+        isSingleDay: false,
       );
     }
     final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
@@ -514,6 +576,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, event.duration);
 
@@ -537,6 +601,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       toTime: currentState.toTime,
       breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
+      targetDate: currentState.targetDate,
+      isSingleDay: currentState.isSingleDay,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
 
@@ -749,6 +815,14 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     emit(currentState.copyWith(isDeploying: true, deploySuccess: false));
 
     try {
+      final breakTimesList = currentState.breakTimes
+          .map((b) => {
+                "fromTime": b.fromTime,
+                "toTime": b.toTime,
+                "label": b.label,
+              })
+          .toList();
+
       bool success = false;
       if (currentState.isSingleDay) {
         final dateStr = DateFormat('yyyy-MM-dd').format(currentState.targetDate);
@@ -756,6 +830,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
           currentState.slots,
           targetDate: dateStr,
           isSingleDay: true,
+          breakTimes: breakTimesList,
         );
       } else {
         DateTime current = currentState.startDate;
@@ -766,6 +841,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
             currentState.slots,
             targetDate: dateStr,
             isSingleDay: false,
+            breakTimes: breakTimesList,
           );
           if (!res) allSuccess = false;
           current = current.add(const Duration(days: 1));

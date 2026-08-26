@@ -102,6 +102,7 @@ class ExecutionCard extends StatelessWidget {
           const SizedBox(height: 8),
           CommonDatePicker(
             selectedDate: dataState.targetDate,
+            firstDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
             onDateSelected: (DateTime chosen) {
               context.read<SlotBloc>().add(UpdateTargetDateEvent(chosen));
             },
@@ -109,6 +110,8 @@ class ExecutionCard extends StatelessWidget {
         ],
       );
     }
+
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,6 +128,7 @@ class ExecutionCard extends StatelessWidget {
         const SizedBox(height: 8),
         CommonDatePicker(
           selectedDate: dataState.startDate,
+          firstDate: today,
           onDateSelected: (DateTime chosen) {
             final difference = dataState.endDate.difference(chosen).inDays;
             if (difference > 7) {
@@ -165,6 +169,7 @@ class ExecutionCard extends StatelessWidget {
         const SizedBox(height: 8),
         CommonDatePicker(
           selectedDate: dataState.endDate,
+          firstDate: dataState.startDate.isBefore(today) ? today : dataState.startDate,
           onDateSelected: (DateTime chosen) {
             final difference = chosen.difference(dataState.startDate).inDays;
 

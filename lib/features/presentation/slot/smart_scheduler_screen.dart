@@ -41,6 +41,13 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
         buildWhen: (previous, current) => current is SlotDataState,
         listener: (context, state) {
           if (state is SlotDataState && state.deploySuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Schedule deployed successfully!'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
             Navigator.pop(context);
           }
         },
@@ -268,9 +275,48 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           text: dataState.isSingleDay
                               ? "Deploy Schedule (${dataState.slots.length} Slots)"
                               : "Deploy Schedule (${dataState.slots.length} Slots/Day)",
-                          onPressed: () => context.read<SlotBloc>().add(
-                            DeployScheduleEvent(),
-                          ),
+                          onPressed: () {
+                            if (dataState.slots.isEmpty) {
+                              showDialog(
+                                context: context,
+                                builder: (alertContext) => AlertDialog(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+                                  title: const Row(
+                                    children: [
+                                      Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: CommonText(
+                                          'Past Time Selected',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  content: const CommonText(
+                                    'Cannot generate slots for past time. The selected date or working shift has already passed. Please select a future date or time range.',
+                                    style: TextStyle(fontSize: 14, height: 1.4),
+                                  ),
+                                  actions: [
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orangeAccent.shade700,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => Navigator.pop(alertContext),
+                                      child: const CommonText('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
+                            context.read<SlotBloc>().add(
+                              DeployScheduleEvent(),
+                            );
+                          },
                         ),
                 ),
               ],
@@ -549,8 +595,23 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
     }
   }
 
+  bool _isOverlapping(int s1, int e1, int s2, int e2) => s1 < e2 && e1 > s2;
+
   List<dynamic> _buildTimelineItems(List<SlotEntity> slots, List<BreakTimeEntity> breakTimes) {
-    final List<dynamic> items = [...slots, ...breakTimes];
+    final validSlots = slots.where((s) {
+      final sStart = _timeStringToMinutes(s.startTime);
+      final sEnd = _timeStringToMinutes(s.endTime);
+      for (final b in breakTimes) {
+        final bStart = _timeStringToMinutes(b.fromTime);
+        final bEnd = _timeStringToMinutes(b.toTime);
+        if (bStart < bEnd && _isOverlapping(sStart, sEnd, bStart, bEnd)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    final List<dynamic> items = [...validSlots, ...breakTimes];
     items.sort((a, b) {
       final aTime = a is SlotEntity ? a.startTime : (a as BreakTimeEntity).fromTime;
       final bTime = b is SlotEntity ? b.startTime : (b as BreakTimeEntity).fromTime;
