@@ -117,7 +117,15 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
     super.dispose();
   }
 
-  void _submitRequest() {
+  bool _isSubmitting = false;
+
+  void _submitRequest() async {
+    if (_isSubmitting) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
     final doctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
     final hospitalId = widget.hospitalId ??
         GlobalSession.instance.userNotifier.value?.data?.latestHospitalId;
@@ -129,6 +137,9 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
       duration: _selectedDuration,
       notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
     ));
+
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
 
     Navigator.pop(context);
 
@@ -386,7 +397,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _submitRequest,
+              onPressed: _isSubmitting ? null : _submitRequest,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
@@ -397,21 +408,27 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.send_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    "Submit Access Request",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.send_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          "Submit Access Request",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],

@@ -35,25 +35,38 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     });
 
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final patientId = currentUser?.data?.id ?? '6CDE8235-B520-4442-B912-9622A9D357D0';
+    final patientId = (currentUser?.data?.id ?? '').toString().trim();
     final token = currentUser?.data?.accessToken ?? '';
     final orgId = currentUser?.data?.latestOrgId ?? 9;
     final hospitalId = currentUser?.data?.latestHospitalId ?? 11;
 
+    if (patientId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _doctors = [];
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final linkedStorageKey = 'patient_linked_doctors_$patientId';
+    final unlinkedStorageKey = 'patient_unlinked_doctors_$patientId';
+
     List<Map<String, dynamic>> fetchedDoctors = [];
 
-    // Get list of removed / unlinked doctors to prevent them from re-appearing
+    // Get list of removed / unlinked doctors for THIS specific patient
     Set<String> unlinkedKeys = {};
     try {
       final prefs = await SharedPreferences.getInstance();
-      final unlinkedList = prefs.getStringList('patient_unlinked_doctors') ?? [];
+      final unlinkedList = prefs.getStringList(unlinkedStorageKey) ?? [];
       unlinkedKeys = unlinkedList.map((e) => e.toLowerCase().trim()).toSet();
     } catch (_) {}
 
-    // 1. FIRST: Load locally stored verified scanned / newly added doctors at the top
+    // 1. FIRST: Load locally stored verified scanned / newly added doctors for THIS patient
     try {
       final prefs = await SharedPreferences.getInstance();
-      final localStr = prefs.getString('patient_linked_doctors');
+      final localStr = prefs.getString(linkedStorageKey);
       if (localStr != null) {
         final List<dynamic> localList = jsonDecode(localStr);
         for (final item in localList) {
@@ -61,7 +74,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           final name = (map['name'] ?? '').toString().trim();
           final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
 
-          // Filter out legacy dummy Sarah Jenkins or previously unlinked
+          // Filter out dummy or previously unlinked
           if (name.toLowerCase().contains('sarah jenkins') ||
               name.toLowerCase().contains('robert miller') ||
               unlinkedKeys.contains(name.toLowerCase()) ||
@@ -78,13 +91,14 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       }
     } catch (_) {}
 
-    // 2. SECOND: Load real doctors from patient's appointment records & append
+    // 2. SECOND: Load real doctors from THIS patient's appointment records & append
     try {
       final apptsRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
         '/v1/api/auth/patient-appointments',
         data: {
           "userId": patientId,
           "orgId": orgId,
+          "hospitalId": hospitalId,
         },
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
@@ -135,6 +149,11 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
   }
 
   Future<void> _unlinkDoctor(Map<String, dynamic> doctor) async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final patientId = (currentUser?.data?.id ?? '').toString().trim();
+    final linkedStorageKey = 'patient_linked_doctors_$patientId';
+    final unlinkedStorageKey = 'patient_unlinked_doctors_$patientId';
+
     final docId = (doctor['doctorId'] ?? doctor['id'] ?? '').toString().trim();
     final docName = (doctor['name'] ?? '').toString().trim();
 
@@ -149,8 +168,8 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 1. Remove from linked list
-      final localStr = prefs.getString('patient_linked_doctors');
+      // 1. Remove from user's linked list
+      final localStr = prefs.getString(linkedStorageKey);
       if (localStr != null) {
         final List<dynamic> localList = jsonDecode(localStr);
         localList.removeWhere((d) {
@@ -158,18 +177,18 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           final dName = (d['name'] ?? '').toString().trim();
           return (docId.isNotEmpty && dId == docId) || (docName.isNotEmpty && dName.toLowerCase() == docName.toLowerCase());
         });
-        await prefs.setString('patient_linked_doctors', jsonEncode(localList));
+        await prefs.setString(linkedStorageKey, jsonEncode(localList));
       }
 
-      // 2. Add to unlinked blacklist so it never gets auto re-added from appointments
-      final unlinkedList = prefs.getStringList('patient_unlinked_doctors') ?? [];
+      // 2. Add to user's unlinked blacklist so it never gets auto re-added from appointments
+      final unlinkedList = prefs.getStringList(unlinkedStorageKey) ?? [];
       if (docId.isNotEmpty && !unlinkedList.contains(docId)) {
         unlinkedList.add(docId);
       }
       if (docName.isNotEmpty && !unlinkedList.contains(docName)) {
         unlinkedList.add(docName);
       }
-      await prefs.setStringList('patient_unlinked_doctors', unlinkedList);
+      await prefs.setStringList(unlinkedStorageKey, unlinkedList);
     } catch (_) {}
 
     if (mounted) {
@@ -291,28 +310,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           ),
           const SizedBox(width: 8),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: primaryColor,
-        elevation: 3,
-        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
-        label: const Text(
-          'Scan Doctor QR',
-          style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        onPressed: () => ScanDoctorQrSheet.show(
-          context,
-          onDoctorLinked: (newDoc) {
-            setState(() {
-              _doctors.removeWhere((d) =>
-                  (d['doctorId'] != null && d['doctorId'] == newDoc['doctorId']) ||
-                  (d['id'] != null && d['id'] == newDoc['id']) ||
-                  (d['name'] != null && d['name'] == newDoc['name']));
-              _doctors.insert(0, newDoc);
-            });
-            _loadDoctors();
-          },
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: _loadDoctors,

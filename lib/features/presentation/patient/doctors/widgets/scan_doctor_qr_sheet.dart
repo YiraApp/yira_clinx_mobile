@@ -188,13 +188,19 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
         final docData = resData['data'] is Map<String, dynamic> ? resData['data'] : (resData is Map<String, dynamic> ? resData : null);
 
         if (docData != null) {
+          final doctorUserId = (docData['userId'] ?? docData['doctorId'] ?? cleanDoctorId).toString().trim();
+          final doctorHospId = (docData['hospitalId'] != null && docData['hospitalId'] != 0) ? docData['hospitalId'] : hospitalId;
+          final doctorOrgId = (docData['orgId'] != null && docData['orgId'] != 0) ? docData['orgId'] : orgId;
+
           final realDoctor = {
-            'id': docData['id'] ?? docData['doctorId'] ?? cleanDoctorId,
-            'doctorId': docData['doctorId'] ?? docData['id'] ?? cleanDoctorId,
+            'id': doctorUserId,
+            'doctorId': doctorUserId,
             'name': docData['displayName'] ?? docData['name'] ?? 'Dr. ${docData['firstName'] ?? ''} ${docData['lastName'] ?? ''}'.trim(),
             'specialty': docData['specialty'] ?? 'Specialist',
             'department': docData['department'] ?? 'General Outpatient',
             'hospitalName': docData['hospitalName'] ?? 'Yira Clinx Medical Center',
+            'hospitalId': doctorHospId,
+            'orgId': doctorOrgId,
             'qualification': docData['qualification'] ?? 'MBBS',
             'experience': docData['experience'] ?? '',
             'consultationFee': docData['consultationFee'] ?? 500,
@@ -208,32 +214,35 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
 
           // Register patient under doctor's patient list on backend so doctor also sees this patient
           try {
-            final patientPhone = (currentUser?.data?.phoneNumber ?? currentUser?.data?.phone ?? '').toString().trim();
+            final rawPhone = (currentUser?.data?.phoneNumber ?? '').toString().trim();
+            final patientPhone = rawPhone.isNotEmpty ? rawPhone : '9876543210';
             final patientName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim();
-            if (patientPhone.isNotEmpty) {
-              await sl<ApiClient>().account(showSuccessSnack: false).post(
-                '/v1/api/auth/book-appointment',
-                data: {
-                  "doctorId": cleanDoctorId,
-                  "hospitalId": hospitalId,
-                  "orgId": orgId,
-                  "patientName": patientName.isNotEmpty ? patientName : 'Patient',
-                  "patientPhone": patientPhone,
-                  "patientEmail": currentUser?.data?.email ?? '',
-                  "gender": currentUser?.data?.gender ?? 'Other',
-                  "appointmentDate": DateTime.now().toIso8601String().split('T')[0],
-                  "startTime": "09:00:00",
-                  "reason": "Connected via Doctor QR Scan",
-                  "appointmentType": "General Consultation",
-                  "isTeleConsultation": false,
-                  "includeConsultationFee": false,
-                },
-                options: Options(
-                  headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-                ),
-              );
-            }
-          } catch (_) {}
+            
+            await sl<ApiClient>().account(showSuccessSnack: false).post(
+              '/v1/api/auth/book-appointment',
+              data: {
+                "doctorId": doctorUserId,
+                "hospitalId": doctorHospId,
+                "orgId": doctorOrgId,
+                "patientUserId": currentUser?.data?.id ?? '',
+                "patientName": patientName.isNotEmpty ? patientName : 'Patient',
+                "patientPhone": patientPhone,
+                "patientEmail": currentUser?.data?.email ?? '',
+                "gender": currentUser?.data?.gender ?? 'Other',
+                "appointmentDate": DateTime.now().toIso8601String().split('T')[0],
+                "startTime": "09:00:00",
+                "reason": "Connected via Doctor QR Scan",
+                "appointmentType": "General Consultation",
+                "isTeleConsultation": false,
+                "includeConsultationFee": false,
+              },
+              options: Options(
+                headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+              ),
+            );
+          } catch (e) {
+            debugPrint("Error registering doctor-patient connection: $e");
+          }
 
           if (widget.onDoctorLinked != null) {
             widget.onDoctorLinked!(realDoctor);
@@ -284,19 +293,24 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
 
   Future<void> _saveDoctorLocally(Map<String, dynamic> doctor) async {
     try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final patientId = (currentUser?.data?.id ?? '').toString().trim();
+      final linkedStorageKey = patientId.isNotEmpty ? 'patient_linked_doctors_$patientId' : 'patient_linked_doctors';
+      final unlinkedStorageKey = patientId.isNotEmpty ? 'patient_unlinked_doctors_$patientId' : 'patient_unlinked_doctors';
+
       final prefs = await SharedPreferences.getInstance();
-      final existingStr = prefs.getString('patient_linked_doctors') ?? '[]';
+      final existingStr = prefs.getString(linkedStorageKey) ?? '[]';
       final List<dynamic> list = jsonDecode(existingStr);
       list.removeWhere((item) => item['doctorId'] == doctor['doctorId'] || item['id'] == doctor['id']);
       list.insert(0, doctor);
-      await prefs.setString('patient_linked_doctors', jsonEncode(list));
+      await prefs.setString(linkedStorageKey, jsonEncode(list));
 
-      // Remove from unlinked blacklist so re-scanned doctor displays properly
-      final unlinkedList = prefs.getStringList('patient_unlinked_doctors') ?? [];
+      // Remove from user's unlinked blacklist so re-scanned doctor displays properly
+      final unlinkedList = prefs.getStringList(unlinkedStorageKey) ?? [];
       final docId = (doctor['doctorId'] ?? doctor['id'] ?? '').toString().trim();
       final docName = (doctor['name'] ?? '').toString().trim();
       unlinkedList.removeWhere((item) => item == docId || item == docName);
-      await prefs.setStringList('patient_unlinked_doctors', unlinkedList);
+      await prefs.setStringList(unlinkedStorageKey, unlinkedList);
     } catch (_) {}
   }
 
