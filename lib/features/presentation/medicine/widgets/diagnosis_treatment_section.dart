@@ -9,6 +9,7 @@ import '../../../../core/constants/constants.dart';
 class DiagnosisTreatmentSection extends StatelessWidget {
   final TextEditingController diagnosisController;
   final TextEditingController treatmentPlanController;
+  final TextEditingController? doctorNotesController;
   final bool isTab;
   final Function(String term, String? code)? onDiagnosisConceptSelected;
 
@@ -16,6 +17,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
     super.key,
     required this.diagnosisController,
     required this.treatmentPlanController,
+    this.doctorNotesController,
     required this.isTab,
     this.onDiagnosisConceptSelected,
   });
@@ -29,12 +31,18 @@ class DiagnosisTreatmentSection extends StatelessWidget {
       color: Colors.grey,
       fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
     );
+    final mandatoryLabelStyle = TextStyle(
+      fontWeight: FontWeight.w600,
+      fontFamily: appPoppinFont,
+      color: Theme.of(context).primaryColor,
+      fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+    );
     final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(title: "Diagnosis & Treatment", isTab: isTab),
+        SectionHeader(title: "Diagnosis, Notes & Treatment", isTab: isTab),
         const SizedBox(height: 16),
 
         Container(
@@ -61,7 +69,30 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              CommonText("Treatment Plan", style: labelStyle),
+              // Mandatory Doctor Notes Section
+              Row(
+                children: [
+                  CommonText("Doctor Notes", style: mandatoryLabelStyle),
+                  const SizedBox(width: 4),
+                  const Text("*", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(width: 8),
+                  Text("(Mandatory)", style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontStyle: FontStyle.italic)),
+                ],
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 85,
+                child: CommonInputFieldUnlimited(
+                  suffixIcon: null,
+                  borderRadius: fieldBorderRadius,
+                  textInputAction: TextInputAction.newline,
+                  controller: doctorNotesController ?? treatmentPlanController,
+                  hintText: "Enter mandatory doctor notes & observations...",
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              CommonText("Treatment Plan & Recommendations", style: labelStyle),
               const SizedBox(height: 6),
               SizedBox(
                 height: 80,
@@ -70,7 +101,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   borderRadius: fieldBorderRadius,
                   textInputAction: TextInputAction.done,
                   controller: treatmentPlanController,
-                  hintText: "Enter treatment plan...",
+                  hintText: "Enter treatment plan / medications...",
                 ),
               ),
             ],

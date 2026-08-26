@@ -9,11 +9,15 @@ class PatientOverViewModel extends PatientOverViewEntity {
 
   factory PatientOverViewModel.fromJson(Map<String, dynamic> json) {
     return PatientOverViewModel(
-      status: json['status'] as bool?,
-      message: json['message'] as String?,
-      data: json['data'] != null
-          ? DataModel.fromJson(json['data'] as Map<String, dynamic>)
-          : null,
+      status: json['status'] == true || json['success'] == true,
+      message: json['message']?.toString(),
+      data: json['data'] != null && json['data'] is Map
+          ? DataModel.fromJson(Map<String, dynamic>.from(json['data'] as Map))
+          : (json['result'] != null && json['result'] is Map
+              ? DataModel.fromJson(Map<String, dynamic>.from(json['result'] as Map))
+              : (json['payload'] != null && json['payload'] is Map
+                  ? DataModel.fromJson(Map<String, dynamic>.from(json['payload'] as Map))
+                  : null)),
     );
   }
 
@@ -21,7 +25,7 @@ class PatientOverViewModel extends PatientOverViewEntity {
     return {
       'status': status,
       'message': message,
-      if (data != null) 'data': (data as DataModel).toJson(),
+      if (data != null && data is DataModel) 'data': (data as DataModel).toJson(),
     };
   }
 }
@@ -32,7 +36,7 @@ class DataModel extends DataEntity {
     MedicalInformationModel? medicalInformation,
     InsuranceModel? insurance,
     VisitHistoryModel? visitHistory,
-    String? summary,
+    super.summary,
     List<PatientAppointmentModel>? appointments,
     NextAppointmentModel? nextAppointment,
     List<NextAppointmentModel>? upcomingAppointments,
@@ -42,7 +46,6 @@ class DataModel extends DataEntity {
     medicalInformation: medicalInformation,
     insurance: insurance,
     visitHistory: visitHistory,
-    summary: summary,
     appointments: appointments,
     nextAppointment: nextAppointment,
     upcomingAppointments: upcomingAppointments,
@@ -51,52 +54,79 @@ class DataModel extends DataEntity {
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
     return DataModel(
-      contactInformation: json['contact_information'] != null
-          ? ContactInformationModel.fromJson(json['contact_information'] as Map<String, dynamic>)
+      contactInformation: json['contact_information'] != null && json['contact_information'] is Map
+          ? ContactInformationModel.fromJson(Map<String, dynamic>.from(json['contact_information'] as Map))
+          : (json['contactInformation'] != null && json['contactInformation'] is Map
+              ? ContactInformationModel.fromJson(Map<String, dynamic>.from(json['contactInformation'] as Map))
+              : null),
+      medicalInformation: json['medical_information'] != null && json['medical_information'] is Map
+          ? MedicalInformationModel.fromJson(Map<String, dynamic>.from(json['medical_information'] as Map))
+          : (json['medicalInformation'] != null && json['medicalInformation'] is Map
+              ? MedicalInformationModel.fromJson(Map<String, dynamic>.from(json['medicalInformation'] as Map))
+              : null),
+      insurance: json['insurance'] != null && json['insurance'] is Map
+          ? InsuranceModel.fromJson(Map<String, dynamic>.from(json['insurance'] as Map))
           : null,
-      medicalInformation: json['medical_information'] != null
-          ? MedicalInformationModel.fromJson(json['medical_information'] as Map<String, dynamic>)
-          : null,
-      insurance: json['insurance'] != null
-          ? InsuranceModel.fromJson(json['insurance'] as Map<String, dynamic>)
-          : null,
-      visitHistory: json['visit_history'] != null
-          ? VisitHistoryModel.fromJson(json['visit_history'] as Map<String, dynamic>)
-          : null,
-      summary: json['summary'] as String?,
-      appointments: json['appointments'] != null
+      visitHistory: json['visit_history'] != null && json['visit_history'] is Map
+          ? VisitHistoryModel.fromJson(Map<String, dynamic>.from(json['visit_history'] as Map))
+          : (json['visitHistory'] != null && json['visitHistory'] is Map
+              ? VisitHistoryModel.fromJson(Map<String, dynamic>.from(json['visitHistory'] as Map))
+              : null),
+      summary: json['summary']?.toString(),
+      appointments: json['appointments'] is List
           ? (json['appointments'] as List)
-              .map((i) => PatientAppointmentModel.fromJson(i as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((i) => PatientAppointmentModel.fromJson(Map<String, dynamic>.from(i)))
               .toList()
           : null,
-      nextAppointment: json['next_appointment'] != null
-          ? NextAppointmentModel.fromJson(json['next_appointment'] as Map<String, dynamic>)
-          : null,
-      upcomingAppointments: json['upcoming_appointments'] != null
+      nextAppointment: json['next_appointment'] != null && json['next_appointment'] is Map
+          ? NextAppointmentModel.fromJson(Map<String, dynamic>.from(json['next_appointment'] as Map))
+          : (json['nextAppointment'] != null && json['nextAppointment'] is Map
+              ? NextAppointmentModel.fromJson(Map<String, dynamic>.from(json['nextAppointment'] as Map))
+              : null),
+      upcomingAppointments: json['upcoming_appointments'] is List
           ? (json['upcoming_appointments'] as List)
-              .map((e) => NextAppointmentModel.fromJson(e as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((e) => NextAppointmentModel.fromJson(Map<String, dynamic>.from(e)))
               .toList()
-          : null,
-      latestVitals: json['latest_vitals'] != null
-          ? LatestVitalsModel.fromJson(json['latest_vitals'] as Map<String, dynamic>)
-          : null,
+          : (json['upcomingAppointments'] is List
+              ? (json['upcomingAppointments'] as List)
+                  .whereType<Map>()
+                  .map((e) => NextAppointmentModel.fromJson(Map<String, dynamic>.from(e)))
+                  .toList()
+              : null),
+      latestVitals: json['latest_vitals'] != null && json['latest_vitals'] is Map
+          ? LatestVitalsModel.fromJson(Map<String, dynamic>.from(json['latest_vitals'] as Map))
+          : (json['latestVitals'] != null && json['latestVitals'] is Map
+              ? LatestVitalsModel.fromJson(Map<String, dynamic>.from(json['latestVitals'] as Map))
+              : null),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (contactInformation != null) 'contact_information': (contactInformation as ContactInformationModel).toJson(),
-      if (medicalInformation != null) 'medical_information': (medicalInformation as MedicalInformationModel).toJson(),
-      if (insurance != null) 'insurance': (insurance as InsuranceModel).toJson(),
-      if (visitHistory != null) 'visit_history': (visitHistory as VisitHistoryModel).toJson(),
+      if (contactInformation != null && contactInformation is ContactInformationModel)
+        'contact_information': (contactInformation as ContactInformationModel).toJson(),
+      if (medicalInformation != null && medicalInformation is MedicalInformationModel)
+        'medical_information': (medicalInformation as MedicalInformationModel).toJson(),
+      if (insurance != null && insurance is InsuranceModel)
+        'insurance': (insurance as InsuranceModel).toJson(),
+      if (visitHistory != null && visitHistory is VisitHistoryModel)
+        'visit_history': (visitHistory as VisitHistoryModel).toJson(),
       'summary': summary,
       if (appointments != null)
-        'appointments': appointments?.map((a) => (a as PatientAppointmentModel).toJson()).toList(),
-      if (nextAppointment != null)
+        'appointments': appointments
+            ?.map((a) => a is PatientAppointmentModel ? a.toJson() : null)
+            .whereType<Map<String, dynamic>>()
+            .toList(),
+      if (nextAppointment != null && nextAppointment is NextAppointmentModel)
         'next_appointment': (nextAppointment as NextAppointmentModel).toJson(),
       if (upcomingAppointments != null)
-        'upcoming_appointments': upcomingAppointments?.map((a) => (a as NextAppointmentModel).toJson()).toList(),
-      if (latestVitals != null)
+        'upcoming_appointments': upcomingAppointments
+            ?.map((a) => a is NextAppointmentModel ? a.toJson() : null)
+            .whereType<Map<String, dynamic>>()
+            .toList(),
+      if (latestVitals != null && latestVitals is LatestVitalsModel)
         'latest_vitals': (latestVitals as LatestVitalsModel).toJson(),
     };
   }
@@ -137,53 +167,74 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
   });
 
   factory PatientAppointmentModel.fromJson(Map<String, dynamic> json) {
+    final isTele = json['is_tele_consultation'] == true ||
+        json['isTeleConsultation'] == true ||
+        json['is_tele_consultation'] == 1 ||
+        json['is_tele_consultation']?.toString().toLowerCase() == 'true' ||
+        (json['appointment_type'] ?? json['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
+        (json['appointment_type'] ?? json['appointmentType'] ?? '').toString().toLowerCase().contains('video');
+
     return PatientAppointmentModel(
-      id: json['id'] != null ? json['id'].toString() : '',
-      appointmentNumber: json['appointment_number']?.toString() ?? '',
-      tokenNumber: json['token_number']?.toString() ?? '',
-      appointmentDate: json['appointment_date']?.toString() ?? '',
-      rawDate: json['raw_date'],
-      startTime: json['start_time']?.toString() ?? '',
-      endTime: json['end_time']?.toString() ?? '',
-      duration: json['duration']?.toString() ?? '15 mins',
-      condition: json['condition']?.toString() ?? json['chief_complaint']?.toString() ?? 'General Consultation',
-      chiefComplaint: json['chief_complaint']?.toString() ?? '',
-      reason: json['reason']?.toString() ?? '',
-      status: json['status']?.toString() ?? 'Confirmed',
-      appointmentType: json['appointment_type']?.toString() ?? 'In-Clinic',
-      isTeleConsultation: json['is_tele_consultation'] == true,
-      meetingUrl: json['meeting_url']?.toString() ?? '',
-      location: json['location']?.toString() ?? '',
-      hospitalName: json['hospital_name']?.toString() ?? '',
-      hospitalAddress: json['hospital_address']?.toString() ?? '',
-      hospitalPhone: json['hospital_phone']?.toString() ?? '',
-      doctorId: json['doctor_id']?.toString() ?? '',
-      doctorName: json['doctor_name']?.toString() ?? '',
-      doctorEmail: json['doctor_email']?.toString() ?? '',
-      doctorPhone: json['doctor_phone']?.toString() ?? '',
-      notes: json['notes']?.toString() ?? '',
-      createdAt: json['created_at']?.toString() ?? '',
-      createdBy: json['created_by']?.toString() ?? '',
-      prescriptions: json['prescriptions'] != null
+      id: (json['id'] ?? json['appointmentId'] ?? json['appointment_id'] ?? '').toString(),
+      appointmentNumber: (json['appointment_number'] ?? json['appointmentNumber'] ?? '').toString(),
+      tokenNumber: (json['token_number'] ?? json['tokenNumber'] ?? '').toString(),
+      appointmentDate: (json['appointment_date'] ?? json['appointmentDate'] ?? json['date'] ?? '').toString(),
+      rawDate: json['raw_date'] ?? json['rawDate'] ?? json['appointmentDate'],
+      startTime: (json['start_time'] ?? json['startTime'] ?? json['time'] ?? '').toString(),
+      endTime: (json['end_time'] ?? json['endTime'] ?? '').toString(),
+      duration: (json['duration'] ?? '15 mins').toString(),
+      condition: (json['condition'] ?? json['chief_complaint'] ?? json['chiefComplaint'] ?? json['reason'] ?? 'General Consultation').toString(),
+      chiefComplaint: (json['chief_complaint'] ?? json['chiefComplaint'] ?? '').toString(),
+      reason: (json['reason'] ?? '').toString(),
+      status: (json['status'] ?? 'Confirmed').toString(),
+      appointmentType: (json['appointment_type'] ?? json['appointmentType'] ?? 'In-Clinic').toString(),
+      isTeleConsultation: isTele,
+      meetingUrl: (json['meeting_url'] ?? json['meetingUrl'] ?? json['videoCallUrl'] ?? '').toString(),
+      location: (json['location'] ?? '').toString(),
+      hospitalName: (json['hospital_name'] ?? json['hospitalName'] ?? '').toString(),
+      hospitalAddress: (json['hospital_address'] ?? json['hospitalAddress'] ?? '').toString(),
+      hospitalPhone: (json['hospital_phone'] ?? json['hospitalPhone'] ?? '').toString(),
+      doctorId: (json['doctor_id'] ?? json['doctorId'] ?? '').toString(),
+      doctorName: (json['doctor_name'] ?? json['doctorName'] ?? 'Doctor').toString(),
+      doctorEmail: (json['doctor_email'] ?? json['doctorEmail'] ?? '').toString(),
+      doctorPhone: (json['doctor_phone'] ?? json['doctorPhone'] ?? '').toString(),
+      notes: (json['notes'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? json['createdAt'] ?? '').toString(),
+      createdBy: (json['created_by'] ?? json['createdBy'] ?? '').toString(),
+      prescriptions: json['prescriptions'] is List
           ? (json['prescriptions'] as List)
-              .map((p) => AppointmentPrescriptionModel.fromJson(p as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((p) => AppointmentPrescriptionModel.fromJson(Map<String, dynamic>.from(p)))
               .toList()
           : const [],
-      clinicalNotes: json['clinical_notes'] != null
+      clinicalNotes: json['clinical_notes'] is List
           ? (json['clinical_notes'] as List)
-              .map((n) => AppointmentClinicalNoteModel.fromJson(n as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((n) => AppointmentClinicalNoteModel.fromJson(Map<String, dynamic>.from(n)))
               .toList()
-          : const [],
-      documents: json['documents'] != null
+          : (json['clinicalNotes'] is List
+              ? (json['clinicalNotes'] as List)
+                  .whereType<Map>()
+                  .map((n) => AppointmentClinicalNoteModel.fromJson(Map<String, dynamic>.from(n)))
+                  .toList()
+              : const []),
+      documents: json['documents'] is List
           ? (json['documents'] as List)
-              .map((d) => AppointmentDocumentModel.fromJson(d as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((d) => AppointmentDocumentModel.fromJson(Map<String, dynamic>.from(d)))
               .toList()
           : const [],
-      medicalRecords: json['medical_records'] != null
+      medicalRecords: json['medical_records'] is List
           ? (json['medical_records'] as List)
-              .map((r) => AppointmentMedicalRecordModel.fromJson(r as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((r) => AppointmentMedicalRecordModel.fromJson(Map<String, dynamic>.from(r)))
               .toList()
-          : const [],
+          : (json['medicalRecords'] is List
+              ? (json['medicalRecords'] as List)
+                  .whereType<Map>()
+                  .map((r) => AppointmentMedicalRecordModel.fromJson(Map<String, dynamic>.from(r)))
+                  .toList()
+              : const []),
     );
   }
 
@@ -215,10 +266,10 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
       'notes': notes,
       'created_at': createdAt,
       'created_by': createdBy,
-      'prescriptions': prescriptions.map((p) => (p as AppointmentPrescriptionModel).toJson()).toList(),
-      'clinical_notes': clinicalNotes.map((n) => (n as AppointmentClinicalNoteModel).toJson()).toList(),
-      'documents': documents.map((d) => (d as AppointmentDocumentModel).toJson()).toList(),
-      'medical_records': medicalRecords.map((r) => (r as AppointmentMedicalRecordModel).toJson()).toList(),
+      'prescriptions': prescriptions.map((p) => p is AppointmentPrescriptionModel ? p.toJson() : null).whereType<Map<String, dynamic>>().toList(),
+      'clinical_notes': clinicalNotes.map((n) => n is AppointmentClinicalNoteModel ? n.toJson() : null).whereType<Map<String, dynamic>>().toList(),
+      'documents': documents.map((d) => d is AppointmentDocumentModel ? d.toJson() : null).whereType<Map<String, dynamic>>().toList(),
+      'medical_records': medicalRecords.map((r) => r is AppointmentMedicalRecordModel ? r.toJson() : null).whereType<Map<String, dynamic>>().toList(),
     };
   }
 }
@@ -235,18 +286,20 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
 
   factory AppointmentPrescriptionModel.fromJson(Map<String, dynamic> json) {
     return AppointmentPrescriptionModel(
-      id: json['id']?.toString() ?? '',
-      date: json['date']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      date: (json['date'] ?? json['createdAt'] ?? '').toString(),
       notes: json['notes']?.toString() ?? '',
-      doctorName: json['doctor_name']?.toString() ?? '',
-      medications: json['medications'] != null
+      doctorName: (json['doctor_name'] ?? json['doctorName'] ?? '').toString(),
+      medications: json['medications'] is List
           ? (json['medications'] as List)
-              .map((m) => AppointmentMedicationModel.fromJson(m as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((m) => AppointmentMedicationModel.fromJson(Map<String, dynamic>.from(m)))
               .toList()
           : const [],
-      diagnoses: json['diagnoses'] != null
+      diagnoses: json['diagnoses'] is List
           ? (json['diagnoses'] as List)
-              .map((d) => AppointmentDiagnosisModel.fromJson(d as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((d) => AppointmentDiagnosisModel.fromJson(Map<String, dynamic>.from(d)))
               .toList()
           : const [],
     );
@@ -258,8 +311,8 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
       'date': date,
       'notes': notes,
       'doctor_name': doctorName,
-      'medications': medications.map((m) => (m as AppointmentMedicationModel).toJson()).toList(),
-      'diagnoses': diagnoses.map((d) => (d as AppointmentDiagnosisModel).toJson()).toList(),
+      'medications': medications.map((m) => m is AppointmentMedicationModel ? m.toJson() : null).whereType<Map<String, dynamic>>().toList(),
+      'diagnoses': diagnoses.map((d) => d is AppointmentDiagnosisModel ? d.toJson() : null).whereType<Map<String, dynamic>>().toList(),
     };
   }
 }
@@ -276,12 +329,12 @@ class AppointmentMedicationModel extends AppointmentMedicationEntity {
 
   factory AppointmentMedicationModel.fromJson(Map<String, dynamic> json) {
     return AppointmentMedicationModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      dosage: json['dosage']?.toString() ?? '',
-      frequency: json['frequency']?.toString() ?? '',
-      duration: json['duration']?.toString() ?? '',
-      instructions: json['instructions']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['medication'] ?? '').toString(),
+      dosage: (json['dosage'] ?? '').toString(),
+      frequency: (json['frequency'] ?? json['frequencyType'] ?? '').toString(),
+      duration: (json['duration'] ?? '').toString(),
+      instructions: (json['instructions'] ?? '').toString(),
     );
   }
 
@@ -306,9 +359,9 @@ class AppointmentDiagnosisModel extends AppointmentDiagnosisEntity {
 
   factory AppointmentDiagnosisModel.fromJson(Map<String, dynamic> json) {
     return AppointmentDiagnosisModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      icd10: json['icd10']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['diagnosis'] ?? '').toString(),
+      icd10: (json['icd10'] ?? json['diagnosisConceptId'] ?? '').toString(),
     );
   }
 
@@ -331,10 +384,10 @@ class AppointmentClinicalNoteModel extends AppointmentClinicalNoteEntity {
 
   factory AppointmentClinicalNoteModel.fromJson(Map<String, dynamic> json) {
     return AppointmentClinicalNoteModel(
-      id: json['id']?.toString() ?? '',
-      notes: json['notes']?.toString() ?? '',
-      doctorName: json['doctor_name']?.toString() ?? '',
-      createdAt: json['created_at']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      notes: (json['notes'] ?? json['note'] ?? '').toString(),
+      doctorName: (json['doctor_name'] ?? json['doctorName'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? json['createdAt'] ?? json['date'] ?? '').toString(),
     );
   }
 
@@ -360,12 +413,12 @@ class AppointmentDocumentModel extends AppointmentDocumentEntity {
 
   factory AppointmentDocumentModel.fromJson(Map<String, dynamic> json) {
     return AppointmentDocumentModel(
-      id: json['id']?.toString() ?? '',
-      fileName: json['file_name']?.toString() ?? '',
-      category: json['category']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
-      fileUrl: json['file_url']?.toString() ?? '',
-      createdAt: json['created_at']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      fileName: (json['file_name'] ?? json['fileName'] ?? json['name'] ?? '').toString(),
+      category: (json['category'] ?? '').toString(),
+      type: (json['type'] ?? '').toString(),
+      fileUrl: (json['file_url'] ?? json['fileUrl'] ?? json['url'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? json['createdAt'] ?? '').toString(),
     );
   }
 
@@ -391,10 +444,10 @@ class AppointmentMedicalRecordModel extends AppointmentMedicalRecordEntity {
 
   factory AppointmentMedicalRecordModel.fromJson(Map<String, dynamic> json) {
     return AppointmentMedicalRecordModel(
-      id: json['id']?.toString() ?? '',
-      recordType: json['record_type']?.toString() ?? '',
-      fileUrl: json['file_url']?.toString() ?? '',
-      createdAt: json['created_at']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      recordType: (json['record_type'] ?? json['recordType'] ?? json['type'] ?? '').toString(),
+      fileUrl: (json['file_url'] ?? json['fileUrl'] ?? json['url'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? json['createdAt'] ?? '').toString(),
     );
   }
 
@@ -418,12 +471,14 @@ class ContactInformationModel extends ContactInformationEntity {
 
   factory ContactInformationModel.fromJson(Map<String, dynamic> json) {
     return ContactInformationModel(
-      phone: json['phone'] as String?,
-      emailAddress: json['email_address'] as String?,
-      residentialAddress: json['residential_address'] as String?,
-      emergencyContact: json['emergency_contact'] != null
-          ? EmergencyContactModel.fromJson(json['emergency_contact'] as Map<String, dynamic>)
-          : null,
+      phone: json['phone']?.toString(),
+      emailAddress: (json['email_address'] ?? json['emailAddress'] ?? json['email'])?.toString(),
+      residentialAddress: (json['residential_address'] ?? json['residentialAddress'] ?? json['address'])?.toString(),
+      emergencyContact: json['emergency_contact'] != null && json['emergency_contact'] is Map
+          ? EmergencyContactModel.fromJson(Map<String, dynamic>.from(json['emergency_contact'] as Map))
+          : (json['emergencyContact'] != null && json['emergencyContact'] is Map
+              ? EmergencyContactModel.fromJson(Map<String, dynamic>.from(json['emergencyContact'] as Map))
+              : null),
     );
   }
 
@@ -432,7 +487,8 @@ class ContactInformationModel extends ContactInformationEntity {
       'phone': phone,
       'email_address': emailAddress,
       'residential_address': residentialAddress,
-      if (emergencyContact != null) 'emergency_contact': (emergencyContact as EmergencyContactModel).toJson(),
+      if (emergencyContact != null && emergencyContact is EmergencyContactModel)
+        'emergency_contact': (emergencyContact as EmergencyContactModel).toJson(),
     };
   }
 }
@@ -442,8 +498,8 @@ class EmergencyContactModel extends EmergencyContactEntity {
 
   factory EmergencyContactModel.fromJson(Map<String, dynamic> json) {
     return EmergencyContactModel(
-      name: json['name'] as String?,
-      phone: json['phone'] as String?,
+      name: json['name']?.toString(),
+      phone: json['phone']?.toString(),
     );
   }
 
@@ -465,10 +521,14 @@ class MedicalInformationModel extends MedicalInformationEntity {
 
   factory MedicalInformationModel.fromJson(Map<String, dynamic> json) {
     return MedicalInformationModel(
-      condition: json['condition'] as String?,
-      allergies: json['allergies'] as String?,
-      bloodGroup: json['blood_group'] as String?,
-      totalVisits: json['total_visits'] as int?,
+      condition: json['condition']?.toString(),
+      allergies: json['allergies']?.toString(),
+      bloodGroup: (json['blood_group'] ?? json['bloodGroup'])?.toString(),
+      totalVisits: json['total_visits'] is int
+          ? json['total_visits'] as int
+          : (json['totalVisits'] is int
+              ? json['totalVisits'] as int
+              : int.tryParse((json['total_visits'] ?? json['totalVisits'] ?? '').toString())),
     );
   }
 
@@ -487,8 +547,8 @@ class InsuranceModel extends InsuranceEntity {
 
   factory InsuranceModel.fromJson(Map<String, dynamic> json) {
     return InsuranceModel(
-      policyName: json['policy_name'] as String?,
-      policyNumber: json['policy_number'] as String?,
+      policyName: (json['policy_name'] ?? json['policyName'])?.toString(),
+      policyNumber: (json['policy_number'] ?? json['policyNumber'])?.toString(),
     );
   }
 
@@ -509,9 +569,9 @@ class VisitHistoryModel extends VisitHistoryEntity {
 
   factory VisitHistoryModel.fromJson(Map<String, dynamic> json) {
     return VisitHistoryModel(
-      initialRegistration: json['initial_registration'] as String?,
-      lastCheckInVisit: json['last_check_in_visit'] as String?,
-      nextScheduledAppointment: json['next_scheduled_appointment'] as String?,
+      initialRegistration: (json['initial_registration'] ?? json['initialRegistration'])?.toString(),
+      lastCheckInVisit: (json['last_check_in_visit'] ?? json['lastCheckInVisit'])?.toString(),
+      nextScheduledAppointment: (json['next_scheduled_appointment'] ?? json['nextScheduledAppointment'])?.toString(),
     );
   }
 
@@ -549,23 +609,34 @@ class NextAppointmentModel extends NextAppointmentEntity {
   factory NextAppointmentModel.fromJson(Map<String, dynamic> json) {
     return NextAppointmentModel(
       id: json['id'],
-      appointmentId: json['appointment_id']?.toString(),
-      doctorName: json['doctor_name'],
-      doctorId: json['doctor_id']?.toString(),
-      doctorSpecialty: json['doctor_specialty']?.toString(),
-      hospitalId: json['hospital_id'],
-      hospitalName: json['hospital_name'],
-      orgId: json['org_id'],
-      orgName: json['org_name'],
-      appointmentDate: json['appointment_date'],
-      formattedDate: json['formatted_date'],
-      startTime: json['start_time'],
-      formattedTime: json['formatted_time'],
-      consultationType: json['consultation_type'],
-      isTeleconsultation: json['is_teleconsultation'],
-      reason: json['reason'],
-      status: json['status'],
-      meetingUrl: json['meeting_url'],
+      appointmentId: (json['appointment_id'] ?? json['appointmentId'] ?? json['id'])?.toString(),
+      doctorName: (json['doctor_name'] ?? json['doctorName'])?.toString(),
+      doctorId: (json['doctor_id'] ?? json['doctorId'])?.toString(),
+      doctorSpecialty: (json['doctor_specialty'] ?? json['doctorSpecialty'])?.toString(),
+      hospitalId: json['hospital_id'] is int
+          ? json['hospital_id'] as int
+          : (json['hospitalId'] is int
+              ? json['hospitalId'] as int
+              : int.tryParse((json['hospital_id'] ?? json['hospitalId'] ?? '').toString())),
+      hospitalName: (json['hospital_name'] ?? json['hospitalName'])?.toString(),
+      orgId: json['org_id'] is int
+          ? json['org_id'] as int
+          : (json['orgId'] is int
+              ? json['orgId'] as int
+              : int.tryParse((json['org_id'] ?? json['orgId'] ?? '').toString())),
+      orgName: (json['org_name'] ?? json['orgName'])?.toString(),
+      appointmentDate: (json['appointment_date'] ?? json['appointmentDate'])?.toString(),
+      formattedDate: (json['formatted_date'] ?? json['formattedDate'])?.toString(),
+      startTime: (json['start_time'] ?? json['startTime'])?.toString(),
+      formattedTime: (json['formatted_time'] ?? json['formattedTime'])?.toString(),
+      consultationType: (json['consultation_type'] ?? json['consultationType'])?.toString(),
+      isTeleconsultation: json['is_teleconsultation'] == true ||
+          json['isTeleconsultation'] == true ||
+          json['is_tele_consultation'] == true ||
+          json['isTeleConsultation'] == true,
+      reason: json['reason']?.toString(),
+      status: json['status']?.toString(),
+      meetingUrl: (json['meeting_url'] ?? json['meetingUrl'] ?? json['videoCallUrl'])?.toString(),
     );
   }
 
@@ -612,23 +683,43 @@ class LatestVitalsModel extends LatestVitalsEntity {
 
   factory LatestVitalsModel.fromJson(Map<String, dynamic> json) {
     return LatestVitalsModel(
-      bloodPressure: json['blood_pressure'] != null ? VitalMeasurementModel.fromJson(json['blood_pressure'] as Map<String, dynamic>) : null,
-      pulse: json['pulse'] != null ? VitalMeasurementModel.fromJson(json['pulse'] as Map<String, dynamic>) : null,
-      temperature: json['temperature'] != null ? VitalMeasurementModel.fromJson(json['temperature'] as Map<String, dynamic>) : null,
-      spo2: json['spo2'] != null ? VitalMeasurementModel.fromJson(json['spo2'] as Map<String, dynamic>) : null,
-      weight: json['weight'] != null ? VitalMeasurementModel.fromJson(json['weight'] as Map<String, dynamic>) : null,
-      height: json['height'] != null ? VitalMeasurementModel.fromJson(json['height'] as Map<String, dynamic>) : null,
+      bloodPressure: json['blood_pressure'] != null && json['blood_pressure'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['blood_pressure'] as Map))
+          : (json['bloodPressure'] != null && json['bloodPressure'] is Map
+              ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['bloodPressure'] as Map))
+              : null),
+      pulse: json['pulse'] != null && json['pulse'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['pulse'] as Map))
+          : null,
+      temperature: json['temperature'] != null && json['temperature'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['temperature'] as Map))
+          : null,
+      spo2: json['spo2'] != null && json['spo2'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['spo2'] as Map))
+          : null,
+      weight: json['weight'] != null && json['weight'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['weight'] as Map))
+          : null,
+      height: json['height'] != null && json['height'] is Map
+          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['height'] as Map))
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      if (bloodPressure != null) 'blood_pressure': (bloodPressure as VitalMeasurementModel).toJson(),
-      if (pulse != null) 'pulse': (pulse as VitalMeasurementModel).toJson(),
-      if (temperature != null) 'temperature': (temperature as VitalMeasurementModel).toJson(),
-      if (spo2 != null) 'spo2': (spo2 as VitalMeasurementModel).toJson(),
-      if (weight != null) 'weight': (weight as VitalMeasurementModel).toJson(),
-      if (height != null) 'height': (height as VitalMeasurementModel).toJson(),
+      if (bloodPressure != null && bloodPressure is VitalMeasurementModel)
+        'blood_pressure': (bloodPressure as VitalMeasurementModel).toJson(),
+      if (pulse != null && pulse is VitalMeasurementModel)
+        'pulse': (pulse as VitalMeasurementModel).toJson(),
+      if (temperature != null && temperature is VitalMeasurementModel)
+        'temperature': (temperature as VitalMeasurementModel).toJson(),
+      if (spo2 != null && spo2 is VitalMeasurementModel)
+        'spo2': (spo2 as VitalMeasurementModel).toJson(),
+      if (weight != null && weight is VitalMeasurementModel)
+        'weight': (weight as VitalMeasurementModel).toJson(),
+      if (height != null && height is VitalMeasurementModel)
+        'height': (height as VitalMeasurementModel).toJson(),
     };
   }
 }

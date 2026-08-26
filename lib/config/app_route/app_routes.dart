@@ -31,6 +31,7 @@ class AppRoutes {
   static const String changePasswordScreen= '/changePasswordScreen';
   static const String onSuccessChangePassword= '/onSuccessChangePassword';
   static const String doctorPatientProfileScreen= '/doctorPatientProfileScreen';
+  static const String doctorPatientDetailProfileScreen= '/doctorPatientDetailProfileScreen';
   static const String addMedicalRecordScreen= '/addMedicalRecordScreen';
   static const String medicalRecordDetailsScreen= '/medicalRecordDetailsScreen';
   static const String medicalHistoryScreen= '/medicalHistoryScreen';

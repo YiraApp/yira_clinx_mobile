@@ -104,6 +104,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
     AppRoutes.changePasswordScreen: 'lib/features/presentation/settings/change_password_screen.dart',
     AppRoutes.onSuccessChangePassword: 'lib/features/presentation/settings/password_changed_successfully.dart',
     AppRoutes.doctorPatientProfileScreen: 'lib/features/presentation/patient_profile/patient_profile_screen.dart',
+    AppRoutes.doctorPatientDetailProfileScreen: 'lib/features/presentation/patient_profile/doctor_patient_detail_profile_screen.dart',
     AppRoutes.addMedicalRecordScreen: 'lib/features/presentation/medicine/create_medicine_screen.dart',
     AppRoutes.medicalRecordDetailsScreen: 'lib/features/presentation/medicine/medical_details_screen.dart',
     AppRoutes.medicalHistoryScreen: 'lib/features/presentation/medicine/medical_record_list_screen.dart',

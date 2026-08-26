@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_info_session.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/diagnosis_treatment_section.dart';
-import 'package:yiraclinics/features/presentation/medicine/widgets/section_header.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/vital_signs_section.dart';
 
 import '../../../core/colors/colors.dart';
@@ -55,6 +54,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _diagnosisController = TextEditingController();
+  final TextEditingController _doctorNotesController = TextEditingController();
   final TextEditingController _treatmentPlanController =
       TextEditingController();
   final TextEditingController _oxygenSaturationController =
@@ -71,6 +71,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
       _symptomsController.text = rec.symptoms ?? '';
       _physicalExamController.text = rec.physicalExamination ?? '';
       _diagnosisController.text = rec.diagnosis;
+      _doctorNotesController.text = rec.treatmentPlan ?? '';
       _treatmentPlanController.text = rec.treatmentPlan ?? '';
       _bpController.text = rec.bloodPressure ?? '';
       _hrController.text = rec.heartRate ?? '';
@@ -95,7 +96,9 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _diagnosisController.dispose();
+    _doctorNotesController.dispose();
     _treatmentPlanController.dispose();
+    _oxygenSaturationController.dispose();
     super.dispose();
   }
 
@@ -132,7 +135,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                      border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
                     ),
                     child: Column(
                       children: [
@@ -192,14 +195,15 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       fontWeight: FontWeight.w500,
                                       fontFamily: appPoppinFont,
                                       color: Colors.grey,
-                                      fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
                                   _buildDOBPicker(
                                     context,
-                                    state.selectedDate ?? DateTime(2000, 1, 1),
-                                    isDark,isTab
+                                    state.selectedDate,
+                                    isDark,
+                                    isTab,
                                   ),
                                 ],
                               ),
@@ -215,7 +219,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       fontWeight: FontWeight.w500,
                                       fontFamily: appPoppinFont,
                                       color: Colors.grey,
-                                      fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,
+                                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -242,24 +246,25 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                         ClinicalInfoSection(
                           chiefComplaintController: _chiefComplaintController,
                           symptomsController: _symptomsController,
-                          physicalExamController: _physicalExamController, isTab: isTab,
+                          physicalExamController: _physicalExamController,
+                          isTab: isTab,
                         ),
                         const SizedBox(height: 24),
 
                         VitalSignsSection(
-                         isTab: isTab,
+                          isTab: isTab,
                           bpController: _bpController,
                           hrController: _hrController,
                           tempController: _tempController,
                           weightController: _weightController,
                           heightController: _heightController,
-                          oxygenSaturationController:
-                              _oxygenSaturationController,
+                          oxygenSaturationController: _oxygenSaturationController,
                         ),
                         const SizedBox(height: 24),
                         DiagnosisTreatmentSection(
-                         isTab: isTab,
+                          isTab: isTab,
                           diagnosisController: _diagnosisController,
+                          doctorNotesController: _doctorNotesController,
                           treatmentPlanController: _treatmentPlanController,
                         ),
                         const SizedBox(height: 32),
@@ -310,27 +315,55 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                     );
                                     return;
                                   }
+
+                                  final doctorNotes = _doctorNotesController.text.trim();
+                                  final treatmentPlan = _treatmentPlanController.text.trim();
+
+                                  if (doctorNotes.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Row(
+                                          children: [
+                                            Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                                            SizedBox(width: 8),
+                                            Text("Doctor Note is mandatory when adding a record"),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.red.shade600,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  final combinedTreatment = treatmentPlan.isNotEmpty && treatmentPlan != doctorNotes
+                                      ? "Doctor Notes: $doctorNotes\n\nPlan: $treatmentPlan"
+                                      : doctorNotes;
+
                                   if (_formKey.currentState!.validate()) {
-                                     context.read<MedicalRecordBloc>().add(
-                                       SaveMedicalRecordEvent(
-                                         recordId: widget.recordToEdit?.id,
-                                         patientId: widget.patientId ?? widget.patient?.id,
-                                         appointmentId: widget.appointmentId,
-                                         hospitalId: widget.hospitalId,
-                                         orgId: widget.orgId,
-                                         visitType: _selectedVisitType,
-                                         chiefComplaint: _chiefComplaintController.text,
-                                         symptoms: _symptomsController.text,
-                                         physicalExamination: _physicalExamController.text,
-                                         bp: _bpController.text,
-                                         hr: _hrController.text,
-                                         temperature: _tempController.text,
-                                         weight: _weightController.text,
-                                         height: _heightController.text,
-                                         diagnosis: _diagnosisController.text,
-                                         treatmentPlan: _treatmentPlanController.text,
-                                       ),
-                                     );
+                                    context.read<MedicalRecordBloc>().add(
+                                      SaveMedicalRecordEvent(
+                                        recordId: widget.recordToEdit?.id,
+                                        patientId: widget.patientId ?? widget.patient?.id,
+                                        appointmentId: widget.appointmentId,
+                                        hospitalId: widget.hospitalId,
+                                        orgId: widget.orgId,
+                                        visitType: _selectedVisitType,
+                                        chiefComplaint: _chiefComplaintController.text,
+                                        symptoms: _symptomsController.text,
+                                        physicalExamination: _physicalExamController.text,
+                                        bp: _bpController.text,
+                                        hr: _hrController.text,
+                                        temperature: _tempController.text,
+                                        weight: _weightController.text,
+                                        height: _heightController.text,
+                                        diagnosis: _diagnosisController.text,
+                                        treatmentPlan: combinedTreatment,
+                                      ),
+                                    );
                                   }
                                 },
                               ),
@@ -358,84 +391,62 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setModalState) {
-            return Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Theme.of(context).scaffoldBackgroundColor
-                    : Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
+      builder: (BuildContext modalContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? darkModeCardColor : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.only(top: 10, bottom: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              padding: const EdgeInsets.only(top: 12, bottom: 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    height: 5,
-                    width: 45,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(fieldBorderRadius),
-                    ),
+                  CupertinoButton(
+                    child: Text('Cancel', style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
+                    onPressed: () => Navigator.of(modalContext).pop(),
                   ),
-                  const SizedBox(height: 25),
-                  Text(
-                    "Select Date",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: displayWidth(context) * 0.045,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    height: displayHeight(context) / 3.5,
-                    child: CupertinoTheme(
-                      data: CupertinoThemeData(
-                        brightness: isDark ? Brightness.dark : Brightness.light,
-                        textTheme: CupertinoTextThemeData(
-                          dateTimePickerTextStyle: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: displayWidth(context) * 0.05,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        initialDateTime: initialDate,
-                        maximumDate: DateTime.now(),
-                        minimumYear: 1900,
-                        itemExtent: 50,
-                        onDateTimeChanged: (DateTime newDate) {
-                          tempSelectedDate = newDate;
-                        },
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 10,
-                    ),
-                    child: CustomElevatedButton(
-                      text: "Confirm",
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      width: double.infinity,
-                      height: 55,
-                    ),
+                  CupertinoButton(
+                    child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+                    onPressed: () {
+                      context.read<MedicalRecordBloc>().add(
+                        ChangeSelectedDateEvent(tempSelectedDate),
+                      );
+                      Navigator.of(modalContext).pop();
+                    },
                   ),
                 ],
               ),
-            );
-          },
+              const Divider(height: 0),
+              SizedBox(
+                height: 200,
+                child: CupertinoTheme(
+                  data: CupertinoThemeData(
+                    brightness: isDark ? Brightness.dark : Brightness.light,
+                  ),
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.date,
+                    initialDateTime: initialDate,
+                    minimumDate: DateTime(1900),
+                    maximumDate: DateTime.now(),
+                    onDateTimeChanged: (DateTime newDate) {
+                      tempSelectedDate = newDate;
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -443,35 +454,39 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
 
   Widget _buildDOBPicker(
     BuildContext context,
-    DateTime? currentDob,
+    DateTime displayDate,
     bool isDark,
-      bool isTab
+    bool isTab,
   ) {
-    final DateTime displayDate = currentDob ?? DateTime(2000, 1, 1);
-    final age = DateTime.now().year - displayDate.year;
-
-    return InkWell(
-      onTap: () => _showDatePicker(context, displayDate, isDark),
-      borderRadius: BorderRadius.circular(fieldBorderRadius),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        _showDatePicker(context, displayDate, isDark);
+      },
+      child: Container(
+        height: isTab ? 45 : 38,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color:  isDark ? darkModeCardColor.withOpacity(0.8) : lightModeTextFieldBgColor,
-          border: Border.all(color: isDark ? darkModeBorderColor : lightModeBorderColor, width: 1.0),
           borderRadius: BorderRadius.circular(fieldBorderRadius),
+          border: Border.all(
+            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          ),
+          color: isDark ? Colors.transparent : Colors.grey.shade50,
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_month_rounded, color: primaryColor, size: 18),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 14,
+              color: primaryColor,
+            ),
+            const SizedBox(width: 8),
+            Row(
               children: [
                 Text(
                   DateFormat('MMMM dd, yyyy').format(displayDate),
                   style: TextStyle(
-                    fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
+                    fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                   ),
@@ -482,25 +497,5 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         ),
       ),
     );
-  }
-
-  void _onSubmit() {
-    if (_formKey.currentState!.validate()) {
-      context.read<MedicalRecordBloc>().add(
-        SaveMedicalRecordEvent(
-          visitType: _selectedVisitType,
-          chiefComplaint: _chiefComplaintController.text,
-          symptoms: _symptomsController.text,
-          physicalExamination: _physicalExamController.text,
-          bp: _bpController.text,
-          hr: _hrController.text,
-          temperature: _tempController.text,
-          weight: _weightController.text,
-          height: _heightController.text,
-          diagnosis: _diagnosisController.text,
-          treatmentPlan: _treatmentPlanController.text,
-        ),
-      );
-    }
   }
 }

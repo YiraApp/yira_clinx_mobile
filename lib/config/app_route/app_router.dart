@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
@@ -9,8 +8,6 @@ import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.da
 import 'package:yiraclinics/features/domain/entities/slot/slot_appointment_entity.dart';
 import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
-import 'package:yiraclinics/features/presentation/appointments/appointments_dashboard.dart';
-import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
 import 'package:yiraclinics/features/presentation/auth/verify_otp_screen.dart';
@@ -23,7 +20,6 @@ import 'package:yiraclinics/features/presentation/configure_screens/log_out_scre
 import 'package:yiraclinics/features/presentation/configure_screens/maintance_screen.dart';
 import 'package:yiraclinics/features/presentation/configure_screens/soft_update_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_patient_details_screen.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_main_shell_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/favorite_patients_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/patient_main_shell_screen.dart';
@@ -32,7 +28,6 @@ import 'package:yiraclinics/features/presentation/patient/self_service/digital_c
 import 'package:yiraclinics/features/presentation/patient/self_service/online_bill_payment_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/upload_via_link_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/doctors/patient_my_doctors_screen.dart';
-import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
@@ -43,6 +38,7 @@ import 'package:yiraclinics/features/presentation/medicine/medical_history_bloc/
 import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_screen.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/doctor_patient_detail_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
 import 'package:yiraclinics/features/presentation/notifications/recent_notifications_screen.dart';
 import 'package:yiraclinics/features/presentation/permisions/permissions_screen.dart';
@@ -79,8 +75,6 @@ import '../../features/domain/entities/provider_profile/provider_profile_entity.
 import '../../features/presentation/doctor/profile/edit_provider_profile_screen.dart';
 import '../../features/presentation/consent/patient_consent_approval_screen.dart';
 import '../../features/presentation/doctor/profile/provider_profile_bloc/provider_profile_bloc.dart';
-import '../../features/presentation/doctor/dashboard/doctor_dashboard_screen.dart';
-import '../../features/presentation/doctor/dashboard/patient_management_screen.dart';
 import '../../features/presentation/doctor/patient_appoinment_list/patient_appoinment_list.dart';
 import '../../features/presentation/medicine/medical_record_list_screen.dart';
 import '../../features/presentation/settings/language_setting_screen.dart';
@@ -282,6 +276,21 @@ class AppRouter {
               patientName: args?['patientName'] as String?,
               initialStatus: (args?['initialStatus'] ?? args?['status']) as String?,
               initialTabIndex: args?['initialTabIndex'] as int? ?? 0,
+            ),
+          ),
+        );
+      case AppRoutes.doctorPatientDetailProfileScreen:
+        final detailArgs = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => BlocProvider.value(
+            value: sl<PatientProfileBloc>(),
+            child: DoctorPatientDetailProfileScreen(
+              patientId: detailArgs?['patientId'] as String?,
+              hospitalId: detailArgs?['hospitalId'] as String?,
+              orgId: detailArgs?['orgId'] as String?,
+              patientName: detailArgs?['patientName'] as String?,
+              initialTabIndex: detailArgs?['initialTabIndex'] as int? ?? 0,
             ),
           ),
         );

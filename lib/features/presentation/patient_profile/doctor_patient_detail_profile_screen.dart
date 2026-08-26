@@ -13,6 +13,7 @@ import 'package:yiraclinics/features/presentation/patient_profile/patient_over_v
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_header.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_access_gate.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
@@ -23,37 +24,33 @@ import '../medicine/medical_history_bloc/medical_history_bloc.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'over_view/over_view_screen.dart';
 
-class DoctorPatientProfileScreen extends StatefulWidget {
+class DoctorPatientDetailProfileScreen extends StatefulWidget {
   final String? patientId;
-  final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
   final String? patientName;
-  final String? initialStatus;
   final int initialTabIndex;
 
-  const DoctorPatientProfileScreen({
+  const DoctorPatientDetailProfileScreen({
     super.key,
     this.patientId,
-    this.appointmentId,
     this.hospitalId,
     this.orgId,
     this.patientName,
-    this.initialStatus,
     this.initialTabIndex = 0,
   });
 
   @override
-  State<DoctorPatientProfileScreen> createState() =>
-      _DoctorPatientProfileScreenState();
+  State<DoctorPatientDetailProfileScreen> createState() =>
+      _DoctorPatientDetailProfileScreenState();
 }
 
-class _DoctorPatientProfileScreenState
-    extends State<DoctorPatientProfileScreen> {
+class _DoctorPatientDetailProfileScreenState
+    extends State<DoctorPatientDetailProfileScreen> {
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 6 tabs with dedicated Appointments tab
+  // 6 tabs for Doctor Patient Management Record
   final List<String> _tabs = [
     'Info',
     'Appointments',
@@ -68,7 +65,8 @@ class _DoctorPatientProfileScreenState
     super.initState();
     _pageController = PageController(initialPage: widget.initialTabIndex);
 
-    final currentDoctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+    final currentDoctorId =
+        GlobalSession.instance.userNotifier.value?.data?.id ?? '';
     _consentBloc = sl<PatientAccessConsentBloc>()
       ..add(CheckAccessStatusEvent(
         patientId: widget.patientId ?? '3456',
@@ -76,13 +74,15 @@ class _DoctorPatientProfileScreenState
       ));
 
     context.read<PatientProfileBloc>().add(
-      LoadPatientProfile(
-        widget.patientId ?? '3456',
-        patientName: widget.patientName,
-      ),
-    );
+          LoadPatientProfile(
+            widget.patientId ?? '3456',
+            patientName: widget.patientName,
+          ),
+        );
     if (widget.initialTabIndex != 0) {
-      context.read<PatientProfileBloc>().add(TabChanged(widget.initialTabIndex));
+      context
+          .read<PatientProfileBloc>()
+          .add(TabChanged(widget.initialTabIndex));
     }
   }
 
@@ -115,20 +115,7 @@ class _DoctorPatientProfileScreenState
             }
           },
           builder: (context, state) {
-            if (state is PatientProfileInitial) {
-              context.read<PatientProfileBloc>().add(
-                LoadPatientProfile(
-                  widget.patientId ?? '3456',
-                  patientName: widget.patientName,
-                ),
-              );
-              return PatientProfileScreenShimmer(
-                isDark: Theme.of(context).brightness == Brightness.dark,
-                isTab: isTab,
-              );
-            }
-
-            if (state is PatientProfileLoading) {
+            if (state is PatientProfileInitial || state is PatientProfileLoading) {
               return PatientProfileScreenShimmer(
                 isDark: Theme.of(context).brightness == Brightness.dark,
                 isTab: isTab,
@@ -151,19 +138,26 @@ class _DoctorPatientProfileScreenState
               final patient = state.patient;
               final currentTab = state.activeTabIndex;
 
-              return BlocBuilder<PatientAccessConsentBloc, PatientAccessConsentState>(
+              return BlocBuilder<PatientAccessConsentBloc,
+                  PatientAccessConsentState>(
                 builder: (context, consentState) {
                   final DoctorAccessStatusLoaded? accessStatus =
-                      consentState is DoctorAccessStatusLoaded ? consentState : null;
+                      consentState is DoctorAccessStatusLoaded
+                          ? consentState
+                          : null;
+
+                  final bool hasAccess = accessStatus?.hasAccess ?? false;
 
                   return Column(
                     children: [
+                      // Header with showStatus: false (No appointment status badge)
                       PatientProfileHeader(
                         patient: patient,
                         isTab: isTab,
-                        appointmentId: widget.appointmentId,
+                        appointmentId: null,
                         patientId: widget.patientId ?? patient.id,
-                        initialStatus: widget.initialStatus,
+                        initialStatus: null,
+                        showStatus: false,
                         hospitalId: int.tryParse(widget.hospitalId ?? ''),
                         consentBloc: _consentBloc,
                         accessStatus: accessStatus,
@@ -177,16 +171,22 @@ class _DoctorPatientProfileScreenState
                           selectedIndex: currentTab,
                           isTab: isTab,
                           onTabSelected: (index) {
-                            context.read<PatientProfileBloc>().add(TabChanged(index));
+                            context
+                                .read<PatientProfileBloc>()
+                                .add(TabChanged(index));
                           },
                         ),
                       ),
+
+                      // Tab Content PageView
                       Expanded(
                         child: PageView.builder(
                           controller: _pageController,
                           itemCount: _tabs.length,
                           onPageChanged: (index) {
-                            context.read<PatientProfileBloc>().add(TabChanged(index));
+                            context
+                                .read<PatientProfileBloc>()
+                                .add(TabChanged(index));
                           },
                           itemBuilder: (context, index) {
                             return _buildActiveTabContent(
@@ -194,6 +194,7 @@ class _DoctorPatientProfileScreenState
                               patient,
                               index,
                               isTab,
+                              hasAccess,
                               accessStatus,
                             );
                           },
@@ -220,6 +221,7 @@ class _DoctorPatientProfileScreenState
     PatientProfileEntity patient,
     int activeTab,
     bool isTab,
+    bool hasAccess,
     DoctorAccessStatusLoaded? accessStatus,
   ) {
     switch (activeTab) {
@@ -229,10 +231,9 @@ class _DoctorPatientProfileScreenState
           create: (_) => sl<PatientOverViewBloc>(),
           child: OverviewScreen(
             isTab: isTab,
-            key: const ValueKey('InfoTabContentFrame'),
+            key: const ValueKey('PatientDetailInfoTabFrame'),
             patient: patient,
             patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
             onPrescribeTap: () {
@@ -247,18 +248,17 @@ class _DoctorPatientProfileScreenState
           ),
         );
       case 1:
-        // Appointments Tab (Dedicated tab showing all Appointments with full clinical records)
+        // Appointments Tab (Full patient visit schedule & clinical consultations, consent-aware)
         return BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>(),
           child: PatientAppointmentsScreen(
-            key: const ValueKey('AppointmentsTabFrame'),
+            key: const ValueKey('PatientDetailAppointmentsTabFrame'),
             patient: patient,
             patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
             isTab: isTab,
-            hasAccess: accessStatus?.hasAccess ?? true,
+            hasAccess: hasAccess,
             onPrescribeTap: () {
               context.read<PatientProfileBloc>().add(const TabChanged(3));
             },
@@ -268,60 +268,103 @@ class _DoctorPatientProfileScreenState
           ),
         );
       case 2:
-        // Medical Record Tab (Direct access for doctor consultations)
+        // Medical Record Tab (Gated by patient consent)
+        if (!hasAccess) {
+          return PatientRecordAccessGate(
+            key: const ValueKey('MedicalRecordsConsentGate'),
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            orgId: widget.orgId,
+            consentBloc: _consentBloc,
+            accessStatus: accessStatus,
+            recordType: "Medical Records & Clinical Findings",
+          );
+        }
         return BlocProvider<MedicalHistoryBloc>(
           create: (_) => sl<MedicalHistoryBloc>(),
           child: MedicalRecordsListScreen(
-            key: const ValueKey('MedicalRecordsTabFrame'),
+            key: const ValueKey('PatientDetailMedicalRecordsTabFrame'),
             patient: patient,
             patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
           ),
         );
       case 3:
-        // Prescribe Tab (Direct access for doctor to write & manage prescriptions)
+        // Prescribe Tab (Gated by patient consent)
+        if (!hasAccess) {
+          return PatientRecordAccessGate(
+            key: const ValueKey('PrescriptionsConsentGate'),
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            orgId: widget.orgId,
+            consentBloc: _consentBloc,
+            accessStatus: accessStatus,
+            recordType: "Prescriptions & Medication History",
+          );
+        }
         return BlocProvider<PrescriptionBloc>(
           create: (_) => sl<PrescriptionBloc>()
             ..add(LoadPrescriptionData(
               patientId: widget.patientId ?? patient.id,
-              appointmentId: widget.appointmentId,
               hospitalId: widget.hospitalId,
               orgId: widget.orgId,
             )),
           child: PrescriptionListScreen(
-            key: const ValueKey('PrescriptionTabFrame'),
+            key: const ValueKey('PatientDetailPrescriptionTabFrame'),
             patient: patient,
-            appointmentId: widget.appointmentId,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
           ),
         );
       case 4:
-        // Notes Tab (Direct access for doctor to record clinical notes)
+        // Notes Tab (Gated by patient consent)
+        if (!hasAccess) {
+          return PatientRecordAccessGate(
+            key: const ValueKey('ClinicalNotesConsentGate'),
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            orgId: widget.orgId,
+            consentBloc: _consentBloc,
+            accessStatus: accessStatus,
+            recordType: "Clinical Consultation Notes",
+          );
+        }
         return ClinicalNotesScreen(
-          key: const ValueKey('NotesTabFrame'),
+          key: const ValueKey('PatientDetailNotesTabFrame'),
           patientId: widget.patientId ?? patient.id,
-          appointmentId: widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         );
       case 5:
-        // Documents Tab (Direct access for doctor to view & upload lab reports and docs)
+        // Documents Tab (Gated by patient consent)
+        if (!hasAccess) {
+          return PatientRecordAccessGate(
+            key: const ValueKey('DocumentsConsentGate'),
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            orgId: widget.orgId,
+            consentBloc: _consentBloc,
+            accessStatus: accessStatus,
+            recordType: "Documents & Clinical Reports",
+          );
+        }
         return BlocProvider<UploadedBloc>(
           create: (_) => sl<UploadedBloc>(),
           child: UploadedRecordsScreen(
-            key: const ValueKey('DocumentsTabFrame'),
+            key: const ValueKey('PatientDetailDocumentsTabFrame'),
             patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
           ),
         );
       default:
         return Center(
-          key: const ValueKey('FallbackTabFrame'),
+          key: const ValueKey('PatientDetailFallbackTabFrame'),
           child: Text(
             '${_tabs[activeTab]} Tab Content',
             style: const TextStyle(color: Colors.grey, fontSize: 14),

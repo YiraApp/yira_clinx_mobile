@@ -100,17 +100,27 @@ class AppointmentDashboardDataModel {
   });
 
   factory AppointmentDashboardDataModel.fromJson(Map<String, dynamic> json) {
-    final payload = json['data'] ?? json;
+    final dynamic rawPayload = json['data'] ?? json;
+    final Map<String, dynamic> payload = rawPayload is Map
+        ? Map<String, dynamic>.from(rawPayload)
+        : json;
     final aptListRaw = (payload['appointments'] as List<dynamic>?) ?? [];
 
+    int toInt(dynamic val, [int fallback = 0]) {
+      if (val is int) return val;
+      if (val != null) return int.tryParse(val.toString()) ?? fallback;
+      return fallback;
+    }
+
     return AppointmentDashboardDataModel(
-      todayCount: payload['todayCount'] ?? 0,
-      confirmedCount: payload['confirmedCount'] ?? 0,
-      pendingCount: payload['pendingCount'] ?? 0,
-      completedCount: payload['completedCount'] ?? 0,
-      aiOptimizationScore: payload['aiOptimizationScore'] ?? 94,
+      todayCount: toInt(payload['todayCount']),
+      confirmedCount: toInt(payload['confirmedCount']),
+      pendingCount: toInt(payload['pendingCount']),
+      completedCount: toInt(payload['completedCount']),
+      aiOptimizationScore: toInt(payload['aiOptimizationScore'], 94),
       appointments: aptListRaw
-          .map((item) => AppointmentModel.fromJson(item as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((item) => AppointmentModel.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
     );
   }
