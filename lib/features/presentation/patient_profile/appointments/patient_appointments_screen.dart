@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/local/global_session.dart';
 import '../../../../core/shimmer_widgets/patient_appointments_shimmer.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
@@ -16,6 +17,7 @@ class PatientAppointmentsScreen extends StatefulWidget {
   final VoidCallback onPrescribeTap;
   final VoidCallback onNoteTap;
   final bool isTab;
+  final bool hasAccess;
 
   const PatientAppointmentsScreen({
     super.key,
@@ -27,6 +29,7 @@ class PatientAppointmentsScreen extends StatefulWidget {
     required this.onPrescribeTap,
     required this.onNoteTap,
     required this.isTab,
+    this.hasAccess = true,
   });
 
   @override
@@ -51,9 +54,28 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         ));
   }
 
-  List<PatientAppointmentEntity> _filterAppointments(List<PatientAppointmentEntity> all) {
-    if (_activeFilter == 'All') return all;
-    return all.where((a) => a.status.toUpperCase() == _activeFilter.toUpperCase()).toList();
+  List<PatientAppointmentEntity> _getBaseAppointments(List<PatientAppointmentEntity> all) {
+    if (widget.hasAccess) {
+      return all;
+    }
+    // Without consent: only show treated / completed appointments or appointments belonging to this doctor
+    final currentDoctorId =
+        GlobalSession.instance.userNotifier.value?.data?.id?.toString().trim() ?? '';
+
+    return all.where((a) {
+      final s = a.status.toLowerCase().trim();
+      final isTreated = s == 'completed' || s == 'treated';
+      final isThisDoctor = currentDoctorId.isNotEmpty && a.doctorId.trim() == currentDoctorId;
+      final hasClinicalRecords = a.prescriptions.isNotEmpty ||
+          a.medicalRecords.isNotEmpty ||
+          a.clinicalNotes.isNotEmpty;
+      return isTreated || isThisDoctor || hasClinicalRecords;
+    }).toList();
+  }
+
+  List<PatientAppointmentEntity> _filterAppointments(List<PatientAppointmentEntity> baseList) {
+    if (_activeFilter == 'All') return baseList;
+    return baseList.where((a) => a.status.toUpperCase() == _activeFilter.toUpperCase()).toList();
   }
 
   @override
@@ -152,11 +174,12 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               ? (state.patientOverViewEntity.data?.appointments ?? <PatientAppointmentEntity>[])
               : <PatientAppointmentEntity>[];
 
-          final filteredAppointments = _filterAppointments(allAppointments);
+          final baseAppointments = _getBaseAppointments(allAppointments);
+          final filteredAppointments = _filterAppointments(baseAppointments);
 
           // Build dynamic filter chip data
           final Map<String, int> statusCounts = {};
-          for (final a in allAppointments) {
+          for (final a in baseAppointments) {
             final key = a.status.toUpperCase();
             statusCounts[key] = (statusCounts[key] ?? 0) + 1;
           }
@@ -172,8 +195,41 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Consent Restricted Notice Banner
+                  if (!widget.hasAccess)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.amber.withValues(alpha: 0.15)
+                            : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? Colors.amber.withValues(alpha: 0.35) : const Color(0xFFFDE68A),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.shield_outlined, size: 18, color: Color(0xFFD97706)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Showing treated appointments only. Patient consent is required to view complete appointment history.",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // ── Filter Chips Row ──
-                  if (allAppointments.isNotEmpty) ...[
+                  if (baseAppointments.isNotEmpty) ...[
                     SizedBox(
                       height: 32,
                       child: ListView(
@@ -182,7 +238,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         children: [
                           _buildFilterChip(
                             label: "All",
-                            count: allAppointments.length,
+                            count: baseAppointments.length,
                             isActive: _activeFilter == 'All',
                             primaryColor: primaryColor,
                             isDark: isDark,
@@ -218,14 +274,55 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     ),
                   ],
 
-                  // ── Appointment Cards ──
-                  PatientAppointmentsCard(
-                    appointments: filteredAppointments,
-                    isTab: widget.isTab,
-                    patient: widget.patient,
-                    onPrescribeTap: widget.onPrescribeTap,
-                    onNoteTap: widget.onNoteTap,
-                  ),
+                  // ── Empty State when no treated appointments ──
+                  if (filteredAppointments.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.event_busy_rounded,
+                              size: 48,
+                              color: isDark ? Colors.white30 : Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              !widget.hasAccess
+                                  ? "No Treated Appointments Found"
+                                  : "No Appointments Found",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              !widget.hasAccess
+                                  ? "No treated records available for this patient. Patient consent is required to access full appointment history."
+                                  : "There are no appointments registered for this patient.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12.5,
+                                color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    // ── Appointment Cards ──
+                    PatientAppointmentsCard(
+                      appointments: filteredAppointments,
+                      isTab: widget.isTab,
+                      patient: widget.patient,
+                      onPrescribeTap: widget.onPrescribeTap,
+                      onNoteTap: widget.onNoteTap,
+                    ),
                 ],
               ),
             ),

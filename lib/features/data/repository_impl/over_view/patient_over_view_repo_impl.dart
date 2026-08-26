@@ -76,17 +76,31 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo {
         ),
       );
 
-      if (response.data != null && response.data is Map<String, dynamic>) {
-        final Map<String, dynamic> rawData =
-            response.data as Map<String, dynamic>;
+      dynamic rawBody = response.data;
+      Map<String, dynamic>? rawData;
+      if (rawBody is Map<String, dynamic>) {
+        rawData = rawBody;
+      } else if (rawBody is Map) {
+        rawData = Map<String, dynamic>.from(rawBody);
+      } else if (rawBody is String && rawBody.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawBody);
+          if (decoded is Map) {
+            rawData = Map<String, dynamic>.from(decoded);
+          }
+        } catch (_) {}
+      }
 
+      if (rawData != null) {
         final bool isSuccessStatus =
             rawData['status'] == true || rawData['success'] == true;
         final dynamic nestedPayload =
             rawData['data'] ?? rawData['result'] ?? rawData['payload'];
 
         if (isSuccessStatus && nestedPayload != null) {
-          await _localCache.saveResponse(fullCacheKey, jsonEncode(rawData));
+          try {
+            await _localCache.saveResponse(fullCacheKey, jsonEncode(rawData));
+          } catch (_) {}
           return PatientOverViewModel.fromJson(rawData);
         }
       }
@@ -113,11 +127,13 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo {
     try {
       final String? cachedJsonString =
           await _localCache.getCachedResponse(cacheKey);
-      if (cachedJsonString != null) {
-        final Map<String, dynamic> decodedData = jsonDecode(cachedJsonString);
-        developer.log("Direct cache key fetch execution hit success.",
-            name: "PatientOverViewRepoImpl");
-        return PatientOverViewModel.fromJson(decodedData);
+      if (cachedJsonString != null && cachedJsonString.trim().isNotEmpty) {
+        final dynamic decodedData = jsonDecode(cachedJsonString);
+        if (decodedData is Map) {
+          developer.log("Direct cache key fetch execution hit success.",
+              name: "PatientOverViewRepoImpl");
+          return PatientOverViewModel.fromJson(Map<String, dynamic>.from(decodedData));
+        }
       }
     } catch (cacheError, stackTrace) {
       developer.log(

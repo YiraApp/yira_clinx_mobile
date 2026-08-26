@@ -1295,63 +1295,6 @@ class PatientAppointmentsCard extends StatelessWidget {
                                 ),
                             ]),
                           ],
-                          if (appt.isTeleConsultation && appt.meetingUrl.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            InkWell(
-                              onTap: () async {
-                                await Utils.launchURL(
-                                  appt.meetingUrl,
-                                  onLaunchFailure: (err) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(err)),
-                                      );
-                                    }
-                                  },
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(10),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13.5),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF2563EB),
-                                      Color(0xFF1D4ED8),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.videocam_rounded, color: Colors.white, size: 22),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Join Zoom Call",
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                        letterSpacing: 0.2,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 17),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
 

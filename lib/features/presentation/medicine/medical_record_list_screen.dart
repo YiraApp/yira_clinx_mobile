@@ -106,7 +106,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -201,11 +201,11 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
     final isTab = isTablet(context);
     return BlocConsumer<MedicalHistoryBloc, MedicalHistoryState>(
       buildWhen: (previous, current) =>
-      current is MedicalHistoryLoading ||
+          current is MedicalHistoryLoading ||
           current is MedicalHistoryError ||
           current is MedicalHistoryLoaded,
       listenWhen: (previous, current) =>
-      current is AddMedicalRecordNavState ||
+          current is AddMedicalRecordNavState ||
           current is SingleMedicineDetailsNavState,
       listener: (BuildContext context, MedicalHistoryState state) {
         if (state is AddMedicalRecordNavState) {
@@ -219,20 +219,20 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
         }
       },
       builder: (context, state) {
-        final bool hasRecord = (state is MedicalHistoryLoaded && state.records.isNotEmpty);
-        final bool isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+        final bool isPatient =
+            GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          floatingActionButton: (hasRecord || isPatient)
+          floatingActionButton: isPatient
               ? null
               : FloatingActionButton(
                   backgroundColor: primaryColor,
                   child: const Icon(Icons.add, color: Colors.white),
                   onPressed: () {
                     context.read<MedicalHistoryBloc>().add(
-                      AddMedicalRecordNavEvent(),
-                    );
+                          AddMedicalRecordNavEvent(),
+                        );
                   },
                 ),
           body: _buildBody(context, state, isTab, isPatient),
@@ -252,8 +252,27 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
 
     if (state is MedicalHistoryLoaded) {
       if (state.records.isEmpty) {
-        return const Center(
-          child: CommonText("No medical records history found."),
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.assignment_outlined, size: 48, color: Colors.grey.shade400),
+              const SizedBox(height: 12),
+              const CommonText("No medical records history found."),
+              if (!isPatient) ...[
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _openRecordFormModal(),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text("Add First Medical Record"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ],
+          ),
         );
       }
       return ListView.builder(

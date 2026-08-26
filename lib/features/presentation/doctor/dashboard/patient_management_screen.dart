@@ -56,7 +56,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
                   Navigator.pushNamed(
                     context,
-                    AppRoutes.doctorPatientProfileScreen,
+                    AppRoutes.doctorPatientDetailProfileScreen,
                     arguments: {
                       'patientId': state.patientId,
                       'patientName': state.patientName,

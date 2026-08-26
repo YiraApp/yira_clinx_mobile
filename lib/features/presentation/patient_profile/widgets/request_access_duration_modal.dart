@@ -105,8 +105,8 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
     ),
     DurationOption(
       key: "NEVER",
-      title: "Never",
-      subtitle: "Permanent access until patient revokes",
+      title: "Permanent",
+      subtitle: "Active care until revoked by patient",
       icon: Icons.all_inclusive_rounded,
     ),
   ];
@@ -134,8 +134,8 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: const [
+        content: const Row(
+          children: [
             Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 20),
             SizedBox(width: 10),
             Expanded(
@@ -160,7 +160,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: MediaQuery.of(context).size.height * 0.90,
       ),
       padding: EdgeInsets.fromLTRB(
         20,
@@ -176,7 +176,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),
@@ -206,7 +206,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withOpacity(isDark ? 0.2 : 0.1),
+                  color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -232,7 +232,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Select how long you need access to ${widget.patient.name}'s full medical records.",
+                      "Select access duration for ${widget.patient.name.isNotEmpty ? widget.patient.name : 'this patient'}'s records.",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 12.5 : 11.5,
@@ -249,7 +249,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Duration options list
           Flexible(
@@ -257,7 +257,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
               shrinkWrap: true,
               physics: const BouncingScrollPhysics(),
               itemCount: _options.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (context, index) => const SizedBox(height: 7),
               itemBuilder: (context, index) {
                 final opt = _options[index];
                 final isSelected = _selectedDuration == opt.key;
@@ -267,10 +267,10 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   borderRadius: BorderRadius.circular(14),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? primaryColor.withOpacity(isDark ? 0.2 : 0.08)
+                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
                           : (isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
@@ -325,13 +325,18 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                             ],
                           ),
                         ),
-                        Radio<String>(
-                          value: opt.key,
-                          groupValue: _selectedDuration,
-                          activeColor: primaryColor,
-                          onChanged: (val) {
-                            if (val != null) setState(() => _selectedDuration = val);
-                          },
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? primaryColor
+                                  : (isDark ? Colors.white30 : Colors.grey.shade400),
+                              width: isSelected ? 5.5 : 1.5,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -340,7 +345,42 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
               },
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Clinical Purpose / Notes field (Optional)
+          TextField(
+            controller: _notesController,
+            maxLines: 2,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 13,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+            decoration: InputDecoration(
+              hintText: "Optional clinical purpose or note to patient...",
+              hintStyle: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 12,
+                color: isDark ? Colors.white38 : Colors.grey.shade500,
+              ),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade200),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: primaryColor, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
 
           // Submit Request Button
           SizedBox(
@@ -352,14 +392,14 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 3,
-                shadowColor: primaryColor.withOpacity(0.4),
+                shadowColor: primaryColor.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.send_rounded, size: 18),
                   SizedBox(width: 8),
                   Text(

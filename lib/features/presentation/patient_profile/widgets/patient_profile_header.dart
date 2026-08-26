@@ -13,7 +13,6 @@ import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 
 import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_bloc.dart';
 import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_state.dart';
-import 'request_access_duration_modal.dart';
 
 class PatientProfileHeader extends StatefulWidget {
   final PatientProfileEntity patient;
@@ -26,6 +25,7 @@ class PatientProfileHeader extends StatefulWidget {
   final int? hospitalId;
   final PatientAccessConsentBloc? consentBloc;
   final DoctorAccessStatusLoaded? accessStatus;
+  final bool showStatus;
 
   const PatientProfileHeader({
     super.key,
@@ -39,6 +39,7 @@ class PatientProfileHeader extends StatefulWidget {
     this.hospitalId,
     this.consentBloc,
     this.accessStatus,
+    this.showStatus = true,
   });
 
   @override
@@ -184,18 +185,38 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         ? widget.patient.name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
         : 'PT';
 
+    final String rawPhone = widget.patient.phone.trim();
+    final String phone = (rawPhone.isEmpty || rawPhone.toLowerCase() == 'none' || rawPhone.toLowerCase() == 'null')
+        ? ''
+        : rawPhone;
+
+    final String rawDob = widget.patient.dob.trim();
+    final String dob = (rawDob.isEmpty || rawDob.toLowerCase() == 'none' || rawDob.toLowerCase() == 'null')
+        ? ''
+        : rawDob;
+
+    final String rawGender = widget.patient.gender.trim();
+    final String gender = (rawGender.isEmpty || rawGender.toLowerCase() == 'none' || rawGender.toLowerCase() == 'null')
+        ? ''
+        : rawGender;
+
+    final String rawBlood = widget.patient.bloodGroup.trim();
+    final String bloodGroup = (rawBlood.isEmpty || rawBlood.toLowerCase() == 'none' || rawBlood.toLowerCase() == 'null')
+        ? ''
+        : rawBlood;
+
     return Container(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 10),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 8),
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(18),
-          bottomRight: Radius.circular(18),
+          bottomLeft: Radius.circular(22),
+          bottomRight: Radius.circular(22),
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.3),
-            blurRadius: 10,
+            color: primaryColor.withValues(alpha: 0.28),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -205,7 +226,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Navigation & Action Row
+            // Top Navigation & Actions
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -215,8 +236,12 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: Colors.white.withValues(alpha: 0.16),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
                       ),
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
@@ -229,6 +254,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                   const SizedBox.shrink(),
                 Row(
                   children: [
+                    // Book Appointment Button
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(
@@ -241,19 +267,26 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           children: const [
-                            Icon(Icons.add_rounded, size: 14, color: primaryColor),
+                            Icon(Icons.add_rounded, size: 15, color: primaryColor),
                             SizedBox(width: 4),
                             Text(
-                              'Book Appt',
+                              'Book Appointment',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w700,
                                 color: primaryColor,
@@ -263,74 +296,77 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: (_isUpdating || isPatient) ? null : () => _showStatusPicker(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_isUpdating)
-                              const SizedBox(
-                                width: 10,
-                                height: 10,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    // Appointment status badge (only shown on appointment screen when showStatus == true)
+                    if (widget.showStatus && widget.appointmentId != null && widget.appointmentId!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: (_isUpdating || isPatient) ? null : () => _showStatusPicker(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_isUpdating)
+                                const SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              else ...[
+                                Text(
+                                  _currentStatus,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontFamily: appPoppinFont,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              )
-                            else ...[
-                              Text(
-                                _currentStatus,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontFamily: appPoppinFont,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              if (!isPatient) ...[
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.arrow_drop_down_rounded,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
+                                if (!isPatient) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.arrow_drop_down_rounded,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ],
                               ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                     if (!isPatient) ...[
                       const SizedBox(width: 8),
                       // Favorite Star Button
                       GestureDetector(
                         onTap: _toggleFavorite,
                         child: Container(
-                          padding: const EdgeInsets.all(5),
+                          padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
                             color: _isFav
                                 ? Colors.white
-                                : Colors.white.withValues(alpha: 0.15),
+                                : Colors.white.withValues(alpha: 0.16),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: _isFav
                                   ? const Color(0xFFFDE68A)
-                                  : Colors.white.withValues(alpha: 0.3),
+                                  : Colors.white.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Icon(
                             _isFav ? Icons.star_rounded : Icons.star_outline_rounded,
                             color: _isFav ? const Color(0xFFD97706) : Colors.white,
-                            size: 16,
+                            size: 17,
                           ),
                         ),
                       ),
@@ -339,28 +375,35 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Patient details row
+            // Patient details card layout
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Patient Avatar (White Circle, Blue Initials)
+                // Patient Avatar (White Circle with Blue Initials & shadow)
                 Container(
-                  width: 52,
-                  height: 52,
-                  decoration: const BoxDecoration(
+                  width: widget.isTab ? 58 : 50,
+                  height: widget.isTab ? 58 : 50,
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
                       initials,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: appPoppinFont,
                         color: primaryColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: widget.isTab ? 20 : 17,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
@@ -370,62 +413,95 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Patient Name
                       Text(
                         widget.patient.name,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           color: Colors.white,
-                          fontSize: widget.isTab ? 20 : 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: widget.isTab ? 20 : 17,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
+
+                      // Mobile Phone Number Row
+                      if (phone.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.phone_android_rounded,
+                                color: Colors.white.withValues(alpha: 0.9),
+                                size: 13,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                phone,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontSize: widget.isTab ? 13 : 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Demographics row (DOB, Gender, Blood Group)
                       Row(
                         children: [
-                          if (widget.patient.dob.isNotEmpty)
+                          if (dob.isNotEmpty)
                             Text(
-                              widget.patient.dob,
+                              dob,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: widget.isTab ? 13 : 11,
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: widget.isTab ? 12.5 : 11,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          if (widget.patient.gender.isNotEmpty) ...[
-                            if (widget.patient.dob.isNotEmpty)
+                          if (gender.isNotEmpty) ...[
+                            if (dob.isNotEmpty)
                               Text(
                                 ' • ',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                               ),
                             Text(
-                              widget.patient.gender,
+                              gender,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: widget.isTab ? 13 : 11,
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: widget.isTab ? 12.5 : 11,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
-                          if (widget.patient.bloodGroup.isNotEmpty) ...[
-                            Text(
-                              ' • ',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-                            ),
+                          if (bloodGroup.isNotEmpty) ...[
+                            if (dob.isNotEmpty || gender.isNotEmpty)
+                              Text(
+                                ' • ',
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                              ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
+                                color: Colors.white.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(5),
                               ),
                               child: Text(
-                                widget.patient.bloodGroup,
+                                bloodGroup,
                                 style: const TextStyle(
                                   fontFamily: appPoppinFont,
                                   color: Colors.white,
                                   fontSize: 10,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -437,129 +513,8 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                 ),
               ],
             ),
-            if (!isPatient && widget.consentBloc != null && (widget.appointmentId == null || widget.appointmentId!.isEmpty)) ...[
-              const SizedBox(height: 10),
-              _buildConsentAccessButton(context),
-            ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             if (widget.tabBar != null) widget.tabBar!,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConsentAccessButton(BuildContext context) {
-    final status = widget.accessStatus?.status.toUpperCase() ?? 'NO_REQUEST';
-    final hasAccess = widget.accessStatus?.hasAccess ?? false;
-    final isPending = status == 'PENDING';
-
-    if (hasAccess) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFF10B981).withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 14),
-            const SizedBox(width: 5),
-            Text(
-              "Access Granted • ${widget.accessStatus?.durationLabel ?? 'Active'}",
-              style: const TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (isPending) {
-      return InkWell(
-        onTap: () {
-          RequestAccessDurationModal.show(
-            context: context,
-            patient: widget.patient,
-            patientId: widget.patientId ?? widget.patient.id,
-            appointmentId: widget.appointmentId,
-            hospitalId: widget.hospitalId,
-            consentBloc: widget.consentBloc!,
-          );
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.25),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.hourglass_top_rounded, color: Colors.amberAccent, size: 13),
-              SizedBox(width: 5),
-              Text(
-                "Access Request Pending (Tap to Change)",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return InkWell(
-      onTap: () {
-        RequestAccessDurationModal.show(
-          context: context,
-          patient: widget.patient,
-          patientId: widget.patientId ?? widget.patient.id,
-          appointmentId: widget.appointmentId,
-          hospitalId: widget.hospitalId,
-          consentBloc: widget.consentBloc!,
-        );
-      },
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.vpn_key_rounded, color: primaryColor, size: 14),
-            SizedBox(width: 6),
-            Text(
-              "Request Access to Patient Information",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: primaryColor,
-              ),
-            ),
           ],
         ),
       ),

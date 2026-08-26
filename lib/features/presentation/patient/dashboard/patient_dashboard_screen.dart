@@ -5,10 +5,9 @@ import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
+import '../../../../core/utils/utils.dart';
 import '../../../../di/dependency_injection.dart';
-import '../../../domain/entities/appointments/appointment_entity.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
-import '../../appointments/appointment_bloc/appointment_bloc.dart';
 import '../../doctor/dashboard/widgets/doc_appointment_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
@@ -85,15 +84,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     final lastName = currentUser?.data?.lastName ?? '';
     final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Patient';
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<PatientOverViewBloc>(
-          create: (_) => sl<PatientOverViewBloc>()..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
-        ),
-        BlocProvider<AppointmentBloc>(
-          create: (_) => sl<AppointmentBloc>()..add(LoadAppointmentsEvent()),
-        ),
-      ],
+    return BlocProvider<PatientOverViewBloc>(
+      create: (_) => sl<PatientOverViewBloc>()..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
       child: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
         builder: (context, state) {
           PatientOverViewEntity? overViewEntity;
@@ -111,7 +103,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             final weightVal = latestVitals.weight?.value;
             final heightVal = latestVitals.height?.value;
 
-            bool isValidVital(String? val) => val != null && val.trim().isNotEmpty && val.trim().toLowerCase() != 'none' && val.trim().toLowerCase() != 'null' && val.trim().toLowerCase() != 'n/a';
+            bool isValidVital(String? val) =>
+                val != null &&
+                val.trim().isNotEmpty &&
+                val.trim().toLowerCase() != 'none' &&
+                val.trim().toLowerCase() != 'null' &&
+                val.trim().toLowerCase() != 'n/a';
 
             if (isValidVital(bpVal)) _vitalsData['bp'] = bpVal!;
             if (isValidVital(pulseVal)) _vitalsData['pulse'] = pulseVal!;
@@ -120,6 +117,16 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             if (isValidVital(weightVal)) _vitalsData['weight'] = weightVal!;
             if (isValidVital(heightVal)) _vitalsData['height'] = heightVal!;
           }
+
+          final List<PatientAppointmentEntity> allAppointments = data?.appointments ?? [];
+          final List<PatientAppointmentEntity> upcomingAppointments = allAppointments
+              .where((a) =>
+                  a.status.toLowerCase() != 'completed' &&
+                  a.status.toLowerCase() != 'cancelled')
+              .take(2)
+              .toList();
+
+          final bool isLoading = state is LoadingPatientViewDetails;
 
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
@@ -192,7 +199,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       backgroundColor: primaryColor.withValues(alpha: 0.15),
                       child: Text(
                         patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
-                        style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13, color: primaryColor),
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: primaryColor,
+                        ),
                       ),
                     ),
                   ),
@@ -201,13 +213,17 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             ),
             body: RefreshIndicator(
               onRefresh: () async {
-                context.read<PatientOverViewBloc>().add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
-                context.read<AppointmentBloc>().add(LoadAppointmentsEvent());
+                context.read<PatientOverViewBloc>().add(
+                      LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+                    );
                 await Future.delayed(const Duration(milliseconds: 600));
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: screenHorizontalSpacePadding,
+                  vertical: 10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -238,7 +254,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                               widget.onNavigateTab!(1);
                             }
                           },
-                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'View All',
                             style: TextStyle(
@@ -253,116 +273,168 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    BlocBuilder<AppointmentBloc, AppointmentState>(
-                      builder: (context, aptState) {
-                        if (aptState is AppointmentLoading) {
-                          return _buildAppointmentsShimmer(context, isDark);
-                        }
-
-                        List<Appointment> upcomingAppointments = [];
-                        if (aptState is AppointmentLoaded) {
-                          upcomingAppointments = aptState.appointments
-                              .where((a) => (a.statusRaw.toLowerCase() != 'completed' && a.statusRaw.toLowerCase() != 'cancelled'))
-                              .take(2)
-                              .toList();
-                        }
-
-                        if (upcomingAppointments.isEmpty) {
-                          return Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                    if (isLoading)
+                      _buildAppointmentsShimmer(context, isDark)
+                    else if (upcomingAppointments.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.event_available_rounded,
+                                color: primaryColor,
+                                size: 22,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: primaryColor.withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'No appointments scheduled today',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: adaptiveTextColor,
+                                    ),
                                   ),
-                                  child: Icon(Icons.event_available_rounded, color: primaryColor, size: 22),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'No appointments scheduled today',
-                                        style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13, color: adaptiveTextColor),
-                                      ),
-                                      Text(
-                                        'Book a consultation with your doctor',
-                                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey[600]),
-                                      ),
-                                    ],
+                                  Text(
+                                    'Book a consultation with your doctor',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 11,
+                                      color: isDark ? Colors.white54 : Colors.grey[600],
+                                    ),
                                   ),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {
-                                    if (widget.onNavigateTab != null) {
-                                      widget.onNavigateTab!(1);
-                                    }
-                                  },
-                                  child: const Text('Book', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          );
-                        }
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                if (widget.onNavigateTab != null) {
+                                  widget.onNavigateTab!(1);
+                                }
+                              },
+                              child: const Text(
+                                'Book',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Column(
+                        children: upcomingAppointments.map((apt) {
+                          final docName = apt.doctorName.isNotEmpty
+                              ? apt.doctorName
+                              : 'Consulting Doctor';
+                          final initials = docName.isNotEmpty
+                              ? (docName.startsWith('Dr. ')
+                                  ? docName.replaceFirst('Dr. ', '').trim()
+                                  : docName)[0]
+                                  .toUpperCase()
+                              : 'DR';
+                          final hospitalName = apt.hospitalName.isNotEmpty
+                              ? apt.hospitalName
+                              : 'Yira Hospitals';
+                          final statusLabel = apt.status.isNotEmpty ? apt.status : 'Scheduled';
+                          final timeStr = apt.startTime.isNotEmpty
+                              ? '${apt.startTime} • ${apt.duration}'
+                              : (apt.appointmentDate.isNotEmpty
+                                  ? apt.appointmentDate
+                                  : '30 mins');
 
-                        return Column(
-                          children: upcomingAppointments.map((apt) {
-                            final docName = apt.doctorName ?? 'Consulting Doctor';
-                            final initials = docName.isNotEmpty ? docName[0].toUpperCase() : 'DR';
-                            final hospitalName = (apt.hospitalName != null && apt.hospitalName!.isNotEmpty)
-                                ? apt.hospitalName!
-                                : ((apt.hospitalId != null && apt.hospitalId == 19) ? 'Yira Hospitals' : 'Yira Clinx Medical Center');
-                            final statusLabel = apt.statusRaw.isNotEmpty ? apt.statusRaw : 'Confirmed';
-
-                            return DocAppointmentCard(
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: DocAppointmentCard(
                               initials: initials,
                               name: docName,
                               subtitle: hospitalName,
-                              description: apt.category.isNotEmpty ? apt.category : 'General Consultation',
-                              timeOrDate: '${apt.time} • ${apt.duration}',
+                              description: apt.condition.isNotEmpty
+                                  ? apt.condition
+                                  : (apt.reason.isNotEmpty
+                                      ? apt.reason
+                                      : 'General Consultation'),
+                              timeOrDate: timeStr,
                               statusLabel: statusLabel,
                               statusColor: const Color(0xFF059669),
                               statusTextColor: Colors.white,
                               isTab: isTab,
-                              isTeleConsultation: apt.type == AppointmentType.videoCall,
+                              isTeleConsultation: apt.isTeleConsultation,
+                              onJoinCall: () {
+                                if (apt.meetingUrl.isNotEmpty) {
+                                  Utils.launchURL(
+                                    apt.meetingUrl,
+                                    onLaunchFailure: (err) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(err)),
+                                        );
+                                      }
+                                    },
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('No meeting link available.'),
+                                    ),
+                                  );
+                                }
+                              },
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
                                   AppRoutes.doctorPatientProfileScreen,
                                   arguments: {
-                                    'patientId': apt.patientUserId ?? userId,
+                                    'patientId': userId,
                                     'appointmentId': apt.id,
-                                    'hospitalId': apt.hospitalId?.toString() ?? '1',
-                                    'orgId': apt.orgId?.toString() ?? '1',
-                                    'patientName': apt.patientName.isNotEmpty ? apt.patientName : patientName,
-                                    'initialStatus': apt.statusRaw,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialStatus': apt.status,
                                     'initialTabIndex': 0,
                                   },
                                 );
                               },
-                            );
-                          }).toList(),
-                        );
-                      },
-                    ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     const SizedBox(height: 20),
 
                     // 3. Four Core Feature Navigation Cards
@@ -391,7 +463,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                           subtitle: 'Active medicines & rx',
                           icon: Icons.medication_rounded,
                           color: const Color(0xFF8B5CF6),
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.userPrescriptionManagement),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.userPrescriptionManagement,
+                          ),
                         ),
                         _buildFeatureCard(
                           context: context,
@@ -414,7 +489,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const PatientDocumentsScreen(),
+                              ),
                             );
                           },
                         ),
@@ -463,7 +540,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0xFFE2E8F0),
           ),
           boxShadow: [
             BoxShadow(
@@ -488,7 +567,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                   ),
                   child: Icon(icon, color: color, size: isTab ? 26 : 22),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 12, color: isDark ? Colors.white38 : Colors.grey[400]),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: isDark ? Colors.white38 : Colors.grey[400],
+                ),
               ],
             ),
             Column(
@@ -533,20 +616,45 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.grey.shade200,
+            ),
           ),
           child: BaseShimmer(
             child: Row(
               children: [
-                Container(width: 44, height: 44, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(width: 140, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                      Container(
+                        width: 140,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                       const SizedBox(height: 6),
-                      Container(width: 100, height: 11, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                      Container(
+                        width: 100,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ],
                   ),
                 ),

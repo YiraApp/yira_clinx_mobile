@@ -232,7 +232,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                                     final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
                                     Navigator.pushNamed(
                                       context,
-                                      AppRoutes.doctorPatientProfileScreen,
+                                      AppRoutes.doctorPatientDetailProfileScreen,
                                       arguments: {
                                         'patientId': patient.userId,
                                         'patientName': patient.name,

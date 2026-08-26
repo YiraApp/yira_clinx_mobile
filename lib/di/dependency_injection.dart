@@ -196,7 +196,9 @@ Future<void> init() async {
   sl.registerLazySingleton<LoginRepository>(
     () => LoginRepositoryImpl(apiClient: sl<ApiClient>()),
   );
-  sl.registerLazySingleton<PatientRepository>(() => PatientRepositoryImpl());
+  sl.registerLazySingleton<PatientRepository>(
+    () => PatientRepositoryImpl(sl<ApiClient>()),
+  );
   sl.registerLazySingleton<MedicationRepository>(
     () => MedicationRepositoryImpl(),
   );
