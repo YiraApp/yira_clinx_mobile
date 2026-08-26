@@ -179,42 +179,37 @@ class HealthPassportCard extends StatelessWidget {
                 ),
               ),
 
-              // Interactive QR Code Container
-              GestureDetector(
-                onTap: onShowQrCode,
-                child: Container(
-                  width: isTab ? 90 : 76,
-                  height: isTab ? 90 : 76,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 10,
-                      ),
-                    ],
+              // Health Passport Badge (QR Removed)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CustomPaint(
-                        size: Size(isTab ? 54 : 44, isTab ? 54 : 44),
-                        painter: MockQrPainter(),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.verified_user_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'PASSPORT',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'SCAN QR',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],

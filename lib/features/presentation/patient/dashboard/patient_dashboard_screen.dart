@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import '../../../../core/app_navigation_drawer/app_navigation_drawer.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
+import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
-import '../widgets/health_passport_card.dart';
 import '../widgets/patient_appointment_card.dart';
 import '../widgets/patient_vitals_grid.dart';
 import '../widgets/update_vitals_sheet.dart';
 import '../../upload_documnets/uploaded_bloc/uploaded_bloc.dart';
-import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
@@ -37,6 +38,14 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     'lastUpdated': 'Today',
   };
 
+  String _getInitials(String name) {
+    final clean = name.trim();
+    final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return 'PT';
+    if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+  }
+
   void _openUpdateVitalsSheet() async {
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
@@ -56,39 +65,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
         _vitalsData = result;
       });
     }
-  }
-
-  void _showQrDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Digital Health Passport QR', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: const Icon(Icons.qr_code_2_rounded, size: 150, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 16),
-            const Text('Scan at Clinic Desk for Immediate Check-in', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -124,18 +100,86 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           }
 
           final isLoading = state is LoadingPatientViewDetails || state is PatientOverViewInitial || overViewEntity == null;
-
           final data = overViewEntity?.data;
-          final bloodGroup = data?.medicalInformation?.bloodGroup ?? '';
-          final emergencyPhone = data?.contactInformation?.emergencyContact?.phone ?? '';
-          final policyName = data?.insurance?.policyName ?? '';
-          final policyNumber = data?.insurance?.policyNumber ?? '';
-          final nextAppointment = data?.nextAppointment;
+          DateTime? parseDate(String? dStr) {
+            if (dStr == null || dStr.trim().isEmpty || dStr.trim().toLowerCase() == 'null' || dStr.trim().toLowerCase() == 'none') return null;
+            final dt = DateTime.tryParse(dStr);
+            if (dt != null) return dt;
+            final parts = dStr.replaceAll(',', '').trim().split(RegExp(r'\s+'));
+            if (parts.length >= 3) {
+              int? day = int.tryParse(parts[0]);
+              int? year = int.tryParse(parts[2]);
+              String monthStr = parts[1].toLowerCase();
+              if (day == null) {
+                monthStr = parts[0].toLowerCase();
+                day = int.tryParse(parts[1]);
+                year = int.tryParse(parts[2]);
+              }
+              if (day != null && year != null) {
+                const months = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12};
+                for (final entry in months.entries) {
+                  if (monthStr.startsWith(entry.key)) return DateTime(year, entry.value, day);
+                }
+              }
+            }
+            return null;
+          }
+
+          bool isUpcomingDate(String? dStr) {
+            if (dStr == null || dStr.isEmpty) return false;
+            final parsed = parseDate(dStr);
+            if (parsed == null) return true;
+            final now = DateTime.now();
+            final todayMidnight = DateTime(now.year, now.month, now.day);
+            return !DateTime(parsed.year, parsed.month, parsed.day).isBefore(todayMidnight);
+          }
+
+          NextAppointmentEntity? nextAppointment;
+          if (data?.nextAppointment != null) {
+            final dateCandidate = data!.nextAppointment!.formattedDate ?? data.nextAppointment!.appointmentDate;
+            if (isUpcomingDate(dateCandidate)) {
+              nextAppointment = data.nextAppointment;
+            }
+          }
+
+          if (nextAppointment == null && data?.upcomingAppointments != null && data!.upcomingAppointments!.isNotEmpty) {
+            try {
+              final candidate = data.upcomingAppointments!.firstWhere(
+                (u) => isUpcomingDate(u.formattedDate ?? u.appointmentDate),
+              );
+              nextAppointment = candidate;
+            } catch (_) {}
+          }
+
+          if (nextAppointment == null && data?.appointments != null && data!.appointments!.isNotEmpty) {
+            try {
+              final appt = data.appointments!.firstWhere(
+                (a) => isUpcomingDate(a.appointmentDate),
+              );
+              nextAppointment = NextAppointmentEntity(
+                id: appt.id,
+                appointmentId: appt.id,
+                doctorName: appt.doctorName,
+                doctorId: appt.doctorId,
+                doctorSpecialty: appt.reason.isNotEmpty ? appt.reason : appt.appointmentType,
+                hospitalName: appt.hospitalName,
+                appointmentDate: appt.appointmentDate,
+                formattedDate: appt.appointmentDate,
+                startTime: appt.startTime,
+                formattedTime: appt.startTime,
+                consultationType: appt.appointmentType,
+                isTeleconsultation: appt.isTeleConsultation,
+                reason: appt.reason,
+                status: appt.status,
+                meetingUrl: appt.meetingUrl,
+              );
+            } catch (_) {}
+          }
+
           final nextAppointmentDate = nextAppointment?.formattedDate ?? nextAppointment?.appointmentDate ?? data?.visitHistory?.nextScheduledAppointment;
-          final hasNextAppointment = nextAppointment != null || (nextAppointmentDate != null &&
-              nextAppointmentDate.trim().isNotEmpty &&
-              nextAppointmentDate.trim().toLowerCase() != 'null' &&
-              nextAppointmentDate.trim().toLowerCase() != 'none');
+          final hasNextAppointment = nextAppointment != null && isUpcomingDate(nextAppointmentDate);
+
+
 
           final latestVitals = data?.latestVitals;
           if (latestVitals != null) {
@@ -162,35 +206,77 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             appBar: AppBar(
               elevation: 0,
               backgroundColor: theme.scaffoldBackgroundColor,
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              automaticallyImplyLeading: false,
+              titleSpacing: screenHorizontalSpacePadding,
+              centerTitle: false,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Welcome back,',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      color: isDark ? Colors.white60 : Colors.grey[600],
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SvgPicture.asset(
+                      appLogo,
+                      width: isTab ? 32 : 28,
+                      height: isTab ? 32 : 28,
                     ),
                   ),
-                  Text(
-                    patientName,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 20 : 17,
-                      fontWeight: FontWeight.bold,
-                      color: adaptiveTextColor,
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: () => ProfileSwitcherSheet.show(context),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              color: isDark ? Colors.white60 : Colors.grey[600],
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  patientName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 16 : 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: adaptiveTextColor,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 18,
+                                color: adaptiveTextColor.withValues(alpha: 0.7),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
               actions: [
                 IconButton(
-                  icon: Icon(Icons.notifications_none_outlined, color: adaptiveTextColor),
+                  tooltip: "Notifications",
+                  icon: Icon(
+                    Icons.notifications_none_outlined,
+                    color: adaptiveTextColor,
+                    size: isTab ? 24 : 22,
+                  ),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('No new notifications.')),
-                    );
+                    Navigator.pushNamed(context, AppRoutes.notificationSettingsScreen);
                   },
                 ),
                 Padding(
@@ -199,12 +285,32 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     onTap: () {
                       if (widget.onNavigateTab != null) {
                         widget.onNavigateTab!(3);
+                      } else {
+                        Navigator.pushNamed(context, AppRoutes.patientProfile);
                       }
                     },
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: primaryColor.withOpacity(0.15),
-                      child: Icon(Icons.person, color: primaryColor, size: 18),
+                    child: Container(
+                      width: isTab ? 38 : 34,
+                      height: isTab ? 38 : 34,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _getInitials(patientName),
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 14 : 12,
+                            fontWeight: FontWeight.w700,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -222,235 +328,230 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
-                    // 1. Digital Health Passport Card
+                    // 1. Health Vitals Overview Grid (First)
                     isLoading
-                        ? _buildHealthPassportShimmer(context, isDark, primaryColor)
-                        : HealthPassportCard(
-                            patientName: patientName,
-                            mrnNumber: 'MRN-${userId.length > 6 ? userId.substring(0, 6).toUpperCase() : '998241'}',
-                            bloodGroup: bloodGroup,
-                            emergencyContact: emergencyPhone,
-                            insurancePolicy: '$policyName #$policyNumber',
-                            onShowQrCode: _showQrDialog,
+                        ? _buildVitalsGridShimmer(context, isDark)
+                        : PatientVitalsGrid(
+                            vitals: _vitalsData,
+                            onUpdateVitals: _openUpdateVitalsSheet,
                           ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-              // 2. Upcoming Appointment Header & Card (Smooth transition when loaded)
-              AnimatedSize(
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeInOut,
-                child: isLoading
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildNextAppointmentShimmer(context, isDark),
-                          const SizedBox(height: 20),
-                        ],
-                      )
-                    : hasNextAppointment
-                        ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Next Appointment',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: isTab ? 18 : 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: adaptiveTextColor,
+                    // 2. Upcoming / New Appointment Card (Below Vitals if exists)
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                      child: isLoading
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildNextAppointmentShimmer(context, isDark),
+                                const SizedBox(height: 24),
+                              ],
+                            )
+                          : hasNextAppointment
+                              ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Next Appointment',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab ? 18 : 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: adaptiveTextColor,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        if (widget.onNavigateTab != null) {
+                                          widget.onNavigateTab!(1);
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                                      child: Text(
+                                        'View All',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 10),
+                                PatientAppointmentCard(
+                                  doctorName: nextAppointment?.doctorName ?? 'Attending Physician',
+                                  specialty: nextAppointment?.doctorSpecialty ?? nextAppointment?.reason ?? nextAppointment?.consultationType ?? data?.summary ?? 'General Practitioner',
+                                  hospitalName: nextAppointment?.hospitalName ?? 'ClinicX Health Center',
+                                  date: nextAppointment?.formattedDate ?? nextAppointmentDate ?? 'Scheduled Visit',
+                                  time: nextAppointment?.formattedTime ?? nextAppointment?.startTime ?? 'Scheduled Slot',
+                                  status: nextAppointment?.status ?? 'Scheduled',
+                                  isTeleconsultation: nextAppointment?.isTeleconsultation ?? false,
+                                  meetingUrl: nextAppointment?.meetingUrl,
+                                  onTap: () {
+                                    if (widget.onNavigateTab != null) {
+                                      widget.onNavigateTab!(1);
+                                    }
+                                  },
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+
+                    // 3. Recent Clinical Records Section (Below Next Appointment)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Recent Clinical Records',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 18 : 16,
+                            fontWeight: FontWeight.bold,
+                            color: adaptiveTextColor,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            if (widget.onNavigateTab != null) {
+                              widget.onNavigateTab!(2);
+                            }
+                          },
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                          child: Text(
+                            'View Vault',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    BlocBuilder<UploadedBloc, UploadedBlocState>(
+                      builder: (context, state) {
+                        if (state.status == UploadedStatus.initial || state.status == UploadedStatus.loading) {
+                          return _buildRecentRecordsShimmer(context, isDark);
+                        }
+                        final docs = state.allRecords.take(2).toList();
+                        if (docs.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'No recent clinical documents available',
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.grey[500]),
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: docs.map((doc) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: _buildClinicalRecordItem(
+                                context: context,
+                                title: doc.fileName,
+                                date: '${doc.uploadDate.day}/${doc.uploadDate.month}/${doc.uploadDate.year}',
+                                hospital: '🏥 Yira Health Network',
+                                type: doc.category.isNotEmpty ? doc.category : 'Medical Report',
+                                typeColor: doc.category.toLowerCase().contains('lab') ? Colors.purple : Colors.blue,
                               ),
-                              TextButton(
-                                onPressed: () {
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 4. Quick Action Shortcuts Grid (At Last)
+                    Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? 18 : 16,
+                        fontWeight: FontWeight.bold,
+                        color: adaptiveTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionShortcut(
+                                context: context,
+                                title: 'Book Visit',
+                                icon: Icons.calendar_month_rounded,
+                                color: Colors.blue,
+                                onTap: () {
                                   if (widget.onNavigateTab != null) {
                                     widget.onNavigateTab!(1);
                                   }
                                 },
-                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                                child: Text(
-                                  'View All',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: primaryColor,
-                                  ),
-                                ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          PatientAppointmentCard(
-                            doctorName: nextAppointment?.doctorName ?? 'Attending Physician',
-                            specialty: nextAppointment?.doctorSpecialty ?? nextAppointment?.reason ?? nextAppointment?.consultationType ?? data?.summary ?? 'General Practitioner',
-                            hospitalName: nextAppointment?.hospitalName ?? 'ClinicX Health Center',
-                            date: nextAppointment?.formattedDate ?? nextAppointmentDate ?? 'Scheduled Visit',
-                            time: nextAppointment?.formattedTime ?? nextAppointment?.startTime ?? 'Scheduled Slot',
-                            status: nextAppointment?.status ?? 'Scheduled',
-                            isTeleconsultation: nextAppointment?.isTeleconsultation ?? false,
-                            meetingUrl: nextAppointment?.meetingUrl,
-                            onTap: () {
-                              if (widget.onNavigateTab != null) {
-                                widget.onNavigateTab!(1);
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-              ),
-
-              // 3. Quick Action Shortcuts Grid
-              Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: isTab ? 18 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: adaptiveTextColor,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionShortcut(
-                      context: context,
-                      title: 'Book Visit',
-                      icon: Icons.calendar_month_rounded,
-                      color: Colors.blue,
-                      onTap: () {
-                        if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(1);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildActionShortcut(
-                      context: context,
-                      title: 'My Records',
-                      icon: Icons.folder_shared_rounded,
-                      color: Colors.teal,
-                      onTap: () {
-                        if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(2);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildActionShortcut(
-                      context: context,
-                      title: 'Log Vitals',
-                      icon: Icons.edit_note_rounded,
-                      color: const Color(0xFFE11D48),
-                      onTap: _openUpdateVitalsSheet,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildActionShortcut(
-                      context: context,
-                      title: 'My Profile',
-                      icon: Icons.person_pin_rounded,
-                      color: Colors.indigo,
-                      onTap: () {
-                        if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(3);
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // 4. Health Vitals Overview Grid
-              isLoading
-                  ? _buildVitalsGridShimmer(context, isDark)
-                  : PatientVitalsGrid(
-                      vitals: _vitalsData,
-                      onUpdateVitals: _openUpdateVitalsSheet,
-                    ),
-              const SizedBox(height: 24),
-
-              // 5. Recent Clinical Records Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Recent Clinical Records',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 18 : 16,
-                      fontWeight: FontWeight.bold,
-                      color: adaptiveTextColor,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      if (widget.onNavigateTab != null) {
-                        widget.onNavigateTab!(2);
-                      }
-                    },
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                    child: Text(
-                      'View Vault',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              BlocBuilder<UploadedBloc, UploadedBlocState>(
-                builder: (context, state) {
-                  if (state.status == UploadedStatus.initial || state.status == UploadedStatus.loading) {
-                    return _buildRecentRecordsShimmer(context, isDark);
-                  }
-                  final docs = state.allRecords.take(2).toList();
-                  if (docs.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        'No recent clinical documents available',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.grey[500]),
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: docs.map((doc) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: _buildClinicalRecordItem(
-                          context: context,
-                          title: doc.fileName,
-                          date: '${doc.uploadDate.day}/${doc.uploadDate.month}/${doc.uploadDate.year}',
-                          hospital: '🏥 Yira Health Network',
-                          type: doc.category.isNotEmpty ? doc.category : 'Medical Report',
-                          typeColor: doc.category.toLowerCase().contains('lab') ? Colors.purple : Colors.blue,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildActionShortcut(
+                                context: context,
+                                title: 'My Records',
+                                icon: Icons.folder_shared_rounded,
+                                color: Colors.teal,
+                                onTap: () {
+                                  if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(2);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionShortcut(
+                                context: context,
+                                title: 'Log Vitals',
+                                icon: Icons.edit_note_rounded,
+                                color: const Color(0xFFE11D48),
+                                onTap: _openUpdateVitalsSheet,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildActionShortcut(
+                                context: context,
+                                title: 'My Profile',
+                                icon: Icons.person_pin_rounded,
+                                color: Colors.indigo,
+                                onTap: () {
+                                  if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(3);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
             ],
           ),
         ),
@@ -586,43 +687,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     );
   }
 
-  Widget _buildHealthPassportShimmer(BuildContext context, bool isDark, Color primaryColor) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200),
-      ),
-      child: BaseShimmer(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(width: 80, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                Container(width: 50, height: 18, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10))),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Container(width: 180, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 6),
-            Container(width: 110, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: Container(height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)))),
-                const SizedBox(width: 12),
-                Expanded(child: Container(height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)))),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildNextAppointmentShimmer(BuildContext context, bool isDark) {
     return Container(

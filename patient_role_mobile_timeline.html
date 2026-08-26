@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Role – Mobile Application Breakdown & Timeline</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+        .print-btn:hover {
+            background-color: #1d4ed8;
+        }
+        @media print {
+            .print-btn {
+                display: none;
+            }
+            body {
+                padding: 0;
+                background-color: #ffffff;
+            }
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid #1e3a8a;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .header-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1e3a8a;
+        }
+        .header-subtitle {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .header-epic {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .banner {
+            background-color: #f0f7ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-size: 11.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pin-icon {
+            color: #ef4444;
+            font-size: 14px;
+        }
+        .banner-title {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .banner-text {
+            color: #334155;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11.5px;
+        }
+        th {
+            background-color: #1a2b4c;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 9px 10px;
+            text-align: left;
+            border: 1px solid #1a2b4c;
+        }
+        th.center, td.center {
+            text-align: center;
+        }
+        td {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            vertical-align: top;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .num-col {
+            font-weight: 800;
+            text-align: center;
+            width: 28px;
+        }
+        .module-col {
+            width: 160px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .module-subtext {
+            font-size: 10px;
+            font-weight: normal;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .features-list {
+            margin: 0;
+            padding-left: 14px;
+        }
+        .features-list li {
+            margin-bottom: 3px;
+            line-height: 1.35;
+        }
+        .features-list li strong {
+            color: #0f172a;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .badge-teja {
+            background-color: #eff6ff;
+            color: #2563eb;
+        }
+        .badge-mani {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+        .badge-sateesh {
+            background-color: #faf5ff;
+            color: #9333ea;
+        }
+        .date-col {
+            width: 90px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .timeline-col {
+            width: 70px;
+            font-weight: 600;
+        }
+        .assigned-col {
+            width: 90px;
+        }
+        .summary-box {
+            margin-top: 14px;
+            padding: 10px 14px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11.5px;
+            color: #334155;
+        }
+        .summary-item {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .summary-label {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn" onclick="window.print()">🖨️ Download / Save as PDF</button>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <span class="header-title">Patient Role – Mobile Application</span>
+                <span class="header-subtitle">Expanded Feature Breakdown, Timeline & Ownership</span>
+            </div>
+            <div class="header-epic">Jira Epic: Patient Role – Mobile App</div>
+        </div>
+
+        <!-- Key Distinction Banner -->
+        <div class="banner">
+            <span class="pin-icon">📌</span>
+            <div>
+                <span class="banner-title">Key Distinction:</span>
+                <span class="banner-text">
+                    <strong>Working Days:</strong> Mon – Fri Only (Saturdays & Sundays Excluded) | 
+                    <strong>Start Date:</strong> 25-08-2026 (Today) | 
+                    <strong>Extended Timelines:</strong> Teja (17 Working Days), Mani (12 Working Days), Sateesh (5 Working Days)
+                </span>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th class="center" style="width: 28px;">#</th>
+                    <th style="width: 160px;">MODULE / TAB</th>
+                    <th>FEATURES & SUB-FEATURES</th>
+                    <th class="center" style="width: 90px;">START DATE</th>
+                    <th class="center" style="width: 90px;">END DATE</th>
+                    <th class="center" style="width: 70px;">TIMELINE</th>
+                    <th class="center" style="width: 90px;">ASSIGNED TO</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Row 1 (Teja Task 1) -->
+                <tr>
+                    <td class="num-col">1</td>
+                    <td class="module-col">
+                        Dashboard
+                        <div class="module-subtext">(Patient Home)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Health vitals summary</strong> (2-column side-by-side grid: BP, Pulse, SpO2, Temp, Weight, Height)</li>
+                            <li><strong>Next appointment card</strong> (Date-validated hero card with Zoom call link)</li>
+                            <li><strong>Recent clinical history</strong> (Quick view of latest doctor visit notes)</li>
+                            <li><strong>Quick action shortcuts</strong> (Book appointment, upload docs, Digital Health Passport)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">25-08-2026</td>
+                    <td class="center date-col">28-08-2026</td>
+                    <td class="center timeline-col">4 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-teja">Teja</span></td>
+                </tr>
+
+                <!-- Row 2 (Teja Task 2) -->
+                <tr>
+                    <td class="num-col">2</td>
+                    <td class="module-col">
+                        Appointments
+                        <div class="module-subtext">(Hospital-Wise / Global)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Multi-hospital appointment list</strong> (Aggregated patient appointments across all hospitals)</li>
+                            <li><strong>Hospital accordion view</strong> (Grouped expandable hospital cards with count badges)</li>
+                            <li><strong>Date & status filters</strong> (All, Upcoming [today/future], Completed, Cancelled)</li>
+                            <li><strong>Appointment details & booking</strong> (New booking dialog, doctor selection, booking cancellation)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">31-08-2026</td>
+                    <td class="center date-col">03-09-2026</td>
+                    <td class="center timeline-col">4 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-teja">Teja</span></td>
+                </tr>
+
+                <!-- Row 3 (Teja Task 3) -->
+                <tr>
+                    <td class="num-col">3</td>
+                    <td class="module-col">
+                        Medical Records
+                        <div class="module-subtext">(Documents & Passport)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Digital Health Passport</strong> (Universal QR code, blood group, emergency contact details)</li>
+                            <li><strong>Global medical records vault</strong> (Central vault of all lab reports & checkup PDFs)</li>
+                            <li><strong>Document upload & sharing</strong> (Upload lab files & generate doctor upload share links)</li>
+                            <li><strong>Prescriptions archive</strong> (All past digital prescriptions & PDF download export)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">04-09-2026</td>
+                    <td class="center date-col">10-09-2026</td>
+                    <td class="center timeline-col">5 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-teja">Teja</span></td>
+                </tr>
+
+                <!-- Row 4 (Teja Task 4 - Diet Plan) -->
+                <tr>
+                    <td class="num-col">4</td>
+                    <td class="module-col">
+                        Diet & Nutrition Plan
+                        <div class="module-subtext">(Personalized Meals)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Prescribed diet chart</strong> (View meal plans assigned by doctor or clinical nutritionist)</li>
+                            <li><strong>Daily meal schedule</strong> (Breakfast, lunch, evening snack, and dinner meal cards)</li>
+                            <li><strong>Calorie & nutrition summary</strong> (Proteins, carbs, fats, and daily calorie target tracker)</li>
+                            <li><strong>Diet PDF export</strong> (Export and download diet chart as PDF for offline printing)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">11-09-2026</td>
+                    <td class="center date-col">16-09-2026</td>
+                    <td class="center timeline-col">4 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-teja">Teja</span></td>
+                </tr>
+
+                <!-- Row 5 (Mani Task 1) -->
+                <tr>
+                    <td class="num-col">5</td>
+                    <td class="module-col">
+                        Patient Profile
+                        <div class="module-subtext">(Demographics & Switcher)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Patient profile details</strong> (Name, photo, UHID, age, blood group, emergency contacts)</li>
+                            <li><strong>Unified account switcher</strong> (Active status pill, seamless role switching to Provider/Admin)</li>
+                            <li><strong>Settings & security</strong> (Biometric login, PIN lock, change password, logout)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">25-08-2026</td>
+                    <td class="center date-col">27-08-2026</td>
+                    <td class="center timeline-col">3 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-mani">Mani</span></td>
+                </tr>
+
+                <!-- Row 6 (Sateesh Task 1 - Questionnaires starting 27-08-2026) -->
+                <tr>
+                    <td class="num-col">6</td>
+                    <td class="module-col">
+                        Health Questionnaires
+                        <div class="module-subtext">(Forms & Screening)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Pre-consultation screening forms</strong> (Dynamic intake questionnaires before doctor visit)</li>
+                            <li><strong>Symptom assessment forms</strong> (Checklist for current symptoms, pain scale, & health history)</li>
+                            <li><strong>Response submission & history</strong> (Submit answers directly to attending physician's portal)</li>
+                            <li><strong>Form status tracker</strong> (Pending, completed, and mandatory questionnaire badges)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">27-08-2026</td>
+                    <td class="center date-col">02-09-2026</td>
+                    <td class="center timeline-col">5 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-sateesh">Sateesh</span></td>
+                </tr>
+
+                <!-- Row 7 (Mani Task 2) -->
+                <tr>
+                    <td class="num-col">7</td>
+                    <td class="module-col">
+                        Notifications
+                        <div class="module-subtext">(Center & Push Alerts)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Appointment booking alerts</strong> (New booking, reschedule, cancellation push alerts)</li>
+                            <li><strong>15-Min prior reminder</strong> (Call alert before teleconsultation starts)</li>
+                            <li><strong>Notification center</strong> (Read/unread list with deep-linking to records)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">28-08-2026</td>
+                    <td class="center date-col">02-09-2026</td>
+                    <td class="center timeline-col">4 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-mani">Mani</span></td>
+                </tr>
+
+                <!-- Row 8 (Mani Task 3) -->
+                <tr>
+                    <td class="num-col">8</td>
+                    <td class="module-col">
+                        Online Consultation
+                        <div class="module-subtext">(Zoom Call Integration)</div>
+                    </td>
+                    <td>
+                        <ul class="features-list">
+                            <li><strong>Zoom teleconsultation launch</strong> (One-click launch of Zoom meeting room for video consultation)</li>
+                            <li><strong>Meeting link & join details</strong> (Display Zoom Meeting URL, Meeting ID & passcode in card)</li>
+                            <li><strong>In-app Zoom launch support</strong> (Seamless deep-linking to Zoom mobile app or in-app web view)</li>
+                        </ul>
+                    </td>
+                    <td class="center date-col">03-09-2026</td>
+                    <td class="center date-col">09-09-2026</td>
+                    <td class="center timeline-col">5 Days</td>
+                    <td class="center assigned-col"><span class="badge badge-mani">Mani</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Summary Footer -->
+        <div class="summary-box">
+            <div class="summary-item">
+                <span class="summary-label">Start Date:</span> 25-08-2026 (Today)
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Project Completion:</span> 16-09-2026
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Schedule:</span> Mon – Fri (5 Days/Wk, Weekends Excluded)
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Teja Share:</span> 4 Modules (17 Days)
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Mani Share:</span> 3 Modules (12 Days)
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Sateesh Share:</span> 1 Module (5 Days)
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

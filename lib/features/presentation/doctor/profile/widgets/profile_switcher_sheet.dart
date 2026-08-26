@@ -48,11 +48,20 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     final allRoles = currentUser?.data?.roles ?? [];
     final roles = allRoles.where((r) {
       final name = r.roleName?.toLowerCase() ?? '';
+      final roleId = (r.roleId ?? '').toUpperCase();
       return name.contains('provider') ||
           name.contains('doctor') ||
           name.contains('physician') ||
           name.contains('user') ||
-          name.contains('patient');
+          name.contains('patient') ||
+          name.contains('front desk') ||
+          name.contains('admin') ||
+          roleId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+          roleId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
+          roleId == '3956F98D-D835-4204-8D5B-72870E57FF76' ||
+          roleId == 'FFE1811D-6200-407C-9BDD-3B89FA1BAF2B' ||
+          roleId == '6F92E889-9844-4C8F-A9E7-5A456F12A9C7' ||
+          roleId == 'F6C3292F-BB06-4F43-9962-988E23087FD5';
     }).toList();
 
     if (roles.isEmpty) {
@@ -66,13 +75,48 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       final getWorkSpaceUseCase = sl<GetWorkSpaceDetailsUseCase>();
       final List<_FlatWorkspaceItem> items = [];
 
+      bool addedPatientEntry = false;
+
       for (final role in roles) {
         final roleId = role.roleId ?? '';
+        final roleIdUpper = roleId.toUpperCase();
         final rawRoleName = role.roleName ?? 'Provider';
-        final String roleName = (rawRoleName.toLowerCase().contains('patient') ||
-                rawRoleName.toLowerCase().contains('user'))
-            ? 'User'
-            : 'Provider';
+
+        String roleName = rawRoleName;
+        if (roleIdUpper == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+            rawRoleName.toLowerCase().contains('patient') ||
+            rawRoleName.toLowerCase().contains('user') ||
+            rawRoleName.toLowerCase().contains('client') ||
+            rawRoleName.toLowerCase().contains('consumer')) {
+          roleName = 'User';
+        } else if (roleIdUpper == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' || rawRoleName.toLowerCase().contains('provider')) {
+          roleName = 'Provider';
+        } else if (roleIdUpper == '3956F98D-D835-4204-8D5B-72870E57FF76' || rawRoleName.toLowerCase().contains('front desk')) {
+          roleName = 'Front Desk';
+        } else if (roleIdUpper == 'FFE1811D-6200-407C-9BDD-3B89FA1BAF2B' || rawRoleName.toLowerCase().contains('hospital admin')) {
+          roleName = 'Hospital Admin';
+        } else if (roleIdUpper == '6F92E889-9844-4C8F-A9E7-5A456F12A9C7' || rawRoleName.toLowerCase().contains('org admin')) {
+          roleName = 'Org Admin';
+        } else if (roleIdUpper == 'F6C3292F-BB06-4F43-9962-988E23087FD5' || rawRoleName.toLowerCase().contains('system admin')) {
+          roleName = 'Yira System Admin';
+        }
+
+        // Patients / Users have a single, unified profile across the platform
+        if (roleName == 'User' || roleName == 'Patient') {
+          if (!addedPatientEntry) {
+            items.add(_FlatWorkspaceItem(
+              roleId: roleId,
+              roleName: 'User',
+              orgId: 1,
+              orgName: 'Unified Health Account',
+              hospitalId: 1,
+              hospitalName: 'User Profile',
+              location: 'Personal Account',
+            ));
+            addedPatientEntry = true;
+          }
+          continue;
+        }
 
         if (roleId.isNotEmpty) {
           try {
@@ -218,7 +262,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     if (lower.contains('doctor') || lower.contains('provider') || lower.contains('physician')) {
       return Icons.medical_services_rounded;
     }
-    if (lower.contains('patient')) {
+    if (lower.contains('patient') || lower.contains('user')) {
       return Icons.person_rounded;
     }
     if (lower.contains('admin') || lower.contains('manager')) {
@@ -238,7 +282,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     if (lower.contains('admin')) {
       return const Color(0xFF6366F1); // Indigo
     }
-    if (lower.contains('patient')) {
+    if (lower.contains('patient') || lower.contains('user')) {
       return const Color(0xFF10B981); // Emerald
     }
     if (lower.contains('nurse')) {
@@ -365,12 +409,32 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                               final item = _flatItems[index];
                               final String key = "${item.roleId}_${item.orgId}_${item.hospitalId}";
                               final bool isSwitching = (_switchingKey == key);
-                              final bool isActive = (item.roleId == activeRoleId) &&
-                                  (item.hospitalId == activeHospitalId);
+                              final activeRoleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+                              final activeNavId = currentUser?.data?.navigationId?.toString().trim();
+                              final activeRoleIdStr = (activeRoleId?.toString() ?? '').toUpperCase();
+
+                              final isPatientItem = (item.roleName == 'User' ||
+                                  item.roleName == 'Patient' ||
+                                  item.roleId.toUpperCase() == '4FC67429-28AE-4106-93EF-436228282ED0');
+
+                              final bool isSessionPatient = activeRoleName.contains('patient') ||
+                                  activeRoleName == 'user' ||
+                                  activeRoleName.contains('consumer') ||
+                                  activeRoleName.contains('client') ||
+                                  activeNavId == '1' ||
+                                  activeRoleIdStr == '4FC67429-28AE-4106-93EF-436228282ED0';
+
+                              final bool isActive = isPatientItem
+                                  ? isSessionPatient
+                                  : (!isSessionPatient &&
+                                      item.roleId.toUpperCase() == activeRoleIdStr &&
+                                      item.hospitalId.toString() == activeHospitalId.toString());
                               final Color roleColor = _getRoleColor(item.roleName, primaryColor);
 
-                              // Format: "Yira Hospital (Provider)"
-                              final String displayTitle = "${item.hospitalName} (${item.roleName})";
+                              // Format: "User Profile" or "Yira Hospital (Provider)"
+                              final String displayTitle = (item.roleName == 'User' || item.roleName == 'Patient')
+                                  ? item.hospitalName
+                                  : "${item.hospitalName} (${item.roleName})";
 
                               return Material(
                                 color: isActive

@@ -86,7 +86,10 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
               final navigationRoutes = const {
                 '1': AppRoutes.patientDashboard,
                 '2': AppRoutes.doctorDashboard,
-                '3': AppRoutes.patientDashboard,
+                '3': AppRoutes.doctorDashboard,
+                '4': AppRoutes.doctorDashboard,
+                '5': AppRoutes.doctorDashboard,
+                '6': AppRoutes.doctorDashboard,
               };
 
               final coreRoute = navigationRoutes[navigationId];
