@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
@@ -20,6 +20,9 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     on<ChangeDurationEvent>(_onChangeDuration);
     on<ChangeBufferEvent>(_onChangeBuffer);
     on<UpdateTimeRangeEvent>(_onUpdateTimeRange);
+    on<AddBreakTimeEvent>(_onAddBreakTime);
+    on<UpdateBreakTimeEvent>(_onUpdateBreakTime);
+    on<RemoveBreakTimeEvent>(_onRemoveBreakTime);
     on<GenerateTemplateSlotsEvent>(_onGenerateTemplateSlots);
     on<AddCustomSlotEvent>(_onAddCustomSlot);
     on<RemoveSlotEvent>(_onRemoveSlot);
@@ -45,26 +48,36 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
   }
 
   int _timeStringToMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
     try {
-      timeStr = timeStr.trim();
+      final cleaned = timeStr.replaceAll(RegExp(r'[\s\u00A0\u2000-\u200B\u202F]+'), ' ').trim();
+      
+      final match = RegExp(r'^(\d{1,2}):(\d{2})\s*([a-zA-Z]{2})?', caseSensitive: false).firstMatch(cleaned);
+      if (match != null) {
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+        String? ampm = match.group(3)?.toUpperCase();
+
+        if (ampm == 'PM' && hour < 12) {
+          hour += 12;
+        } else if (ampm == 'AM' && hour == 12) {
+          hour = 0;
+        }
+        return hour * 60 + minute;
+      }
+
       DateTime dt;
-      if (timeStr.toUpperCase().contains('AM') || timeStr.toUpperCase().contains('PM')) {
-        dt = DateFormat('h:mm a').parse(timeStr);
+      if (cleaned.toUpperCase().contains('AM') || cleaned.toUpperCase().contains('PM')) {
+        try {
+          dt = DateFormat('h:mm a').parse(cleaned);
+        } catch (_) {
+          dt = DateFormat('hh:mm a').parse(cleaned);
+        }
       } else {
-        dt = DateFormat('HH:mm').parse(timeStr);
+        dt = DateFormat('HH:mm').parse(cleaned);
       }
       return dt.hour * 60 + dt.minute;
     } catch (_) {
-      try {
-        final parts = timeStr.split(':');
-        if (parts.length >= 2) {
-          int h = int.parse(parts[0]);
-          int m = int.parse(parts[1].split(' ')[0]);
-          if (timeStr.toUpperCase().contains('PM') && h < 12) h += 12;
-          if (timeStr.toUpperCase().contains('AM') && h == 12) h = 0;
-          return h * 60 + m;
-        }
-      } catch (_) {}
       return 0;
     }
   }
@@ -73,7 +86,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     int h = (totalMinutes ~/ 60) % 24;
     int m = totalMinutes % 60;
     final dt = DateTime(2000, 1, 1, h, m);
-    return DateFormat('h:mm a').format(dt);
+    return DateFormat('hh:mm a').format(dt);
   }
 
   bool _isOverlapping(int start1, int end1, int start2, int end2) {
@@ -85,16 +98,31 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     required String bufferType,
     String fromTime = '09:00 AM',
     String toTime = '05:00 PM',
+    List<BreakTimeEntity> breakTimes = const [],
     List<SlotEntity>? existingSlots,
   }) {
     final int bufferMinutes = _bufferStringToMinutes(bufferType);
     final int effectiveDuration = durationMinutes > 0 ? durationMinutes : 20;
 
-    // Preserve existing booked slots
-    final bookedSlots = (existingSlots ?? []).where((s) => s.hasAppointment || s.label == 'Booked').toList();
-
     final int dayStart = _timeStringToMinutes(fromTime);
     final int dayEnd = _timeStringToMinutes(toTime);
+
+    // Preserve existing booked slots only if they don't overlap with any break and fall within shift hours
+    final bookedSlots = (existingSlots ?? []).where((s) {
+      if (!s.hasAppointment && s.label != 'Booked') return false;
+      final sStart = _timeStringToMinutes(s.startTime);
+      final sEnd = _timeStringToMinutes(s.endTime);
+      if (sStart < dayStart || sEnd > dayEnd) return false;
+
+      for (final b in breakTimes) {
+        final bStart = _timeStringToMinutes(b.fromTime);
+        final bEnd = _timeStringToMinutes(b.toTime);
+        if (_isOverlapping(sStart, sEnd, bStart, bEnd)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
 
     if (dayStart >= dayEnd) {
       return bookedSlots;
@@ -102,12 +130,35 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
 
     final List<SlotEntity> generated = [];
     int current = dayStart;
+    int iterations = 0;
 
-    while (current + effectiveDuration <= dayEnd) {
+    while (current + effectiveDuration <= dayEnd && iterations < 500) {
+      iterations++;
       final int slotStart = current;
       final int slotEnd = current + effectiveDuration;
 
-      // Check if this interval overlaps with any existing booked slot
+      // 1. Check if this candidate slot overlaps with ANY break interval
+      BreakTimeEntity? overlappingBreak;
+      for (final b in breakTimes) {
+        final bStart = _timeStringToMinutes(b.fromTime);
+        final bEnd = _timeStringToMinutes(b.toTime);
+        if (bStart < bEnd && _isOverlapping(slotStart, slotEnd, bStart, bEnd)) {
+          overlappingBreak = b;
+          break;
+        }
+      }
+
+      if (overlappingBreak != null) {
+        final bEnd = _timeStringToMinutes(overlappingBreak.toTime);
+        if (bEnd > current) {
+          current = bEnd;
+        } else {
+          current = slotEnd;
+        }
+        continue;
+      }
+
+      // 2. Check if this candidate slot overlaps with any existing booked slot
       final overlappingBooked = bookedSlots.where((b) {
         final bStart = _timeStringToMinutes(b.startTime);
         final bEnd = _timeStringToMinutes(b.endTime);
@@ -115,7 +166,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       }).toList();
 
       if (overlappingBooked.isEmpty) {
-        final newId = "slot_${slotStart}_${slotEnd}_${DateTime.now().millisecondsSinceEpoch}";
+        final newId = "slot_${slotStart}_${slotEnd}_${DateTime.now().millisecondsSinceEpoch}_$iterations";
         final startStr = _minutesToTimeString(slotStart);
         final endStr = _minutesToTimeString(slotEnd);
 
@@ -127,9 +178,12 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         ));
         current = slotEnd + bufferMinutes;
       } else {
-        // Jump current past the overlapping booked slot
         final bEnd = _timeStringToMinutes(overlappingBooked.first.endTime);
-        current = bEnd + bufferMinutes;
+        if (bEnd > current) {
+          current = bEnd + bufferMinutes;
+        } else {
+          current = slotEnd + bufferMinutes;
+        }
       }
     }
 
@@ -189,14 +243,41 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         bufferType: currentState.bufferType,
       );
 
+      List<SlotEntity> slots = fetchedLegacySlots;
+      List<TimeSlot> timeSlots = fetchedModernSlots;
+
+      // Always calculate slots on frontend if API returns empty schedule
+      if (slots.isEmpty) {
+        slots = _generateScheduleSlots(
+          durationMinutes: currentState.durationMinutes,
+          bufferType: currentState.bufferType,
+          fromTime: currentState.fromTime,
+          toTime: currentState.toTime,
+          breakTimes: currentState.breakTimes,
+        );
+        timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
+      }
+
       emit(currentState.copyWith(
-        slots: fetchedLegacySlots,
-        timeSlots: fetchedModernSlots,
+        slots: slots,
+        timeSlots: timeSlots,
         isLoading: false,
       ));
     } catch (e) {
-      debugPrint('SlotBloc: InitializeSlots error: $e');
-      emit(currentState.copyWith(isLoading: false));
+      debugPrint('SlotBloc: InitializeSlots fallback to frontend calculation: $e');
+      final slots = _generateScheduleSlots(
+        durationMinutes: currentState.durationMinutes,
+        bufferType: currentState.bufferType,
+        fromTime: currentState.fromTime,
+        toTime: currentState.toTime,
+        breakTimes: currentState.breakTimes,
+      );
+      final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
+      emit(currentState.copyWith(
+        slots: slots,
+        timeSlots: timeSlots,
+        isLoading: false,
+      ));
     }
   }
 
@@ -210,6 +291,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       bufferType: currentState.bufferType,
       fromTime: currentState.fromTime,
       toTime: currentState.toTime,
+      breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
     );
     final templateModernSlots = _mapSlotsToTimeSlots(templateSlots, currentState.durationMinutes);
@@ -231,6 +313,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       bufferType: currentState.bufferType,
       fromTime: event.fromTime,
       toTime: event.toTime,
+      breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
@@ -244,11 +327,147 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     ));
   }
 
+  void _onAddBreakTime(AddBreakTimeEvent event, Emitter<SlotState> emit) {
+    final SlotDataState currentState = state is SlotDataState
+        ? state as SlotDataState
+        : SlotDataState.initial();
+
+    final count = currentState.breakTimes.length + 1;
+    final defaultLabel = 'Break $count';
+    String defaultFrom = '01:00 PM';
+    String defaultTo = '02:00 PM';
+
+    if (currentState.breakTimes.isNotEmpty) {
+      if (currentState.breakTimes.length == 1) {
+        defaultFrom = '04:00 PM';
+        defaultTo = '04:30 PM';
+      } else if (currentState.breakTimes.length == 2) {
+        defaultFrom = '06:00 PM';
+        defaultTo = '06:30 PM';
+      } else {
+        defaultFrom = '07:00 PM';
+        defaultTo = '07:30 PM';
+      }
+    }
+
+    final newBreak = BreakTimeEntity(
+      id: 'break_${DateTime.now().millisecondsSinceEpoch}',
+      label: event.label ?? defaultLabel,
+      fromTime: event.fromTime ?? defaultFrom,
+      toTime: event.toTime ?? defaultTo,
+    );
+
+    final updatedBreaks = [...currentState.breakTimes, newBreak];
+
+    debugPrint("SlotBloc: Adding break '${newBreak.label}' (${newBreak.fromTime} - ${newBreak.toTime}). Total breaks: ${updatedBreaks.length}");
+
+    final newSlots = _generateScheduleSlots(
+      durationMinutes: currentState.durationMinutes,
+      bufferType: currentState.bufferType,
+      fromTime: currentState.fromTime,
+      toTime: currentState.toTime,
+      breakTimes: updatedBreaks,
+      existingSlots: currentState.slots,
+    );
+    final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
+
+    debugPrint("SlotBloc: Slots reallocated around break. Total slots: ${newSlots.length}");
+
+    emit(currentState.copyWith(
+      breakTimes: updatedBreaks,
+      slots: newSlots,
+      timeSlots: newTimeSlots,
+    ));
+  }
+
+  void _onUpdateBreakTime(UpdateBreakTimeEvent event, Emitter<SlotState> emit) {
+    final SlotDataState currentState = state is SlotDataState
+        ? state as SlotDataState
+        : SlotDataState.initial();
+
+    final updatedBreaks = currentState.breakTimes.map((b) {
+      if (b.id == event.breakId) {
+        return b.copyWith(
+          label: event.label,
+          fromTime: event.fromTime,
+          toTime: event.toTime,
+        );
+      }
+      return b;
+    }).toList();
+
+    debugPrint("SlotBloc: Updating break ${event.breakId} to (${event.fromTime} - ${event.toTime})");
+
+    final newSlots = _generateScheduleSlots(
+      durationMinutes: currentState.durationMinutes,
+      bufferType: currentState.bufferType,
+      fromTime: currentState.fromTime,
+      toTime: currentState.toTime,
+      breakTimes: updatedBreaks,
+      existingSlots: currentState.slots,
+    );
+    final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
+
+    debugPrint("SlotBloc: Slots reallocated on break update. Total slots: ${newSlots.length}");
+
+    emit(currentState.copyWith(
+      breakTimes: updatedBreaks,
+      slots: newSlots,
+      timeSlots: newTimeSlots,
+    ));
+  }
+
+  void _onRemoveBreakTime(RemoveBreakTimeEvent event, Emitter<SlotState> emit) {
+    final SlotDataState currentState = state is SlotDataState
+        ? state as SlotDataState
+        : SlotDataState.initial();
+
+    final updatedBreaks = currentState.breakTimes.where((b) => b.id != event.breakId).toList();
+
+    debugPrint("SlotBloc: Removed break ${event.breakId}. Remaining breaks: ${updatedBreaks.length}");
+
+    final newSlots = _generateScheduleSlots(
+      durationMinutes: currentState.durationMinutes,
+      bufferType: currentState.bufferType,
+      fromTime: currentState.fromTime,
+      toTime: currentState.toTime,
+      breakTimes: updatedBreaks,
+      existingSlots: currentState.slots,
+    );
+    final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);
+
+    debugPrint("SlotBloc: Slots reallocated on break removal. Total slots: ${newSlots.length}");
+
+    emit(currentState.copyWith(
+      breakTimes: updatedBreaks,
+      slots: newSlots,
+      timeSlots: newTimeSlots,
+    ));
+  }
+
   void _onChangeExecutionMode(ChangeExecutionModeEvent event, Emitter<SlotState> emit) {
     final SlotDataState currentState = state is SlotDataState
         ? state as SlotDataState
         : SlotDataState.initial();
-    emit(currentState.copyWith(isSingleDay: event.isSingleDay));
+
+    // Ensure template slots exist
+    List<SlotEntity> slots = currentState.slots;
+    if (slots.isEmpty) {
+      slots = _generateScheduleSlots(
+        durationMinutes: currentState.durationMinutes,
+        bufferType: currentState.bufferType,
+        fromTime: currentState.fromTime,
+        toTime: currentState.toTime,
+        breakTimes: currentState.breakTimes,
+      );
+    }
+    final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
+
+    emit(currentState.copyWith(
+      isSingleDay: event.isSingleDay,
+      slots: slots,
+      timeSlots: timeSlots,
+    ));
   }
 
   void _onUpdateTargetDate(UpdateTargetDateEvent event, Emitter<SlotState> emit) {
@@ -262,7 +481,25 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     final SlotDataState currentState = state is SlotDataState
         ? state as SlotDataState
         : SlotDataState.initial();
-    emit(currentState.copyWith(startDate: event.startDate, endDate: event.endDate));
+
+    List<SlotEntity> slots = currentState.slots;
+    if (slots.isEmpty) {
+      slots = _generateScheduleSlots(
+        durationMinutes: currentState.durationMinutes,
+        bufferType: currentState.bufferType,
+        fromTime: currentState.fromTime,
+        toTime: currentState.toTime,
+        breakTimes: currentState.breakTimes,
+      );
+    }
+    final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
+
+    emit(currentState.copyWith(
+      startDate: event.startDate,
+      endDate: event.endDate,
+      slots: slots,
+      timeSlots: timeSlots,
+    ));
   }
 
   void _onChangeDuration(ChangeDurationEvent event, Emitter<SlotState> emit) {
@@ -275,6 +512,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       bufferType: currentState.bufferType,
       fromTime: currentState.fromTime,
       toTime: currentState.toTime,
+      breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, event.duration);
@@ -297,6 +535,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       bufferType: event.buffer,
       fromTime: currentState.fromTime,
       toTime: currentState.toTime,
+      breakTimes: currentState.breakTimes,
       existingSlots: currentState.slots,
     );
     final newTimeSlots = _mapSlotsToTimeSlots(newSlots, currentState.durationMinutes);

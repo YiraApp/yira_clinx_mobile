@@ -45,3 +45,31 @@ class SlotEntity {
     );
   }
 }
+
+class BreakTimeEntity {
+  final String id;
+  final String label;
+  final String fromTime;
+  final String toTime;
+
+  BreakTimeEntity({
+    required this.id,
+    required this.label,
+    required this.fromTime,
+    required this.toTime,
+  });
+
+  BreakTimeEntity copyWith({
+    String? id,
+    String? label,
+    String? fromTime,
+    String? toTime,
+  }) {
+    return BreakTimeEntity(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      fromTime: fromTime ?? this.fromTime,
+      toTime: toTime ?? this.toTime,
+    );
+  }
+}

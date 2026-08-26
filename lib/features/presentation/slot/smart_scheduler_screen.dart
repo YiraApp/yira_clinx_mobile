@@ -94,46 +94,78 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                         const SizedBox(height: fieldSpace),
                         ParametersCard(state: dataState,isTab: isTab,),
                         const SizedBox(height: inputFieldBorderRadius),
-                        if (dataState.isSingleDay &&
-                            dataState.slots.isNotEmpty) ...[
+                        if (dataState.slots.isNotEmpty) ...[
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              CommonText(
-                                'Daily Slots',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.03,
-                                  fontWeight: FontWeight.w700,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CommonText(
+                                      dataState.isSingleDay ? 'Daily Slots' : 'Daily Slots Template',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.038,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    if (!dataState.isSingleDay)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: CommonText(
+                                          'These slots will apply to all days in date range',
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.028,
+                                            color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
-                              CommonText(
-                                DateFormat(
-                                  'EEEE, MMM dd',
-                                ).format(dataState.targetDate).toUpperCase(),
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: isTab?  displayWidth(context) * 0.018:displayWidth(context) * 0.03,
-                                  color: isDark
-                                      ? Colors.white60
-                                      : Colors.grey.shade500,
-                                  letterSpacing: 1,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: theme.primaryColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: CommonText(
+                                  dataState.isSingleDay
+                                      ? DateFormat('EEEE, MMM dd').format(dataState.targetDate)
+                                      : "${DateFormat('MMM dd').format(dataState.startDate)} - ${DateFormat('MMM dd').format(dataState.endDate)}",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.028,
+                                    color: theme.primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                        ],
-                        if (dataState.isSingleDay) ...[
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: dataState.slots.length,
-                            separatorBuilder: (_, _) =>
-                            const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              return SlotConfigurationCard(
-                                slot: dataState.slots[index],
+                          Builder(
+                            builder: (context) {
+                              final timelineItems = _buildTimelineItems(dataState.slots, dataState.breakTimes);
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: timelineItems.length,
+                                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final item = timelineItems[index];
+                                  if (item is SlotEntity) {
+                                    return SlotConfigurationCard(
+                                      slot: item,
+                                    );
+                                  } else if (item is BreakTimeEntity) {
+                                    return _buildBreakTimelineCard(context, item, isDark, isTab);
+                                  }
+                                  return const SizedBox.shrink();
+                                },
                               );
                             },
                           ),
@@ -143,13 +175,13 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
                               side: BorderSide(
-                                color: theme.primaryColor.withOpacity(0.4),
+                                color: theme.primaryColor.withValues(alpha: 0.4),
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                               ),
                               backgroundColor: isDark
-                                  ? Colors.white.withOpacity(0.02)
+                                  ? Colors.white.withValues(alpha: 0.02)
                                   : Colors.transparent,
                             ),
                             child: Row(
@@ -165,9 +197,45 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                   'Add Custom Slot',
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
-                                    fontSize:isTab?  displayWidth(context) * 0.02: displayWidth(context) * 0.035,
+                                    fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.035,
                                     color: theme.primaryColor,
                                     fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(fieldBorderRadius),
+                              border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.event_busy_rounded, color: Colors.grey.shade400, size: 40),
+                                const SizedBox(height: 10),
+                                const CommonText(
+                                  'No slots generated for current parameters.',
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                ),
+                                const SizedBox(height: 4),
+                                const CommonText(
+                                  'Try adjusting shift times, break times, or add custom slots.',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 14),
+                                OutlinedButton.icon(
+                                  onPressed: () => _showAddCustomSlotDialog(context, dataState),
+                                  icon: Icon(Icons.add, size: 16, color: theme.primaryColor),
+                                  label: CommonText('Add Custom Slot', style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(color: theme.primaryColor.withValues(alpha: 0.5)),
                                   ),
                                 ),
                               ],
@@ -197,7 +265,9 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           noElevation: true,
                           height: 50,
                           width: displayWidth(context),
-                          text: "Deploy Schedular",
+                          text: dataState.isSingleDay
+                              ? "Deploy Schedule (${dataState.slots.length} Slots)"
+                              : "Deploy Schedule (${dataState.slots.length} Slots/Day)",
                           onPressed: () => context.read<SlotBloc>().add(
                             DeployScheduleEvent(),
                           ),
@@ -249,7 +319,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.12),
+                      color: theme.primaryColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.add_alarm_rounded, color: theme.primaryColor, size: 22),
@@ -356,7 +426,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                         child: ChoiceChip(
                           label: const Center(child: Text('Available')),
                           selected: status == 'Available',
-                          selectedColor: Colors.green.withOpacity(0.2),
+                          selectedColor: Colors.green.withValues(alpha: 0.2),
                           onSelected: (val) => setDialogState(() => status = 'Available'),
                         ),
                       ),
@@ -365,7 +435,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                         child: ChoiceChip(
                           label: const Center(child: Text('Blocked')),
                           selected: status == 'Blocked',
-                          selectedColor: Colors.redAccent.withOpacity(0.2),
+                          selectedColor: Colors.redAccent.withValues(alpha: 0.2),
                           onSelected: (val) => setDialogState(() => status = 'Blocked'),
                         ),
                       ),
@@ -443,6 +513,133 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
           },
         );
       },
+    );
+  }
+
+  int _timeStringToMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
+    try {
+      final cleaned = timeStr.replaceAll(RegExp(r'[\s\u00A0\u2000-\u200B\u202F]+'), ' ').trim();
+      final match = RegExp(r'^(\d{1,2}):(\d{2})\s*([a-zA-Z]{2})?', caseSensitive: false).firstMatch(cleaned);
+      if (match != null) {
+        int hour = int.parse(match.group(1)!);
+        int minute = int.parse(match.group(2)!);
+        String? ampm = match.group(3)?.toUpperCase();
+
+        if (ampm == 'PM' && hour < 12) {
+          hour += 12;
+        } else if (ampm == 'AM' && hour == 12) {
+          hour = 0;
+        }
+        return hour * 60 + minute;
+      }
+      DateTime dt;
+      if (cleaned.toUpperCase().contains('AM') || cleaned.toUpperCase().contains('PM')) {
+        try {
+          dt = DateFormat('h:mm a').parse(cleaned);
+        } catch (_) {
+          dt = DateFormat('hh:mm a').parse(cleaned);
+        }
+      } else {
+        dt = DateFormat('HH:mm').parse(cleaned);
+      }
+      return dt.hour * 60 + dt.minute;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  List<dynamic> _buildTimelineItems(List<SlotEntity> slots, List<BreakTimeEntity> breakTimes) {
+    final List<dynamic> items = [...slots, ...breakTimes];
+    items.sort((a, b) {
+      final aTime = a is SlotEntity ? a.startTime : (a as BreakTimeEntity).fromTime;
+      final bTime = b is SlotEntity ? b.startTime : (b as BreakTimeEntity).fromTime;
+      return _timeStringToMinutes(aTime).compareTo(_timeStringToMinutes(bTime));
+    });
+    return items;
+  }
+
+  Widget _buildBreakTimelineCard(BuildContext context, BreakTimeEntity b, bool isDark, bool isTab) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        border: Border.all(
+          color: isDark ? Colors.amber.withValues(alpha: 0.3) : const Color(0xFFFDE68A),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.free_breakfast_rounded,
+              color: Colors.amber,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CommonText(
+                      b.label.isNotEmpty ? b.label : 'Break Period',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.032,
+                        color: isDark ? Colors.amber.shade300 : const Color(0xFFB45309),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (isDark ? Colors.amber : const Color(0xFFB45309)).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: CommonText(
+                        'Break',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.amber.shade300 : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                CommonText(
+                  '${b.fromTime} - ${b.toTime} • Break period (No slots scheduled)',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.026,
+                    color: isDark ? Colors.white60 : Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              context.read<SlotBloc>().add(RemoveBreakTimeEvent(b.id));
+            },
+          ),
+        ],
+      ),
     );
   }
 

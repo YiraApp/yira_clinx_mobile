@@ -153,6 +153,8 @@ class SlotDataState extends SlotState {
   final String bufferType;
   final String fromTime;
   final String toTime;
+  final List<BreakTimeEntity>? _breakTimes;
+  List<BreakTimeEntity> get breakTimes => _breakTimes ?? const [];
   final bool isLoading;
   final bool isDeploying;
   final bool deploySuccess;
@@ -170,13 +172,14 @@ class SlotDataState extends SlotState {
     required this.bufferType,
     this.fromTime = '09:00 AM',
     this.toTime = '05:00 PM',
+    List<BreakTimeEntity>? breakTimes,
     required this.slots,
     required this.timeSlots,
     this.isLoading = false,
     this.isDeploying = false,
     this.deploySuccess = false,
     this.selectedTabIndex = 0,
-  });
+  }) : _breakTimes = breakTimes;
 
   factory SlotDataState.initial() {
     final now = DateTime.now();
@@ -189,6 +192,7 @@ class SlotDataState extends SlotState {
       bufferType: '5 Minutes',
       fromTime: '09:00 AM',
       toTime: '05:00 PM',
+      breakTimes: const [],
       slots: const [],
       timeSlots: const [],
       selectedTabIndex: 0,
@@ -240,6 +244,7 @@ class SlotDataState extends SlotState {
     String? bufferType,
     String? fromTime,
     String? toTime,
+    List<BreakTimeEntity>? breakTimes,
     List<SlotEntity>? slots,
     List<TimeSlot>? timeSlots,
     bool? isLoading,
@@ -256,6 +261,7 @@ class SlotDataState extends SlotState {
       bufferType: bufferType ?? this.bufferType,
       fromTime: fromTime ?? this.fromTime,
       toTime: toTime ?? this.toTime,
+      breakTimes: breakTimes ?? (_breakTimes != null ? List<BreakTimeEntity>.from(_breakTimes) : const []),
       isLoading: isLoading ?? this.isLoading,
       isDeploying: isDeploying ?? this.isDeploying,
       deploySuccess: deploySuccess ?? this.deploySuccess,
