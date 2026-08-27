@@ -259,18 +259,6 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
               Icon(Icons.assignment_outlined, size: 48, color: Colors.grey.shade400),
               const SizedBox(height: 12),
               const CommonText("No medical records history found."),
-              if (!isPatient) ...[
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _openRecordFormModal(),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text("Add First Medical Record"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ],
             ],
           ),
         );
