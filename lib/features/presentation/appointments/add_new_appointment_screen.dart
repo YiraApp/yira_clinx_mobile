@@ -1747,6 +1747,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
             (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
 
+
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
           appBar: AppBar(
