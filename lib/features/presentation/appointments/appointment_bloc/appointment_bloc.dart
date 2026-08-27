@@ -72,13 +72,15 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
       emit(const BookAppointmentLoadingState());
       try {
         final currentUser = GlobalSession.instance.userNotifier.value;
-        final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
-            ? currentUser.data!.id!.trim()
-            : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
-                ? currentUser.data!.navigationId!.trim()
-                : '1';
-        final int orgId = currentUser?.data?.latestOrgId ?? 1;
-        final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+        final String doctorId = (event.doctorId != null && event.doctorId!.trim().isNotEmpty)
+            ? event.doctorId!.trim()
+            : ((currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+                ? currentUser.data!.id!.trim()
+                : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+                    ? currentUser.data!.navigationId!.trim()
+                    : '1');
+        final int orgId = event.orgId ?? (currentUser?.data?.latestOrgId ?? 1);
+        final int hospitalId = event.hospitalId ?? (currentUser?.data?.latestHospitalId ?? 1);
 
         final success = await appointmentRepo.bookAppointment(
           doctorId: doctorId,

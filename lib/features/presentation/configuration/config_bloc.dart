@@ -50,8 +50,122 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
           return;
         }
 
-        await GlobalSession.instance.update(result);
-        final userDataPayload = result.data;
+        final currentProfiles = GlobalSession.instance.userNotifier.value?.data?.profiles ?? [];
+        final incomingProfiles = result.data?.profiles ?? [];
+
+        // 1. Resolve or lock the single root primary user ID
+        String? rootPrimaryId = GlobalSession.instance.rootPrimaryUserId;
+        if (rootPrimaryId == null || rootPrimaryId.isEmpty) {
+          ProfileEntity? found;
+          for (final p in currentProfiles) {
+            final r = (p.relation ?? '').trim().toLowerCase();
+            final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+            if (p.isPrimary == true && !isFam) {
+              found = p;
+              break;
+            }
+          }
+          if (found == null) {
+            for (final p in incomingProfiles) {
+              final r = (p.relation ?? '').trim().toLowerCase();
+              final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+              if (p.isPrimary == true && !isFam) {
+                found = p;
+                break;
+              }
+            }
+          }
+          if (found != null && found.id != null && found.id!.isNotEmpty) {
+            rootPrimaryId = found.id;
+            GlobalSession.instance.rootPrimaryUserId = rootPrimaryId;
+          }
+        }
+
+        final Map<String, ProfileEntity> map = {};
+        for (final p in currentProfiles) {
+          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
+        }
+        for (final p in incomingProfiles) {
+          if (p.id != null && p.id!.isNotEmpty) {
+            if (!map.containsKey(p.id!)) {
+              map[p.id!] = p;
+            }
+          }
+        }
+
+        // Clean & guarantee that ONLY rootPrimaryId is Primary, all others are their relation or Dependent
+        List<ProfileEntity> mergedProfiles = map.values.map((p) {
+          final isRealPrimary = (rootPrimaryId != null && p.id == rootPrimaryId);
+          final rawRel = (p.relation ?? '').trim();
+          final bool hasFamilyRel = rawRel.isNotEmpty &&
+              rawRel.toLowerCase() != 'self' &&
+              rawRel.toLowerCase() != 'admin' &&
+              rawRel.toLowerCase() != 'primary';
+
+          final String rel = isRealPrimary ? 'Primary' : (hasFamilyRel ? rawRel : 'Dependent');
+
+          return ProfileEntity(
+            id: p.id,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            name: p.name,
+            phoneNumber: p.phoneNumber,
+            relation: rel,
+            isPrimary: isRealPrimary,
+            gender: p.gender,
+            dob: p.dob,
+            accountType: isRealPrimary ? 'Independent' : 'Dependent',
+          );
+        }).toList();
+
+        // Pin the true Primary profile at Index 0
+        if (mergedProfiles.isNotEmpty) {
+          int pIdx = mergedProfiles.indexWhere((p) => p.isPrimary == true);
+          if (pIdx > 0) {
+            final primary = mergedProfiles.removeAt(pIdx);
+            mergedProfiles.insert(0, primary);
+          }
+        }
+
+        final finalData = DataEntity(
+          accessToken: result.data?.accessToken,
+          refreshToken: result.data?.refreshToken,
+          accessTokenExpiry: result.data?.accessTokenExpiry,
+          refreshTokenExpiry: result.data?.refreshTokenExpiry,
+          id: result.data?.id,
+          isMobileVerified: result.data?.isMobileVerified,
+          isEmailVerified: result.data?.isEmailVerified,
+          roleCount: result.data?.roleCount,
+          hospitalCount: result.data?.hospitalCount,
+          organizationCount: result.data?.organizationCount,
+          latestUserRole: result.data?.latestUserRole,
+          latestOrgId: result.data?.latestOrgId,
+          latestHospitalId: result.data?.latestHospitalId,
+          latestRoleId: result.data?.latestRoleId,
+          roles: result.data?.roles ?? GlobalSession.instance.userNotifier.value?.data?.roles,
+          profiles: mergedProfiles.isNotEmpty ? mergedProfiles : result.data?.profiles,
+          firstName: result.data?.firstName,
+          lastName: result.data?.lastName,
+          email: result.data?.email,
+          phoneNumber: result.data?.phoneNumber,
+          countryCode: result.data?.countryCode,
+          gender: result.data?.gender,
+          dob: result.data?.dob,
+          height: result.data?.height,
+          weight: result.data?.weight,
+          heightUnit: result.data?.heightUnit,
+          weightUnit: result.data?.weightUnit,
+          navigationId: result.data?.navigationId,
+        );
+
+        final updatedLoginResult = LoginEntity(
+          status: result.status,
+          message: result.message,
+          data: finalData,
+        );
+
+        await GlobalSession.instance.update(updatedLoginResult);
+        final userDataPayload = finalData;
 
         if (userDataPayload == null) {
           emit(

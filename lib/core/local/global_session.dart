@@ -14,6 +14,8 @@ class GlobalSession {
   final ValueNotifier<LoginEntity?> userNotifier = ValueNotifier<LoginEntity?>(null);
   final ValueNotifier<PlatformInfoEntity?> platformNotifier = ValueNotifier<PlatformInfoEntity?>(null);
 
+  String? rootPrimaryUserId;
+
   late SecureStorageService _secureStorage;
 
   PlatformInfoEntity? get cachedPlatformInfo => platformNotifier.value;

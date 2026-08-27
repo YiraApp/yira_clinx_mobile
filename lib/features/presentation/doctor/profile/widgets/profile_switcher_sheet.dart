@@ -45,7 +45,13 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     });
 
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final userId = currentUser?.data?.id ?? '';
+    final profiles = currentUser?.data?.profiles ?? [];
+    
+    // Always use the primary account's ID for workspace fetching
+    final primaryUserId = (profiles.isNotEmpty && profiles.first.id != null && profiles.first.id!.isNotEmpty)
+        ? profiles.first.id!
+        : (currentUser?.data?.id ?? '');
+
     final allRoles = currentUser?.data?.roles ?? [];
     final roles = allRoles.where((r) {
       final name = r.roleName?.toLowerCase() ?? '';
@@ -55,17 +61,11 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           name.contains('physician') ||
           name.contains('user') ||
           name.contains('patient') ||
-          name.contains('front desk') ||
-          name.contains('admin') ||
           roleId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
-          roleId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
-          roleId == '3956F98D-D835-4204-8D5B-72870E57FF76' ||
-          roleId == 'FFE1811D-6200-407C-9BDD-3B89FA1BAF2B' ||
-          roleId == '6F92E889-9844-4C8F-A9E7-5A456F12A9C7' ||
-          roleId == 'F6C3292F-BB06-4F43-9962-988E23087FD5';
+          roleId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C';
     }).toList();
 
-    if (roles.isEmpty) {
+    if (roles.isEmpty && profiles.isEmpty) {
       setState(() {
         _isLoading = false;
       });
@@ -78,6 +78,105 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       bool addedPatientEntry = false;
 
+      // 1. Add ALL Family Profiles (Primary + Dependents / Brothers / Parents / Children)
+      final List<_FlatWorkspaceItem> patientItems = [];
+      final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
+          ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
+          : 'Primary Account';
+
+      if (profiles.isNotEmpty) {
+        int primaryIndex = profiles.indexWhere((p) {
+          final r = (p.relation ?? '').trim().toLowerCase();
+          final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+          return p.isPrimary == true && !isFam;
+        });
+        if (primaryIndex == -1) primaryIndex = 0;
+
+        final primaryProf = profiles[primaryIndex];
+        final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
+            ? primaryProf.name!
+            : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
+                ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
+                : fallbackPrimaryName;
+
+        // 1. Primary Profile ALWAYS fixed at Index 0
+        patientItems.add(_FlatWorkspaceItem(
+          roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
+          roleName: 'Primary',
+          orgId: 1,
+          orgName: 'Primary',
+          hospitalId: 1,
+          hospitalName: pPrimaryName,
+          location: 'Primary',
+          profileUserId: primaryProf.id ?? primaryUserId,
+          firstName: primaryProf.firstName,
+          lastName: primaryProf.lastName,
+          gender: primaryProf.gender,
+          dob: primaryProf.dob,
+          phoneNumber: primaryProf.phoneNumber,
+          relation: 'Primary',
+        ));
+
+        // 2. All other family members retain their exact fixed relations
+        for (int i = 0; i < profiles.length; i++) {
+          if (i == primaryIndex) continue;
+
+          final p = profiles[i];
+          final rawRel = (p.relation ?? '').trim();
+          final bool hasFamilyRelation = rawRel.isNotEmpty &&
+              rawRel.toLowerCase() != 'self' &&
+              rawRel.toLowerCase() != 'primary' &&
+              rawRel.toLowerCase() != 'admin';
+
+          final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
+          final String pName = (p.name?.isNotEmpty ?? false)
+              ? p.name!
+              : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
+                  ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
+                  : pRel;
+
+          final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
+
+          patientItems.add(_FlatWorkspaceItem(
+            roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
+            roleName: pRel,
+            orgId: 1,
+            orgName: pRel,
+            hospitalId: 1,
+            hospitalName: pName,
+            location: pRel,
+            profileUserId: pUserId,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            gender: p.gender,
+            dob: p.dob,
+            phoneNumber: p.phoneNumber,
+            relation: pRel,
+          ));
+        }
+      } else {
+        patientItems.add(_FlatWorkspaceItem(
+          roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
+          roleName: 'Primary',
+          orgId: 1,
+          orgName: 'Unified Health Account',
+          hospitalId: 1,
+          hospitalName: fallbackPrimaryName,
+          location: 'Personal Account',
+          profileUserId: primaryUserId,
+          firstName: currentUser?.data?.firstName,
+          lastName: currentUser?.data?.lastName,
+          gender: currentUser?.data?.gender,
+          dob: currentUser?.data?.dob,
+          phoneNumber: currentUser?.data?.phoneNumber,
+          relation: 'Primary',
+        ));
+      }
+
+      items.addAll(patientItems);
+      addedPatientEntry = true;
+
+      // 2. Add Provider / Staff Workspaces for each facility
       for (final role in roles) {
         final roleId = role.roleId ?? '';
         final roleIdUpper = roleId.toUpperCase();
@@ -102,17 +201,26 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           roleName = 'Yira System Admin';
         }
 
-        // Patients / Users have a single, unified profile across the platform
+        // If patient entries already added above from profiles, skip redundant generic entry
         if (roleName == 'User' || roleName == 'Patient') {
           if (!addedPatientEntry) {
             items.add(_FlatWorkspaceItem(
               roleId: roleId,
-              roleName: 'User',
+              roleName: 'Primary',
               orgId: 1,
               orgName: 'Unified Health Account',
               hospitalId: 1,
-              hospitalName: 'User Profile',
+              hospitalName: '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
+                  ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
+                  : 'User Profile',
               location: 'Personal Account',
+              profileUserId: primaryUserId,
+              firstName: currentUser?.data?.firstName,
+              lastName: currentUser?.data?.lastName,
+              gender: currentUser?.data?.gender,
+              dob: currentUser?.data?.dob,
+              phoneNumber: currentUser?.data?.phoneNumber,
+              relation: 'Primary',
             ));
             addedPatientEntry = true;
           }
@@ -121,7 +229,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
         if (roleId.isNotEmpty) {
           try {
-            final res = await getWorkSpaceUseCase(WorkSpaceParameters(userId, roleId));
+            final res = await getWorkSpaceUseCase(WorkSpaceParameters(primaryUserId, roleId));
             if (res != null && res.status == true && res.data != null) {
               final orgs = res.data!.whereType<ws.DataEntity>().toList();
               bool addedAnyHospital = false;
@@ -144,6 +252,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                       hospitalId: hospitalId,
                       hospitalName: hospitalName,
                       location: location,
+                      profileUserId: primaryUserId,
                     ));
                     addedAnyHospital = true;
                   }
@@ -159,6 +268,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                   orgName: '',
                   hospitalId: 1,
                   hospitalName: 'Healthcare Facility',
+                  profileUserId: primaryUserId,
                 ));
               }
             } else {
@@ -169,6 +279,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                 orgName: '',
                 hospitalId: 1,
                 hospitalName: 'Healthcare Facility',
+                profileUserId: primaryUserId,
               ));
             }
           } catch (_) {
@@ -179,6 +290,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
               orgName: '',
               hospitalId: 1,
               hospitalName: 'Healthcare Facility',
+              profileUserId: primaryUserId,
             ));
           }
         }
@@ -202,7 +314,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
   }
 
   Future<void> _switchWorkspace(_FlatWorkspaceItem item) async {
-    final key = "${item.roleId}_${item.orgId}_${item.hospitalId}";
+    final key = "${item.profileUserId ?? ''}_${item.roleId}_${item.orgId}_${item.hospitalId}";
     if (_switchingKey != null) return;
 
     setState(() {
@@ -212,6 +324,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     try {
       final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
       final params = UpdateLatestOrgDetailsModelParams(
+        userId: item.profileUserId,
         latestRoleId: item.roleId,
         latestOrgId: item.orgId,
         latestHospitalId: item.hospitalId,
@@ -224,14 +337,19 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
         final bool isPatientRole = item.roleId.toUpperCase() ==
                 "4FC67429-28AE-4106-93EF-436228282ED0" ||
             item.roleName.toLowerCase().contains("patient") ||
-            item.roleName.toLowerCase().contains("user");
+            item.roleName.toLowerCase().contains("user") ||
+            item.relation != null;
         final String navigationId = isPatientRole ? "1" : "2";
         final String latestUserRole = isPatientRole ? "Patient" : "Provider";
 
         if (currentSession?.data != null) {
           final oldData = currentSession!.data!;
+          final targetUserId = (item.profileUserId != null && item.profileUserId!.isNotEmpty)
+              ? item.profileUserId!
+              : oldData.id;
+
           final updatedData = DataEntity(
-            id: oldData.id,
+            id: targetUserId,
             accessToken: oldData.accessToken,
             refreshToken: oldData.refreshToken,
             accessTokenExpiry: oldData.accessTokenExpiry,
@@ -242,13 +360,13 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             hospitalCount: oldData.hospitalCount,
             organizationCount: oldData.organizationCount,
             roles: oldData.roles,
-            firstName: oldData.firstName,
-            lastName: oldData.lastName,
+            firstName: item.firstName ?? oldData.firstName,
+            lastName: item.lastName ?? oldData.lastName,
             email: oldData.email,
-            phoneNumber: oldData.phoneNumber,
+            phoneNumber: item.phoneNumber ?? oldData.phoneNumber,
             countryCode: oldData.countryCode,
-            gender: oldData.gender,
-            dob: oldData.dob,
+            gender: item.gender ?? oldData.gender,
+            dob: item.dob ?? oldData.dob,
             height: oldData.height,
             weight: oldData.weight,
             heightUnit: oldData.heightUnit,
@@ -313,31 +431,49 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     if (lower.contains('doctor') || lower.contains('provider') || lower.contains('physician')) {
       return Icons.medical_services_rounded;
     }
-    if (lower.contains('patient') || lower.contains('user')) {
-      return Icons.person_rounded;
-    }
     if (lower.contains('admin') || lower.contains('manager')) {
       return Icons.admin_panel_settings_rounded;
     }
     if (lower.contains('nurse')) {
       return Icons.health_and_safety_rounded;
     }
+    if (lower.contains('father') || lower.contains('mother') || lower.contains('parent')) {
+      return Icons.family_restroom_rounded;
+    }
+    if (lower.contains('spouse') || lower.contains('wife') || lower.contains('husband')) {
+      return Icons.favorite_rounded;
+    }
+    if (lower.contains('brother') || lower.contains('sister') || lower.contains('sibling')) {
+      return Icons.people_alt_rounded;
+    }
+    if (lower.contains('son') || lower.contains('daughter') || lower.contains('child') || lower.contains('kid')) {
+      return Icons.child_care_rounded;
+    }
+    if (lower.contains('patient') || lower.contains('user') || lower == 'primary' || lower == 'self') {
+      return Icons.person_rounded;
+    }
     return Icons.local_hospital_rounded;
   }
 
   Color _getRoleColor(String roleName, Color fallback) {
     final lower = roleName.toLowerCase();
-    if (lower.contains('doctor') || lower.contains('provider')) {
-      return const Color(0xFF0284C7); // Sky Blue
+    if (lower.contains('doctor') || lower.contains('provider') || lower == 'primary' || lower == 'self' || lower.contains('patient') || lower.contains('user')) {
+      return const Color(0xFF0284C7); // Primary Sky Blue
     }
     if (lower.contains('admin')) {
-      return const Color(0xFF6366F1); // Indigo
+      return const Color(0xFF2563EB); // Royal Blue
     }
-    if (lower.contains('patient') || lower.contains('user')) {
-      return const Color(0xFF10B981); // Emerald
+    if (lower.contains('father') || lower.contains('mother') || lower.contains('parent')) {
+      return const Color(0xFF1D4ED8); // Deep Cobalt Blue
     }
-    if (lower.contains('nurse')) {
-      return const Color(0xFFEC4899); // Pink
+    if (lower.contains('brother') || lower.contains('sister') || lower.contains('sibling')) {
+      return const Color(0xFF0EA5E9); // Azure / Ocean Blue
+    }
+    if (lower.contains('spouse') || lower.contains('wife') || lower.contains('husband') || lower.contains('nurse')) {
+      return const Color(0xFF06B6D4); // Soft Cyan Blue
+    }
+    if (lower.contains('son') || lower.contains('daughter') || lower.contains('child') || lower.contains('kid')) {
+      return const Color(0xFF38BDF8); // Soft Sky Blue
     }
     return fallback;
   }
@@ -422,7 +558,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                         ),
                       ),
                       Text(
-                        "Tap to switch into any hospital profile",
+                        "Tap to switch profile or workspace",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 12.5 : 11.5,
@@ -451,161 +587,265 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                     ? _buildErrorView(isDark, primaryColor)
                     : _flatItems.isEmpty
                         ? _buildEmptyView(isDark)
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: _flatItems.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final item = _flatItems[index];
-                              final String key = "${item.roleId}_${item.orgId}_${item.hospitalId}";
-                              final bool isSwitching = (_switchingKey == key);
-                              final activeRoleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
-                              final activeNavId = currentUser?.data?.navigationId?.toString().trim();
-                              final activeRoleIdStr = (activeRoleId?.toString() ?? '').toUpperCase();
+                        : Builder(
+                            builder: (context) {
+                              final profileItems = _flatItems.where((i) =>
+                                  i.roleId.toUpperCase() == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+                                  i.relation != null).toList();
 
-                              final isPatientItem = (item.roleName == 'User' ||
-                                  item.roleName == 'Patient' ||
-                                  item.roleId.toUpperCase() == '4FC67429-28AE-4106-93EF-436228282ED0');
+                              final roleItems = _flatItems.where((i) =>
+                                  i.roleId.toUpperCase() != '4FC67429-28AE-4106-93EF-436228282ED0' &&
+                                  i.relation == null).toList();
 
-                              final bool isSessionPatient = activeRoleName.contains('patient') ||
-                                  activeRoleName == 'user' ||
-                                  activeRoleName.contains('consumer') ||
-                                  activeRoleName.contains('client') ||
-                                  activeNavId == '1' ||
-                                  activeRoleIdStr == '4FC67429-28AE-4106-93EF-436228282ED0';
-
-                              final bool isActive = isPatientItem
-                                  ? isSessionPatient
-                                  : (!isSessionPatient &&
-                                      item.roleId.toUpperCase() == activeRoleIdStr &&
-                                      item.hospitalId.toString() == activeHospitalId.toString());
-                              final Color roleColor = _getRoleColor(item.roleName, primaryColor);
-
-                              // Format: "User Profile" or "Yira Hospital (Provider)"
-                              final String displayTitle = (item.roleName == 'User' || item.roleName == 'Patient')
-                                  ? item.hospitalName
-                                  : "${item.hospitalName} (${item.roleName})";
-
-                              return Material(
-                                color: isActive
-                                    ? roleColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                                    : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: BorderSide(
-                                    color: isActive
-                                        ? roleColor
-                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                                    width: isActive ? 1.6 : 1,
-                                  ),
-                                ),
-                                child: InkWell(
-                                  onTap: isActive || isSwitching
-                                      ? null
-                                      : () => _switchWorkspace(item),
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                                    child: Row(
-                                      children: [
-                                        // Icon
-                                        Container(
-                                          padding: const EdgeInsets.all(9),
-                                          decoration: BoxDecoration(
-                                            color: isActive
-                                                ? roleColor
-                                                : roleColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            _getRoleIcon(item.roleName),
-                                            size: 18,
-                                            color: isActive ? Colors.white : roleColor,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-
-                                        // Title: "Yira Hospital (Provider)"
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                displayTitle,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontFamily: appPoppinFont,
-                                                  fontSize: isTab ? 15 : 13.5,
-                                                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                                ),
-                                              ),
-                                              if (item.orgName.isNotEmpty || item.location != null) ...[
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  [
-                                                    if (item.orgName.isNotEmpty) item.orgName,
-                                                    if (item.location != null && item.location!.isNotEmpty)
-                                                      item.location!,
-                                                  ].join(' • '),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontFamily: appPoppinFont,
-                                                    fontSize: isTab ? 12 : 11,
-                                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-
-                                        // Action / Status Pill
-                                        if (isSwitching)
-                                          SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: roleColor,
-                                            ),
-                                          )
-                                        else if (isActive)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                                            decoration: BoxDecoration(
-                                              color: roleColor,
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: const Text(
-                                              "ACTIVE",
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w800,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          )
-                                        else
-                                          Icon(
-                                            Icons.chevron_right_rounded,
-                                            size: 20,
-                                            color: isDark ? Colors.white38 : Colors.grey.shade400,
-                                          ),
-                                      ],
+                              return ListView(
+                                shrinkWrap: true,
+                                physics: const BouncingScrollPhysics(),
+                                children: [
+                                  if (profileItems.isNotEmpty) ...[
+                                    _buildSectionHeader(
+                                      title: "Profiles & Family Members",
+                                      icon: Icons.people_alt_rounded,
+                                      color: const Color(0xFF0284C7),
+                                      isDark: isDark,
+                                      isTab: isTab,
                                     ),
-                                  ),
-                                ),
+                                    const SizedBox(height: 8),
+                                    ...profileItems.map((item) => _buildItemTile(
+                                          item: item,
+                                          isDark: isDark,
+                                          primaryColor: primaryColor,
+                                          isTab: isTab,
+                                          currentUser: currentUser,
+                                          activeRoleId: activeRoleId,
+                                          activeHospitalId: activeHospitalId,
+                                        )),
+                                  ],
+                                  if (roleItems.isNotEmpty) ...[
+                                    if (profileItems.isNotEmpty) const SizedBox(height: 12),
+                                    _buildSectionHeader(
+                                      title: "Roles & Responsibilities",
+                                      icon: Icons.badge_rounded,
+                                      color: const Color(0xFF2563EB),
+                                      isDark: isDark,
+                                      isTab: isTab,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ...roleItems.map((item) => _buildItemTile(
+                                          item: item,
+                                          isDark: isDark,
+                                          primaryColor: primaryColor,
+                                          isTab: isTab,
+                                          currentUser: currentUser,
+                                          activeRoleId: activeRoleId,
+                                          activeHospitalId: activeHospitalId,
+                                        )),
+                                  ],
+                                ],
                               );
                             },
                           ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required bool isDark,
+    required bool isTab,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.25 : 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: isTab ? 13.5 : 12.5,
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemTile({
+    required _FlatWorkspaceItem item,
+    required bool isDark,
+    required Color primaryColor,
+    required bool isTab,
+    required dynamic currentUser,
+    required dynamic activeRoleId,
+    required dynamic activeHospitalId,
+  }) {
+    final String key = "${item.profileUserId ?? ''}_${item.roleId}_${item.orgId}_${item.hospitalId}";
+    final bool isSwitching = (_switchingKey == key);
+    final activeRoleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+    final activeNavId = currentUser?.data?.navigationId?.toString().trim();
+    final activeRoleIdStr = (activeRoleId?.toString() ?? '').toUpperCase();
+
+    final isPatientItem = (item.roleName == 'User' ||
+        item.roleName == 'Patient' ||
+        item.roleId.toUpperCase() == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+        item.relation != null);
+
+    final bool isSessionPatient = activeRoleName.contains('patient') ||
+        activeRoleName == 'user' ||
+        activeRoleName.contains('consumer') ||
+        activeRoleName.contains('client') ||
+        activeNavId == '1' ||
+        activeRoleIdStr == '4FC67429-28AE-4106-93EF-436228282ED0';
+
+    final String currentUserId = (currentUser?.data?.id ?? '').toLowerCase().trim();
+    final String targetProfileId = (item.profileUserId ?? '').toLowerCase().trim();
+
+    final bool isActuallyCurrentModeAndItem = isPatientItem
+        ? (isSessionPatient && targetProfileId.isNotEmpty && targetProfileId == currentUserId)
+        : (!isSessionPatient &&
+            item.roleId.toUpperCase() == activeRoleIdStr &&
+            item.hospitalId.toString() == activeHospitalId.toString());
+
+    final bool isActive = isPatientItem
+        ? (targetProfileId.isNotEmpty && targetProfileId == currentUserId)
+        : (!isSessionPatient &&
+            item.roleId.toUpperCase() == activeRoleIdStr &&
+            item.hospitalId.toString() == activeHospitalId.toString());
+    final Color roleColor = _getRoleColor(item.roleName, primaryColor);
+
+    // Format: "Teja Ch (Primary)" or "Ramesh Ch (Father)" or "Yira Hospital (Provider)"
+    final String displayTitle = item.roleName == 'User'
+        ? item.hospitalName
+        : "${item.hospitalName} (${item.roleName})";
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: isActive
+            ? roleColor.withValues(alpha: isDark ? 0.2 : 0.08)
+            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: isActive
+                ? roleColor
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: isActive ? 1.6 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: isActuallyCurrentModeAndItem || isSwitching
+              ? null
+              : () => _switchWorkspace(item),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? roleColor
+                        : roleColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _getRoleIcon(item.roleName),
+                    size: 18,
+                    color: isActive ? Colors.white : roleColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Title
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? 15 : 13.5,
+                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (item.orgName.isNotEmpty || item.location != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            if (item.orgName.isNotEmpty) item.orgName,
+                            if (item.location != null && item.location!.isNotEmpty)
+                              item.location!,
+                          ].join(' • '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 12 : 11,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Action / Status Pill
+                if (isSwitching)
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: roleColor,
+                    ),
+                  )
+                else if (isActive)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: roleColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      "ACTIVE",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: isDark ? Colors.white38 : Colors.grey.shade400,
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -732,6 +972,13 @@ class _FlatWorkspaceItem {
   final int hospitalId;
   final String hospitalName;
   final String? location;
+  final String? profileUserId;
+  final String? firstName;
+  final String? lastName;
+  final String? gender;
+  final String? dob;
+  final String? phoneNumber;
+  final String? relation;
 
   _FlatWorkspaceItem({
     required this.roleId,
@@ -741,5 +988,12 @@ class _FlatWorkspaceItem {
     required this.hospitalId,
     required this.hospitalName,
     this.location,
+    this.profileUserId,
+    this.firstName,
+    this.lastName,
+    this.gender,
+    this.dob,
+    this.phoneNumber,
+    this.relation,
   });
 }

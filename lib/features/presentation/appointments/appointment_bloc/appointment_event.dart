@@ -18,6 +18,9 @@ class OnAddAppointmentEvent extends AppointmentEvent {}
 class SubmitBookAppointmentEvent extends AppointmentEvent {
   final String patientName;
   final String phoneNumber;
+  final String? doctorId;
+  final int? hospitalId;
+  final int? orgId;
   final String? patientUserId;
   final String? parentUserId;
   final String? relation;
@@ -40,6 +43,9 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   SubmitBookAppointmentEvent({
     required this.patientName,
     required this.phoneNumber,
+    this.doctorId,
+    this.hospitalId,
+    this.orgId,
     this.patientUserId,
     this.parentUserId,
     this.relation,

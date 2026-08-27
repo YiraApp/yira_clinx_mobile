@@ -88,6 +88,38 @@ class Utils {
     }
   }
 
+  static Future<void> launchMeetingURL(
+    String urlString, {
+    String? displayName,
+    void Function(String errorMessage)? onLaunchFailure,
+  }) async {
+    String url = urlString.trim();
+    if (url.isEmpty) {
+      _handleError('Meeting link is empty', onLaunchFailure);
+      return;
+    }
+
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      try {
+        final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+        final params = Map<String, String>.from(uri.queryParameters);
+        final name = displayName.trim();
+
+        if (url.contains('zoom.us') || url.contains('/wc/')) {
+          if (!params.containsKey('uname')) params['uname'] = name;
+          if (!params.containsKey('dn')) params['dn'] = name;
+          url = uri.replace(queryParameters: params).toString();
+        } else if (url.contains('meet.jit.si')) {
+          if (!url.contains('userInfo.displayName')) {
+            url = '$url#userInfo.displayName=${Uri.encodeComponent('"$name"')}';
+          }
+        }
+      } catch (_) {}
+    }
+
+    await launchURL(url, onLaunchFailure: onLaunchFailure);
+  }
+
   static void _handleError(
       String message,
       void Function(String)? onFailureCallback, {

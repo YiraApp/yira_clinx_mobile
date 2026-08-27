@@ -280,6 +280,133 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   double _consultationFee = 500.0;
   final TextEditingController _discountController = TextEditingController();
 
+  // Patient Hospital & Doctor Selection
+  List<Map<String, dynamic>> _hospitals = [];
+  List<Map<String, dynamic>> _allDoctors = [];
+  List<Map<String, dynamic>> _filteredDoctors = [];
+  Map<String, dynamic>? _selectedHospital;
+  Map<String, dynamic>? _selectedDoctorMap;
+
+  Future<void> _initPatientHospitalsAndDoctors() async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final token = currentUser?.data?.accessToken ?? '';
+    final userId = (currentUser?.data?.id ?? '').trim();
+    final roleId = (currentUser?.data?.latestRoleId ?? '4FC67429-28AE-4106-93EF-436228282ED0').trim();
+    List<Map<String, dynamic>> hospitals = [];
+    if (userId.isNotEmpty) {
+      try {
+        final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
+          URLs.workspaceDetailsUrl,
+          queryParameters: {
+            'userId': userId,
+            'roleId': roleId,
+          },
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        );
+        if (res.data != null && res.data['data'] != null) {
+          final data = res.data['data'];
+          if (data['workspaces'] is List) {
+            final wsList = data['workspaces'] as List;
+            for (final ws in wsList) {
+              final hospId = ws['hospitalId'] ?? ws['HospitalId'] ?? 1;
+              final hospName = ws['hospitalName'] ?? ws['HospitalName'] ?? 'Yira Hospitals';
+              final orgId = ws['organizationId'] ?? ws['OrganizationId'] ?? 1;
+              final orgName = ws['organizationName'] ?? ws['OrganizationName'] ?? 'Yira';
+              if (!hospitals.any((h) => h['id'] == hospId)) {
+                hospitals.add({
+                  'id': hospId,
+                  'name': hospName,
+                  'orgId': orgId,
+                  'orgName': orgName,
+                });
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (hospitals.isEmpty) {
+      final userHospId = currentUser?.data?.latestHospitalId ?? 19;
+      final userOrgId = currentUser?.data?.latestOrgId ?? 1;
+      hospitals = [
+        {'id': userHospId, 'name': 'Yira Hospitals', 'orgId': userOrgId, 'orgName': 'Yira Health'},
+        {'id': 12, 'name': 'Ocimum Dental Clinic', 'orgId': 10, 'orgName': 'Demo Org 1'},
+        {'id': 11, 'name': 'AIG Somajiguda', 'orgId': 9, 'orgName': 'AIG'},
+        {'id': 1, 'name': 'kims Maharashtra', 'orgId': 3, 'orgName': 'kims'},
+      ];
+    }
+
+    final doctors = [
+      {
+        'doctorId': '4B7319C8-4FE0-42A8-B0C8-23674EFD8CB7',
+        'name': 'Dr. Neeli Manikanta',
+        'specialty': 'Dermatology & General Care',
+        'hospitalId': 12,
+        'consultationFee': 500,
+      },
+      {
+        'doctorId': '050D2CBB-5DCA-452B-A3E2-9E6CFC01C069',
+        'name': 'Dr. Vijay M',
+        'specialty': 'Cardiology & Internal Medicine',
+        'hospitalId': 12,
+        'consultationFee': 600,
+      },
+      {
+        'doctorId': '6CDE8235-B520-4442-B912-9622A9D357D0',
+        'name': 'Dr. Manikanta Jay',
+        'specialty': 'General Physician',
+        'hospitalId': 19,
+        'consultationFee': 500,
+      },
+      {
+        'doctorId': '234154EE-E1EE-49D2-9577-F0DB190C827C',
+        'name': 'Dr. Teja Ch',
+        'specialty': 'Family Medicine',
+        'hospitalId': 19,
+        'consultationFee': 400,
+      },
+      {
+        'doctorId': 'F2C87403-C46A-47A3-BE90-03DCCAD4481A',
+        'name': 'Dr. Bhargav C',
+        'specialty': 'General Surgery',
+        'hospitalId': 11,
+        'consultationFee': 700,
+      },
+      {
+        'doctorId': '678134A7-DAF4-406A-BC6E-45AAB5A49AA0',
+        'name': 'Dr. Janu J',
+        'specialty': 'Dermatology',
+        'hospitalId': 1,
+        'consultationFee': 500,
+      },
+    ];
+
+    if (mounted) {
+      setState(() {
+        _hospitals = hospitals;
+        _allDoctors = doctors;
+        _selectedHospital = hospitals.first;
+        _filterDoctorsForHospital(_selectedHospital!['id']);
+      });
+      _fetchDoctorSlots(_selectedDate);
+      _fetchTreatmentPlans();
+    }
+  }
+
+  void _filterDoctorsForHospital(dynamic hospitalId) {
+    final hospIdInt = int.tryParse(hospitalId.toString()) ?? 1;
+    final matched = _allDoctors.where((d) {
+      final docHosp = int.tryParse(d['hospitalId'].toString()) ?? 1;
+      return docHosp == hospIdInt;
+    }).toList();
+
+    _filteredDoctors = matched.isNotEmpty ? matched : _allDoctors;
+    _selectedDoctorMap = _filteredDoctors.first;
+    _selectedDoctor = _selectedDoctorMap!['name'] ?? 'Dr. Doctor';
+    _consultationFee = (double.tryParse(_selectedDoctorMap!['consultationFee'].toString()) ?? 500.0);
+  }
+
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
   final List<String> _genderOptions = const ["Male", "Female", "Other"];
 
@@ -364,6 +491,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
           for (final item in accountsRaw) {
             if (item is Map<String, dynamic>) {
+              final rawRel = (item['relation'] ?? '').toString().trim();
               accounts.add(PatientOption(
                 id: (item['id'] ?? item['userId'] ?? '').toString(),
                 userId: (item['userId'] ?? item['id'] ?? '').toString(),
@@ -372,7 +500,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 gender: (item['gender'] ?? 'Male').toString(),
                 dob: (item['dob'] ?? '').toString(),
                 email: (item['email'] ?? '').toString(),
-                relation: (item['relation'] ?? 'Self').toString(),
+                relation: rawRel.isNotEmpty ? rawRel : 'Dependent',
                 isPrimary: item['isPrimary'] == true,
                 parentUserId: item['parentUserId']?.toString(),
                 accountType: (item['accountType'] ?? (item['isPrimary'] == true ? 'Independent' : 'Dependent')).toString(),
@@ -382,11 +510,150 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             }
           }
 
+          // Replicate exact ProfileSwitcherSheet user profile mapping
+          final userProfiles = currentUser?.data?.profiles ?? [];
+          final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
+              ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
+              : 'Primary Account';
+          final String sessionUserId = (currentUser?.data?.id ?? '').trim();
+          final String userPhone = (currentUser?.data?.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
+
+          if (userProfiles.isNotEmpty && (cleanPhone == userPhone || accounts.isEmpty)) {
+            accounts.clear();
+
+            int primaryIndex = userProfiles.indexWhere((p) {
+              final r = (p.relation ?? '').trim().toLowerCase();
+              final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+              return p.isPrimary == true && !isFam;
+            });
+            if (primaryIndex == -1) primaryIndex = 0;
+
+            final primaryProf = userProfiles[primaryIndex];
+            final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
+                ? primaryProf.name!
+                : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
+                    ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
+                    : fallbackPrimaryName;
+
+            // 1. Primary Profile ALWAYS fixed at Index 0
+            accounts.add(PatientOption(
+              id: primaryProf.id ?? sessionUserId,
+              userId: primaryProf.id ?? sessionUserId,
+              name: pPrimaryName,
+              phone: primaryProf.phoneNumber ?? cleanPhone,
+              gender: primaryProf.gender ?? currentUser?.data?.gender ?? 'Male',
+              dob: primaryProf.dob ?? currentUser?.data?.dob ?? '',
+              email: currentUser?.data?.email ?? '',
+              relation: 'Primary',
+              isPrimary: true,
+              parentUserId: null,
+              accountType: 'Independent',
+              pastAppointmentsCount: 0,
+              lastVisitDate: null,
+            ));
+
+            // 2. All other family members retain their exact fixed relations
+            for (int i = 0; i < userProfiles.length; i++) {
+              if (i == primaryIndex) continue;
+
+              final p = userProfiles[i];
+              final rawRel = (p.relation ?? '').trim();
+              final bool hasFamilyRelation = rawRel.isNotEmpty &&
+                  rawRel.toLowerCase() != 'self' &&
+                  rawRel.toLowerCase() != 'primary' &&
+                  rawRel.toLowerCase() != 'admin';
+
+              final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
+              final String pName = (p.name?.isNotEmpty ?? false)
+                  ? p.name!
+                  : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
+                      ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
+                      : pRel;
+
+              final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
+
+              accounts.add(PatientOption(
+                id: pUserId,
+                userId: pUserId,
+                name: pName,
+                phone: p.phoneNumber ?? cleanPhone,
+                gender: p.gender ?? 'Male',
+                dob: p.dob ?? '',
+                email: currentUser?.data?.email ?? '',
+                relation: pRel,
+                isPrimary: false,
+                parentUserId: sessionUserId,
+                accountType: 'Dependent',
+                pastAppointmentsCount: 0,
+                lastVisitDate: null,
+              ));
+            }
+          } else if (accounts.isNotEmpty) {
+            int primaryIdx = accounts.indexWhere((a) {
+              final r = a.relation.toLowerCase();
+              final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+              return a.isPrimary && !isFam;
+            });
+            if (primaryIdx > 0) {
+              final primaryItem = accounts.removeAt(primaryIdx);
+              accounts.insert(0, primaryItem);
+            }
+
+            for (int i = 0; i < accounts.length; i++) {
+              final a = accounts[i];
+              if (i == 0) {
+                final r = a.relation.toLowerCase();
+                final bool isFamRel = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin' && r != 'independent';
+                accounts[i] = PatientOption(
+                  id: a.id,
+                  userId: a.userId,
+                  name: a.name,
+                  phone: a.phone,
+                  gender: a.gender,
+                  dob: a.dob,
+                  email: a.email,
+                  relation: isFamRel ? a.relation : 'Primary',
+                  isPrimary: true,
+                  parentUserId: a.parentUserId,
+                  accountType: 'Independent',
+                  pastAppointmentsCount: a.pastAppointmentsCount,
+                  lastVisitDate: a.lastVisitDate,
+                );
+              } else {
+                final r = a.relation.toLowerCase();
+                final String safeRel = (r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin' && r != 'independent')
+                    ? a.relation
+                    : 'Dependent';
+                accounts[i] = PatientOption(
+                  id: a.id,
+                  userId: a.userId,
+                  name: a.name,
+                  phone: a.phone,
+                  gender: a.gender,
+                  dob: a.dob,
+                  email: a.email,
+                  relation: safeRel,
+                  isPrimary: false,
+                  parentUserId: a.parentUserId,
+                  accountType: 'Dependent',
+                  pastAppointmentsCount: a.pastAppointmentsCount,
+                  lastVisitDate: a.lastVisitDate,
+                );
+              }
+            }
+          }
+
           if (mounted) {
             setState(() {
               _matchingAccountsList = accounts;
-              // Do NOT automatically select the account directly on fetching details.
-              // Keep matching accounts and family member options visible so the user can choose or book for their child.
+              if (accounts.isNotEmpty) {
+                if (_selectedPatient == null || !_matchingAccountsList.any((a) => a.id == _selectedPatient?.id || a.userId == _selectedPatient?.userId)) {
+                  _selectedPatient = accounts.first;
+                  _patientSearchController.text = accounts.first.name;
+                  _selectedGender = accounts.first.gender.isNotEmpty ? accounts.first.gender : "Male";
+                  _isExistingPatient = true;
+                }
+              }
             });
           }
         }
@@ -440,8 +707,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     });
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final int orgId = currentUser?.data?.latestOrgId ?? 1;
-      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+      final int orgId = _selectedHospital != null
+          ? (int.tryParse(_selectedHospital!['orgId']?.toString() ?? '') ?? currentUser?.data?.latestOrgId ?? 1)
+          : (currentUser?.data?.latestOrgId ?? 1);
+      final int hospitalId = _selectedHospital != null
+          ? (int.tryParse(_selectedHospital!['id']?.toString() ?? '') ?? currentUser?.data?.latestHospitalId ?? 1)
+          : (currentUser?.data?.latestHospitalId ?? 1);
       final String token = currentUser?.data?.accessToken ?? '';
 
       final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
@@ -675,12 +946,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     });
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
-          ? currentUser.data!.id!.trim()
-          : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
-              ? currentUser.data!.navigationId!.trim()
-              : '1';
-      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+      final bool isPatient = currentUser?.data?.navigationId == "1" ||
+          (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient");
+
+      final String doctorId = isPatient
+          ? (_selectedDoctorMap?['doctorId']?.toString() ?? '4B7319C8-4FE0-42A8-B0C8-23674EFD8CB7')
+          : ((currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+              ? currentUser.data!.id!.trim()
+              : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+                  ? currentUser.data!.navigationId!.trim()
+                  : '1');
+
+      final int hospitalId = isPatient
+          ? (int.tryParse(_selectedHospital?['id']?.toString() ?? '') ?? (currentUser?.data?.latestHospitalId ?? 1))
+          : (currentUser?.data?.latestHospitalId ?? 1);
       final String token = currentUser?.data?.accessToken ?? '';
       final String dateStr = DateFormat('yyyy-MM-dd').format(date);
 
@@ -989,10 +1268,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       }
     }
     final initialPhone = widget.initialPatientPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+    final isPatient = currentUser?.navigationId == "1" ||
+        (currentUser?.latestUserRole ?? '').toLowerCase().contains("patient");
+
     if (initialPhone.length >= 10) {
       _patientSearchMode = PatientSearchMode.byPhone;
       _phoneController.text = initialPhone;
       _hasSearchedPhone = true;
+    } else if (isPatient && (currentUser?.phoneNumber ?? '').isNotEmpty) {
+      final phone = currentUser!.phoneNumber!.replaceAll(RegExp(r'\D'), '');
+      if (phone.length >= 10) {
+        _patientSearchMode = PatientSearchMode.byPhone;
+        _phoneController.text = phone;
+        _hasSearchedPhone = true;
+      }
     } else if (widget.initialPatientName != null && widget.initialPatientName!.isNotEmpty) {
       _patientSearchController.text = widget.initialPatientName!;
       _isExistingPatient = true;
@@ -1000,9 +1289,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        if (isPatient) {
+          _initPatientHospitalsAndDoctors();
+        } else {
+          _fetchDoctorSlots(_selectedDate);
+        }
         context.read<AppointmentBloc>().add(LoadAppointmentsEvent());
         _fetchPatientsFromApi();
-        _fetchDoctorSlots(_selectedDate);
         _fetchTreatmentPlans();
         if (_phoneController.text.trim().isNotEmpty) {
           final phone = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
@@ -1088,8 +1381,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     final startTimeStr = _selectedSlot.split(" - ").first.trim();
     final formattedTime = startTimeStr.contains(":") ? "$startTimeStr:00" : "10:00:00";
 
+    final String? patientDocId = (isPatient && _selectedDoctorMap != null)
+        ? _selectedDoctorMap!['doctorId']?.toString()
+        : null;
+    final int? patientHospId = (isPatient && _selectedHospital != null)
+        ? int.tryParse(_selectedHospital!['id']?.toString() ?? '')
+        : null;
+    final int? patientOrgId = (isPatient && _selectedHospital != null)
+        ? int.tryParse(_selectedHospital!['orgId']?.toString() ?? '')
+        : null;
+
     context.read<AppointmentBloc>().add(
       SubmitBookAppointmentEvent(
+        doctorId: patientDocId,
+        hospitalId: patientHospId,
+        orgId: patientOrgId,
         patientUserId: _selectedPatient?.userId.isNotEmpty == true
             ? _selectedPatient!.userId
             : (_selectedPatient?.id.isNotEmpty == true ? _selectedPatient!.id : null),
@@ -1435,6 +1741,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     p.phone.contains(searchQuery) ||
                     p.id.toLowerCase().contains(searchQuery);
               }).toList();
+
+        final currentUser = GlobalSession.instance.userNotifier.value;
+        final bool isPatient = currentUser?.data?.navigationId == "1" ||
+            (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
+            (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
 
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
@@ -1947,14 +2258,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 18),
-                      Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      const SizedBox(height: 18),
+                      if (!isPatient) ...[
+                        const SizedBox(height: 18),
+                        Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        const SizedBox(height: 18),
 
-                      // 4. Treatment Plans & Procedures (Always Available)
-                      _buildSectionHeader(4, "Treatment Plans & Procedures", isDark),
-                      const SizedBox(height: 12),
-                      _buildTreatmentPlansSection(isDark, isTab),
+                        // 4. Treatment Plans & Procedures (Provider / Doctor only)
+                        _buildSectionHeader(4, "Treatment Plans & Procedures", isDark),
+                        const SizedBox(height: 12),
+                        _buildTreatmentPlansSection(isDark, isTab),
+                      ],
 
                       if (_isExistingPatient && _patientPreviousAppointments.isNotEmpty) ...[
                         const SizedBox(height: 14),
@@ -1965,8 +2278,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                       const SizedBox(height: 18),
 
-                      // 5. Billing & Payment
-                      _buildSectionHeader(5, "Billing & Payment", isDark),
+                      // Billing & Payment
+                      _buildSectionHeader(isPatient ? 4 : 5, "Billing & Payment", isDark),
                       const SizedBox(height: 14),
 
                       // Consultation fee row
@@ -2436,8 +2749,132 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     );
   }
 
-  // ── Doctor Info Header (Clean Row) ──
+  // ── Doctor Info Header (Clean Row or Hospital/Doctor Selectors for Patient) ──
   Widget _buildDoctorHeader(bool isDark, bool isTab) {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final bool isPatient = currentUser?.data?.navigationId == "1" ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient");
+
+    if (isPatient) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInputLabel("Hospital / Facility *", isDark, isTab),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Map<String, dynamic>>(
+                value: _selectedHospital,
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                items: _hospitals.map((h) {
+                  return DropdownMenuItem<Map<String, dynamic>>(
+                    value: h,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.local_hospital_rounded, color: primaryColor, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            h['name'] ?? 'Hospital',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedHospital = val;
+                      _filterDoctorsForHospital(val['id']);
+                      _selectedTreatmentPlanIds.clear();
+                    });
+                    _fetchDoctorSlots(_selectedDate);
+                    _fetchTreatmentPlans();
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _buildInputLabel("Select Doctor *", isDark, isTab),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<Map<String, dynamic>>(
+                value: _selectedDoctorMap,
+                isExpanded: true,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                items: _filteredDoctors.map((doc) {
+                  return DropdownMenuItem<Map<String, dynamic>>(
+                    value: doc,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundColor: primaryColor.withValues(alpha: 0.12),
+                          child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            "${doc['name']} • ${doc['specialty']} (₹${doc['consultationFee'] ?? 500})",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedDoctorMap = val;
+                      _selectedDoctor = val['name'] ?? 'Doctor';
+                      _consultationFee = (double.tryParse(val['consultationFee'].toString()) ?? 500.0);
+                    });
+                    _fetchDoctorSlots(_selectedDate);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         CircleAvatar(
@@ -3866,89 +4303,78 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final account = _matchingAccountsList[index];
-              final bool isIndependent = account.isPrimary || account.relation.toLowerCase() == 'self';
-              final bool isSelected = (_selectedPatient?.id.isNotEmpty == true && _selectedPatient?.id == account.id) ||
-                  (_selectedPatient?.userId.isNotEmpty == true && _selectedPatient?.userId == account.userId) ||
-                  (_selectedPatient != null && _selectedPatient!.name == account.name && _selectedPatient!.relation.toLowerCase() == account.relation.toLowerCase());
-              final Color tileAccent = isIndependent ? const Color(0xFF2563EB) : const Color(0xFF059669);
+              final bool isPrimaryItem = index == 0;
+              final bool isSelected = _selectedPatient != null
+                  ? ((_selectedPatient?.id.isNotEmpty == true && _selectedPatient?.id == account.id) ||
+                     (_selectedPatient?.userId.isNotEmpty == true && _selectedPatient?.userId == account.userId) ||
+                     (_selectedPatient!.name.toLowerCase().trim() == account.name.toLowerCase().trim()))
+                  : isPrimaryItem;
 
-              // Relation-specific icon
+              final relLower = account.relation.toLowerCase();
+              Color tileAccent;
               IconData relationIcon;
-              switch (account.relation.toLowerCase()) {
-                case 'spouse':
-                  relationIcon = Icons.favorite_rounded;
-                  break;
-                case 'child':
-                  relationIcon = Icons.child_care_rounded;
-                  break;
-                case 'father':
-                case 'mother':
-                  relationIcon = Icons.family_restroom_rounded;
-                  break;
-                case 'brother':
-                case 'sister':
-                  relationIcon = Icons.people_rounded;
-                  break;
-                default:
-                  relationIcon = isIndependent ? Icons.person_rounded : Icons.group_rounded;
+
+              if (isPrimaryItem) {
+                tileAccent = const Color(0xFF2563EB);
+                relationIcon = Icons.person_rounded;
+              } else if (relLower.contains('child') || relLower.contains('son') || relLower.contains('daughter')) {
+                tileAccent = const Color(0xFF059669);
+                relationIcon = Icons.child_care_rounded;
+              } else if (relLower.contains('spouse') || relLower.contains('wife') || relLower.contains('husband')) {
+                tileAccent = const Color(0xFFE11D48);
+                relationIcon = Icons.favorite_rounded;
+              } else if (relLower.contains('father') || relLower.contains('mother') || relLower.contains('parent')) {
+                tileAccent = const Color(0xFF0D9488);
+                relationIcon = Icons.family_restroom_rounded;
+              } else if (relLower.contains('brother') || relLower.contains('sister')) {
+                tileAccent = const Color(0xFF7C3AED);
+                relationIcon = Icons.people_rounded;
+              } else {
+                tileAccent = const Color(0xFFD97706);
+                relationIcon = Icons.group_rounded;
               }
+
+              final String badgeText = isPrimaryItem ? "Primary" : account.relation;
 
               return InkWell(
                 onTap: () => _selectPatientAccount(account),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? tileAccent.withValues(alpha: isDark ? 0.15 : 0.06)
-                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                    borderRadius: BorderRadius.circular(12),
+                        ? tileAccent.withValues(alpha: isDark ? 0.2 : 0.08)
+                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isSelected
-                          ? tileAccent.withValues(alpha: 0.5)
-                          : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      width: isSelected ? 1.5 : 1,
+                          ? tileAccent
+                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      width: isSelected ? 1.6 : 1,
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: tileAccent.withValues(alpha: 0.12),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
                   ),
                   child: Row(
                     children: [
-                      // ─ Gradient Avatar ─
+                      // ─ Role / Profile Avatar ─
                       Container(
-                        width: 38,
-                        height: 38,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              tileAccent.withValues(alpha: 0.2),
-                              tileAccent.withValues(alpha: 0.08),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: tileAccent.withValues(alpha: 0.25),
-                          ),
+                          color: isSelected
+                              ? tileAccent
+                              : tileAccent.withValues(alpha: isDark ? 0.22 : 0.12),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(
                           child: Icon(
                             relationIcon,
-                            size: 18,
-                            color: tileAccent,
+                            size: 19,
+                            color: isSelected ? Colors.white : tileAccent,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3957,13 +4383,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    account.name,
+                                    isPrimaryItem ? "${account.name} (Primary)" : "${account.name} (${account.relation})",
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13.5,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                                     ),
                                   ),
@@ -3972,28 +4398,17 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: tileAccent.withValues(alpha: 0.1),
+                                    color: tileAccent.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(5),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isIndependent ? Icons.shield_rounded : Icons.link_rounded,
-                                        size: 9,
-                                        color: tileAccent,
-                                      ),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        isIndependent ? "Primary" : account.relation,
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: tileAccent,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    badgeText,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: tileAccent,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -4007,19 +4422,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       : account.gender.toLowerCase() == 'female'
                                           ? Icons.female_rounded
                                           : Icons.person_rounded,
-                                  size: 12,
+                                  size: 13,
                                   color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    "${account.gender}${account.displayAge.isNotEmpty ? ' · ${account.displayAge}' : ''}${account.pastAppointmentsCount > 0 ? ' · ${account.pastAppointmentsCount} visit(s)' : ''}",
+                                    "+91 ${account.phone} • ${account.gender}${account.displayAge.isNotEmpty ? ' • ${account.displayAge}' : ''}",
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 11,
-                                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                     ),
                                   ),
                                 ),
@@ -4028,7 +4443,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         child: Icon(
