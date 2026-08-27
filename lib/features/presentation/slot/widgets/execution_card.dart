@@ -24,35 +24,35 @@ class ExecutionCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SectionCardWrapper(
-      icon: Icons.settings_outlined,
-      title: 'Execution',
-       isTab: isTab,
+      icon: Icons.calendar_month_rounded,
+      title: 'Schedule Dates',
+      isTab: isTab,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCardLabel(context, 'Run Mode', isDark,isTab),
+          _buildCardLabel(context, 'Schedule For', isDark, isTab),
           const SizedBox(height: 8),
-          _buildRunModeToggle(context, dataState,isTab),
-          const SizedBox(height: 20),
-          _buildDatePickerTrigger(context, dataState, isDark,isTab),
+          _buildRunModeToggle(context, dataState, isTab),
+          const SizedBox(height: 18),
+          _buildDatePickerTrigger(context, dataState, isDark, isTab),
         ],
       ),
     );
   }
 
-  Widget _buildCardLabel(BuildContext context, String text, bool isDark,bool isTab) {
+  Widget _buildCardLabel(BuildContext context, String text, bool isDark, bool isTab) {
     return CommonText(
       text,
       style: TextStyle(
         fontFamily: appPoppinFont,
-        fontSize:isTab? displayWidth(context)*0.018: displayWidth(context) * 0.032,
+        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white60 : Colors.blueGrey,
+        color: isDark ? Colors.white70 : const Color(0xFF334155),
       ),
     );
   }
 
-  Widget _buildRunModeToggle(BuildContext context, SlotDataState dataState,bool isTab) {
+  Widget _buildRunModeToggle(BuildContext context, SlotDataState dataState, bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -70,14 +70,16 @@ class ExecutionCard extends StatelessWidget {
             child: _ToggleSegment(
               label: 'Single Day',
               isSelected: dataState.isSingleDay,
-              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)), isTab: isTab,
+              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)),
+              isTab: isTab,
             ),
           ),
           Expanded(
             child: _ToggleSegment(
-              label: 'Date Range',
+              label: 'Multiple Days',
               isSelected: !dataState.isSingleDay,
-              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)), isTab: isTab
+              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)),
+              isTab: isTab,
             ),
           ),
         ],

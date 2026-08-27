@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/custom_setting_tile.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/setting_group_widget.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -15,8 +16,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final width = displayWidth(context);
-final isTab = isTablet(context);
+    final isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -106,6 +106,16 @@ final isTab = isTablet(context);
               SettingsGroupCard(
                 isTab: isTab,
                 children: [
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.tour_outlined,
+                    title: "Interactive Product Tour",
+                    subtitle: "Restart the guided walkthrough for all features",
+                    showDivider: true,
+                    onTap: () {
+                      ProviderTourController().restartTour();
+                    },
+                  ),
                   CustomSettingTile(
                     isTab: isTab,
                     icon: Icons.language_rounded,
@@ -200,38 +210,11 @@ final isTab = isTablet(context);
       title,
       style: TextStyle(
         fontFamily: appPoppinFont,
-        fontSize: isTab?width*0.02:width * 0.031,
+        fontSize: isTab ? width * 0.02 : width * 0.031,
         fontWeight: FontWeight.w600,
         color: (isDark ? textLightDarkColor : scoreSubTextColor),
         letterSpacing: 1.1,
       ),
-    );
-  }
-
-  void _showDeleteConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Delete Account?"),
-          content: const Text(
-            "This action is permanent and cannot be undone. All clinical data, profile records, and configurations will be permanently deleted.",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Delete"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -169,6 +169,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
     super.hospitalId,
     super.appointmentId,
     super.patientName,
+    super.profileImageUrl,
     super.time,
     super.consultationType,
     super.reason,
@@ -194,12 +195,19 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       }
     }
 
+    final photo = json['profileImageUrl']?.toString() ??
+        json['imagePath']?.toString() ??
+        json['ImagePath']?.toString() ??
+        json['photoUrl']?.toString() ??
+        json['avatar']?.toString();
+
     return TodaysScheduleModel(
       patientUserId: json['patientUserId'],
       orgId: (json['orgId'] as num?)?.toInt(),
       hospitalId: (json['hospitalId'] as num?)?.toInt(),
       appointmentId: (json['appointmentId'] as num?)?.toInt(),
       patientName: json['patientName'] as String?,
+      profileImageUrl: photo,
       time: json['time'] as String?,
       consultationType: json['consultationType'] as String?,
       reason: json['reason'] as String?,
@@ -216,6 +224,7 @@ class TodaysScheduleModel extends TodaysScheduleEntity {
       'hospitalId': hospitalId,
       'appointmentId': appointmentId,
       'patientName': patientName,
+      'profileImageUrl': profileImageUrl,
       'time': time,
       'consultationType': consultationType,
       'reason': reason,
@@ -233,6 +242,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
     super.hospitalId,
     super.appointmentId,
     super.name,
+    super.profileImageUrl,
     super.date,
     super.consultationType,
     super.condition,
@@ -240,12 +250,19 @@ class RecentPatientsModel extends RecentPatientsEntity {
   });
 
   factory RecentPatientsModel.fromJson(Map<String, dynamic> json) {
+    final photo = json['profileImageUrl']?.toString() ??
+        json['imagePath']?.toString() ??
+        json['ImagePath']?.toString() ??
+        json['photoUrl']?.toString() ??
+        json['avatar']?.toString();
+
     return RecentPatientsModel(
       patientUserId: json['patientUserId'] as String?,
       orgId: (json['orgId'] as num?)?.toInt(),
       hospitalId: (json['hospitalId'] as num?)?.toInt(),
       appointmentId: (json['appointmentId'] as num?)?.toInt(),
       name: json['name'] as String?,
+      profileImageUrl: photo,
       date: json['date'] as String?,
       consultationType: json['consultationType'] as String?,
       condition: json['condition'] as String?,
@@ -260,6 +277,7 @@ class RecentPatientsModel extends RecentPatientsEntity {
       'hospitalId': hospitalId,
       'appointmentId': appointmentId,
       'name': name,
+      'profileImageUrl': profileImageUrl,
       'date': date,
       'consultationType': consultationType,
       'condition': condition,

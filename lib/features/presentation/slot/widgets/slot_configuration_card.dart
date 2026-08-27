@@ -5,7 +5,7 @@ import '../../../../core/colors/colors.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../domain/entities/slot/slot_appointment_entity.dart';
 import '../slot_bloc/slot_bloc.dart';
-import 'appointment_modal_sheet.dart';
+import '../slot_details_screen.dart';
 import '../../../../core/common_widgets/common_text.dart';
 
 class SlotConfigurationCard extends StatelessWidget {
@@ -24,28 +24,24 @@ class SlotConfigurationCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(fieldBorderRadius),
-      onTap: () => AppointmentModalSheet.show(
-        context,
-        slot,
-        context.read<SlotBloc>(),
-      ),
+      onTap: () => SlotDetailsDialog.show(context, slot),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark? darkModeCardColor:Colors.white,
+          color: isDark ? darkModeCardColor : Colors.white,
           borderRadius: BorderRadius.circular(fieldBorderRadius),
           border: Border.all(
             color: (slot.hasAppointment || slot.label == 'Booked')
-                ? primary.withOpacity(.25)
+                ? primary.withValues(alpha: .25)
                 : (slot.label == 'Blocked'
-                    ? Colors.redAccent.withOpacity(.3)
+                    ? Colors.redAccent.withValues(alpha: .3)
                     : (isDark ? Colors.white10 : Colors.grey.shade200)),
           ),
           boxShadow: [
             BoxShadow(
               color: isDark
                   ? Colors.black12
-                  : Colors.black.withOpacity(.03),
+                  : Colors.black.withValues(alpha: .03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -103,7 +99,7 @@ class SlotConfigurationCard extends StatelessWidget {
                         width: 36,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.red.withOpacity(.15)
+                              ? Colors.red.withValues(alpha: .15)
                               : Colors.red.shade50,
                           shape: BoxShape.circle,
                         ),
@@ -144,7 +140,7 @@ class SlotConfigurationCard extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withOpacity(0.1)
+            ? Colors.white.withValues(alpha: 0.1)
             : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(fieldBorderRadius/2),
       ),
@@ -213,7 +209,7 @@ class SlotConfigurationCard extends StatelessWidget {
         vertical: 8,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(.12),
+        color: color.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
       ),
       child: Row(

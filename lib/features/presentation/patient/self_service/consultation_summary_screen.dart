@@ -59,9 +59,9 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Apollo City Hospital', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold)),
+                            const Text('Yira Hospital', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold)),
                             const SizedBox(height: 2),
-                            Text('Attending Physician: Dr. Sarah Jenkins (Cardiologist)', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white60 : Colors.grey[600])),
+                            Text('Attending Physician: Dr. Rajesh Sharma (Cardiologist)', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white60 : Colors.grey[600])),
                             Text('Consultation Date: 20 Aug 2026', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: primaryColor, fontWeight: FontWeight.bold)),
                           ],
                         ),

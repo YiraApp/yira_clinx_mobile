@@ -71,6 +71,7 @@ class TodaysScheduleEntity {
   final int? hospitalId;
   final int? appointmentId;
   final String? patientName;
+  final String? profileImageUrl;
   final String? time;
   final String? consultationType;
   final String? reason;
@@ -84,6 +85,7 @@ class TodaysScheduleEntity {
     this.hospitalId,
     this.appointmentId,
     this.patientName,
+    this.profileImageUrl,
     this.time,
     this.consultationType,
     this.reason,
@@ -99,6 +101,7 @@ class RecentPatientsEntity {
   final int? hospitalId;
   final int? appointmentId;
   final String? name;
+  final String? profileImageUrl;
   final String? date;
   final String? consultationType;
   final String? condition;
@@ -110,6 +113,7 @@ class RecentPatientsEntity {
     this.hospitalId,
     this.appointmentId,
     this.name,
+    this.profileImageUrl,
     this.date,
     this.consultationType,
     this.condition,

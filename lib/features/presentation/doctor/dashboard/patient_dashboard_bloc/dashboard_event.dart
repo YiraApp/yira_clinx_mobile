@@ -49,4 +49,12 @@ class ToggleFavoritePatientEvent extends DashboardEvent {
   List<Object?> get props => [patientId, alternateId];
 }
 
+class LoadMorePatients extends DashboardEvent {
+  const LoadMorePatients();
+}
+
+class ClearFilters extends DashboardEvent {
+  const ClearFilters();
+}
+
 

@@ -9,11 +9,19 @@ import 'package:yiraclinics/core/constants/constants.dart';
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
+  final GlobalKey? homeKey;
+  final GlobalKey? appointmentsKey;
+  final GlobalKey? patientsKey;
+  final GlobalKey? slotsKey;
 
   const AppBottomNavBar({
     super.key,
     required this.currentIndex,
     this.onTap,
+    this.homeKey,
+    this.appointmentsKey,
+    this.patientsKey,
+    this.slotsKey,
   });
 
   void _handleItemTapped(BuildContext context, int index) {
@@ -110,6 +118,11 @@ class AppBottomNavBar extends StatelessWidget {
             children: List.generate(items.length, (index) {
               final item = items[index];
               final isSelected = index == currentIndex;
+              GlobalKey? itemKey;
+              if (index == 0) itemKey = homeKey;
+              if (index == 1) itemKey = appointmentsKey;
+              if (index == 2) itemKey = patientsKey;
+              if (index == 3) itemKey = slotsKey;
 
               return Expanded(
                 child: InkWell(
@@ -117,10 +130,13 @@ class AppBottomNavBar extends StatelessWidget {
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
                   child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                    child: Container(
+                      key: itemKey,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           curve: Curves.easeOutCubic,
@@ -167,7 +183,8 @@ class AppBottomNavBar extends StatelessWidget {
                     ),
                   ),
                 ),
-              );
+              ),
+            );
             }),
           ),
         ),

@@ -16,7 +16,12 @@ import '../../../core/models/select_role_model.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final SendOtpEntity sendOtpEntity;
-  const VerifyOtpScreen({super.key, required this.sendOtpEntity});
+  final bool isSignup;
+  const VerifyOtpScreen({
+    super.key,
+    required this.sendOtpEntity,
+    this.isSignup = false,
+  });
 
   @override
   State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
@@ -88,17 +93,28 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
     setState(() {
       _isSubmitting = true;
     });
-    final String activeCountryCode =
-        context.read<LoginBloc>().currentCountryCode;
-    context.read<LoginBloc>().add(
-          OnTapMobileSignInEvent(
-            mobileNumber: widget.sendOtpEntity.data?.contact ?? '',
-            otp: otpController.text,
-            sessionId: widget.sendOtpEntity.data?.sessionId ?? '',
-            countryCode: activeCountryCode,
-            fcmToken: _cachedFcmToken,
-          ),
-        );
+
+    if (widget.isSignup) {
+      context.read<LoginBloc>().add(
+            OnVerifyAndRegisterPatient(
+              otp: otpController.text.trim(),
+              sessionId: widget.sendOtpEntity.data?.sessionId,
+              fcmToken: _cachedFcmToken,
+            ),
+          );
+    } else {
+      final String activeCountryCode =
+          context.read<LoginBloc>().currentCountryCode;
+      context.read<LoginBloc>().add(
+            OnTapMobileSignInEvent(
+              mobileNumber: widget.sendOtpEntity.data?.contact ?? '',
+              otp: otpController.text.trim(),
+              sessionId: widget.sendOtpEntity.data?.sessionId ?? '',
+              countryCode: activeCountryCode,
+              fcmToken: _cachedFcmToken,
+            ),
+          );
+    }
   }
 
   @override
@@ -140,7 +156,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                       current is LoginLoading ||
                       current is LoginSuccess ||
                       current is LoginFailure ||
-                      current is SignInError,
+                      current is SignInError ||
+                      current is RegisterPatientLoading ||
+                      current is RegisterPatientFailureState ||
+                      current is SendSignupOtpLoading ||
+                      current is SendSignupOtpFailureState,
                   listener: (context, state) {
                     if (state is LoginSuccess) {
                       _clearError();
@@ -187,6 +207,14 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                       _isVerified = false;
                       _showErrorMessage(
                           _parseErrorMessage(state.errorMessage ?? 'Verification failed'));
+                    } else if (state is RegisterPatientFailureState) {
+                      _isSubmitting = false;
+                      _isVerified = false;
+                      _showErrorMessage(
+                          _parseErrorMessage(state.errorMessage));
+                    } else if (state is SendSignupOtpFailureState) {
+                      _showErrorMessage(
+                          _parseErrorMessage(state.errorMessage));
                     } else if (state is ReSendOtpSuccessState) {
                       _clearError();
                       if (mounted) {
@@ -592,19 +620,45 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                                               .read<
                                                                   LoginBloc>()
                                                               .currentCountryCode;
-                                                      context
-                                                          .read<
-                                                              LoginBloc>()
-                                                          .add(
-                                                            OnReSendOtp(
-                                                              widget
-                                                                      .sendOtpEntity
-                                                                      .data
-                                                                      ?.contact ??
-                                                                  '',
-                                                              activeCountryCode,
-                                                            ),
-                                                          );
+                                                      if (widget.isSignup) {
+                                                        final draft = context
+                                                            .read<LoginBloc>()
+                                                            .currentSignupDraft;
+                                                        if (draft != null) {
+                                                          context
+                                                              .read<LoginBloc>()
+                                                              .add(
+                                                                OnInitiateSignup(
+                                                                  mobileNumber:
+                                                                      draft.phoneNumber,
+                                                                  countryCode:
+                                                                      draft.countryCode,
+                                                                  firstName:
+                                                                      draft.firstName,
+                                                                  lastName:
+                                                                      draft.lastName,
+                                                                  email: draft.email,
+                                                                  password:
+                                                                      draft.password,
+                                                                  profileImagePath:
+                                                                      draft.profileImagePath,
+                                                                ),
+                                                              );
+                                                        }
+                                                      } else {
+                                                        context
+                                                            .read<LoginBloc>()
+                                                            .add(
+                                                              OnReSendOtp(
+                                                                widget
+                                                                        .sendOtpEntity
+                                                                        .data
+                                                                        ?.contact ??
+                                                                    '',
+                                                                activeCountryCode,
+                                                              ),
+                                                            );
+                                                      }
                                                     },
                                                     child: Container(
                                                       padding:

@@ -89,7 +89,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
                           ),
                           child: const SingleChildScrollView(
                             child: Text(
-                              '1. CONSENT TO TREATMENT: I hereby authorize licensed healthcare providers at Apollo City Hospital / Yira Clinx to perform necessary clinical evaluations and teleconsultations.\n\n'
+                              '1. CONSENT TO TREATMENT: I hereby authorize licensed healthcare providers at Yira Hospital / Yira Clinx to perform necessary clinical evaluations and teleconsultations.\n\n'
                               '2. ELECTRONIC RECORDS & PRIVACY: I consent to the electronic transmission of medical data, prescriptions, and diagnostic reports in compliance with healthcare data protection standards.\n\n'
                               '3. TELECONSULTATION LIMITATIONS: I understand that teleconsultations are not designed for life-threatening emergencies. In case of emergency, I will contact emergency services immediately.',
                               style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, height: 1.5),

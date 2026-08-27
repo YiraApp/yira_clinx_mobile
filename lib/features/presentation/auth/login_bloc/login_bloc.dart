@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:yiraclinics/features/domain/entities/send_otp/send_otp_entity.dart';
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
+import 'package:yiraclinics/features/use_cases/register_patient_use_case.dart';
 
 import '../../../../core/constants/clinx_storage_keys.dart';
 import '../../../../core/constants/constants.dart';
@@ -23,17 +24,25 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   final UpdateFcmTokenUseCase updateFcmTokenUseCase;
   final SharedPrefsService sharedPrefsService;
   final SendOtpUseCase sendOtpUseCase;
+  final SendSignupOtpUseCase sendSignupOtpUseCase;
+  final RegisterPatientUseCase registerPatientUseCase;
 
   Timer? _timer;
   static const int _countdownDuration = reSendOtpDuration;
   String currentCountryCode = "+91";
   String bloodGroup = '';
   String relationType = '';
+  SignupDraftData? currentSignupDraft;
+  SendOtpEntity? currentSignupOtpEntity;
+
   LoginBloc({
     required this.loginMobileUseCase,
     required this.loginEmailUseCase,
     required this.sharedPrefsService,
-    required this.sendOtpUseCase, required this.updateFcmTokenUseCase,
+    required this.sendOtpUseCase,
+    required this.updateFcmTokenUseCase,
+    required this.sendSignupOtpUseCase,
+    required this.registerPatientUseCase,
   }) : super(SignInInitial()) {
     // Auth & API Events
     on<OnCountryCodeChanged>((event, emit) {
@@ -44,17 +53,20 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     on<OnVerifyAndLogin>(_onVerifyAndLogin);
     on<OnReSendOtp>(_onReSendOtp);
     on<OnSendOtp>(_onSendOtp);
+    on<OnInitiateSignup>(_onInitiateSignup);
+    on<OnVerifyAndRegisterPatient>(_onVerifyAndRegisterPatient);
+
     on<NavSelectRole>((event, emit) => emit(NavigateToSelectRole()));
     on<NavSelectRoleVerifyOtp>(
       (event, emit) => emit(NavigateToSelectRoleVerifyOtp()),
     );
-    on<NavForgotPasswordEvent>((event, emit) => emit(NavForgotPasswordState()));
+    on<NavForgotPasswordEvent>((event, emit) => emit(const NavForgotPasswordState()));
     on<NavSelectRoleSignUp>(
       (event, emit) => emit(NavigateToSelectRoleSignUp()),
     );
 
     on<NavTellAboutYourSelfSignUp>(
-      (event, emit) => emit(NavTellAboutYourSelfSignUpState()),
+      (event, emit) => emit(const NavTellAboutYourSelfSignUpState()),
     );
     on<NavSignIn>((event, emit) => emit(NavigateToSignIn()));
     on<NavSignUp>((event, emit) => emit(NavigateToSignup()));
@@ -65,6 +77,107 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   }
 
   // --- Event Handlers ---
+
+  Future<void> _onInitiateSignup(
+    OnInitiateSignup event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const SendSignupOtpLoading());
+    try {
+      currentSignupDraft = SignupDraftData(
+        phoneNumber: event.mobileNumber.trim(),
+        countryCode: event.countryCode.trim(),
+        firstName: event.firstName.trim(),
+        lastName: event.lastName.trim(),
+        email: event.email?.trim(),
+        password: event.password,
+        profileImagePath: event.profileImagePath,
+      );
+
+      final SendOtpEntity? result = await sendSignupOtpUseCase(
+        mobileNumber: event.mobileNumber.trim(),
+        countryCode: event.countryCode.trim(),
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Failed to send signup verification OTP.";
+        emit(SendSignupOtpFailureState(failureMessage));
+        return;
+      } else {
+        currentSignupOtpEntity = result;
+        _timer?.cancel();
+        _startCountdown();
+        emit(NavigateToVerifyOtpForSignup(
+          sendOtpEntity: result,
+          signupDraft: currentSignupDraft!,
+        ));
+      }
+    } catch (error, stackTrace) {
+      debugPrint("CRITICAL (LoginBloc) - Signup OTP initiation error: $error\n$stackTrace");
+      emit(SendSignupOtpFailureState(error.toString()));
+    }
+  }
+
+  Future<void> _onVerifyAndRegisterPatient(
+    OnVerifyAndRegisterPatient event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const RegisterPatientLoading());
+    try {
+      if (currentSignupDraft == null) {
+        emit(const RegisterPatientFailureState(
+          "Registration session expired. Please fill your details again.",
+        ));
+        return;
+      }
+
+      final resolvedSessionId = event.sessionId ??
+          currentSignupOtpEntity?.data?.sessionId ??
+          "";
+
+      final LoginEntity? result = await registerPatientUseCase(
+        mobileNumber: currentSignupDraft!.phoneNumber,
+        countryCode: currentSignupDraft!.countryCode,
+        firstName: currentSignupDraft!.firstName,
+        lastName: currentSignupDraft!.lastName,
+        email: currentSignupDraft!.email,
+        password: currentSignupDraft!.password,
+        otp: event.otp.trim(),
+        sessionId: resolvedSessionId,
+        profileImagePath: currentSignupDraft!.profileImagePath,
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Registration verification failed. Please try again.";
+        emit(RegisterPatientFailureState(failureMessage));
+        return;
+      } else {
+        await Future.wait([
+          GlobalSession.instance.update(result),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isUserLoggedIn,
+            true,
+          ),
+        ]);
+
+        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+          try {
+            await updateFcmTokenUseCase.call(event.fcmToken);
+            debugPrint("Production Signup Pipeline - Remote FCM Token synced successfully.");
+          } catch (fcmError, fcmStack) {
+            debugPrint("CRITICAL (LoginBloc) - FCM Token sync failed background tracking: $fcmError\n$fcmStack");
+          }
+        }
+
+        emit(LoginSuccess(loginEntity: result));
+      }
+    } catch (error, stackTrace) {
+      debugPrint("CRITICAL (LoginBloc) - Patient registration verification error: $error\n$stackTrace");
+      emit(RegisterPatientFailureState(error.toString()));
+    }
+  }
 
   Future<void> _onTapEmailSignIn(
     OnTapEmailSignInEvent event,
@@ -124,7 +237,6 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
           countryCode: event.countryCode,
         ),
       );
-      {}
       if (result == null || !(result.status ?? false)) {
         final failureMessage =
             result?.message ?? "Invalid OTP or mobile number.";

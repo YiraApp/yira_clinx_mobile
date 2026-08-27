@@ -8,7 +8,6 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/utils/dismiss_key_board.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
-import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
 
 import '../../../core/common_input_fields/common_input_field.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -17,7 +16,6 @@ import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
 import '../../../core/models/select_role_model.dart';
-import '../../../core/services/network_services/network_listener/network_listener.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,9 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   payload.roleCount == 1 &&
                   payload.hospitalCount == 1 &&
                   payload.organizationCount == 1) {
-                final String role = (payload.latestUserRole ?? '')
-                    .toLowerCase()
-                    .trim();
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   AppRoutes.userConfiguration,
@@ -146,6 +141,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   arguments: data,
                 );
               }
+              break;
+            case SendOtpFailureState():
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.errorMessage,
+                    style: const TextStyle(fontFamily: appPoppinFont),
+                  ),
+                  backgroundColor: Colors.red.shade700,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(16),
+                ),
+              );
+              break;
+            case LoginFailure():
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.errorMessage ?? "Login failed. Please check your credentials.",
+                    style: const TextStyle(fontFamily: appPoppinFont),
+                  ),
+                  backgroundColor: Colors.red.shade700,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  margin: const EdgeInsets.all(16),
+                ),
+              );
               break;
             case NavForgotPasswordState():
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
@@ -247,8 +274,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         height: 50,
                                         decoration: BoxDecoration(
                                           color: isDarkMode
-                                              ? darkModeCardColor.withOpacity(
-                                            0.9,
+                                              ? darkModeCardColor.withValues(
+                                            alpha: 0.9,
                                           )
                                               : filedBg,
                                           borderRadius: BorderRadius.circular(
@@ -264,8 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           dividerColor: Colors.transparent,
                                           indicatorColor: Colors.transparent,
                                           labelColor: isDarkMode
-                                              ? Colors.black
-                                              : primaryColor,
+                                              ? Colors.white
+                                              : const Color(0xFF005696),
                                           labelStyle: TextStyle(
                                             fontWeight: FontWeight.w600,
                                             fontFamily: appPoppinFont,
@@ -287,13 +314,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                             fieldBorderRadius * 5,
                                             topRightRadius:
                                             fieldBorderRadius * 5,
-                                            color: Colors.white,
+                                            color: isDarkMode
+                                                ? const Color(0xFF005696)
+                                                : Colors.white,
                                             horizontalPadding: 4,
                                             verticalPadding: 4,
                                           ),
                                           tabs: const [
-                                            Tab(text: "Mobile Login"),
-                                            Tab(text: "Email Login"),
+                                            Tab(text: "Mobile OTP"),
+                                            Tab(text: "Email & Password"),
                                           ],
                                         ),
                                       ),
@@ -330,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         MainAxisAlignment.center,
                                         children: [
                                           CommonText(
-                                            "Don't you have account? ",
+                                            "Don't have an account? ",
                                             style: TextStyle(
                                               fontFamily: appPoppinFont,
                                               fontSize:
@@ -345,7 +374,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             onPressed: () {
                                               context.dismissKeyboard();
                                               context.read<LoginBloc>().add(
-                                                NavSignUp(),
+                                                const NavSignUp(),
                                               );
                                             },
                                             style: TextButton.styleFrom(

@@ -18,6 +18,7 @@ import 'widgets/doctor_profile_hero_header.dart';
 import 'widgets/doctor_profile_section_card.dart';
 import 'widgets/doctor_qr_code_sheet.dart';
 import 'widgets/profile_switcher_sheet.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
 
 class ProviderProfileScreen extends StatefulWidget {
   final String? userId;
@@ -767,6 +768,18 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
+          _buildSettingsTile(
+            icon: Icons.tour_outlined,
+            iconColor: primaryColor,
+            title: "Interactive Product Tour",
+            subtitle: "Restart the guided walkthrough for all features",
+            isDark: isDark,
+            isTab: isTab,
+            onTap: () {
+              ProviderTourController().restartTour();
+            },
+          ),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.switch_account_rounded,
             iconColor: primaryColor,

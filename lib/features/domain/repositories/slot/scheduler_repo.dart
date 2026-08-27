@@ -25,6 +25,11 @@ abstract class SchedulerRepository {
     required String bufferType,
   });
 
+  Future<List<BreakTimeEntity>> fetchBreakTimes({
+    required String targetDate,
+    required bool isSingleDay,
+  });
+
   Future<bool> deployTimeSchedule(
     List<TimeSlot> slots, {
     required String targetDate,

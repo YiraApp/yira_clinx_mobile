@@ -188,6 +188,59 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
     return fetched;
   }
 
+  @override
+  Future<List<BreakTimeEntity>> fetchBreakTimes({
+    required String targetDate,
+    required bool isSingleDay,
+  }) async {
+    try {
+      final String dateStr = isSingleDay ? targetDate : DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+          ? currentUser.data!.id!.trim()
+          : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+              ? currentUser.data!.navigationId!.trim()
+              : '1';
+      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+      final String token = currentUser?.data?.accessToken ?? '';
+
+      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.doctorSlotsUrl,
+        data: {
+          "doctorId": doctorId,
+          "hospitalId": hospitalId,
+          "date": dateStr,
+        },
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        final rawData = response.data as Map<String, dynamic>;
+        final slotData = rawData['data'];
+        if (slotData != null && slotData['breaks'] is List) {
+          final breaksList = slotData['breaks'] as List;
+          final List<BreakTimeEntity> result = [];
+          for (final b in breaksList) {
+            if (b is Map<String, dynamic>) {
+              result.add(BreakTimeEntity(
+                id: (b['id'] ?? 'break_${result.length + 1}').toString(),
+                fromTime: _formatTime((b['fromTime'] ?? b['startTime'] ?? '').toString()),
+                toTime: _formatTime((b['toTime'] ?? b['endTime'] ?? '').toString()),
+                label: (b['label'] ?? 'Break ${result.length + 1}').toString(),
+              ));
+            }
+          }
+          if (result.isNotEmpty) return result;
+        }
+      }
+    } catch (e) {
+      debugPrint("SlotRepo: fetchBreakTimes error: $e");
+    }
+    return [];
+  }
+
   DateTime _parseTimeString(String t) {
     try {
       final cleaned = t.replaceAll(RegExp(r'[\s\u00A0\u2000-\u200B\u202F]+'), ' ').trim();

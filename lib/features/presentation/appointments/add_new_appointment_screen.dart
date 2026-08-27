@@ -32,6 +32,7 @@ class PatientOption {
   final String accountType;
   final int pastAppointmentsCount;
   final String? lastVisitDate;
+  final String? profileImageUrl;
 
   const PatientOption({
     required this.id,
@@ -47,6 +48,7 @@ class PatientOption {
     this.accountType = "Independent",
     this.pastAppointmentsCount = 0,
     this.lastVisitDate,
+    this.profileImageUrl,
   });
 
   String get displayAge {
@@ -215,11 +217,19 @@ class PreviousAppointmentOption {
 class AddNewAppointmentScreen extends StatefulWidget {
   final String? initialPatientName;
   final String? initialPatientPhone;
+  final DateTime? initialDate;
+  final String? initialSlot;
+  final String? initialDoctorId;
+  final String? initialDoctorName;
 
   const AddNewAppointmentScreen({
     super.key,
     this.initialPatientName,
     this.initialPatientPhone,
+    this.initialDate,
+    this.initialSlot,
+    this.initialDoctorId,
+    this.initialDoctorName,
   });
 
   @override
@@ -740,7 +750,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           _allDoctorSlots = fetched;
           final availableSlots = _allDoctorSlots.where((s) => s.isSelectableForDate(date)).toList();
           if (availableSlots.isNotEmpty) {
-            if (!_allDoctorSlots.any((s) => s.label == _selectedSlot && s.isSelectableForDate(date))) {
+            DoctorSlotItem? matchedSlot;
+            if (_selectedSlot.isNotEmpty) {
+              final query = _selectedSlot.trim().toLowerCase();
+              for (final s in availableSlots) {
+                final sLabel = s.label.toLowerCase();
+                final sStart = s.startTime.toLowerCase();
+                if (sLabel == query || sStart == query || sLabel.contains(query) || query.startsWith(sStart)) {
+                  matchedSlot = s;
+                  break;
+                }
+              }
+            }
+            if (matchedSlot != null) {
+              _selectedSlot = matchedSlot.label;
+            } else if (!_allDoctorSlots.any((s) => s.label == _selectedSlot && s.isSelectableForDate(date))) {
               _selectedSlot = availableSlots.first.label;
             }
           } else {
@@ -982,11 +1006,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       }
     });
     final currentUser = GlobalSession.instance.userNotifier.value?.data;
-    if (currentUser != null) {
+    if (widget.initialDoctorName != null && widget.initialDoctorName!.trim().isNotEmpty) {
+      _selectedDoctor = widget.initialDoctorName!;
+    } else if (currentUser != null) {
       final name = currentUser.firstName ?? currentUser.email?.split('@').first ?? '';
       if (name.isNotEmpty) {
         _selectedDoctor = "Dr. $name";
       }
+    }
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
+    if (widget.initialSlot != null && widget.initialSlot!.trim().isNotEmpty) {
+      _selectedSlot = widget.initialSlot!.trim();
     }
     final initialPhone = widget.initialPatientPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
     if (initialPhone.length >= 10) {
@@ -3230,16 +3262,40 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               color: accentColor.withValues(alpha: 0.3),
                             ),
                           ),
-                          child: Center(
-                            child: Text(
-                              patient.name.isNotEmpty ? patient.name[0].toUpperCase() : 'P',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: accentColor,
-                              ),
-                            ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: (patient.profileImageUrl != null &&
+                                    patient.profileImageUrl!.trim().isNotEmpty &&
+                                    !patient.profileImageUrl!.contains('placeholder') &&
+                                    !patient.profileImageUrl!.contains('default_avatar'))
+                                ? Image.network(
+                                    patient.profileImageUrl!.trim(),
+                                    fit: BoxFit.cover,
+                                    width: 44,
+                                    height: 44,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Text(
+                                        patient.name.isNotEmpty ? patient.name[0].toUpperCase() : 'P',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: accentColor,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      patient.name.isNotEmpty ? patient.name[0].toUpperCase() : 'P',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: accentColor,
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 12),

@@ -17,6 +17,7 @@ import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart
 import '../documents/patient_documents_screen.dart';
 import '../widgets/patient_vitals_card.dart';
 import '../widgets/update_vitals_sheet.dart';
+import '../../../../core/services/notification_services/notification_services.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
@@ -29,6 +30,12 @@ class PatientDashboardScreen extends StatefulWidget {
 }
 
 class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    NotificationService.instance.syncFcmTokenWithBackend();
+  }
+
   Map<String, String> _vitalsData = {
     'bp': '120/80',
     'bpSystolic': '120',

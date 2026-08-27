@@ -75,19 +75,19 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CommonText(
-                          'Configure Optimization Engine',
+                          'Set Consultation Timings',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: isTab?  displayWidth(context) * 0.022:displayWidth(context) * 0.045,
+                            fontSize: isTab ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 6),
                         CommonText(
-                          'Adjust algorithm parameters for the upcoming clinical block.',
+                          'Customize your working hours, per-patient duration, and break times.',
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize:  isTab?  displayWidth(context) * 0.018:displayWidth(context) * 0.03,
+                            fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
                             color: isDark
                                 ? Colors.white60
                                 : Colors.grey.shade600,
@@ -97,9 +97,12 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           softWrap: true,
                         ),
                         const SizedBox(height: 24),
-                        ExecutionCard(state: dataState,isTab: isTab,),
+                        ExecutionCard(state: dataState, isTab: isTab),
                         const SizedBox(height: fieldSpace),
-                        ParametersCard(state: dataState,isTab: isTab,),
+                        ParametersCard(
+                          state: dataState,
+                          isTab: isTab,
+                        ),
                         const SizedBox(height: inputFieldBorderRadius),
                         if (dataState.slots.isNotEmpty) ...[
                           Row(
@@ -111,7 +114,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     CommonText(
-                                      dataState.isSingleDay ? 'Daily Slots' : 'Daily Slots Template',
+                                      dataState.isSingleDay ? 'Generated Slots Preview' : 'Schedule Template Preview',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.038,
@@ -122,7 +125,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                                       Padding(
                                         padding: const EdgeInsets.only(top: 2),
                                         child: CommonText(
-                                          'These slots will apply to all days in date range',
+                                          'These slots will apply to all days in the selected date range',
                                           style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: isTab ? displayWidth(context) * 0.015 : displayWidth(context) * 0.028,
@@ -273,8 +276,8 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                           height: 50,
                           width: displayWidth(context),
                           text: dataState.isSingleDay
-                              ? "Deploy Schedule (${dataState.slots.length} Slots)"
-                              : "Deploy Schedule (${dataState.slots.length} Slots/Day)",
+                              ? "Save & Publish Schedule (${dataState.slots.length} Slots)"
+                              : "Save & Publish Schedule (${dataState.slots.length} Slots/Day)",
                           onPressed: () {
                             if (dataState.slots.isEmpty) {
                               showDialog(

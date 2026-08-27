@@ -21,16 +21,34 @@ class FcmTokenHelper {
           );
         } catch (_) {}
 
+        // 1. Wait for APNs token to be issued by Apple APNs service
+        for (int i = 1; i <= 10; i++) {
+          try {
+            final apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null && apnsToken.isNotEmpty) {
+              debugPrint("APNS Token successfully received on iOS device.");
+              final String? token = await messaging.getToken();
+              if (token != null && token.isNotEmpty) {
+                return token;
+              }
+            }
+          } catch (e) {
+            debugPrint("APNS / FCM getToken attempt $i: $e");
+          }
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+
+        // 2. Direct FCM getToken attempt
         try {
           final String? token = await messaging.getToken();
           if (token != null && token.isNotEmpty) {
             return token;
           }
         } catch (e) {
-          debugPrint("FCM getToken on iOS: $e");
+          debugPrint("FCM getToken on iOS fallback: $e");
         }
 
-        // Fallback for iOS Simulator / local testing
+        // 3. Fallback for iOS Simulator / local testing
         try {
           final deviceInfo = DeviceInfoPlugin();
           final iosInfo = await deviceInfo.iosInfo;

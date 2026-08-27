@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_details_screen.dart';
@@ -16,6 +18,8 @@ import '../../../core/widgets/calendar/advanced_calendar.dart';
 import '../../../core/widgets/calendar/advanced_calendar_controller.dart';
 import '../../domain/entities/slot/slot_appointment_entity.dart';
 import '../../domain/entities/slot/time_slot_entity.dart';
+import '../../../../core/tour/provider_tour_controller.dart';
+import '../../../../core/tour/provider_tour_mock_data.dart';
 
 class SlotDashBoardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -41,32 +45,42 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
-    return BlocConsumer<SlotBloc, SlotState>(
-      buildWhen: (previous, current) => current is SlotDataState,
-      listener: (context, state) {},
-      builder: (context, state) {
-        return Scaffold(
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: primaryColor,
-            shape: const CircleBorder(),
-            onPressed: () async {
-              await Navigator.pushNamed(
-                context,
-                AppRoutes.smartSlotSchedulerScreen,
-              );
-              if (context.mounted) {
-                context.read<SlotBloc>().add(InitializeSlotsEvent());
-              }
-            },
-            child: const Icon(Icons.event, color: Colors.white),
-          ),
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: state is SlotDataState
-                ? _buildBodyContent(context, state, isTab)
-                : SlotDashboardShimmer(isTab: isTab),
-          ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return BlocConsumer<SlotBloc, SlotState>(
+          buildWhen: (previous, current) => current is SlotDataState,
+          listener: (context, state) {},
+          builder: (context, state) {
+            final effectiveState = isTourActive
+                ? ProviderTourMockData.demoSlotDataState
+                : (state is SlotDataState ? state : null);
+
+            return Scaffold(
+              floatingActionButton: FloatingActionButton(
+                key: ProviderTourController().slotsFabKey,
+                backgroundColor: primaryColor,
+                shape: const CircleBorder(),
+                onPressed: () async {
+                  await Navigator.pushNamed(
+                    context,
+                    AppRoutes.smartSlotSchedulerScreen,
+                  );
+                  if (context.mounted) {
+                    context.read<SlotBloc>().add(InitializeSlotsEvent());
+                  }
+                },
+                child: const Icon(Icons.event, color: Colors.white),
+              ),
+              bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              body: SafeArea(
+                child: effectiveState != null
+                    ? _buildBodyContent(context, effectiveState, isTab)
+                    : SlotDashboardShimmer(isTab: isTab),
+              ),
+            );
+          },
         );
       },
     );
@@ -91,14 +105,69 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     }
   }
 
+  bool _isSlotPast(DateTime? date, String timeStr) {
+    if (date == null) return false;
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    if (isToday) {
+      try {
+        final clean = timeStr.trim();
+        if (clean.isEmpty) return false;
+        final firstPart = clean.contains(' - ') ? clean.split(' - ').first.trim() : clean;
+        final isPM = firstPart.toUpperCase().contains('PM');
+        final isAM = firstPart.toUpperCase().contains('AM');
+        final digitsOnly = firstPart.replaceAll(RegExp(r'[^0-9:]'), '');
+        final parts = digitsOnly.split(':');
+        if (parts.isEmpty) return false;
+        int hour = int.parse(parts[0]);
+        int minute = parts.length > 1 ? int.parse(parts[1]) : 0;
+        if (isPM && hour < 12) hour += 12;
+        if (isAM && hour == 12) hour = 0;
+        final slotTime = DateTime(date.year, date.month, date.day, hour, minute);
+        return slotTime.isBefore(now);
+      } catch (_) {
+        return false;
+      }
+    } else {
+      final dateOnly = DateTime(date.year, date.month, date.day);
+      final todayOnly = DateTime(now.year, now.month, now.day);
+      return dateOnly.isBefore(todayOnly);
+    }
+  }
+
   List<dynamic> _buildVisibleItems(SlotDataState state) {
     final List<dynamic> items = [];
     final selectedTab = state.selectedTabIndex;
 
+    // Collect effective breaks (from state or auto-detected gaps)
+    final List<BreakTimeEntity> effectiveBreaks = List<BreakTimeEntity>.from(state.breakTimes);
+    if (effectiveBreaks.isEmpty && state.timeSlots.length > 1) {
+      final sortedSlots = List<TimeSlot>.from(state.timeSlots)
+        ..sort((a, b) => _timeToMinutes(a.time).compareTo(_timeToMinutes(b.time)));
+      for (int i = 0; i < sortedSlots.length - 1; i++) {
+        final currentMins = _timeToMinutes(sortedSlots[i].time);
+        final nextMins = _timeToMinutes(sortedSlots[i + 1].time);
+        int slotDur = 15;
+        final durMatch = RegExp(r'(\d+)').firstMatch(sortedSlots[i].duration);
+        if (durMatch != null) slotDur = int.tryParse(durMatch.group(1)!) ?? 15;
+        final endMins = currentMins + slotDur;
+        if (nextMins - endMins >= 15) {
+          final fromDt = DateTime(2000, 1, 1, endMins ~/ 60, endMins % 60);
+          final toDt = DateTime(2000, 1, 1, nextMins ~/ 60, nextMins % 60);
+          effectiveBreaks.add(BreakTimeEntity(
+            id: 'gap_break_${effectiveBreaks.length + 1}',
+            fromTime: DateFormat('hh:mm a').format(fromDt),
+            toTime: DateFormat('hh:mm a').format(toDt),
+            label: 'Break ${effectiveBreaks.length + 1}',
+          ));
+        }
+      }
+    }
+
     // Filter timeSlots that don't fall into any break period
     final nonBreakTimeSlots = state.timeSlots.where((s) {
       final sMin = _timeToMinutes(s.time);
-      for (final b in state.breakTimes) {
+      for (final b in effectiveBreaks) {
         final bStart = _timeToMinutes(b.fromTime);
         final bEnd = _timeToMinutes(b.toTime);
         if (bStart < bEnd && sMin >= bStart && sMin < bEnd) {
@@ -111,7 +180,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     if (selectedTab == 0) {
       // All tab: include non-break slots + break periods
       items.addAll(nonBreakTimeSlots);
-      items.addAll(state.breakTimes);
+      items.addAll(effectiveBreaks);
     } else if (selectedTab == 1) {
       items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.booked));
     } else if (selectedTab == 2) {
@@ -119,7 +188,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     } else if (selectedTab == 3) {
       items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.blocked));
     } else if (selectedTab == 4) {
-      items.addAll(state.breakTimes);
+      items.addAll(effectiveBreaks);
     }
 
     items.sort((a, b) {
@@ -132,6 +201,31 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
   }
 
   Widget _buildBodyContent(BuildContext context, SlotDataState state, bool isTab) {
+    // Build effective breaks list for counters
+    final List<BreakTimeEntity> effectiveBreaks = List<BreakTimeEntity>.from(state.breakTimes);
+    if (effectiveBreaks.isEmpty && state.timeSlots.length > 1) {
+      final sortedSlots = List<TimeSlot>.from(state.timeSlots)
+        ..sort((a, b) => _timeToMinutes(a.time).compareTo(_timeToMinutes(b.time)));
+      for (int i = 0; i < sortedSlots.length - 1; i++) {
+        final currentMins = _timeToMinutes(sortedSlots[i].time);
+        final nextMins = _timeToMinutes(sortedSlots[i + 1].time);
+        int slotDur = 15;
+        final durMatch = RegExp(r'(\d+)').firstMatch(sortedSlots[i].duration);
+        if (durMatch != null) slotDur = int.tryParse(durMatch.group(1)!) ?? 15;
+        final endMins = currentMins + slotDur;
+        if (nextMins - endMins >= 15) {
+          final fromDt = DateTime(2000, 1, 1, endMins ~/ 60, endMins % 60);
+          final toDt = DateTime(2000, 1, 1, nextMins ~/ 60, nextMins % 60);
+          effectiveBreaks.add(BreakTimeEntity(
+            id: 'gap_break_${effectiveBreaks.length + 1}',
+            fromTime: DateFormat('hh:mm a').format(fromDt),
+            toTime: DateFormat('hh:mm a').format(toDt),
+            label: 'Break ${effectiveBreaks.length + 1}',
+          ));
+        }
+      }
+    }
+
     final totalCount = state.timeSlots.length;
     final bookedCount = state.timeSlots
         .where((s) => s.status == SlotStatus.booked)
@@ -142,7 +236,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     final blockedCount = state.timeSlots
         .where((s) => s.status == SlotStatus.blocked)
         .length;
-    final breakCount = state.breakTimes.length;
+    final breakCount = effectiveBreaks.length;
 
     final visibleItems = _buildVisibleItems(state);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -152,6 +246,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       children: [
         SizedBox(height: screenTopPadding),
         Container(
+          key: ProviderTourController().slotsCalendarKey,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
           ),
@@ -208,11 +303,45 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           ),
         ),
         Expanded(
-          child: state.isLoading
-              ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
-              : visibleItems.isEmpty
-                  ? const Center(
-                      child: CommonText("No time slots found for this selection."),
+          child: Container(
+            key: ProviderTourController().slotsListKey,
+            child: state.isLoading
+                ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
+                : visibleItems.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_note_rounded,
+                              size: 48,
+                              color: isDark ? Colors.white24 : Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 12),
+                            CommonText(
+                              "No slots scheduled for this date",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: FontWeight.w600,
+                                fontSize: isTab ? 16 : 14,
+                                color: isDark ? Colors.white70 : Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            CommonText(
+                              "Tap '+' at the bottom to configure consultation hours and generate your schedule.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 13 : 12,
+                                color: isDark ? Colors.white38 : Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
@@ -232,7 +361,54 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                           child: TimeSlotCard(
                             isTab: isTab,
                             slot: timeSlotItem,
+                            targetDate: state.targetDate,
                             bookSlot: () {
+                              if (_isSlotPast(state.targetDate, timeSlotItem.time) && timeSlotItem.status != SlotStatus.booked) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Cannot book an appointment for past time.",
+                                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13),
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: const Color(0xFF334155),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (timeSlotItem.status == SlotStatus.available) {
+                                final currentUser = GlobalSession.instance.userNotifier.value?.data;
+                                final doctorId = (currentUser?.id != null && currentUser!.id!.trim().isNotEmpty)
+                                    ? currentUser.id!.trim()
+                                    : (currentUser?.navigationId != null && currentUser!.navigationId!.trim().isNotEmpty)
+                                        ? currentUser.navigationId!.trim()
+                                        : '1';
+                                final doctorName = currentUser != null
+                                    ? "Dr. ${currentUser.firstName ?? currentUser.email?.split('@').first ?? ''}"
+                                    : '';
+
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.addAppointmentScreen,
+                                  arguments: {
+                                    'date': state.targetDate,
+                                    'targetDate': state.targetDate,
+                                    'slot': timeSlotItem.time,
+                                    'time': timeSlotItem.time,
+                                    'startTime': timeSlotItem.time,
+                                    'doctorId': doctorId,
+                                    'doctorName': doctorName,
+                                  },
+                                ).then((_) {
+                                  if (context.mounted) {
+                                    context.read<SlotBloc>().add(InitializeSlotsEvent());
+                                  }
+                                });
+                                return;
+                              }
+
                               try {
                                 final legacySlot = state.slots.firstWhere(
                                   (s) => s.id == timeSlotItem.id,
@@ -268,6 +444,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                         );
                       },
                     ),
+          ),
         ),
       ],
     );
@@ -355,10 +532,10 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         CommonText(
-          "Time Slots",
+          "Consultation Slots",
           style: TextStyle(
             fontFamily: appPoppinFont,
-            fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.039,
+            fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.038,
             fontWeight: FontWeight.w600,
           ),
         ),

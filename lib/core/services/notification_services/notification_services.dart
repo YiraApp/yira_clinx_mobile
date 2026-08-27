@@ -120,6 +120,8 @@ class NotificationService {
               presentAlert: true,
               presentBadge: true,
               presentSound: true,
+              presentBanner: true,
+              presentList: true,
             ),
           ),
           payload: jsonEncode(message.data),
@@ -156,10 +158,107 @@ class NotificationService {
     });
   }
 
+  /// Fetch the current FCM registration token
+  Future<String> getFcmToken() async {
+    return await FcmTokenHelper.getProductionFcmToken();
+  }
+
+  /// Triggers a test push notification locally to verify UI banner, sound, and navigation
+  Future<void> sendTestLocalNotification({
+    String title = "🩺 Yira Clinx: Test Appointment Alert",
+    String body = "Rahul Verma booked an appointment for Today at 10:30 AM (Live Video)",
+    Map<String, dynamic>? customData,
+  }) async {
+    final Map<String, dynamic> data = customData ?? {
+      'type': 'APPOINTMENT_BOOKED',
+      'title': title,
+      'body': body,
+      'appointmentId': '1001',
+      'route': '/doctorDashboard',
+    };
+
+    await _localNotifications.show(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _highImportanceChannel.id,
+          _highImportanceChannel.name,
+          channelDescription: _highImportanceChannel.description,
+          importance: Importance.max,
+          priority: Priority.high,
+          playSound: true,
+          enableVibration: true,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          presentBanner: true,
+          presentList: true,
+        ),
+      ),
+      payload: jsonEncode(data),
+    );
+  }
+
+  /// Schedules a 10-minute pre-appointment reminder notification
+  Future<void> scheduleAppointment10MinReminder({
+    required int appointmentId,
+    required String title,
+    required String body,
+    required DateTime appointmentDateTime,
+    Map<String, dynamic>? customData,
+  }) async {
+    final reminderTime = appointmentDateTime.subtract(const Duration(minutes: 10));
+    final now = DateTime.now();
+
+    // If the reminder time is in the past, skip
+    if (reminderTime.isBefore(now)) return;
+
+    final Duration delay = reminderTime.difference(now);
+
+    Future.delayed(delay, () async {
+      await _localNotifications.show(
+        id: appointmentId.hashCode,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            _highImportanceChannel.id,
+            _highImportanceChannel.name,
+            channelDescription: _highImportanceChannel.description,
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+            presentBanner: true,
+            presentList: true,
+          ),
+        ),
+        payload: jsonEncode(customData ?? {
+          'type': 'APPOINTMENT_REMINDER_10MIN',
+          'appointmentId': appointmentId.toString(),
+          'title': title,
+          'body': body,
+        }),
+      );
+    });
+  }
+
   /// Explicitly sync current FCM token with backend
   Future<void> syncFcmTokenWithBackend() async {
     try {
       final String token = await FcmTokenHelper.getProductionFcmToken();
+      debugPrint("FCM Registration Token: $token");
       if (token.isNotEmpty && token != 'no_token_available') {
         await _sendTokenToBackend(token);
       }
@@ -172,7 +271,7 @@ class NotificationService {
     try {
       if (sl.isRegistered<UpdateFcmTokenUseCase>()) {
         await sl<UpdateFcmTokenUseCase>().call(token);
-        debugPrint("FCM token registered with backend successfully");
+        debugPrint("FCM token registered with backend successfully: $token");
       }
     } catch (e) {
       debugPrint("Error sending FCM token to backend: $e");

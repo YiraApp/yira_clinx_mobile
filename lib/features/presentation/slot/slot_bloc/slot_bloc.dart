@@ -267,8 +267,37 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         bufferType: currentState.bufferType,
       );
 
+      final fetchedBreaks = await schedulerRepository.fetchBreakTimes(
+        targetDate: dateString,
+        isSingleDay: currentState.isSingleDay,
+      );
+
       List<SlotEntity> slots = fetchedLegacySlots;
       List<TimeSlot> timeSlots = fetchedModernSlots;
+      List<BreakTimeEntity> breaks = fetchedBreaks.isNotEmpty
+          ? fetchedBreaks
+          : List<BreakTimeEntity>.from(currentState.breakTimes);
+
+      // Auto-detect break gaps between fetched slots if breaks list is empty
+      if (breaks.isEmpty && timeSlots.length > 1) {
+        final sorted = List<TimeSlot>.from(timeSlots)
+          ..sort((a, b) => _timeStringToMinutes(a.time).compareTo(_timeStringToMinutes(b.time)));
+        for (int i = 0; i < sorted.length - 1; i++) {
+          final curMins = _timeStringToMinutes(sorted[i].time);
+          final nextMins = _timeStringToMinutes(sorted[i + 1].time);
+          final endMins = curMins + currentState.durationMinutes;
+          if (nextMins - endMins >= 15) {
+            final fromDt = DateTime(2000, 1, 1, endMins ~/ 60, endMins % 60);
+            final toDt = DateTime(2000, 1, 1, nextMins ~/ 60, nextMins % 60);
+            breaks.add(BreakTimeEntity(
+              id: 'break_${breaks.length + 1}',
+              fromTime: DateFormat('hh:mm a').format(fromDt),
+              toTime: DateFormat('hh:mm a').format(toDt),
+              label: 'Break ${breaks.length + 1}',
+            ));
+          }
+        }
+      }
 
       // Always calculate slots on frontend if API returns empty schedule
       if (slots.isEmpty) {
@@ -277,7 +306,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
           bufferType: currentState.bufferType,
           fromTime: currentState.fromTime,
           toTime: currentState.toTime,
-          breakTimes: currentState.breakTimes,
+          breakTimes: breaks,
           targetDate: currentState.targetDate,
           isSingleDay: currentState.isSingleDay,
         );
@@ -287,6 +316,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       emit(currentState.copyWith(
         slots: slots,
         timeSlots: timeSlots,
+        breakTimes: breaks,
         isLoading: false,
         deploySuccess: false,
       ));

@@ -20,6 +20,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<GetDashboardData>(_onGetDashboardData);
     on<SearchPatients>(_onSearchPatients);
     on<FilterPatients>(_onFilterPatients);
+    on<LoadMorePatients>(_onLoadMorePatients);
+    on<ClearFilters>(_onClearFilters);
     on<ToggleFavoritePatientEvent>(_onToggleFavoritePatient);
     on<ViewPatientDetailsEvent>((event, emit) async {
       emit(ViewPatientDetailsState(
@@ -80,9 +82,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       emit(state.copyWith(
         status: DashboardStatus.success,
-        patients: patients,
         allPatients: patients,
       ));
+
+      _applyFilters(emit, query: state.searchQuery, resetPage: true);
     } catch (e) {
       emit(state.copyWith(status: DashboardStatus.failure, errorMessage: e.toString()));
     }
@@ -113,11 +116,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }).toList();
 
     emit(state.copyWith(allPatients: updatedAll));
-    _applyFilters(emit);
+    _applyFilters(emit, query: state.searchQuery, resetPage: false);
   }
 
   void _onSearchPatients(SearchPatients event, Emitter<DashboardState> emit) {
-    _applyFilters(emit, query: event.query);
+    emit(state.copyWith(searchQuery: event.query));
+    _applyFilters(emit, query: event.query, resetPage: true);
   }
 
   void _onFilterPatients(FilterPatients event, Emitter<DashboardState> emit) {
@@ -134,28 +138,62 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       selectedGender: () => genderToSet,
     ));
 
-    _applyFilters(emit);
+    _applyFilters(emit, query: state.searchQuery, resetPage: true);
   }
 
-  void _applyFilters(Emitter<DashboardState> emit, {String? query}) {
-    final searchQuery = (query ?? "").trim().toLowerCase();
+  void _onClearFilters(ClearFilters event, Emitter<DashboardState> emit) {
+    emit(state.copyWith(
+      searchQuery: '',
+      selectedStatus: () => null,
+      selectedGender: () => null,
+    ));
+    _applyFilters(emit, query: '', resetPage: true);
+  }
 
-    final filteredList = state.allPatients.where((patient) {
-      // 1. Check Search Query
+  void _onLoadMorePatients(LoadMorePatients event, Emitter<DashboardState> emit) {
+    if (!state.hasMore || state.isLoadingMore) return;
+
+    emit(state.copyWith(isLoadingMore: true));
+
+    final nextPage = state.currentPage + 1;
+    final totalToShow = nextPage * state.pageSize;
+    final paginatedList = state.allFilteredPatients.take(totalToShow).toList();
+    final hasMoreNow = state.allFilteredPatients.length > paginatedList.length;
+
+    emit(state.copyWith(
+      currentPage: nextPage,
+      patients: paginatedList,
+      hasMore: hasMoreNow,
+      isLoadingMore: false,
+    ));
+  }
+
+  void _applyFilters(Emitter<DashboardState> emit, {String? query, bool resetPage = true}) {
+    final searchQuery = (query ?? state.searchQuery).trim().toLowerCase();
+
+    List<PatientEntity> filteredList = state.allPatients.where((patient) {
+      // 1. Search Query Match
       final matchesSearch = searchQuery.isEmpty ||
           patient.name.toLowerCase().contains(searchQuery) ||
           patient.id.toLowerCase().contains(searchQuery) ||
+          patient.userId.toLowerCase().contains(searchQuery) ||
           patient.condition.toLowerCase().contains(searchQuery) ||
           patient.allergy.toLowerCase().contains(searchQuery);
 
-      // 2. Check Status / Favorites Filter
+      // 2. Status / Tab Filter Match
       bool matchesStatus = true;
       if (state.selectedStatus != null &&
           state.selectedStatus!.trim().isNotEmpty &&
           state.selectedStatus != "All") {
         final selected = state.selectedStatus!.trim().toLowerCase();
-        if (selected == "favorites" || selected == "favorite" || selected.contains("favorite")) {
+        if (selected == "favorites" || selected == "favorite") {
           matchesStatus = patient.isFavorite == true;
+        } else if (selected == "recent") {
+          matchesStatus = patient.lastVisit.trim().isNotEmpty || patient.visits > 0;
+        } else if (selected == "male" || selected == "m") {
+          matchesStatus = patient.gender.trim().toLowerCase().startsWith('m');
+        } else if (selected == "female" || selected == "f") {
+          matchesStatus = patient.gender.trim().toLowerCase().startsWith('f');
         } else {
           final pStatus = patient.status.trim().toLowerCase();
           final pCondition = patient.condition.trim().toLowerCase();
@@ -163,18 +201,34 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         }
       }
 
-      // 3. Check Gender Filter
+      // 3. Gender Filter Match
       bool matchesGender = true;
       if (state.selectedGender != null &&
           state.selectedGender!.trim().isNotEmpty &&
           state.selectedGender != "All") {
         final selectedG = state.selectedGender!.trim().toLowerCase();
-        matchesGender = patient.gender.trim().toLowerCase() == selectedG;
+        matchesGender = patient.gender.trim().toLowerCase().startsWith(selectedG.substring(0, 1));
       }
 
       return matchesSearch && matchesStatus && matchesGender;
     }).toList();
 
-    emit(state.copyWith(patients: filteredList));
+    // Sort: Favorites or Recent first if selected
+    if (state.selectedStatus?.toLowerCase() == 'recent') {
+      filteredList.sort((a, b) => b.lastVisit.compareTo(a.lastVisit));
+    }
+
+    final page = resetPage ? 1 : state.currentPage;
+    final totalToShow = page * state.pageSize;
+    final paginatedList = filteredList.take(totalToShow).toList();
+    final hasMoreNow = filteredList.length > paginatedList.length;
+
+    emit(state.copyWith(
+      allFilteredPatients: filteredList,
+      patients: paginatedList,
+      currentPage: page,
+      hasMore: hasMoreNow,
+      isLoadingMore: false,
+    ));
   }
 }

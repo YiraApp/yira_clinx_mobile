@@ -51,7 +51,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
       "date": "2024-01-18",
       "condition": "Hypertension",
       "status": "Active",
-      "pharmacy": "Apollo Pharmacy, MG Road",
+      "pharmacy": "Yira Pharmacy, MG Road",
       "notes": "Monitor blood pressure daily. Follow-up in 4 weeks.",
       "medications": [
         {

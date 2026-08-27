@@ -18,8 +18,8 @@ class ParametersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SectionCardWrapper(
-      icon: Icons.tune_rounded,
-      title: 'Parameters',
+      icon: Icons.access_time_filled_rounded,
+      title: 'Consultation & Shift Timings',
       isTab: isTab,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,10 +51,10 @@ class ParametersCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'Buffer Time', isTab),
+                    _buildCardLabel(context, 'Gap Between Slots', isTab),
                     const SizedBox(height: 8),
                     CommonDropdown(
-                      title: 'Select Buffer',
+                      title: 'Select Gap',
                       options: const ['Continuous', '5 Minutes', '10 Minutes', '15 Minutes'],
                       selectedValue: state.bufferType,
                       onSelected: (String value) {
@@ -73,7 +73,7 @@ class ParametersCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'From Time', isTab),
+                    _buildCardLabel(context, 'Shift Start Time', isTab),
                     const SizedBox(height: 8),
                     _buildTimeSelector(context, state.fromTime, (chosenTime) {
                       _validateAndUpdateTimeRange(context, chosenTime, state.toTime);
@@ -86,7 +86,7 @@ class ParametersCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'To Time', isTab),
+                    _buildCardLabel(context, 'Shift End Time', isTab),
                     const SizedBox(height: 8),
                     _buildTimeSelector(context, state.toTime, (chosenTime) {
                       _validateAndUpdateTimeRange(context, state.fromTime, chosenTime);
@@ -113,14 +113,14 @@ class ParametersCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.schedule_rounded, size: 18, color: primaryColor),
+            Icon(Icons.coffee_rounded, size: 18, color: primaryColor),
             const SizedBox(width: 6),
-            _buildCardLabel(context, 'Break Times (Optional)', isTab),
+            _buildCardLabel(context, 'Break Timings (Optional)', isTab),
           ],
         ),
         const SizedBox(height: 4),
         CommonText(
-          'Slots falling within break timings will not be generated.',
+          'No appointment slots will be scheduled during your break hours.',
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: isTab ? displayWidth(context) * 0.014 : displayWidth(context) * 0.026,

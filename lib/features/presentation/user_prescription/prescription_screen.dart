@@ -195,7 +195,7 @@ class PrescriptionManagementScreen extends StatelessWidget {
                         date: isFirst ? "2024-01-18" : "2024-01-15",
                         status: isFirst ? "Active" : "Completed",
                         pharmacy: isFirst
-                            ? "Apollo Pharmacy, MG Road"
+                            ? "Yira Pharmacy, MG Road"
                             : "MedPlus, Commercial Street",
                         medications: isFirst
                             ? [

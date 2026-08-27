@@ -26,6 +26,8 @@ import 'package:yiraclinics/features/data/repository_impl/notifications/notifica
 import 'widgets/dashboard_section_header.dart';
 import 'widgets/dashboard_chart_card.dart';
 import '../profile/widgets/profile_switcher_sheet.dart';
+import '../../../../core/tour/provider_tour_controller.dart';
+import '../../../../core/tour/provider_tour_mock_data.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -48,6 +50,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
     _fetchUnreadNotificationsCount();
     NotificationService.instance.syncFcmTokenWithBackend();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          ProviderTourController().startDashboardTour(context: context);
+        }
+      });
+    });
   }
 
   Future<void> _fetchUnreadNotificationsCount() async {
@@ -127,18 +136,24 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             _dashboardBloc.add(FetchDoctorDashboardData());
           }
         },
-        child: Scaffold(
-          backgroundColor: scaffoldBg,
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 0),
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: scaffoldBg,
-            automaticallyImplyLeading: false,
-            titleSpacing: screenHorizontalSpacePadding,
-            centerTitle: false,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        child: ValueListenableBuilder<bool>(
+          valueListenable: ProviderTourController().isTourActiveNotifier,
+          builder: (context, isTourActive, _) {
+            return Scaffold(
+              backgroundColor: scaffoldBg,
+              bottomNavigationBar: widget.isShellChild
+                  ? null
+                  : const AppBottomNavBar(currentIndex: 0),
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: scaffoldBg,
+                automaticallyImplyLeading: false,
+                titleSpacing: screenHorizontalSpacePadding,
+                centerTitle: false,
+                title: Row(
+                  key: ProviderTourController().headerKey,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: SvgPicture.asset(
@@ -152,7 +167,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
                     bloc: _dashboardBloc,
                     builder: (context, state) {
-                      if (state is! DoctorDashboardSuccessState) {
+                      if (state is! DoctorDashboardSuccessState && !isTourActive) {
                         return BaseShimmer(
                           child: Container(
                             width: isTabletDevice ? 160 : 130,
@@ -165,7 +180,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         );
                       }
 
-                      final hName = state.dashboardEntity.data?.hospitalName;
+                      final hName = isTourActive
+                          ? ProviderTourMockData.demoDoctorDashboard.data?.hospitalName
+                          : (state is DoctorDashboardSuccessState
+                              ? state.dashboardEntity.data?.hospitalName
+                              : null);
                       final hospitalTitle = (hName != null && hName.trim().isNotEmpty)
                           ? hName.trim()
                           : 'Healthcare Facility';
@@ -208,10 +227,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 valueListenable: _unreadNotificationsCount,
                 builder: (context, count, _) {
                   return Stack(
-                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
                       IconButton(
-                        tooltip: "Notifications",
                         icon: Icon(
                           Icons.notifications_none_outlined,
                           color: adaptiveTextColor,
@@ -273,6 +291,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     final double size = isTabletDevice ? 38 : 34;
 
                     return GestureDetector(
+                      key: ProviderTourController().profileKey,
                       onTap: () {
                         Navigator.pushNamed(context, AppRoutes.profile);
                       },
@@ -419,7 +438,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               }
 
               DoctorDashboardEntity? workingEntity;
-              if (state is DoctorDashboardSuccessState) {
+              if (isTourActive) {
+                workingEntity = ProviderTourMockData.demoDoctorDashboard;
+              } else if (state is DoctorDashboardSuccessState) {
                 workingEntity = state.dashboardEntity;
               } else if (state is DoctorAppointmentsNav) {
                 workingEntity = state.dashboardEntity;
@@ -470,192 +491,188 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       padding: const EdgeInsets.symmetric(
                         horizontal: screenHorizontalSpacePadding,
                       ),
-                      sliver: SliverList(
-                        delegate: SliverChildListDelegate([
-                          const SizedBox(height: 12.0),
-
-                          DashboardMetricsGrid(
-                            metrics: dashboard.metrics!,
-                            primaryColor: primaryColor,
-                            isTab: isTabletDevice,
-                          ),
-                          const SizedBox(height: 20.0),
-
-                          DashboardSectionHeader(
-                            title: "Today's Schedule",
-                            countBadge: "${dashboard.todaysSchedule?.length ?? 0}",
-                            actionText: "View Appointments",
-                            isDark: isDark,
-                            primaryColor: primaryColor,
-                            onTap: () => context
-                                .read<DoctorDashboardBloc>()
-                                .add(ViewCalendarEvent()),
-                            isTab: isTabletDevice,
-                            fontFamily: appPoppinFont,
-                          ),
-                          const SizedBox(height: 10.0),
-                        ]),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 12.0),
+                            DashboardMetricsGrid(
+                              key: ProviderTourController().metricsKey,
+                              metrics: dashboard.metrics!,
+                              primaryColor: primaryColor,
+                              isTab: isTabletDevice,
+                            ),
+                            const SizedBox(height: 20.0),
+                          ],
+                        ),
                       ),
                     ),
 
-                    if (dashboard.todaysSchedule?.isEmpty ?? true)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildEmptyState(
-                            context,
-                            'No active appointments today',
-                          ),
-                        ),
-                      )
-                    else ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final displayedAppointments =
-                                (dashboard.todaysSchedule ?? []).take(2).toList();
-                            final appointment = displayedAppointments[index];
-                            final bool isVideo =
-                                appointment.statusTag?.toUpperCase() ==
-                                'LIVE VIDEO';
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: DocAppointmentCard(
-                                initials: _getInitials(
-                                  appointment.patientName ?? '',
-                                ),
-                                name:
-                                    appointment.patientName?.isNotEmpty ??
-                                        false
-                                    ? appointment.patientName ?? ''
-                                    : 'Unknown Patient',
-                                subtitle:
-                                    appointment.consultationType?.isNotEmpty ??
-                                        false
-                                    ? appointment.consultationType ?? ''
-                                    : 'Consultation',
-                                description:
-                                    appointment.reason?.isNotEmpty ?? false
-                                    ? appointment.reason ?? ''
-                                    : 'General Checkup',
-                                timeOrDate:
-                                    appointment.time?.isNotEmpty ?? false
-                                    ? appointment.time ?? ''
-                                    : '--:-- AM',
-                                statusLabel:
-                                    appointment.statusTag?.isNotEmpty ??
-                                        false
-                                    ? appointment.statusTag ?? ''
-                                    : 'Confirmed',
-                                statusColor: isVideo
-                                    ? Colors.amber.withValues(alpha: 0.15)
-                                    : Colors.green.withValues(alpha: 0.15),
-                                statusTextColor: isVideo
-                                    ? Colors.amber[800]!
-                                    : Colors.green[700]!,
-                                patientStatus: appointment.patientStatus,
-                                onTap: () {
-                                  var data = DashboardPatientDetails(
-                                    appointment,
-                                    null,
-                                    false,
-                                  );
-                                  context.read<DoctorDashboardBloc>().add(
-                                    DocAndAppPatientDetailsNavEvent(data),
-                                  );
-                                },
-                                isTab: isTabletDevice,
-                                isTeleConsultation: isVideo,
-                                onJoinCall: () async {
-                                  final meetingUrl = appointment.meetingUrl;
-                                  if (meetingUrl != null && meetingUrl.isNotEmpty) {
-                                    await Utils.launchURL(
-                                      meetingUrl,
-                                      onLaunchFailure: (err) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(err)),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
-                                    );
-                                  }
-                                },
-                              ),
-                            );
-                          }, childCount: (dashboard.todaysSchedule ?? []).take(2).length),
-                        ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: screenHorizontalSpacePadding,
                       ),
-                      if ((dashboard.todaysSchedule?.length ?? 0) > 2)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: screenHorizontalSpacePadding,
-                              vertical: 4.0,
-                            ),
-                            child: Center(
-                              child: InkWell(
+                      sliver: SliverToBoxAdapter(
+                        child: Container(
+                          key: ProviderTourController().scheduleKey,
+                          padding: const EdgeInsets.all(4.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DashboardSectionHeader(
+                                title: "Today's Schedule",
+                                countBadge: "${dashboard.todaysSchedule?.length ?? 0}",
+                                actionText: "View Appointments",
+                                isDark: isDark,
+                                primaryColor: primaryColor,
                                 onTap: () => context
                                     .read<DoctorDashboardBloc>()
                                     .add(ViewCalendarEvent()),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_month_rounded,
-                                        size: 16,
-                                        color: primaryColor,
+                                isTab: isTabletDevice,
+                                fontFamily: appPoppinFont,
+                              ),
+                              const SizedBox(height: 10.0),
+                              if (dashboard.todaysSchedule?.isEmpty ?? true)
+                                _buildEmptyState(
+                                  context,
+                                  'No active appointments today',
+                                )
+                              else ...[
+                                ...((dashboard.todaysSchedule ?? []).take(2).map((appointment) {
+                                  final bool isVideo =
+                                      appointment.statusTag?.toUpperCase() ==
+                                      'LIVE VIDEO';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: DocAppointmentCard(
+                                      profileImageUrl: appointment.profileImageUrl,
+                                      initials: _getInitials(
+                                        appointment.patientName ?? '',
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "View All (${dashboard.todaysSchedule?.length}) Appointments",
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: isTabletDevice ? 13 : 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: primaryColor,
+                                      name:
+                                          appointment.patientName?.isNotEmpty ??
+                                              false
+                                          ? appointment.patientName ?? ''
+                                          : 'Unknown Patient',
+                                      subtitle:
+                                          appointment.consultationType?.isNotEmpty ??
+                                              false
+                                          ? appointment.consultationType ?? ''
+                                          : 'Consultation',
+                                      description:
+                                          appointment.reason?.isNotEmpty ?? false
+                                          ? appointment.reason ?? ''
+                                          : 'General Checkup',
+                                      timeOrDate:
+                                          appointment.time?.isNotEmpty ?? false
+                                          ? appointment.time ?? ''
+                                          : '--:-- AM',
+                                      statusLabel:
+                                          appointment.statusTag?.isNotEmpty ??
+                                              false
+                                          ? appointment.statusTag ?? ''
+                                          : 'Confirmed',
+                                      statusColor: isVideo
+                                          ? Colors.amber.withValues(alpha: 0.15)
+                                          : Colors.green.withValues(alpha: 0.15),
+                                      statusTextColor: isVideo
+                                          ? Colors.amber[800]!
+                                          : Colors.green[700]!,
+                                      patientStatus: appointment.patientStatus,
+                                      onTap: () {
+                                        var data = DashboardPatientDetails(
+                                          appointment,
+                                          null,
+                                          false,
+                                        );
+                                        context.read<DoctorDashboardBloc>().add(
+                                          DocAndAppPatientDetailsNavEvent(data),
+                                        );
+                                      },
+                                      isTab: isTabletDevice,
+                                      isTeleConsultation: isVideo,
+                                      onJoinCall: () async {
+                                        final meetingUrl = appointment.meetingUrl;
+                                        if (meetingUrl != null && meetingUrl.isNotEmpty) {
+                                          await Utils.launchURL(
+                                            meetingUrl,
+                                            onLaunchFailure: (err) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text(err)),
+                                                );
+                                              }
+                                            },
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                })),
+                                if ((dashboard.todaysSchedule?.length ?? 0) > 2)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4.0,
+                                    ),
+                                    child: Center(
+                                      child: InkWell(
+                                        onTap: () => context
+                                            .read<DoctorDashboardBloc>()
+                                            .add(ViewCalendarEvent()),
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_month_rounded,
+                                                size: 16,
+                                                color: primaryColor,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "View All (${dashboard.todaysSchedule?.length}) Appointments",
+                                                style: TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: isTabletDevice ? 13 : 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                size: 11,
+                                                color: primaryColor,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 11,
-                                        color: primaryColor,
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
+                              ],
+                            ],
                           ),
                         ),
-                    ],
+                      ),
+                    ),
 
                     SliverPadding(
                       padding: const EdgeInsets.only(
@@ -667,6 +684,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           DashboardChartCard(
+                            key: ProviderTourController().chartsKey,
                             title: "Weekly Appointments",
                             badgeText:
                                 "Avg: ${dashboard.weeklyAppointments?.averagePerDay}/day",
@@ -726,12 +744,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               );
             }
 
-              return const Center(child: CircularProgressIndicator.adaptive());
-            },
+            return const Center(child: CircularProgressIndicator.adaptive());
+          },
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  ),
+);
   }
 
   Widget _buildEmptyState(BuildContext context, String message) {

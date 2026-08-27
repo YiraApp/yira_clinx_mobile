@@ -49,6 +49,13 @@
     <key>NSMicrophoneUsageDescription</key>
     <string>Yira Clinx needs microphone access to capture audio if you choose to record video uploads.</string>
 
+    <!-- Background Modes for Push Notifications -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
     <key>UIApplicationSceneManifest</key>
     <dict>
        <key>UIApplicationSupportsMultipleScenes</key>

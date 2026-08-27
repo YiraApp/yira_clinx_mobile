@@ -5,11 +5,12 @@ import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/tour/provider_tour_controller.dart';
+import '../../../../core/tour/provider_tour_mock_data.dart';
 
 class PatientManagementScreen extends StatefulWidget {
   final bool isShellChild;
@@ -21,15 +22,40 @@ class PatientManagementScreen extends StatefulWidget {
 
 class _PatientManagementScreenState extends State<PatientManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _selectedFilter = "All";
 
   final List<String> _statusFilters = const [
     "All",
     "Favorites",
+    "Recent",
+    "Male",
+    "Female",
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      if (currentScroll >= maxScroll - 250) {
+        final bloc = context.read<DashboardBloc>();
+        if (bloc.state.hasMore && !bloc.state.isLoadingMore) {
+          bloc.add(const LoadMorePatients());
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -40,114 +66,157 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     final bool isTab = isTablet(context);
     final primaryColor = Theme.of(context).primaryColor;
 
-    return BlocProvider<DashboardBloc>.value(
-      value: sl<DashboardBloc>()..add(const GetDashboardData()),
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 2),
-          body: SafeArea(
-            child: BlocConsumer<DashboardBloc, DashboardState>(
-              buildWhen: (previous, state) => state is! ViewPatientDetailsState,
-              listener: (context, state) {
-                if (state is ViewPatientDetailsState) {
-                  final currentUser = GlobalSession.instance.userNotifier.value;
-                  final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
-                  final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.doctorPatientDetailProfileScreen,
-                    arguments: {
-                      'patientId': state.patientId,
-                      'patientName': state.patientName,
-                      'hospitalId': hospitalId,
-                      'orgId': orgId,
-                      'initialTabIndex': 0,
-                    },
-                  );
-                }
-              },
-              builder: (context, state) {
-                final totalCount = state.allPatients.length;
-                final filteredCount = state.patients.length;
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return BlocProvider<DashboardBloc>.value(
+          value: sl<DashboardBloc>()..add(const GetDashboardData()),
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Scaffold(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 2),
+              body: SafeArea(
+                child: BlocConsumer<DashboardBloc, DashboardState>(
+                  buildWhen: (previous, state) => state is! ViewPatientDetailsState,
+                  listener: (context, state) {
+                    if (state is ViewPatientDetailsState) {
+                      final currentUser = GlobalSession.instance.userNotifier.value;
+                      final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
+                      final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.doctorPatientDetailProfileScreen,
+                        arguments: {
+                          'patientId': state.patientId,
+                          'patientName': state.patientName,
+                          'hospitalId': hospitalId,
+                          'orgId': orgId,
+                          'initialTabIndex': 0,
+                        },
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    final displayPatients = isTourActive ? ProviderTourMockData.demoPatients : state.patients;
+                    final totalCount = isTourActive ? 4 : state.allPatients.length;
+                    final filteredCount = isTourActive ? 4 : state.allFilteredPatients.length;
+                    final loadedCount = isTourActive ? 4 : state.patients.length;
 
-                return Column(
-                  children: [
-                    // Clean Top Bar & Search Section
-                    _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, filteredCount),
+                    return Column(
+                      children: [
+                        // Clean Top Bar & Search Section + Filter Pills
+                        Container(
+                          key: ProviderTourController().patientsSearchKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, filteredCount, loadedCount),
+                              _buildStatusFilterRow(context, isDark, primaryColor, isTab, state.selectedStatus),
+                            ],
+                          ),
+                        ),
 
-                    // Filter Pills Bar
-                    _buildStatusFilterRow(context, isDark, primaryColor, isTab, state.selectedStatus),
+                        const SizedBox(height: 6),
 
-                    const SizedBox(height: 6),
+                        // Patient List View or Empty State
+                        Expanded(
+                          child: Container(
+                            key: ProviderTourController().patientsListKey,
+                            child: (state.status == DashboardStatus.loading && !isTourActive)
+                                ? PatientCardListShimmer(itemCount: 5, isTab: isTab)
+                                : RefreshIndicator(
+                                    color: primaryColor,
+                                    onRefresh: () async {
+                                      context.read<DashboardBloc>().add(const GetDashboardData());
+                                    },
+                                    child: displayPatients.isEmpty
+                                        ? _buildEmptyState(context, isDark, primaryColor, isTab)
+                                        : ListView.separated(
+                                            controller: _scrollController,
+                                            padding: const EdgeInsets.fromLTRB(
+                                              screenHorizontalSpacePadding,
+                                              8,
+                                              screenHorizontalSpacePadding,
+                                              24,
+                                            ),
+                                            physics: const AlwaysScrollableScrollPhysics(
+                                              parent: BouncingScrollPhysics(),
+                                            ),
+                                            itemCount: displayPatients.length + ((!isTourActive && (state.hasMore || state.isLoadingMore)) ? 1 : 0),
+                                            separatorBuilder: (_, _) => const SizedBox(height: 10),
+                                            itemBuilder: (context, index) {
+                                              if (index >= displayPatients.length) {
+                                                return Padding(
+                                                  padding: const EdgeInsets.symmetric(vertical: 18.0),
+                                                  child: Center(
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 20,
+                                                          height: 20,
+                                                          child: CircularProgressIndicator.adaptive(
+                                                            strokeWidth: 2.2,
+                                                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 10),
+                                                        Text(
+                                                          "Loading more patients...",
+                                                          style: TextStyle(
+                                                            fontFamily: appPoppinFont,
+                                                            fontSize: 12,
+                                                            fontWeight: FontWeight.w500,
+                                                            color: isDark ? Colors.white60 : Colors.grey.shade600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              }
 
-                    // Patient List View or Empty State
-                    Expanded(
-                      child: state.status == DashboardStatus.loading
-                          ? PatientCardListShimmer(itemCount: 5, isTab: isTab)
-                          : RefreshIndicator(
-                              color: primaryColor,
-                              onRefresh: () async {
-                                context.read<DashboardBloc>().add(const GetDashboardData());
-                              },
-                              child: state.patients.isEmpty
-                                  ? _buildEmptyState(context, isDark, primaryColor, isTab)
-                                  : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(
-                                  screenHorizontalSpacePadding,
-                                  8,
-                                  screenHorizontalSpacePadding,
-                                  24,
-                                ),
-                                physics: const AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
-                                ),
-                                itemCount: state.patients.length,
-                                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                                itemBuilder: (context, index) {
-                                  final patient = state.patients[index];
-                                  return PatientCard(
-                                    key: ValueKey(patient.id),
-                                    isTab: isTab,
-                                    patient: patient,
-                                    onToggleFavorite: () async {
-                                      final bloc = context.read<DashboardBloc>();
-                                      await FavoritePatientsService().toggleFavorite(
-                                        patientId: patient.userId,
-                                        alternateId: patient.id,
-                                      );
-                                      try {
-                                        bloc.add(
-                                          ToggleFavoritePatientEvent(
-                                            patientId: patient.userId,
-                                            alternateId: patient.id,
+                                              final patient = displayPatients[index];
+                                              return PatientCard(
+                                                key: ValueKey(patient.id),
+                                                isTab: isTab,
+                                                patient: patient,
+                                                onToggleFavorite: () {
+                                                  if (!isTourActive) {
+                                                    context.read<DashboardBloc>().add(
+                                                      ToggleFavoritePatientEvent(
+                                                        patientId: patient.userId,
+                                                        alternateId: patient.id,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                                onTap: () {
+                                                  if (!isTourActive) {
+                                                    context.read<DashboardBloc>().add(
+                                                      ViewPatientDetailsEvent(
+                                                        patientId: patient.userId,
+                                                        patientName: patient.name,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                              );
+                                            },
                                           ),
-                                        );
-                                      } catch (_) {
-                                        // Handled smoothly in-place by ValueListenableBuilder in PatientCard without any page reload
-                                      }
-                                    },
-                                    onTap: () {
-                                      context.read<DashboardBloc>().add(
-                                        ViewPatientDetailsEvent(
-                                          patientId: patient.userId,
-                                          patientName: patient.name,
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                                  ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -159,6 +228,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     bool isTab,
     int totalCount,
     int filteredCount,
+    int loadedCount,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -471,8 +541,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   setState(() {
                     _selectedFilter = "All";
                   });
-                  context.read<DashboardBloc>().add(const SearchPatients(""));
-                  context.read<DashboardBloc>().add(const FilterPatients(status: "All", gender: "All"));
+                  context.read<DashboardBloc>().add(const ClearFilters());
                 },
                 icon: const Icon(Icons.clear_all_rounded, size: 18),
                 label: const Text("Reset Filters"),

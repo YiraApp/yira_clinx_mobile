@@ -201,6 +201,14 @@ class AppRouter {
         );
       case AppRoutes.addAppointmentScreen:
         final appointmentArgs = settings.arguments as Map<String, dynamic>?;
+        DateTime? parsedDate;
+        if (appointmentArgs?['date'] is DateTime) {
+          parsedDate = appointmentArgs!['date'] as DateTime;
+        } else if (appointmentArgs?['targetDate'] is DateTime) {
+          parsedDate = appointmentArgs!['targetDate'] as DateTime;
+        } else if (appointmentArgs?['date'] != null) {
+          parsedDate = DateTime.tryParse(appointmentArgs!['date'].toString());
+        }
         return MaterialPageRoute(
           settings: settings, 
           builder: (_) => BlocProvider.value(
@@ -208,6 +216,10 @@ class AppRouter {
             child: AddNewAppointmentScreen(
               initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
               initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
+              initialDate: parsedDate,
+              initialSlot: (appointmentArgs?['slot'] ?? appointmentArgs?['startTime'] ?? appointmentArgs?['time'])?.toString(),
+              initialDoctorId: appointmentArgs?['doctorId']?.toString(),
+              initialDoctorName: appointmentArgs?['doctorName']?.toString(),
             ),
           ),
         );
@@ -242,11 +254,25 @@ class AppRouter {
           ),
         );
       case AppRoutes.verifyOtp:
-        final SendOtpEntity sendOtpData = settings.arguments as SendOtpEntity;
-        return MaterialPageRoute(settings: settings, 
+        SendOtpEntity sendOtpData;
+        bool isSignup = false;
+        if (settings.arguments is SendOtpEntity) {
+          sendOtpData = settings.arguments as SendOtpEntity;
+        } else if (settings.arguments is Map<String, dynamic>) {
+          final map = settings.arguments as Map<String, dynamic>;
+          sendOtpData = map['sendOtpEntity'] as SendOtpEntity;
+          isSignup = map['isSignup'] as bool? ?? false;
+        } else {
+          sendOtpData = const SendOtpEntity();
+        }
+        return MaterialPageRoute(
+          settings: settings,
           builder: (_) => BlocProvider.value(
             value: sl<LoginBloc>(),
-            child: VerifyOtpScreen(sendOtpEntity: sendOtpData,),
+            child: VerifyOtpScreen(
+              sendOtpEntity: sendOtpData,
+              isSignup: isSignup,
+            ),
           ),
         );
       case AppRoutes.changePasswordScreen:

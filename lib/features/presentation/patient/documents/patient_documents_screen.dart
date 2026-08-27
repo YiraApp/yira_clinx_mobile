@@ -122,7 +122,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    items: ['Yira Hospitals', 'Apollo City Hospital', 'KIMS Hospital', 'Independent Lab']
+                    items: ['Yira Hospital', 'City Care Hospital', 'KIMS Hospital', 'Independent Lab']
                         .map((h) => DropdownMenuItem(value: h, child: Text(h, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13))))
                         .toList(),
                     onChanged: (val) => setModalState(() => selectedHospital = val!),
@@ -229,7 +229,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
               {
                 'title': 'Complete Blood Count (CBC) Report',
                 'category': 'Lab Reports',
-                'hospitalName': 'Apollo City Hospital',
+                'hospitalName': 'Yira Hospital',
                 'date': '24 Aug 2026',
                 'fileSize': '2.1 MB',
                 'fileType': 'PDF',

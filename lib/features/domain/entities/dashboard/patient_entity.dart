@@ -14,6 +14,7 @@ class PatientEntity extends Equatable {
   final String allergy;
   final int age;
   final int visits;
+  final String? profileImageUrl;
   final bool? isFavoriteRaw;
 
   bool get isFavorite => isFavoriteRaw ?? false;
@@ -29,6 +30,7 @@ class PatientEntity extends Equatable {
     required this.visits,
     required this.age,
     this.allergy = "",
+    this.profileImageUrl,
     bool? isFavorite,
   }) : isFavoriteRaw = isFavorite ?? false;
 
@@ -43,6 +45,7 @@ class PatientEntity extends Equatable {
     String? allergy,
     int? age,
     int? visits,
+    String? profileImageUrl,
     bool? isFavorite,
   }) {
     return PatientEntity(
@@ -56,10 +59,11 @@ class PatientEntity extends Equatable {
       allergy: allergy ?? this.allergy,
       age: age ?? this.age,
       visits: visits ?? this.visits,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, status, condition, isFavorite];
+  List<Object?> get props => [id, userId, name, status, condition, profileImageUrl, isFavorite];
 }

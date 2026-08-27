@@ -66,7 +66,7 @@ class PatientCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Clean Minimalist Monogram Avatar
+                        // Profile Avatar: Image if available, else Letters/Initials
                         Container(
                           width: isTab ? 48 : 42,
                           height: isTab ? 48 : 42,
@@ -74,18 +74,43 @@ class PatientCard extends StatelessWidget {
                             color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                              color: isDark ? Colors.white10 : const Color(0xFFCBD5E1),
                             ),
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            initials,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w700,
-                              fontSize: isTab ? 16 : 14,
-                              color: isDark ? Colors.white : const Color(0xFF1E293B),
-                            ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: (patient.profileImageUrl != null &&
+                                    patient.profileImageUrl!.trim().isNotEmpty &&
+                                    !patient.profileImageUrl!.contains('placeholder') &&
+                                    !patient.profileImageUrl!.contains('default_avatar'))
+                                ? Image.network(
+                                    patient.profileImageUrl!.trim(),
+                                    fit: BoxFit.cover,
+                                    width: isTab ? 48 : 42,
+                                    height: isTab ? 48 : 42,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Text(
+                                        initials,
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: isTab ? 16 : 14,
+                                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      initials,
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: isTab ? 16 : 14,
+                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 12),

@@ -6,6 +6,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import '../../../../../core/colors/colors.dart';
 
 class DocAppointmentCard extends StatefulWidget {
+  final String? profileImageUrl;
   final String initials;
   final String name;
   final String subtitle;
@@ -23,6 +24,7 @@ class DocAppointmentCard extends StatefulWidget {
 
   const DocAppointmentCard({
     super.key,
+    this.profileImageUrl,
     required this.initials,
     required this.name,
     required this.subtitle,
@@ -117,23 +119,48 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Clean soft avatar
+                  // Clean soft avatar: Image if available, else Letters/Initials
                   Container(
                     width: widget.isTab ? 44 : 40,
                     height: widget.isTab ? 44 : 40,
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(isDark ? 0.18 : 0.1),
+                      color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      widget.initials,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: widget.isTab ? width * 0.015 : 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: (widget.profileImageUrl != null &&
+                              widget.profileImageUrl!.trim().isNotEmpty &&
+                              !widget.profileImageUrl!.contains('placeholder') &&
+                              !widget.profileImageUrl!.contains('default_avatar'))
+                          ? Image.network(
+                              widget.profileImageUrl!.trim(),
+                              fit: BoxFit.cover,
+                              width: widget.isTab ? 44 : 40,
+                              height: widget.isTab ? 44 : 40,
+                              errorBuilder: (context, error, stackTrace) => Center(
+                                child: Text(
+                                  widget.initials,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: widget.isTab ? width * 0.015 : 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                widget.initials,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: widget.isTab ? width * 0.015 : 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),

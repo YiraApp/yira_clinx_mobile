@@ -14,6 +14,7 @@ class PatientModel extends PatientEntity {
     required super.age,
     required super.visits,
     super.allergy,
+    super.profileImageUrl,
     super.isFavorite,
   });
 
@@ -29,6 +30,12 @@ class PatientModel extends PatientEntity {
     }
 
     final bool fav = (json['isFavorite'] == true) || (json['is_favorite'] == true) || isFavorite;
+    final profileImg = json['profileImageUrl']?.toString() ??
+        json['imagePath']?.toString() ??
+        json['ImagePath']?.toString() ??
+        json['photoUrl']?.toString() ??
+        json['avatar']?.toString() ??
+        json['profilePic']?.toString();
 
     return PatientModel(
       id: json['id'] ?? '',
@@ -41,6 +48,7 @@ class PatientModel extends PatientEntity {
       age: json['age'] ?? 0,
       visits: json['total_visits'] ?? json['visits'] ?? 0,
       allergy: allergyStr,
+      profileImageUrl: profileImg,
       isFavorite: fav,
     );
   }
@@ -58,6 +66,7 @@ class PatientModel extends PatientEntity {
       'age': age,
       'visits': visits,
       'allergy': allergy,
+      'profileImageUrl': profileImageUrl,
       'isFavorite': isFavorite,
     };
   }

@@ -14,6 +14,8 @@ import '../../../core/constants/constants.dart';
 import '../../../core/utils/utils.dart';
 import '../../domain/entities/appointments/appointment_entity.dart';
 import 'appointment_bloc/appointment_bloc.dart';
+import '../../../../core/tour/provider_tour_controller.dart';
+import '../../../../core/tour/provider_tour_mock_data.dart';
 
 class AppointmentDashboardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -296,37 +298,45 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     final isTab = isTablet(context);
     final width = displayWidth(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 1),
-      body: SafeArea(
-        child: BlocConsumer<AppointmentBloc, AppointmentState>(
-          listener: (BuildContext context, AppointmentState state) {},
-          builder: (context, state) {
-            // Compute stats from loaded state
-            int totalCount = 0;
-            int completedCount = 0;
-            int pendingCount = 0;
-            List<Appointment> appointments = [];
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 1),
+          body: SafeArea(
+            child: BlocConsumer<AppointmentBloc, AppointmentState>(
+              listener: (BuildContext context, AppointmentState state) {},
+              builder: (context, state) {
+                // Compute stats from loaded state or mock tour state
+                int totalCount = 0;
+                int completedCount = 0;
+                int pendingCount = 0;
+                List<Appointment> appointments = [];
 
-            if (state is AppointmentLoaded) {
-              appointments = state.appointments;
-              completedCount = state.completedCount > 0
-                  ? state.completedCount
-                  : appointments
-                      .where((a) => a.statusRaw.toLowerCase().contains('complete'))
-                      .length;
-              pendingCount = state.pendingCount > 0
-                  ? state.pendingCount
-                  : appointments
-                      .where((a) =>
-                          a.statusRaw.toLowerCase().contains('pending') ||
-                          a.statusRaw.toLowerCase().contains('schedule'))
-                      .length;
-              totalCount = state.todayCount > 0
-                  ? state.todayCount
-                  : appointments.length;
-            }
+                if (isTourActive) {
+                  appointments = ProviderTourMockData.demoAppointments;
+                  totalCount = appointments.length;
+                  completedCount = 2;
+                  pendingCount = 1;
+                } else if (state is AppointmentLoaded) {
+                  appointments = state.appointments;
+                  completedCount = state.completedCount > 0
+                      ? state.completedCount
+                      : appointments
+                          .where((a) => a.statusRaw.toLowerCase().contains('complete'))
+                          .length;
+                  pendingCount = state.pendingCount > 0
+                      ? state.pendingCount
+                      : appointments
+                          .where((a) =>
+                              a.statusRaw.toLowerCase().contains('pending') ||
+                              a.statusRaw.toLowerCase().contains('schedule'))
+                          .length;
+                  totalCount = state.todayCount > 0
+                      ? state.todayCount
+                      : appointments.length;
+                }
 
             return Column(
               children: [
@@ -636,13 +646,18 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 ),
 
                 // ─── FILTERS ──────────────────────────────────
-                if (_showFilters) ...[
-                  const SizedBox(height: 12),
+                if (_showFilters)
+                  Container(
+                    key: ProviderTourController().apptsFilterKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 12),
 
-                  // Date chip selector
-                  SizedBox(
-                    height: 38,
-                    child: ListView.separated(
+                        // Date chip selector
+                        SizedBox(
+                          height: 38,
+                          child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
@@ -825,12 +840,12 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                       },
                     ),
                   ),
-                ],
+                ])),
 
                 const SizedBox(height: 10),
 
                 // ─── DATE & COUNT SUBTITLE ──────────────
-                if (state is AppointmentLoaded)
+                if (state is AppointmentLoaded || isTourActive)
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: screenHorizontalSpacePadding,
@@ -892,8 +907,11 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
 
                 // ─── SCROLLABLE LIST CONTENT ───────────────
                 Expanded(
-                  child: _buildListContent(
-                      state, appointments, isDark, theme, isTab, width),
+                  child: Container(
+                    key: ProviderTourController().apptsListKey,
+                    child: _buildListContent(
+                        state, appointments, isDark, theme, isTab, width),
+                  ),
                 ),
               ],
             );
@@ -901,6 +919,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
         ),
       ),
     );
+  },
+);
   }
 
   /// Builds only the scrollable list portion (loading / list / empty / error)
@@ -912,11 +932,11 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     bool isTab,
     double width,
   ) {
-    if (state is AppointmentLoading) {
+    if (state is AppointmentLoading && !ProviderTourController().isTourActive) {
       return AppointmentListShimmer(itemCount: 4, isTab: isTab);
     }
 
-    if (state is AppointmentLoaded) {
+    if (state is AppointmentLoaded || ProviderTourController().isTourActive) {
       if (appointments.isEmpty) {
         return _buildEmptyState(isDark, theme, isTab, width);
       }
