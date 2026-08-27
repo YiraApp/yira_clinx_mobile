@@ -134,7 +134,8 @@ class PatientVitalsCard extends StatelessWidget {
           const Divider(height: 1),
           const SizedBox(height: 14),
 
-          // Vitals Metrics Grid (2 columns x 3 rows or 3 columns on tablet)
+          // Vitals Metrics Grid (2 items per row)
+          // Row 1: Blood Pressure & Heart Rate
           Row(
             children: [
               Expanded(
@@ -147,7 +148,7 @@ class PatientVitalsCard extends StatelessWidget {
                   iconColor: const Color(0xFFE11D48),
                 ),
               ),
-              Container(width: 1, height: 42, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+              Container(width: 1, height: 46, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
               Expanded(
                 child: _buildMetricItem(
                   context: context,
@@ -158,15 +159,34 @@ class PatientVitalsCard extends StatelessWidget {
                   iconColor: Colors.orange,
                 ),
               ),
-              Container(width: 1, height: 42, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+
+          // Row 2: SpO2 Level & Temperature
+          Row(
+            children: [
               Expanded(
                 child: _buildMetricItem(
                   context: context,
-                  label: 'SpO2 Level',
-                  value: '$spO2%',
-                  unit: 'Optimal',
+                  label: 'SpO2 Oxygen',
+                  value: spO2.endsWith('%') ? spO2 : '$spO2%',
+                  unit: 'Optimal Level',
                   icon: Icons.air_rounded,
                   iconColor: Colors.teal,
+                ),
+              ),
+              Container(width: 1, height: 46, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+              Expanded(
+                child: _buildMetricItem(
+                  context: context,
+                  label: 'Temperature',
+                  value: temp.endsWith('°') ? temp : '$temp°',
+                  unit: 'Fahrenheit',
+                  icon: Icons.thermostat_rounded,
+                  iconColor: Colors.amber[800]!,
                 ),
               ),
             ],
@@ -174,36 +194,27 @@ class PatientVitalsCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 12),
+
+          // Row 3: Weight & BMI
           Row(
             children: [
               Expanded(
                 child: _buildMetricItem(
                   context: context,
-                  label: 'Temperature',
-                  value: '$temp°',
-                  unit: 'Fahrenheit',
-                  icon: Icons.thermostat_rounded,
-                  iconColor: Colors.amber[800]!,
-                ),
-              ),
-              Container(width: 1, height: 42, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-              Expanded(
-                child: _buildMetricItem(
-                  context: context,
                   label: 'Body Weight',
-                  value: '$weight kg',
-                  unit: '$height cm',
+                  value: weight.contains('kg') ? weight : '$weight kg',
+                  unit: height.contains('cm') ? height : '$height cm',
                   icon: Icons.fitness_center_rounded,
                   iconColor: Colors.indigo,
                 ),
               ),
-              Container(width: 1, height: 42, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+              Container(width: 1, height: 46, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
               Expanded(
                 child: _buildMetricItem(
                   context: context,
                   label: 'BMI Status',
-                  value: '22.8',
-                  unit: 'Normal',
+                  value: (vitals['bmi'] != null && vitals['bmi']!.isNotEmpty) ? vitals['bmi']! : '22.8',
+                  unit: 'Normal Range',
                   icon: Icons.health_and_safety_rounded,
                   iconColor: const Color(0xFF059669),
                 ),
@@ -227,22 +238,29 @@ class PatientVitalsCard extends StatelessWidget {
     final isTab = isTablet(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 13, color: iconColor),
-              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: isTab ? 16 : 14, color: iconColor),
+              ),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white54 : Colors.grey[600],
+                    fontSize: isTab ? 12 : 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -250,7 +268,7 @@ class PatientVitalsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           if (isLoading)
             BaseShimmer(
               child: Column(
@@ -258,16 +276,16 @@ class PatientVitalsCard extends StatelessWidget {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(top: 2, bottom: 4),
-                    width: 48,
-                    height: 16,
+                    width: 64,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                   Container(
-                    width: 32,
-                    height: 10,
+                    width: 40,
+                    height: 11,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(3),
@@ -281,16 +299,18 @@ class PatientVitalsCard extends StatelessWidget {
               value,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: isTab ? 16 : 14,
+                fontSize: isTab ? 17 : 15.5,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
+            const SizedBox(height: 1),
             Text(
               unit,
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: 10,
+                fontSize: isTab ? 11.5 : 10.5,
+                fontWeight: FontWeight.w500,
                 color: isDark ? Colors.white38 : Colors.grey[500],
               ),
             ),

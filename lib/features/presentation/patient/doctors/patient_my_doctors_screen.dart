@@ -36,9 +36,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final patientId = (currentUser?.data?.id ?? '').toString().trim();
-    final token = currentUser?.data?.accessToken ?? '';
-    final orgId = currentUser?.data?.latestOrgId ?? 9;
-    final hospitalId = currentUser?.data?.latestHospitalId ?? 11;
 
     if (patientId.isEmpty) {
       if (mounted) {
@@ -51,19 +48,10 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     }
 
     final linkedStorageKey = 'patient_linked_doctors_$patientId';
-    final unlinkedStorageKey = 'patient_unlinked_doctors_$patientId';
 
     List<Map<String, dynamic>> fetchedDoctors = [];
 
-    // Get list of removed / unlinked doctors for THIS specific patient
-    Set<String> unlinkedKeys = {};
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final unlinkedList = prefs.getStringList(unlinkedStorageKey) ?? [];
-      unlinkedKeys = unlinkedList.map((e) => e.toLowerCase().trim()).toSet();
-    } catch (_) {}
-
-    // 1. FIRST: Load locally stored verified scanned / newly added doctors for THIS patient
+    // Load exclusively the doctors explicitly linked / scanned by THIS user
     try {
       final prefs = await SharedPreferences.getInstance();
       final localStr = prefs.getString(linkedStorageKey);
@@ -74,11 +62,9 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           final name = (map['name'] ?? '').toString().trim();
           final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
 
-          // Filter out dummy or previously unlinked
+          // Filter out legacy dummy
           if (name.toLowerCase().contains('sarah jenkins') ||
-              name.toLowerCase().contains('robert miller') ||
-              unlinkedKeys.contains(name.toLowerCase()) ||
-              unlinkedKeys.contains(docId.toLowerCase())) {
+              name.toLowerCase().contains('robert miller')) {
             continue;
           }
           if (!fetchedDoctors.any((d) =>
@@ -86,55 +72,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
               (d['id'] != null && d['id'] == map['id']) ||
               (d['name'] != null && d['name'].toString().toLowerCase() == name.toLowerCase()))) {
             fetchedDoctors.add(map);
-          }
-        }
-      }
-    } catch (_) {}
-
-    // 2. SECOND: Load real doctors from THIS patient's appointment records & append
-    try {
-      final apptsRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        '/v1/api/auth/patient-appointments',
-        data: {
-          "userId": patientId,
-          "orgId": orgId,
-          "hospitalId": hospitalId,
-        },
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
-
-      if (apptsRes.statusCode == 200 && apptsRes.data != null) {
-        final data = apptsRes.data;
-        final list = (data is Map && data['data'] is List) ? data['data'] as List : [];
-
-        for (final appt in list) {
-          final docName = (appt['doctorName'] ?? '').toString().trim();
-          final docId = (appt['doctorId'] ?? appt['id'] ?? docName).toString().trim();
-          
-          if (docName.isNotEmpty &&
-              docName.toLowerCase() != 'doctor' &&
-              !unlinkedKeys.contains(docId.toLowerCase()) &&
-              !unlinkedKeys.contains(docName.toLowerCase())) {
-            if (!fetchedDoctors.any((d) =>
-                (d['name'] != null && d['name'].toString().toLowerCase() == docName.toLowerCase()) ||
-                (d['doctorId'] != null && d['doctorId'] == docId) ||
-                (d['id'] != null && d['id'] == docId))) {
-              fetchedDoctors.add({
-                'id': docId,
-                'doctorId': docId,
-                'name': docName,
-                'specialty': (appt['appointmentType'] != null && appt['appointmentType'].toString().isNotEmpty) ? appt['appointmentType'].toString() : 'Consulting Specialist',
-                'department': 'General Consultation',
-                'hospitalName': (appt['hospitalName'] != null && appt['hospitalName'].toString().isNotEmpty) ? appt['hospitalName'].toString() : 'Yira Clinx Medical Center',
-                'qualification': 'Verified Healthcare Provider',
-                'experience': '',
-                'consultationFee': 500,
-                'phoneNumber': '',
-                'isLinked': true,
-              });
-            }
           }
         }
       }
@@ -679,7 +616,14 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.addAppointmentScreen,
+                      arguments: {
+                        'doctorId': docId,
+                        'hospitalId': doctor['hospitalId'],
+                      },
+                    );
                   },
                   icon: const Icon(Icons.calendar_today_rounded, size: 15, color: Colors.white),
                   label: const Text(

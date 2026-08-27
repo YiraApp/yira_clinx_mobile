@@ -121,6 +121,150 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     );
   }
 
+  DateTime? _parseFlexibleDate(dynamic rawDate, String dateStr) {
+    if (rawDate != null) {
+      if (rawDate is DateTime) return rawDate.toLocal();
+      if (rawDate is String && rawDate.trim().isNotEmpty) {
+        final parsed = DateTime.tryParse(rawDate.trim());
+        if (parsed != null) return parsed.toLocal();
+      }
+    }
+    final s = dateStr.trim();
+    if (s.isEmpty) return null;
+
+    final parsedIso = DateTime.tryParse(s);
+    if (parsedIso != null) return parsedIso.toLocal();
+
+    try {
+      const monthMap = {
+        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+      };
+      final clean = s.replaceAll(',', ' ').replaceAll('-', ' ').replaceAll('/', ' ');
+      final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 3) {
+        int? day, month, year;
+        for (final p in parts) {
+          final lower = p.toLowerCase();
+          if (monthMap.containsKey(lower)) {
+            month = monthMap[lower];
+          } else if (int.tryParse(p) != null) {
+            final val = int.parse(p);
+            if (val > 1900 && val < 2100) {
+              year = val;
+            } else if (day == null && val >= 1 && val <= 31) {
+              day = val;
+            } else if (month == null && val >= 1 && val <= 12) {
+              month = val;
+            } else if (year == null) {
+              year = val;
+            }
+          }
+        }
+        if (day != null && month != null && year != null) {
+          return DateTime(year, month, day);
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  DateTime? _parseAppointmentDateTime(PatientAppointmentEntity a) {
+    final parsedDate = _parseFlexibleDate(a.rawDate, a.appointmentDate);
+    if (parsedDate == null) return null;
+
+    if (a.startTime.isNotEmpty) {
+      final rawStartTime = a.startTime.trim();
+      if (rawStartTime.contains('T') || rawStartTime.contains('Z')) {
+        final parsedTime = DateTime.tryParse(rawStartTime);
+        if (parsedTime != null) {
+          final local = parsedTime.toLocal();
+          return DateTime(parsedDate.year, parsedDate.month, parsedDate.day, local.hour, local.minute);
+        }
+      } else {
+        try {
+          final timeStr = rawStartTime.toUpperCase();
+          final isPm = timeStr.contains('PM');
+          final isAm = timeStr.contains('AM');
+          final cleanTime = timeStr.replaceAll('AM', '').replaceAll('PM', '').trim();
+          final timeParts = cleanTime.split(':');
+          if (timeParts.isNotEmpty) {
+            int hour = int.tryParse(timeParts[0].trim()) ?? 0;
+            int minute = timeParts.length > 1 ? (int.tryParse(timeParts[1].trim()) ?? 0) : 0;
+            if (isPm && hour < 12) hour += 12;
+            if (isAm && hour == 12) hour = 0;
+            return DateTime(parsedDate.year, parsedDate.month, parsedDate.day, hour, minute);
+          }
+        } catch (_) {}
+      }
+    }
+
+    return DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+  }
+
+  String _formatAppointmentDateTime(PatientAppointmentEntity apt) {
+    final parsedDate = _parseFlexibleDate(apt.rawDate, apt.appointmentDate);
+    String formattedDate = '';
+
+    if (parsedDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final aptDay = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+
+      if (aptDay == today) {
+        formattedDate = 'Today';
+      } else if (aptDay == today.add(const Duration(days: 1))) {
+        formattedDate = 'Tomorrow';
+      } else {
+        const months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        formattedDate = '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
+      }
+    } else if (apt.appointmentDate.isNotEmpty) {
+      formattedDate = apt.appointmentDate;
+    }
+
+    String displayTime = '';
+    final rawStartTime = apt.startTime.trim();
+    if (rawStartTime.isNotEmpty) {
+      if (rawStartTime.contains('T') || rawStartTime.contains('Z')) {
+        final parsedTime = DateTime.tryParse(rawStartTime);
+        if (parsedTime != null) {
+          final local = parsedTime.toLocal();
+          int hour = local.hour;
+          final min = local.minute.toString().padLeft(2, '0');
+          final ampm = hour >= 12 ? 'PM' : 'AM';
+          hour = hour % 12;
+          if (hour == 0) hour = 12;
+          displayTime = '$hour:$min $ampm';
+        } else {
+          displayTime = rawStartTime;
+        }
+      } else {
+        displayTime = rawStartTime;
+      }
+    }
+
+    final parts = <String>[];
+    if (formattedDate.isNotEmpty) {
+      parts.add(formattedDate);
+    }
+    if (displayTime.isNotEmpty) {
+      parts.add(displayTime);
+    }
+    if (apt.duration.isNotEmpty && apt.duration != '0 mins') {
+      parts.add(apt.duration);
+    }
+
+    if (parts.isEmpty) {
+      return 'Scheduled';
+    }
+    return parts.join(' • ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -172,12 +316,32 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           }
 
           final List<PatientAppointmentEntity> allAppointments = data?.appointments ?? [];
-          final List<PatientAppointmentEntity> upcomingAppointments = allAppointments
-              .where((a) =>
-                  a.status.toLowerCase() != 'completed' &&
-                  a.status.toLowerCase() != 'cancelled')
-              .take(2)
-              .toList();
+          final now = DateTime.now();
+          final todayStart = DateTime(now.year, now.month, now.day);
+
+          // 1. Only include appointments for Today or in the Future (>= todayStart), excluding completed/cancelled
+          final validUpcoming = allAppointments.where((a) {
+            final status = a.status.toLowerCase().trim();
+            if (status == 'completed' || status == 'cancelled') return false;
+
+            final aptDateTime = _parseAppointmentDateTime(a);
+            if (aptDateTime == null) return true;
+
+            final aptDay = DateTime(aptDateTime.year, aptDateTime.month, aptDateTime.day);
+            return !aptDay.isBefore(todayStart);
+          }).toList();
+
+          // 2. Sort ascending: nearest date & time first
+          validUpcoming.sort((a, b) {
+            final dtA = _parseAppointmentDateTime(a);
+            final dtB = _parseAppointmentDateTime(b);
+            if (dtA == null && dtB == null) return 0;
+            if (dtA == null) return 1;
+            if (dtB == null) return -1;
+            return dtA.compareTo(dtB);
+          });
+
+          final List<PatientAppointmentEntity> upcomingAppointments = validUpcoming.take(2).toList();
 
           final bool isLoading = state is LoadingPatientViewDetails;
 
@@ -431,11 +595,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                               ? apt.hospitalName
                               : 'Yira Hospitals';
                           final statusLabel = apt.status.isNotEmpty ? apt.status : 'Scheduled';
-                          final timeStr = apt.startTime.isNotEmpty
-                              ? '${apt.startTime} • ${apt.duration}'
-                              : (apt.appointmentDate.isNotEmpty
-                                  ? apt.appointmentDate
-                                  : '30 mins');
+                          final timeStr = _formatAppointmentDateTime(apt);
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 10.0),
@@ -456,8 +616,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                               isTeleConsultation: apt.isTeleConsultation,
                               onJoinCall: () {
                                 if (apt.meetingUrl.isNotEmpty) {
-                                  Utils.launchURL(
+                                  Utils.launchMeetingURL(
                                     apt.meetingUrl,
+                                    displayName: patientName,
                                     onLaunchFailure: (err) {
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(

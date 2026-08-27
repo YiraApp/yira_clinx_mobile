@@ -221,8 +221,16 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   ? patientName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
                   : 'TC';
 
-              final relation = activeProfile?.relation ?? 'Primary (Self)';
-              final isPrimary = activeProfile?.isPrimary ?? true;
+              final rawRel = (activeProfile?.relation ?? '').trim();
+              final bool hasFamilyRelation = rawRel.isNotEmpty &&
+                  rawRel.toLowerCase() != 'self' &&
+                  rawRel.toLowerCase() != 'primary' &&
+                  rawRel.toLowerCase() != 'admin';
+
+              final String relation = hasFamilyRelation
+                  ? rawRel
+                  : ((activeProfile?.isPrimary == true) ? 'Primary' : 'Dependent');
+              final bool isPrimary = (relation == 'Primary');
               final mrn = 'MRN-90214';
               final phone = contact?.phone ?? currentUser?.data?.phoneNumber ?? '+91 98765 43210';
               final email = contact?.emailAddress ?? currentUser?.data?.email ?? 'patient@yiraclinics.com';

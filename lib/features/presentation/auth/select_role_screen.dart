@@ -76,6 +76,19 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
       }
     }
 
+    if (rawProfiles.isNotEmpty) {
+      int pIdx = rawProfiles.indexWhere((p) {
+        final r = (p.relation ?? '').trim().toLowerCase();
+        final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+        return p.isPrimary == true && !isFam;
+      });
+      if (pIdx >= 0) {
+        final primary = rawProfiles.removeAt(pIdx);
+        rawProfiles.insert(0, primary);
+        GlobalSession.instance.rootPrimaryUserId = primary.id;
+      }
+    }
+
     _profiles = rawProfiles;
 
     // If only 1 profile or none, select it and advance to role/facility step or direct login
@@ -175,6 +188,20 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                     "4FC67429-28AE-4106-93EF-436228282ED0";
         final String roleName = isPatientRole ? 'User' : 'Provider';
 
+        if (isPatientRole) {
+          // Patient role is Unified & Global across all clinics & hospitals
+          items.add(_FlatWorkspaceItem(
+            roleId: roleId.isNotEmpty ? roleId : "4FC67429-28AE-4106-93EF-436228282ED0",
+            roleName: "User",
+            orgId: 1,
+            orgName: "Unified Global Patient",
+            hospitalId: 19,
+            hospitalName: "User",
+            location: "",
+          ));
+          continue;
+        }
+
         if (roleId.isNotEmpty) {
           try {
             final res = await getWorkSpaceUseCase(
@@ -218,29 +245,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   ));
                 }
               }
-            } else if (isPatientRole) {
-              items.add(_FlatWorkspaceItem(
-                roleId: roleId,
-                roleName: "User",
-                orgId: 1,
-                orgName: '',
-                hospitalId: 19,
-                hospitalName: 'Healthcare Facility',
-              ));
             }
-            // If Provider role has no hospitals returned, do NOT add dummy items
-          } catch (_) {
-            if (isPatientRole) {
-              items.add(_FlatWorkspaceItem(
-                roleId: roleId,
-                roleName: "User",
-                orgId: 1,
-                orgName: '',
-                hospitalId: 19,
-                hospitalName: 'Healthcare Facility',
-              ));
-            }
-          }
+          } catch (_) {}
         }
       }
 
@@ -249,9 +255,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
           roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
           roleName: "User",
           orgId: 1,
-          orgName: '',
+          orgName: "Unified Global Patient",
           hospitalId: 19,
-          hospitalName: 'Healthcare Facility',
+          hospitalName: "User",
+          location: "",
         ));
       }
 
@@ -484,20 +491,23 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
   }
 
   Color _getRelationColor(String relation, bool isPrimary) {
-    if (isPrimary || relation.toLowerCase() == 'self') {
-      return const Color(0xFF0284C7); // Sky Blue
+    if (isPrimary || relation.toLowerCase() == 'primary' || relation.toLowerCase() == 'self') {
+      return const Color(0xFF0284C7); // Primary Sky Blue
     }
     final lower = relation.toLowerCase();
+    if (lower.contains('father') || lower.contains('mother') || lower.contains('parent')) {
+      return const Color(0xFF1D4ED8); // Deep Cobalt Blue
+    }
+    if (lower.contains('brother') || lower.contains('sister') || lower.contains('sibling')) {
+      return const Color(0xFF0EA5E9); // Azure / Ocean Blue
+    }
     if (lower.contains('spouse') || lower.contains('wife') || lower.contains('husband')) {
-      return const Color(0xFFEC4899); // Rose Pink
+      return const Color(0xFF06B6D4); // Soft Cyan Blue
     }
     if (lower.contains('child') || lower.contains('son') || lower.contains('daughter')) {
-      return const Color(0xFF10B981); // Emerald
+      return const Color(0xFF38BDF8); // Soft Sky Blue
     }
-    if (lower.contains('father') || lower.contains('mother') || lower.contains('parent')) {
-      return const Color(0xFFF59E0B); // Amber
-    }
-    return const Color(0xFF8B5CF6); // Purple
+    return const Color(0xFF64748B); // Slate Blue
   }
 
   @override
@@ -721,13 +731,31 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final profile = _profiles[index];
-            final bool isPrimary = profile.isPrimary == true ||
-                profile.relation?.toLowerCase() == 'self';
-            final String relation = profile.relation ?? (isPrimary ? 'Self' : 'Dependent');
-            final Color relColor = _getRelationColor(relation, isPrimary);
+            final String rawRelation = (profile.relation ?? '').trim();
+            final bool hasFamilyRelation = rawRelation.isNotEmpty &&
+                rawRelation.toLowerCase() != 'self' &&
+                rawRelation.toLowerCase() != 'primary' &&
+                rawRelation.toLowerCase() != 'admin';
+
+            final bool isPrimaryUser = (index == 0);
+
+            final String displayRelation;
+            final bool isPrimaryBadge;
+            if (isPrimaryUser) {
+              displayRelation = 'Primary';
+              isPrimaryBadge = true;
+            } else if (hasFamilyRelation) {
+              displayRelation = rawRelation;
+              isPrimaryBadge = false;
+            } else {
+              displayRelation = 'Dependent';
+              isPrimaryBadge = false;
+            }
+
+            final Color relColor = _getRelationColor(displayRelation, isPrimaryBadge);
             final String displayName = profile.name?.isNotEmpty ?? false
                 ? profile.name!
-                : (isPrimary ? "Primary Account" : "Family Member");
+                : (isPrimaryBadge ? "Primary Account" : displayRelation);
             final String initials = _getInitials(displayName);
 
             final String subtitle = [
@@ -737,11 +765,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                 profile.phoneNumber!,
             ].join(' • ');
 
-            final bool isDep = !isPrimary &&
-                (profile.accountType == "Dependent" ||
-                    (profile.relation != null &&
-                        profile.relation!.toLowerCase() != "self" &&
-                        profile.relation!.toLowerCase() != "admin"));
+            final bool isDep = !isPrimaryBadge;
             final bool isThisProfileSwitching =
                 _switchingKey != null && _selectedProfile?.id == profile.id;
 
@@ -859,7 +883,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                       ),
                                     ),
                                     child: Text(
-                                      isPrimary ? "Primary (Self)" : relation,
+                                      displayRelation,
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 10,
@@ -1008,8 +1032,21 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                 (item.hospitalId == activeHospitalId);
             final Color roleColor = _getRoleColor(item.roleName, primaryColor);
 
-            // Format: "Yira Hospital (Provider)"
-            final String displayTitle = "${item.hospitalName} (${item.roleName})";
+            final bool isPatient = item.roleName == 'User' ||
+                item.roleId.toUpperCase() == "4FC67429-28AE-4106-93EF-436228282ED0";
+
+            // Format: "Yira Hospital (Provider)" or "User"
+            final String displayTitle = isPatient
+                ? "User"
+                : "${item.hospitalName} (${item.roleName})";
+
+            final String subtitle = isPatient
+                ? "Unified Global Patient"
+                : [
+                    if (item.orgName.isNotEmpty) item.orgName,
+                    if (item.location != null && item.location!.isNotEmpty)
+                      item.location!,
+                  ].join(' • ');
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
@@ -1068,14 +1105,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 ),
                               ),
-                              if (item.orgName.isNotEmpty || item.location != null) ...[
+                              if (subtitle.isNotEmpty) ...[
                                 const SizedBox(height: 3),
                                 Text(
-                                  [
-                                    if (item.orgName.isNotEmpty) item.orgName,
-                                    if (item.location != null && item.location!.isNotEmpty)
-                                      item.location!,
-                                  ].join(' • '),
+                                  subtitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

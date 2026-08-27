@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/features/presentation/patient/appointments/patient_add_new_appointment_screen.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
