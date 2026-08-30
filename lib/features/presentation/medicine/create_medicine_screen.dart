@@ -303,7 +303,9 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                           children: [
                                             Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
                                             SizedBox(width: 8),
-                                            Text("Chief Complaint is mandatory"),
+                                            Expanded(
+                                              child: Text("Chief Complaint is mandatory"),
+                                            ),
                                           ],
                                         ),
                                         backgroundColor: Colors.red.shade600,
@@ -326,7 +328,9 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                           children: [
                                             Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
                                             SizedBox(width: 8),
-                                            Text("Doctor Note is mandatory when adding a record"),
+                                            Expanded(
+                                              child: Text("Doctor Note is mandatory when adding a record"),
+                                            ),
                                           ],
                                         ),
                                         backgroundColor: Colors.red.shade600,

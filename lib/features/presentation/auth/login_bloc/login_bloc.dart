@@ -11,6 +11,8 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/local/shared_preferences.dart';
 import '../../../domain/entities/login/login_entity.dart';
+import '../../../use_cases/register_patient_use_case.dart';
+import '../../../use_cases/send_signup_otp_use_case.dart';
 import '../../../use_cases/send_otp_use_case.dart';
 import '../../../use_cases/update_fcm_token_use_case.dart';
 
@@ -23,6 +25,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   final UpdateFcmTokenUseCase updateFcmTokenUseCase;
   final SharedPrefsService sharedPrefsService;
   final SendOtpUseCase sendOtpUseCase;
+  final SendSignupOtpUseCase sendSignupOtpUseCase;
+  final RegisterPatientUseCase registerPatientUseCase;
 
   Timer? _timer;
   static const int _countdownDuration = reSendOtpDuration;
@@ -33,7 +37,10 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     required this.loginMobileUseCase,
     required this.loginEmailUseCase,
     required this.sharedPrefsService,
-    required this.sendOtpUseCase, required this.updateFcmTokenUseCase,
+    required this.sendOtpUseCase,
+    required this.sendSignupOtpUseCase,
+    required this.registerPatientUseCase,
+    required this.updateFcmTokenUseCase,
   }) : super(SignInInitial()) {
     // Auth & API Events
     on<OnCountryCodeChanged>((event, emit) {
@@ -41,6 +48,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     });
     on<OnTapEmailSignInEvent>(_onTapEmailSignIn);
     on<OnTapMobileSignInEvent>(_onTapMobileSignIn);
+    on<OnSendSignupOtpEvent>(_onSendSignupOtp);
+    on<OnRegisterPatientEvent>(_onRegisterPatient);
     on<OnVerifyAndLogin>(_onVerifyAndLogin);
     on<OnReSendOtp>(_onReSendOtp);
     on<OnSendOtp>(_onSendOtp);
@@ -196,6 +205,90 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
       debugPrint("Stacktrace: $stackTrace");
 
       emit(SendOtpFailureState(error.toString()));
+    }
+  }
+
+  Future<void> _onSendSignupOtp(
+    OnSendSignupOtpEvent event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const SignupOtpLoadingState());
+    try {
+      final SendOtpEntity? result = await sendSignupOtpUseCase(
+        countryCode: event.countryCode.trim(),
+        mobileNumber: event.mobileNumber.trim(),
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Failed to send signup verification code.";
+        emit(SignupOtpFailureState(failureMessage));
+        return;
+      } else {
+        _timer?.cancel();
+        _startCountdown();
+        emit(SignupOtpSentState(result));
+      }
+    } catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Error sending signup OTP: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+      emit(SignupOtpFailureState(error.toString()));
+    }
+  }
+
+  Future<void> _onRegisterPatient(
+    OnRegisterPatientEvent event,
+    Emitter<LogInState> emit,
+  ) async {
+    emit(const SignupLoadingState());
+    try {
+      final LoginEntity? result = await registerPatientUseCase(
+        RegisterPatientParams(
+          firstName: event.firstName.trim(),
+          lastName: event.lastName.trim(),
+          email: event.email?.trim(),
+          mobileNumber: event.mobileNumber.trim(),
+          countryCode: event.countryCode.trim(),
+          password: event.password,
+          otp: event.otp.trim(),
+          sessionId: event.sessionId.trim(),
+        ),
+      );
+
+      if (result == null || !(result.status ?? false)) {
+        final failureMessage =
+            result?.message ?? "Registration failed. Please check your verification code.";
+        emit(SignupFailureState(failureMessage));
+        return;
+      } else {
+        _timer?.cancel();
+        await Future.wait([
+          GlobalSession.instance.update(result),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isUserLoggedIn,
+            true,
+          ),
+        ]);
+
+        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+          try {
+            await updateFcmTokenUseCase.call(event.fcmToken);
+            debugPrint("Production Signup Pipeline - Remote FCM Token synced successfully.");
+          } catch (fcmError, fcmStack) {
+            debugPrint("CRITICAL (LoginBloc) - Signup FCM Token sync error: $fcmError\n$fcmStack");
+          }
+        }
+
+        emit(SignupSuccessState(loginEntity: result));
+      }
+    } catch (error, stackTrace) {
+      debugPrint(
+        "CRITICAL (LoginBloc): Unexpected error during patient registration: $error",
+      );
+      debugPrint("Stacktrace: $stackTrace");
+      emit(SignupFailureState(error.toString()));
     }
   }
 

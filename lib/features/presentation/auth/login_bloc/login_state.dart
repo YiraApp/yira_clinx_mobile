@@ -87,16 +87,38 @@ class LoginSuccess extends LogInState {
   final LoginEntity loginEntity;
 
   const LoginSuccess({required this.loginEntity});
-
-  @override
-  List<Object?> get props => [loginEntity];
 }
 
 class LoginFailure extends LogInState {
   final String? errorMessage;
 
   const LoginFailure({this.errorMessage});
+}
 
-  @override
-  List<Object?> get props => [errorMessage];
+class SignupOtpLoadingState extends LogInState {
+  const SignupOtpLoadingState();
+}
+
+class SignupOtpSentState extends LogInState {
+  final SendOtpEntity sendOtpEntity;
+  const SignupOtpSentState(this.sendOtpEntity);
+}
+
+class SignupOtpFailureState extends LogInState {
+  final String errorMessage;
+  const SignupOtpFailureState(this.errorMessage);
+}
+
+class SignupLoadingState extends LogInState {
+  const SignupLoadingState();
+}
+
+class SignupSuccessState extends LogInState {
+  final LoginEntity loginEntity;
+  const SignupSuccessState({required this.loginEntity});
+}
+
+class SignupFailureState extends LogInState {
+  final String errorMessage;
+  const SignupFailureState(this.errorMessage);
 }

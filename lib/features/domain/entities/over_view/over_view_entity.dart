@@ -58,6 +58,10 @@ class PatientAppointmentEntity {
   final String doctorName;
   final String doctorEmail;
   final String doctorPhone;
+  final String patientName;
+  final String patientUserId;
+  final String relation;
+  final bool isPrimary;
   final String notes;
   final String createdAt;
   final String createdBy;
@@ -90,6 +94,10 @@ class PatientAppointmentEntity {
     this.doctorName = '',
     this.doctorEmail = '',
     this.doctorPhone = '',
+    this.patientName = '',
+    this.patientUserId = '',
+    this.relation = 'Self',
+    this.isPrimary = true,
     this.notes = '',
     this.createdAt = '',
     this.createdBy = '',

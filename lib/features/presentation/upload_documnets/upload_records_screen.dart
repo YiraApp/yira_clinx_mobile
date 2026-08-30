@@ -355,6 +355,13 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         bloc.add(AddUploadedRecord(recordToAdd));
       }
 
+      bloc.add(FetchUploadedRecords(
+        patientId: widget.patientId,
+        appointmentId: widget.appointmentId,
+        hospitalId: widget.hospitalId,
+        orgId: widget.orgId,
+      ));
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

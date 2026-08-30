@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointments_dashboard.dart';
@@ -30,7 +31,13 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
   @override
   void initState() {
     super.initState();
+    ProviderTourController().refreshKeys();
     _currentIndex = widget.initialIndex;
+    ProviderTourController().registerTabSwitcher((index) {
+      if (mounted) {
+        _onTabTapped(index);
+      }
+    });
   }
 
   void _onTabTapped(int index) {
@@ -38,11 +45,20 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
       setState(() {
         _currentIndex = index;
       });
+      if (index == 2) {
+        sl<DashboardBloc>().add(const GetDashboardData());
+      } else if (index == 1) {
+        sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+      } else if (index == 0) {
+        sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tour = ProviderTourController();
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<NavigationDrawerBloc>.value(
@@ -87,6 +103,10 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
           bottomNavigationBar: AppBottomNavBar(
             currentIndex: _currentIndex,
             onTap: _onTabTapped,
+            homeKey: tour.homeNavKey,
+            appointmentsKey: tour.apptsNavKey,
+            patientsKey: tour.patientsNavKey,
+            slotsKey: tour.slotsNavKey,
           ),
         ),
       ),

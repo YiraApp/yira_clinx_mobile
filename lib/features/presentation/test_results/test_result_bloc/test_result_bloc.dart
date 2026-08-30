@@ -14,33 +14,16 @@ class TestResultsBloc extends Bloc<TestResultsEvent, TestResultsState> {
   Future<void> _onLoadResults(LoadTestResults event, Emitter<TestResultsState> emit) async {
     emit(TestResultsLoading());
 
-    // Simulated Repository Call / Mock Data
-    final results = [
-      {
-        "title": "Complete Blood Count (CBC)",
-        "doctor": "Dr. Priya Sharma",
-        "date": "2024-01-15",
-        "params": ["Hemoglobin", "WBC Count", "RBC Count", "+2 more"],
-        "status": "Normal",
-        "isAbnormal": false
-      },
-      {
-        "title": "Lipid Profile",
-        "doctor": "Dr. Rajesh Kumar",
-        "date": "2024-01-12",
-        "params": ["Total Cholesterol", "LDL Cholesterol", "HDL Cholesterol"],
-        "status": "1 Abnormal",
-        "isAbnormal": true
-      }
-    ];
+    // Clean initial state for new users (connects to dynamic diagnostic lab services)
+    final results = <Map<String, dynamic>>[];
 
     emit(TestResultsLoaded(
-      overallPercentage: 0.94,
-      totalTests: 4,
-      normalTests: 3,
-      bloodTestsCount: 3,
-      urineTestsCount: 1,
-      abnormalCount: 1,
+      overallPercentage: 1.0,
+      totalTests: 0,
+      normalTests: 0,
+      bloodTestsCount: 0,
+      urineTestsCount: 0,
+      abnormalCount: 0,
       labResults: results,
       filteredLabResults: results,
       selectedStatus: "All",

@@ -7,15 +7,19 @@ abstract class RecordsRepository {
     String? hospitalId,
     String? orgId,
     int? limit,
+    int? page,
   });
+
   Future<UploadedRecord?> uploadDocument({
     required String filePath,
     required String fileName,
     required String category,
+    String? description,
     String? patientId,
     String? appointmentId,
     String? hospitalId,
     String? orgId,
   });
+
   Future<void> deleteUploadedRecord(String id);
 }

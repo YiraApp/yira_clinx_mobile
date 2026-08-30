@@ -94,18 +94,18 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
           padding: const EdgeInsets.all(14.0),
           decoration: BoxDecoration(
             color: containerBg,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               width: 1,
               color: isDark
-                  ? Colors.white.withOpacity(0.08)
+                  ? Colors.white.withValues(alpha: 0.08)
                   : const Color(0xFFE2E8F0),
             ),
             boxShadow: [
               if (!isDark)
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withOpacity(0.025),
-                  blurRadius: 6,
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
             ],
@@ -122,7 +122,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                     width: widget.isTab ? 44 : 40,
                     height: widget.isTab ? 44 : 40,
                     decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(isDark ? 0.18 : 0.1),
+                      color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
@@ -239,12 +239,12 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                       horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.white.withOpacity(0.03)
+                        ? Colors.white.withValues(alpha: 0.03)
                         : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.05)
+                          ? Colors.white.withValues(alpha: 0.05)
                           : const Color(0xFFF1F5F9),
                     ),
                   ),
@@ -286,160 +286,204 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Left items: Video Call button + Patient Status pill
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Video call badge (Only for upcoming/active appointments, not past/completed/cancelled)
-                      if (widget.isTeleConsultation &&
-                          !widget.statusLabel.toLowerCase().contains('completed') &&
-                          !widget.statusLabel.toLowerCase().contains('cancelled') &&
-                          !widget.statusLabel.toLowerCase().contains('past')) ...[
-                        InkWell(
-                          onTap: widget.onJoinCall,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: widget.isTab ? 16.0 : 13.0,
-                              vertical: widget.isTab ? 8.0 : 6.5,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF2563EB),
-                                  Color(0xFF1D4ED8),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Video call badge (Only for upcoming/active appointments, not past/completed/cancelled)
+                        if (widget.isTeleConsultation &&
+                            !widget.statusLabel.toLowerCase().contains('completed') &&
+                            !widget.statusLabel.toLowerCase().contains('cancelled') &&
+                            !widget.statusLabel.toLowerCase().contains('past')) ...[
+                          InkWell(
+                            onTap: widget.onJoinCall,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: widget.isTab ? 14.0 : 10.0,
+                                vertical: widget.isTab ? 7.0 : 5.5,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF2563EB),
+                                    Color(0xFF1D4ED8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.videocam_rounded,
-                                  size: widget.isTab ? 18 : 16,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  "Join Call",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: widget.isTab
-                                        ? width * 0.014
-                                        : 12.5,
-                                    fontWeight: FontWeight.w700,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.videocam_rounded,
+                                    size: widget.isTab ? 16 : 14,
                                     color: Colors.white,
-                                    letterSpacing: 0.2,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "Join Call",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: widget.isTab ? 12 : 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
+                          const SizedBox(width: 6),
+                        ],
 
-                      // Patient Status Pill (e.g. New Patient / Follow-up)
-                      if (widget.patientStatus != null &&
-                          widget.patientStatus!.trim().isNotEmpty &&
-                          widget.patientStatus!.trim().toLowerCase() != 'active' &&
-                          widget.patientStatus!.trim().toLowerCase() != 'inactive')
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 7.5, vertical: 3.5),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF334155)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isDark
-                                  ? Colors.white12
-                                  : const Color(0xFFE2E8F0),
-                              width: 1,
+                        // Patient Status Pill (e.g. For: John Doe / New Patient / Follow-up)
+                        if (widget.patientStatus != null &&
+                            widget.patientStatus!.trim().isNotEmpty &&
+                            widget.patientStatus!.trim().toLowerCase() != 'active' &&
+                            widget.patientStatus!.trim().toLowerCase() != 'inactive') ...[
+                          Flexible(
+                            child: Builder(
+                              builder: (context) {
+                                final isForFamily = widget.patientStatus!.startsWith('For:');
+                                final badgeBg = isForFamily
+                                    ? (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF))
+                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9));
+                                final badgeText = isForFamily
+                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
+                                    : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));
+                                final badgeBorder = isForFamily
+                                    ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFBFDBFE))
+                                    : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 3.5),
+                                  decoration: BoxDecoration(
+                                    color: badgeBg,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: badgeBorder,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isForFamily ? Icons.family_restroom_rounded : Icons.medical_services_outlined,
+                                        size: 11,
+                                        color: badgeText,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          widget.patientStatus!,
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: widget.isTab
+                                                ? width * 0.011
+                                                : 10.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: badgeText,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Right item: Clean, Crisp, Unfaded Appointment Status pill badge
+                  Builder(
+                    builder: (context) {
+                      Color bg;
+                      Color txt;
+                      Color border;
+                      final s = widget.statusLabel.toLowerCase();
+
+                      if (s.contains('cancel')) {
+                        bg = isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2);
+                        txt = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626);
+                        border = isDark ? const Color(0xFF991B1B) : const Color(0xFFFECACA);
+                      } else if (s.contains('pend')) {
+                        bg = isDark ? const Color(0xFF451A03) : const Color(0xFFFEF3C7);
+                        txt = isDark ? const Color(0xFFFCD34D) : const Color(0xFFD97706);
+                        border = isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A);
+                      } else if (s.contains('complet')) {
+                        bg = isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE);
+                        txt = isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB);
+                        border = isDark ? const Color(0xFF1E40AF) : const Color(0xFFBFDBFE);
+                      } else {
+                        // Scheduled / Confirmed / Active
+                        bg = isDark ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7);
+                        txt = isDark ? const Color(0xFF6EE7B7) : const Color(0xFF16A34A);
+                        border = isDark ? const Color(0xFF065F46) : const Color(0xFFBBF7D0);
+                      }
+
+                      return GestureDetector(
+                        onTap: widget.onStatusTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 4.0),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: border, width: 1),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 11,
-                                color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF64748B),
+                              Container(
+                                width: 5.5,
+                                height: 5.5,
+                                decoration: BoxDecoration(
+                                  color: txt,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Text(
-                                widget.patientStatus!,
+                                widget.statusLabel.toUpperCase(),
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: widget.isTab
                                       ? width * 0.01
                                       : 9.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? const Color(0xFFCBD5E1)
-                                      : const Color(0xFF475569),
+                                  fontWeight: FontWeight.w700,
+                                  color: txt,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
+                              if (widget.onStatusTap != null) ...[
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  size: 13,
+                                  color: txt,
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                    ],
-                  ),
-
-                  // Right item: Clean Appointment Status pill badge
-                  GestureDetector(
-                    onTap: widget.onStatusTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0, vertical: 4.0),
-                      decoration: BoxDecoration(
-                        color: widget.statusColor.withOpacity(isDark ? 0.2 : 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: widget.statusTextColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            widget.statusLabel.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: widget.isTab
-                                  ? width * 0.01
-                                  : 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: widget.statusTextColor,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          if (widget.onStatusTap != null) ...[
-                            const SizedBox(width: 2),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 13,
-                              color: widget.statusTextColor,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),

@@ -7,6 +7,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/consent/patient_access_consent_entity.dart';
+import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
 import 'bloc/patient_access_consent_bloc.dart';
 import 'bloc/patient_access_consent_event.dart';
 import 'bloc/patient_access_consent_state.dart';
@@ -439,6 +440,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
 
                   // Consent Cards List
                   Expanded(
+                    key: PatientTourController().consentsListKey,
                     child: RefreshIndicator(
                       onRefresh: () async {
                         _consentBloc.add(LoadPatientConsentsEvent(patientId: currentPatientId));
@@ -794,21 +796,28 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.access_time_rounded, size: 13, color: isDark ? Colors.white38 : Colors.grey.shade500),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Requested: ${_formatDate(item.requestedAt)}',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      color: isDark ? Colors.white54 : Colors.grey.shade600,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.access_time_rounded, size: 13, color: isDark ? Colors.white38 : Colors.grey.shade500),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Requested: ${_formatDate(item.requestedAt)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11,
+                          color: isDark ? Colors.white54 : Colors.grey.shade600,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              if (item.expiresAt != null && isApproved)
+              if (item.expiresAt != null && isApproved) ...[
+                const SizedBox(width: 8),
                 Text(
                   'Expires: ${DateFormat('MMM dd, yyyy').format(item.expiresAt!)}',
                   style: const TextStyle(
@@ -818,6 +827,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                     color: Color(0xFF059669),
                   ),
                 ),
+              ],
             ],
           ),
 

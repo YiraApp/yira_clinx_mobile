@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -44,46 +45,67 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       _errorMessage = null;
     });
 
-    final currentUser = GlobalSession.instance.userNotifier.value;
-    final profiles = currentUser?.data?.profiles ?? [];
-    
-    // Always use the primary account's ID for workspace fetching
-    final primaryUserId = (profiles.isNotEmpty && profiles.first.id != null && profiles.first.id!.isNotEmpty)
-        ? profiles.first.id!
-        : (currentUser?.data?.id ?? '');
-
-    final allRoles = currentUser?.data?.roles ?? [];
-    final roles = allRoles.where((r) {
-      final name = r.roleName?.toLowerCase() ?? '';
-      final roleId = (r.roleId ?? '').toUpperCase();
-      return name.contains('provider') ||
-          name.contains('doctor') ||
-          name.contains('physician') ||
-          name.contains('user') ||
-          name.contains('patient') ||
-          roleId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
-          roleId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C';
-    }).toList();
-
-    if (roles.isEmpty && profiles.isEmpty) {
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
     try {
-      final getWorkSpaceUseCase = sl<GetWorkSpaceDetailsUseCase>();
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
+      final List<RoleEntity> allRoles = currentUser?.data?.roles ?? [];
+
+      // Always use the primary account's ID for workspace fetching
+      final primaryUserId = (profiles.isNotEmpty && profiles.first.id != null && profiles.first.id!.isNotEmpty)
+          ? profiles.first.id!
+          : (currentUser?.data?.id ?? '');
+
+      final roles = allRoles.where((r) {
+        final name = r.roleName?.toLowerCase() ?? '';
+        final roleId = (r.roleId ?? '').toUpperCase();
+        return name.contains('provider') ||
+            name.contains('doctor') ||
+            name.contains('physician') ||
+            name.contains('user') ||
+            name.contains('patient') ||
+            roleId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+            roleId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C';
+      }).toList();
+
       final List<_FlatWorkspaceItem> items = [];
 
-      bool addedPatientEntry = false;
-
-      // 1. Add ALL Family Profiles (Primary + Dependents / Brothers / Parents / Children)
-      final List<_FlatWorkspaceItem> patientItems = [];
       final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
           ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
           : 'Primary Account';
 
+      final bool primaryHasPatientRole = allRoles.any((r) {
+        final rName = (r.roleName ?? '').toLowerCase();
+        final rId = (r.roleId ?? '').toUpperCase();
+        return rId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+               rName.contains('patient') ||
+               rName.contains('user');
+      });
+
+      RoleEntity? providerRoleEntity;
+      for (final r in allRoles) {
+        final rName = (r.roleName ?? '').toLowerCase();
+        final rId = (r.roleId ?? '').toUpperCase();
+        if (rId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
+            rName.contains('provider') ||
+            rName.contains('doctor') ||
+            rName.contains('physician')) {
+          providerRoleEntity = r;
+          break;
+        }
+      }
+      final bool primaryHasProviderRole = providerRoleEntity != null &&
+          providerRoleEntity.roleId != null &&
+          providerRoleEntity.roleId!.isNotEmpty;
+
+      final String primaryRoleId = primaryHasPatientRole
+          ? '4FC67429-28AE-4106-93EF-436228282ED0'
+          : (primaryHasProviderRole ? providerRoleEntity!.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
+
+      final String primaryRoleLabel = primaryHasPatientRole
+          ? 'Primary'
+          : (primaryHasProviderRole ? 'Doctor' : 'Primary');
+
+      // 1. Add Family Profiles (Primary + Dependents)
       if (profiles.isNotEmpty) {
         int primaryIndex = profiles.indexWhere((p) {
           final r = (p.relation ?? '').trim().toLowerCase();
@@ -100,21 +122,21 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                 : fallbackPrimaryName;
 
         // 1. Primary Profile ALWAYS fixed at Index 0
-        patientItems.add(_FlatWorkspaceItem(
-          roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
-          roleName: 'Primary',
-          orgId: 1,
-          orgName: 'Primary',
-          hospitalId: 1,
+        items.add(_FlatWorkspaceItem(
+          roleId: primaryRoleId,
+          roleName: primaryRoleLabel,
+          orgId: currentUser?.data?.latestOrgId ?? 1,
+          orgName: primaryRoleLabel,
+          hospitalId: currentUser?.data?.latestHospitalId ?? 1,
           hospitalName: pPrimaryName,
-          location: 'Primary',
+          location: primaryRoleLabel,
           profileUserId: primaryProf.id ?? primaryUserId,
           firstName: primaryProf.firstName,
           lastName: primaryProf.lastName,
           gender: primaryProf.gender,
           dob: primaryProf.dob,
           phoneNumber: primaryProf.phoneNumber,
-          relation: 'Primary',
+          relation: primaryRoleLabel,
         ));
 
         // 2. All other family members retain their exact fixed relations
@@ -137,7 +159,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
           final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
 
-          patientItems.add(_FlatWorkspaceItem(
+          items.add(_FlatWorkspaceItem(
             roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
             roleName: pRel,
             orgId: 1,
@@ -155,26 +177,23 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           ));
         }
       } else {
-        patientItems.add(_FlatWorkspaceItem(
-          roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
-          roleName: 'Primary',
-          orgId: 1,
-          orgName: 'Unified Health Account',
-          hospitalId: 1,
+        items.add(_FlatWorkspaceItem(
+          roleId: primaryRoleId,
+          roleName: primaryRoleLabel,
+          orgId: currentUser?.data?.latestOrgId ?? 1,
+          orgName: primaryRoleLabel,
+          hospitalId: currentUser?.data?.latestHospitalId ?? 1,
           hospitalName: fallbackPrimaryName,
-          location: 'Personal Account',
+          location: primaryRoleLabel,
           profileUserId: primaryUserId,
           firstName: currentUser?.data?.firstName,
           lastName: currentUser?.data?.lastName,
           gender: currentUser?.data?.gender,
           dob: currentUser?.data?.dob,
           phoneNumber: currentUser?.data?.phoneNumber,
-          relation: 'Primary',
+          relation: primaryRoleLabel,
         ));
       }
-
-      items.addAll(patientItems);
-      addedPatientEntry = true;
 
       // 2. Add Provider / Staff Workspaces for each facility
       for (final role in roles) {
@@ -203,32 +222,12 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
         // If patient entries already added above from profiles, skip redundant generic entry
         if (roleName == 'User' || roleName == 'Patient') {
-          if (!addedPatientEntry) {
-            items.add(_FlatWorkspaceItem(
-              roleId: roleId,
-              roleName: 'Primary',
-              orgId: 1,
-              orgName: 'Unified Health Account',
-              hospitalId: 1,
-              hospitalName: '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
-                  ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
-                  : 'User Profile',
-              location: 'Personal Account',
-              profileUserId: primaryUserId,
-              firstName: currentUser?.data?.firstName,
-              lastName: currentUser?.data?.lastName,
-              gender: currentUser?.data?.gender,
-              dob: currentUser?.data?.dob,
-              phoneNumber: currentUser?.data?.phoneNumber,
-              relation: 'Primary',
-            ));
-            addedPatientEntry = true;
-          }
           continue;
         }
 
         if (roleId.isNotEmpty) {
           try {
+            final getWorkSpaceUseCase = sl<GetWorkSpaceDetailsUseCase>();
             final res = await getWorkSpaceUseCase(WorkSpaceParameters(primaryUserId, roleId));
             if (res != null && res.status == true && res.data != null) {
               final orgs = res.data!.whereType<ws.DataEntity>().toList();
@@ -260,13 +259,12 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
               }
 
               if (!addedAnyHospital) {
-                // Fallback for role with no explicit hospital entries
                 items.add(_FlatWorkspaceItem(
                   roleId: roleId,
                   roleName: roleName,
-                  orgId: 1,
+                  orgId: currentUser?.data?.latestOrgId ?? 1,
                   orgName: '',
-                  hospitalId: 1,
+                  hospitalId: currentUser?.data?.latestHospitalId ?? 1,
                   hospitalName: 'Healthcare Facility',
                   profileUserId: primaryUserId,
                 ));
@@ -275,9 +273,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
               items.add(_FlatWorkspaceItem(
                 roleId: roleId,
                 roleName: roleName,
-                orgId: 1,
+                orgId: currentUser?.data?.latestOrgId ?? 1,
                 orgName: '',
-                hospitalId: 1,
+                hospitalId: currentUser?.data?.latestHospitalId ?? 1,
                 hospitalName: 'Healthcare Facility',
                 profileUserId: primaryUserId,
               ));
@@ -286,9 +284,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             items.add(_FlatWorkspaceItem(
               roleId: roleId,
               roleName: roleName,
-              orgId: 1,
+              orgId: currentUser?.data?.latestOrgId ?? 1,
               orgName: '',
-              hospitalId: 1,
+              hospitalId: currentUser?.data?.latestHospitalId ?? 1,
               hospitalName: 'Healthcare Facility',
               profileUserId: primaryUserId,
             ));
@@ -301,13 +299,15 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           _flatItems.clear();
           _flatItems.addAll(items);
           _isLoading = false;
+          _errorMessage = items.isEmpty ? "No profiles found" : null;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      developer.log("Error loading switcher profiles", error: e, stackTrace: stack, name: "ProfileSwitcherSheet");
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = "Failed to load profiles";
+          _errorMessage = _flatItems.isNotEmpty ? null : "Failed to load profiles";
         });
       }
     }
@@ -334,13 +334,17 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       if (response != null && response.status == true && response.data != null) {
         final currentSession = GlobalSession.instance.userNotifier.value;
-        final bool isPatientRole = item.roleId.toUpperCase() ==
+        final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
+        final bool isPatientRole = effectiveRoleId.toUpperCase() ==
                 "4FC67429-28AE-4106-93EF-436228282ED0" ||
             item.roleName.toLowerCase().contains("patient") ||
             item.roleName.toLowerCase().contains("user") ||
-            item.relation != null;
-        final String navigationId = isPatientRole ? "1" : "2";
-        final String latestUserRole = isPatientRole ? "Patient" : "Provider";
+            (item.relation != null &&
+             item.relation!.toLowerCase() != 'doctor' &&
+             item.relation!.toLowerCase() != 'provider' &&
+             effectiveRoleId.toUpperCase() != "FE80173F-9DB3-4703-84A8-5C23E7CC493C");
+        final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
+        final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
 
         if (currentSession?.data != null) {
           final oldData = currentSession!.data!;
@@ -371,9 +375,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             weight: oldData.weight,
             heightUnit: oldData.heightUnit,
             weightUnit: oldData.weightUnit,
-            latestRoleId: item.roleId,
-            latestOrgId: item.orgId,
-            latestHospitalId: item.hospitalId,
+            latestRoleId: effectiveRoleId,
+            latestOrgId: response.data?.latestOrgId ?? item.orgId,
+            latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
             latestUserRole: latestUserRole,
             navigationId: navigationId,
             profiles: oldData.profiles,

@@ -8,6 +8,8 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
+import 'package:yiraclinics/core/tour/provider_tour_mock_data.dart';
 import '../../../../core/constants/constants.dart';
 
 class PatientManagementScreen extends StatefulWidget {
@@ -39,114 +41,131 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     final bool isTab = isTablet(context);
     final primaryColor = Theme.of(context).primaryColor;
 
-    return BlocProvider(
-      create: (context) => DashboardBloc()..add(const GetDashboardData()),
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 2),
-          body: SafeArea(
-            child: BlocConsumer<DashboardBloc, DashboardState>(
-              buildWhen: (previous, state) => state is! ViewPatientDetailsState,
-              listener: (context, state) {
-                if (state is ViewPatientDetailsState) {
-                  final currentUser = GlobalSession.instance.userNotifier.value;
-                  final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
-                  final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.doctorPatientDetailProfileScreen,
-                    arguments: {
-                      'patientId': state.patientId,
-                      'patientName': state.patientName,
-                      'hospitalId': hospitalId,
-                      'orgId': orgId,
-                      'initialTabIndex': 0,
-                    },
-                  );
-                }
-              },
-              builder: (context, state) {
-                final totalCount = state.allPatients.length;
-                final filteredCount = state.patients.length;
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return BlocProvider(
+          create: (context) => DashboardBloc()..add(const GetDashboardData()),
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Scaffold(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 2),
+              body: SafeArea(
+                child: BlocConsumer<DashboardBloc, DashboardState>(
+                  buildWhen: (previous, state) => state is! ViewPatientDetailsState,
+                  listener: (context, state) {
+                    if (state is ViewPatientDetailsState) {
+                      final currentUser = GlobalSession.instance.userNotifier.value;
+                      final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
+                      final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.doctorPatientDetailProfileScreen,
+                        arguments: {
+                          'patientId': state.patientId,
+                          'patientName': state.patientName,
+                          'hospitalId': hospitalId,
+                          'orgId': orgId,
+                          'initialTabIndex': 0,
+                        },
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    final displayPatients = isTourActive ? ProviderTourMockData.demoPatients : state.patients;
+                    final totalCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.allPatients.length;
+                    final filteredCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.patients.length;
 
-                return Column(
-                  children: [
-                    // Clean Top Bar & Search Section
-                    _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, filteredCount),
+                    return Column(
+                      children: [
+                        // Clean Top Bar & Search Section + Filter Pills
+                        Container(
+                          key: ProviderTourController().patientsSearchKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, filteredCount),
+                              _buildStatusFilterRow(context, isDark, primaryColor, isTab, state.selectedStatus),
+                            ],
+                          ),
+                        ),
 
-                    // Filter Pills Bar
-                    _buildStatusFilterRow(context, isDark, primaryColor, isTab, state.selectedStatus),
+                        const SizedBox(height: 6),
 
-                    const SizedBox(height: 6),
-
-                    // Patient List View or Empty State
-                    Expanded(
-                      child: state.status == DashboardStatus.loading
-                          ? PatientCardListShimmer(itemCount: 5, isTab: isTab)
-                          : RefreshIndicator(
-                              color: primaryColor,
-                              onRefresh: () async {
-                                context.read<DashboardBloc>().add(const GetDashboardData());
-                              },
-                              child: state.patients.isEmpty
-                                  ? _buildEmptyState(context, isDark, primaryColor, isTab)
-                                  : ListView.separated(
-                                padding: const EdgeInsets.fromLTRB(
-                                  screenHorizontalSpacePadding,
-                                  8,
-                                  screenHorizontalSpacePadding,
-                                  24,
-                                ),
-                                physics: const AlwaysScrollableScrollPhysics(
-                                  parent: BouncingScrollPhysics(),
-                                ),
-                                itemCount: state.patients.length,
-                                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                                itemBuilder: (context, index) {
-                                  final patient = state.patients[index];
-                                  return PatientCard(
-                                    key: ValueKey(patient.id),
-                                    isTab: isTab,
-                                    patient: patient,
-                                    onToggleFavorite: () async {
-                                      final bloc = context.read<DashboardBloc>();
-                                      await FavoritePatientsService().toggleFavorite(
-                                        patientId: patient.userId,
-                                        alternateId: patient.id,
-                                      );
-                                      try {
-                                        bloc.add(
-                                          ToggleFavoritePatientEvent(
-                                            patientId: patient.userId,
-                                            alternateId: patient.id,
+                        // Patient List View or Empty State
+                        Expanded(
+                          child: Container(
+                            key: ProviderTourController().patientsListKey,
+                            child: (state.status == DashboardStatus.loading && !isTourActive)
+                                ? PatientCardListShimmer(itemCount: 5, isTab: isTab)
+                                : RefreshIndicator(
+                                    color: primaryColor,
+                                    onRefresh: () async {
+                                      context.read<DashboardBloc>().add(const GetDashboardData());
+                                    },
+                                    child: displayPatients.isEmpty
+                                        ? _buildEmptyState(context, isDark, primaryColor, isTab)
+                                        : ListView.separated(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              screenHorizontalSpacePadding,
+                                              8,
+                                              screenHorizontalSpacePadding,
+                                              24,
+                                            ),
+                                            physics: const AlwaysScrollableScrollPhysics(
+                                              parent: BouncingScrollPhysics(),
+                                            ),
+                                            itemCount: displayPatients.length,
+                                            separatorBuilder: (_, _) => const SizedBox(height: 10),
+                                            itemBuilder: (context, index) {
+                                              final patient = displayPatients[index];
+                                              return PatientCard(
+                                                key: ValueKey(patient.id),
+                                                isTab: isTab,
+                                                patient: patient,
+                                                onToggleFavorite: () async {
+                                                  if (!isTourActive) {
+                                                    final bloc = context.read<DashboardBloc>();
+                                                    await FavoritePatientsService().toggleFavorite(
+                                                      patientId: patient.userId,
+                                                      alternateId: patient.id,
+                                                    );
+                                                    try {
+                                                      bloc.add(
+                                                        ToggleFavoritePatientEvent(
+                                                          patientId: patient.userId,
+                                                          alternateId: patient.id,
+                                                        ),
+                                                      );
+                                                    } catch (_) {}
+                                                  }
+                                                },
+                                                onTap: () {
+                                                  if (!isTourActive) {
+                                                    context.read<DashboardBloc>().add(
+                                                      ViewPatientDetailsEvent(
+                                                        patientId: patient.userId,
+                                                        patientName: patient.name,
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                              );
+                                            },
                                           ),
-                                        );
-                                      } catch (_) {
-                                        // Handled smoothly in-place by ValueListenableBuilder in PatientCard without any page reload
-                                      }
-                                    },
-                                    onTap: () {
-                                      context.read<DashboardBloc>().add(
-                                        ViewPatientDetailsEvent(
-                                          patientId: patient.userId,
-                                          patientName: patient.name,
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                                  ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -180,6 +180,7 @@ class ProfileModel extends ProfileEntity {
     super.gender,
     super.dob,
     super.accountType,
+    super.imagePath,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -197,6 +198,7 @@ class ProfileModel extends ProfileEntity {
       dob: json['dob']?.toString(),
       accountType: json['accountType']?.toString() ??
           (json['isPrimary'] == true ? "Independent" : "Dependent"),
+      imagePath: (json['imagePath'] ?? json['ImagePath'] ?? json['photo'] ?? json['photoUrl'] ?? json['avatar'] ?? json['profilePicture'] ?? json['profilePhoto'])?.toString(),
     );
   }
 
@@ -212,6 +214,7 @@ class ProfileModel extends ProfileEntity {
       gender: entity.gender,
       dob: entity.dob,
       accountType: entity.accountType,
+      imagePath: entity.imagePath,
     );
   }
 
@@ -227,6 +230,7 @@ class ProfileModel extends ProfileEntity {
       'gender': gender,
       'dob': dob,
       'accountType': accountType,
+      'imagePath': imagePath,
     };
   }
 }

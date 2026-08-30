@@ -18,6 +18,9 @@ import 'package:yiraclinics/features/presentation/prescriptions/prescription_blo
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_records_screen.dart';
+import 'suggestions/add_suggestion_sheet.dart';
+import 'suggestions/doctor_suggestions_screen.dart';
+import 'widgets/request_access_duration_modal.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
@@ -50,7 +53,7 @@ class _DoctorPatientDetailProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 6 tabs for Doctor Patient Management Record
+  // 7 tabs for Doctor Patient Management Record
   final List<String> _tabs = [
     'Info',
     'Appointments',
@@ -58,6 +61,7 @@ class _DoctorPatientDetailProfileScreenState
     'Prescribe',
     'Notes',
     'Documents',
+    'Suggestions',
   ];
 
   @override
@@ -148,59 +152,99 @@ class _DoctorPatientDetailProfileScreenState
 
                   final bool hasAccess = accessStatus?.hasAccess ?? false;
 
-                  return Column(
-                    children: [
-                      // Header with showStatus: false (No appointment status badge)
-                      PatientProfileHeader(
-                        patient: patient,
-                        isTab: isTab,
-                        appointmentId: null,
-                        patientId: widget.patientId ?? patient.id,
-                        initialStatus: null,
-                        showStatus: false,
-                        hospitalId: int.tryParse(widget.hospitalId ?? ''),
-                        consentBloc: _consentBloc,
-                        accessStatus: accessStatus,
-                        onBack: () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          }
-                        },
-                        tabBar: PatientProfileTabBar(
-                          tabs: _tabs,
-                          selectedIndex: currentTab,
+                  return Scaffold(
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    floatingActionButton: FloatingActionButton.extended(
+                      onPressed: () async {
+                        if (!hasAccess) {
+                          RequestAccessDurationModal.show(
+                            context: context,
+                            patient: patient,
+                            patientId: widget.patientId ?? patient.id,
+                            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+                            consentBloc: _consentBloc,
+                          );
+                          return;
+                        }
+                        final added = await AddDoctorSuggestionSheet.show(
+                          context,
+                          patientId: widget.patientId ?? patient.id,
+                          orgId: widget.orgId,
+                          hospitalId: widget.hospitalId,
+                          patientName: patient.name,
+                        );
+                        if (added == true && context.mounted) {
+                          context.read<PatientProfileBloc>().add(const TabChanged(6));
+                        }
+                      },
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      icon: const Icon(Icons.add_rounded, size: 20),
+                      label: const Text(
+                        "Add Suggestion",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    body: Column(
+                      children: [
+                        // Header with showStatus: false (No appointment status badge)
+                        PatientProfileHeader(
+                          patient: patient,
                           isTab: isTab,
-                          onTabSelected: (index) {
-                            context
-                                .read<PatientProfileBloc>()
-                                .add(TabChanged(index));
+                          appointmentId: null,
+                          patientId: widget.patientId ?? patient.id,
+                          initialStatus: null,
+                          showStatus: false,
+                          hospitalId: int.tryParse(widget.hospitalId ?? ''),
+                          consentBloc: _consentBloc,
+                          accessStatus: accessStatus,
+                          onBack: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
                           },
+                          tabBar: PatientProfileTabBar(
+                            tabs: _tabs,
+                            selectedIndex: currentTab,
+                            isTab: isTab,
+                            onTabSelected: (index) {
+                              context
+                                  .read<PatientProfileBloc>()
+                                  .add(TabChanged(index));
+                            },
+                          ),
                         ),
-                      ),
 
-                      // Tab Content PageView
-                      Expanded(
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: _tabs.length,
-                          onPageChanged: (index) {
-                            context
-                                .read<PatientProfileBloc>()
-                                .add(TabChanged(index));
-                          },
-                          itemBuilder: (context, index) {
-                            return _buildActiveTabContent(
-                              context,
-                              patient,
-                              index,
-                              isTab,
-                              hasAccess,
-                              accessStatus,
-                            );
-                          },
+                        // Tab Content PageView
+                        Expanded(
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: _tabs.length,
+                            onPageChanged: (index) {
+                              context
+                                  .read<PatientProfileBloc>()
+                                  .add(TabChanged(index));
+                            },
+                            itemBuilder: (context, index) {
+                              return _buildActiveTabContent(
+                                context,
+                                patient,
+                                index,
+                                isTab,
+                                hasAccess,
+                                accessStatus,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               );
@@ -268,7 +312,7 @@ class _DoctorPatientDetailProfileScreenState
           ),
         );
       case 2:
-        // Medical Record Tab (Gated by patient consent)
+        // Medical Record Tab (Gated by patient consent, read-only tracking)
         if (!hasAccess) {
           return PatientRecordAccessGate(
             key: const ValueKey('MedicalRecordsConsentGate'),
@@ -289,10 +333,11 @@ class _DoctorPatientDetailProfileScreenState
             patientId: widget.patientId ?? patient.id,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
+            allowAdd: false,
           ),
         );
       case 3:
-        // Prescribe Tab (Gated by patient consent)
+        // Prescribe Tab (Gated by patient consent, read-only tracking)
         if (!hasAccess) {
           return PatientRecordAccessGate(
             key: const ValueKey('PrescriptionsConsentGate'),
@@ -317,10 +362,11 @@ class _DoctorPatientDetailProfileScreenState
             patient: patient,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
+            allowAdd: false,
           ),
         );
       case 4:
-        // Notes Tab (Gated by patient consent)
+        // Notes Tab (Gated by patient consent, read-only tracking)
         if (!hasAccess) {
           return PatientRecordAccessGate(
             key: const ValueKey('ClinicalNotesConsentGate'),
@@ -338,9 +384,10 @@ class _DoctorPatientDetailProfileScreenState
           patientId: widget.patientId ?? patient.id,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
+          allowAdd: false,
         );
       case 5:
-        // Documents Tab (Gated by patient consent)
+        // Documents Tab (Gated by patient consent, read-only tracking)
         if (!hasAccess) {
           return PatientRecordAccessGate(
             key: const ValueKey('DocumentsConsentGate'),
@@ -360,7 +407,30 @@ class _DoctorPatientDetailProfileScreenState
             patientId: widget.patientId ?? patient.id,
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
+            allowAdd: false,
           ),
+        );
+      case 6:
+        // Suggestions Tab (Gated by patient consent)
+        if (!hasAccess) {
+          return PatientRecordAccessGate(
+            key: const ValueKey('SuggestionsConsentGate'),
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            orgId: widget.orgId,
+            consentBloc: _consentBloc,
+            accessStatus: accessStatus,
+            recordType: "Doctor Suggestions & Treatment Recommendations",
+          );
+        }
+        return DoctorSuggestionsScreen(
+          key: const ValueKey('PatientDetailSuggestionsTabFrame'),
+          patientId: widget.patientId ?? patient.id,
+          hospitalId: widget.hospitalId,
+          orgId: widget.orgId,
+          patientName: widget.patientName ?? patient.name,
+          showFab: false,
         );
       default:
         return Center(

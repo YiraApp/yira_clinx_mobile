@@ -36,7 +36,10 @@ class Utils {
       formattedUrl = "https://$formattedUrl";
     }
 
-    final Uri? parsedUri = Uri.tryParse(formattedUrl);
+    Uri? parsedUri = Uri.tryParse(formattedUrl);
+    if (parsedUri == null || !parsedUri.hasScheme) {
+      parsedUri = Uri.tryParse(Uri.encodeFull(formattedUrl));
+    }
     if (parsedUri == null) {
       _handleError('Could not parse invalid URL: $formattedUrl', onLaunchFailure);
       return;
@@ -47,10 +50,21 @@ class Utils {
       try {
         launched = await launchUrl(
           parsedUri,
-          mode: LaunchMode.externalApplication,
+          mode: LaunchMode.inAppBrowserView,
         );
       } catch (e) {
-        debugPrint('[Utils.launchURL] externalApplication attempt error: $e');
+        debugPrint('[Utils.launchURL] inAppBrowserView attempt error: $e');
+      }
+
+      if (!launched) {
+        try {
+          launched = await launchUrl(
+            parsedUri,
+            mode: LaunchMode.externalApplication,
+          );
+        } catch (e) {
+          debugPrint('[Utils.launchURL] externalApplication attempt error: $e');
+        }
       }
 
       if (!launched) {
@@ -61,17 +75,6 @@ class Utils {
           );
         } catch (e) {
           debugPrint('[Utils.launchURL] platformDefault attempt error: $e');
-        }
-      }
-
-      if (!launched) {
-        try {
-          launched = await launchUrl(
-            parsedUri,
-            mode: LaunchMode.inAppBrowserView,
-          );
-        } catch (e) {
-          debugPrint('[Utils.launchURL] inAppBrowserView attempt error: $e');
         }
       }
 
@@ -189,13 +192,13 @@ class Utils {
   ) async {
     var status = await Permission.camera.status;
 
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       return true;
     }
 
     if (status.isDenied) {
       PermissionStatus newStatus = await Permission.camera.request();
-      if (newStatus.isGranted) {
+      if (newStatus.isGranted || newStatus.isLimited) {
         return true;
       }
       status = newStatus;
@@ -224,7 +227,7 @@ class Utils {
       }
     }
 
-    return await Permission.camera.isGranted;
+    return await Permission.camera.isGranted || await Permission.camera.isLimited;
   }
 
   static Future<bool> getStoragePermission(
@@ -241,13 +244,13 @@ class Utils {
     }
 
     var status = await permission.status;
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       return true;
     }
 
     if (status.isDenied) {
       PermissionStatus newStatus = await permission.request();
-      if (newStatus.isGranted) {
+      if (newStatus.isGranted || newStatus.isLimited) {
         return true;
       }
       status = newStatus;
@@ -281,13 +284,13 @@ class Utils {
 
   static Future<bool> getStoragePermissionIOS(BuildContext context) async {
     var status = await Permission.photos.status;
-    if (status.isGranted) {
+    if (status.isGranted || status.isLimited) {
       return true;
     }
 
     if (status.isDenied) {
       PermissionStatus newStatus = await Permission.photos.request();
-      if (newStatus.isGranted) {
+      if (newStatus.isGranted || newStatus.isLimited) {
         return true;
       }
       status = newStatus;

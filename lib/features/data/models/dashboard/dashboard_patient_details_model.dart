@@ -188,12 +188,30 @@ class LatestVitalsModel extends LatestVitalsEntity {
 
   factory LatestVitalsModel.fromJson(Map<String, dynamic> json) {
     return LatestVitalsModel(
-      bloodPressure: json['blood_pressure'] != null ? VitalMeasurementModel.fromJson(json['blood_pressure']) : null,
-      pulse: json['pulse'] != null ? VitalMeasurementModel.fromJson(json['pulse']) : null,
-      temperature: json['temperature'] != null ? VitalMeasurementModel.fromJson(json['temperature']) : null,
-      spo2: json['spo2'] != null ? VitalMeasurementModel.fromJson(json['spo2']) : null,
-      weight: json['weight'] != null ? VitalMeasurementModel.fromJson(json['weight']) : null,
-      height: json['height'] != null ? VitalMeasurementModel.fromJson(json['height']) : null,
+      bloodPressure: VitalMeasurementModel.parse(
+        json['blood_pressure'] ?? json['bloodPressure'] ?? json['bp'],
+        defaultUnit: 'mmHg',
+      ),
+      pulse: VitalMeasurementModel.parse(
+        json['pulse'] ?? json['heartRate'] ?? json['heart_rate'],
+        defaultUnit: 'bpm',
+      ),
+      temperature: VitalMeasurementModel.parse(
+        json['temperature'] ?? json['temp'],
+        defaultUnit: '°F',
+      ),
+      spo2: VitalMeasurementModel.parse(
+        json['spo2'] ?? json['spO2'] ?? json['oxygen'],
+        defaultUnit: '%',
+      ),
+      weight: VitalMeasurementModel.parse(
+        json['weight'],
+        defaultUnit: 'kg',
+      ),
+      height: VitalMeasurementModel.parse(
+        json['height'],
+        defaultUnit: 'cm',
+      ),
     );
   }
 
@@ -212,10 +230,31 @@ class LatestVitalsModel extends LatestVitalsEntity {
 class VitalMeasurementModel extends VitalMeasurementEntity {
   const VitalMeasurementModel({super.value, super.unit});
 
+  static VitalMeasurementModel? parse(dynamic raw, {String defaultUnit = ''}) {
+    if (raw == null) return null;
+    if (raw is Map) {
+      final v = raw['value'] ?? raw['val'];
+      final u = raw['unit'] ?? defaultUnit;
+      if (v == null || v.toString().trim().isEmpty) return null;
+      return VitalMeasurementModel(
+        value: v.toString().trim(),
+        unit: u?.toString().trim() ?? defaultUnit,
+      );
+    }
+    final str = raw.toString().trim();
+    if (str.isEmpty || str.toLowerCase() == 'null' || str.toLowerCase() == 'none' || str.toLowerCase() == 'n/a') {
+      return null;
+    }
+    return VitalMeasurementModel(
+      value: str,
+      unit: defaultUnit,
+    );
+  }
+
   factory VitalMeasurementModel.fromJson(Map<String, dynamic> json) {
     return VitalMeasurementModel(
-      value: json['value'],
-      unit: json['unit'],
+      value: json['value']?.toString(),
+      unit: json['unit']?.toString(),
     );
   }
 

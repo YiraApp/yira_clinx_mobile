@@ -86,7 +86,9 @@ class ReusableTestCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     CommonText(
-                      "Dr. $doctorName • $date",
+                      doctorName.isNotEmpty
+                          ? "$doctorName • $date"
+                          : date,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: displayWidth(context)*0.028,

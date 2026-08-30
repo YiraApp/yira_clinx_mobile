@@ -287,7 +287,7 @@ class HeightScaleScreen extends StatelessWidget {
         color: isDark
             ? Colors.white.withOpacity(0.04)
             : const Color(0xFFF4F7FF),
-        borderRadius: BorderRadius.circular(fieldBorderRadius ?? 14),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.blue.withOpacity(0.08)),
       ),
       child: Row(

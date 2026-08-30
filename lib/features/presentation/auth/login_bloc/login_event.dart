@@ -79,3 +79,37 @@ class OnTapMobileSignInEvent extends LogInEvent{
 
   const OnTapMobileSignInEvent({ required this.mobileNumber, required this.otp, required this.sessionId, required this.countryCode, required this.fcmToken});
 }
+
+class OnSendSignupOtpEvent extends LogInEvent {
+  final String mobileNumber;
+  final String countryCode;
+
+  const OnSendSignupOtpEvent({
+    required this.mobileNumber,
+    required this.countryCode,
+  });
+}
+
+class OnRegisterPatientEvent extends LogInEvent {
+  final String firstName;
+  final String lastName;
+  final String? email;
+  final String mobileNumber;
+  final String countryCode;
+  final String password;
+  final String otp;
+  final String sessionId;
+  final String fcmToken;
+
+  const OnRegisterPatientEvent({
+    required this.firstName,
+    required this.lastName,
+    this.email,
+    required this.mobileNumber,
+    required this.countryCode,
+    required this.password,
+    required this.otp,
+    required this.sessionId,
+    required this.fcmToken,
+  });
+}

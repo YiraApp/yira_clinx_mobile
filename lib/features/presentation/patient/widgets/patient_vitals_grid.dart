@@ -18,36 +18,41 @@ class PatientVitalsGrid extends StatelessWidget {
     final primaryColor = Theme.of(context).primaryColor;
     final isTab = isTablet(context);
 
+    final bp = (vitals['bp'] != null && vitals['bp']!.isNotEmpty) ? vitals['bp']! : '--';
+    final pulse = (vitals['pulse'] != null && vitals['pulse']!.isNotEmpty) ? vitals['pulse']! : '--';
+    final temp = (vitals['temp'] != null && vitals['temp']!.isNotEmpty) ? vitals['temp']! : '--';
+    final spO2 = (vitals['spO2'] != null && vitals['spO2']!.isNotEmpty) ? vitals['spO2']! : '--';
+
     final items = [
       {
         'title': 'Blood Pressure',
-        'value': vitals['bp'] ?? '120/80',
+        'value': bp,
         'unit': 'mmHg',
-        'status': 'Optimal',
+        'status': bp != '--' ? 'Optimal' : 'Pending',
         'icon': Icons.favorite_rounded,
         'color': const Color(0xFFE11D48),
       },
       {
         'title': 'Pulse Rate',
-        'value': vitals['pulse'] ?? '72',
+        'value': pulse != '--' ? '$pulse bpm' : '--',
         'unit': 'bpm',
-        'status': 'Normal',
+        'status': pulse != '--' ? 'Normal' : 'Pending',
         'icon': Icons.monitor_heart_rounded,
         'color': Colors.orange,
       },
       {
         'title': 'Temperature',
-        'value': '${vitals['temp'] ?? '98.6'}°',
+        'value': temp != '--' ? (temp.endsWith('°') ? temp : '$temp°F') : '--',
         'unit': 'Fahrenheit',
-        'status': 'Normal',
+        'status': temp != '--' ? 'Normal' : 'Pending',
         'icon': Icons.thermostat_rounded,
         'color': Colors.amber[700]!,
       },
       {
         'title': 'Blood Oxygen',
-        'value': '${vitals['spO2'] ?? '98'}%',
+        'value': spO2 != '--' ? (spO2.endsWith('%') ? spO2 : '$spO2%') : '--',
         'unit': 'SpO2',
-        'status': 'Healthy',
+        'status': spO2 != '--' ? 'Healthy' : 'Pending',
         'icon': Icons.air_rounded,
         'color': Colors.teal,
       },

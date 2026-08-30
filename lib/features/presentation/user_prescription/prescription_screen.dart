@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/prescription_card.dart';
 import '../../../core/colors/colors.dart';
-import '../../../core/common_drop_down/common_drop_down.dart';
-import '../../../core/models/medication_insight.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/medication/medication_entity.dart';
-
-import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 
-class PrescriptionManagementScreen extends StatelessWidget {
+class PrescriptionManagementScreen extends StatefulWidget {
   const PrescriptionManagementScreen({super.key});
+
+  @override
+  State<PrescriptionManagementScreen> createState() => _PrescriptionManagementScreenState();
+}
+
+class _PrescriptionManagementScreenState extends State<PrescriptionManagementScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,21 +33,26 @@ class PrescriptionManagementScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) => sl<MedicationBloc>()..add(LoadMedicationData()),
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 20,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          title: CommonText(
-            "Prescription Management",
+          title: Text(
+            "Prescriptions",
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.045,
-              fontWeight: FontWeight.w600,
-              color: theme.textTheme.titleLarge?.color,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
           actions: [
@@ -47,190 +61,204 @@ class PrescriptionManagementScreen extends StatelessWidget {
                 Navigator.pushNamed(context, AppRoutes.recentNotifications);
               },
               icon: Icon(
-                Icons.notifications_none,
-                size: 20,
-                color: theme.iconTheme.color,
+                Icons.notifications_none_rounded,
+                size: 22,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
               ),
             ),
+            const SizedBox(width: 4),
           ],
         ),
         body: BlocConsumer<MedicationBloc, MedicationState>(
           listener: (context, state) {
             if (state.status == MedicationStatus.failure) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.error ?? "Error")));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.error ?? "Failed to load prescriptions"),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             }
           },
           builder: (context, state) {
             if (state.status == MedicationStatus.loading) {
               return const Center(child: CircularProgressIndicator.adaptive());
             }
+
+            final allItems = state.filteredPrescriptions;
+            final displayedItems = _searchQuery.trim().isEmpty
+                ? allItems
+                : allItems.where((p) {
+                    final title = (p['title'] ?? '').toString().toLowerCase();
+                    final doc = (p['doctor'] ?? '').toString().toLowerCase();
+                    final condition = (p['condition'] ?? '').toString().toLowerCase();
+                    final meds = (p['medications'] as List? ?? [])
+                        .map((m) => (m is Map ? (m['name'] ?? '') : '').toString().toLowerCase())
+                        .join(' ');
+                    final q = _searchQuery.trim().toLowerCase();
+                    return title.contains(q) || doc.contains(q) || condition.contains(q) || meds.contains(q);
+                  }).toList();
+
+            final selectedStatus = state.selectedStatus ?? 'All';
+
             return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
               slivers: [
+                // ── Interactive Summary Cards Grid ──
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    displayWidth(context) * 0.04,
-                    16,
-                    displayWidth(context) * 0.04,
-                    0,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   sliver: SliverToBoxAdapter(
-                    child: _buildSummaryGrid(context, state.summary, isDark),
-                  ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: displayWidth(context) * 0.04,
-                    vertical: 24,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: _buildInsightSection(context, isDark),
+                    child: _buildSummaryGrid(context, state.summary, selectedStatus, isDark),
                   ),
                 ),
 
+                // ── Search & Filter Tabs ──
                 SliverPadding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: displayWidth(context) * 0.04,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 12),
                   sliver: SliverToBoxAdapter(
-                    child: Row(
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 40,
-                            child: TextField(
-                              onChanged: (val) {
-                              },
-                              style: TextStyle(
-                                decorationThickness: 0,
+                        // Search Box
+                        Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E2430) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) {
+                              setState(() {
+                                _searchQuery = val;
+                              });
+                            },
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 13,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Search doctor, medicine or condition...",
+                              hintStyle: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: displayWidth(context) * 0.03,
+                                fontSize: 12.5,
+                                color: isDark ? Colors.white38 : Colors.grey.shade400,
                               ),
-                              decoration: InputDecoration(
-                                hintStyle: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: displayWidth(context) * 0.03,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                ),
-                                hintText: "Search prescriptions...",
-                                prefixIcon: const Icon(
-                                  Icons.search,
-                                  color: Colors.blueGrey,
-                                  size: 18,
-                                ),
-                                filled: true,
-                                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 0,
-                                  horizontal: 16,
-                                ),
-
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    width: 1.0,
-                                  ),
-                                ),
-
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    width: 1.0,
-                                  ),
-                                ),
-
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(fieldBorderRadius),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    width: 1.5,
-                                  ),
-                                ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                size: 20,
+                                color: isDark ? Colors.white54 : Colors.grey.shade500,
                               ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() {
+                                          _searchQuery = '';
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: displayWidth(context) * 0.33,
-                          child: CommonDropdown(
-                            title: "Filter by Status",
-                            selectedValue: state.selectedStatus ?? "All",
-                            options: const [
-                              "All",
-                              "Active",
-                              "Completed",
-                              "Pending",
-                              "Expired",
-                            ],
-                            onSelected: (value) {
-                              context.read<MedicationBloc>().add(
-                                FilterByStatus(value),
-                              );
-                            },
-                          ),
-                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Status Filter Chips
+                        _buildFilterChips(context, selectedStatus, isDark),
                       ],
                     ),
                   ),
                 ),
 
-
-                SliverPadding(
-                  padding: EdgeInsets.all(displayWidth(context) * 0.04),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final bool isFirst = index == 0;
-                      return PrescriptionCard(
-                        context: context,
-                        title: isFirst
-                            ? "Prescription for Hypertension"
-                            : "Prescription for Eczema",
-                        doctor: isFirst
-                            ? "Dr. Rajesh Kumar - Cardiologist"
-                            : "Dr. Priya Sharma - Dermatologist",
-                        date: isFirst ? "2024-01-18" : "2024-01-15",
-                        status: isFirst ? "Active" : "Completed",
-                        pharmacy: isFirst
-                            ? "Apollo Pharmacy, MG Road"
-                            : "MedPlus, Commercial Street",
-                        medications: isFirst
-                            ? [
-                                {
-                                  "name": "Lisinopril",
-                                  "code": "386873009",
-                                  "left": "25/30 left",
-                                  "dosage": "10mg - Once daily",
-                                  "progress": 0.7,
-                                },
-                                {
-                                  "name": "Amlodipine",
-                                  "code": "387585004",
-                                  "left": "28/30 left",
-                                  "dosage": "5mg - Once daily",
-                                  "progress": 0.9,
-                                },
-                              ]
-                            : [
-                                {
-                                  "name": "Hydrocortisone Cream",
-                                  "code": "116601002",
-                                  "dosage": "1% - Twice daily",
-                                },
-                                {
-                                  "name": "Cetirizine",
-                                  "code": "372682005",
-                                  "dosage": "10mg - Once daily",
-                                },
-                              ],
-                      );
-                    }, childCount: 2),
+                // ── Prescriptions List ──
+                if (displayedItems.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: 0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.medication_outlined,
+                                size: 48,
+                                color: primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isNotEmpty ? "No matching prescriptions" : "No Prescriptions in '$selectedStatus'",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? "Try searching for a different medicine or doctor name."
+                                  : "Prescriptions issued by your doctor will appear here.",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12.5,
+                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = displayedItems[index];
+                          final meds = List<Map<String, dynamic>>.from(item['medications'] ?? []);
+                          return PrescriptionCard(
+                            id: item['id'] ?? '',
+                            title: item['title'] ?? '',
+                            condition: item['condition'] ?? 'General Consultation',
+                            doctor: item['doctor'] ?? 'Doctor',
+                            specialty: item['specialty'] ?? 'General Physician',
+                            date: item['date'] ?? '',
+                            status: item['status'] ?? 'Active',
+                            pharmacy: item['pharmacy'] ?? 'Yira Clinx E-Pharmacy',
+                            medications: meds,
+                          );
+                        },
+                        childCount: displayedItems.length,
+                      ),
+                    ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
             );
           },
@@ -239,49 +267,111 @@ class PrescriptionManagementScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildFilterChips(BuildContext context, String currentStatus, bool isDark) {
+    final statuses = ['All', 'Active', 'Need Refill', 'Completed'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: statuses.map((status) {
+          final isSelected = currentStatus.toLowerCase() == status.toLowerCase() ||
+              (currentStatus.toLowerCase() == 'refill' && status.toLowerCase() == 'need refill');
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(
+                status,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                ),
+              ),
+              selected: isSelected,
+              showCheckmark: false,
+              backgroundColor: isDark ? const Color(0xFF1E2430) : Colors.white,
+              selectedColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected
+                      ? primaryColor
+                      : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              onSelected: (_) {
+                context.read<MedicationBloc>().add(FilterByStatus(status == 'Need Refill' ? 'Refill' : status));
+              },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildSummaryGrid(
     BuildContext context,
     MedicationEntity? summary,
+    String selectedStatus,
     bool isDark,
   ) {
+    final bool isAllSelected = selectedStatus.toLowerCase() == 'all';
+    final bool isActiveSelected = selectedStatus.toLowerCase() == 'active';
+    final bool isRefillSelected = selectedStatus.toLowerCase() == 'refill' || selectedStatus.toLowerCase() == 'need refill';
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        double dynamicAspectRatio = (constraints.maxWidth / 2) / 85.0;
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          childAspectRatio: dynamicAspectRatio,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+          childAspectRatio: 2.1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
           children: [
             _statCard(
-              context,
-              "Total Prescriptions",
-              summary?.totalPrescriptions ?? 0,
-              Colors.blue,
-              isDark,
+              context: context,
+              title: "Prescriptions",
+              value: summary?.totalPrescriptions ?? 0,
+              accentColor: const Color(0xFF0284C7),
+              icon: Icons.description_outlined,
+              isSelected: isAllSelected,
+              isDark: isDark,
+              onTap: () => context.read<MedicationBloc>().add(const FilterByStatus("All")),
             ),
             _statCard(
-              context,
-              "Active Meds",
-              summary?.activeMeds ?? 0,
-              Colors.blue,
-              isDark,
+              context: context,
+              title: "Active Meds",
+              value: summary?.activeMeds ?? 0,
+              accentColor: const Color(0xFF10B981),
+              icon: Icons.medication_rounded,
+              isSelected: isActiveSelected,
+              isDark: isDark,
+              onTap: () => context.read<MedicationBloc>().add(const FilterByStatus("Active")),
             ),
             _statCard(
-              context,
-              "Total Medications",
-              summary?.totalMedications ?? 0,
-              Colors.blue,
-              isDark,
+              context: context,
+              title: "Total Medicines",
+              value: summary?.totalMedications ?? 0,
+              accentColor: const Color(0xFF8B5CF6),
+              icon: Icons.vaccines_outlined,
+              isSelected: false,
+              isDark: isDark,
+              onTap: () => context.read<MedicationBloc>().add(const FilterByStatus("All")),
             ),
             _statCard(
-              context,
-              "Need Refill",
-              summary?.needRefill ?? 0,
-              Colors.red,
-              isDark,
+              context: context,
+              title: "Need Refill",
+              value: summary?.needRefill ?? 0,
+              accentColor: const Color(0xFFF59E0B),
+              icon: Icons.replay_circle_filled_rounded,
+              isSelected: isRefillSelected,
+              isDark: isDark,
+              onTap: () => context.read<MedicationBloc>().add(const FilterByStatus("Refill")),
             ),
           ],
         );
@@ -289,176 +379,86 @@ class PrescriptionManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(
-    BuildContext context,
-    String title,
-    int value,
-    Color valueColor,
-    bool isDark,
-  ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CommonText(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.03,
-              color: theme.textTheme.bodySmall?.color,
+  Widget _statCard({
+    required BuildContext context,
+    required String title,
+    required int value,
+    required Color accentColor,
+    required IconData icon,
+    required bool isSelected,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E2430) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? accentColor
+                  : (isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFEEF2F6)),
+              width: isSelected ? 1.6 : 1.0,
             ),
-          ),
-          CommonText(
-            value.toString().padLeft(2, '0'),
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: displayWidth(context) * 0.045,
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInsightSection(BuildContext context, bool isDark) {
-    final theme = Theme.of(context);
-
-    final List<MedicationInsight> insights = [
-      MedicationInsight(
-        title: "Critical Interaction",
-        subTitle: "Lisinopril + Potassium",
-        message: "Potential risk of hyperkalemia. Consult physician.",
-        isCritical: true,
-      ),
-      MedicationInsight(
-        title: "Dosing Advisory",
-        subTitle: "Best time for Amlodipine: morning",
-        message:
-            "Research suggests morning dosing improves blood pressure control.",
-        isCritical: false,
-      ),
-      MedicationInsight(
-        title: "Adherence Status",
-        subTitle: "Estimated adherence at 85%",
-        message: "Good progress! You've missed 2 doses in the last 14 days.",
-        isCritical: false,
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.psychology, color: Colors.blue),
-            const SizedBox(width: 8),
-            CommonText(
-              "AI Medication Insights",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontWeight: FontWeight.w600,
-                fontSize: displayWidth(context) * 0.04,
-                color: theme.textTheme.titleMedium?.color,
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? accentColor.withValues(alpha: 0.12)
+                    : (isDark ? Colors.transparent : const Color(0xFF1E293B).withValues(alpha: 0.03)),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ListView.builder(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: insights.length,
-          itemBuilder: (context, index) {
-            final item = insights[index];
-            final Color bg = item.isCritical
-                ? (isDark ? const Color(0xFF3B1E1E) : const Color(0xFFFFEBEE))
-                : (primaryColor.withOpacity(0.09));
-            final Color text = item.isCritical ? (Colors.red) : (primaryColor);
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: index == insights.length - 1 ? 0 : 12.0,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: accentColor, size: 20),
               ),
-              child: _insightAlert(
-                context,
-                item.title,
-                item.subTitle,
-                item.message,
-                bg,
-                text,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      value.toString().padLeft(2, '0'),
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? accentColor
+                            : (isDark ? Colors.white60 : Colors.grey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         ),
-      ],
-    );
-  }
-
-  Widget _insightAlert(
-    BuildContext context,
-    String title,
-    String sub,
-    String msg,
-    Color bg,
-    Color text,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CommonText(
-            title,
-            maxLines: 2,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              color: text,
-              fontWeight: FontWeight.w600,
-              fontSize: displayWidth(context) * 0.03,
-            ),
-          ),
-          CommonText(
-            sub,
-            maxLines: 2,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              color: text,
-              fontWeight: FontWeight.w600,
-              fontSize: displayWidth(context) * 0.03,
-            ),
-          ),
-          CommonText(
-            msg,
-            maxLines: 3,
-            softWrap: true,
-            overflow: TextOverflow.visible,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              color: text,
-              fontSize: displayWidth(context) * 0.03,
-            ),
-          ),
-        ],
       ),
     );
   }

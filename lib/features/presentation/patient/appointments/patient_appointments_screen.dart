@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -13,6 +12,8 @@ import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
+import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
+import 'package:yiraclinics/core/tour/patient_tour_mock_data.dart';
 import 'patient_book_appointment_sheet.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
@@ -29,19 +30,10 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   String _activeTab = "upcoming"; // "upcoming" | "completed"
-  String _selectedDateLabel = "All Dates";
-  DateTimeRange? _customDateRange;
   String _selectedStatus = "All Status";
   bool _isLoading = true;
 
   List<Map<String, dynamic>> _allAppointments = [];
-
-  final List<String> _dateOptions = const [
-    "All Dates",
-    "Today",
-    "Tomorrow",
-    "Date Range",
-  ];
 
   final List<String> _statusOptions = const [
     "All Status",
@@ -132,9 +124,14 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                 'reason': a['reason'] ?? a['condition'],
                 'isTeleConsultation': a['is_tele_consultation'] ?? false,
                 'meetingUrl': a['meeting_url'] ?? '',
-                'patientName': currentUser?.data?.firstName != null
-                    ? '${currentUser!.data!.firstName} ${currentUser.data!.lastName ?? ''}'.trim()
-                    : 'Patient',
+                'patientName': (a['patient_name'] != null && a['patient_name'].toString().isNotEmpty && a['patient_name'] != 'Patient')
+                    ? a['patient_name'].toString()
+                    : (currentUser?.data?.firstName != null
+                        ? '${currentUser!.data!.firstName} ${currentUser.data!.lastName ?? ''}'.trim()
+                        : 'Patient'),
+                'patientUserId': a['patient_user_id'] ?? a['userId'] ?? userId,
+                'relation': a['relation'] ?? 'Self',
+                'isPrimary': a['is_primary'] ?? true,
               });
             }
           }
@@ -288,35 +285,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     return parts.join(' • ');
   }
 
-  Future<void> _pickDateRange() async {
-    final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: now.subtract(const Duration(days: 365)),
-      lastDate: now.add(const Duration(days: 365)),
-      initialDateRange: _customDateRange ?? DateTimeRange(
-        start: now,
-        end: now.add(const Duration(days: 7)),
-      ),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).primaryColor,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      final rangeStr = "${DateFormat('MMM d').format(picked.start)} - ${DateFormat('MMM d').format(picked.end)}";
-      setState(() {
-        _customDateRange = picked;
-        _selectedDateLabel = rangeStr;
-      });
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +297,6 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
-    final tomorrowStart = todayStart.add(const Duration(days: 1));
 
     // ─── 1. SEGREGATE UPCOMING VS COMPLETED ─────────────────────────────
     final List<Map<String, dynamic>> upcomingList = [];
@@ -402,52 +370,53 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         }
       }
 
-      final aptDate = _parseAppointmentDateTime(a);
-      if (aptDate != null) {
-        final aptDay = DateTime(aptDate.year, aptDate.month, aptDate.day);
-        if (_selectedDateLabel == "Today") {
-          if (aptDay != todayStart) return false;
-        } else if (_selectedDateLabel == "Tomorrow") {
-          if (aptDay != tomorrowStart) return false;
-        } else if (_customDateRange != null && !_dateOptions.sublist(0, 3).contains(_selectedDateLabel)) {
-          final start = DateTime(_customDateRange!.start.year, _customDateRange!.start.month, _customDateRange!.start.day);
-          final end = DateTime(_customDateRange!.end.year, _customDateRange!.end.month, _customDateRange!.end.day);
-          if (aptDay.isBefore(start) || aptDay.isAfter(end)) return false;
-        }
-      }
-
       return true;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ─── 1. HEADER WITH BOOK BUTTON ──────────────────────────────
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                screenHorizontalSpacePadding,
-                isTab ? 20 : 14,
-                screenHorizontalSpacePadding,
-                0,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "My Appointments",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontWeight: FontWeight.w700,
-                            fontSize: isTab ? width * 0.028 : width * 0.058,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: PatientTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        final effectiveUpcoming = (isTourActive && upcomingList.isEmpty)
+            ? PatientTourMockData.demoAppointmentsList
+            : upcomingList;
+
+        final effectiveCompleted = (isTourActive && completedList.isEmpty)
+            ? PatientTourMockData.demoAppointmentsList
+            : completedList;
+
+        final effectiveFiltered = (isTourActive && filteredList.isEmpty)
+            ? PatientTourMockData.demoAppointmentsList
+            : filteredList;
+
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // ─── 1. HEADER WITH BOOK BUTTON ──────────────────────────────
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    screenHorizontalSpacePadding,
+                    isTab ? 20 : 14,
+                    screenHorizontalSpacePadding,
+                    0,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "My Appointments",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: FontWeight.w700,
+                                fontSize: isTab ? width * 0.028 : width * 0.058,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                            ),
                         Text(
                           "Manage your upcoming visits & past consultations",
                           style: TextStyle(
@@ -459,6 +428,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 4),
+
                   // Book New Appointment Action Button (Solid Dashboard Primary Color)
                   Material(
                     color: primaryBlue,
@@ -510,7 +481,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                   Expanded(
                     child: _buildTabStatCard(
                       title: "Upcoming",
-                      count: "${upcomingList.length}",
+                      count: "${effectiveUpcoming.length}",
                       subtitle: "Today & Future",
                       icon: Icons.hourglass_top_rounded,
                       iconColor: const Color(0xFF2563EB),
@@ -524,7 +495,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                   Expanded(
                     child: _buildTabStatCard(
                       title: "Completed",
-                      count: "${completedList.length}",
+                      count: "${effectiveCompleted.length}",
                       subtitle: "Past Consultations",
                       icon: Icons.check_circle_outline_rounded,
                       iconColor: const Color(0xFF059669),
@@ -540,80 +511,9 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
             const SizedBox(height: 12),
 
-            // ─── 3. DATE SELECTOR & FILTER BAR ────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: screenHorizontalSpacePadding,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    ..._dateOptions.map((opt) {
-                      final isSelected = _selectedDateLabel == opt ||
-                          (opt == "Date Range" && _customDateRange != null && !_dateOptions.sublist(0, 3).contains(_selectedDateLabel));
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            if (opt == "Date Range") {
-                              _pickDateRange();
-                            } else {
-                              setState(() {
-                                _customDateRange = null;
-                                _selectedDateLabel = opt;
-                              });
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? (isDark ? const Color(0xFF2563EB) : Colors.white)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: isSelected && !isDark
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Center(
-                              child: Text(
-                                opt,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                  color: isSelected
-                                      ? (isDark ? Colors.white : const Color(0xFF2563EB))
-                                      : (isDark ? Colors.white54 : const Color(0xFF64748B)),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // ─── 4. SEARCH & STATUS FILTER ────────────────────────────────
-            Padding(
+            // ─── 3. SEARCH & STATUS FILTER ────────────────────────────────
+            Container(
+              key: PatientTourController().apptsFilterKey,
               padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
               child: Row(
                 children: [
@@ -698,9 +598,10 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
             // ─── 5. APPOINTMENTS LIST VIEW ────────────────────────────────
             Expanded(
-              child: _isLoading
+              key: PatientTourController().apptsListKey,
+              child: (_isLoading && !isTourActive)
                   ? _buildLoadingShimmer(isTab)
-                  : filteredList.isEmpty
+                  : effectiveFiltered.isEmpty
                       ? _buildEmptyState(isDark)
                       : RefreshIndicator(
                           color: const Color(0xFF2563EB),
@@ -712,10 +613,10 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                               screenHorizontalSpacePadding,
                               24,
                             ),
-                            itemCount: filteredList.length,
+                            itemCount: effectiveFiltered.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {
-                              final apt = filteredList[index];
+                              final apt = effectiveFiltered[index];
                               final docName = (apt['doctorName'] ?? 'Doctor').toString();
                               final initials = docName.replaceFirst('Dr. ', '').trim().isNotEmpty
                                   ? (docName.replaceFirst('Dr. ', '').trim())[0].toUpperCase()
@@ -754,6 +655,9 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 statusLabel: statusLabel,
                                 statusColor: statusColor,
                                 statusTextColor: Colors.white,
+                                patientStatus: (patientName.isNotEmpty && patientName != 'Patient')
+                                    ? 'For: $patientName'
+                                    : (isTele ? 'Video Consultation' : 'In-Clinic Visit'),
                                 isTab: isTab,
                                 isTeleConsultation: isTele,
                                 onJoinCall: () {
@@ -799,6 +703,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         ),
       ),
     );
+      },
+    );
   }
 
   Widget _buildTabStatCard({
@@ -816,7 +722,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: isTab ? 14 : 10, vertical: 10),
         decoration: BoxDecoration(
           color: isActive
               ? (isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE))
@@ -839,7 +745,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(isTab ? 10 : 8),
               decoration: BoxDecoration(
                 color: isActive
                     ? const Color(0xFF2563EB)
@@ -849,30 +755,35 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               child: Icon(
                 icon,
                 color: isActive ? Colors.white : iconColor,
-                size: 20,
+                size: isTab ? 20 : 18,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isTab ? 12 : 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isActive
-                              ? (isDark ? Colors.white : const Color(0xFF0369A1))
-                              : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                      Flexible(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 12 : 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: isActive
+                                ? (isDark ? Colors.white : const Color(0xFF0369A1))
+                                : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: isActive ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
                           borderRadius: BorderRadius.circular(10),
@@ -880,7 +791,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         child: Text(
                           count,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -888,11 +799,14 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: 10,
+                      fontSize: 9.5,
                       color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                     ),
                   ),
@@ -906,17 +820,99 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
   }
 
   Widget _buildLoadingShimmer(bool isTab) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListView.builder(
       padding: const EdgeInsets.all(screenHorizontalSpacePadding),
       itemCount: 4,
       itemBuilder: (_, __) => Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
-        child: BaseShimmer(
-          child: Container(
-            height: isTab ? 110 : 90,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14.0),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              width: 1,
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: BaseShimmer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 130,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: 90,
+                            height: 11,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 65,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Divider(
+                  height: 1,
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    Container(
+                      width: 85,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

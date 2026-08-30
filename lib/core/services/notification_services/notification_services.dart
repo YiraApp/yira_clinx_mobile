@@ -1,15 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  debugPrint("[NotificationService] Background message received: ${message.messageId}");
 }
 
 class NotificationService {
@@ -28,10 +32,13 @@ class NotificationService {
     enableVibration: true,
   );
 
+  bool _isInitialized = false;
+
   Future<void> initializeNotificationPipeline(
     BuildContext context,
     Function(String) onPayloadReceived,
   ) async {
+    if (_isInitialized) return;
     try {
       await requestNotificationPermissions();
 
@@ -62,14 +69,16 @@ class NotificationService {
         },
       );
 
-      await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(_highImportanceChannel);
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await androidPlugin?.createNotificationChannel(_highImportanceChannel);
 
       _listenToActiveStateNotifications();
       _listenToBackgroundInteractions(onPayloadReceived);
       _checkSuspendedOrTerminatedStateBoot(onPayloadReceived);
       _listenToTokenRefresh();
+
+      _isInitialized = true;
 
       // Initial token sync
       syncFcmTokenWithBackend();
@@ -86,6 +95,14 @@ class NotificationService {
         provisional: false,
         sound: true,
       );
+
+      // On Android 13+ (API 33+), also request runtime notification permission explicitly
+      if (!kIsWeb && Platform.isAndroid) {
+        final androidPlugin = _localNotifications
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        await androidPlugin?.requestNotificationsPermission();
+      }
+
       return settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
     } catch (e) {
@@ -96,13 +113,18 @@ class NotificationService {
 
   void _listenToActiveStateNotifications() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint("[NotificationService] Foreground notification received: ${message.data}");
       final RemoteNotification? notification = message.notification;
       final String title = notification?.title ?? message.data['title'] ?? 'Yira Clinx';
       final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
 
       if (title.isNotEmpty || body.isNotEmpty) {
+        final int notificationId = (message.messageId != null
+            ? message.messageId.hashCode
+            : DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
+
         _localNotifications.show(
-          id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          id: notificationId,
           title: title,
           body: body,
           notificationDetails: NotificationDetails(
@@ -128,8 +150,45 @@ class NotificationService {
     });
   }
 
+  /// Manually triggers an immediate local notification (e.g. for instant booking confirmation)
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    try {
+      final int notificationId = (DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
+      await _localNotifications.show(
+        id: notificationId,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            _highImportanceChannel.id,
+            _highImportanceChannel.name,
+            channelDescription: _highImportanceChannel.description,
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint("[NotificationService] showNotification error: $e");
+    }
+  }
+
   void _listenToBackgroundInteractions(Function(String) onPayloadReceived) {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint("[NotificationService] Notification opened from background: ${message.data}");
       if (message.data.isNotEmpty) {
         onPayloadReceived(jsonEncode(message.data));
       }
@@ -140,6 +199,7 @@ class NotificationService {
     try {
       RemoteMessage? initialMessage = await _fcm.getInitialMessage();
       if (initialMessage != null && initialMessage.data.isNotEmpty) {
+        debugPrint("[NotificationService] App launched from terminated push: ${initialMessage.data}");
         Future.delayed(const Duration(milliseconds: 600), () {
           onPayloadReceived(jsonEncode(initialMessage.data));
         });
@@ -151,7 +211,7 @@ class NotificationService {
 
   void _listenToTokenRefresh() {
     _fcm.onTokenRefresh.listen((String newToken) {
-      debugPrint("FCM token refreshed: $newToken");
+      debugPrint("[NotificationService] FCM token refreshed: $newToken");
       _sendTokenToBackend(newToken);
     });
   }
@@ -170,12 +230,18 @@ class NotificationService {
 
   Future<void> _sendTokenToBackend(String token) async {
     try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      if (currentUser == null || (currentUser.data?.id ?? '').isEmpty) {
+        debugPrint("[NotificationService] Skipping token sync: user not logged in yet");
+        return;
+      }
+
       if (sl.isRegistered<UpdateFcmTokenUseCase>()) {
         await sl<UpdateFcmTokenUseCase>().call(token);
-        debugPrint("FCM token registered with backend successfully");
+        debugPrint("[NotificationService] FCM token registered with backend successfully for user ${currentUser.data?.id}");
       }
     } catch (e) {
-      debugPrint("Error sending FCM token to backend: $e");
+      debugPrint("[NotificationService] Error sending FCM token to backend: $e");
     }
   }
 

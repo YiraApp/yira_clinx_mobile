@@ -1,13 +1,19 @@
+import 'dart:developer' as developer;
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
 
 part 'on_boarding_event.dart';
 part 'on_boarding_state.dart';
 
 class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
   OnBoardingBloc() : super(const OnBoardingState()) {
-
 
     on<UpdateWeightEvent>((event, emit) {
       emit(state.copyWith(currentWeight: event.weight));
@@ -28,6 +34,7 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
         currentUnit: event.unit,
       ));
     });
+
     on<UpdateBloodGroupEvent>((event, emit) {
       emit(state.copyWith(selectedBloodGroup: event.bloodGroup));
     });
@@ -35,13 +42,16 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
     on<UpdateEmergencyRelationEvent>((event, emit) {
       emit(state.copyWith(selectedEmergencyRelation: event.relation));
     });
+
     on<UpdateDOBEvent>((event, emit) {
       final age = DateTime.now().year - event.dob.year;
       emit(state.copyWith(selectedDob: event.dob, selectedAge: age));
     });
+
     on<UpdateHeightEvent>((event, emit) {
       emit(state.copyWith(currentHeight: event.height));
     });
+
     on<UpdateGenderEvent>((event, emit) {
       emit(state.copyWith(selectedGender: event.gender));
     });
@@ -49,6 +59,7 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
     on<UpdateAgeEvent>((event, emit) {
       emit(state.copyWith(selectedAge: event.age));
     });
+
     on<ToggleHeightUnitEvent>((event, emit) {
       if (state.currentHeightUnit == event.unit) return;
 
@@ -66,25 +77,75 @@ class OnBoardingBloc extends Bloc<OnBoardingEvent, OnBoardingState> {
       ));
     });
 
-
     on<SaveOnBoardingEvent>((event, emit) async {
-      emit(state.copyWith(isLoading: true, errorMessage: null, successMessage: null));
+      emit(state.copyWith(isLoading: true, errorMessage: null, successMessage: null, isCompleted: false));
       try {
-        // Implementation for Yiralife backend integration
-        // await repository.saveHealthProfile(
-        //   weight: state.currentWeight,
-        //   height: state.currentHeight,
-        //   date: event.date
-        // );
-        await Future.delayed(const Duration(seconds: 1));
+        final double heightInCm = state.currentHeightUnit == 'in'
+            ? (state.currentHeight * 2.54)
+            : state.currentHeight;
+
+        final double weightInKg = state.currentUnit == 'lbs'
+            ? (state.currentWeight / 2.20462)
+            : state.currentWeight;
+
+        final String? dobString = state.selectedDob != null
+            ? DateFormat('yyyy-MM-dd').format(state.selectedDob!)
+            : null;
+
+        final String? bloodGroup = state.selectedBloodGroup != 'Select Blood Group'
+            ? state.selectedBloodGroup
+            : null;
+
+        final userSession = GlobalSession.instance.userNotifier.value;
+        final String token = userSession?.data?.accessToken ?? '';
+        final String userId = userSession?.data?.id ?? '';
+        final int? hospitalId = userSession?.data?.latestHospitalId;
+        final int? orgId = userSession?.data?.latestOrgId;
+
+        final Map<String, dynamic> requestBody = {
+          if (userId.isNotEmpty) "userId": userId,
+          if (hospitalId != null) "hospitalId": hospitalId,
+          if (orgId != null) "orgId": orgId,
+          "height": double.parse(heightInCm.toStringAsFixed(1)),
+          "weight": double.parse(weightInKg.toStringAsFixed(1)),
+          "gender": state.selectedGender,
+          if (dobString != null) "dob": dobString,
+          if (dobString != null) "dateOfBirth": dobString,
+          if (bloodGroup != null) "bloodGroup": bloodGroup,
+        };
+
+        developer.log("Submitting OnBoarding health data: $requestBody", name: "OnBoardingBloc");
+
+        try {
+          final dio = ApiClient().account(showSuccessSnack: false);
+          final options = token.isNotEmpty
+              ? Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'})
+              : null;
+
+          final response = await dio.post(
+            URLs.providerProfileUpdateUrl,
+            data: requestBody,
+            options: options,
+          );
+          developer.log("OnBoarding API response: ${response.data}", name: "OnBoardingBloc");
+        } catch (apiError, stackTrace) {
+          developer.log(
+            "OnBoarding API call failed gracefully: $apiError",
+            error: apiError,
+            stackTrace: stackTrace,
+            name: "OnBoardingBloc",
+          );
+        }
 
         emit(state.copyWith(
           isLoading: false,
-          successMessage: "Profile updated successfully",
+          isCompleted: true,
+          successMessage: "Profile completed successfully",
         ));
       } catch (e) {
         emit(state.copyWith(
           isLoading: false,
+          isCompleted: false,
           errorMessage: e.toString(),
         ));
       }

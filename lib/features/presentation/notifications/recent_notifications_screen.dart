@@ -74,6 +74,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return Icons.description_outlined;
       case 'PRESCRIPTION_ADDED':
         return Icons.medication_rounded;
+      case 'DOCTOR_SUGGESTION':
+        return Icons.lightbulb_outline_rounded;
       case 'TELECONSULT_START':
         return Icons.video_camera_front_rounded;
       default:
@@ -86,6 +88,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       case 'APPOINTMENT_BOOKED':
       case 'APPOINTMENT_STATUS':
         return const Color(0xFF3B82F6); // Blue
+      case 'DOCTOR_SUGGESTION':
+        return const Color(0xFF2563EB); // Royal Medical Blue
       case 'MEDICAL_RECORD_ADDED':
         return const Color(0xFF0D9488); // Teal
       case 'PRESCRIPTION_ADDED':

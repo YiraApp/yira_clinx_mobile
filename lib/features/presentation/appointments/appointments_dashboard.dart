@@ -12,6 +12,8 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_a
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/utils/utils.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
+import 'package:yiraclinics/core/tour/provider_tour_mock_data.dart';
 import '../../domain/entities/appointments/appointment_entity.dart';
 import 'appointment_bloc/appointment_bloc.dart';
 
@@ -296,37 +298,45 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     final isTab = isTablet(context);
     final width = displayWidth(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 1),
-      body: SafeArea(
-        child: BlocConsumer<AppointmentBloc, AppointmentState>(
-          listener: (BuildContext context, AppointmentState state) {},
-          builder: (context, state) {
-            // Compute stats from loaded state
-            int totalCount = 0;
-            int completedCount = 0;
-            int pendingCount = 0;
-            List<Appointment> appointments = [];
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 1),
+          body: SafeArea(
+            child: BlocConsumer<AppointmentBloc, AppointmentState>(
+              listener: (BuildContext context, AppointmentState state) {},
+              builder: (context, state) {
+                // Compute stats from loaded state
+                int totalCount = 0;
+                int completedCount = 0;
+                int pendingCount = 0;
+                List<Appointment> appointments = [];
 
-            if (state is AppointmentLoaded) {
-              appointments = state.appointments;
-              completedCount = state.completedCount > 0
-                  ? state.completedCount
-                  : appointments
-                      .where((a) => a.statusRaw.toLowerCase().contains('complete'))
-                      .length;
-              pendingCount = state.pendingCount > 0
-                  ? state.pendingCount
-                  : appointments
-                      .where((a) =>
-                          a.statusRaw.toLowerCase().contains('pending') ||
-                          a.statusRaw.toLowerCase().contains('schedule'))
-                      .length;
-              totalCount = state.todayCount > 0
-                  ? state.todayCount
-                  : appointments.length;
-            }
+                if (isTourActive) {
+                  appointments = ProviderTourMockData.demoAppointments;
+                  totalCount = appointments.length;
+                  completedCount = 1;
+                  pendingCount = 2;
+                } else if (state is AppointmentLoaded) {
+                  appointments = state.appointments;
+                  completedCount = state.completedCount > 0
+                      ? state.completedCount
+                      : appointments
+                          .where((a) => a.statusRaw.toLowerCase().contains('complete'))
+                          .length;
+                  pendingCount = state.pendingCount > 0
+                      ? state.pendingCount
+                      : appointments
+                          .where((a) =>
+                              a.statusRaw.toLowerCase().contains('pending') ||
+                              a.statusRaw.toLowerCase().contains('schedule'))
+                          .length;
+                  totalCount = state.todayCount > 0
+                      ? state.todayCount
+                      : appointments.length;
+                }
 
             return Column(
               children: [
@@ -636,201 +646,206 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 ),
 
                 // ─── FILTERS ──────────────────────────────────
-                if (_showFilters) ...[
-                  const SizedBox(height: 12),
+                if (_showFilters)
+                  Container(
+                    key: ProviderTourController().apptsFilterKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 12),
 
-                  // Date chip selector
-                  SizedBox(
-                    height: 38,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                      ),
-                      itemCount: _dateOptions.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final option = _dateOptions[index];
-                        final isActive = option == "Date Range"
-                            ? _customDateRange != null
-                            : _selectedDateLabel == option;
-
-                        return GestureDetector(
-                          onTap: () {
-                            if (option == "Date Range") {
-                              _pickDateRange();
-                            } else {
-                              setState(() {
-                                _selectedDateLabel = option;
-                                _customDateRange = null;
-                              });
-                              _loadWithDateFilter();
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
+                        // Date chip selector
+                        SizedBox(
+                          height: 38,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? (isDark
-                                      ? primaryColor.withOpacity(0.15)
-                                      : primaryColor.withOpacity(0.08))
-                                  : (isDark
-                                      ? darkModeCardColor
-                                      : Colors.white),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isActive
-                                    ? primaryColor.withOpacity(0.5)
-                                    : (isDark
-                                        ? Colors.white.withOpacity(0.08)
-                                        : Colors.grey.shade200),
-                                width: 1.2,
-                              ),
+                              horizontal: screenHorizontalSpacePadding,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (option == "Date Range") ...[
-                                  Icon(
-                                    Icons.date_range_rounded,
-                                    size: 14,
+                            itemCount: _dateOptions.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final option = _dateOptions[index];
+                              final isActive = option == "Date Range"
+                                  ? _customDateRange != null
+                                  : _selectedDateLabel == option;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  if (option == "Date Range") {
+                                    _pickDateRange();
+                                  } else {
+                                    setState(() {
+                                      _selectedDateLabel = option;
+                                      _customDateRange = null;
+                                    });
+                                    _loadWithDateFilter();
+                                  }
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeInOut,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
                                     color: isActive
-                                        ? primaryColor
+                                        ? (isDark
+                                            ? primaryColor.withOpacity(0.15)
+                                            : primaryColor.withOpacity(0.08))
                                         : (isDark
-                                            ? Colors.white54
-                                            : Colors.grey.shade500),
+                                            ? darkModeCardColor
+                                            : Colors.white),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isActive
+                                          ? primaryColor.withOpacity(0.5)
+                                          : (isDark
+                                              ? Colors.white.withOpacity(0.08)
+                                              : Colors.grey.shade200),
+                                      width: 1.2,
+                                    ),
                                   ),
-                                  const SizedBox(width: 5),
-                                ],
-                                Text(
-                                  _customDateRange != null &&
-                                          option == "Date Range"
-                                      ? _selectedDateLabel
-                                      : option,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize:
-                                        isTab ? width * 0.014 : width * 0.03,
-                                    fontWeight: isActive
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: isActive
-                                        ? primaryColor
-                                        : (isDark
-                                            ? Colors.white60
-                                            : Colors.grey.shade600),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Status pill filter
-                  SizedBox(
-                    height: 36,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                      ),
-                      itemCount: _statusOptions.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final option = _statusOptions[index];
-                        final isActive = _selectedStatus == option;
-
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedStatus = option;
-                            });
-                            _loadWithDateFilter();
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? primaryColor
-                                  : (isDark
-                                      ? darkModeCardColor.withOpacity(0.6)
-                                      : Colors.white),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: isActive
-                                    ? primaryColor
-                                    : (isDark
-                                        ? Colors.white.withOpacity(0.08)
-                                        : Colors.grey.shade200),
-                                width: 1,
-                              ),
-                              boxShadow: isActive
-                                  ? [
-                                      BoxShadow(
-                                        color:
-                                            primaryColor.withOpacity(0.2),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (option == "Date Range") ...[
+                                        Icon(
+                                          Icons.date_range_rounded,
+                                          size: 14,
+                                          color: isActive
+                                          ? primaryColor
+                                          : (isDark
+                                              ? Colors.white54
+                                              : Colors.grey.shade500),
                                       ),
-                                    ]
-                                  : [],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _statusIcon(option),
-                                  size: 13,
-                                  color: isActive
-                                      ? Colors.white
-                                      : (isDark
-                                          ? Colors.white38
-                                          : Colors.grey.shade400),
+                                      const SizedBox(width: 5),
+                                    ],
+                                    Text(
+                                      _customDateRange != null &&
+                                              option == "Date Range"
+                                          ? _selectedDateLabel
+                                          : option,
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize:
+                                            isTab ? width * 0.014 : width * 0.03,
+                                        fontWeight: isActive
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isActive
+                                            ? primaryColor
+                                            : (isDark
+                                                ? Colors.white60
+                                                : Colors.grey.shade600),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  option,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab
-                                        ? width * 0.013
-                                        : width * 0.028,
-                                    fontWeight: isActive
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: isActive
-                                        ? Colors.white
-                                        : (isDark
-                                            ? Colors.white54
-                                            : Colors.grey.shade600),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Status pill filter
+                      SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: screenHorizontalSpacePadding,
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+                          itemCount: _statusOptions.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            final option = _statusOptions[index];
+                            final isActive = _selectedStatus == option;
+
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedStatus = option;
+                                });
+                                _loadWithDateFilter();
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeInOut,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? primaryColor
+                                      : (isDark
+                                          ? darkModeCardColor.withOpacity(0.6)
+                                          : Colors.white),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: isActive
+                                        ? primaryColor
+                                        : (isDark
+                                            ? Colors.white.withOpacity(0.08)
+                                            : Colors.grey.shade200),
+                                    width: 1,
+                                  ),
+                                  boxShadow: isActive
+                                      ? [
+                                          BoxShadow(
+                                            color:
+                                                primaryColor.withOpacity(0.2),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : [],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _statusIcon(option),
+                                      size: 13,
+                                      color: isActive
+                                          ? Colors.white
+                                          : (isDark
+                                              ? Colors.white38
+                                              : Colors.grey.shade400),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      option,
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab
+                                            ? width * 0.013
+                                            : width * 0.028,
+                                        fontWeight: isActive
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isActive
+                                            ? Colors.white
+                                            : (isDark
+                                                ? Colors.white54
+                                                : Colors.grey.shade600),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ])),
 
                 const SizedBox(height: 10),
 
                 // ─── DATE & COUNT SUBTITLE ──────────────
-                if (state is AppointmentLoaded)
+                if (state is AppointmentLoaded || isTourActive)
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: screenHorizontalSpacePadding,
@@ -892,8 +907,11 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
 
                 // ─── SCROLLABLE LIST CONTENT ───────────────
                 Expanded(
-                  child: _buildListContent(
-                      state, appointments, isDark, theme, isTab, width),
+                  child: Container(
+                    key: ProviderTourController().apptsListKey,
+                    child: _buildListContent(
+                        state, appointments, isDark, theme, isTab, width),
+                  ),
                 ),
               ],
             );
@@ -901,6 +919,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
         ),
       ),
     );
+  },
+);
   }
 
   /// Builds only the scrollable list portion (loading / list / empty / error)
@@ -912,11 +932,11 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     bool isTab,
     double width,
   ) {
-    if (state is AppointmentLoading) {
+    if (state is AppointmentLoading && !ProviderTourController().isTourActive) {
       return AppointmentListShimmer(itemCount: 4, isTab: isTab);
     }
 
-    if (state is AppointmentLoaded) {
+    if (state is AppointmentLoaded || ProviderTourController().isTourActive) {
       if (appointments.isEmpty) {
         return _buildEmptyState(isDark, theme, isTab, width);
       }

@@ -16,6 +16,8 @@ import '../../../core/widgets/calendar/advanced_calendar.dart';
 import '../../../core/widgets/calendar/advanced_calendar_controller.dart';
 import '../../domain/entities/slot/slot_appointment_entity.dart';
 import '../../domain/entities/slot/time_slot_entity.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
+import 'package:yiraclinics/core/tour/provider_tour_mock_data.dart';
 
 class SlotDashBoardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -41,32 +43,42 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isTab = isTablet(context);
-    return BlocConsumer<SlotBloc, SlotState>(
-      buildWhen: (previous, current) => current is SlotDataState,
-      listener: (context, state) {},
-      builder: (context, state) {
-        return Scaffold(
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: primaryColor,
-            shape: const CircleBorder(),
-            onPressed: () async {
-              await Navigator.pushNamed(
-                context,
-                AppRoutes.smartSlotSchedulerScreen,
-              );
-              if (context.mounted) {
-                context.read<SlotBloc>().add(InitializeSlotsEvent());
-              }
-            },
-            child: const Icon(Icons.event, color: Colors.white),
-          ),
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: state is SlotDataState
-                ? _buildBodyContent(context, state, isTab)
-                : SlotDashboardShimmer(isTab: isTab),
-          ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: ProviderTourController().isTourActiveNotifier,
+      builder: (context, isTourActive, _) {
+        return BlocConsumer<SlotBloc, SlotState>(
+          buildWhen: (previous, current) => current is SlotDataState,
+          listener: (context, state) {},
+          builder: (context, state) {
+            final effectiveState = isTourActive
+                ? ProviderTourMockData.demoSlotDataState
+                : (state is SlotDataState ? state : null);
+
+            return Scaffold(
+              floatingActionButton: FloatingActionButton(
+                key: ProviderTourController().slotsFabKey,
+                backgroundColor: primaryColor,
+                shape: const CircleBorder(),
+                onPressed: () async {
+                  await Navigator.pushNamed(
+                    context,
+                    AppRoutes.smartSlotSchedulerScreen,
+                  );
+                  if (context.mounted) {
+                    context.read<SlotBloc>().add(InitializeSlotsEvent());
+                  }
+                },
+                child: const Icon(Icons.event, color: Colors.white),
+              ),
+              bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              body: SafeArea(
+                child: effectiveState != null
+                    ? _buildBodyContent(context, effectiveState, isTab)
+                    : SlotDashboardShimmer(isTab: isTab),
+              ),
+            );
+          },
         );
       },
     );
@@ -91,6 +103,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       children: [
         SizedBox(height: screenTopPadding),
         Container(
+          key: ProviderTourController().slotsCalendarKey,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
           ),
@@ -150,13 +163,15 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           ),
         ),
         Expanded(
-          child: state.isLoading
-              ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
-              : visibleSlots.isEmpty
-                  ? const Center(
-                      child: CommonText("No time slots found for this selection."),
-                    )
-                  : ListView.builder(
+          child: Container(
+            key: ProviderTourController().slotsListKey,
+            child: state.isLoading
+                ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
+                : visibleSlots.isEmpty
+                    ? const Center(
+                        child: CommonText("No time slots found for this selection."),
+                      )
+                    : ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
                     horizontal: screenHorizontalSpacePadding,
@@ -206,6 +221,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                     );
                   },
                 ),
+          ),
         ),
       ],
     );

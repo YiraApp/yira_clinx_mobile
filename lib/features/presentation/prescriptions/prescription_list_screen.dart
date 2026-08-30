@@ -19,6 +19,7 @@ class PrescriptionListScreen extends StatelessWidget {
   final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
+  final bool allowAdd;
 
   const PrescriptionListScreen({
     super.key,
@@ -27,6 +28,7 @@ class PrescriptionListScreen extends StatelessWidget {
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.allowAdd = true,
   });
 
   @override
@@ -125,7 +127,7 @@ class PrescriptionListScreen extends StatelessWidget {
                     title: cardTitle,
                     subtitle: cardSubtitle,
                     date: 'Today',
-                    onEdit: isPatient
+                    onEdit: (isPatient || !allowAdd)
                         ? null
                         : () {
                             showModalBottomSheet(
@@ -156,7 +158,7 @@ class PrescriptionListScreen extends StatelessWidget {
                               }
                             });
                           },
-                    onDelete: isPatient
+                    onDelete: (isPatient || !allowAdd)
                         ? null
                         : () {
                             _confirmDeletePrescription(context, validMeds);
@@ -176,7 +178,7 @@ class PrescriptionListScreen extends StatelessWidget {
 
           return Scaffold(
             backgroundColor: theme.scaffoldBackgroundColor,
-            floatingActionButton: (hasPrescription || isPatient)
+            floatingActionButton: (hasPrescription || isPatient || !allowAdd)
                 ? null
                 : FloatingActionButton(
                     backgroundColor: primaryColor,

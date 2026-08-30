@@ -9,11 +9,19 @@ import 'package:yiraclinics/core/constants/constants.dart';
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
+  final GlobalKey? homeKey;
+  final GlobalKey? appointmentsKey;
+  final GlobalKey? patientsKey;
+  final GlobalKey? slotsKey;
 
   const AppBottomNavBar({
     super.key,
     required this.currentIndex,
     this.onTap,
+    this.homeKey,
+    this.appointmentsKey,
+    this.patientsKey,
+    this.slotsKey,
   });
 
   void _handleItemTapped(BuildContext context, int index) {
@@ -51,6 +59,21 @@ class AppBottomNavBar extends StatelessWidget {
       );
     } else {
       Navigator.pushReplacementNamed(context, targetRoute);
+    }
+  }
+
+  GlobalKey? _getKeyForIndex(int index) {
+    switch (index) {
+      case 0:
+        return homeKey;
+      case 1:
+        return appointmentsKey;
+      case 2:
+        return patientsKey;
+      case 3:
+        return slotsKey;
+      default:
+        return null;
     }
   }
 
@@ -110,9 +133,11 @@ class AppBottomNavBar extends StatelessWidget {
             children: List.generate(items.length, (index) {
               final item = items[index];
               final isSelected = index == currentIndex;
+              final itemKey = _getKeyForIndex(index);
 
               return Expanded(
                 child: InkWell(
+                  key: itemKey,
                   onTap: () => _handleItemTapped(context, index),
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,

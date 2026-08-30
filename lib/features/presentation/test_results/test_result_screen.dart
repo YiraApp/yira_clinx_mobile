@@ -164,20 +164,56 @@ class TestResultsScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: fieldSpace),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: state.labResults.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, i) => ReusableTestCard(
-              title: state.labResults[i]['title'],
-              doctorName: state.labResults[i]['doctor'],
-              date: state.labResults[i]['date'],
-              parameters: List<String>.from(state.labResults[i]['params']),
-              statusText: state.labResults[i]['status'],
-              isAbnormal: state.labResults[i]['isAbnormal'],
+          if (state.labResults.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 36.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.biotech_outlined,
+                      size: 60,
+                      color: Colors.grey.withOpacity(0.35),
+                    ),
+                    const SizedBox(height: 14),
+                    CommonText(
+                      "No Lab Test Results",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const CommonText(
+                      "Diagnostic and pathology results ordered by your doctor will be listed here.",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: state.labResults.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, i) => ReusableTestCard(
+                title: state.labResults[i]['title'],
+                doctorName: state.labResults[i]['doctor'],
+                date: state.labResults[i]['date'],
+                parameters: List<String>.from(state.labResults[i]['params']),
+                statusText: state.labResults[i]['status'],
+                isAbnormal: state.labResults[i]['isAbnormal'],
+              ),
             ),
-          ),
           const SizedBox(height: 40),
         ],
       ),

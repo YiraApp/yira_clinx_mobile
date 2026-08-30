@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -6,12 +5,11 @@ import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/core/utils/utils.dart';
 import 'package:yiraclinics/features/domain/entities/uploaded_record/uploaded_record_entity.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/widgets/uploaded_record_card.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
-import '../../../core/common_widgets/common_text.dart';
+import '../../../core/common_widgets/in_app_document_viewer.dart';
 
 class UploadedRecordsScreen extends StatefulWidget {
   final String? patientId;
@@ -25,229 +23,104 @@ class UploadedRecordsScreen extends StatefulWidget {
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.allowAdd = true,
   });
+
+  final bool allowAdd;
 
   @override
   State<UploadedRecordsScreen> createState() => _UploadedRecordsScreenState();
 }
 
 class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedCategory = 'All';
+
+  final List<String> _categories = const [
+    'All',
+    'Lab Report',
+    'Prescription',
+    'Imaging / Radiology',
+    'Discharge Summary',
+    'General',
+    'Other',
+  ];
+
   @override
   void initState() {
     super.initState();
+    _fetchInitialRecords();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _fetchInitialRecords() {
     context.read<UploadedBloc>().add(FetchUploadedRecords(
           patientId: widget.patientId,
           appointmentId: widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
+          limit: 15,
+          page: 1,
         ));
   }
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll <= 250) {
+      final state = context.read<UploadedBloc>().state;
+      if (state.hasMore && !state.isLoadingMore && state.status == UploadedStatus.success) {
+        context.read<UploadedBloc>().add(LoadMoreUploadedRecords(
+              patientId: widget.patientId,
+              appointmentId: widget.appointmentId,
+              hospitalId: widget.hospitalId,
+              orgId: widget.orgId,
+              limit: 15,
+            ));
+      }
+    }
+  }
+
   void _viewDocument(BuildContext context, UploadedRecord record) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final String url = (record.fileUrl ?? '').trim();
     final String path = (record.filePath ?? '').trim();
-    final String target = url.isNotEmpty ? url : path;
-    final String lower = (target.isNotEmpty ? target : record.fileName).toLowerCase();
+    final ext = (record.fileType ??
+            (record.fileName.contains('.') ? record.fileName.split('.').last : 'PDF'))
+        .toUpperCase();
 
-    final bool isImage = lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.png') ||
-        lower.endsWith('.webp') ||
-        lower.endsWith('.gif');
+    final fileSizeStr = record.fileSizeKB > 0
+        ? (record.fileSizeKB >= 1024
+            ? '${(record.fileSizeKB / 1024).toStringAsFixed(1)} MB'
+            : '${record.fileSizeKB} KB')
+        : '';
 
-    // 1. Direct Image preview if local file exists
-    if (isImage && path.isNotEmpty && File(path).existsSync()) {
-      showDialog(
-        context: context,
-        builder: (dialogContext) => Dialog(
-          backgroundColor: Colors.black.withValues(alpha: 0.9),
-          insetPadding: EdgeInsets.zero,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              InteractiveViewer(
-                maxScale: 4.0,
-                child: Image.file(File(path), fit: BoxFit.contain),
-              ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: CircleAvatar(
-                  backgroundColor: Colors.black54,
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(dialogContext),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-      return;
-    }
-
-    // 2. Direct launch if HTTP Azure Blob URL exists
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      Utils.launchURL(url);
-      return;
-    }
-
-    // 3. Fallback Document Preview Modal (shows file details & action button to view)
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (modalContext) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? darkModeCardColor : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.description_outlined,
-                    color: primaryColor,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        record.fileName,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        record.category,
-                        style: const TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          color: primaryColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey[900] : const Color(0xFFFAFBFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.white10 : const Color(0xFFEDEFF3),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Upload Date", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Theme.of(context).hintColor)),
-                      Text(DateFormat('MMM dd, yyyy').format(record.uploadDate), style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  const Divider(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("File Size", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Theme.of(context).hintColor)),
-                      Text(
-                        record.fileSizeKB >= 1024
-                            ? '${(record.fileSizeKB / 1024).toStringAsFixed(1)} MB'
-                            : '${record.fileSizeKB} KB',
-                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () => Navigator.pop(modalContext),
-                    child: Text("Close", style: TextStyle(fontFamily: appPoppinFont, color: isDark ? Colors.white70 : Colors.black87)),
-                  ),
-                ),
-                if (target.isNotEmpty) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.open_in_new, size: 18, color: Colors.white),
-                      label: const Text("Open Document", style: TextStyle(fontFamily: appPoppinFont, color: Colors.white, fontWeight: FontWeight.bold)),
-                      onPressed: () {
-                        Navigator.pop(modalContext);
-                        if (target.startsWith('http://') || target.startsWith('https://')) {
-                          Utils.launchURL(target);
-                        } else {
-                          Utils.launchURL('file://$target');
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
+    InAppDocumentViewer.show(
+      context,
+      title: record.fileName,
+      category: record.category,
+      fileUrl: url.isNotEmpty ? url : null,
+      filePath: path.isNotEmpty ? path : null,
+      fileType: ext,
+      fileSize: fileSizeStr.isNotEmpty ? fileSizeStr : null,
+      date: DateFormat('MMM dd, yyyy').format(record.uploadDate),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    bool isTab = isTablet(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bool isTab = isTablet(context);
 
     return BlocConsumer<UploadedBloc, UploadedBlocState>(
       buildWhen: (previous, current) => current is! UploadRecordScreenNavState,
@@ -260,8 +133,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
             builder: (_) => FractionallySizedBox(
               heightFactor: 0.9,
               child: ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 child: BlocProvider<UploadedBloc>.value(
                   value: context.read<UploadedBloc>(),
                   child: Scaffold(
@@ -278,12 +150,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
             ),
           ).then((_) {
             if (context.mounted) {
-              context.read<UploadedBloc>().add(FetchUploadedRecords(
-                    patientId: widget.patientId,
-                    appointmentId: widget.appointmentId,
-                    hospitalId: widget.hospitalId,
-                    orgId: widget.orgId,
-                  ));
+              _fetchInitialRecords();
             }
           });
         }
@@ -291,21 +158,123 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: primaryColor,
-            child: const Icon(Icons.add, color: Colors.white),
-            onPressed: () {
-              context.read<UploadedBloc>().add(UploadRecordScreenNavEvent());
-            },
-          ),
+          floatingActionButton: !widget.allowAdd
+              ? null
+              : FloatingActionButton.extended(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                  label: const Text(
+                    'Upload Document',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  onPressed: () {
+                    context.read<UploadedBloc>().add(UploadRecordScreenNavEvent());
+                  },
+                ),
           body: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: screenHorizontalSpacePadding,
-              vertical: 0.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
             child: Column(
               children: [
-                Expanded(child: _buildRecordsList(context, state, isTab)),
+                const SizedBox(height: 10),
+                // 1. Search Bar
+                TextField(
+                  controller: _searchController,
+                  onChanged: (val) {
+                    context.read<UploadedBloc>().add(SearchQueryChanged(val));
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search documents by name, category, or note...',
+                    hintStyle: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12.5,
+                      color: isDark ? Colors.white38 : Colors.grey[400],
+                    ),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 16),
+                            onPressed: () {
+                              _searchController.clear();
+                              context.read<UploadedBloc>().add(SearchQueryChanged(''));
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // 2. Category Filter Pills
+                SizedBox(
+                  height: 34,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _categories.length,
+                    itemBuilder: (context, idx) {
+                      final cat = _categories[idx];
+                      final isSelected = _selectedCategory.toLowerCase() == cat.toLowerCase();
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(cat),
+                          selected: isSelected,
+                          onSelected: (val) {
+                            if (val) {
+                              setState(() => _selectedCategory = cat);
+                              context.read<UploadedBloc>().add(FilterCategoryChanged(cat));
+                            }
+                          },
+                          labelStyle: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                          ),
+                          selectedColor: primaryColor,
+                          backgroundColor:
+                              isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? primaryColor
+                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            ),
+                          ),
+                          showCheckmark: false,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // 3. Document List with YouTube-style Pagination
+                Expanded(child: _buildRecordsList(context, state, isTab, isDark)),
               ],
             ),
           ),
@@ -315,40 +284,145 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
   }
 
   Widget _buildRecordsList(
-      BuildContext context, UploadedBlocState state, bool isTab) {
+    BuildContext context,
+    UploadedBlocState state,
+    bool isTab,
+    bool isDark,
+  ) {
     if (state.status == UploadedStatus.loading) {
       return UploadedRecordListShimmer(itemCount: 4, isTab: isTab);
     }
 
-    if (state.allRecords.isEmpty) {
-      return Center(
-        child: CommonText(
-          "No documents found for this appointment.",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * (isTab ? 0.018 : 0.035),
-            color: Colors.grey,
+    final records = state.filteredRecords;
+
+    if (records.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () async {
+          _fetchInitialRecords();
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 20.0),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.folder_open_rounded,
+                      size: 34,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.searchQuery.isNotEmpty
+                        ? 'No Matching Documents'
+                        : 'No Documents Uploaded',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    state.searchQuery.isNotEmpty
+                        ? 'Try clearing your search or category filter.'
+                        : 'Tap the button below to upload lab reports, scan files, or prescriptions.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 3.0),
-      itemCount: state.allRecords.length,
-      itemBuilder: (context, index) {
-        final record = state.allRecords[index];
-        return UploadedRecordCard(
-          record: record,
-          isTab: isTab,
-          onView: () => _viewDocument(context, record),
-          onDelete: () {
-            context
-                .read<UploadedBloc>()
-                .add(DeleteUploadedRecordItem(record.id));
-          },
-        );
+    final int totalCount = records.length + (state.isLoadingMore ? 1 : (state.hasMore ? 0 : 1));
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        _fetchInitialRecords();
+        await Future.delayed(const Duration(milliseconds: 500));
       },
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 4.0, bottom: 80.0),
+        itemCount: totalCount,
+        itemBuilder: (context, index) {
+          if (index < records.length) {
+            final record = records[index];
+            return UploadedRecordCard(
+              record: record,
+              isTab: isTab,
+              onView: () => _viewDocument(context, record),
+              onDelete: widget.allowAdd
+                  ? () {
+                      context.read<UploadedBloc>().add(DeleteUploadedRecordItem(record.id));
+                    }
+                  : null,
+            );
+          }
+
+          // YouTube-style bottom loading or end-of-list footer
+          if (state.isLoadingMore) {
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Loading more records...',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11.5,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            alignment: Alignment.center,
+            child: Text(
+              '• All ${records.length} documents loaded •',
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 11,
+                color: isDark ? Colors.white38 : Colors.grey.shade400,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

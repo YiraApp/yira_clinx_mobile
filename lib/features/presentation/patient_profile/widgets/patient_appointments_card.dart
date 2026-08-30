@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
@@ -793,7 +794,15 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    Utils.launchURL(url);
+                    InAppDocumentViewer.show(
+                      context,
+                      title: doc.fileName.isNotEmpty ? doc.fileName : "Medical Document",
+                      category: doc.category.isNotEmpty ? doc.category : "General",
+                      fileUrl: url,
+                      fileType: doc.type.isNotEmpty ? doc.type : "PDF",
+                      date: doc.createdAt,
+                      isAppointmentDoc: true,
+                    );
                   },
                   icon: const Icon(Icons.visibility_rounded, size: 18),
                   label: const Text(
@@ -914,12 +923,24 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    Utils.launchURL(url);
+                    InAppDocumentViewer.show(
+                      context,
+                      title: rec.recordType.isNotEmpty ? rec.recordType : "Medical Record",
+                      category: "Medical Record",
+                      fileUrl: url,
+                      fileType: "PDF",
+                      date: rec.createdAt,
+                      isAppointmentDoc: true,
+                    );
                   },
-                  icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+                  icon: const Icon(Icons.visibility_rounded, size: 18),
                   label: const Text(
-                    "Open Attached File",
-                    style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                    "View Medical Record",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),

@@ -23,6 +23,7 @@ class OnBoardingState extends Equatable {
 
   // Status Data
   final bool isLoading;
+  final bool isCompleted;
   final String? errorMessage;
   final String? successMessage;
 
@@ -37,6 +38,7 @@ class OnBoardingState extends Equatable {
     this.selectedBloodGroup = 'Select Blood Group',
     this.selectedEmergencyRelation = 'Select Relation Type',
     this.isLoading = false,
+    this.isCompleted = false,
     this.errorMessage,
     this.successMessage,
   });
@@ -52,6 +54,7 @@ class OnBoardingState extends Equatable {
     String? selectedBloodGroup,
     String? selectedEmergencyRelation,
     bool? isLoading,
+    bool? isCompleted,
     String? errorMessage,
     String? successMessage,
   }) {
@@ -63,9 +66,10 @@ class OnBoardingState extends Equatable {
       selectedGender: selectedGender ?? this.selectedGender,
       selectedAge: selectedAge ?? this.selectedAge,
       selectedDob: selectedDob ?? this.selectedDob,
-      selectedBloodGroup: selectedBloodGroup ?? this.selectedBloodGroup, // Support for Blood Group update
-      selectedEmergencyRelation: selectedEmergencyRelation ?? this.selectedEmergencyRelation, // Support for Emergency Contact update
+      selectedBloodGroup: selectedBloodGroup ?? this.selectedBloodGroup,
+      selectedEmergencyRelation: selectedEmergencyRelation ?? this.selectedEmergencyRelation,
       isLoading: isLoading ?? this.isLoading,
+      isCompleted: isCompleted ?? this.isCompleted,
       errorMessage: errorMessage,
       successMessage: successMessage,
     );
@@ -83,6 +87,7 @@ class OnBoardingState extends Equatable {
     selectedBloodGroup,
     selectedEmergencyRelation,
     isLoading,
+    isCompleted,
     errorMessage,
     successMessage,
   ];

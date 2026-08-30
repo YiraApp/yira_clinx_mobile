@@ -1,7 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/colors/colors.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
@@ -13,6 +14,7 @@ import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../../../../core/tour/patient_tour_controller.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -22,6 +24,226 @@ class PatientProfilePassportScreen extends StatefulWidget {
 }
 
 class _PatientProfilePassportScreenState extends State<PatientProfilePassportScreen> {
+  File? _localProfileImage;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfilePhoto();
+  }
+
+  Future<void> _loadProfilePhoto() async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      if (userId.isEmpty) return;
+      final prefs = await SharedPreferences.getInstance();
+      final savedPath = prefs.getString('patient_profile_image_$userId');
+      if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
+        if (mounted) {
+          setState(() {
+            _localProfileImage = File(savedPath);
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _openPhotoPickerSheet() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              "Profile Photo",
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Choose how you want to update your profile photo",
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 12.5,
+                color: isDark ? Colors.white60 : Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.camera_alt_rounded,
+                    label: "Camera",
+                    color: primaryColor,
+                    isDark: isDark,
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+                      if (picked != null) {
+                        final file = File(picked.path);
+                        setState(() => _localProfileImage = file);
+                        if (userId.isNotEmpty) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('patient_profile_image_$userId', picked.path);
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile photo updated successfully!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.photo_library_rounded,
+                    label: "Gallery",
+                    color: const Color(0xFF10B981),
+                    isDark: isDark,
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                      if (picked != null) {
+                        final file = File(picked.path);
+                        setState(() => _localProfileImage = file);
+                        if (userId.isNotEmpty) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('patient_profile_image_$userId', picked.path);
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile photo updated successfully!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            if (_localProfileImage != null) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: const Text(
+                    "Remove Photo",
+                    style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    setState(() => _localProfileImage = null);
+                    if (userId.isNotEmpty) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('patient_profile_image_$userId');
+                    }
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withValues(alpha: isDark ? 0.35 : 0.25),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _openProfileSwitcher(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -73,14 +295,27 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Edit Profile Details',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Edit Profile Details',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openPhotoPickerSheet();
+                    },
+                    icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                    label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Text('Full Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
@@ -215,11 +450,11 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
 
               final firstName = currentUser?.data?.firstName ?? '';
               final lastName = currentUser?.data?.lastName ?? '';
-              final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Teja Ch';
+              final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Patient';
 
               final initials = patientName.isNotEmpty
                   ? patientName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
-                  : 'TC';
+                  : 'P';
 
               final rawRel = (activeProfile?.relation ?? '').trim();
               final bool hasFamilyRelation = rawRel.isNotEmpty &&
@@ -231,7 +466,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   ? rawRel
                   : ((activeProfile?.isPrimary == true) ? 'Primary' : 'Dependent');
               final bool isPrimary = (relation == 'Primary');
-              final mrn = 'MRN-90214';
+              final mrn = userId.isNotEmpty
+                  ? 'MRN-${userId.length > 5 ? userId.substring(0, 5).toUpperCase() : userId}'
+                  : 'MRN-90214';
               final phone = contact?.phone ?? currentUser?.data?.phoneNumber ?? '+91 98765 43210';
               final email = contact?.emailAddress ?? currentUser?.data?.email ?? 'patient@yiraclinics.com';
               final gender = 'Male';
@@ -254,7 +491,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     vertical: 12,
                   ),
                   children: [
-                    // 1. Executive Hero Header (Exact Provider Design Copy)
+                    // 1. Executive Hero Header with Profile Picture Upload
                     _buildPatientHeroHeader(
                       context: context,
                       name: patientName,
@@ -342,12 +579,12 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Contact Name",
-                          value: emergency?.name ?? "Srinivas Rao",
+                          value: emergency?.name ?? "Family Member",
                           icon: Icons.person_outline_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Relationship",
-                          value: "Father",
+                          value: "Primary Contact",
                           icon: Icons.family_restroom_rounded,
                         ),
                         DoctorProfileFieldItem(
@@ -368,7 +605,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Insurance Provider",
-                          value: insurance?.policyName ?? "Star Health Comprehensive Care",
+                          value: insurance?.policyName ?? "Universal Health Coverage",
                           icon: Icons.business_outlined,
                         ),
                         DoctorProfileFieldItem(
@@ -437,8 +674,61 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
 
-                    // 8. Sign Out Tile (Styled matching Provider)
+                    // 7.5. Spotlight Product Tour Tile
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.4 : 0.25),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.08 : 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.lightbulb_circle_rounded, color: Color(0xFF2563EB), size: 20),
+                        ),
+                        title: Text(
+                          "Spotlight Product Tour",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Start live interactive spotlight tour across all tabs",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11.5,
+                            color: isDark ? Colors.white60 : Colors.grey.shade600,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                        onTap: () {
+                          PatientTourController().restartTour(context: context);
+                        },
+                      ),
+                    ),
+
+                    // 8. Sign Out Tile
                     Container(
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
@@ -448,40 +738,37 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           color: Colors.red.withValues(alpha: 0.3),
                           width: 1,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          title: const Text(
-                            'Sign Out',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14.5,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Log out of your patient account',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 12,
-                              color: isDark ? Colors.white54 : Colors.grey[600],
-                            ),
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.redAccent),
-                          onTap: () => SignOutAlert.showSignCustomDialog(context, primaryColor),
+                          child: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
                         ),
+                        title: const Text(
+                          "Sign Out",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.red, size: 14),
+                        onTap: () async {
+                          await SignOutAlert.showSignCustomDialog(context, primaryColor);
+                        },
                       ),
                     ),
                   ],
@@ -507,6 +794,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     required bool isTab,
   }) {
     return Container(
+      key: PatientTourController().passportProfileCardKey,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -556,37 +844,104 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
             ),
             child: Column(
               children: [
-                // Avatar with Initials
-                Container(
-                  width: isTab ? 84 : 76,
-                  height: isTab ? 84 : 76,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [primaryColor, primaryColor.withValues(alpha: 0.75)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
+                // Avatar with Camera Icon Overlay for Photo Upload
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    GestureDetector(
+                      onTap: _openPhotoPickerSheet,
+                      child: Container(
+                        width: isTab ? 96 : 84,
+                        height: isTab ? 96 : 84,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: primaryColor.withValues(alpha: 0.4),
+                            width: 3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withValues(alpha: 0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: _localProfileImage != null
+                              ? Image.file(
+                                  _localProfileImage!,
+                                  width: isTab ? 96 : 84,
+                                  height: isTab ? 96 : 84,
+                                  fit: BoxFit.cover,
+                                )
+                              : _buildInitialsAvatar(initials, isTab, primaryColor),
+                        ),
                       ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 28 : 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    ),
+                    Positioned(
+                      bottom: 2,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: _openPhotoPickerSheet,
+                        child: Container(
+                          padding: const EdgeInsets.all(4.5),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              width: 2.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1.5),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt_rounded,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Tap to change photo subtitle button
+                GestureDetector(
+                  onTap: _openPhotoPickerSheet,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_a_photo_outlined, size: 13, color: primaryColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          _localProfileImage != null ? "Change Photo" : "Add Photo",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+
+                const SizedBox(height: 10),
 
                 // Name & Verified Badge
                 Row(
@@ -735,6 +1090,29 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
+  Widget _buildInitialsAvatar(String initials, bool isTab, Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [primaryColor, primaryColor.withValues(alpha: 0.75)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: isTab ? 30 : 26,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
   Widget _buildProfileCompletionCard({
     required BuildContext context,
     required int completionPct,
@@ -745,11 +1123,18 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -833,72 +1218,8 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               ),
             ),
           ),
-          Divider(height: 1, color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9)),
-          ListTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.logout_rounded, size: 18, color: Colors.red),
-            ),
-            title: Text(
-              "Sign Out",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: Colors.red.shade400,
-              ),
-            ),
-            trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: Colors.red),
-            onTap: () async {
-              await SignOutAlert.showSignCustomDialog(context, primaryColor);
-            },
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLoadingShimmer(BuildContext context, bool isDark, bool isTab) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: screenHorizontalSpacePadding,
-        vertical: 16,
-      ),
-      children: [
-        BaseShimmer(
-          child: Container(
-            height: 240,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        BaseShimmer(
-          child: Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        BaseShimmer(
-          child: Container(
-            height: 180,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

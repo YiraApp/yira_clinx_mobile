@@ -1,14 +1,20 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 
 class PatientAddNewAppointmentScreen extends StatefulWidget {
   final VoidCallback? onAppointmentBooked;
@@ -28,6 +34,7 @@ class PatientAddNewAppointmentScreen extends StatefulWidget {
 
 class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmentScreen> {
   bool _isLoadingInitial = true;
+  bool _isLoadingDoctors = false;
   bool _isLoadingSlots = false;
   bool _isSubmitting = false;
 
@@ -74,23 +81,51 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     setState(() => _isLoadingInitial = true);
     final currentUser = GlobalSession.instance.userNotifier.value;
     final token = currentUser?.data?.accessToken ?? '';
-    final userId = currentUser?.data?.id ?? '';
+    final userId = (currentUser?.data?.id ?? '').toString().trim();
     final primaryPhone = currentUser?.data?.phoneNumber ?? '';
 
-    // 1. Prepare Patient Profiles (Self + Dependents)
+    // 1. Prepare Patient Profiles (Primary + Dependents / Family Members)
     final List<Map<String, dynamic>> profiles = [];
-    final firstName = currentUser?.data?.firstName ?? 'Patient';
-    final lastName = currentUser?.data?.lastName ?? '';
-    final fullName = '$firstName $lastName'.trim();
+    final userProfiles = currentUser?.data?.profiles ?? [];
 
-    profiles.add({
-      'userId': userId,
-      'name': fullName.isNotEmpty ? fullName : 'Self',
-      'relation': 'Self',
-      'phone': primaryPhone,
-      'gender': currentUser?.data?.gender ?? 'Male',
-      'isPrimary': true,
-    });
+    if (userProfiles.isNotEmpty) {
+      for (final p in userProfiles) {
+        final pId = (p.id ?? '').trim();
+        final rawRel = (p.relation ?? '').trim();
+        final bool isFam = rawRel.isNotEmpty &&
+            rawRel.toLowerCase() != 'self' &&
+            rawRel.toLowerCase() != 'primary' &&
+            rawRel.toLowerCase() != 'admin';
+        final String rel = isFam ? rawRel : (p.isPrimary == true ? 'Self' : 'Dependent');
+        final pName = (p.name?.isNotEmpty ?? false)
+            ? p.name!
+            : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
+                ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
+                : rel;
+
+        profiles.add({
+          'userId': pId.isNotEmpty ? pId : userId,
+          'name': pName,
+          'relation': rel,
+          'phone': p.phoneNumber ?? primaryPhone,
+          'gender': p.gender ?? currentUser?.data?.gender ?? 'Male',
+          'isPrimary': p.isPrimary == true && !isFam,
+        });
+      }
+    } else {
+      final firstName = currentUser?.data?.firstName ?? 'Patient';
+      final lastName = currentUser?.data?.lastName ?? '';
+      final fullName = '$firstName $lastName'.trim();
+
+      profiles.add({
+        'userId': userId,
+        'name': fullName.isNotEmpty ? fullName : 'Self',
+        'relation': 'Self',
+        'phone': primaryPhone,
+        'gender': currentUser?.data?.gender ?? 'Male',
+        'isPrimary': true,
+      });
+    }
 
     if (primaryPhone.isNotEmpty) {
       try {
@@ -103,22 +138,20 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
           final list = res.data['data'] as List;
           for (final item in list) {
             final itemUserId = (item['id'] ?? item['userId'] ?? '').toString();
-            if (itemUserId.isNotEmpty && itemUserId != userId) {
+            if (itemUserId.isNotEmpty && !profiles.any((p) => p['userId'] == itemUserId)) {
               final fName = (item['firstName'] ?? '').toString();
               final lName = (item['lastName'] ?? '').toString();
               final depName = '$fName $lName'.trim();
               final rel = (item['relation'] ?? 'Dependent').toString();
 
-              if (!profiles.any((p) => p['userId'] == itemUserId)) {
-                profiles.add({
-                  'userId': itemUserId,
-                  'name': depName.isNotEmpty ? depName : 'Family Member',
-                  'relation': rel.isNotEmpty ? rel : 'Dependent',
-                  'phone': (item['phoneNumber'] ?? primaryPhone).toString(),
-                  'gender': (item['gender'] ?? 'Other').toString(),
-                  'isPrimary': false,
-                });
-              }
+              profiles.add({
+                'userId': itemUserId,
+                'name': depName.isNotEmpty ? depName : 'Family Member',
+                'relation': rel.isNotEmpty ? rel : 'Dependent',
+                'phone': (item['phoneNumber'] ?? primaryPhone).toString(),
+                'gender': (item['gender'] ?? 'Other').toString(),
+                'isPrimary': item['isPrimary'] == true,
+              });
             }
           }
         }
@@ -126,112 +159,80 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     }
 
     _patientProfiles = profiles;
-    _selectedProfile = profiles.first;
 
-    // 2. Load Hospitals from Workspace Details
-    List<Map<String, dynamic>> hospitals = [];
+    // Auto-select the active profile (dependent or primary)
+    Map<String, dynamic>? activeMatch;
+    if (userId.isNotEmpty) {
+      final matches = profiles.where((p) => p['userId'] == userId).toList();
+      if (matches.isNotEmpty) {
+        activeMatch = matches.first;
+      }
+    }
+    _selectedProfile = activeMatch ?? (profiles.isNotEmpty ? profiles.first : null);
+
+    // 2. Load Exclusively Liked & Linked Hospitals
+    List<Map<String, dynamic>> hospitals = await LikedHospitalsService.instance.getLikedAndLinkedHospitals(
+      patientId: userId,
+      initialHospitalId: widget.initialHospitalId,
+    );
+
+    // 3. Load Linked Doctors from SharedPreferences
     List<Map<String, dynamic>> doctors = [];
-
+    final linkedStorageKey = userId.isNotEmpty ? 'patient_linked_doctors_$userId' : 'patient_linked_doctors';
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
-        URLs.workspaceDetailsUrl,
-        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-      );
-
-      if (res.data != null && res.data['data'] != null) {
-        final data = res.data['data'];
-        if (data['workspaces'] is List) {
-          final wsList = data['workspaces'] as List;
-          for (final ws in wsList) {
-            final hospId = ws['hospitalId'] ?? ws['HospitalId'] ?? 1;
-            final hospName = ws['hospitalName'] ?? ws['HospitalName'] ?? 'Yira Hospitals';
-            final orgId = ws['organizationId'] ?? ws['OrganizationId'] ?? 1;
-            final orgName = ws['organizationName'] ?? ws['OrganizationName'] ?? 'Yira';
-
-            if (!hospitals.any((h) => h['id'] == hospId)) {
-              hospitals.add({
-                'id': hospId,
-                'name': hospName,
-                'orgId': orgId,
-                'orgName': orgName,
-              });
-            }
+      final prefs = await SharedPreferences.getInstance();
+      final localStr = prefs.getString(linkedStorageKey);
+      if (localStr != null) {
+        final List<dynamic> localList = jsonDecode(localStr);
+        for (final item in localList) {
+          final map = Map<String, dynamic>.from(item);
+          final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
+          if (docId.isNotEmpty && !doctors.any((d) => (d['doctorId'] ?? d['id'])?.toString().trim() == docId)) {
+            doctors.add(map);
           }
         }
       }
     } catch (_) {}
 
-    if (hospitals.isEmpty) {
-      final userHospId = currentUser?.data?.latestHospitalId ?? 19;
-      final userOrgId = currentUser?.data?.latestOrgId ?? 1;
-      hospitals = [
-        {'id': userHospId, 'name': 'Yira Hospitals', 'orgId': userOrgId, 'orgName': 'Yira Health'},
-        {'id': 12, 'name': 'Ocimum Dental Clinic', 'orgId': 10, 'orgName': 'Demo Org 1'},
-        {'id': 11, 'name': 'AIG Somajiguda', 'orgId': 9, 'orgName': 'AIG'},
-        {'id': 1, 'name': 'kims Maharashtra', 'orgId': 3, 'orgName': 'kims'},
-      ];
+    // Ensure all doctors' hospitals are present in hospitals list
+    for (final doc in doctors) {
+      if (doc['hospitalId'] != null) {
+        final hId = doc['hospitalId'];
+        final hName = (doc['hospitalName'] ?? '').toString().trim();
+        final oId = doc['orgId'] ?? 1;
+        final oName = doc['orgName'] ?? 'Healthcare Facility';
+        if (hName.isNotEmpty && !hospitals.any((h) => h['id'].toString() == hId.toString())) {
+          hospitals.add({
+            'id': int.tryParse(hId.toString()) ?? hId,
+            'name': hName,
+            'orgId': oId,
+            'orgName': oName,
+            'isLiked': true,
+            'isLinked': true,
+          });
+        }
+      }
     }
-
-    // 3. Hospital-Wise Assigned Doctors Mapping
-    doctors = [
-      {
-        'doctorId': '4B7319C8-4FE0-42A8-B0C8-23674EFD8CB7',
-        'name': 'Dr. Neeli Manikanta',
-        'specialty': 'Dermatology & General Care',
-        'hospitalId': 12,
-        'consultationFee': 500,
-      },
-      {
-        'doctorId': '050D2CBB-5DCA-452B-A3E2-9E6CFC01C069',
-        'name': 'Dr. Vijay M',
-        'specialty': 'Cardiology & Internal Medicine',
-        'hospitalId': 12,
-        'consultationFee': 600,
-      },
-      {
-        'doctorId': '6CDE8235-B520-4442-B912-9622A9D357D0',
-        'name': 'Dr. Manikanta Jay',
-        'specialty': 'General Physician',
-        'hospitalId': 19,
-        'consultationFee': 500,
-      },
-      {
-        'doctorId': '234154EE-E1EE-49D2-9577-F0DB190C827C',
-        'name': 'Dr. Teja Ch',
-        'specialty': 'Family Medicine',
-        'hospitalId': 19,
-        'consultationFee': 400,
-      },
-      {
-        'doctorId': 'F2C87403-C46A-47A3-BE90-03DCCAD4481A',
-        'name': 'Dr. Bhargav C',
-        'specialty': 'General Surgery',
-        'hospitalId': 11,
-        'consultationFee': 700,
-      },
-      {
-        'doctorId': '678134A7-DAF4-406A-BC6E-45AAB5A49AA0',
-        'name': 'Dr. Janu J',
-        'specialty': 'Dermatology',
-        'hospitalId': 1,
-        'consultationFee': 500,
-      },
-    ];
 
     _hospitals = hospitals;
     _allDoctors = doctors;
 
     if (widget.initialHospitalId != null) {
       final foundHosp = hospitals.where((h) => h['id'].toString() == widget.initialHospitalId.toString()).toList();
-      _selectedHospital = foundHosp.isNotEmpty ? foundHosp.first : hospitals.first;
+      _selectedHospital = foundHosp.isNotEmpty ? foundHosp.first : (hospitals.isNotEmpty ? hospitals.first : null);
     } else {
-      _selectedHospital = hospitals.first;
+      _selectedHospital = hospitals.isNotEmpty ? hospitals.first : null;
     }
 
-    _filterDoctorsForHospital(_selectedHospital!['id']);
+    if (_selectedHospital != null) {
+      _filterDoctorsForHospital(_selectedHospital!['id']);
+    } else {
+      _filteredDoctors = [];
+      _selectedDoctor = null;
+    }
 
     if (widget.initialDoctorId != null) {
-      final foundDoc = _allDoctors.where((d) => d['doctorId'].toString() == widget.initialDoctorId.toString()).toList();
+      final foundDoc = _allDoctors.where((d) => (d['doctorId'] ?? d['id']).toString() == widget.initialDoctorId.toString()).toList();
       if (foundDoc.isNotEmpty) {
         _selectedDoctor = foundDoc.first;
       }
@@ -239,23 +240,52 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
 
     if (mounted) {
       setState(() => _isLoadingInitial = false);
-      _fetchSlots();
+      if (_selectedDoctor != null && _selectedHospital != null) {
+        _fetchSlots();
+      }
     }
   }
 
-  void _filterDoctorsForHospital(dynamic hospitalId) {
-    final hospIdInt = int.tryParse(hospitalId.toString()) ?? 1;
-    final matched = _allDoctors.where((d) {
-      final docHosp = int.tryParse(d['hospitalId'].toString()) ?? 1;
-      return docHosp == hospIdInt;
-    }).toList();
+  Future<void> _filterDoctorsForHospital(dynamic hospitalId) async {
+    if (hospitalId == null) {
+      if (mounted) {
+        setState(() {
+          _filteredDoctors = [];
+          _selectedDoctor = null;
+        });
+      }
+      return;
+    }
 
-    _filteredDoctors = matched.isNotEmpty ? matched : _allDoctors;
-    _selectedDoctor = _filteredDoctors.first;
+    setState(() => _isLoadingDoctors = true);
+    try {
+      final docs = await LikedHospitalsService.instance.getLinkedDoctorsForHospital(
+        hospitalId: hospitalId,
+        initialDoctor: widget.initialDoctorId != null ? {'doctorId': widget.initialDoctorId} : null,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _filteredDoctors = docs;
+        _selectedDoctor = _filteredDoctors.isNotEmpty ? _filteredDoctors.first : null;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingDoctors = false);
+    }
+
+    _fetchSlots();
   }
 
   Future<void> _fetchSlots() async {
-    if (_selectedDoctor == null || _selectedHospital == null) return;
+    if (_selectedDoctor == null || _selectedHospital == null) {
+      setState(() {
+        _availableSlots = [];
+        _selectedSlot = null;
+        _isLoadingSlots = false;
+      });
+      return;
+    }
 
     setState(() {
       _isLoadingSlots = true;
@@ -283,50 +313,63 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
       );
 
-      if (res.data != null && res.data['data'] is List) {
-        final list = res.data['data'] as List;
-        for (final item in list) {
-          final isAvail = item['isAvailable'] == true && item['isBooked'] != true;
-          slots.add({
-            'id': item['id'],
-            'startTime': item['startTime'] ?? '09:00',
-            'endTime': item['endTime'] ?? '09:15',
-            'label': item['label'] ?? item['startTime'] ?? '09:00 AM',
-            'isAvailable': isAvail,
-          });
+      List<dynamic>? rawSlots;
+      if (res.data != null && res.data['data'] != null) {
+        final slotData = res.data['data'];
+        if (slotData is List) {
+          rawSlots = slotData;
+        } else if (slotData is Map && slotData['slots'] is List) {
+          rawSlots = slotData['slots'] as List;
+        }
+      }
+
+      if (rawSlots != null && rawSlots.isNotEmpty) {
+        final now = DateTime.now();
+        final isToday = _selectedDate.year == now.year &&
+            _selectedDate.month == now.month &&
+            _selectedDate.day == now.day;
+
+        for (final item in rawSlots) {
+          if (item is Map<String, dynamic>) {
+            final String startTime = (item['startTime'] ?? '09:00').toString();
+            final String endTime = (item['endTime'] ?? '09:15').toString();
+            final String label = (item['label'] ?? startTime).toString();
+
+            final bool isBooked = item['isBooked'] == true ||
+                item['status']?.toString().toLowerCase() == 'booked' ||
+                (item['appointmentId'] != null &&
+                    item['appointmentId'].toString().isNotEmpty &&
+                    item['appointmentId'].toString() != 'null') ||
+                item['hasAppointment'] == true;
+
+            final bool isBlocked = item['isBlocked'] == true ||
+                item['status']?.toString().toLowerCase() == 'blocked' ||
+                item['label']?.toString().toLowerCase() == 'blocked';
+
+            bool isPast = false;
+            if (isToday) {
+              final slotDt = DoctorSlotItem.parseSlotDateTime(_selectedDate, startTime);
+              if (slotDt != null && slotDt.isBefore(now)) {
+                isPast = true;
+              }
+            }
+
+            final bool isAvail = (item['isAvailable'] == true) && !isBooked && !isBlocked && !isPast;
+
+            slots.add({
+              'id': item['id'],
+              'startTime': startTime,
+              'endTime': endTime,
+              'label': label,
+              'isAvailable': isAvail,
+              'isBooked': isBooked,
+              'isBlocked': isBlocked,
+              'isPast': isPast,
+            });
+          }
         }
       }
     } catch (_) {}
-
-    if (slots.isEmpty) {
-      final defaultTimes = [
-        {"start": "09:00", "end": "09:15", "label": "09:00 AM"},
-        {"start": "09:30", "end": "09:45", "label": "09:30 AM"},
-        {"start": "10:00", "end": "10:15", "label": "10:00 AM"},
-        {"start": "10:30", "end": "10:45", "label": "10:30 AM"},
-        {"start": "11:00", "end": "11:15", "label": "11:00 AM"},
-        {"start": "11:30", "end": "11:45", "label": "11:30 AM"},
-        {"start": "14:00", "end": "14:15", "label": "02:00 PM"},
-        {"start": "14:30", "end": "14:45", "label": "02:30 PM"},
-        {"start": "15:00", "end": "15:15", "label": "03:00 PM"},
-        {"start": "15:30", "end": "15:45", "label": "03:30 PM"},
-        {"start": "16:00", "end": "16:15", "label": "04:00 PM"},
-        {"start": "16:30", "end": "16:45", "label": "04:30 PM"},
-        {"start": "18:00", "end": "18:15", "label": "06:00 PM"},
-        {"start": "18:30", "end": "18:45", "label": "06:30 PM"},
-        {"start": "19:00", "end": "19:15", "label": "07:00 PM"},
-      ];
-
-      for (int i = 0; i < defaultTimes.length; i++) {
-        slots.add({
-          'id': i + 1,
-          'startTime': defaultTimes[i]['start']!,
-          'endTime': defaultTimes[i]['end']!,
-          'label': defaultTimes[i]['label']!,
-          'isAvailable': true,
-        });
-      }
-    }
 
     if (mounted) {
       setState(() {
@@ -335,6 +378,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         final firstAvail = slots.where((s) => s['isAvailable'] == true).toList();
         if (firstAvail.isNotEmpty) {
           _selectedSlot = firstAvail.first;
+        } else {
+          _selectedSlot = null;
         }
       });
     }
@@ -414,7 +459,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "orgId": orgId,
       "hospitalId": hospitalId,
       "patientUserId": profile['userId'],
-      "parentUserId": profile['isPrimary'] == true ? null : currentUser?.data?.id,
+      "parentUserId": profile['isPrimary'] == true
+          ? null
+          : (GlobalSession.instance.rootPrimaryUserId ?? currentUser?.data?.id),
       "relation": profile['relation'] ?? "Self",
       "isPrimary": profile['isPrimary'] ?? true,
       "patientName": profile['name'] ?? "Patient",
@@ -425,7 +472,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "reason": reason,
       "appointmentType": _isTeleConsultation ? "Video" : "Consultation",
       "isTeleConsultation": _isTeleConsultation,
-      "consultationFee": _selectedDoctor!['consultationFee'] ?? 500,
+      "consultationFee": _selectedDoctor!['consultationFee'] ?? 0,
     };
 
     try {
@@ -451,6 +498,32 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   }
 
   void _showSuccessSheet(BuildContext ctx) {
+    if (_selectedDoctor != null) {
+      LikedHospitalsService.instance.saveLinkedDoctor(_selectedDoctor!);
+    }
+    if (_selectedHospital != null) {
+      LikedHospitalsService.instance.saveLikedHospital(_selectedHospital!);
+    }
+
+    // Trigger immediate local notification to alert patient instantly
+    try {
+      final rawDocName = (_selectedDoctor?['name'] ?? 'Doctor').toString().trim();
+      final cleanDocName = rawDocName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim();
+      final formattedDocName = cleanDocName.isNotEmpty ? 'Dr. $cleanDocName' : 'your doctor';
+      final dateFormatted = DateFormat('dd MMM yyyy').format(_selectedDate);
+      final slotTime = _selectedSlot?['startTime'] ?? '10:00 AM';
+      NotificationService.instance.showNotification(
+        title: "Appointment Confirmed",
+        body: "Your appointment with $formattedDocName on $dateFormatted at $slotTime is confirmed.",
+        payload: jsonEncode({
+          "type": "APPOINTMENT_BOOKED",
+          "route": "/patientDashboard",
+        }),
+      );
+    } catch (e) {
+      debugPrint("Failed to trigger local appointment notification: $e");
+    }
+
     final isDark = Theme.of(ctx).brightness == Brightness.dark;
     showModalBottomSheet(
       context: ctx,
@@ -656,7 +729,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         ),
       ),
       body: _isLoadingInitial
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+          ? _buildFullAppointmentShimmer(isDark, isTab)
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.symmetric(
@@ -690,158 +763,314 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         _buildSectionHeader(1, "Hospital & Assigned Doctor", isDark),
                         const SizedBox(height: 12),
 
-                        _buildInputLabel("Hospital / Facility *", isDark, isTab),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                        if (_hospitals.isEmpty) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                              ),
                             ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<Map<String, dynamic>>(
-                              value: _selectedHospital,
-                              isExpanded: true,
-                              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
-                              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                              items: _hospitals.map((h) {
-                                return DropdownMenuItem<Map<String, dynamic>>(
-                                  value: h,
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          h['name'] ?? 'Hospital',
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    _selectedHospital = val;
-                                    _filterDoctorsForHospital(val['id']);
-                                  });
-                                  _fetchSlots();
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        _buildInputLabel("Assigned Doctor *", isDark, isTab),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          height: 88,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _filteredDoctors.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 10),
-                            itemBuilder: (context, index) {
-                              final doc = _filteredDoctors[index];
-                              final isSelected = _selectedDoctor?['doctorId'] == doc['doctorId'];
-                              final docName = doc['name'] ?? 'Doctor';
-                              final initial = docName.replaceFirst('Dr. ', '').trim().isNotEmpty
-                                  ? docName.replaceFirst('Dr. ', '').trim()[0].toUpperCase()
-                                  : 'D';
-
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() => _selectedDoctor = doc);
-                                  _fetchSlots();
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 220,
-                                  padding: const EdgeInsets.all(10),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? (isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE))
-                                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF2563EB)
-                                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                                      width: isSelected ? 1.8 : 1.0,
-                                    ),
+                                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: isSelected ? const Color(0xFF2563EB) : const Color(0xFFBAE6FD),
-                                        child: Text(
-                                          initial,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white : const Color(0xFF0369A1),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              docName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
-                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                              ),
-                                            ),
-                                            Text(
-                                              doc['specialty'] ?? 'General Physician',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: 10,
-                                                color: Color(0xFF2563EB),
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            Text(
-                                              "₹${doc['consultationFee'] ?? 500}",
-                                              style: TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                  child: const Icon(
+                                    Icons.local_hospital_rounded,
+                                    color: Color(0xFF2563EB),
+                                    size: 28,
                                   ),
                                 ),
-                              );
-                            },
+                                const SizedBox(height: 12),
+                                Text(
+                                  "No Linked Hospitals",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 16 : 14.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Only liked and linked hospitals are allowed for patient appointment bookings. Connect with your doctor or hospital by scanning their QR code.",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 13 : 12,
+                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2563EB),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                  onPressed: () {
+                                    ScanDoctorQrSheet.show(
+                                      context,
+                                      onDoctorLinked: (newDoc) {
+                                        _loadInitialData();
+                                      },
+                                    );
+                                  },
+                                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 16, color: Colors.white),
+                                  label: const Text(
+                                    "Scan Doctor / Clinic QR",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ] else ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildInputLabel("Hospital / Facility *", isDark, isTab),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF0284C7)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "Liked / Linked Only",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF0284C7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<Map<String, dynamic>>(
+                                value: _selectedHospital,
+                                isExpanded: true,
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+                                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                items: _hospitals.map((h) {
+                                  return DropdownMenuItem<Map<String, dynamic>>(
+                                    value: h,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            h['name'] ?? 'Hospital',
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedHospital = val;
+                                    });
+                                    _filterDoctorsForHospital(val['id']);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          _buildInputLabel("Assigned Doctor *", isDark, isTab),
+                          const SizedBox(height: 6),
+                          if (_isLoadingDoctors) ...[
+                            _buildDoctorCardsShimmer(isDark),
+                          ] else if (_filteredDoctors.isEmpty) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      "No connected doctors for this hospital. Scan doctor's QR code to link.",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 12,
+                                        color: isDark ? Colors.white70 : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      ScanDoctorQrSheet.show(
+                                        context,
+                                        onDoctorLinked: (newDoc) {
+                                          _loadInitialData();
+                                        },
+                                      );
+                                    },
+                                    child: const Text(
+                                      "Scan QR",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            SizedBox(
+                              height: 88,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _filteredDoctors.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                itemBuilder: (context, index) {
+                                  final doc = _filteredDoctors[index];
+                                  final isSelected = (_selectedDoctor?['doctorId'] ?? _selectedDoctor?['id']) == (doc['doctorId'] ?? doc['id']);
+                                  final docName = doc['name'] ?? 'Doctor';
+                                  final initial = docName.replaceFirst('Dr. ', '').trim().isNotEmpty
+                                      ? docName.replaceFirst('Dr. ', '').trim()[0].toUpperCase()
+                                      : 'D';
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() => _selectedDoctor = doc);
+                                      _fetchSlots();
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: 220,
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? (isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE))
+                                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF2563EB)
+                                              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                          width: isSelected ? 1.8 : 1.0,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 18,
+                                            backgroundColor: isSelected ? const Color(0xFF2563EB) : const Color(0xFFBAE6FD),
+                                            child: Text(
+                                              initial,
+                                              style: TextStyle(
+                                                color: isSelected ? Colors.white : const Color(0xFF0369A1),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  docName,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontFamily: appPoppinFont,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  doc['specialty'] ?? 'General Physician',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontFamily: appPoppinFont,
+                                                    fontSize: 10,
+                                                    color: Color(0xFF2563EB),
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "₹${doc['consultationFee'] ?? 0}",
+                                                  style: TextStyle(
+                                                    fontFamily: appPoppinFont,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
 
                         const SizedBox(height: 18),
                         Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
@@ -1036,12 +1265,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         const SizedBox(height: 8),
 
                         if (_isLoadingSlots)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: CircularProgressIndicator(color: Color(0xFF2563EB)),
-                            ),
-                          )
+                          _buildSlotsShimmer(isDark)
                         else if (_availableSlots.isEmpty)
                           Container(
                             width: double.infinity,
@@ -1066,10 +1290,37 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             runSpacing: 8,
                             children: _availableSlots.map((slot) {
                               final isAvail = slot['isAvailable'] == true;
-                              final isSelected = _selectedSlot?['startTime'] == slot['startTime'];
+                              final isBooked = slot['isBooked'] == true;
+                              final isPast = slot['isPast'] == true;
+                              final isSelected = isAvail && _selectedSlot?['startTime'] == slot['startTime'];
+                              final displayLabel = slot['label'] ?? slot['startTime'];
 
-                              return GestureDetector(
-                                onTap: isAvail ? () => setState(() => _selectedSlot = slot) : null,
+                              return InkWell(
+                                onTap: () {
+                                  if (isAvail) {
+                                    setState(() {
+                                      _selectedSlot = slot;
+                                      if (_slotError != null) _slotError = null;
+                                    });
+                                  } else {
+                                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          isPast
+                                              ? "This slot has already passed."
+                                              : (isBooked
+                                                  ? "This slot is already booked. Please select an available slot."
+                                                  : "This slot is currently blocked."),
+                                          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12),
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
@@ -1077,27 +1328,44 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         ? const Color(0xFF2563EB)
                                         : (isAvail
                                             ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))
-                                            : (isDark ? Colors.white10 : const Color(0xFFE2E8F0))),
+                                            : (isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9))),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: isSelected
                                           ? const Color(0xFF2563EB)
-                                          : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                                          : (isBooked
+                                              ? (isDark ? Colors.redAccent.withValues(alpha: 0.25) : Colors.red.withValues(alpha: 0.2))
+                                              : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1))),
                                     ),
                                   ),
-                                  child: Text(
-                                    slot['label'] ?? slot['startTime'],
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 11,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isAvail
-                                              ? (isDark ? Colors.white : const Color(0xFF0F172A))
-                                              : (isDark ? Colors.white24 : Colors.grey.shade400)),
-                                      decoration: isAvail ? null : TextDecoration.lineThrough,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (isBooked) ...[
+                                        Icon(
+                                          Icons.lock_outline_rounded,
+                                          size: 11,
+                                          color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      Text(
+                                        displayLabel,
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 11,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : (isAvail
+                                                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                                  : (isBooked
+                                                      ? (isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400)
+                                                      : (isDark ? Colors.white24 : Colors.grey.shade400))),
+                                          decoration: isAvail ? null : TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );
@@ -1333,7 +1601,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   ),
                   Text(
                     _selectedDoctor != null
-                        ? "${_selectedDoctor!['name']} (₹${_selectedDoctor!['consultationFee'] ?? 500})"
+                        ? "${_selectedDoctor!['name']} (₹${_selectedDoctor!['consultationFee'] ?? 0})"
                         : "Select a doctor",
                     style: const TextStyle(
                       fontFamily: appPoppinFont,
@@ -1428,6 +1696,172 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         fontWeight: FontWeight.w600,
         fontSize: isTab ? 13 : 11.5,
         color: isDark ? Colors.white70 : const Color(0xFF475569),
+      ),
+    );
+  }
+
+  Widget _buildDoctorCardsShimmer(bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: SizedBox(
+        height: 88,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (_, __) => Container(
+            width: 220,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 110, height: 12, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(height: 6),
+                      Container(width: 75, height: 10, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(height: 6),
+                      Container(width: 55, height: 9, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlotsShimmer(bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: List.generate(6, (index) => Container(
+          width: 92,
+          height: 38,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        )),
+      ),
+    );
+  }
+
+  Widget _buildFullAppointmentShimmer(bool isDark, bool isTab) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: isTab ? 32 : 16, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(isTab ? 24 : 18),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 140, height: 16, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 120, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 88,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 3,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (_, __) => Container(
+                        width: 220,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 100, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 90, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(6, (index) => Container(
+                      width: 92,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    )),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

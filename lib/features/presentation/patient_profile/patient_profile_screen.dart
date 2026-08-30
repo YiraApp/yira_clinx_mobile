@@ -17,6 +17,7 @@ import 'package:yiraclinics/features/presentation/prescriptions/prescription_blo
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_records_screen.dart';
+import 'suggestions/doctor_suggestions_screen.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
@@ -53,7 +54,7 @@ class _DoctorPatientProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 6 tabs with dedicated Appointments tab
+  // 7 tabs with dedicated Appointments & Suggestions tabs
   final List<String> _tabs = [
     'Info',
     'Appointments',
@@ -61,6 +62,7 @@ class _DoctorPatientProfileScreenState
     'Prescribe',
     'Notes',
     'Documents',
+    'Suggestions',
   ];
 
   @override
@@ -318,6 +320,15 @@ class _DoctorPatientProfileScreenState
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
           ),
+        );
+      case 6:
+        // Suggestions Tab (Doctors can add health & lifestyle suggestions for the patient)
+        return DoctorSuggestionsScreen(
+          key: const ValueKey('SuggestionsTabFrame'),
+          patientId: widget.patientId ?? patient.id,
+          hospitalId: widget.hospitalId,
+          orgId: widget.orgId,
+          patientName: widget.patientName ?? patient.name,
         );
       default:
         return Center(

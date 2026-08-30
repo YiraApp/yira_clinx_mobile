@@ -5,6 +5,7 @@ import '../../di/dependency_injection.dart';
 import '../../features/data/models/login/login_model.dart';
 import '../../features/domain/entities/login/login_entity.dart';
 import '../package/domain/plat_form_info_entity.dart';
+import '../services/notification_services/notification_services.dart';
 import '../use_cases/get_plat_form_info_usecase.dart';
 
 class GlobalSession {
@@ -67,6 +68,8 @@ class GlobalSession {
 
       final String userJson = jsonEncode(jsonMap);
       await _secureStorage.writeSecureValue<String>(SecureCacheKey.userData, userJson);
+      // Automatically register FCM token for the newly authenticated session
+      NotificationService.instance.syncFcmTokenWithBackend();
     } catch (e, stackTrace) {
       debugPrint("CRITICAL (GlobalSession): Error saving session payload to SecureStorage: $e");
       debugPrint("Stacktrace: $stackTrace");

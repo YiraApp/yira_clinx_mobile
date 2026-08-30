@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
+import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/constants/constants.dart';
@@ -188,38 +194,23 @@ class TreatmentPlanOption {
   });
 }
 
-class PreviousAppointmentOption {
-  final int id;
-  final String appointmentDate;
-  final String startTime;
-  final String appointmentType;
-  final String status;
-  final String reason;
-  final String doctorName;
-  final String patientName;
-  final String? hospitalName;
-
-  const PreviousAppointmentOption({
-    required this.id,
-    required this.appointmentDate,
-    required this.startTime,
-    required this.appointmentType,
-    required this.status,
-    required this.reason,
-    required this.doctorName,
-    required this.patientName,
-    this.hospitalName,
-  });
-}
 
 class AddNewAppointmentScreen extends StatefulWidget {
   final String? initialPatientName;
   final String? initialPatientPhone;
+  final String? initialDoctorId;
+  final String? initialDoctorName;
+  final dynamic initialHospitalId;
+  final Map<String, dynamic>? initialDoctor;
 
   const AddNewAppointmentScreen({
     super.key,
     this.initialPatientName,
     this.initialPatientPhone,
+    this.initialDoctorId,
+    this.initialDoctorName,
+    this.initialHospitalId,
+    this.initialDoctor,
   });
 
   @override
@@ -260,14 +251,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   String _selectedGender = "Male";
   bool _isTeleConsultation = false;
   bool _isLoadingSlots = false;
-  bool _isExistingPatient = false;
   List<DoctorSlotItem> _allDoctorSlots = [];
-
-  // Link to Another Appointment
-  bool _linkToExistingAppointment = false;
-  int? _selectedParentAppointmentId;
-  List<PreviousAppointmentOption> _patientPreviousAppointments = [];
-  bool _isLoadingPatientAppointments = false;
 
   // Configured Treatment Plans for the Hospital
   List<TreatmentPlanOption> _allTreatmentPlans = [];
@@ -277,134 +261,202 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   // Consultation Fee & Discount State
   bool _includeConsultationFee = true;
-  double _consultationFee = 500.0;
+  double _consultationFee = 0.0;
   final TextEditingController _discountController = TextEditingController();
 
   // Patient Hospital & Doctor Selection
   List<Map<String, dynamic>> _hospitals = [];
-  List<Map<String, dynamic>> _allDoctors = [];
   List<Map<String, dynamic>> _filteredDoctors = [];
   Map<String, dynamic>? _selectedHospital;
   Map<String, dynamic>? _selectedDoctorMap;
+  bool _isLoadingDoctors = false;
+  bool _isLoadingInitial = true;
 
   Future<void> _initPatientHospitalsAndDoctors() async {
+    setState(() => _isLoadingInitial = true);
+    try {
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final token = currentUser?.data?.accessToken ?? '';
     final userId = (currentUser?.data?.id ?? '').trim();
-    final roleId = (currentUser?.data?.latestRoleId ?? '4FC67429-28AE-4106-93EF-436228282ED0').trim();
+    final bool isPatient = currentUser?.data?.navigationId == "1" ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
+
     List<Map<String, dynamic>> hospitals = [];
-    if (userId.isNotEmpty) {
+    List<Map<String, dynamic>> doctors = [];
+
+    if (isPatient) {
+      // 1. Fetch exclusively Liked & Linked Hospitals
+      hospitals = await LikedHospitalsService.instance.getLikedAndLinkedHospitals(
+        patientId: userId,
+        initialDoctor: widget.initialDoctor,
+        initialHospitalId: widget.initialHospitalId,
+      );
+
+      // 2. Load Linked Doctors from SharedPreferences
+      final linkedStorageKey = userId.isNotEmpty ? 'patient_linked_doctors_$userId' : 'patient_linked_doctors';
       try {
-        final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
-          URLs.workspaceDetailsUrl,
-          queryParameters: {
-            'userId': userId,
-            'roleId': roleId,
-          },
-          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-        );
-        if (res.data != null && res.data['data'] != null) {
-          final data = res.data['data'];
-          if (data['workspaces'] is List) {
-            final wsList = data['workspaces'] as List;
-            for (final ws in wsList) {
-              final hospId = ws['hospitalId'] ?? ws['HospitalId'] ?? 1;
-              final hospName = ws['hospitalName'] ?? ws['HospitalName'] ?? 'Yira Hospitals';
-              final orgId = ws['organizationId'] ?? ws['OrganizationId'] ?? 1;
-              final orgName = ws['organizationName'] ?? ws['OrganizationName'] ?? 'Yira';
-              if (!hospitals.any((h) => h['id'] == hospId)) {
-                hospitals.add({
-                  'id': hospId,
-                  'name': hospName,
-                  'orgId': orgId,
-                  'orgName': orgName,
-                });
-              }
+        final prefs = await SharedPreferences.getInstance();
+        final localStr = prefs.getString(linkedStorageKey);
+        if (localStr != null) {
+          final List<dynamic> localList = jsonDecode(localStr);
+          for (final item in localList) {
+            final map = Map<String, dynamic>.from(item);
+            final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
+            if (docId.isNotEmpty && !doctors.any((d) => (d['doctorId'] ?? d['id'])?.toString().trim() == docId)) {
+              doctors.add(map);
             }
           }
         }
       } catch (_) {}
-    }
 
-    if (hospitals.isEmpty) {
+      // 3. Insert Explicit Initial Doctor if provided
+      if (widget.initialDoctor != null) {
+        final initDoc = Map<String, dynamic>.from(widget.initialDoctor!);
+        final docId = (initDoc['doctorId'] ?? initDoc['id'] ?? '').toString().trim();
+        if (docId.isNotEmpty) {
+          doctors.removeWhere((d) => (d['doctorId'] ?? d['id'])?.toString().trim() == docId);
+          doctors.insert(0, initDoc);
+        }
+      }
+
+      // 4. Ensure all linked doctors' hospitals are in the hospitals list
+      for (final doc in doctors) {
+        if (doc['hospitalId'] != null) {
+          final hId = doc['hospitalId'];
+          final hName = (doc['hospitalName'] ?? '').toString().trim();
+          final oId = doc['orgId'] ?? 1;
+          final oName = doc['orgName'] ?? 'Healthcare Facility';
+          if (hName.isNotEmpty && !hospitals.any((h) => h['id'].toString() == hId.toString())) {
+            hospitals.add({
+              'id': int.tryParse(hId.toString()) ?? hId,
+              'name': hName,
+              'orgId': oId,
+              'orgName': oName,
+              'isLiked': true,
+              'isLinked': true,
+            });
+          }
+        }
+      }
+    } else {
+      // Provider mode: use provider's hospital & clinic context
       final userHospId = currentUser?.data?.latestHospitalId ?? 19;
       final userOrgId = currentUser?.data?.latestOrgId ?? 1;
+      final firstName = currentUser?.data?.firstName ?? '';
+      final lastName = currentUser?.data?.lastName ?? '';
+      final providerName = 'Dr. $firstName $lastName'.trim();
+
       hospitals = [
-        {'id': userHospId, 'name': 'Yira Hospitals', 'orgId': userOrgId, 'orgName': 'Yira Health'},
-        {'id': 12, 'name': 'Ocimum Dental Clinic', 'orgId': 10, 'orgName': 'Demo Org 1'},
-        {'id': 11, 'name': 'AIG Somajiguda', 'orgId': 9, 'orgName': 'AIG'},
-        {'id': 1, 'name': 'kims Maharashtra', 'orgId': 3, 'orgName': 'kims'},
+        {'id': userHospId, 'name': 'Yira Hospitals', 'orgId': userOrgId, 'orgName': 'yira'},
+      ];
+
+      doctors = [
+        {
+          'doctorId': currentUser?.data?.id ?? '1',
+          'name': providerName.isNotEmpty ? providerName : 'Dr. Provider',
+          'specialty': 'Specialist',
+          'hospitalId': userHospId,
+          'consultationFee': 500,
+        }
       ];
     }
 
-    final doctors = [
-      {
-        'doctorId': '4B7319C8-4FE0-42A8-B0C8-23674EFD8CB7',
-        'name': 'Dr. Neeli Manikanta',
-        'specialty': 'Dermatology & General Care',
-        'hospitalId': 12,
-        'consultationFee': 500,
-      },
-      {
-        'doctorId': '050D2CBB-5DCA-452B-A3E2-9E6CFC01C069',
-        'name': 'Dr. Vijay M',
-        'specialty': 'Cardiology & Internal Medicine',
-        'hospitalId': 12,
-        'consultationFee': 600,
-      },
-      {
-        'doctorId': '6CDE8235-B520-4442-B912-9622A9D357D0',
-        'name': 'Dr. Manikanta Jay',
-        'specialty': 'General Physician',
-        'hospitalId': 19,
-        'consultationFee': 500,
-      },
-      {
-        'doctorId': '234154EE-E1EE-49D2-9577-F0DB190C827C',
-        'name': 'Dr. Teja Ch',
-        'specialty': 'Family Medicine',
-        'hospitalId': 19,
-        'consultationFee': 400,
-      },
-      {
-        'doctorId': 'F2C87403-C46A-47A3-BE90-03DCCAD4481A',
-        'name': 'Dr. Bhargav C',
-        'specialty': 'General Surgery',
-        'hospitalId': 11,
-        'consultationFee': 700,
-      },
-      {
-        'doctorId': '678134A7-DAF4-406A-BC6E-45AAB5A49AA0',
-        'name': 'Dr. Janu J',
-        'specialty': 'Dermatology',
-        'hospitalId': 1,
-        'consultationFee': 500,
-      },
-    ];
+    // 5. Resolve Target Doctor for Auto-Selection
+    Map<String, dynamic>? targetDoctor;
+    final targetDocId = (widget.initialDoctorId ?? widget.initialDoctor?['doctorId'] ?? widget.initialDoctor?['id'])?.toString().trim();
+    final targetDocName = (widget.initialDoctorName ?? widget.initialDoctor?['name'])?.toString().trim();
 
-    if (mounted) {
-      setState(() {
-        _hospitals = hospitals;
-        _allDoctors = doctors;
-        _selectedHospital = hospitals.first;
-        _filterDoctorsForHospital(_selectedHospital!['id']);
-      });
-      _fetchDoctorSlots(_selectedDate);
-      _fetchTreatmentPlans();
+    if (targetDocId != null && targetDocId.isNotEmpty) {
+      final idx = doctors.indexWhere((d) => (d['doctorId'] ?? d['id'])?.toString().trim() == targetDocId);
+      if (idx != -1) {
+        targetDoctor = doctors[idx];
+      }
+    }
+
+    if (targetDoctor == null && targetDocName != null && targetDocName.isNotEmpty) {
+      final idx = doctors.indexWhere((d) => (d['name'] ?? '').toString().trim().toLowerCase() == targetDocName.toLowerCase());
+      if (idx != -1) {
+        targetDoctor = doctors[idx];
+      }
+    }
+
+    // 6. Resolve Target Hospital for Auto-Selection
+    Map<String, dynamic>? targetHospital;
+    final targetHospId = widget.initialHospitalId ?? targetDoctor?['hospitalId'];
+    if (targetHospId != null) {
+      final hIdx = hospitals.indexWhere((h) => h['id'].toString() == targetHospId.toString());
+      if (hIdx != -1) {
+        targetHospital = hospitals[hIdx];
+      } else if (hospitals.isNotEmpty) {
+        targetHospital = hospitals.first;
+      }
+    } else if (hospitals.isNotEmpty) {
+      targetHospital = hospitals.first;
+    }
+
+      if (mounted) {
+        setState(() {
+          _hospitals = hospitals;
+          _selectedHospital = targetHospital;
+        });
+        if (_selectedHospital != null) {
+          await _filterDoctorsForHospital(_selectedHospital!['id'], preferredDoctor: targetDoctor);
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingInitial = false);
+      }
     }
   }
 
-  void _filterDoctorsForHospital(dynamic hospitalId) {
-    final hospIdInt = int.tryParse(hospitalId.toString()) ?? 1;
-    final matched = _allDoctors.where((d) {
-      final docHosp = int.tryParse(d['hospitalId'].toString()) ?? 1;
-      return docHosp == hospIdInt;
-    }).toList();
+  Future<void> _filterDoctorsForHospital(dynamic hospitalId, {Map<String, dynamic>? preferredDoctor}) async {
+    if (hospitalId == null) {
+      if (mounted) {
+        setState(() {
+          _filteredDoctors = [];
+          _selectedDoctorMap = null;
+        });
+      }
+      return;
+    }
 
-    _filteredDoctors = matched.isNotEmpty ? matched : _allDoctors;
-    _selectedDoctorMap = _filteredDoctors.first;
-    _selectedDoctor = _selectedDoctorMap!['name'] ?? 'Dr. Doctor';
-    _consultationFee = (double.tryParse(_selectedDoctorMap!['consultationFee'].toString()) ?? 500.0);
+    setState(() => _isLoadingDoctors = true);
+    try {
+      final docs = await LikedHospitalsService.instance.getLinkedDoctorsForHospital(
+        hospitalId: hospitalId,
+        initialDoctor: preferredDoctor ?? widget.initialDoctor,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _filteredDoctors = docs;
+        if (preferredDoctor != null) {
+          final hasDoc = _filteredDoctors.any((d) =>
+              (d['doctorId'] ?? d['id'])?.toString().trim() ==
+              (preferredDoctor['doctorId'] ?? preferredDoctor['id'])?.toString().trim());
+          if (!hasDoc) {
+            _filteredDoctors.insert(0, preferredDoctor);
+          }
+          _selectedDoctorMap = preferredDoctor;
+        } else if (_filteredDoctors.isNotEmpty) {
+          _selectedDoctorMap = _filteredDoctors.first;
+        } else {
+          _selectedDoctorMap = null;
+        }
+
+        _selectedDoctor = _selectedDoctorMap?['name'] ?? 'Dr. Doctor';
+        _consultationFee = (double.tryParse(_selectedDoctorMap?['consultationFee']?.toString() ?? '') ?? 0.0);
+      });
+    } finally {
+      if (mounted) setState(() => _isLoadingDoctors = false);
+    }
+
+    if (_selectedDoctorMap != null) {
+      _fetchDoctorSlots(_selectedDate);
+      _fetchTreatmentPlans();
+    }
   }
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
@@ -414,12 +466,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     setState(() {
       _patientSearchController.clear();
       _selectedGender = "Male";
-      _isExistingPatient = false;
       _selectedPatient = null;
       _showPatientDropdown = false;
-      _linkToExistingAppointment = false;
-      _selectedParentAppointmentId = null;
-      _patientPreviousAppointments = [];
       _nameError = null;
       _phoneError = null;
       _reasonError = null;
@@ -438,15 +486,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       _patientSearchController.text = account.name;
       _phoneController.text = account.phone;
       _selectedGender = account.gender.isNotEmpty ? account.gender : "Male";
-      _isExistingPatient = true;
       _showPatientDropdown = false;
       _nameError = null;
       _phoneError = null;
     });
     _patientFocusNode.unfocus();
-    if (account.phone.isNotEmpty) {
-      _fetchPatientPreviousAppointments(account.phone);
-    }
   }
 
   Future<void> _lookupAccountsByPhone(String rawPhone) async {
@@ -651,7 +695,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   _selectedPatient = accounts.first;
                   _patientSearchController.text = accounts.first.name;
                   _selectedGender = accounts.first.gender.isNotEmpty ? accounts.first.gender : "Male";
-                  _isExistingPatient = true;
                 }
               }
             });
@@ -679,7 +722,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     if (digits.length != 10 && _selectedPatient != null) {
       setState(() {
         _selectedPatient = null;
-        _isExistingPatient = false;
       });
     }
 
@@ -877,69 +919,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     }
   }
 
-  Future<void> _fetchPatientPreviousAppointments(String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-    if (cleanPhone.length < 10) return;
-
-    setState(() {
-      _isLoadingPatientAppointments = true;
-    });
-    try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final String token = currentUser?.data?.accessToken ?? '';
-
-      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.patientAppointmentsUrl,
-        data: {
-          "patientPhone": cleanPhone,
-        },
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
-
-      final List<PreviousAppointmentOption> list = [];
-      if (response.data != null && response.data is Map<String, dynamic>) {
-        final rawData = response.data as Map<String, dynamic>;
-        final items = rawData['data'];
-        if (items is List) {
-          for (final item in items) {
-            if (item is Map<String, dynamic>) {
-              final int id = int.tryParse((item['id'] ?? '0').toString()) ?? 0;
-              if (id > 0) {
-                list.add(PreviousAppointmentOption(
-                  id: id,
-                  appointmentDate: (item['appointmentDate'] ?? '').toString(),
-                  startTime: (item['startTime'] ?? '').toString(),
-                  appointmentType: (item['appointmentType'] ?? 'Consultation').toString(),
-                  status: (item['status'] ?? 'Scheduled').toString(),
-                  reason: (item['reason'] ?? '').toString(),
-                  doctorName: (item['doctorName'] ?? 'Doctor').toString(),
-                  patientName: (item['patientName'] ?? 'Patient').toString(),
-                  hospitalName: (item['hospitalName'] ?? '').toString(),
-                ));
-              }
-            }
-          }
-        }
-      }
-      if (mounted) {
-        setState(() {
-          _patientPreviousAppointments = list;
-          if (_patientPreviousAppointments.isNotEmpty && _selectedParentAppointmentId == null) {
-            _selectedParentAppointmentId = _patientPreviousAppointments.first.id;
-          }
-        });
-      }
-    } catch (_) {} finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingPatientAppointments = false;
-        });
-      }
-    }
-  }
-
   Future<void> _fetchDoctorSlots(DateTime date) async {
     setState(() {
       _isLoadingSlots = true;
@@ -947,10 +926,25 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final bool isPatient = currentUser?.data?.navigationId == "1" ||
-          (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient");
+          (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
+          (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
+
+      final String? patientDocId = _selectedDoctorMap?['doctorId']?.toString() ?? _selectedDoctorMap?['id']?.toString();
+      final int? patientHospId = int.tryParse(_selectedHospital?['id']?.toString() ?? '');
+
+      if (isPatient && (patientDocId == null || patientHospId == null)) {
+        if (mounted) {
+          setState(() {
+            _allDoctorSlots = [];
+            _selectedSlot = "";
+            _isLoadingSlots = false;
+          });
+        }
+        return;
+      }
 
       final String doctorId = isPatient
-          ? (_selectedDoctorMap?['doctorId']?.toString() ?? '4B7319C8-4FE0-42A8-B0C8-23674EFD8CB7')
+          ? patientDocId!
           : ((currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
               ? currentUser.data!.id!.trim()
               : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
@@ -958,7 +952,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   : '1');
 
       final int hospitalId = isPatient
-          ? (int.tryParse(_selectedHospital?['id']?.toString() ?? '') ?? (currentUser?.data?.latestHospitalId ?? 1))
+          ? patientHospId!
           : (currentUser?.data?.latestHospitalId ?? 1);
       final String token = currentUser?.data?.accessToken ?? '';
       final String dateStr = DateFormat('yyyy-MM-dd').format(date);
@@ -979,14 +973,29 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       if (response.data != null && response.data is Map<String, dynamic>) {
         final rawData = response.data as Map<String, dynamic>;
         final slotData = rawData['data'];
-        if (slotData != null && slotData['slots'] is List) {
-          final List<dynamic> rawSlots = slotData['slots'] as List;
+        List<dynamic>? rawSlots;
+        if (slotData != null) {
+          if (slotData is List) {
+            rawSlots = slotData;
+          } else if (slotData is Map && slotData['slots'] is List) {
+            rawSlots = slotData['slots'] as List;
+          }
+        }
+        if (rawSlots != null) {
           for (final item in rawSlots) {
             if (item is Map<String, dynamic>) {
               final String label = (item['label'] ?? '').toString();
-              final bool isAvail = item['isAvailable'] == true;
-              final bool isBooked = item['isBooked'] == true;
-              final bool isBlocked = item['isBlocked'] == true || (!isAvail && !isBooked);
+              final bool isBooked = item['isBooked'] == true ||
+                  item['status']?.toString().toLowerCase() == 'booked' ||
+                  (item['appointmentId'] != null &&
+                      item['appointmentId'].toString().isNotEmpty &&
+                      item['appointmentId'].toString() != 'null') ||
+                  item['hasAppointment'] == true;
+              final bool isBlocked = item['isBlocked'] == true ||
+                  item['status']?.toString().toLowerCase() == 'blocked' ||
+                  item['label']?.toString().toLowerCase() == 'blocked';
+              final bool isAvail = (item['isAvailable'] == true) && !isBooked && !isBlocked;
+
               if (label.isNotEmpty) {
                 fetched.add(DoctorSlotItem(
                   id: (item['id'] ?? '').toString(),
@@ -995,7 +1004,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   label: label,
                   isAvailable: isAvail,
                   isBooked: isBooked,
-                  isBlocked: isBlocked,
+                  isBlocked: isBlocked || (!isAvail && !isBooked),
                   patientName: (item['patientName'] ?? '').toString(),
                   appointmentType: (item['appointmentType'] ?? '').toString(),
                 ));
@@ -1004,11 +1013,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           }
         }
         // Parse consultation fee from the slots API response
-        if (slotData != null && slotData['consultationFee'] != null) {
+        if (slotData != null && slotData is Map && slotData['consultationFee'] != null) {
           final fee = double.tryParse(slotData['consultationFee'].toString()) ?? 0;
           if (mounted) {
             setState(() {
-              _consultationFee = fee > 0 ? fee : 500.0;
+              _consultationFee = fee;
             });
           }
         }
@@ -1198,6 +1207,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     if (_matchingAccountsList.isNotEmpty) {
       PatientOption match = _matchingAccountsList.first;
+      final currentUser = GlobalSession.instance.userNotifier.value?.data;
+      final activeUserId = (currentUser?.id ?? '').trim();
+      final activeFirstName = (currentUser?.firstName ?? '').trim().toLowerCase();
+
       if (preferredName != null && preferredName.trim().isNotEmpty) {
         final target = preferredName.trim().toLowerCase();
         final found = _matchingAccountsList.where(
@@ -1208,6 +1221,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         ).toList();
         if (found.isNotEmpty) {
           match = found.first;
+        }
+      } else if (activeUserId.isNotEmpty) {
+        final idMatches = _matchingAccountsList.where((a) => a.id == activeUserId || a.userId == activeUserId).toList();
+        if (idMatches.isNotEmpty) {
+          match = idMatches.first;
+        } else if (activeFirstName.isNotEmpty) {
+          final nameMatches = _matchingAccountsList.where((a) => a.name.toLowerCase().contains(activeFirstName)).toList();
+          if (nameMatches.isNotEmpty) {
+            match = nameMatches.first;
+          }
         }
       }
       _selectPatientAccount(match);
@@ -1261,15 +1284,18 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       }
     });
     final currentUser = GlobalSession.instance.userNotifier.value?.data;
-    if (currentUser != null) {
+    final isPatient = currentUser?.navigationId == "1" ||
+        (currentUser?.latestUserRole ?? '').toLowerCase().contains("patient");
+
+    if (!isPatient && currentUser != null) {
       final name = currentUser.firstName ?? currentUser.email?.split('@').first ?? '';
       if (name.isNotEmpty) {
         _selectedDoctor = "Dr. $name";
       }
+    } else if (widget.initialDoctorName != null && widget.initialDoctorName!.isNotEmpty) {
+      _selectedDoctor = widget.initialDoctorName!;
     }
     final initialPhone = widget.initialPatientPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
-    final isPatient = currentUser?.navigationId == "1" ||
-        (currentUser?.latestUserRole ?? '').toLowerCase().contains("patient");
 
     if (initialPhone.length >= 10) {
       _patientSearchMode = PatientSearchMode.byPhone;
@@ -1284,7 +1310,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       }
     } else if (widget.initialPatientName != null && widget.initialPatientName!.isNotEmpty) {
       _patientSearchController.text = widget.initialPatientName!;
-      _isExistingPatient = true;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1355,7 +1380,22 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       hasError = true;
     }
 
-    final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final bool isPatient = currentUser?.data?.navigationId == "1" ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
+
+    if (isPatient) {
+      if (_selectedHospital == null || _hospitals.isEmpty) {
+        _showValidationBanner("Please connect with or select a liked/linked hospital to book an appointment.");
+        return;
+      }
+      if (_selectedDoctorMap == null || _filteredDoctors.isEmpty) {
+        _showValidationBanner("Please select a linked doctor to book an appointment.");
+        return;
+      }
+    }
+
     final double discount = !isPatient ? (double.tryParse(_discountController.text.trim()) ?? 0.0) : 0.0;
     final bool effectiveIncludeConsultationFee = isPatient ? true : _includeConsultationFee;
     final double consultationFeeAmt = effectiveIncludeConsultationFee ? _consultationFee : 0.0;
@@ -1382,7 +1422,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     final formattedTime = startTimeStr.contains(":") ? "$startTimeStr:00" : "10:00:00";
 
     final String? patientDocId = (isPatient && _selectedDoctorMap != null)
-        ? _selectedDoctorMap!['doctorId']?.toString()
+        ? (_selectedDoctorMap!['doctorId'] ?? _selectedDoctorMap!['id'])?.toString()
         : null;
     final int? patientHospId = (isPatient && _selectedHospital != null)
         ? int.tryParse(_selectedHospital!['id']?.toString() ?? '')
@@ -1399,7 +1439,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         patientUserId: _selectedPatient?.userId.isNotEmpty == true
             ? _selectedPatient!.userId
             : (_selectedPatient?.id.isNotEmpty == true ? _selectedPatient!.id : null),
-        parentUserId: _selectedPatient?.parentUserId,
+        parentUserId: _selectedPatient?.parentUserId ??
+            ((_selectedPatient != null && !_selectedPatient!.isPrimary)
+                ? (GlobalSession.instance.rootPrimaryUserId ?? currentUser?.data?.id)
+                : null),
         relation: _selectedPatient?.relation ?? "Self",
         isPrimary: _selectedPatient?.isPrimary ?? (_selectedPatient == null ? true : _selectedPatient!.relation.toLowerCase() == "self"),
         patientName: name,
@@ -1412,7 +1455,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         reason: reason,
         appointmentType: _selectedVisitType,
         isTeleConsultation: _isTeleConsultation,
-        parentAppointmentId: (_isExistingPatient && _linkToExistingAppointment) ? _selectedParentAppointmentId : null,
         treatmentPlanIds: _selectedTreatmentPlanIds.isNotEmpty ? _selectedTreatmentPlanIds.toList() : null,
         discountAmount: (!isPatient && discount > 0) ? discount : null,
         includeConsultationFee: effectiveIncludeConsultationFee,
@@ -1452,6 +1494,32 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   }
 
   void _showSuccessSheet(BuildContext context, BookAppointmentSuccessState state) {
+    if (_selectedDoctorMap != null) {
+      LikedHospitalsService.instance.saveLinkedDoctor(_selectedDoctorMap!);
+    }
+    if (_selectedHospital != null) {
+      LikedHospitalsService.instance.saveLikedHospital(_selectedHospital!);
+    }
+
+    // Trigger immediate local notification to alert patient instantly
+    try {
+      final rawDocName = (_selectedDoctorMap?['name'] ?? _selectedDoctor ?? 'Doctor').toString().trim();
+      final cleanDocName = rawDocName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim();
+      final formattedDocName = cleanDocName.isNotEmpty ? 'Dr. $cleanDocName' : 'your doctor';
+      final dateFormatted = _selectedDate != null ? DateFormat('dd MMM yyyy').format(_selectedDate!) : 'Selected Date';
+      final slotTime = _selectedSlot.isNotEmpty ? _selectedSlot : '10:00 AM';
+      NotificationService.instance.showNotification(
+        title: "Appointment Confirmed",
+        body: "Your appointment with $formattedDocName on $dateFormatted at $slotTime is confirmed.",
+        payload: jsonEncode({
+          "type": "APPOINTMENT_BOOKED",
+          "route": "/patientDashboard",
+        }),
+      );
+    } catch (e) {
+      debugPrint("Failed to trigger local appointment notification: $e");
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
@@ -1546,16 +1614,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           Icons.medical_services_outlined,
                           isDark,
                         ),
-                        if (_linkToExistingAppointment && _selectedParentAppointmentId != null) ...[
-                          const SizedBox(height: 8),
-                          _buildSummaryRow(
-                            "Linked Visit",
-                            "Connected to Appointment #$_selectedParentAppointmentId",
-                            Icons.link_rounded,
-                            isDark,
-                            highlight: true,
-                          ),
-                        ],
                         if (_selectedTreatmentPlanIds.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           _buildSummaryRow(
@@ -1768,7 +1826,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          body: SingleChildScrollView(
+          body: (_isLoadingInitial && isPatient)
+              ? _buildFullAppointmentShimmer(isDark, isTab)
+              : SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(
               horizontal: isTab ? 32 : 16,
@@ -2071,33 +2131,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       const SizedBox(height: 8),
 
                       if (_isLoadingSlots)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Checking available slots...",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 12,
-                                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
+                        _buildSlotsShimmer(isDark, isTab)
                       else if (_allDoctorSlots.isEmpty)
                         Container(
                           width: double.infinity,
@@ -2268,11 +2302,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         _buildSectionHeader(4, "Treatment Plans & Procedures", isDark),
                         const SizedBox(height: 12),
                         _buildTreatmentPlansSection(isDark, isTab),
-                      ],
-
-                      if (_isExistingPatient && _patientPreviousAppointments.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        _buildLinkToPreviousAppointmentCard(isDark, isTab),
                       ],
 
                       const SizedBox(height: 18),
@@ -2750,17 +2779,124 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     );
   }
 
-  // ── Doctor Info Header (Clean Row or Hospital/Doctor Selectors for Patient) ──
+  // ── Doctor Info Header (Clean Row or Liked/Linked Hospital & Doctor Selectors for Patient) ──
   Widget _buildDoctorHeader(bool isDark, bool isTab) {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final bool isPatient = currentUser?.data?.navigationId == "1" ||
-        (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient");
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
+        (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
 
     if (isPatient) {
+      if (_hospitals.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.local_hospital_rounded,
+                  color: primaryColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "No Linked Hospitals",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? 16 : 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Only liked and linked hospitals are allowed for patient appointment bookings. Connect with your doctor or hospital by scanning their QR code.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? 13 : 12,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  ScanDoctorQrSheet.show(
+                    context,
+                    onDoctorLinked: (newDoc) {
+                      _initPatientHospitalsAndDoctors();
+                    },
+                  );
+                },
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 16, color: Colors.white),
+                label: const Text(
+                  "Scan Doctor / Clinic QR",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildInputLabel("Hospital / Facility *", isDark, isTab),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildInputLabel("Hospital / Facility *", isDark, isTab),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF0284C7)),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Liked / Linked Only",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0284C7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -2806,8 +2942,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       _filterDoctorsForHospital(val['id']);
                       _selectedTreatmentPlanIds.clear();
                     });
-                    _fetchDoctorSlots(_selectedDate);
-                    _fetchTreatmentPlans();
+                    if (_selectedDoctorMap != null) {
+                      _fetchDoctorSlots(_selectedDate);
+                      _fetchTreatmentPlans();
+                    }
                   }
                 },
               ),
@@ -2816,62 +2954,113 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           const SizedBox(height: 14),
           _buildInputLabel("Select Doctor *", isDark, isTab),
           const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+          if (_isLoadingDoctors) ...[
+            _buildDoctorDropdownShimmer(isDark),
+          ] else if (_filteredDoctors.isEmpty) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+                ),
               ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<Map<String, dynamic>>(
-                value: _selectedDoctorMap,
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                items: _filteredDoctors.map((doc) {
-                  return DropdownMenuItem<Map<String, dynamic>>(
-                    value: doc,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 12,
-                          backgroundColor: primaryColor.withValues(alpha: 0.12),
-                          child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            "${doc['name']} • ${doc['specialty']} (₹${doc['consultationFee'] ?? 500})",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "No connected doctors for this hospital. Scan doctor's QR code to link.",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() {
-                      _selectedDoctorMap = val;
-                      _selectedDoctor = val['name'] ?? 'Doctor';
-                      _consultationFee = (double.tryParse(val['consultationFee'].toString()) ?? 500.0);
-                    });
-                    _fetchDoctorSlots(_selectedDate);
-                  }
-                },
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ScanDoctorQrSheet.show(
+                        context,
+                        onDoctorLinked: (newDoc) {
+                          _initPatientHospitalsAndDoctors();
+                        },
+                      );
+                    },
+                    child: const Text(
+                      "Scan QR",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+                ),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<Map<String, dynamic>>(
+                  value: _selectedDoctorMap,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  items: _filteredDoctors.map((doc) {
+                    return DropdownMenuItem<Map<String, dynamic>>(
+                      value: doc,
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 12,
+                            backgroundColor: primaryColor.withValues(alpha: 0.12),
+                            child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "${doc['name']} • ${doc['specialty'] ?? 'Specialist'} (₹${doc['consultationFee'] ?? 0})",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _selectedDoctorMap = val;
+                        _selectedDoctor = val['name'] ?? 'Doctor';
+                        _consultationFee = (double.tryParse(val['consultationFee']?.toString() ?? '') ?? 0.0);
+                      });
+                      _fetchDoctorSlots(_selectedDate);
+                    }
+                  },
+                ),
+              ),
+            ),
+          ],
         ],
       );
     }
@@ -3019,40 +3208,77 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               ? "Booked"
               : "Blocked";
 
-      return Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+      return InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isPast
+                    ? "This slot has already passed."
+                    : (isBooked
+                        ? "This slot is already booked. Please select an available slot."
+                        : "This slot is currently blocked by the doctor."),
+                style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12),
+              ),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isBooked
+                  ? (isDark ? Colors.redAccent.withValues(alpha: 0.25) : Colors.red.withValues(alpha: 0.2))
+                  : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0)),
+            ),
           ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                displayTime,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
-                  decoration: TextDecoration.lineThrough,
-                  decorationColor: isDark ? Colors.white30 : const Color(0xFF94A3B8),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  displayTime,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: isDark ? Colors.white30 : const Color(0xFF94A3B8),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 1),
-              Text(
-                statusLabel,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
+                const SizedBox(height: 1),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isBooked) ...[
+                      Icon(
+                        Icons.lock_outline_rounded,
+                        size: 9.5,
+                        color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
+                      ),
+                      const SizedBox(width: 2),
+                    ],
+                    Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w600,
+                        color: isBooked
+                            ? (isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red.shade500)
+                            : (isDark ? Colors.white30 : const Color(0xFF94A3B8)),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -3293,181 +3519,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           },
         );
       },
-    );
-  }
-
-  Widget _buildLinkToPreviousAppointmentCard(bool isDark, bool isTab) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Link to Previous Appointment",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  "Connect to prior visit or follow-up session",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11,
-                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-            Switch.adaptive(
-              value: _linkToExistingAppointment,
-              activeTrackColor: primaryColor,
-              activeThumbColor: Colors.white,
-              onChanged: (val) {
-                setState(() {
-                  _linkToExistingAppointment = val;
-                  if (val && _patientPreviousAppointments.isEmpty && _phoneController.text.trim().isNotEmpty) {
-                    _fetchPatientPreviousAppointments(_phoneController.text.trim());
-                  }
-                });
-              },
-            ),
-          ],
-        ),
-        if (_linkToExistingAppointment) ...[
-          const SizedBox(height: 10),
-          if (_isLoadingPatientAppointments)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      "Fetching prior consultations...",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (_patientPreviousAppointments.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-              ),
-              child: Text(
-                "No prior appointments found for this patient.",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11.5,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-              ),
-            )
-          else ...[
-            _buildInputLabel("Select Prior Appointment", isDark, isTab),
-            const SizedBox(height: 6),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _patientPreviousAppointments.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final appt = _patientPreviousAppointments[index];
-                final isSelected = _selectedParentAppointmentId == appt.id;
-
-                String formattedDate = appt.appointmentDate;
-                try {
-                  final parsed = DateTime.parse(appt.appointmentDate);
-                  formattedDate = DateFormat('dd MMM yyyy').format(parsed);
-                } catch (_) {}
-
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedParentAppointmentId = appt.id;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                          : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? primaryColor
-                            : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                          size: 16,
-                          color: isSelected ? primaryColor : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "$formattedDate • ${appt.startTime.length >= 5 ? appt.startTime.substring(0, 5) : appt.startTime} (${appt.appointmentType})",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                                ),
-                              ),
-                              if (appt.doctorName.isNotEmpty || (appt.hospitalName != null && appt.hospitalName!.isNotEmpty))
-                                Text(
-                                  [
-                                    if (appt.doctorName.isNotEmpty) "Doctor: ${appt.doctorName}",
-                                    if (appt.hospitalName != null && appt.hospitalName!.isNotEmpty) appt.hospitalName!,
-                                  ].join(' • '),
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11,
-                                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ],
-      ],
     );
   }
 
@@ -5213,6 +5264,140 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildDoctorDropdownShimmer(bool isDark) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSlotsShimmer(bool isDark, bool isTab) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isTab ? 4 : 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 2.2,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, __) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullAppointmentShimmer(bool isDark, bool isTab) {
+    return Shimmer.fromColors(
+      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: isTab ? 32 : 16, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(isTab ? 24 : 18),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 140, height: 16, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 120, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 100, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(width: 90, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 10),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isTab ? 4 : 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 2.2,
+                    ),
+                    itemCount: 6,
+                    itemBuilder: (_, __) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

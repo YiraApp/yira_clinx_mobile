@@ -19,14 +19,30 @@ class UpdateFcmRepoImpl extends UpdateFcmRepository {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final platFormData = GlobalSession.instance.platformNotifier.value;
-
       final String token = currentUser?.data?.accessToken ?? '';
+
+      String platformName = 'android';
+      if (Platform.isIOS) {
+        platformName = 'ios';
+      } else if (Platform.isAndroid) {
+        platformName = 'android';
+      } else {
+        final p = (platFormData?.platform ?? Platform.operatingSystem).toLowerCase();
+        platformName = (p == 'ios' || p.contains('ios')) ? 'ios' : 'android';
+      }
+
+      String deviceId = platFormData?.deviceId ?? '';
+      if (deviceId.isEmpty || deviceId == 'unknown_id') {
+        deviceId = (currentUser?.data?.id != null && currentUser!.data!.id!.isNotEmpty)
+            ? 'dev_${currentUser.data!.id}'
+            : 'device_${DateTime.now().millisecondsSinceEpoch}';
+      }
 
       final Map<String, dynamic> requestBody = {
         "userId": currentUser?.data?.id ?? '',
-        "platform": platFormData?.platform ?? Platform.operatingSystem,
+        "platform": platformName,
         "currentVersion": platFormData?.version ?? '1.0.0',
-        "deviceId": platFormData?.deviceId ?? 'unknown_id',
+        "deviceId": deviceId,
         "fcmToken": fcmToken,
       };
 

@@ -95,6 +95,8 @@ import 'package:yiraclinics/features/use_cases/patient_over_view_use_case.dart';
 import 'package:yiraclinics/features/use_cases/save_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
+import 'package:yiraclinics/features/use_cases/send_signup_otp_use_case.dart';
+import 'package:yiraclinics/features/use_cases/register_patient_use_case.dart';
 import 'package:yiraclinics/features/presentation/auth/use_case/role_use_case.dart';
 
 // Blocs & Presentation Imports
@@ -200,7 +202,7 @@ Future<void> init() async {
     () => PatientRepositoryImpl(sl<ApiClient>()),
   );
   sl.registerLazySingleton<MedicationRepository>(
-    () => MedicationRepositoryImpl(),
+    () => MedicationRepositoryImpl(sl<ApiClient>()),
   );
   sl.registerLazySingleton<MedicalHistoryRepository>(
     () => MedicalHistoryRepositoryImpl(sl<ApiClient>()),
@@ -320,6 +322,8 @@ Future<void> init() async {
     () => LoginEmailUseCase(repository: sl<LoginRepository>()),
   );
   sl.registerLazySingleton(() => SendOtpUseCase(repository: sl<SendOtpRepo>()));
+  sl.registerLazySingleton(() => SendSignupOtpUseCase(repository: sl<SendOtpRepo>()));
+  sl.registerLazySingleton(() => RegisterPatientUseCase(sl<LoginRepository>()));
   sl.registerLazySingleton(
     () => GetWorkSpaceDetailsUseCase(sl<GetWorkSpaceDetailsRepo>()),
   );
@@ -391,6 +395,8 @@ Future<void> init() async {
       loginEmailUseCase: sl<LoginEmailUseCase>(),
       sharedPrefsService: sl<SharedPrefsService>(),
       sendOtpUseCase: sl<SendOtpUseCase>(),
+      sendSignupOtpUseCase: sl<SendSignupOtpUseCase>(),
+      registerPatientUseCase: sl<RegisterPatientUseCase>(),
       updateFcmTokenUseCase: sl<UpdateFcmTokenUseCase>(),
     ),
   );

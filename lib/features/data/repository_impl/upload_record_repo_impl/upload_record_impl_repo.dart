@@ -19,6 +19,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
     String? hospitalId,
     String? orgId,
     int? limit,
+    int? page,
   }) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
@@ -42,6 +43,9 @@ class RecordsRepositoryImpl implements RecordsRepository {
         if (limit != null && limit > 0) {
           queryParams['limit'] = limit;
         }
+        if (page != null && page > 0) {
+          queryParams['page'] = page;
+        }
 
         final response = await _apiClient.account(showSuccessSnack: false).get(
           '${URLs.medicalDocumentsUrl}/patient/$effectivePatientId',
@@ -64,20 +68,72 @@ class RecordsRepositoryImpl implements RecordsRepository {
                 } catch (_) {}
               }
 
-              int sizeKb = 150;
+              int sizeKb = 0;
               final rawSize = json['fileSizeKB'] ?? json['FileSize'] ?? json['fileSize'];
               if (rawSize != null) {
-                sizeKb = (int.tryParse(rawSize.toString()) ?? 150000) ~/ 1024;
+                final parsed = int.tryParse(rawSize.toString());
+                if (parsed != null && parsed > 0) {
+                  sizeKb = parsed > 1024 ? (parsed ~/ 1024) : parsed;
+                }
+              }
+
+              final fileName = (json['fileName'] ?? json['FileName'] ?? json['OriginalName'] ?? 'Document.pdf').toString();
+              String fileType = (json['documentType'] ?? json['DocumentType'] ?? json['fileType'] ?? '').toString();
+              if (fileType.isEmpty && fileName.contains('.')) {
+                fileType = fileName.substring(fileName.lastIndexOf('.') + 1).toUpperCase();
+              }
+              if (fileType.isEmpty) fileType = 'PDF';
+
+              final description = (json['description'] ?? json['Description'] ?? json['notes'] ?? json['Notes'] ?? '').toString().trim();
+              final appointmentDate = (json['appointmentDate'] ?? json['AppointmentDate'] ?? '').toString().trim();
+              final apptId = (json['appointmentId'] ?? json['AppointmentId'] ?? '').toString().trim();
+
+              final isPatientUploaded = json['isPatientUploaded'] == true ||
+                  json['IsPatientUploaded'] == true ||
+                  json['isPatientUploaded'] == 'true' ||
+                  json['IsPatientUploaded'] == 'true';
+
+              String hospitalName = '';
+              String doctorName = '';
+
+              // If record was added by hospital/provider, resolve hospital and doctor name
+              if (!isPatientUploaded) {
+                hospitalName = (json['hospitalName'] ??
+                        json['HospitalName'] ??
+                        (json['hospital'] is Map ? json['hospital']['hospitalName'] ?? json['hospital']['HospitalName'] : '') ??
+                        (json['Hospital'] is Map ? json['Hospital']['HospitalName'] ?? json['Hospital']['hospitalName'] : '') ??
+                        (json['appointment'] is Map && json['appointment']['hospital'] is Map ? json['appointment']['hospital']['hospitalName'] : '') ??
+                        (json['Appointment'] is Map && json['Appointment']['Hospital'] is Map ? json['Appointment']['Hospital']['HospitalName'] : '') ??
+                        '')
+                    .toString()
+                    .trim();
+
+                doctorName = (json['doctorName'] ??
+                        json['DoctorName'] ??
+                        (json['doctor'] is Map ? json['doctor']['name'] ?? json['doctor']['DoctorName'] : '') ??
+                        (json['Doctor'] is Map ? json['Doctor']['DoctorName'] ?? json['Doctor']['name'] : '') ??
+                        '')
+                    .toString()
+                    .trim();
               }
 
               return UploadedRecord(
                 id: (json['id'] ?? json['Id'] ?? DateTime.now().millisecondsSinceEpoch.toString()).toString(),
-                fileName: (json['fileName'] ?? json['FileName'] ?? json['OriginalName'] ?? 'Document.pdf').toString(),
-                category: (json['category'] ?? json['Category'] ?? json['DocumentType'] ?? 'General').toString(),
+                fileName: fileName,
+                category: (json['category'] ?? json['Category'] ?? json['documentCategory'] ?? json['DocumentCategory'] ?? 'General').toString(),
                 uploadDate: date,
                 fileSizeKB: sizeKb,
                 fileUrl: (json['blobUrl'] ?? json['BlobUrl'] ?? json['fileUrl'] ?? json['url'] ?? json['Url'] ?? json['filePath'] ?? json['path'] ?? '').toString(),
                 filePath: (json['filePath'] ?? json['path'] ?? '').toString(),
+                description: description.isNotEmpty ? description : null,
+                doctorName: doctorName.isNotEmpty ? doctorName : null,
+                hospitalName: hospitalName.isNotEmpty ? hospitalName : null,
+                appointmentDate: appointmentDate.isNotEmpty ? appointmentDate : null,
+                appointmentId: apptId.isNotEmpty ? apptId : null,
+                fileType: fileType,
+                isAppointmentDoc: apptId.isNotEmpty,
+                isPatientUploaded: isPatientUploaded,
+                isDeletable: true,
               );
             }).toList();
           }
@@ -100,6 +156,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
     required String filePath,
     required String fileName,
     required String category,
+    String? description,
     String? patientId,
     String? appointmentId,
     String? hospitalId,
@@ -108,22 +165,30 @@ class RecordsRepositoryImpl implements RecordsRepository {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final token = currentUser?.data?.accessToken ?? '';
+      final currentUserId = currentUser?.data?.id ?? '';
 
       final formData = FormData.fromMap({
         'files': await MultipartFile.fromFile(filePath, filename: fileName),
         'category': category,
         'documentCategory': category,
-        'patientId': (patientId != null && patientId.trim().isNotEmpty) ? patientId.trim() : '1',
+        if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
+        'patientId': (patientId != null && patientId.trim().isNotEmpty) ? patientId.trim() : (currentUserId.isNotEmpty ? currentUserId : '1'),
         if (appointmentId != null && appointmentId.trim().isNotEmpty) 'appointmentId': appointmentId.trim(),
-        'hospitalId': (hospitalId != null && hospitalId.trim().isNotEmpty) ? hospitalId.trim() : '1',
-        'organizationId': (orgId != null && orgId.trim().isNotEmpty) ? orgId.trim() : '1',
+        'hospitalId': (hospitalId != null && hospitalId.trim().isNotEmpty) ? hospitalId.trim() : (currentUser?.data?.latestHospitalId?.toString() ?? '1'),
+        'organizationId': (orgId != null && orgId.trim().isNotEmpty) ? orgId.trim() : (currentUser?.data?.latestOrgId?.toString() ?? '1'),
+        if (currentUserId.isNotEmpty) 'uploadedByUserId': currentUserId,
+        'isPatientUploaded': currentUser?.data?.navigationId == "1" ? "true" : "false",
+        'isDoctorUploaded': currentUser?.data?.navigationId != "1" ? "true" : "false",
       });
 
       final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.medicalDocumentsUrl,
         data: formData,
         options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+            'Content-Type': 'multipart/form-data',
+          },
         ),
       );
 
@@ -138,10 +203,13 @@ class RecordsRepositoryImpl implements RecordsRepository {
         }
 
         if (json != null) {
-          int sizeKb = 150;
+          int sizeKb = 0;
           final rawSize = json['fileSizeKB'] ?? json['FileSize'] ?? json['fileSize'];
           if (rawSize != null) {
-            sizeKb = (int.tryParse(rawSize.toString()) ?? 150000) ~/ 1024;
+            final parsed = int.tryParse(rawSize.toString());
+            if (parsed != null && parsed > 0) {
+              sizeKb = parsed > 1024 ? (parsed ~/ 1024) : parsed;
+            }
           }
           final blobUrl = (json['blobUrl'] ?? json['BlobUrl'] ?? json['fileUrl'] ?? json['url'] ?? json['Url'] ?? '').toString();
           return UploadedRecord(
@@ -152,6 +220,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
             fileSizeKB: sizeKb,
             fileUrl: blobUrl.isNotEmpty ? blobUrl : null,
             filePath: filePath,
+            description: description,
+            isPatientUploaded: true,
           );
         }
       }

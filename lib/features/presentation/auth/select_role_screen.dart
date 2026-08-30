@@ -166,12 +166,13 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     }).toList();
 
     if (roles.isEmpty) {
-      // Fallback patient/user role
-      roles.add(RoleEntity(
-        roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-        roleName: "Patient",
-        status: true,
-      ));
+      if (mounted) {
+        setState(() {
+          _isLoadingWorkspaces = false;
+          _workspaceErrorMessage = "No authorized roles found for this account. Please register as a patient or contact support.";
+        });
+      }
+      return;
     }
 
     try {
@@ -251,15 +252,13 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
       }
 
       if (items.isEmpty) {
-        items.add(_FlatWorkspaceItem(
-          roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-          roleName: "User",
-          orgId: 1,
-          orgName: "Unified Global Patient",
-          hospitalId: 19,
-          hospitalName: "User",
-          location: "",
-        ));
+        if (mounted) {
+          setState(() {
+            _isLoadingWorkspaces = false;
+            _workspaceErrorMessage = "No active facilities found for this account. Please contact support.";
+          });
+        }
+        return;
       }
 
       // If only 1 role/facility option exists -> DIRECT LOGIN!
@@ -309,12 +308,13 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
       if (response != null && response.status == true && response.data != null) {
         final currentSession = GlobalSession.instance.userNotifier.value;
-        final bool isPatientRole = item.roleId.toUpperCase() ==
+        final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
+        final bool isPatientRole = effectiveRoleId.toUpperCase() ==
                 "4FC67429-28AE-4106-93EF-436228282ED0" ||
             item.roleName.toLowerCase().contains("patient") ||
             item.roleName.toLowerCase().contains("user");
-        final String navigationId = isPatientRole ? "1" : "2";
-        final String latestUserRole = isPatientRole ? "Patient" : "Provider";
+        final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
+        final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
 
         if (currentSession?.data != null) {
           final oldData = currentSession!.data!;
@@ -341,9 +341,9 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
             weight: oldData.weight,
             heightUnit: oldData.heightUnit,
             weightUnit: oldData.weightUnit,
-            latestRoleId: item.roleId,
-            latestOrgId: item.orgId,
-            latestHospitalId: item.hospitalId,
+            latestRoleId: effectiveRoleId,
+            latestOrgId: response.data?.latestOrgId ?? item.orgId,
+            latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
             latestUserRole: latestUserRole,
             navigationId: navigationId,
             profiles: oldData.profiles,

@@ -22,6 +22,7 @@ class MedicalRecordsListScreen extends StatefulWidget {
   final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
+  final bool allowAdd;
 
   const MedicalRecordsListScreen({
     super.key,
@@ -30,6 +31,7 @@ class MedicalRecordsListScreen extends StatefulWidget {
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.allowAdd = true,
   });
 
   @override
@@ -224,7 +226,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          floatingActionButton: isPatient
+          floatingActionButton: (isPatient || !widget.allowAdd)
               ? null
               : FloatingActionButton(
                   backgroundColor: primaryColor,
@@ -290,8 +292,8 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                   SingleMedicineDetailsNavEvent(recordId: item.id, record: item),
                 );
               },
-              onDeletePressed: isPatient ? null : () => _confirmDeleteRecord(item),
-              onEditPressed: isPatient ? null : () => _openRecordFormModal(item),
+              onDeletePressed: (isPatient || !widget.allowAdd) ? null : () => _confirmDeleteRecord(item),
+              onEditPressed: (isPatient || !widget.allowAdd) ? null : () => _openRecordFormModal(item),
             ),
           );
         },

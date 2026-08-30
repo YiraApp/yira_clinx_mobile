@@ -1,6 +1,7 @@
 class URLs {
   /*Authentication*/
   static const registrationUrl = "/v1/api/auth/register";
+  static const signupOtpUrl = "/v1/api/auth/signup-otp";
   static const loginUrl = "/v1/api/auth/login";
   static const sendOtpUrl = "/v1/api/auth/sendotp";
   static const updateFcmTokenUrl = "/v1/api/auth/device-token";
@@ -26,6 +27,8 @@ class URLs {
   static const doctorSlotsUrl = "/v1/api/auth/doctor-slots";
   static const doctorSlotsDeployUrl = "/v1/api/auth/doctor-slots/deploy";
   static const doctorSlotBlockUrl = "/v1/api/auth/doctor-slots/block";
+  static const hospitalDoctorsUrl = "/v1/api/auth/hospital-doctors";
+  static const allHospitalsUrl = "/v1/api/auth/hospitals";
   static const patientsListUrl = "/v1/api/auth/patients";
   static const favoritePatientsListUrl = "/v1/api/auth/favorite-patients/list";
   static const toggleFavoritePatientUrl = "/v1/api/auth/favorite-patients/toggle";
@@ -72,4 +75,7 @@ class URLs {
   static const notificationsListUrl = "/v1/api/auth/notifications";
   static const markNotificationReadUrl = "/v1/api/auth/notifications";
   static const markAllNotificationsReadUrl = "/v1/api/auth/notifications/mark-all-read";
+
+  /*Doctor Suggestions*/
+  static const doctorSuggestionsUrl = "/v1/api/auth/doctor-suggestions";
 }

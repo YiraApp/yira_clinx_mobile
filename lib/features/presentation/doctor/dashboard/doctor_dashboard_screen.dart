@@ -26,6 +26,8 @@ import 'package:yiraclinics/features/data/repository_impl/notifications/notifica
 import 'widgets/dashboard_section_header.dart';
 import 'widgets/dashboard_chart_card.dart';
 import '../profile/widgets/profile_switcher_sheet.dart';
+import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
+import 'package:yiraclinics/core/tour/provider_tour_mock_data.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   final bool isShellChild;
@@ -43,11 +45,21 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    if (!widget.isShellChild) {
+      ProviderTourController().refreshKeys();
+    }
     _navigationDrawerBloc = sl<NavigationDrawerBloc>()
       ..add(const InitializeDrawerData());
     _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
     _fetchUnreadNotificationsCount();
     NotificationService.instance.syncFcmTokenWithBackend();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) {
+          ProviderTourController().startDashboardTour(context: context);
+        }
+      });
+    });
   }
 
   Future<void> _fetchUnreadNotificationsCount() async {
@@ -127,305 +139,316 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             _dashboardBloc.add(FetchDoctorDashboardData());
           }
         },
-        child: Scaffold(
-          backgroundColor: scaffoldBg,
-          bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 0),
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: scaffoldBg,
-            automaticallyImplyLeading: false,
-            titleSpacing: screenHorizontalSpacePadding,
-            centerTitle: false,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SvgPicture.asset(
-                    appLogo,
-                    width: isTabletDevice ? 32 : 28,
-                    height: isTabletDevice ? 32 : 28,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Flexible(
-                  child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
-                    bloc: _dashboardBloc,
-                    builder: (context, state) {
-                      if (state is! DoctorDashboardSuccessState) {
-                        return BaseShimmer(
-                          child: Container(
-                            width: isTabletDevice ? 160 : 130,
-                            height: isTabletDevice ? 20 : 16,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final hName = state.dashboardEntity.data?.hospitalName;
-                      final hospitalTitle = (hName != null && hName.trim().isNotEmpty)
-                          ? hName.trim()
-                          : 'Healthcare Facility';
-
-                      return GestureDetector(
-                        onTap: () => ProfileSwitcherSheet.show(context),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                hospitalTitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: isTabletDevice ? width * 0.022 : 18.0,
-                                  fontWeight: FontWeight.w700,
-                                  color: adaptiveTextColor,
-                                  letterSpacing: -0.5,
+        child: ValueListenableBuilder<bool>(
+          valueListenable: ProviderTourController().isTourActiveNotifier,
+          builder: (context, isTourActive, _) {
+            return Scaffold(
+              backgroundColor: scaffoldBg,
+              bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 0),
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: scaffoldBg,
+                automaticallyImplyLeading: false,
+                titleSpacing: screenHorizontalSpacePadding,
+                centerTitle: false,
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SvgPicture.asset(
+                        appLogo,
+                        width: isTabletDevice ? 32 : 28,
+                        height: isTabletDevice ? 32 : 28,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                        bloc: _dashboardBloc,
+                        builder: (context, state) {
+                          if (state is! DoctorDashboardSuccessState && !isTourActive) {
+                            return BaseShimmer(
+                              child: Container(
+                                width: isTabletDevice ? 160 : 130,
+                                height: isTabletDevice ? 20 : 16,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
+                            );
+                          }
+
+                          final hName = isTourActive
+                              ? ProviderTourMockData.demoDoctorDashboard.data?.hospitalName
+                              : (state is DoctorDashboardSuccessState
+                                  ? state.dashboardEntity.data?.hospitalName
+                                  : null);
+                          final hospitalTitle = (hName != null && hName.trim().isNotEmpty)
+                              ? hName.trim()
+                              : 'Healthcare Facility';
+
+                          return GestureDetector(
+                            key: ProviderTourController().headerKey,
+                            onTap: () => ProfileSwitcherSheet.show(context),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    hospitalTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: isTabletDevice ? width * 0.022 : 18.0,
+                                      fontWeight: FontWeight.w700,
+                                      color: adaptiveTextColor,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 20,
+                                  color: adaptiveTextColor.withValues(alpha: 0.7),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              size: 20,
-                              color: adaptiveTextColor.withValues(alpha: 0.7),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              ValueListenableBuilder<int>(
-                valueListenable: _unreadNotificationsCount,
-                builder: (context, count, _) {
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        tooltip: "Notifications",
-                        icon: Icon(
-                          Icons.notifications_none_outlined,
-                          color: adaptiveTextColor,
-                          size: isTabletDevice ? 24 : 22,
-                        ),
-                        onPressed: () async {
-                          await Navigator.pushNamed(context, AppRoutes.recentNotifications);
-                          _fetchUnreadNotificationsCount();
+                          );
                         },
                       ),
-                      if (count > 0)
-                        Positioned(
-                          top: 7,
-                          right: 7,
-                          child: IgnorePointer(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: scaffoldBg,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  count > 99 ? "99+" : "$count",
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    height: 1,
+                    ),
+                  ],
+                ),
+                actions: [
+                  ValueListenableBuilder<int>(
+                    valueListenable: _unreadNotificationsCount,
+                    builder: (context, count, _) {
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            tooltip: "Notifications",
+                            icon: Icon(
+                              Icons.notifications_none_outlined,
+                              color: adaptiveTextColor,
+                              size: isTabletDevice ? 24 : 22,
+                            ),
+                            onPressed: () async {
+                              await Navigator.pushNamed(context, AppRoutes.recentNotifications);
+                              _fetchUnreadNotificationsCount();
+                            },
+                          ),
+                          if (count > 0)
+                            Positioned(
+                              top: 7,
+                              right: 7,
+                              child: IgnorePointer(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEF4444),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: scaffoldBg,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      count > 99 ? "99+" : "$count",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
-                child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
-                  bloc: _dashboardBloc,
-                  builder: (context, state) {
-                    String? photoUrl;
-                    if (state is DoctorDashboardSuccessState) {
-                      photoUrl = state.dashboardEntity.data?.profile?.profileImageUrl ??
-                          state.dashboardEntity.data?.profile?.imagePath;
-                    }
-                    final double size = isTabletDevice ? 38 : 34;
+                        ],
+                      );
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
+                    child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                      bloc: _dashboardBloc,
+                      builder: (context, state) {
+                        String? photoUrl;
+                        if (state is DoctorDashboardSuccessState) {
+                          photoUrl = state.dashboardEntity.data?.profile?.profileImageUrl ??
+                              state.dashboardEntity.data?.profile?.imagePath;
+                        }
+                        final double size = isTabletDevice ? 38 : 34;
 
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.profile);
-                      },
-                      child: Container(
-                        width: size,
-                        height: size,
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: (photoUrl != null && photoUrl.trim().isNotEmpty)
-                            ? Image.network(
-                                photoUrl.trim(),
-                                width: size,
-                                height: size,
-                                fit: BoxFit.cover,
-                                errorBuilder: (ctx, err, stack) => Icon(
-                                  Icons.person_rounded,
-                                  color: primaryColor,
-                                  size: isTabletDevice ? 20 : 18,
-                                ),
-                              )
-                            : Icon(
-                                Icons.person_rounded,
-                                color: primaryColor,
-                                size: isTabletDevice ? 20 : 18,
+                        return GestureDetector(
+                          key: ProviderTourController().profileKey,
+                          onTap: () {
+                            Navigator.pushNamed(context, AppRoutes.profile);
+                          },
+                          child: Container(
+                            width: size,
+                            height: size,
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: primaryColor.withValues(alpha: 0.4),
+                                width: 1.5,
                               ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                                ? Image.network(
+                                    photoUrl.trim(),
+                                    width: size,
+                                    height: size,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (ctx, err, stack) => Icon(
+                                      Icons.person_rounded,
+                                      color: primaryColor,
+                                      size: isTabletDevice ? 20 : 18,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.person_rounded,
+                                    color: primaryColor,
+                                    size: isTabletDevice ? 20 : 18,
+                                  ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
+                bloc: _dashboardBloc,
+                buildWhen: (previous, current) {
+                  return current is DoctorDashboardSuccessState ||
+                      current is DoctorDashboardLoading ||
+                      current is DoctorDashboardError ||
+                      current is DoctorAppointmentsNav ||
+                      current is PatientManagementNav ||
+                      current is DocAndAppPatientDetailsNavState;
+                },
+                listener: (context, state) async {
+                  if (state is DoctorAppointmentsNav) {
+                    await Navigator.pushNamed(
+                      context,
+                      AppRoutes.appointmentDashboardScreen,
+                    );
+                    if (context.mounted) {
+                      _dashboardBloc.add(ClearNavigationTriggerEvent());
+                    }
+                  } else if (state is PatientManagementNav) {
+                    await Navigator.pushNamed(
+                      context,
+                      AppRoutes.patientManagementScreen,
+                    );
+                    if (context.mounted) {
+                      _dashboardBloc.add(ClearNavigationTriggerEvent());
+                    }
+                  } else if (state is DocAndAppPatientDetailsNavState) {
+                    final isRecent = state.patientDetails.isRecent == true;
+                    final pid = isRecent
+                        ? state.patientDetails.recentPatients?.patientUserId
+                        : state.patientDetails.todaysSchedule?.patientUserId;
+                    final aid = isRecent
+                        ? state.patientDetails.recentPatients?.appointmentId
+                        : state.patientDetails.todaysSchedule?.appointmentId;
+                    final hid = isRecent
+                        ? state.patientDetails.recentPatients?.hospitalId
+                        : state.patientDetails.todaysSchedule?.hospitalId;
+                    final oid = isRecent
+                        ? state.patientDetails.recentPatients?.orgId
+                        : state.patientDetails.todaysSchedule?.orgId;
+                    final name = isRecent
+                        ? state.patientDetails.recentPatients?.name
+                        : state.patientDetails.todaysSchedule?.patientName;
+
+                    await Navigator.pushNamed(
+                      context,
+                      AppRoutes.doctorPatientProfileScreen,
+                      arguments: {
+                        'patientId': pid?.toString(),
+                        'appointmentId': aid?.toString(),
+                        'hospitalId': hid?.toString(),
+                        'orgId': oid?.toString(),
+                        'patientName': name,
+                        'initialTabIndex': 0,
+                      },
+                    );
+                    if (context.mounted) {
+                      _dashboardBloc.add(ClearNavigationTriggerEvent());
+                    }
+                  }
+                },
+                builder: (context, state) {
+                  if (state is DoctorDashboardLoading && !isTourActive) {
+                    return DoctorDashboardShimmer(fontFamily: appPoppinFont);
+                  }
+                  if (state is DoctorDashboardError && !isTourActive) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            state.message,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              color: Colors.red,
+                              fontSize:
+                                  displayWidth(context) *
+                                  (isTabletDevice ? 0.018 : 0.03),
+                            ),
+                          ),
+                          const SizedBox(height: fieldSpace),
+                          TextButton(
+                            onPressed: () =>
+                                _dashboardBloc.add(FetchDoctorDashboardData()),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              'Retry Operations',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize:
+                                    displayWidth(context) *
+                                    (isTablet(context) ? 0.026 : 0.032),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
-                  },
-                ),
-              ),
-            ],
-          ),
-          body: BlocConsumer<DoctorDashboardBloc, DoctorDashboardState>(
-            bloc: _dashboardBloc,
-            buildWhen: (previous, current) {
-              return current is DoctorDashboardSuccessState ||
-                  current is DoctorDashboardLoading ||
-                  current is DoctorDashboardError ||
-                  current is DoctorAppointmentsNav ||
-                  current is PatientManagementNav ||
-                  current is DocAndAppPatientDetailsNavState;
-            },
-            listener: (context, state) async {
-              if (state is DoctorAppointmentsNav) {
-                await Navigator.pushNamed(
-                  context,
-                  AppRoutes.appointmentDashboardScreen,
-                );
-                if (context.mounted) {
-                  _dashboardBloc.add(ClearNavigationTriggerEvent());
-                }
-              } else if (state is PatientManagementNav) {
-                await Navigator.pushNamed(
-                  context,
-                  AppRoutes.patientManagementScreen,
-                );
-                if (context.mounted) {
-                  _dashboardBloc.add(ClearNavigationTriggerEvent());
-                }
-              } else if (state is DocAndAppPatientDetailsNavState) {
-                final isRecent = state.patientDetails.isRecent == true;
-                final pid = isRecent
-                    ? state.patientDetails.recentPatients?.patientUserId
-                    : state.patientDetails.todaysSchedule?.patientUserId;
-                final aid = isRecent
-                    ? state.patientDetails.recentPatients?.appointmentId
-                    : state.patientDetails.todaysSchedule?.appointmentId;
-                final hid = isRecent
-                    ? state.patientDetails.recentPatients?.hospitalId
-                    : state.patientDetails.todaysSchedule?.hospitalId;
-                final oid = isRecent
-                    ? state.patientDetails.recentPatients?.orgId
-                    : state.patientDetails.todaysSchedule?.orgId;
-                final name = isRecent
-                    ? state.patientDetails.recentPatients?.name
-                    : state.patientDetails.todaysSchedule?.patientName;
+                  }
 
-                await Navigator.pushNamed(
-                  context,
-                  AppRoutes.doctorPatientProfileScreen,
-                  arguments: {
-                    'patientId': pid?.toString(),
-                    'appointmentId': aid?.toString(),
-                    'hospitalId': hid?.toString(),
-                    'orgId': oid?.toString(),
-                    'patientName': name,
-                    'initialTabIndex': 0,
-                  },
-                );
-                if (context.mounted) {
-                  _dashboardBloc.add(ClearNavigationTriggerEvent());
-                }
-              }
-            },
-            builder: (context, state) {
-              if (state is DoctorDashboardLoading) {
-                return DoctorDashboardShimmer(fontFamily: appPoppinFont);
-              }
-              if (state is DoctorDashboardError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        state.message,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          color: Colors.red,
-                          fontSize:
-                              displayWidth(context) *
-                              (isTabletDevice ? 0.018 : 0.03),
-                        ),
-                      ),
-                      const SizedBox(height: fieldSpace),
-                      TextButton(
-                        onPressed: () =>
-                            _dashboardBloc.add(FetchDoctorDashboardData()),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Retry Operations',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize:
-                                displayWidth(context) *
-                                (isTablet(context) ? 0.026 : 0.032),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              DoctorDashboardEntity? workingEntity;
-              if (state is DoctorDashboardSuccessState) {
-                workingEntity = state.dashboardEntity;
-              } else if (state is DoctorAppointmentsNav) {
-                workingEntity = state.dashboardEntity;
-              } else if (state is PatientManagementNav) {
-                workingEntity = state.dashboardEntity;
-              }
+                  DoctorDashboardEntity? workingEntity;
+                  if (isTourActive) {
+                    workingEntity = ProviderTourMockData.demoDoctorDashboard;
+                  } else if (state is DoctorDashboardSuccessState) {
+                    workingEntity = state.dashboardEntity;
+                  } else if (state is DoctorAppointmentsNav) {
+                    workingEntity = state.dashboardEntity;
+                  } else if (state is PatientManagementNav) {
+                    workingEntity = state.dashboardEntity;
+                  }
 
               if (workingEntity != null) {
                 final dashboard = workingEntity.data;
@@ -475,187 +498,179 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           const SizedBox(height: 12.0),
 
                           DashboardMetricsGrid(
+                            key: ProviderTourController().metricsKey,
                             metrics: dashboard.metrics!,
                             primaryColor: primaryColor,
                             isTab: isTabletDevice,
                           ),
                           const SizedBox(height: 20.0),
-
-                          DashboardSectionHeader(
-                            title: "Today's Schedule",
-                            countBadge: "${dashboard.todaysSchedule?.length ?? 0}",
-                            actionText: "View Appointments",
-                            isDark: isDark,
-                            primaryColor: primaryColor,
-                            onTap: () => context
-                                .read<DoctorDashboardBloc>()
-                                .add(ViewCalendarEvent()),
-                            isTab: isTabletDevice,
-                            fontFamily: appPoppinFont,
-                          ),
-                          const SizedBox(height: 10.0),
                         ]),
                       ),
                     ),
 
-                    if (dashboard.todaysSchedule?.isEmpty ?? true)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildEmptyState(
-                            context,
-                            'No active appointments today',
-                          ),
-                        ),
-                      )
-                    else ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: screenHorizontalSpacePadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final displayedAppointments =
-                                (dashboard.todaysSchedule ?? []).take(2).toList();
-                            final appointment = displayedAppointments[index];
-                            final bool isVideo =
-                                appointment.statusTag?.toUpperCase() ==
-                                'LIVE VIDEO';
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: DocAppointmentCard(
-                                initials: _getInitials(
-                                  appointment.patientName ?? '',
-                                ),
-                                name:
-                                    appointment.patientName?.isNotEmpty ??
-                                        false
-                                    ? appointment.patientName ?? ''
-                                    : 'Unknown Patient',
-                                subtitle:
-                                    appointment.consultationType?.isNotEmpty ??
-                                        false
-                                    ? appointment.consultationType ?? ''
-                                    : 'Consultation',
-                                description:
-                                    appointment.reason?.isNotEmpty ?? false
-                                    ? appointment.reason ?? ''
-                                    : 'General Checkup',
-                                timeOrDate:
-                                    appointment.time?.isNotEmpty ?? false
-                                    ? appointment.time ?? ''
-                                    : '--:-- AM',
-                                statusLabel:
-                                    appointment.statusTag?.isNotEmpty ??
-                                        false
-                                    ? appointment.statusTag ?? ''
-                                    : 'Confirmed',
-                                statusColor: isVideo
-                                    ? Colors.amber.withValues(alpha: 0.15)
-                                    : Colors.green.withValues(alpha: 0.15),
-                                statusTextColor: isVideo
-                                    ? Colors.amber[800]!
-                                    : Colors.green[700]!,
-                                patientStatus: appointment.patientStatus,
-                                onTap: () {
-                                  var data = DashboardPatientDetails(
-                                    appointment,
-                                    null,
-                                    false,
-                                  );
-                                  context.read<DoctorDashboardBloc>().add(
-                                    DocAndAppPatientDetailsNavEvent(data),
-                                  );
-                                },
-                                isTab: isTabletDevice,
-                                isTeleConsultation: isVideo,
-                                onJoinCall: () async {
-                                  final meetingUrl = appointment.meetingUrl;
-                                  if (meetingUrl != null && meetingUrl.isNotEmpty) {
-                                    await Utils.launchURL(
-                                      meetingUrl,
-                                      onLaunchFailure: (err) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(err)),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
-                                    );
-                                  }
-                                },
-                              ),
-                            );
-                          }, childCount: (dashboard.todaysSchedule ?? []).take(2).length),
-                        ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: screenHorizontalSpacePadding,
                       ),
-                      if ((dashboard.todaysSchedule?.length ?? 0) > 2)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: screenHorizontalSpacePadding,
-                              vertical: 4.0,
-                            ),
-                            child: Center(
-                              child: InkWell(
+                      sliver: SliverToBoxAdapter(
+                        child: Container(
+                          key: ProviderTourController().scheduleKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DashboardSectionHeader(
+                                title: "Today's Schedule",
+                                countBadge: "${dashboard.todaysSchedule?.length ?? 0}",
+                                actionText: "View Appointments",
+                                isDark: isDark,
+                                primaryColor: primaryColor,
                                 onTap: () => context
                                     .read<DoctorDashboardBloc>()
                                     .add(ViewCalendarEvent()),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_month_rounded,
-                                        size: 16,
-                                        color: primaryColor,
+                                isTab: isTabletDevice,
+                                fontFamily: appPoppinFont,
+                              ),
+                              const SizedBox(height: 10.0),
+                              if (dashboard.todaysSchedule?.isEmpty ?? true)
+                                _buildEmptyState(
+                                  context,
+                                  'No active appointments today',
+                                )
+                              else ...[
+                                ...((dashboard.todaysSchedule ?? []).take(2).map((appointment) {
+                                  final bool isVideo =
+                                      appointment.statusTag?.toUpperCase() ==
+                                      'LIVE VIDEO';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: DocAppointmentCard(
+                                      initials: _getInitials(
+                                        appointment.patientName ?? '',
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "View All (${dashboard.todaysSchedule?.length}) Appointments",
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: isTabletDevice ? 13 : 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: primaryColor,
+                                      name:
+                                          appointment.patientName?.isNotEmpty ??
+                                              false
+                                          ? appointment.patientName ?? ''
+                                          : 'Unknown Patient',
+                                      subtitle:
+                                          appointment.consultationType?.isNotEmpty ??
+                                              false
+                                          ? appointment.consultationType ?? ''
+                                          : 'Consultation',
+                                      description:
+                                          appointment.reason?.isNotEmpty ?? false
+                                          ? appointment.reason ?? ''
+                                          : 'General Checkup',
+                                      timeOrDate:
+                                          appointment.time?.isNotEmpty ?? false
+                                          ? appointment.time ?? ''
+                                          : '--:-- AM',
+                                      statusLabel:
+                                          appointment.statusTag?.isNotEmpty ??
+                                              false
+                                          ? appointment.statusTag ?? ''
+                                          : 'Confirmed',
+                                      statusColor: isVideo
+                                          ? Colors.amber.withValues(alpha: 0.15)
+                                          : Colors.green.withValues(alpha: 0.15),
+                                      statusTextColor: isVideo
+                                          ? Colors.amber[800]!
+                                          : Colors.green[700]!,
+                                      patientStatus: appointment.patientStatus,
+                                      onTap: () {
+                                        var data = DashboardPatientDetails(
+                                          appointment,
+                                          null,
+                                          false,
+                                        );
+                                        context.read<DoctorDashboardBloc>().add(
+                                          DocAndAppPatientDetailsNavEvent(data),
+                                        );
+                                      },
+                                      isTab: isTabletDevice,
+                                      isTeleConsultation: isVideo,
+                                      onJoinCall: () async {
+                                        final meetingUrl = appointment.meetingUrl;
+                                        if (meetingUrl != null && meetingUrl.isNotEmpty) {
+                                          await Utils.launchURL(
+                                            meetingUrl,
+                                            onLaunchFailure: (err) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text(err)),
+                                                );
+                                              }
+                                            },
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('No Zoom meeting link found for this appointment.')),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  );
+                                })),
+                                if ((dashboard.todaysSchedule?.length ?? 0) > 2)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4.0,
+                                    ),
+                                    child: Center(
+                                      child: InkWell(
+                                        onTap: () => context
+                                            .read<DoctorDashboardBloc>()
+                                            .add(ViewCalendarEvent()),
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_month_rounded,
+                                                size: 16,
+                                                color: primaryColor,
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "View All (${dashboard.todaysSchedule?.length}) Appointments",
+                                                style: TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: isTabletDevice ? 13 : 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                size: 11,
+                                                color: primaryColor,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        size: 11,
-                                        color: primaryColor,
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
+                              ],
+                            ],
                           ),
                         ),
-                    ],
+                      ),
+                    ),
 
                     SliverPadding(
                       padding: const EdgeInsets.only(
@@ -667,6 +682,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           DashboardChartCard(
+                            key: ProviderTourController().chartsKey,
                             title: "Weekly Appointments",
                             badgeText:
                                 "Avg: ${dashboard.weeklyAppointments?.averagePerDay}/day",
@@ -729,30 +745,50 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               return const Center(child: CircularProgressIndicator.adaptive());
             },
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  ),
+);
   }
 
   Widget _buildEmptyState(BuildContext context, String message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      padding: const EdgeInsets.all(20.0),
+      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1E293B).withOpacity(0.2)
-            : Colors.grey[50],
-        borderRadius: BorderRadius.circular(12.0),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18.0),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Center(
-        child: Text(
-          message,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: displayWidth(context) * 0.034,
-            color: Colors.grey[500],
-            fontWeight: FontWeight.w500,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.event_available_rounded, size: 24, color: primaryColor),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 13,
+                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

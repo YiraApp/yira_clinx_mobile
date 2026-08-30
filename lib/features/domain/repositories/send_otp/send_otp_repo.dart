@@ -6,6 +6,11 @@ abstract class SendOtpRepo {
   Future<SendOtpEntity?> sendOtp({
     required String mobileNumber,
     required String countryCode,
-    required bool isReSend
+    required bool isReSend,
+  });
+
+  Future<SendOtpEntity?> sendSignupOtp({
+    required String mobileNumber,
+    required String countryCode,
   });
 }

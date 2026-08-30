@@ -8,7 +8,6 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
@@ -33,30 +32,26 @@ class ScanDoctorQrSheet extends StatefulWidget {
 }
 
 class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  late final TextEditingController _urlController;
   late final AnimationController _laserAnimController;
   late final Animation<double> _laserAnimation;
   late final MobileScannerController _scannerController;
   final ImagePicker _imagePicker = ImagePicker();
 
   bool _isLoading = false;
-  bool _isManualInput = false;
   bool _isTorchOn = false;
   bool _hasDetected = false;
-  bool _hasCameraPermission = false;
-  bool _isPermissionChecking = true;
+  bool _hasCameraPermission = true;
+  bool _cameraPermissionDenied = false;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _urlController = TextEditingController();
     _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       facing: CameraFacing.back,
       torchEnabled: false,
-      autoStart: false,
     );
 
     _laserAnimController = AnimationController(
@@ -68,12 +63,18 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
       CurvedAnimation(parent: _laserAnimController, curve: Curves.easeInOut),
     );
 
-    _checkAndRequestCameraPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndRequestCameraPermission();
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      setState(() {
+        _cameraPermissionDenied = false;
+        _hasCameraPermission = true;
+      });
       _checkAndRequestCameraPermission();
     }
   }
@@ -81,39 +82,47 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _urlController.dispose();
     _laserAnimController.dispose();
     _scannerController.dispose();
     super.dispose();
   }
 
   Future<void> _checkAndRequestCameraPermission() async {
-    setState(() {
-      _isPermissionChecking = true;
-    });
-
-    final status = await Permission.camera.request();
-    if (!mounted) return;
-
-    if (status.isGranted) {
-      setState(() {
-        _hasCameraPermission = true;
-        _isPermissionChecking = false;
-        _errorMessage = null;
-      });
+    try {
+      final status = await Permission.camera.status;
+      if (status.isDenied) {
+        final newStatus = await Permission.camera.request();
+        if (newStatus.isGranted || newStatus.isLimited) {
+          if (mounted) {
+            setState(() {
+              _hasCameraPermission = true;
+              _cameraPermissionDenied = false;
+            });
+            try {
+              await _scannerController.start();
+            } catch (_) {}
+          }
+        }
+      } else if (status.isGranted || status.isLimited) {
+        if (mounted) {
+          setState(() {
+            _hasCameraPermission = true;
+            _cameraPermissionDenied = false;
+          });
+          try {
+            await _scannerController.start();
+          } catch (_) {}
+        }
+      } else {
+        // Fallback: try starting native camera directly in case permission_handler returned a false negative
+        try {
+          await _scannerController.start();
+        } catch (_) {}
+      }
+    } catch (_) {
       try {
         await _scannerController.start();
       } catch (_) {}
-    } else {
-      setState(() {
-        _hasCameraPermission = false;
-        _isPermissionChecking = false;
-        if (status.isPermanentlyDenied) {
-          _errorMessage = 'Camera permission is permanently denied. Please enable it in Settings.';
-        } else {
-          _errorMessage = 'Camera permission is required to scan Doctor QR code.';
-        }
-      });
     }
   }
 
@@ -192,6 +201,8 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
           final doctorHospId = (docData['hospitalId'] != null && docData['hospitalId'] != 0) ? docData['hospitalId'] : hospitalId;
           final doctorOrgId = (docData['orgId'] != null && docData['orgId'] != 0) ? docData['orgId'] : orgId;
 
+          final photoUrl = (docData['imagePath'] ?? docData['ImagePath'] ?? docData['photoUrl'] ?? docData['photo'] ?? docData['profilePicture'] ?? docData['profilePhoto'] ?? docData['avatar'] ?? '').toString().trim();
+
           final realDoctor = {
             'id': doctorUserId,
             'doctorId': doctorUserId,
@@ -206,43 +217,15 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
             'consultationFee': docData['consultationFee'] ?? 500,
             'phoneNumber': docData['phoneNumber'] ?? docData['phone'] ?? '',
             'email': docData['email'] ?? '',
+            'imagePath': photoUrl,
+            'photo': photoUrl,
             'isLinked': true,
             'linkedAt': DateTime.now().toIso8601String(),
           };
 
           await _saveDoctorLocally(realDoctor);
 
-          // Register patient under doctor's patient list on backend so doctor also sees this patient
-          try {
-            final rawPhone = (currentUser?.data?.phoneNumber ?? '').toString().trim();
-            final patientPhone = rawPhone.isNotEmpty ? rawPhone : '9876543210';
-            final patientName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim();
-            
-            await sl<ApiClient>().account(showSuccessSnack: false).post(
-              '/v1/api/auth/book-appointment',
-              data: {
-                "doctorId": doctorUserId,
-                "hospitalId": doctorHospId,
-                "orgId": doctorOrgId,
-                "patientUserId": currentUser?.data?.id ?? '',
-                "patientName": patientName.isNotEmpty ? patientName : 'Patient',
-                "patientPhone": patientPhone,
-                "patientEmail": currentUser?.data?.email ?? '',
-                "gender": currentUser?.data?.gender ?? 'Other',
-                "appointmentDate": DateTime.now().toIso8601String().split('T')[0],
-                "startTime": "09:00:00",
-                "reason": "Connected via Doctor QR Scan",
-                "appointmentType": "General Consultation",
-                "isTeleConsultation": false,
-                "includeConsultationFee": false,
-              },
-              options: Options(
-                headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-              ),
-            );
-          } catch (e) {
-            debugPrint("Error registering doctor-patient connection: $e");
-          }
+
 
           if (widget.onDoctorLinked != null) {
             widget.onDoctorLinked!(realDoctor);
@@ -326,33 +309,36 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
       body: Stack(
         children: [
           // 1. Live Camera Preview
-          if (!_isManualInput)
-            if (_hasCameraPermission)
-              MobileScanner(
-                controller: _scannerController,
-                errorBuilder: (context, error) {
-                  return _buildPermissionWidget(primaryColor);
-                },
-                onDetect: (BarcodeCapture capture) {
-                  if (_hasDetected || _isLoading) return;
-                  for (final barcode in capture.barcodes) {
-                    final rawValue = barcode.rawValue;
-                    if (rawValue != null && rawValue.isNotEmpty) {
-                      _processDoctorIdentifier(rawValue);
-                      break;
-                    }
+          if (!_cameraPermissionDenied)
+            MobileScanner(
+              controller: _scannerController,
+              errorBuilder: (context, error) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && !_cameraPermissionDenied) {
+                    setState(() {
+                      _cameraPermissionDenied = true;
+                      _hasCameraPermission = false;
+                    });
                   }
-                },
-              )
-            else if (_isPermissionChecking)
-              const Center(child: CircularProgressIndicator(color: Colors.white))
-            else
-              _buildPermissionWidget(primaryColor)
+                });
+                return _buildPermissionWidget(primaryColor);
+              },
+              onDetect: (BarcodeCapture capture) {
+                if (_hasDetected || _isLoading) return;
+                for (final barcode in capture.barcodes) {
+                  final rawValue = barcode.rawValue;
+                  if (rawValue != null && rawValue.isNotEmpty) {
+                    _processDoctorIdentifier(rawValue);
+                    break;
+                  }
+                }
+              },
+            )
           else
-            Container(color: const Color(0xFF0F172A)),
+            _buildPermissionWidget(primaryColor),
 
           // 2. Semi-Transparent Dark Cutout Overlay
-          if (!_isManualInput && _hasCameraPermission)
+          if (_hasCameraPermission)
             ColorFiltered(
               colorFilter: ColorFilter.mode(
                 Colors.black.withValues(alpha: 0.65),
@@ -381,7 +367,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
             ),
 
           // 3. Viewfinder Target Frame & Laser Line
-          if (!_isManualInput && _hasCameraPermission)
+          if (_hasCameraPermission)
             Center(
               child: SizedBox(
                 width: scanBoxSize,
@@ -464,7 +450,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                       color: Colors.white,
                     ),
                   ),
-                  if (!_isManualInput && _hasCameraPermission)
+                  if (_hasCameraPermission)
                     IconButton(
                       style: IconButton.styleFrom(
                         backgroundColor: _isTorchOn ? primaryColor : Colors.black.withValues(alpha: 0.5),
@@ -527,126 +513,35 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                       const SizedBox(height: 12),
                     ],
 
-                    if (!_isManualInput) ...[
-                      const Text(
-                        'Align Doctor\'s QR code within frame to scan automatically',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white70,
-                        ),
+                    const Text(
+                      'Align Doctor\'s QR code within frame to scan automatically',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white70,
                       ),
-                      const SizedBox(height: 20),
+                    ),
+                    const SizedBox(height: 18),
 
-                      // Quick Action Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white30),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                              onPressed: _pickFromGallery,
-                              icon: const Icon(Icons.photo_library_rounded, size: 18, color: Colors.white),
-                              label: const Text(
-                                'From Gallery',
-                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                elevation: 0,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isManualInput = true;
-                                  _errorMessage = null;
-                                });
-                              },
-                              icon: const Icon(Icons.link_rounded, size: 18, color: Colors.white),
-                              label: const Text(
-                                'Enter URL / ID',
-                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      // Manual URL Input Form
-                      TextField(
-                        controller: _urlController,
-                        autofocus: true,
-                        style: const TextStyle(fontFamily: appPoppinFont, color: Colors.white, fontSize: 14),
-                        decoration: InputDecoration(
-                          hintText: 'e.g. https://yiraclinics.com/doctor/DR-10492',
-                          hintStyle: const TextStyle(fontFamily: appPoppinFont, color: Colors.white38, fontSize: 13),
-                          prefixIcon: Icon(Icons.qr_code_rounded, color: primaryColor, size: 20),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.paste_rounded, color: Colors.white70, size: 20),
-                            onPressed: () async {
-                              final data = await Clipboard.getData(Clipboard.kTextPlain);
-                              if (data?.text != null) {
-                                _urlController.text = data!.text!;
-                              }
-                            },
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFF1E293B),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
-                          ),
+                    // Quick Action Button: Gallery Scan
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white30),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _pickFromGallery,
+                        icon: const Icon(Icons.photo_library_rounded, size: 18, color: Colors.white),
+                        label: const Text(
+                          'Upload QR from Gallery',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white30),
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _isManualInput = false;
-                                  _hasDetected = false;
-                                  _errorMessage = null;
-                                });
-                              },
-                              child: const Text('Back to Scanner', style: TextStyle(fontFamily: appPoppinFont, color: Colors.white)),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                padding: const EdgeInsets.symmetric(vertical: 13),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                              onPressed: _isLoading ? null : () => _processDoctorIdentifier(_urlController.text),
-                              child: _isLoading
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Text('Connect Doctor', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -725,31 +620,38 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: () async {
-                final status = await Permission.camera.request();
-                if (status.isGranted) {
-                  _checkAndRequestCameraPermission();
-                } else if (status.isPermanentlyDenied) {
-                  openAppSettings();
+                setState(() {
+                  _cameraPermissionDenied = false;
+                  _hasCameraPermission = true;
+                });
+                try {
+                  await _scannerController.start();
+                } catch (_) {
+                  await openAppSettings();
                 }
               },
-              icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
+              icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 18),
               label: const Text(
-                'Grant Camera Permission',
+                'Open Settings / Allow Camera',
                 style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
             const SizedBox(height: 12),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _isManualInput = true;
-                });
-              },
-              child: const Text(
-                'Enter Doctor URL / ID Manually',
-                style: TextStyle(fontFamily: appPoppinFont, color: Colors.white70, fontSize: 13),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _pickFromGallery,
+              icon: const Icon(Icons.photo_library_rounded, size: 18),
+              label: const Text(
+                'Upload QR from Gallery',
+                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
               ),
             ),
+            const SizedBox(height: 12),
           ],
         ),
       ),

@@ -26,8 +26,21 @@ class WeightScaleScreen extends StatelessWidget {
 
     return BlocConsumer<OnBoardingBloc, OnBoardingState>(
       listener: (context, state) {
-        // if (state.successMessage != null) Utils.showSnackBar(message:  state.successMessage!);
-        // if (state.errorMessage != null) Utils.showErrorSnackBar(context, state.errorMessage!);
+        if (state.isCompleted || state.successMessage != null) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.userConfiguration,
+            (route) => false,
+          );
+        } else if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
       builder: (context, state) {
         return Scaffold(
@@ -279,7 +292,7 @@ class WeightScaleScreen extends StatelessWidget {
         color: isDark
             ? Colors.white.withOpacity(0.04)
             : const Color(0xFFF4F7FF),
-        borderRadius: BorderRadius.circular(fieldBorderRadius ?? 14),
+        borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: Colors.blue.withOpacity(0.08)),
       ),
       child: Row(
@@ -355,7 +368,9 @@ class WeightScaleScreen extends StatelessWidget {
               height: 56,
               width: double.infinity,
               text: "Complete Profile",
-              onPressed: () {},
+              onPressed: () {
+                context.read<OnBoardingBloc>().add(SaveOnBoardingEvent(date: date));
+              },
             ),
     );
   }

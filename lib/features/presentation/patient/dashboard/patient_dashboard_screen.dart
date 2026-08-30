@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -14,10 +16,16 @@ import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../doctor/dashboard/widgets/doc_appointment_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../appointments/patient_book_appointment_sheet.dart';
+import '../doctors/widgets/scan_doctor_qr_sheet.dart';
 import '../documents/patient_documents_screen.dart';
 import '../widgets/patient_vitals_card.dart';
 import '../widgets/update_vitals_sheet.dart';
+import '../widgets/doctor_suggestions_card.dart';
+import '../../../../core/services/notification_services/notification_services.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
+import '../../../../core/tour/patient_tour_controller.dart';
+import '../../../../core/tour/patient_tour_mock_data.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
@@ -30,23 +38,55 @@ class PatientDashboardScreen extends StatefulWidget {
 
 class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
   Map<String, String> _vitalsData = {
-    'bp': '120/80',
-    'bpSystolic': '120',
-    'bpDiastolic': '80',
-    'pulse': '72',
-    'temp': '98.6',
-    'spO2': '98',
-    'weight': '68',
-    'height': '172',
-    'lastUpdated': 'Today',
+    'bp': '--',
+    'bpSystolic': '--',
+    'bpDiastolic': '--',
+    'pulse': '--',
+    'temp': '--',
+    'spO2': '--',
+    'weight': '--',
+    'height': '--',
+    'lastUpdated': 'Not updated yet',
   };
 
-  String _getInitials(String name) {
-    final clean = name.trim();
-    final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-    if (parts.isEmpty) return 'PT';
-    if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+  String? _profileImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCachedVitals();
+    NotificationService.instance.syncFcmTokenWithBackend();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PatientTourController().startDashboardTour(context: context);
+    });
+  }
+
+  Future<void> _loadCachedVitals() async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      if (userId.isEmpty) return;
+      final prefs = await SharedPreferences.getInstance();
+
+      final imgPath = prefs.getString('patient_profile_image_$userId');
+      final savedStr = prefs.getString('patient_vitals_$userId');
+
+      if (mounted) {
+        setState(() {
+          if (imgPath != null && imgPath.isNotEmpty && File(imgPath).existsSync()) {
+            _profileImagePath = imgPath;
+          }
+          if (savedStr != null) {
+            final Map<String, dynamic> decoded = jsonDecode(savedStr);
+            decoded.forEach((key, value) {
+              if (value != null && value.toString().trim().isNotEmpty) {
+                _vitalsData[key] = value.toString();
+              }
+            });
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   void _openUpdateVitalsSheet(BuildContext blocContext) async {
@@ -73,6 +113,28 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       final orgId = currentUser?.data?.latestOrgId ?? 1;
       final hospitalId = currentUser?.data?.latestHospitalId ?? 1;
       final token = currentUser?.data?.accessToken ?? '';
+
+      // Cache locally immediately
+      if (userId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('patient_vitals_$userId', jsonEncode(result));
+
+          // Append to vitals history
+          final historyKey = 'patient_vitals_history_$userId';
+          final historyStr = prefs.getString(historyKey);
+          List<dynamic> historyList = [];
+          if (historyStr != null) {
+            try {
+              historyList = jsonDecode(historyStr);
+            } catch (_) {}
+          }
+          final entry = Map<String, dynamic>.from(result);
+          entry['timestamp'] = DateTime.now().toIso8601String();
+          historyList.add(entry);
+          await prefs.setString(historyKey, jsonEncode(historyList));
+        } catch (_) {}
+      }
 
       if (userId.isNotEmpty) {
         try {
@@ -303,16 +365,28 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             bool isValidVital(String? val) =>
                 val != null &&
                 val.trim().isNotEmpty &&
+                val.trim() != '--' &&
                 val.trim().toLowerCase() != 'none' &&
                 val.trim().toLowerCase() != 'null' &&
                 val.trim().toLowerCase() != 'n/a';
 
-            _vitalsData['bp'] = isValidVital(bpVal) ? bpVal! : (_vitalsData['bp'] != null && _vitalsData['bp'] != '--' ? _vitalsData['bp']! : '120/80');
-            _vitalsData['pulse'] = isValidVital(pulseVal) ? pulseVal! : (_vitalsData['pulse'] != null && _vitalsData['pulse'] != '--' ? _vitalsData['pulse']! : '72');
-            _vitalsData['temp'] = isValidVital(tempVal) ? tempVal! : (_vitalsData['temp'] != null && _vitalsData['temp'] != '--' ? _vitalsData['temp']! : '98.6');
-            _vitalsData['spO2'] = isValidVital(spo2Val) ? spo2Val! : (_vitalsData['spO2'] != null && _vitalsData['spO2'] != '--' ? _vitalsData['spO2']! : '98');
-            _vitalsData['weight'] = isValidVital(weightVal) ? weightVal! : (_vitalsData['weight'] != null && _vitalsData['weight'] != '--' ? _vitalsData['weight']! : '68');
-            _vitalsData['height'] = isValidVital(heightVal) ? heightVal! : (_vitalsData['height'] != null && _vitalsData['height'] != '--' ? _vitalsData['height']! : '172');
+            if (isValidVital(bpVal)) {
+              _vitalsData['bp'] = bpVal!;
+              if (bpVal.contains('/')) {
+                _vitalsData['bpSystolic'] = bpVal.split('/').first.trim();
+                _vitalsData['bpDiastolic'] = bpVal.split('/').last.trim();
+              }
+            }
+            if (isValidVital(pulseVal)) _vitalsData['pulse'] = pulseVal!;
+            if (isValidVital(tempVal)) _vitalsData['temp'] = tempVal!;
+            if (isValidVital(spo2Val)) _vitalsData['spO2'] = spo2Val!;
+            if (isValidVital(weightVal)) _vitalsData['weight'] = weightVal!;
+            if (isValidVital(heightVal)) _vitalsData['height'] = heightVal!;
+
+            final hasAny = [bpVal, pulseVal, tempVal, spo2Val, weightVal, heightVal].any(isValidVital);
+            if (hasAny) {
+              _vitalsData['lastUpdated'] = 'Latest Recorded';
+            }
           }
 
           final List<PatientAppointmentEntity> allAppointments = data?.appointments ?? [];
@@ -341,67 +415,112 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             return dtA.compareTo(dtB);
           });
 
-          final List<PatientAppointmentEntity> upcomingAppointments = validUpcoming.take(2).toList();
+          return ValueListenableBuilder<bool>(
+            valueListenable: PatientTourController().isTourActiveNotifier,
+            builder: (context, isTourActive, _) {
+              final List<PatientAppointmentEntity> upcomingAppointments = isTourActive
+                  ? PatientTourMockData.demoUpcomingAppointments
+                  : validUpcoming.take(2).toList();
 
-          final bool isLoading = state is LoadingPatientViewDetails;
+              final bool isLoading = state is LoadingPatientViewDetails && !isTourActive;
 
-          return Scaffold(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            appBar: AppBar(
-              elevation: 0,
-              backgroundColor: theme.scaffoldBackgroundColor,
-              automaticallyImplyLeading: false,
-              titleSpacing: screenHorizontalSpacePadding,
-              centerTitle: false,
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SvgPicture.asset(
-                      appLogo,
-                      width: isTab ? 32 : 28,
-                      height: isTab ? 32 : 28,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: _openProfileSwitcher,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              patientName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: isTab ? 18.0 : 16.0,
-                                fontWeight: FontWeight.w700,
-                                color: adaptiveTextColor,
-                                letterSpacing: -0.4,
-                              ),
+              return Scaffold(
+                backgroundColor: theme.scaffoldBackgroundColor,
+                appBar: AppBar(
+                  elevation: 0,
+                  backgroundColor: theme.scaffoldBackgroundColor,
+                  automaticallyImplyLeading: false,
+                  titleSpacing: screenHorizontalSpacePadding,
+                  centerTitle: false,
+                  title: Container(
+                    key: PatientTourController().headerProfileKey,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: SvgPicture.asset(
+                            appLogo,
+                            width: isTab ? 32 : 28,
+                            height: isTab ? 32 : 28,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: _openProfileSwitcher,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    patientName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: isTab ? 18.0 : 16.0,
+                                      fontWeight: FontWeight.w700,
+                                      color: adaptiveTextColor,
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 20,
+                                  color: adaptiveTextColor.withValues(alpha: 0.7),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 20,
-                            color: adaptiveTextColor.withValues(alpha: 0.7),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-              actions: [
+                  actions: [
                 IconButton(
-                  tooltip: 'Switch Family Member',
-                  icon: Icon(Icons.people_outline_rounded, color: primaryColor),
-                  onPressed: _openProfileSwitcher,
+                  tooltip: 'Recent Notifications',
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.notifications_none_rounded, color: primaryColor, size: 20),
+                      ),
+                      Positioned(
+                        right: 2,
+                        top: 2,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.recentNotifications);
+                  },
+                ),
+                IconButton(
+                  tooltip: 'Scan Doctor QR',
+                  icon: Icon(Icons.qr_code_scanner_rounded, color: primaryColor),
+                  onPressed: () {
+                    ScanDoctorQrSheet.show(context);
+                  },
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
@@ -413,17 +532,37 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                         Navigator.pushNamed(context, AppRoutes.patientProfile);
                       }
                     },
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: primaryColor.withValues(alpha: 0.15),
-                      child: Text(
-                        patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          color: primaryColor,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.35),
+                          width: 1.5,
                         ),
+                      ),
+                      child: ClipOval(
+                        child: (_profileImagePath != null && _profileImagePath!.isNotEmpty && File(_profileImagePath!).existsSync())
+                            ? Image.file(
+                                File(_profileImagePath!),
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                color: primaryColor.withValues(alpha: 0.15),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -432,6 +571,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             ),
             body: RefreshIndicator(
               onRefresh: () async {
+                _loadCachedVitals();
                 context.read<PatientOverViewBloc>().add(
                       LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
                     );
@@ -447,294 +587,459 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 1. Health Vitals (Single Card with Welcome Back matching provider layout)
-                    PatientVitalsCard(
-                      vitals: _vitalsData,
-                      isLoading: state is LoadingPatientViewDetails || state is PatientOverViewInitial,
-                      onUpdateVitals: () => _openUpdateVitalsSheet(context),
-                      patientName: patientName,
+                    Container(
+                      key: PatientTourController().vitalsCardKey,
+                      child: PatientVitalsCard(
+                        vitals: isTourActive ? PatientTourMockData.demoVitals : _vitalsData,
+                        isLoading: !isTourActive && (state is LoadingPatientViewDetails || state is PatientOverViewInitial),
+                        onUpdateVitals: () => _openUpdateVitalsSheet(context),
+                        patientName: patientName,
+                        profileImagePath: _profileImagePath,
+                        onProfileTap: () {
+                          if (widget.onNavigateTab != null) {
+                            widget.onNavigateTab!(3);
+                          } else {
+                            Navigator.pushNamed(context, AppRoutes.patientProfile);
+                          }
+                        },
+                      ),
                     ),
                     const SizedBox(height: 20),
 
                     // 2. Upcoming / Today Appointments (Show up to 2 appointments)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Upcoming Appointments',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 18 : 16,
-                            fontWeight: FontWeight.bold,
-                            color: adaptiveTextColor,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            if (widget.onNavigateTab != null) {
-                              widget.onNavigateTab!(1);
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    if (isLoading)
-                      _buildAppointmentsShimmer(context, isDark)
-                    else if (upcomingAppointments.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : const Color(0xFFE2E8F0),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.event_available_rounded,
-                                color: primaryColor,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'No appointments scheduled today',
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: adaptiveTextColor,
+                    Container(
+                      key: PatientTourController().upcomingAppointmentsKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        'Upcoming Appointments',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTab ? 18 : 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: adaptiveTextColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                    if (upcomingAppointments.isNotEmpty) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: primaryColor.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '${upcomingAppointments.length}',
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: primaryColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: () {
+                                  if (widget.onNavigateTab != null) {
+                                    widget.onNavigateTab!(1);
+                                  }
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'View All',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white70 : Colors.grey[700],
                                   ),
-                                  Text(
-                                    'Book a consultation with your doctor',
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 11,
-                                      color: isDark ? Colors.white54 : Colors.grey[600],
-                                    ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          if (isLoading)
+                            _buildAppointmentsShimmer(context, isDark)
+                          else if (upcomingAppointments.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(isTab ? 20 : 16),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFF334155)
+                                      : const Color(0xFFE2E8F0),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isDark
+                                        ? Colors.black.withValues(alpha: 0.25)
+                                        : const Color(0xFF64748B).withValues(alpha: 0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
                                   ),
                                 ],
                               ),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                elevation: 0,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          Icons.event_note_rounded,
+                                          color: primaryColor,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'No upcoming appointments',
+                                              style: TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: isTab ? 15.5 : 14.5,
+                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Connect with your verified doctors & specialists',
+                                              style: TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontSize: 11.5,
+                                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Divider(
+                                    height: 1,
+                                    color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: isDark ? Colors.white70 : const Color(0xFF475569),
+                                            side: BorderSide(
+                                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: () => Navigator.pushNamed(context, AppRoutes.patientMyDoctors),
+                                          icon: const Icon(Icons.people_outline_rounded, size: 15),
+                                          label: const Text(
+                                            'My Doctors',
+                                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            elevation: 0,
+                                            padding: const EdgeInsets.symmetric(vertical: 10),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: () {
+                                            PatientBookAppointmentSheet.show(
+                                              context,
+                                              onAppointmentBooked: () {
+                                                if (mounted) {
+                                                  context.read<PatientOverViewBloc>().add(
+                                                    LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+                                                  );
+                                                }
+                                              },
+                                            );
+                                          },
+                                          icon: const Icon(Icons.calendar_today_rounded, size: 14),
+                                          label: const Text(
+                                            'Book Visit',
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              onPressed: () {
-                                if (widget.onNavigateTab != null) {
-                                  widget.onNavigateTab!(1);
-                                }
-                              },
-                              child: const Text(
-                                'Book',
+                            )
+                          else
+                            Column(
+                              children: upcomingAppointments.map((apt) {
+                                final docName = apt.doctorName.isNotEmpty
+                                    ? apt.doctorName
+                                    : 'Consulting Doctor';
+                                final initials = docName.isNotEmpty
+                                    ? (docName.startsWith('Dr. ')
+                                        ? docName.replaceFirst('Dr. ', '').trim()
+                                        : docName)[0]
+                                        .toUpperCase()
+                                    : 'DR';
+                                final hospitalName = apt.hospitalName.isNotEmpty
+                                    ? apt.hospitalName
+                                    : 'Yira Healthcare';
+                                final statusLabel = apt.status.isNotEmpty ? apt.status : 'Confirmed';
+                                final timeStr = _formatAppointmentDateTime(apt);
+
+                                final isDifferentPatient = apt.patientName.isNotEmpty &&
+                                    apt.patientName != 'Patient' &&
+                                    apt.patientName.toLowerCase() != patientName.toLowerCase();
+                                final patientLabel = isDifferentPatient
+                                    ? 'For: ${apt.patientName}'
+                                    : (apt.isTeleConsultation ? 'Video Consultation' : 'In-Clinic Visit');
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10.0),
+                                  child: DocAppointmentCard(
+                                    initials: initials,
+                                    name: docName,
+                                    subtitle: hospitalName,
+                                    description: apt.condition.isNotEmpty
+                                        ? apt.condition
+                                        : (apt.reason.isNotEmpty
+                                            ? apt.reason
+                                            : 'General Consultation'),
+                                    timeOrDate: timeStr,
+                                    statusLabel: statusLabel,
+                                    statusColor: const Color(0xFF10B981),
+                                    statusTextColor: Colors.white,
+                                    patientStatus: patientLabel,
+                                    isTab: isTab,
+                                    isTeleConsultation: apt.isTeleConsultation,
+                                    onJoinCall: () {
+                                      if (apt.meetingUrl.isNotEmpty) {
+                                        Utils.launchMeetingURL(
+                                          apt.meetingUrl,
+                                          displayName: patientName,
+                                          onLaunchFailure: (err) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text(err)),
+                                              );
+                                            }
+                                          },
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('No meeting link available.'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        AppRoutes.doctorPatientProfileScreen,
+                                        arguments: {
+                                          'patientId': apt.patientUserId.isNotEmpty ? apt.patientUserId : userId,
+                                          'appointmentId': apt.id,
+                                          'hospitalId': hospitalId,
+                                          'orgId': orgId,
+                                          'patientName': apt.patientName.isNotEmpty ? apt.patientName : patientName,
+                                          'initialStatus': apt.status,
+                                          'initialTabIndex': 0,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Doctor's Suggestions Card
+                    DoctorSuggestionsCard(
+                      patientId: userId,
+                      orgId: orgId,
+                      hospitalId: hospitalId,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 3. Quick Services Grid
+                    Container(
+                      key: PatientTourController().quickServicesKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Quick Services',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: 12,
+                                  fontSize: isTab ? 18 : 15.5,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: adaptiveTextColor,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      Column(
-                        children: upcomingAppointments.map((apt) {
-                          final docName = apt.doctorName.isNotEmpty
-                              ? apt.doctorName
-                              : 'Consulting Doctor';
-                          final initials = docName.isNotEmpty
-                              ? (docName.startsWith('Dr. ')
-                                  ? docName.replaceFirst('Dr. ', '').trim()
-                                  : docName)[0]
-                                  .toUpperCase()
-                              : 'DR';
-                          final hospitalName = apt.hospitalName.isNotEmpty
-                              ? apt.hospitalName
-                              : 'Yira Hospitals';
-                          final statusLabel = apt.status.isNotEmpty ? apt.status : 'Scheduled';
-                          final timeStr = _formatAppointmentDateTime(apt);
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'All Features',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            child: DocAppointmentCard(
-                              initials: initials,
-                              name: docName,
-                              subtitle: hospitalName,
-                              description: apt.condition.isNotEmpty
-                                  ? apt.condition
-                                  : (apt.reason.isNotEmpty
-                                      ? apt.reason
-                                      : 'General Consultation'),
-                              timeOrDate: timeStr,
-                              statusLabel: statusLabel,
-                              statusColor: const Color(0xFF059669),
-                              statusTextColor: Colors.white,
-                              isTab: isTab,
-                              isTeleConsultation: apt.isTeleConsultation,
-                              onJoinCall: () {
-                                if (apt.meetingUrl.isNotEmpty) {
-                                  Utils.launchMeetingURL(
-                                    apt.meetingUrl,
-                                    displayName: patientName,
-                                    onLaunchFailure: (err) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text(err)),
+                          GridView.count(
+                            crossAxisCount: isTab ? 3 : 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            childAspectRatio: isTab ? 1.3 : 1.18,
+                            children: [
+                              // 1. Book Appointment
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'Book Appointment',
+                                subtitle: 'Consult verified doctors',
+                                icon: Icons.calendar_month_rounded,
+                                color: const Color(0xFFE11D48),
+                                gradientColors: const [Color(0xFFE11D48), Color(0xFFBE123C)],
+                                onTap: () {
+                                  PatientBookAppointmentSheet.show(
+                                    context,
+                                    onAppointmentBooked: () {
+                                      if (mounted) {
+                                        context.read<PatientOverViewBloc>().add(
+                                          LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
                                         );
                                       }
                                     },
                                   );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('No meeting link available.'),
+                                },
+                              ),
+
+                              // 2. Medical Records
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'Medical Records',
+                                subtitle: 'Lab reports & files',
+                                icon: Icons.folder_shared_rounded,
+                                color: const Color(0xFF0284C7),
+                                gradientColors: const [Color(0xFF0284C7), Color(0xFF0369A1)],
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const PatientDocumentsScreen(),
                                     ),
                                   );
-                                }
-                              },
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.doctorPatientProfileScreen,
-                                  arguments: {
-                                    'patientId': userId,
-                                    'appointmentId': apt.id,
-                                    'hospitalId': hospitalId,
-                                    'orgId': orgId,
-                                    'patientName': patientName,
-                                    'initialStatus': apt.status,
-                                    'initialTabIndex': 0,
-                                  },
-                                );
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    const SizedBox(height: 20),
-
-                    // 3. Four Core Feature Navigation Cards
-                    Text(
-                      'Medical Services & Records',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: isTab ? 18 : 16,
-                        fontWeight: FontWeight.bold,
-                        color: adaptiveTextColor,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    GridView.count(
-                      crossAxisCount: isTab ? 4 : 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: isTab ? 1.3 : 1.15,
-                      children: [
-                        _buildFeatureCard(
-                          context: context,
-                          title: 'Prescriptions',
-                          subtitle: 'Active medicines & rx',
-                          icon: Icons.medication_rounded,
-                          color: const Color(0xFF8B5CF6),
-                          onTap: () => Navigator.pushNamed(
-                            context,
-                            AppRoutes.userPrescriptionManagement,
-                          ),
-                        ),
-                        _buildFeatureCard(
-                          context: context,
-                          title: 'My Health Checkups',
-                          subtitle: 'Visits & clinic summaries',
-                          icon: Icons.health_and_safety_rounded,
-                          color: const Color(0xFF059669),
-                          onTap: () {
-                            if (widget.onNavigateTab != null) {
-                              widget.onNavigateTab!(1);
-                            }
-                          },
-                        ),
-                        _buildFeatureCard(
-                          context: context,
-                          title: 'My Records & Reports',
-                          subtitle: 'Lab tests, scans & PDFs',
-                          icon: Icons.folder_shared_rounded,
-                          color: const Color(0xFF0284C7),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const PatientDocumentsScreen(),
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        _buildFeatureCard(
-                          context: context,
-                          title: 'Appointments View',
-                          subtitle: 'Full visit schedule',
-                          icon: Icons.calendar_month_rounded,
-                          color: const Color(0xFFEA580C),
-                          onTap: () {
-                            if (widget.onNavigateTab != null) {
-                              widget.onNavigateTab!(1);
-                            }
-                          },
-                        ),
-                        _buildFeatureCard(
-                          context: context,
-                          title: 'My Doctors',
-                          subtitle: 'Connected specialists & QR',
-                          icon: Icons.badge_rounded,
-                          color: const Color(0xFF0D9488),
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientMyDoctors),
-                        ),
-                      ],
+
+                              // 3. My Vitals
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'My Vitals',
+                                subtitle: 'Graphs & health trends',
+                                icon: Icons.monitor_heart_rounded,
+                                color: const Color(0xFF10B981),
+                                gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.patientVitalsTracking,
+                                ),
+                              ),
+
+                              // 4. My Doctors
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'My Doctors',
+                                subtitle: 'Connected specialists',
+                                icon: Icons.badge_rounded,
+                                color: const Color(0xFF0D9488),
+                                gradientColors: const [Color(0xFF0D9488), Color(0xFF0F766E)],
+                                onTap: () => Navigator.pushNamed(context, AppRoutes.patientMyDoctors),
+                              ),
+
+                              // 5. My Family
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'My Family',
+                                subtitle: 'Members & Profiles',
+                                icon: Icons.family_restroom_rounded,
+                                color: const Color(0xFF6366F1),
+                                gradientColors: const [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.patientMyFamily,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -743,8 +1048,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             ),
           );
         },
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 
   Widget _buildFeatureCard({
@@ -753,82 +1060,105 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     required String subtitle,
     required IconData icon,
     required Color color,
+    required List<Color> gradientColors,
     required VoidCallback onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTab = isTablet(context);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : const Color(0xFFE2E8F0),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFE2E8F0),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.25)
+                    : const Color(0xFF64748B).withValues(alpha: 0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          gradientColors[0].withValues(alpha: isDark ? 0.25 : 0.15),
+                          gradientColors[1].withValues(alpha: isDark ? 0.15 : 0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: color.withValues(alpha: isDark ? 0.3 : 0.2),
+                      ),
+                    ),
+                    child: Icon(icon, color: color, size: isTab ? 24 : 20),
                   ),
-                  child: Icon(icon, color: color, size: isTab ? 26 : 22),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: isDark ? Colors.white38 : Colors.grey[400],
-                ),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? 15 : 13,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 10,
+                      color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 10,
-                    color: isDark ? Colors.white54 : Colors.grey[600],
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? 14 : 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 10,
+                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -839,51 +1169,94 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
       children: List.generate(2, (index) {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14.0),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
+              width: 1,
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.grey.shade200,
+                  ? const Color(0xFF334155)
+                  : const Color(0xFFE2E8F0),
             ),
           ),
           child: BaseShimmer(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
+                // Top row: Avatar + Name / Hospital + Status Badge
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 130,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: 90,
+                            height: 11,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 65,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 140,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                const SizedBox(height: 12),
+                Divider(
+                  height: 1,
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                ),
+                const SizedBox(height: 10),
+                // Bottom row: Date/Time badge + Visit mode badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: 100,
-                        height: 11,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                    ),
+                    Container(
+                      width: 85,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),

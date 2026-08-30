@@ -27,6 +27,24 @@
     <key>LSRequiresIPhoneOS</key>
     <true/>
 
+    <!-- Background Modes for Push Notifications -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <!-- App Transport Security for Local Network / Development HTTP -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Yira Clinx needs access to the local network to communicate with the local server.</string>
+
     <!-- URL Launcher Queries Schemes -->
     <key>LSApplicationQueriesSchemes</key>
     <array>
@@ -45,7 +63,7 @@
 
     <!-- Camera & Microphone Permissions -->
     <key>NSCameraUsageDescription</key>
-    <string>Yira Clinx needs camera access to allow you to take and upload photos.</string>
+    <string>Yira Clinx needs camera access to scan Doctor QR codes, take profile photos, and upload medical documents.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Yira Clinx needs microphone access to capture audio if you choose to record video uploads.</string>
 

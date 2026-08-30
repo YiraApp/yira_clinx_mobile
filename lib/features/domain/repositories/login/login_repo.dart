@@ -14,4 +14,15 @@ abstract class LoginRepository {
     required String sessionId,
     String? countryCode,
   });
+
+  Future<LoginEntity?> registerPatient({
+    required String firstName,
+    required String lastName,
+    String? email,
+    required String mobileNumber,
+    required String countryCode,
+    required String password,
+    required String otp,
+    required String sessionId,
+  });
 }

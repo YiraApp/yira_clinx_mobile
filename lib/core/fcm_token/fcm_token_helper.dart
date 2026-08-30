@@ -10,7 +10,14 @@ class FcmTokenHelper {
       final messaging = FirebaseMessaging.instance;
 
       if (Platform.isAndroid) {
-        final String? androidToken = await messaging.getToken();
+        String? androidToken;
+        try {
+          androidToken = await messaging.getToken();
+        } catch (e) {
+          debugPrint("FCM getToken on Android retry needed: $e");
+          await Future.delayed(const Duration(milliseconds: 600));
+          androidToken = await messaging.getToken();
+        }
         return androidToken ?? '';
       } else if (Platform.isIOS) {
         try {
@@ -22,9 +29,14 @@ class FcmTokenHelper {
         } catch (_) {}
 
         try {
-          final String? token = await messaging.getToken();
-          if (token != null && token.isNotEmpty) {
-            return token;
+          final apnsToken = await messaging.getAPNSToken();
+          if (apnsToken != null) {
+            final String? token = await messaging.getToken();
+            if (token != null && token.isNotEmpty) {
+              return token;
+            }
+          } else {
+            debugPrint("APNS token not available on this iOS device/simulator yet, using local identifier fallback.");
           }
         } catch (e) {
           debugPrint("FCM getToken on iOS: $e");

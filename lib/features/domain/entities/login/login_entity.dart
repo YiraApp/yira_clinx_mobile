@@ -80,6 +80,7 @@ class ProfileEntity {
   final String? gender;
   final String? dob;
   final String? accountType;
+  final String? imagePath;
 
   ProfileEntity({
     this.id,
@@ -92,6 +93,7 @@ class ProfileEntity {
     this.gender,
     this.dob,
     this.accountType,
+    this.imagePath,
   });
 }
 

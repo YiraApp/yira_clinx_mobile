@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/core/local/global_session.dart';
-import 'package:yiraclinics/features/presentation/patient/appointments/patient_add_new_appointment_screen.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
@@ -29,7 +27,11 @@ import 'package:yiraclinics/features/presentation/patient/self_service/consultat
 import 'package:yiraclinics/features/presentation/patient/self_service/digital_consent_sign_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/online_bill_payment_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/upload_via_link_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/appointments/patient_select_hospital_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/appointments/patient_hospital_doctors_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/doctors/patient_my_doctors_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/vitals/patient_vitals_tracking_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/family/patient_my_family_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
@@ -127,21 +129,21 @@ class AppRouter {
         return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
-            child: WeightScaleScreen(),
+            child: const WeightScaleScreen(),
           ),
         );
       case AppRoutes.heightScale:
         return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
-            child: HeightScaleScreen(),
+            child: const HeightScaleScreen(),
           ),
         );
       case AppRoutes.genderSelection:
         return MaterialPageRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<OnBoardingBloc>(),
-            child: GenderAgeSelectionScreen(),
+            child: const GenderAgeSelectionScreen(),
           ),
         );
       case AppRoutes.userConfiguration:
@@ -210,6 +212,10 @@ class AppRouter {
             child: AddNewAppointmentScreen(
               initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
               initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
+              initialDoctorId: (appointmentArgs?['doctorId'] ?? appointmentArgs?['doctor']?['doctorId'] ?? appointmentArgs?['doctor']?['id'])?.toString(),
+              initialDoctorName: (appointmentArgs?['doctorName'] ?? appointmentArgs?['doctor']?['name'])?.toString(),
+              initialHospitalId: appointmentArgs?['hospitalId'] ?? appointmentArgs?['doctor']?['hospitalId'],
+              initialDoctor: appointmentArgs?['doctor'] as Map<String, dynamic>?,
             ),
           ),
         );
@@ -479,6 +485,19 @@ class AppRouter {
         return MaterialPageRoute(settings: settings, builder: (_) => DigitalConsentSignScreen(link: link));
       case AppRoutes.patientMyDoctors:
         return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
+      case AppRoutes.patientSelectHospitalScreen:
+        final initialHospitals = settings.arguments as List<Map<String, dynamic>>?;
+        return MaterialPageRoute(settings: settings, builder: (_) => PatientSelectHospitalScreen(initialHospitals: initialHospitals));
+      case AppRoutes.patientHospitalDoctorsScreen:
+        final hosp = (settings.arguments as Map<String, dynamic>?) ?? {};
+        return MaterialPageRoute(settings: settings, builder: (_) => PatientHospitalDoctorsScreen(hospital: hosp));
+      case AppRoutes.patientVitalsTracking:
+        final initialMetric = settings.arguments is VitalMetricType
+            ? settings.arguments as VitalMetricType
+            : VitalMetricType.bloodPressure;
+        return MaterialPageRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
+      case AppRoutes.patientMyFamily:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
       default:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>

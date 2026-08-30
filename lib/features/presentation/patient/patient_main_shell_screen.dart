@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../di/dependency_injection.dart';
 import '../appointments/appointment_bloc/appointment_bloc.dart';
@@ -23,13 +25,43 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   @override
   void initState() {
     super.initState();
+    PatientTourController().refreshKeys();
     _currentIndex = widget.initialIndex;
+    PatientTourController().registerTabSwitcher((index) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = index;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    PatientTourController().unregisterTabSwitcher();
+    super.dispose();
   }
 
   void _onTabSelected(int index) {
+    HapticFeedback.selectionClick();
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  GlobalKey? _getTourKey(int index) {
+    switch (index) {
+      case 0:
+        return PatientTourController().dashboardNavKey;
+      case 1:
+        return PatientTourController().apptsNavKey;
+      case 2:
+        return PatientTourController().consentsNavKey;
+      case 3:
+        return PatientTourController().profileNavKey;
+      default:
+        return null;
+    }
   }
 
   @override
@@ -42,6 +74,13 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
       PatientAppointmentsScreen(onNavigateTab: _onTabSelected),
       const PatientConsentApprovalScreen(showBackButton: false),
       const PatientProfilePassportScreen(),
+    ];
+
+    final navItems = [
+      {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
+      {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
+      {'label': 'Consents', 'icon': Icons.verified_user_rounded, 'outlined': Icons.verified_user_outlined},
+      {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
     ];
 
     return MultiBlocProvider(
@@ -71,46 +110,51 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
               ),
             ],
           ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: _onTabSelected,
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: primaryColor,
-            unselectedItemColor: isDark ? Colors.white54 : Colors.grey[500],
-            selectedLabelStyle: const TextStyle(
-              fontFamily: appPoppinFont,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 60,
+              child: Row(
+                children: List.generate(navItems.length, (index) {
+                  final item = navItems[index];
+                  final isSelected = index == _currentIndex;
+                  final key = _getTourKey(index);
+
+                  return Expanded(
+                    child: InkWell(
+                      key: key,
+                      onTap: () => _onTabSelected(index),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            (isSelected ? item['icon'] : item['outlined']) as IconData,
+                            size: 22,
+                            color: isSelected
+                                ? primaryColor
+                                : (isDark ? Colors.white54 : Colors.grey[500]),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item['label'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 10.5,
+                              color: isSelected
+                                  ? primaryColor
+                                  : (isDark ? Colors.white54 : Colors.grey[500]),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontFamily: appPoppinFont,
-              fontWeight: FontWeight.w500,
-              fontSize: 11,
-            ),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard_rounded),
-                activeIcon: Icon(Icons.dashboard_rounded),
-                label: 'Dashboard',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.calendar_month_rounded),
-                activeIcon: Icon(Icons.calendar_month_rounded),
-                label: 'Appointments',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.verified_user_rounded),
-                activeIcon: Icon(Icons.verified_user_rounded),
-                label: 'Consents',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_rounded),
-                activeIcon: Icon(Icons.person_rounded),
-                label: 'Profile',
-              ),
-            ],
           ),
         ),
       ),

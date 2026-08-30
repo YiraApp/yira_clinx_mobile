@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 
 class UpdateVitalsSheet extends StatefulWidget {
@@ -24,13 +23,30 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
   @override
   void initState() {
     super.initState();
-    _bpSystolicController = TextEditingController(text: widget.currentVitals?['bpSystolic'] ?? '120');
-    _bpDiastolicController = TextEditingController(text: widget.currentVitals?['bpDiastolic'] ?? '80');
-    _pulseController = TextEditingController(text: widget.currentVitals?['pulse'] ?? '72');
-    _tempController = TextEditingController(text: widget.currentVitals?['temp'] ?? '98.6');
-    _spO2Controller = TextEditingController(text: widget.currentVitals?['spO2'] ?? '98');
-    _weightController = TextEditingController(text: widget.currentVitals?['weight'] ?? '68');
-    _heightController = TextEditingController(text: widget.currentVitals?['height'] ?? '172');
+    String extract(String? val) {
+      if (val == null || val.trim().isEmpty || val.trim() == '--') return '';
+      return val.trim().replaceAll(RegExp(r'[^\d.]'), '');
+    }
+
+    final bpSys = widget.currentVitals?['bpSystolic'];
+    final bpDia = widget.currentVitals?['bpDiastolic'];
+    final bpFull = widget.currentVitals?['bp'];
+
+    String sys = extract(bpSys);
+    String dia = extract(bpDia);
+    if (sys.isEmpty && dia.isEmpty && bpFull != null && bpFull.contains('/')) {
+      final parts = bpFull.split('/');
+      sys = extract(parts.first);
+      if (parts.length > 1) dia = extract(parts[1]);
+    }
+
+    _bpSystolicController = TextEditingController(text: sys);
+    _bpDiastolicController = TextEditingController(text: dia);
+    _pulseController = TextEditingController(text: extract(widget.currentVitals?['pulse']));
+    _tempController = TextEditingController(text: extract(widget.currentVitals?['temp']));
+    _spO2Controller = TextEditingController(text: extract(widget.currentVitals?['spO2']));
+    _weightController = TextEditingController(text: extract(widget.currentVitals?['weight']));
+    _heightController = TextEditingController(text: extract(widget.currentVitals?['height']));
   }
 
   @override
@@ -52,7 +68,6 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     final primaryColor = theme.primaryColor;
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final isTab = isTablet(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -86,7 +101,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.12),
+                    color: primaryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.favorite_rounded, color: primaryColor, size: 24),
@@ -100,13 +115,13 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                         'Record Health Vitals',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? 20 : 18,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: textColor,
                         ),
                       ),
                       Text(
-                        'Self-recorded health metrics are shared with your doctor',
+                        'Enter your current health measurements',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 12,
@@ -136,7 +151,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                 Expanded(
                   child: _buildInputField(
                     controller: _bpSystolicController,
-                    label: 'Systolic (e.g. 120)',
+                    label: 'e.g. 120',
                     icon: Icons.compress_rounded,
                     isDark: isDark,
                   ),
@@ -148,7 +163,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                 Expanded(
                   child: _buildInputField(
                     controller: _bpDiastolicController,
-                    label: 'Diastolic (e.g. 80)',
+                    label: 'e.g. 80',
                     icon: Icons.expand_rounded,
                     isDark: isDark,
                   ),
@@ -168,7 +183,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       const SizedBox(height: 6),
                       _buildInputField(
                         controller: _pulseController,
-                        label: '72',
+                        label: 'e.g. 72',
                         icon: Icons.monitor_heart_rounded,
                         isDark: isDark,
                       ),
@@ -184,7 +199,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       const SizedBox(height: 6),
                       _buildInputField(
                         controller: _tempController,
-                        label: '98.6',
+                        label: 'e.g. 98.6',
                         icon: Icons.thermostat_rounded,
                         isDark: isDark,
                       ),
@@ -206,7 +221,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       const SizedBox(height: 6),
                       _buildInputField(
                         controller: _spO2Controller,
-                        label: '98',
+                        label: 'e.g. 98',
                         icon: Icons.air_rounded,
                         isDark: isDark,
                       ),
@@ -222,7 +237,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       const SizedBox(height: 6),
                       _buildInputField(
                         controller: _weightController,
-                        label: '68',
+                        label: 'e.g. 68',
                         icon: Icons.scale_rounded,
                         isDark: isDark,
                       ),
@@ -238,7 +253,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
             const SizedBox(height: 6),
             _buildInputField(
               controller: _heightController,
-              label: '172',
+              label: 'e.g. 172',
               icon: Icons.height_rounded,
               isDark: isDark,
             ),
@@ -257,15 +272,27 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                   ),
                 ),
                 onPressed: () {
+                  final sys = _bpSystolicController.text.trim();
+                  final dia = _bpDiastolicController.text.trim();
+                  final bp = (sys.isNotEmpty && dia.isNotEmpty)
+                      ? '$sys/$dia'
+                      : (sys.isNotEmpty ? sys : (dia.isNotEmpty ? dia : '--'));
+
+                  final pulse = _pulseController.text.trim().isNotEmpty ? _pulseController.text.trim() : '--';
+                  final temp = _tempController.text.trim().isNotEmpty ? _tempController.text.trim() : '--';
+                  final spO2 = _spO2Controller.text.trim().isNotEmpty ? _spO2Controller.text.trim() : '--';
+                  final weight = _weightController.text.trim().isNotEmpty ? _weightController.text.trim() : '--';
+                  final height = _heightController.text.trim().isNotEmpty ? _heightController.text.trim() : '--';
+
                   final result = {
-                    'bp': '${_bpSystolicController.text}/${_bpDiastolicController.text}',
-                    'bpSystolic': _bpSystolicController.text,
-                    'bpDiastolic': _bpDiastolicController.text,
-                    'pulse': _pulseController.text,
-                    'temp': _tempController.text,
-                    'spO2': _spO2Controller.text,
-                    'weight': _weightController.text,
-                    'height': _heightController.text,
+                    'bp': bp,
+                    'bpSystolic': sys.isNotEmpty ? sys : '--',
+                    'bpDiastolic': dia.isNotEmpty ? dia : '--',
+                    'pulse': pulse,
+                    'temp': temp,
+                    'spO2': spO2,
+                    'weight': weight,
+                    'height': height,
                     'lastUpdated': 'Just now',
                   };
                   if (widget.onSave != null) {

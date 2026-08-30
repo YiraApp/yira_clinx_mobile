@@ -18,6 +18,7 @@ class ClinicalNotesScreen extends StatefulWidget {
   final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
+  final bool allowAdd;
 
   const ClinicalNotesScreen({
     super.key,
@@ -25,6 +26,7 @@ class ClinicalNotesScreen extends StatefulWidget {
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.allowAdd = true,
   });
 
   @override
@@ -307,7 +309,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      floatingActionButton: isPatient
+      floatingActionButton: (isPatient || !widget.allowAdd)
           ? null
           : FloatingActionButton(
               backgroundColor: primaryColor,
@@ -413,7 +415,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                   color: isDark ? Colors.white54 : Colors.black45,
                 ),
               ),
-              if (!isPatient) ...[
+              if (!isPatient && widget.allowAdd) ...[
                 const Spacer(),
                 IconButton(
                   icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade600),

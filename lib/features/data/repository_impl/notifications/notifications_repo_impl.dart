@@ -16,10 +16,16 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   @override
   Future<NotificationsPayloadEntity?> getNotifications({int page = 1, int limit = 30}) async {
     try {
-      final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      final userId = currentUser?.data?.id ?? '';
       final response = await _apiClient.account(showSuccessSnack: false).get(
         URLs.notificationsListUrl,
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          if (userId.isNotEmpty) 'userId': userId,
+        },
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
         ),

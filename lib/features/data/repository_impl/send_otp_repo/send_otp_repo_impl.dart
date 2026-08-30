@@ -56,4 +56,53 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
       return null;
     }
   }
+
+  @override
+  Future<SendOtpEntity?> sendSignupOtp({
+    required String mobileNumber,
+    required String countryCode,
+  }) async {
+    try {
+      final Map<String, dynamic> requestBody = {
+        "phoneNumber": mobileNumber.trim(),
+        "identity": mobileNumber.trim(),
+        "countryCode": countryCode.replaceAll('+', '').trim(),
+      };
+
+      final response = await _apiClient.account(showSuccessSnack: true).post(
+        URLs.signupOtpUrl,
+        data: requestBody,
+      );
+
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        return null;
+      }
+
+      return SendOtpModel.fromJson(response.data as Map<String, dynamic>);
+    } catch (error, stackTrace) {
+      developer.log(
+        "sendSignupOtp failed gracefully inside repository layer",
+        error: error,
+        stackTrace: stackTrace,
+        name: "SendOtpRepositoryImpl",
+      );
+      if (error is DioException) {
+        if (error.response?.data != null && error.response!.data is Map<String, dynamic>) {
+          try {
+            return SendOtpModel.fromJson(error.response!.data as Map<String, dynamic>);
+          } catch (e) {
+            developer.log("Failed parsing error response JSON", error: e);
+          }
+        }
+        final String? msg = error.response?.data is Map
+            ? error.response?.data['message']?.toString()
+            : error.message;
+        return SendOtpModel(
+          status: false,
+          message: msg ?? "Failed to send signup verification code.",
+        );
+      }
+      return null;
+    }
+  }
 }

@@ -61,11 +61,23 @@ class ErrorInterceptor extends Interceptor {
       displayMessage = responseData['message']?.toString();
     }
     displayMessage ??= err.message;
-    ExceptionHandler.processException(
-      statusCode: statusCode,
-      status: false,
-      message: displayMessage,
-    );
+
+    final String path = err.requestOptions.path.toLowerCase();
+    final bool isAuthEndpoint = path.contains('login') ||
+        path.contains('register') ||
+        path.contains('signup') ||
+        path.contains('sendotp') ||
+        path.contains('verify') ||
+        path.contains('forgot') ||
+        path.contains('reset');
+
+    if (!isAuthEndpoint) {
+      ExceptionHandler.processException(
+        statusCode: statusCode,
+        status: false,
+        message: displayMessage,
+      );
+    }
 
     return handler.next(err);
   }

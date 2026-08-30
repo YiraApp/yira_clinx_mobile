@@ -157,6 +157,10 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
     super.doctorName,
     super.doctorEmail,
     super.doctorPhone,
+    super.patientName,
+    super.patientUserId,
+    super.relation,
+    super.isPrimary,
     super.notes,
     super.createdAt,
     super.createdBy,
@@ -173,6 +177,11 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
         json['is_tele_consultation']?.toString().toLowerCase() == 'true' ||
         (json['appointment_type'] ?? json['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
         (json['appointment_type'] ?? json['appointmentType'] ?? '').toString().toLowerCase().contains('video');
+
+    final pName = (json['patient_name'] ?? json['patientName'] ?? '').toString();
+    final pUserId = (json['patient_user_id'] ?? json['patientUserId'] ?? json['userId'] ?? '').toString();
+    final rel = (json['relation'] ?? 'Self').toString();
+    final isPrim = json['is_primary'] == true || json['isPrimary'] == true || json['is_primary'] == 1;
 
     return PatientAppointmentModel(
       id: (json['id'] ?? json['appointmentId'] ?? json['appointment_id'] ?? '').toString(),
@@ -198,6 +207,10 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
       doctorName: (json['doctor_name'] ?? json['doctorName'] ?? 'Doctor').toString(),
       doctorEmail: (json['doctor_email'] ?? json['doctorEmail'] ?? '').toString(),
       doctorPhone: (json['doctor_phone'] ?? json['doctorPhone'] ?? '').toString(),
+      patientName: pName,
+      patientUserId: pUserId,
+      relation: rel,
+      isPrimary: isPrim,
       notes: (json['notes'] ?? '').toString(),
       createdAt: (json['created_at'] ?? json['createdAt'] ?? '').toString(),
       createdBy: (json['created_by'] ?? json['createdBy'] ?? '').toString(),
@@ -683,26 +696,30 @@ class LatestVitalsModel extends LatestVitalsEntity {
 
   factory LatestVitalsModel.fromJson(Map<String, dynamic> json) {
     return LatestVitalsModel(
-      bloodPressure: json['blood_pressure'] != null && json['blood_pressure'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['blood_pressure'] as Map))
-          : (json['bloodPressure'] != null && json['bloodPressure'] is Map
-              ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['bloodPressure'] as Map))
-              : null),
-      pulse: json['pulse'] != null && json['pulse'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['pulse'] as Map))
-          : null,
-      temperature: json['temperature'] != null && json['temperature'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['temperature'] as Map))
-          : null,
-      spo2: json['spo2'] != null && json['spo2'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['spo2'] as Map))
-          : null,
-      weight: json['weight'] != null && json['weight'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['weight'] as Map))
-          : null,
-      height: json['height'] != null && json['height'] is Map
-          ? VitalMeasurementModel.fromJson(Map<String, dynamic>.from(json['height'] as Map))
-          : null,
+      bloodPressure: VitalMeasurementModel.parse(
+        json['blood_pressure'] ?? json['bloodPressure'] ?? json['bp'],
+        defaultUnit: 'mmHg',
+      ),
+      pulse: VitalMeasurementModel.parse(
+        json['pulse'] ?? json['heartRate'] ?? json['heart_rate'],
+        defaultUnit: 'bpm',
+      ),
+      temperature: VitalMeasurementModel.parse(
+        json['temperature'] ?? json['temp'],
+        defaultUnit: '°F',
+      ),
+      spo2: VitalMeasurementModel.parse(
+        json['spo2'] ?? json['spO2'] ?? json['oxygen'],
+        defaultUnit: '%',
+      ),
+      weight: VitalMeasurementModel.parse(
+        json['weight'],
+        defaultUnit: 'kg',
+      ),
+      height: VitalMeasurementModel.parse(
+        json['height'],
+        defaultUnit: 'cm',
+      ),
     );
   }
 
@@ -726,6 +743,27 @@ class LatestVitalsModel extends LatestVitalsEntity {
 
 class VitalMeasurementModel extends VitalMeasurementEntity {
   const VitalMeasurementModel({super.value, super.unit});
+
+  static VitalMeasurementModel? parse(dynamic raw, {String defaultUnit = ''}) {
+    if (raw == null) return null;
+    if (raw is Map) {
+      final v = raw['value'] ?? raw['val'];
+      final u = raw['unit'] ?? defaultUnit;
+      if (v == null || v.toString().trim().isEmpty) return null;
+      return VitalMeasurementModel(
+        value: v.toString().trim(),
+        unit: u?.toString().trim() ?? defaultUnit,
+      );
+    }
+    final str = raw.toString().trim();
+    if (str.isEmpty || str.toLowerCase() == 'null' || str.toLowerCase() == 'none' || str.toLowerCase() == 'n/a') {
+      return null;
+    }
+    return VitalMeasurementModel(
+      value: str,
+      unit: defaultUnit,
+    );
+  }
 
   factory VitalMeasurementModel.fromJson(Map<String, dynamic> json) {
     return VitalMeasurementModel(
