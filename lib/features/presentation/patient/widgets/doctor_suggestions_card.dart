@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -656,7 +657,10 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
               ),
               if (_suggestions.length > 2)
                 TextButton(
-                  onPressed: _showAllSuggestionsModal,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    AppRoutes.patientDoctorSuggestions,
+                  ),
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
@@ -668,7 +672,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                       fontFamily: appPoppinFont,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : Colors.grey[700],
+                      color: const Color(0xFF2563EB),
                     ),
                   ),
                 ),

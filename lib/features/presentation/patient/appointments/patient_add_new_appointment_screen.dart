@@ -14,6 +14,7 @@ import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart' show DoctorSlotItem;
 import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 
 class PatientAddNewAppointmentScreen extends StatefulWidget {

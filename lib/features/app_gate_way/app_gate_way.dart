@@ -137,6 +137,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
     AppRoutes.patientMyFamily: 'lib/features/presentation/patient/family/patient_my_family_screen.dart',
     AppRoutes.patientSelectHospitalScreen: 'lib/features/presentation/patient/appointments/patient_select_hospital_screen.dart',
     AppRoutes.patientHospitalDoctorsScreen: 'lib/features/presentation/patient/appointments/patient_hospital_doctors_screen.dart',
+    AppRoutes.patientDoctorSuggestions: 'lib/features/presentation/patient/suggestions/patient_doctor_suggestions_screen.dart',
   };
 
   String _getFilePath(String? routeName) {

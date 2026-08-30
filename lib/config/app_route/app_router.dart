@@ -32,6 +32,7 @@ import 'package:yiraclinics/features/presentation/patient/appointments/patient_h
 import 'package:yiraclinics/features/presentation/patient/doctors/patient_my_doctors_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/vitals/patient_vitals_tracking_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/family/patient_my_family_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/suggestions/patient_doctor_suggestions_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
@@ -498,6 +499,8 @@ class AppRouter {
         return MaterialPageRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
       case AppRoutes.patientMyFamily:
         return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
+      case AppRoutes.patientDoctorSuggestions:
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientDoctorSuggestionsScreen());
       default:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>

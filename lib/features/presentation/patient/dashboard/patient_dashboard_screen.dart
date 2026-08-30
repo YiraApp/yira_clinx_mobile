@@ -21,7 +21,6 @@ import '../doctors/widgets/scan_doctor_qr_sheet.dart';
 import '../documents/patient_documents_screen.dart';
 import '../widgets/patient_vitals_card.dart';
 import '../widgets/update_vitals_sheet.dart';
-import '../widgets/doctor_suggestions_card.dart';
 import '../../../../core/services/notification_services/notification_services.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
@@ -903,14 +902,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Doctor's Suggestions Card
-                    DoctorSuggestionsCard(
-                      patientId: userId,
-                      orgId: orgId,
-                      hospitalId: hospitalId,
-                    ),
-                    const SizedBox(height: 20),
-
                     // 3. Quick Services Grid
                     Container(
                       key: PatientTourController().quickServicesKey,
@@ -1034,6 +1025,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 onTap: () => Navigator.pushNamed(
                                   context,
                                   AppRoutes.patientMyFamily,
+                                ),
+                              ),
+
+                              // 6. Doctor Suggestions
+                              _buildFeatureCard(
+                                context: context,
+                                title: 'Doctor Suggestions',
+                                subtitle: 'Medical advice & tips',
+                                icon: Icons.lightbulb_rounded,
+                                color: const Color(0xFF8B5CF6),
+                                gradientColors: const [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.patientDoctorSuggestions,
                                 ),
                               ),
                             ],

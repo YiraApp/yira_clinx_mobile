@@ -5,18 +5,18 @@ class EnvironmentService {
     switch (_currentEnv) {
       case Environment.dev:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.0.104:5000",
-          healthCampBaseUrl: "192.168.0.104:5000",
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.0.104:5000",
-          healthCampBaseUrl: "192.168.0.104:5000",
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.0.104:5000",
-          healthCampBaseUrl: "192.168.0.104:5000",
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
         );
     }
   }

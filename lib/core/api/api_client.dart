@@ -75,9 +75,17 @@ class ApiClient {
 
   ApiClient._internal();
   Dio _createDio(String baseUrl, bool showSuccessSnack) {
+    String formattedUrl = baseUrl.trim();
+    if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+      formattedUrl = "https://$formattedUrl";
+    }
+    while (formattedUrl.endsWith("/")) {
+      formattedUrl = formattedUrl.substring(0, formattedUrl.length - 1);
+    }
+
     final dio = Dio(
       BaseOptions(
-        baseUrl: "http://$baseUrl",
+        baseUrl: formattedUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
