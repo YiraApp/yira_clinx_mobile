@@ -11,7 +11,12 @@ abstract class SchedulerRepository {
     required String bufferType,
   });
 
-  Future<bool> deploySchedule(List<SlotEntity> slots, {required String targetDate, required bool isSingleDay});
+  Future<bool> deploySchedule(
+    List<SlotEntity> slots, {
+    required String targetDate,
+    required bool isSingleDay,
+    List<Map<String, dynamic>>? breakTimes,
+  });
 
   Future<List<TimeSlot>> generateTimeSlots({
     required bool isSingleDay,
@@ -20,7 +25,17 @@ abstract class SchedulerRepository {
     required String bufferType,
   });
 
-  Future<bool> deployTimeSchedule(List<TimeSlot> slots, {required String targetDate, required bool isSingleDay});
+  Future<List<BreakTimeEntity>> fetchBreakTimes({
+    required String targetDate,
+    required bool isSingleDay,
+  });
+
+  Future<bool> deployTimeSchedule(
+    List<TimeSlot> slots, {
+    required String targetDate,
+    required bool isSingleDay,
+    List<Map<String, dynamic>>? breakTimes,
+  });
 
   Future<bool> blockSlot({required String slotId, bool block = true});
 

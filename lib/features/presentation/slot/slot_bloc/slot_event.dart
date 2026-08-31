@@ -39,6 +39,26 @@ class UpdateTimeRangeEvent extends SlotEvent {
 
 class GenerateTemplateSlotsEvent extends SlotEvent {}
 
+class AddBreakTimeEvent extends SlotEvent {
+  final String? label;
+  final String? fromTime;
+  final String? toTime;
+  AddBreakTimeEvent({this.label, this.fromTime, this.toTime});
+}
+
+class UpdateBreakTimeEvent extends SlotEvent {
+  final String breakId;
+  final String? label;
+  final String? fromTime;
+  final String? toTime;
+  UpdateBreakTimeEvent({required this.breakId, this.label, this.fromTime, this.toTime});
+}
+
+class RemoveBreakTimeEvent extends SlotEvent {
+  final String breakId;
+  RemoveBreakTimeEvent(this.breakId);
+}
+
 class AddCustomSlotEvent extends SlotEvent {
   final String? startTime;
   final String? endTime;
