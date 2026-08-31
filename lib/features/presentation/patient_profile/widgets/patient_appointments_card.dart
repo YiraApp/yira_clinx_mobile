@@ -98,12 +98,12 @@ class PatientAppointmentsCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEC4899).withValues(alpha: 0.12),
+                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.medication_liquid_rounded,
-                              color: Color(0xFFEC4899),
+                              color: primaryColor,
                               size: 22,
                             ),
                           ),
@@ -241,16 +241,16 @@ class PatientAppointmentsCard extends StatelessWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFEC4899).withValues(alpha: isDark ? 0.2 : 0.1),
+                                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
                                           m.dosage,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFFEC4899),
+                                            color: primaryColor,
                                           ),
                                         ),
                                       ),
@@ -301,7 +301,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 11,
-                                        color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                                        color: isDark ? Colors.white70 : const Color(0xFF475569),
                                       ),
                                     ),
                                   ),
@@ -416,10 +416,10 @@ class PatientAppointmentsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.edit_note_rounded, color: Color(0xFF06B6D4), size: 22),
+                  child: Icon(Icons.edit_note_rounded, color: primaryColor, size: 22),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -712,10 +712,10 @@ class PatientAppointmentsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.description_outlined, color: Color(0xFF8B5CF6), size: 26),
+                  child: Icon(Icons.description_outlined, color: primaryColor, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -877,10 +877,10 @@ class PatientAppointmentsCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.assignment_outlined, color: Color(0xFF10B981), size: 26),
+                  child: Icon(Icons.assignment_outlined, color: primaryColor, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1093,7 +1093,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "1",
                         title: "Schedule & Timing",
                         icon: Icons.access_time_rounded,
-                        color: const Color(0xFF3B82F6),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1141,7 +1141,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "2",
                         title: "Clinical Condition & Reason",
                         icon: Icons.healing_rounded,
-                        color: const Color(0xFFF59E0B),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1157,7 +1157,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                               fontFamily: appPoppinFont,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
-                              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
                             ),
                           ),
                           if (appt.reason.isNotEmpty && appt.reason != appt.condition) ...[
@@ -1179,7 +1179,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "3",
                         title: "Prescriptions (${appt.prescriptions.length})",
                         icon: Icons.medication_liquid_rounded,
-                        color: const Color(0xFFEC4899),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1200,7 +1200,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "4",
                         title: "Clinical Notes (${appt.clinicalNotes.length})",
                         icon: Icons.edit_note_rounded,
-                        color: const Color(0xFF06B6D4),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1233,7 +1233,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "5",
                         title: "Documents & Reports (${appt.documents.length})",
                         icon: Icons.folder_shared_outlined,
-                        color: const Color(0xFF8B5CF6),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1254,7 +1254,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "6",
                         title: "Medical Records & Diagnoses (${appt.medicalRecords.length})",
                         icon: Icons.assignment_outlined,
-                        color: const Color(0xFF10B981),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1275,7 +1275,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         number: "7",
                         title: "Provider & Facility",
                         icon: Icons.local_hospital_outlined,
-                        color: const Color(0xFF64748B),
+                        color: primaryColor,
                         isDark: isDark,
                       ),
                       const SizedBox(height: 10),
@@ -1385,7 +1385,7 @@ class PatientAppointmentsCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.medication_liquid_rounded, size: 16, color: Color(0xFFEC4899)),
+                    Icon(Icons.medication_liquid_rounded, size: 16, color: primaryColor),
                     const SizedBox(width: 6),
                     Text(
                       "Prescription • ${pres.date}",
@@ -1424,16 +1424,16 @@ class PatientAppointmentsCard extends StatelessWidget {
                     .map((d) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.2 : 0.1),
+                            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             "🩺 ${d.name}${d.icd10.isNotEmpty ? ' (${d.icd10})' : ''}",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF2563EB),
+                              color: primaryColor,
                             ),
                           ),
                         ))
@@ -1447,9 +1447,9 @@ class PatientAppointmentsCard extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Icon(Icons.circle, size: 6, color: Color(0xFFEC4899)),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Icon(Icons.circle, size: 6, color: primaryColor),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -1516,7 +1516,7 @@ class PatientAppointmentsCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF06B6D4)),
+                    Icon(Icons.edit_note_rounded, size: 16, color: primaryColor),
                     const SizedBox(width: 6),
                     Text(
                       note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
@@ -1586,10 +1586,10 @@ class PatientAppointmentsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.2 : 0.1),
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.description_outlined, color: Color(0xFF8B5CF6), size: 20),
+              child: Icon(Icons.description_outlined, color: primaryColor, size: 20),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1662,10 +1662,10 @@ class PatientAppointmentsCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1),
+                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.assignment_outlined, color: Color(0xFF10B981), size: 20),
+              child: Icon(Icons.assignment_outlined, color: primaryColor, size: 20),
             ),
             const SizedBox(width: 10),
             Expanded(

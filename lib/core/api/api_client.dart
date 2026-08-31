@@ -77,7 +77,14 @@ class ApiClient {
   Dio _createDio(String baseUrl, bool showSuccessSnack) {
     String formattedUrl = baseUrl.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
-      formattedUrl = "https://$formattedUrl";
+      if (formattedUrl.contains("192.168.") ||
+          formattedUrl.contains("10.") ||
+          formattedUrl.contains("localhost") ||
+          formattedUrl.contains(":")) {
+        formattedUrl = "http://$formattedUrl";
+      } else {
+        formattedUrl = "https://$formattedUrl";
+      }
     }
     while (formattedUrl.endsWith("/")) {
       formattedUrl = formattedUrl.substring(0, formattedUrl.length - 1);

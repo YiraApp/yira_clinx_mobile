@@ -145,24 +145,35 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
       }
 
       FormData formData;
+      Options requestOptions;
+
       if (_selectedFile != null) {
+        final multiFile = await MultipartFile.fromFile(
+          _selectedFile!.path,
+          filename: _selectedFileName ?? 'attached_file',
+        );
         formData = FormData.fromMap({
           ...bodyData,
-          'file': await MultipartFile.fromFile(
-            _selectedFile!.path,
-            filename: _selectedFileName ?? 'attached_file',
-          ),
+          'file': multiFile,
+          'files': multiFile,
         });
+        requestOptions = Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+            'Content-Type': 'multipart/form-data',
+          },
+        );
       } else {
         formData = FormData.fromMap(bodyData);
+        requestOptions = Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        );
       }
 
       final response = await ApiClient().account(showSuccessSnack: false).post(
         URLs.doctorSuggestionsUrl,
         data: formData,
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
+        options: requestOptions,
       );
 
       if (mounted) {

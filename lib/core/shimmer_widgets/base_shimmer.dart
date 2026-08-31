@@ -564,7 +564,7 @@ class ClinicalNotesShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? Colors.grey[900] : Colors.white;
+    final cardColor = isDark ? darkModeCardColor : Colors.white;
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 8),
@@ -572,19 +572,21 @@ class ClinicalNotesShimmer extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemBuilder: (context, index) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 14),
+          margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(fieldBorderRadius),
             border: Border.all(
               color: isDark ? Colors.white12 : Colors.grey.shade200,
+              width: 0.5,
             ),
           ),
           child: BaseShimmer(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Top row: Doctor icon + Date + Actions
                 Row(
                   children: [
                     Container(
@@ -596,24 +598,72 @@ class ClinicalNotesShimmer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Container(width: 140, height: 12, color: Colors.white),
+                    Container(
+                      width: 140,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                Container(width: double.infinity, height: 12, color: Colors.white),
-                const SizedBox(height: 6),
-                Container(width: 200, height: 12, color: Colors.white),
+                // Note body lines
+                Container(
+                  width: double.infinity,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 220,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
                 const SizedBox(height: 14),
+                // Doctor footer
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(width: 100, height: 10, color: Colors.white),
                     Container(
-                      width: 32,
-                      height: 20,
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 90,
+                      height: 10,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ],
@@ -1183,120 +1233,192 @@ class PrescriptionCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? darkModeCardColor : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(
-        right: screenHorizontalSpacePadding,
-        left: screenHorizontalSpacePadding,
-        bottom: fieldSpace,
-      ),
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200,
-          width: 1.2,
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
       ),
-      child: IntrinsicHeight(
-        child: Row(
+      child: BaseShimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left Accent Bar
-            Container(
-              width: 3.5,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white24 : Colors.grey.shade300,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(fieldBorderRadius),
-                  bottomLeft: Radius.circular(fieldBorderRadius),
-                ),
+            // Header: Icon + Title + Actions (Row 1) & Badge + Timestamp (Row 2)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 14, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          width: 140,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        width: 85,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 100,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: BaseShimmer(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top row: Medicine Icon + Title + 3-dots
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+
+            Divider(
+              height: 1,
+              color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+            ),
+
+            // Medicine Items Preview Shimmer
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                children: List.generate(2, (i) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 150,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  width: 200,
-                                  height: 11,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // Bottom row: Date + Action Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            width: 90,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                          Row(
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                width: 55,
-                                height: 26,
+                                width: 120,
+                                height: 12,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 4),
                               Container(
-                                width: 50,
-                                height: 26,
+                                width: 150,
+                                height: 10,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            // Bottom View Bar Shimmer
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 160,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
-                ),
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1335,129 +1457,139 @@ class MedicalRecordCardShimmer extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: fieldSpace),
-      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
-          width: 1,
+          width: 0.5,
         ),
       ),
       child: BaseShimmer(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top: Title + Date + Status Badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 15,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 90,
-                      height: 11,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  width: 60,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            // Complaints & Diagnosis box
+            // Top Header: Icon + Title + Subtitle + Edit/Delete
             Container(
-              width: double.infinity,
-              height: 48,
+              padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                color: isDark ? Colors.white.withOpacity(0.02) : const Color(0xFFE2E8F0).withOpacity(0.6),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(fieldBorderRadius)),
               ),
-            ),
-            const SizedBox(height: 12),
-            // Vitals row
-            Row(
-              children: List.generate(3, (index) {
-                return Expanded(
-                  child: Container(
-                    margin: EdgeInsets.only(right: index < 2 ? 8.0 : 0),
-                    height: 28,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(fieldBorderRadius / 2),
                     ),
                   ),
-                );
-              }),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                width: 140,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: 120,
+                          height: 11,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            // Doctor & Actions footer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 22,
-                      height: 22,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+
+            // Card Body
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 90,
-                      height: 11,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 180,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(3),
                     ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Vitals row
+                  Row(
+                    children: List.generate(3, (index) {
+                      return Expanded(
+                        child: Container(
+                          margin: EdgeInsets.only(right: index < 2 ? 8.0 : 0),
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 14),
+                  // Details Button
+                  Container(
+                    width: double.infinity,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 50,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1495,16 +1627,16 @@ class UploadedRecordCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? darkModeCardColor : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.12) : Colors.grey.shade200,
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
           width: 0.5,
         ),
       ),

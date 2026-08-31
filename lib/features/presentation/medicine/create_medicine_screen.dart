@@ -104,153 +104,296 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isTab = isTablet(context);
+    final bool isTab = isTablet(context);
     final theme = Theme.of(context);
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final patientName = (widget.patient?.name != null && widget.patient!.name.trim().isNotEmpty)
+        ? widget.patient!.name
+        : "Patient Record";
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
         listener: (context, state) {
           if (state is MedicalRecordSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Medical record created successfully!'),
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.recordToEdit != null
+                          ? "Medical record updated successfully!"
+                          : "Medical record created successfully!",
+                      style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             );
             Navigator.of(context).pop();
           } else if (state is MedicalRecordFailure) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.errorMessage)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage),
+                backgroundColor: Colors.red.shade600,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            );
           }
         },
         builder: (context, state) {
+          final selectedDate = state.selectedDate;
+
           return Form(
             key: _formKey,
             child: Column(
               children: [
-                // Top Sheet Header Design
+                // Clean Solid Blue Header
                 SafeArea(
                   bottom: false,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+                      color: const Color(0xFF2563EB),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                    child: Column(
+                    child: Row(
                       children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            size: 20,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              widget.recordToEdit != null
-                                  ? "Edit Medical Record"
-                                  : "Create Medical Record",
-                              style: const TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.recordToEdit != null
+                                    ? "Edit Medical Record"
+                                    : "Create Medical Record",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: isTab ? 18 : 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
+                              Text(
+                                patientName,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: isTab ? 13 : 12,
+                                  color: Colors.white.withValues(alpha: 0.85),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => Navigator.pop(context),
+                          icon: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: Colors.white,
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
+
+                // Form Scrollable Body
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: screenHorizontalSpacePadding,
-                      vertical: 12.0,
-                    ),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        // Visit Context Card (Date + Visit Type Selector)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isDark
+                                    ? Colors.black.withValues(alpha: 0.2)
+                                    : Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 children: [
-                                  CommonText(
-                                    "Date",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: appPoppinFont,
-                                      color: Colors.grey,
-                                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
-                                    ),
+                                  Icon(
+                                    Icons.event_note_rounded,
+                                    size: 16,
+                                    color: const Color(0xFF2563EB),
                                   ),
-                                  const SizedBox(height: 6),
-                                  _buildDOBPicker(
-                                    context,
-                                    state.selectedDate,
-                                    isDark,
-                                    isTab,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Consultation Details",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: isTab ? 14 : 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  CommonText(
-                                    "Visit Type",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: appPoppinFont,
-                                      color: Colors.grey,
-                                      fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.032,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  CommonDropdown(
-                                    title: "Select Visit Type",
-                                    options: const [
-                                      "New Consultation",
-                                      "Follow Up",
-                                    ],
-                                    selectedValue: _selectedVisitType,
-                                    onSelected: (String val) {
-                                      setState(() {
-                                        _selectedVisitType = val;
-                                      });
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+                              const SizedBox(height: 14),
 
+                              // Date & Visit Type Row
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Date of Visit",
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        _buildDOBPicker(
+                                          context,
+                                          selectedDate,
+                                          isDark,
+                                          isTab,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 6,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Visit Type",
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          height: isTab ? 45 : 40,
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+                                            ),
+                                          ),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              isExpanded: true,
+                                              value: _selectedVisitType,
+                                              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF2563EB)),
+                                              style: TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontSize: isTab ? 13 : 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              ),
+                                              items: const [
+                                                DropdownMenuItem(
+                                                  value: "New Consultation",
+                                                  child: Text("New Consultation"),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: "Follow Up",
+                                                  child: Text("Follow Up"),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: "Emergency / Walk-in",
+                                                  child: Text("Emergency / Walk-in"),
+                                                ),
+                                              ],
+                                              onChanged: (val) {
+                                                if (val != null) {
+                                                  setState(() => _selectedVisitType = val);
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Section 1: Clinical Assessment & Symptoms
                         ClinicalInfoSection(
                           chiefComplaintController: _chiefComplaintController,
                           symptomsController: _symptomsController,
                           physicalExamController: _physicalExamController,
                           isTab: isTab,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
+                        // Section 2: Vital Signs & Biometrics
                         VitalSignsSection(
                           isTab: isTab,
                           bpController: _bpController,
@@ -260,119 +403,187 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                           heightController: _heightController,
                           oxygenSaturationController: _oxygenSaturationController,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 16),
+
+                        // Section 3: Diagnosis & Treatment Plan
                         DiagnosisTreatmentSection(
                           isTab: isTab,
                           diagnosisController: _diagnosisController,
                           doctorNotesController: _doctorNotesController,
                           treatmentPlanController: _treatmentPlanController,
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
                 ),
+
+                // Bottom Fixed Action Bar
                 Container(
-                  padding: const EdgeInsets.all(16.0),
-                  color: theme.colorScheme.surface,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CommonBorderButton(
-                          height: buttonHeight,
-                          text: 'Cancel',
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: state is MedicalRecordLoading
-                            ? const Center(child: CircularProgressIndicator.adaptive())
-                            : CustomElevatedButton(
-                                noElevation: true,
-                                height: buttonHeight,
-                                width: displayWidth(context),
-                                text: widget.recordToEdit != null
-                                    ? "Update Record"
-                                    : "Create Record",
-                                onPressed: () {
-                                  if (_chiefComplaintController.text.trim().isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Row(
-                                          children: [
-                                            Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
-                                            SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text("Chief Complaint is mandatory"),
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: Colors.red.shade600,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  final doctorNotes = _doctorNotesController.text.trim();
-                                  final treatmentPlan = _treatmentPlanController.text.trim();
-
-                                  if (doctorNotes.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Row(
-                                          children: [
-                                            Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
-                                            SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text("Doctor Note is mandatory when adding a record"),
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: Colors.red.shade600,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  final combinedTreatment = treatmentPlan.isNotEmpty && treatmentPlan != doctorNotes
-                                      ? "Doctor Notes: $doctorNotes\n\nPlan: $treatmentPlan"
-                                      : doctorNotes;
-
-                                  if (_formKey.currentState!.validate()) {
-                                    context.read<MedicalRecordBloc>().add(
-                                      SaveMedicalRecordEvent(
-                                        recordId: widget.recordToEdit?.id,
-                                        patientId: widget.patientId ?? widget.patient?.id,
-                                        appointmentId: widget.appointmentId,
-                                        hospitalId: widget.hospitalId,
-                                        orgId: widget.orgId,
-                                        visitType: _selectedVisitType,
-                                        chiefComplaint: _chiefComplaintController.text,
-                                        symptoms: _symptomsController.text,
-                                        physicalExamination: _physicalExamController.text,
-                                        bp: _bpController.text,
-                                        hr: _hrController.text,
-                                        temperature: _tempController.text,
-                                        weight: _weightController.text,
-                                        height: _heightController.text,
-                                        diagnosis: _diagnosisController.text,
-                                        treatmentPlan: combinedTreatment,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
                       ),
                     ],
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(
+                                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              "Cancel",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 14 : 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.grey.shade300 : const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 7,
+                          child: state is MedicalRecordLoading
+                              ? const Center(
+                                  child: SizedBox(
+                                    height: 30,
+                                    width: 30,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                                  ),
+                                )
+                              : ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    backgroundColor: const Color(0xFF2563EB),
+                                    elevation: 2,
+                                    shadowColor: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    if (_chiefComplaintController.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                                              SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  "Chief Complaint is mandatory",
+                                                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.red.shade600,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final doctorNotes = _doctorNotesController.text.trim();
+                                    final treatmentPlan = _treatmentPlanController.text.trim();
+
+                                    if (doctorNotes.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Row(
+                                            children: [
+                                              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+                                              SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  "Doctor Note is mandatory when recording consultation",
+                                                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          backgroundColor: Colors.red.shade600,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final combinedTreatment = treatmentPlan.isNotEmpty && treatmentPlan != doctorNotes
+                                        ? "Doctor Notes: $doctorNotes\n\nPlan: $treatmentPlan"
+                                        : doctorNotes;
+
+                                    if (_formKey.currentState!.validate()) {
+                                      context.read<MedicalRecordBloc>().add(
+                                        SaveMedicalRecordEvent(
+                                          recordId: widget.recordToEdit?.id,
+                                          patientId: widget.patientId ?? widget.patient?.id,
+                                          appointmentId: widget.appointmentId,
+                                          hospitalId: widget.hospitalId,
+                                          orgId: widget.orgId,
+                                          visitType: _selectedVisitType,
+                                          chiefComplaint: _chiefComplaintController.text,
+                                          symptoms: _symptomsController.text,
+                                          physicalExamination: _physicalExamController.text,
+                                          bp: _bpController.text,
+                                          hr: _hrController.text,
+                                          temperature: _tempController.text,
+                                          weight: _weightController.text,
+                                          height: _heightController.text,
+                                          diagnosis: _diagnosisController.text,
+                                          treatmentPlan: combinedTreatment,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        widget.recordToEdit != null
+                                            ? "Update Record"
+                                            : "Save Record",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTab ? 14 : 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
