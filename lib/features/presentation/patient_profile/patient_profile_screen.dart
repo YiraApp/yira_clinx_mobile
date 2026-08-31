@@ -17,7 +17,6 @@ import 'package:yiraclinics/features/presentation/prescriptions/prescription_blo
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_records_screen.dart';
-import 'suggestions/doctor_suggestions_screen.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
@@ -54,7 +53,7 @@ class _DoctorPatientProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 7 tabs with dedicated Appointments & Suggestions tabs
+  // 6 tabs for Appointment consultation record
   final List<String> _tabs = [
     'Info',
     'Appointments',
@@ -62,7 +61,6 @@ class _DoctorPatientProfileScreenState
     'Prescribe',
     'Notes',
     'Documents',
-    'Suggestions',
   ];
 
   @override
@@ -183,6 +181,7 @@ class _DoctorPatientProfileScreenState
                           },
                         ),
                       ),
+                      const SizedBox(height: 12),
                       Expanded(
                         child: PageView.builder(
                           controller: _pageController,
@@ -191,12 +190,15 @@ class _DoctorPatientProfileScreenState
                             context.read<PatientProfileBloc>().add(TabChanged(index));
                           },
                           itemBuilder: (context, index) {
-                            return _buildActiveTabContent(
-                              context,
-                              patient,
-                              index,
-                              isTab,
-                              accessStatus,
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: _buildActiveTabContent(
+                                context,
+                                patient,
+                                index,
+                                isTab,
+                                accessStatus,
+                              ),
                             );
                           },
                         ),
@@ -320,15 +322,6 @@ class _DoctorPatientProfileScreenState
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
           ),
-        );
-      case 6:
-        // Suggestions Tab (Doctors can add health & lifestyle suggestions for the patient)
-        return DoctorSuggestionsScreen(
-          key: const ValueKey('SuggestionsTabFrame'),
-          patientId: widget.patientId ?? patient.id,
-          hospitalId: widget.hospitalId,
-          orgId: widget.orgId,
-          patientName: widget.patientName ?? patient.name,
         );
       default:
         return Center(

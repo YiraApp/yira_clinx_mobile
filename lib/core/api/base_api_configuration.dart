@@ -19,18 +19,18 @@ class EnvironmentService {
         );
       case Environment.dev:
         return const EnvironmentConfig(
-          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: "192.168.68.63:5000",
+          healthCampBaseUrl: "192.168.68.63:5000",
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: "192.168.68.63:5000",
+          healthCampBaseUrl: "192.168.68.63:5000",
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: "192.168.68.63:5000",
+          healthCampBaseUrl: "192.168.68.63:5000",
         );
     }
   }

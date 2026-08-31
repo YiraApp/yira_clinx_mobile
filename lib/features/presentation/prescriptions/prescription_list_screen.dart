@@ -114,37 +114,26 @@ class PrescriptionListScreen extends StatelessWidget {
               );
             } else {
               final firstMed = validMeds.first;
-              final String cardTitle = validMeds.length > 1
-                  ? '${firstMed.name} (+${validMeds.length - 1} more)'
-                  : firstMed.name;
-              final String cardSubtitle = validMeds.map((m) => m.name).join(', ');
 
               bodyWidget = ListView(
                 padding: EdgeInsets.zero,
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   SinglePrescriptionCard(
-                    title: cardTitle,
-                    subtitle: cardSubtitle,
-                    date: 'Today',
+                    medications: validMeds,
+                    date: 'Today • Clinical Consultation',
                     onEdit: (isPatient || !allowAdd)
                         ? null
                         : () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) => FractionallySizedBox(
-                                heightFactor: 0.9,
-                                child: ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                  child: AddPrescriptionRecordScreen(
-                                    patient: patient,
-                                    patientId: effectivePatientId,
-                                    appointmentId: appointmentId,
-                                    hospitalId: hospitalId,
-                                    orgId: orgId,
-                                  ),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                fullscreenDialog: true,
+                                builder: (_) => AddPrescriptionRecordScreen(
+                                  patient: patient,
+                                  patientId: effectivePatientId,
+                                  appointmentId: appointmentId,
+                                  hospitalId: hospitalId,
+                                  orgId: orgId,
                                 ),
                               ),
                             ).then((_) {

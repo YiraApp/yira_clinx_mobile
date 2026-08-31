@@ -61,26 +61,18 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
   }
 
   void _openRecordFormModal([MedicalRecordBriefEntity? recordToEdit]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.9,
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BlocProvider<MedicalRecordBloc>(
-            create: (_) => sl<MedicalRecordBloc>(),
-            child: Scaffold(
-              body: CreateMedicalRecordScreen(
-                patient: widget.patient,
-                recordToEdit: recordToEdit,
-                patientId: widget.patientId ?? widget.patient?.id,
-                appointmentId: widget.appointmentId,
-                hospitalId: widget.hospitalId,
-                orgId: widget.orgId,
-              ),
-            ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => BlocProvider<MedicalRecordBloc>(
+          create: (_) => sl<MedicalRecordBloc>(),
+          child: CreateMedicalRecordScreen(
+            patient: widget.patient,
+            recordToEdit: recordToEdit,
+            patientId: widget.patientId ?? widget.patient?.id,
+            appointmentId: widget.appointmentId,
+            hospitalId: widget.hospitalId,
+            orgId: widget.orgId,
           ),
         ),
       ),

@@ -9,12 +9,16 @@ class CommonDatePicker extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final double? borderRadius;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
 
   const CommonDatePicker({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
     this.borderRadius,
+    this.firstDate,
+    this.lastDate,
   });
 
   @override
@@ -24,7 +28,7 @@ class CommonDatePicker extends StatelessWidget {
     final bool isTab = isTablet(context);
 
     // Synchronized border radius fallback logic matching form elements
-    final double computedRadius = borderRadius ?? fieldBorderRadius ?? 8.0;
+    final double computedRadius = borderRadius ?? fieldBorderRadius;
 
     // Adaptive System Colors Matrix
     final Color inactiveBorderColor = isDark ? darkModeBorderColor : lightModeBorderColor;
@@ -38,12 +42,18 @@ class CommonDatePicker extends StatelessWidget {
         final DateTime now = DateTime.now();
         final int dynamicLastYear = now.year + 5;
 
+        final effectiveFirstDate = firstDate ?? DateTime(1940);
+        final effectiveLastDate = lastDate ?? DateTime(dynamicLastYear, 12, 31);
+        final effectiveInitialDate = selectedDate.isBefore(effectiveFirstDate)
+            ? effectiveFirstDate
+            : (selectedDate.isAfter(effectiveLastDate) ? effectiveLastDate : selectedDate);
+
         final chosen = await showDatePicker(
           initialEntryMode: DatePickerEntryMode.calendarOnly,
           context: context,
-          initialDate: selectedDate.isBefore(DateTime(1940)) ? DateTime.now() : selectedDate,
-          firstDate: DateTime(1940),
-          lastDate: DateTime(dynamicLastYear, 12, 31),
+          initialDate: effectiveInitialDate,
+          firstDate: effectiveFirstDate,
+          lastDate: effectiveLastDate,
           builder: (BuildContext context, Widget? child) {
             return Theme(
               data: theme.copyWith(

@@ -672,7 +672,6 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,7 +681,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
           children: [
             Row(
               children: [
-                Icon(Icons.checklist_rounded, color: theme.primaryColor, size: 16),
+                const Icon(Icons.checklist_rounded, color: Color(0xFF2563EB), size: 16),
                 const SizedBox(width: 6),
                 Text(
                   widget.label,
@@ -690,7 +689,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : Colors.black87,
+                    color: isDark ? Colors.white70 : const Color(0xFF334155),
                   ),
                 ),
                 if (widget.isRequired)
@@ -700,101 +699,109 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
             if (_selectedItems.isNotEmpty)
               Text(
                 '${_selectedItems.length} selected',
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: theme.primaryColor,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2563EB),
                 ),
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
-        // Display selected chips if any
-        if (_selectedItems.isNotEmpty) ...[
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: _selectedItems.map((item) {
-              return Chip(
-                backgroundColor: theme.primaryColor.withValues(alpha: isDark ? 0.18 : 0.08),
-                side: BorderSide(
-                  color: theme.primaryColor.withValues(alpha: 0.3),
-                  width: 0.8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                label: Text(
-                  item,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                deleteIcon: Icon(
-                  Icons.close_rounded,
-                  size: 14,
-                  color: isDark ? Colors.white70 : Colors.grey.shade700,
-                ),
-                onDeleted: () => _removeItem(item),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-        ],
-
-        // Trigger Button to open multi-select search modal
+        // Single Unified Input Field Container
         InkWell(
           onTap: _openFullScreenMultiSearch,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            width: double.infinity,
+            constraints: const BoxConstraints(minHeight: 46),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? darkModeCardColor : Colors.grey.shade50,
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? Colors.white24 : Colors.grey.shade300,
+                color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.add_circle_outline_rounded,
-                  size: 18,
-                  color: theme.primaryColor,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _selectedItems.isEmpty
-                        ? widget.hintText
-                        : "Tap to add/edit ${widget.label.toLowerCase()}...",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 13,
-                      color: _selectedItems.isEmpty
-                          ? Colors.grey.shade400
-                          : theme.primaryColor,
-                      fontWeight: _selectedItems.isEmpty
-                          ? FontWeight.normal
-                          : FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: _selectedItems.isEmpty
+                ? Row(
+                    children: [
+                      const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.hintText,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: _selectedItems.map((item) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.22 : 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  GestureDetector(
+                                    onTap: () => _removeItem(item),
+                                    child: Icon(
+                                      Icons.close_rounded,
+                                      size: 14,
+                                      color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add_rounded,
+                          size: 16,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: isDark ? Colors.white38 : Colors.grey.shade400,
-                ),
-              ],
-            ),
           ),
         ),
       ],

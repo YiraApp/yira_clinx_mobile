@@ -24,60 +24,71 @@ class ExecutionCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SectionCardWrapper(
-      icon: Icons.settings_outlined,
-      title: 'Execution',
-       isTab: isTab,
+      icon: Icons.calendar_month_rounded,
+      title: 'Schedule Dates',
+      isTab: isTab,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCardLabel(context, 'Run Mode', isDark,isTab),
-          const SizedBox(height: 8),
-          _buildRunModeToggle(context, dataState,isTab),
+          _buildCardLabel(context, 'Schedule For', isDark, isTab),
+          const SizedBox(height: 10),
+          _buildRunModeToggle(context, dataState, isTab),
           const SizedBox(height: 20),
-          _buildDatePickerTrigger(context, dataState, isDark,isTab),
+          _buildDatePickerTrigger(context, dataState, isDark, isTab),
         ],
       ),
     );
   }
 
-  Widget _buildCardLabel(BuildContext context, String text, bool isDark,bool isTab) {
+  Widget _buildCardLabel(BuildContext context, String text, bool isDark, bool isTab) {
     return CommonText(
       text,
       style: TextStyle(
         fontFamily: appPoppinFont,
-        fontSize:isTab? displayWidth(context)*0.018: displayWidth(context) * 0.032,
+        fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white60 : Colors.blueGrey,
+        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        letterSpacing: 0.3,
       ),
     );
   }
 
-  Widget _buildRunModeToggle(BuildContext context, SlotDataState dataState,bool isTab) {
+  Widget _buildRunModeToggle(BuildContext context, SlotDataState dataState, bool isTab) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
 
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 50,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? theme.inputDecorationTheme.fillColor : const Color(0xFFE9ECEF),
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           Expanded(
             child: _ToggleSegment(
               label: 'Single Day',
+              icon: Icons.today_rounded,
               isSelected: dataState.isSingleDay,
-              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)), isTab: isTab,
+              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)),
+              isTab: isTab,
+              primaryColor: primaryColor,
             ),
           ),
+          const SizedBox(width: 4),
           Expanded(
             child: _ToggleSegment(
-              label: 'Date Range',
+              label: 'Multiple Days',
+              icon: Icons.date_range_rounded,
               isSelected: !dataState.isSingleDay,
-              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)), isTab: isTab
+              onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)),
+              isTab: isTab,
+              primaryColor: primaryColor,
             ),
           ),
         ],
@@ -85,7 +96,7 @@ class ExecutionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDatePickerTrigger(BuildContext context, SlotDataState dataState, bool isDark,isTab) {
+  Widget _buildDatePickerTrigger(BuildContext context, SlotDataState dataState, bool isDark, isTab) {
     if (dataState.isSingleDay) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +105,7 @@ class ExecutionCard extends StatelessWidget {
             "Select Date",
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
+              fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white60 : Colors.blueGrey,
             ),
@@ -102,6 +113,7 @@ class ExecutionCard extends StatelessWidget {
           const SizedBox(height: 8),
           CommonDatePicker(
             selectedDate: dataState.targetDate,
+            firstDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
             onDateSelected: (DateTime chosen) {
               context.read<SlotBloc>().add(UpdateTargetDateEvent(chosen));
             },
@@ -110,88 +122,105 @@ class ExecutionCard extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+
+    return Row(
       children: [
-        CommonText(
-          "Start Date",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white60 : Colors.blueGrey,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CommonText(
+                "Start Date",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white60 : Colors.blueGrey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              CommonDatePicker(
+                selectedDate: dataState.startDate,
+                firstDate: today,
+                onDateSelected: (DateTime chosen) {
+                  final difference = dataState.endDate.difference(chosen).inDays;
+                  if (difference > 7) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Invalid Date Range'),
+                        content: const Text('The date range cannot be greater than 7 days.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+
+                  context.read<SlotBloc>().add(
+                    UpdateDateRangeEvent(
+                      startDate: chosen,
+                      endDate: dataState.endDate.isBefore(chosen) ? chosen : dataState.endDate,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        CommonDatePicker(
-          selectedDate: dataState.startDate,
-          onDateSelected: (DateTime chosen) {
-            final difference = dataState.endDate.difference(chosen).inDays;
-            if (difference > 7) {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Invalid Date Range'),
-                  content: const Text('The date range cannot be greater than 7 days.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('OK'),
-                    ),
-                  ],
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CommonText(
+                "End Date",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white60 : Colors.blueGrey,
                 ),
-              );
-              return;
-            }
-
-            context.read<SlotBloc>().add(
-              UpdateDateRangeEvent(
-                startDate: chosen,
-                endDate: dataState.endDate.isBefore(chosen) ? chosen : dataState.endDate,
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        CommonText(
-          "End Date",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white60 : Colors.blueGrey,
+              const SizedBox(height: 8),
+              CommonDatePicker(
+                selectedDate: dataState.endDate,
+                firstDate: dataState.startDate.isBefore(today) ? today : dataState.startDate,
+                onDateSelected: (DateTime chosen) {
+                  final difference = chosen.difference(dataState.startDate).inDays;
+
+                  if (difference > 7) {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Invalid Date Range'),
+                        content: const Text('The date range cannot be greater than 7 days.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+
+                  context.read<SlotBloc>().add(
+                    UpdateDateRangeEvent(
+                      startDate: dataState.startDate,
+                      endDate: chosen,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 8),
-        CommonDatePicker(
-          selectedDate: dataState.endDate,
-          onDateSelected: (DateTime chosen) {
-            final difference = chosen.difference(dataState.startDate).inDays;
-
-            if (difference > 7) {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Invalid Date Range'),
-                  content: const Text('The date range cannot be greater than 7 days.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-              return;
-            }
-
-            context.read<SlotBloc>().add(
-              UpdateDateRangeEvent(
-                startDate: dataState.startDate,
-                endDate: chosen,
-              ),
-            );
-          },
         ),
       ],
     );
@@ -200,35 +229,67 @@ class ExecutionCard extends StatelessWidget {
 
 class _ToggleSegment extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
   final bool isTab;
+  final Color primaryColor;
 
-  const _ToggleSegment({required this.label, required this.isSelected, required this.onTap, required this.isTab});
+  const _ToggleSegment({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.isTab,
+    required this.primaryColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
+          color: isSelected ? primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(11),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Center(
-          child: CommonText(
-            label,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.032,
-              fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? Colors.white
-                  : (isDark ? Colors.white70 : const Color(0xFF495057)),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white54 : const Color(0xFF64748B)),
+              ),
+              const SizedBox(width: 6),
+              CommonText(
+                label,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.03,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                ),
+              ),
+            ],
           ),
         ),
       ),

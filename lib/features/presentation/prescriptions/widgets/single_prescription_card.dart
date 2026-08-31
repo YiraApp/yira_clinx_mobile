@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/constants/constants.dart';
-import '../../upload_documnets/model/app_pop_up_model.dart';
-import '../../upload_documnets/widgets/common_custom_pop_up_menu.dart';
+import '../../../domain/entities/prescriptions/prescription_item.dart';
 
 class SinglePrescriptionCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  final List<MedicationItem> medications;
   final String date;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -18,8 +14,7 @@ class SinglePrescriptionCard extends StatelessWidget {
 
   const SinglePrescriptionCard({
     super.key,
-    required this.title,
-    required this.subtitle,
+    required this.medications,
     required this.date,
     this.onEdit,
     this.onDelete,
@@ -29,17 +24,12 @@ class SinglePrescriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final bool isTab = isTablet(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final int count = medications.length;
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(
-        right: 16,
-        left: 16,
-        bottom: 12,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -51,139 +41,308 @@ class SinglePrescriptionCard extends StatelessWidget {
           BoxShadow(
             color: isDark
                 ? Colors.black.withValues(alpha: 0.25)
-                : const Color(0xFF64748B).withValues(alpha: 0.05),
+                : const Color(0xFF64748B).withValues(alpha: 0.06),
             blurRadius: 12,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onView,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header: Icon + Title + Action Buttons ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 14, 12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon Avatar
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.medication_rounded,
-                    color: _primaryBlue,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                // Top Row: Avatar + Title + Actions
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Rx Icon Badge
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.medication_rounded,
+                        color: _primaryBlue,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
 
-                // Main Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CommonText(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    // Title
+                    Expanded(
+                      child: Text(
+                        "Prescription Record",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? 15 : 14,
-                          fontWeight: FontWeight.bold,
+                          fontSize: isTab ? 16 : 14.5,
+                          fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        CommonText(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 13 : 12,
-                            color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 11,
-                              color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                            ),
-                            const SizedBox(width: 4),
-                            CommonText(
-                              date,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Direct Action Buttons (Edit & Delete)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (onEdit != null)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onEdit,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: _primaryBlue.withValues(alpha: isDark ? 0.15 : 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _primaryBlue.withValues(alpha: 0.25),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: _primaryBlue,
+                                ),
                               ),
                             ),
+                          ),
+                        if (onEdit != null && onDelete != null) const SizedBox(width: 8),
+                        if (onDelete != null)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onDelete,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.all(7),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: isDark ? 0.15 : 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.red.withValues(alpha: 0.25),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 16,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Second Row: Count badge + Timestamp
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 11,
+                            color: _primaryBlue,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "$count ${count == 1 ? 'Medicine' : 'Medicines'}",
+                            style: const TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 12,
+                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        date,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Divider(
+            height: 1,
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+          ),
+
+          // ── Medicine Items List ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              children: medications.take(3).map((med) {
+                final timingParts = <String>[];
+                if (med.dosage != null && med.dosage!.trim().isNotEmpty) {
+                  timingParts.add(med.dosage!.trim());
+                }
+                if (med.frequency != null && med.frequency!.trim().isNotEmpty) {
+                  timingParts.add(med.frequency!.trim());
+                }
+                if (med.duration != null && med.duration!.trim().isNotEmpty) {
+                  timingParts.add(med.duration!.trim());
+                }
+                if (med.route != null && med.route!.trim().isNotEmpty) {
+                  timingParts.add(med.route!.trim());
+                }
+                final timingStr = timingParts.join(' • ');
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: _primaryBlue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              med.name,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 13.5 : 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (timingStr.isNotEmpty)
+                              Text(
+                                timingStr,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
+                );
+              }).toList(),
+            ),
+          ),
 
-                // 3-dots Menu
-                CommonCustomPopupMenu(
-                  items: [
-                    if (onView != null)
-                      AppPopupItemModel(
-                        icon: Icons.visibility_outlined,
-                        title: 'View Details',
-                        onTap: onView!,
-                      ),
-                    if (onEdit != null)
-                      AppPopupItemModel(
-                        icon: Icons.edit_outlined,
-                        title: 'Edit',
-                        onTap: onEdit!,
-                      ),
-                    if (onDelete != null)
-                      AppPopupItemModel(
-                        icon: Icons.delete_outline_rounded,
-                        title: 'Delete',
-                        onTap: onDelete!,
-                        isDestructive: true,
-                      ),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Icon(
-                      Icons.more_vert_rounded,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      size: 20,
+          if (medications.length > 3)
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 8),
+              child: Text(
+                "+ ${medications.length - 3} more medications",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ),
+            ),
+
+          // ── Bottom View Action Bar ──
+          if (onView != null)
+            InkWell(
+              onTap: onView,
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  border: Border(
+                    top: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
                     ),
                   ),
                 ),
-              ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "View Full Prescription Details",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _primaryBlue,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 13,
+                      color: _primaryBlue,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
+        ],
       ),
     );
   }
