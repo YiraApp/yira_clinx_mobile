@@ -110,6 +110,9 @@ class ProviderTourController {
   }) {
     if (!force && !shouldAutoStart()) return;
 
+    // Immediately mark as seen so role switches and tab switches never re-trigger the tour
+    _saveTourCompletion();
+
     _steps = [
       // ─── 1. HOME DASHBOARD ───────────────────────────────────────────
       // Step 1: Clinic & Hospital Switcher
@@ -402,12 +405,11 @@ class ProviderTourController {
     );
   }
 
-  Future<void> _completeTour() async {
+  Future<void> _saveTourCompletion() async {
     final prefs = sl<SharedPrefsService>();
     final userCompletedKey = _getUserKey(_kTourCompletedKey);
     final userDontShowKey = _getUserKey(_kTourDontShowAgainKey);
 
-    // Save completion flag per mobile number and globally
     await prefs.setValue(userCompletedKey, true);
     await prefs.setValue(_kTourCompletedKey, true);
     await prefs.setValue(userDontShowKey, true);
@@ -420,6 +422,10 @@ class ProviderTourController {
       await rawPrefs.setBool(userDontShowKey, true);
       await rawPrefs.setBool(_kTourDontShowAgainKey, true);
     } catch (_) {}
+  }
+
+  Future<void> _completeTour() async {
+    await _saveTourCompletion();
 
     // Return cleanly to Home Tab
     _tabSwitchCallback?.call(0);

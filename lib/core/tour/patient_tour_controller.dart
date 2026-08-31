@@ -205,6 +205,9 @@ class PatientTourController {
 
     if (isTourActive) return;
 
+    // Immediately mark as seen so role switches and tab switches never re-trigger the tour
+    await _saveTourCompletion();
+
     // Small delay to ensure widgets are built and mounted
     await Future.delayed(const Duration(milliseconds: 600));
     if (!context.mounted) return;
