@@ -217,6 +217,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
       final SendOtpEntity? result = await sendSignupOtpUseCase(
         countryCode: event.countryCode.trim(),
         mobileNumber: event.mobileNumber.trim(),
+        email: event.email?.trim(),
       );
 
       if (result == null || !(result.status ?? false)) {

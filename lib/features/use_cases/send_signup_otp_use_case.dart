@@ -10,6 +10,7 @@ class SendSignupOtpUseCase {
   Future<SendOtpEntity?> call({
     required String mobileNumber,
     required String countryCode,
+    String? email,
   }) async {
     if (mobileNumber.trim().isEmpty || countryCode.trim().isEmpty) {
       return null;
@@ -18,6 +19,7 @@ class SendSignupOtpUseCase {
     return await _repository.sendSignupOtp(
       mobileNumber: mobileNumber.trim(),
       countryCode: countryCode.trim(),
+      email: email?.trim(),
     );
   }
 }

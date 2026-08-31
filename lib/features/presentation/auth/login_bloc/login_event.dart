@@ -83,10 +83,12 @@ class OnTapMobileSignInEvent extends LogInEvent{
 class OnSendSignupOtpEvent extends LogInEvent {
   final String mobileNumber;
   final String countryCode;
+  final String? email;
 
   const OnSendSignupOtpEvent({
     required this.mobileNumber,
     required this.countryCode,
+    this.email,
   });
 }
 
