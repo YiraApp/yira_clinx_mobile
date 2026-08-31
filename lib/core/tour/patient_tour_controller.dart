@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 import 'patient_tour_keys.dart';
 import 'patient_tour_model.dart';
 import 'patient_tour_overlay.dart';
@@ -103,12 +104,11 @@ class PatientTourController {
           tabIndex: 0,
         ),
 
-        // ─── 2. APPOINTMENTS TAB ────────────────────────────────────
         // Step 6: Bottom Navigation - Appointments Tab
         PatientTourStep(
           id: 'step_nav_appts',
           title: '2. Appointments Tab',
-          description: 'Switches to your appointment center to track upcoming bookings and check consultation histories.',
+          description: 'Manage all booked consultations, view doctor notes, and check upcoming schedules.',
           targetKey: apptsNavKey,
           icon: Icons.calendar_month_rounded,
           position: TourCardPosition.top,
@@ -117,23 +117,11 @@ class PatientTourController {
           tabIndex: 1,
         ),
 
-        // Step 7: Appointments Filters & Search
-        PatientTourStep(
-          id: 'step_appts_filter',
-          title: 'Search & Status Filters',
-          description: 'Quickly filter consultations between Upcoming and Completed, or filter by Confirmed, Scheduled, and In Progress.',
-          targetKey: apptsFilterKey,
-          icon: Icons.filter_alt_rounded,
-          position: TourCardPosition.bottom,
-          tabIndex: 1,
-        ),
-
-        // ─── 3. CONSENTS TAB ────────────────────────────────────────
-        // Step 8: Bottom Navigation - Consents Tab
+        // Step 7: Bottom Navigation - Approvals Tab
         PatientTourStep(
           id: 'step_nav_consents',
-          title: '3. Consents & Privacy Tab',
-          description: 'Switches to your consent management center where you control all doctor and hospital access to your health records.',
+          title: '3. Approvals & Consents',
+          description: 'Grant or revoke doctor access to your digital health records securely with full consent tracking.',
           targetKey: consentsNavKey,
           icon: Icons.verified_user_rounded,
           position: TourCardPosition.top,
@@ -142,23 +130,11 @@ class PatientTourController {
           tabIndex: 2,
         ),
 
-        // Step 9: Consent Requests List
-        PatientTourStep(
-          id: 'step_consents_list',
-          title: 'Secure Medical Record Consents',
-          description: 'Grant or revoke permissions for consulting doctors to view your medical history with complete privacy protection.',
-          targetKey: consentsListKey,
-          icon: Icons.security_rounded,
-          position: TourCardPosition.bottom,
-          tabIndex: 2,
-        ),
-
-        // ─── 4. PROFILE & PASSPORT TAB ──────────────────────────────
-        // Step 10: Bottom Navigation - Profile Tab
+        // Step 8: Bottom Navigation - Health Passport Tab
         PatientTourStep(
           id: 'step_nav_profile',
-          title: '4. Profile & Health Passport Tab',
-          description: 'Switches to your verified Health Passport, ABHA credentials, and app preferences.',
+          title: '4. Health Passport',
+          description: 'Access your complete medical profile, diagnostic reports, and digital health history.',
           targetKey: profileNavKey,
           icon: Icons.person_rounded,
           position: TourCardPosition.top,
@@ -167,13 +143,49 @@ class PatientTourController {
           tabIndex: 3,
         ),
 
-        // Step 11: Health Passport Card
+        // ─── 2. APPOINTMENTS TAB (Index 1) ──────────────────────────
+        // Step 9: Appointment Status Filter Chips
+        PatientTourStep(
+          id: 'step_appts_filters',
+          title: 'Filter Consultations',
+          description: 'Easily filter consultations by Upcoming, Completed, or Cancelled status to keep track of your care history.',
+          targetKey: apptsFilterKey,
+          icon: Icons.filter_alt_rounded,
+          position: TourCardPosition.bottom,
+          tabIndex: 1,
+        ),
+
+        // Step 10: Appointment Card Actions
+        PatientTourStep(
+          id: 'step_appts_card',
+          title: 'Consultation Details & Actions',
+          description: 'View full doctor details, reschedule or cancel visits, and tap to open consultation summary reports.',
+          targetKey: apptsListKey,
+          icon: Icons.receipt_long_rounded,
+          position: TourCardPosition.auto,
+          tabIndex: 1,
+        ),
+
+        // ─── 3. APPROVALS TAB (Index 2) ─────────────────────────────
+        // Step 11: Doctor Record Access Approvals
+        PatientTourStep(
+          id: 'step_consents_list',
+          title: 'Active Doctor Consents',
+          description: 'Review pending consent requests from hospitals and doctors. Approve with 1 tap or revoke anytime.',
+          targetKey: consentsListKey,
+          icon: Icons.admin_panel_settings_rounded,
+          position: TourCardPosition.auto,
+          tabIndex: 2,
+        ),
+
+        // ─── 4. HEALTH PASSPORT TAB (Index 3) ───────────────────────
+        // Step 12: Health Passport Card
         PatientTourStep(
           id: 'step_passport_card',
-          title: 'Your Digital Health Passport',
-          description: 'Your verified digital health ID card with ABHA linkage, blood group, emergency details, and QR code for rapid hospital check-in.',
+          title: 'Your Digital Health Identity',
+          description: 'Share your encrypted health passport with doctors, manage emergency contacts, and export records.',
           targetKey: passportProfileCardKey,
-          icon: Icons.badge_rounded,
+          icon: Icons.health_and_safety_rounded,
           position: TourCardPosition.bottom,
           tabIndex: 3,
         ),
@@ -197,6 +209,12 @@ class PatientTourController {
   }) async {
     if (!force) {
       final prefs = await SharedPreferences.getInstance();
+      final isNewlyRegistered =
+          prefs.getBool(ClinxStorageKeys.isNewlyRegisteredUser) ?? false;
+      if (!isNewlyRegistered) {
+        return; // Tour only automatically shows for newly registered users
+      }
+
       final userKey = _getUserKey(_prefTourCompletedKey);
       final hasCompleted = (prefs.getBool(_prefTourCompletedKey) ?? false) ||
           (prefs.getBool(userKey) ?? false);
@@ -343,6 +361,7 @@ class PatientTourController {
   Future<void> _saveTourCompletion() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(ClinxStorageKeys.isNewlyRegisteredUser, false);
       final userKey = _getUserKey(_prefTourCompletedKey);
       await prefs.setBool(_prefTourCompletedKey, true);
       await prefs.setBool(userKey, true);

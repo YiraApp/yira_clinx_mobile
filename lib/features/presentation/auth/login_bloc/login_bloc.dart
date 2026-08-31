@@ -99,6 +99,10 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
             ClinxStorageKeys.isUserLoggedIn,
             true,
           ),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isNewlyRegisteredUser,
+            false,
+          ),
         ]);
         if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
           try {
@@ -133,7 +137,6 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
           countryCode: event.countryCode,
         ),
       );
-      {}
       if (result == null || !(result.status ?? false)) {
         final failureMessage =
             result?.message ?? "Invalid OTP or mobile number.";
@@ -145,6 +148,10 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
           sharedPrefsService.setValue<bool>(
             ClinxStorageKeys.isUserLoggedIn,
             true,
+          ),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isNewlyRegisteredUser,
+            false,
           ),
         ]);
         if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
@@ -159,7 +166,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
       }
     } catch (exception) {
       debugPrint(
-        "CRITICAL (LoginBloc): Unexpected mobile login exception: $exception",
+        "CRITICAL (LoginBloc): Exception caught inside _onTapMobileSignIn: $exception",
       );
       emit(LoginFailure(errorMessage: exception.toString()));
     }
@@ -269,6 +276,10 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
           GlobalSession.instance.update(result),
           sharedPrefsService.setValue<bool>(
             ClinxStorageKeys.isUserLoggedIn,
+            true,
+          ),
+          sharedPrefsService.setValue<bool>(
+            ClinxStorageKeys.isNewlyRegisteredUser,
             true,
           ),
         ]);

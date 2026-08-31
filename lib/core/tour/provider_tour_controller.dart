@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/navigation_services/navigation_services.dart';
@@ -92,6 +93,12 @@ class ProviderTourController {
 
   bool shouldAutoStart() {
     final prefs = sl<SharedPrefsService>();
+    final isNewlyRegistered =
+        prefs.getValue<bool>(ClinxStorageKeys.isNewlyRegisteredUser) ?? false;
+    if (!isNewlyRegistered) {
+      return false; // Tour only automatically starts for newly registered users
+    }
+
     final userCompletedKey = _getUserKey(_kTourCompletedKey);
     final userDontShowKey = _getUserKey(_kTourDontShowAgainKey);
 
@@ -410,6 +417,7 @@ class ProviderTourController {
     final userCompletedKey = _getUserKey(_kTourCompletedKey);
     final userDontShowKey = _getUserKey(_kTourDontShowAgainKey);
 
+    await prefs.setValue(ClinxStorageKeys.isNewlyRegisteredUser, false);
     await prefs.setValue(userCompletedKey, true);
     await prefs.setValue(_kTourCompletedKey, true);
     await prefs.setValue(userDontShowKey, true);
@@ -417,6 +425,7 @@ class ProviderTourController {
 
     try {
       final rawPrefs = await SharedPreferences.getInstance();
+      await rawPrefs.setBool(ClinxStorageKeys.isNewlyRegisteredUser, false);
       await rawPrefs.setBool(userCompletedKey, true);
       await rawPrefs.setBool(_kTourCompletedKey, true);
       await rawPrefs.setBool(userDontShowKey, true);
