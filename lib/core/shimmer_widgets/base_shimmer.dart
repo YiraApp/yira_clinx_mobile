@@ -990,77 +990,49 @@ class SmartSchedulerShimmer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 220,
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: 280,
-              height: 13,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Execution Card skeleton
-            Container(
-              height: 100,
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
-                border: Border.all(
-                  color: isDark ? Colors.white12 : Colors.grey.shade200,
-                ),
-              ),
-            ),
-            const SizedBox(height: fieldSpace),
-            // Parameters Card skeleton
+            // Schedule Dates card skeleton
             Container(
               height: 180,
               decoration: BoxDecoration(
                 color: cardColor,
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark ? Colors.white12 : Colors.grey.shade200,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 90,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                Container(
-                  width: 110,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Slot cards list
-            ...List.generate(3, (index) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              height: 64,
+            const SizedBox(height: 16),
+            // Parameters Card skeleton
+            Container(
+              height: 220,
               decoration: BoxDecoration(
                 color: cardColor,
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : Colors.grey.shade200,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Preview header shimmer
+            Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : Colors.grey.shade200,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Slot cards list
+            ...List.generate(3, (index) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              height: 100,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isDark ? Colors.white12 : Colors.grey.shade200,
                 ),

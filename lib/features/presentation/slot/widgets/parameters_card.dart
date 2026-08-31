@@ -17,6 +17,9 @@ class ParametersCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SectionCardWrapper(
       icon: Icons.access_time_filled_rounded,
       title: 'Consultation & Shift Timings',
@@ -30,7 +33,7 @@ class ParametersCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'Slot Duration', isTab),
+                    _buildCardLabel(context, 'Slot Duration', isDark, isTab),
                     const SizedBox(height: 8),
                     CommonDropdown(
                       title: 'Select Duration',
@@ -46,12 +49,12 @@ class ParametersCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'Gap Between Slots', isTab),
+                    _buildCardLabel(context, 'Gap Between Slots', isDark, isTab),
                     const SizedBox(height: 8),
                     CommonDropdown(
                       title: 'Select Gap',
@@ -73,7 +76,7 @@ class ParametersCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'Shift Start Time', isTab),
+                    _buildCardLabel(context, 'Shift Start Time', isDark, isTab),
                     const SizedBox(height: 8),
                     _buildTimeSelector(context, state.fromTime, (chosenTime) {
                       _validateAndUpdateTimeRange(context, chosenTime, state.toTime);
@@ -81,12 +84,12 @@ class ParametersCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildCardLabel(context, 'Shift End Time', isTab),
+                    _buildCardLabel(context, 'Shift End Time', isDark, isTab),
                     const SizedBox(height: 8),
                     _buildTimeSelector(context, state.toTime, (chosenTime) {
                       _validateAndUpdateTimeRange(context, state.fromTime, chosenTime);
@@ -96,7 +99,7 @@ class ParametersCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           _buildBreakTimesSection(context, state, isTab),
         ],
       ),
@@ -113,9 +116,16 @@ class ParametersCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.coffee_rounded, size: 18, color: primaryColor),
-            const SizedBox(width: 6),
-            _buildCardLabel(context, 'Break Timings (Optional)', isTab),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.coffee_rounded, size: 16, color: Colors.amber),
+            ),
+            const SizedBox(width: 8),
+            _buildCardLabel(context, 'Break Timings (Optional)', isDark, isTab),
           ],
         ),
         const SizedBox(height: 4),
@@ -130,12 +140,12 @@ class ParametersCard extends StatelessWidget {
         const SizedBox(height: 12),
         if (state.breakTimes.isEmpty)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(fieldBorderRadius),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Column(
@@ -145,22 +155,22 @@ class ParametersCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.12),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.coffee_rounded, size: 14, color: primaryColor),
+                          Icon(Icons.coffee_rounded, size: 13, color: primaryColor),
                           const SizedBox(width: 4),
                           CommonText(
                             'Break 1',
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
                               color: primaryColor,
                             ),
                           ),
@@ -181,7 +191,7 @@ class ParametersCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white60 : Colors.blueGrey,
+                              color: isDark ? Colors.white60 : Colors.blueGrey.shade700,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -201,7 +211,7 @@ class ParametersCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white60 : Colors.blueGrey,
+                              color: isDark ? Colors.white60 : Colors.blueGrey.shade700,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -221,16 +231,16 @@ class ParametersCard extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: state.breakTimes.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final b = state.breakTimes[index];
               return Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(fieldBorderRadius),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                    color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Column(
@@ -242,22 +252,22 @@ class ParametersCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.12),
+                                color: primaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.coffee_rounded, size: 14, color: primaryColor),
+                                  Icon(Icons.coffee_rounded, size: 13, color: primaryColor),
                                   const SizedBox(width: 4),
                                   CommonText(
                                     'Break ${index + 1}',
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11,
                                       color: primaryColor,
                                     ),
                                   ),
@@ -267,7 +277,7 @@ class ParametersCard extends StatelessWidget {
                             if (_calculateDurationStr(b.fromTime, b.toTime).isNotEmpty) ...[
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: isDark ? Colors.white10 : Colors.grey.shade200,
                                   borderRadius: BorderRadius.circular(4),
@@ -285,13 +295,22 @@ class ParametersCard extends StatelessWidget {
                             ],
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () {
-                            context.read<SlotBloc>().add(RemoveBreakTimeEvent(b.id));
-                          },
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () {
+                              context.read<SlotBloc>().add(RemoveBreakTimeEvent(b.id));
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 16),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -307,7 +326,7 @@ class ParametersCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white60 : Colors.blueGrey,
+                                  color: isDark ? Colors.white60 : Colors.blueGrey.shade700,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -327,7 +346,7 @@ class ParametersCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white60 : Colors.blueGrey,
+                                  color: isDark ? Colors.white60 : Colors.blueGrey.shade700,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -345,25 +364,38 @@ class ParametersCard extends StatelessWidget {
             },
           ),
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () {
-              _showAddBreakDialog(context);
-            },
-            icon: Icon(Icons.add_rounded, size: 18, color: primaryColor),
-            label: CommonText(
-              'Add Another Break',
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.03,
-                fontWeight: FontWeight.w600,
-                color: primaryColor,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 42),
-              side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                _showAddBreakDialog(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.3),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                    const SizedBox(width: 6),
+                    CommonText(
+                      'Add Another Break',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.03,
+                        fontWeight: FontWeight.w700,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -376,11 +408,11 @@ class ParametersCard extends StatelessWidget {
     final slotBloc = context.read<SlotBloc>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
 
     final workStart = _parseTimeToMinutes(state.fromTime);
     final workEnd = _parseTimeToMinutes(state.toTime);
 
-    // Pick a default break time within working hours
     TimeOfDay fromTime = const TimeOfDay(hour: 13, minute: 0);
     TimeOfDay toTime = const TimeOfDay(hour: 14, minute: 0);
 
@@ -426,20 +458,22 @@ class ParametersCard extends StatelessWidget {
             return AlertDialog(
               backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                borderRadius: BorderRadius.circular(20),
               ),
               title: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      gradient: LinearGradient(
+                        colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.free_breakfast_rounded,
-                      color: theme.primaryColor,
-                      size: 22,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -524,12 +558,12 @@ class ParametersCard extends StatelessWidget {
                                     });
                                   }
                                 },
-                                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isDark ? Colors.white24 : Colors.grey.shade300,
                                     ),
@@ -541,7 +575,7 @@ class ParametersCard extends StatelessWidget {
                                         formatTime(fromTime),
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
-                                      Icon(Icons.access_time_rounded, size: 16, color: theme.primaryColor),
+                                      Icon(Icons.access_time_rounded, size: 16, color: primaryColor),
                                     ],
                                   ),
                                 ),
@@ -576,12 +610,12 @@ class ParametersCard extends StatelessWidget {
                                     });
                                   }
                                 },
-                                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(fieldBorderRadius),
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isDark ? Colors.white24 : Colors.grey.shade300,
                                     ),
@@ -593,7 +627,7 @@ class ParametersCard extends StatelessWidget {
                                         formatTime(toTime),
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
-                                      Icon(Icons.access_time_rounded, size: 16, color: theme.primaryColor),
+                                      Icon(Icons.access_time_rounded, size: 16, color: primaryColor),
                                     ],
                                   ),
                                 ),
@@ -606,18 +640,27 @@ class ParametersCard extends StatelessWidget {
                   ],
                 ),
               ),
+              actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const CommonText('Cancel', style: TextStyle(color: Colors.grey)),
+                  child: CommonText(
+                    'Cancel',
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 0,
                   ),
                   onPressed: () {
                     final fromMin = _parseTimeToMinutes(formatTime(fromTime));
@@ -629,7 +672,6 @@ class ParametersCard extends StatelessWidget {
                         state.targetDate.day == now.day;
                     final int nowMinutes = now.hour * 60 + now.minute;
 
-                    // Validation 0: Past break time today
                     if (isToday && toMin <= nowMinutes) {
                       setDialogState(() {
                         dialogError = 'Cannot add break for a past time (${formatTime(fromTime)} - ${formatTime(toTime)}).';
@@ -642,7 +684,6 @@ class ParametersCard extends StatelessWidget {
                       return;
                     }
 
-                    // Validation 1: From < To
                     if (fromMin >= toMin) {
                       setDialogState(() {
                         dialogError = 'From Time (${formatTime(fromTime)}) must be earlier than To Time (${formatTime(toTime)}).';
@@ -655,7 +696,6 @@ class ParametersCard extends StatelessWidget {
                       return;
                     }
 
-                    // Validation 2: Within working hours
                     if (fromMin < workStart || toMin > workEnd) {
                       setDialogState(() {
                         dialogError = 'Break time must fall within working shift hours (${state.fromTime} - ${state.toTime}).';
@@ -668,7 +708,6 @@ class ParametersCard extends StatelessWidget {
                       return;
                     }
 
-                    // Validation 3: Overlapping breaks
                     for (final b in state.breakTimes) {
                       final bStart = _parseTimeToMinutes(b.fromTime);
                       final bEnd = _parseTimeToMinutes(b.toTime);
@@ -685,7 +724,6 @@ class ParametersCard extends StatelessWidget {
                       }
                     }
 
-                    // Check for overlapping slots
                     final overlappingSlots = state.slots.where((s) {
                       final sStart = _parseTimeToMinutes(s.startTime);
                       final sEnd = _parseTimeToMinutes(s.endTime);
@@ -698,7 +736,7 @@ class ParametersCard extends StatelessWidget {
                       showDialog(
                         context: context,
                         builder: (confirmContext) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                           title: const Row(
                             children: [
                               Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
@@ -726,6 +764,7 @@ class ParametersCard extends StatelessWidget {
                               ),
                             ],
                           ),
+                          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(confirmContext),
@@ -735,7 +774,8 @@ class ParametersCard extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                               onPressed: () {
                                 Navigator.pop(confirmContext);
@@ -748,8 +788,9 @@ class ParametersCard extends StatelessWidget {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                                    backgroundColor: Colors.green.shade700,
+                                    backgroundColor: const Color(0xFF10B981),
                                     behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                   ),
                                 );
                               },
@@ -784,7 +825,7 @@ class ParametersCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (alertContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
@@ -801,12 +842,13 @@ class ParametersCard extends StatelessWidget {
           message,
           style: const TextStyle(fontSize: 14, height: 1.4),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.orangeAccent.shade700,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => Navigator.pop(alertContext),
             child: const CommonText('OK', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -815,8 +857,6 @@ class ParametersCard extends StatelessWidget {
       ),
     );
   }
-
-
 
   bool _isOverlapping(int start1, int end1, int start2, int end2) {
     return start1 < end2 && end1 > start2;
@@ -911,7 +951,6 @@ class ParametersCard extends StatelessWidget {
       return;
     }
 
-    // Check overlap with other breaks
     for (final other in state.breakTimes) {
       final oStart = _parseTimeToMinutes(other.fromTime);
       final oEnd = _parseTimeToMinutes(other.toTime);
@@ -935,7 +974,7 @@ class ParametersCard extends StatelessWidget {
       showDialog(
         context: context,
         builder: (confirmContext) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
               Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
@@ -963,6 +1002,7 @@ class ParametersCard extends StatelessWidget {
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(confirmContext),
@@ -972,7 +1012,7 @@ class ParametersCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () {
                 Navigator.pop(confirmContext);
@@ -985,8 +1025,9 @@ class ParametersCard extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                    backgroundColor: Colors.green.shade700,
+                    backgroundColor: const Color(0xFF10B981),
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 );
               },
@@ -1047,7 +1088,6 @@ class ParametersCard extends StatelessWidget {
       return;
     }
 
-    // Check overlap with other breaks
     for (final other in state.breakTimes) {
       if (other.id == b.id) continue;
       final oStart = _parseTimeToMinutes(other.fromTime);
@@ -1072,7 +1112,7 @@ class ParametersCard extends StatelessWidget {
       showDialog(
         context: context,
         builder: (confirmContext) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
               Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
@@ -1100,6 +1140,7 @@ class ParametersCard extends StatelessWidget {
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(confirmContext),
@@ -1109,7 +1150,7 @@ class ParametersCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () {
                 Navigator.pop(confirmContext);
@@ -1123,8 +1164,9 @@ class ParametersCard extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Break updated! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                    backgroundColor: Colors.green.shade700,
+                    backgroundColor: const Color(0xFF10B981),
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 );
               },
@@ -1146,8 +1188,10 @@ class ParametersCard extends StatelessWidget {
   }
 
   Widget _buildTimeSelector(BuildContext context, String currentTime, Function(String) onPicked) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isTab = isTablet(context);
+    final primaryColor = theme.primaryColor;
 
     return Material(
       color: Colors.transparent,
@@ -1167,12 +1211,12 @@ class ParametersCard extends StatelessWidget {
             onPicked(formatted);
           }
         },
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: isDark ? darkModeCardColor : lightModeTextFieldBgColor,
-            borderRadius: BorderRadius.circular(fieldBorderRadius),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark ? darkModeBorderColor : lightModeBorderColor,
               width: 1.0,
@@ -1187,7 +1231,7 @@ class ParametersCard extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : textLightModeColor,
                   ),
                 ),
@@ -1195,7 +1239,7 @@ class ParametersCard extends StatelessWidget {
               Icon(
                 Icons.access_time_rounded,
                 size: 18,
-                color: isDark ? Colors.white54 : Colors.grey[600],
+                color: primaryColor,
               ),
             ],
           ),
@@ -1241,19 +1285,15 @@ class ParametersCard extends StatelessWidget {
     );
   }
 
-
-  Widget _buildCardLabel(BuildContext context, String text, bool isTab) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _buildCardLabel(BuildContext context, String text, bool isDark, bool isTab) {
     return CommonText(
       text,
       style: TextStyle(
         fontFamily: appPoppinFont,
         fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white60 : Colors.blueGrey,
-        letterSpacing: 0.8,
+        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        letterSpacing: 0.3,
       ),
     );
   }

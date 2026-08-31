@@ -150,9 +150,12 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         builder: (context, state) {
           final selectedDate = state.selectedDate;
 
-          return Form(
-            key: _formKey,
-            child: Column(
+          return GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: Form(
+              key: _formKey,
+              child: Column(
               children: [
                 // Clean Solid Blue Header
                 SafeArea(
@@ -588,10 +591,11 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                 ),
               ],
             ),
-          );
-        },
-      ),
-    );
+          ),
+        );
+      },
+    ),
+  );
   }
 
   void _showDatePicker(

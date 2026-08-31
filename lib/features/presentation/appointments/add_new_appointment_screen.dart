@@ -2935,17 +2935,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     ),
                   );
                 }).toList(),
-                onChanged: (val) {
+                onChanged: (val) async {
                   if (val != null) {
                     setState(() {
                       _selectedHospital = val;
-                      _filterDoctorsForHospital(val['id']);
                       _selectedTreatmentPlanIds.clear();
                     });
-                    if (_selectedDoctorMap != null) {
-                      _fetchDoctorSlots(_selectedDate);
-                      _fetchTreatmentPlans();
-                    }
+                    await _filterDoctorsForHospital(val['id']);
                   }
                 },
               ),

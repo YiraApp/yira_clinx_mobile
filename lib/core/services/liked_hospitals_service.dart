@@ -103,13 +103,11 @@ class LikedHospitalsService {
       }
     }
 
-    // 0. Ensure Default Organization & Hospital is always added for every patient
-    final defaultOrgId = currentUser?.data?.latestOrgId ?? 1;
-    final defaultHospId = currentUser?.data?.latestHospitalId ?? 19;
+    // 0. Ensure Default Organization & Hospital (Yira Hospitals) is always added for every patient with actual ID 19
     addHospital(
-      defaultHospId,
+      19,
       'Yira Hospitals',
-      orgId: defaultOrgId,
+      orgId: 1,
       orgName: 'yira',
       city: 'Hyderabad',
       address: 'Jubilee Hills, Road No 36, Hyderabad',
@@ -118,6 +116,19 @@ class LikedHospitalsService {
       is24Hours: true,
       isLiked: true,
     );
+
+    // If patient has another latestHospitalId from session, add that as well
+    final sessionHospId = currentUser?.data?.latestHospitalId;
+    if (sessionHospId != null && sessionHospId != 19) {
+      final sessionOrgId = currentUser?.data?.latestOrgId ?? 1;
+      addHospital(
+        sessionHospId,
+        'Hospital ($sessionHospId)',
+        orgId: sessionOrgId,
+        orgName: 'Healthcare Facility',
+        isLiked: true,
+      );
+    }
 
     // 1. Load from initial arguments if provided
     if (initialDoctor != null) {
@@ -313,8 +324,14 @@ class LikedHospitalsService {
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
       );
 
-      if (res.data != null && res.data['data'] is List) {
-        final List<dynamic> list = res.data['data'] as List;
+      if (res.data != null) {
+        final rawData = res.data['data'];
+        List<dynamic> list = [];
+        if (rawData is List) {
+          list = rawData;
+        } else if (rawData is Map && rawData['data'] is List) {
+          list = rawData['data'] as List;
+        }
         for (final item in list) {
           if (item is Map<String, dynamic>) {
             addDoctor(item);
