@@ -220,12 +220,29 @@ class NotificationService {
   Future<void> syncFcmTokenWithBackend() async {
     try {
       final String token = await FcmTokenHelper.getProductionFcmToken();
+      debugPrint("\n========================================================");
+      debugPrint("🔥 [FCM] YOUR DEVICE TOKEN: $token");
+      debugPrint("========================================================\n");
       if (token.isNotEmpty && token != 'no_token_available') {
         await _sendTokenToBackend(token);
       }
     } catch (e) {
       debugPrint("syncFcmTokenWithBackend error: $e");
     }
+  }
+
+  /// Triggers a test local notification popup (heads-up banner with sound) after a brief delay
+  Future<void> sendTestNotification({int delaySeconds = 3}) async {
+    Future.delayed(Duration(seconds: delaySeconds), () {
+      showNotification(
+        title: "Test Alert • Dr. Appointment",
+        body: "Dr. Rajesh Sharma confirmed your appointment for 04:30 PM today!",
+        payload: jsonEncode({
+          "type": "APPOINTMENT_BOOKED",
+          "route": "/patientDashboard",
+        }),
+      );
+    });
   }
 
   Future<void> _sendTokenToBackend(String token) async {

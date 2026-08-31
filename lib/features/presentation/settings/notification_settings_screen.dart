@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -14,7 +16,7 @@ class NotificationSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-final bool isTab =  isTablet(context);
+    final bool isTab = isTablet(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -37,7 +39,74 @@ final bool isTab =  isTablet(context);
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCardGroup(
-                  isTab:isTab,
+                  isTab: isTab,
+                  context,
+                  theme: theme,
+                  title: "Test System Notifications",
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white10 : Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: primaryColor, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Tap below to trigger an immediate heads-up popup banner test on this device.",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 13 : 11.5,
+                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
+                        label: const Text(
+                          "Send Test Notification (3s)",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          NotificationService.instance.sendTestNotification(delaySeconds: 3);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Test notification will pop up in 3 seconds! You can stay here or minimize the app."),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: fieldSpace),
+                _buildCardGroup(
+                  isTab: isTab,
                   context,
                   theme: theme,
                   title: "Notification Channels",
@@ -67,7 +136,7 @@ final bool isTab =  isTablet(context);
                 ),
                 const SizedBox(height: fieldSpace),
                 _buildCardGroup(
-                  isTab:isTab,
+                  isTab: isTab,
                   context,
                   theme: theme,
                   title: "Notification Types",
@@ -189,7 +258,7 @@ class _NotificationTile extends StatelessWidget {
               value: value,
               onChanged: onChanged,
               activeThumbColor: theme.primaryColor,
-              activeTrackColor: theme.primaryColor.withOpacity(0.5),
+              activeTrackColor: theme.primaryColor.withValues(alpha: 0.5),
               inactiveTrackColor: theme.brightness == Brightness.dark
                   ? Colors.white10
                   : Colors.grey.shade200,
