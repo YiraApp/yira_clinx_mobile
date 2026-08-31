@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/notification_services/notification_services.dart';
+import '../services/permission_helper.dart';
+
 class NotificationListenerWrapper extends StatefulWidget {
   final Widget child;
   final Function(String) onNotificationPayload;
@@ -20,11 +22,12 @@ class _NotificationListenerWrapperState extends State<NotificationListenerWrappe
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationService.instance.initializeNotificationPipeline(
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService.instance.initializeNotificationPipeline(
           context,
           widget.onNotificationPayload
       );
+      await PermissionHelper.requestAppLaunchPermissions();
     });
   }
 

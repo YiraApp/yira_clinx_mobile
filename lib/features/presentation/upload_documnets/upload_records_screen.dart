@@ -15,6 +15,7 @@ import '../../../../core/common_widgets/common_text.dart';
 import '../../../core/common_drop_down/common_drop_down.dart';
 import '../../../core/common_widgets/custom_border_button.dart';
 import '../../../core/common_widgets/custom_button.dart';
+import '../../../core/services/permission_helper.dart';
 
 class UploadDocumentsScreen extends StatefulWidget {
   final String? patientName;
@@ -147,6 +148,12 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
 
     try {
       if (source == 'gallery') {
+        final bool hasPermission = await PermissionHelper.ensurePhotosPermission(context);
+        if (!hasPermission) {
+          _isPicking = false;
+          return;
+        }
+
         final ImagePicker picker = ImagePicker();
         List<XFile> images = [];
         try {
@@ -202,6 +209,12 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           }
         }
       } else if (source == 'camera') {
+        final bool hasPermission = await PermissionHelper.ensureCameraPermission(context);
+        if (!hasPermission) {
+          _isPicking = false;
+          return;
+        }
+
         final ImagePicker picker = ImagePicker();
         final XFile? photo = await picker.pickImage(source: ImageSource.camera);
         if (photo != null) {
@@ -237,6 +250,12 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           }
         }
       } else {
+        final bool hasPermission = await PermissionHelper.ensurePhotosPermission(context);
+        if (!hasPermission) {
+          _isPicking = false;
+          return;
+        }
+
         FilePickerResult? result;
         try {
           result = await FilePicker.platform.pickFiles(

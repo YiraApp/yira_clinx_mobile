@@ -8,7 +8,7 @@ import 'features/app_gate_way/app_gate_way.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  EnvironmentService.setEnvironment(Environment.qa);
+  EnvironmentService.setEnvironment(Environment.local);
 
   try {
     await Future.wait([
@@ -20,7 +20,7 @@ void main() async {
     runApp(const AppGateway());
   } catch (e) {
     debugPrint('Initialization error: $e');
+    GlobalSession.instance.initializePlatformTelemetry();
+    runApp(const AppGateway());
   }
-  GlobalSession.instance.initializePlatformTelemetry();
-  runApp(const AppGateway());
 }

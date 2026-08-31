@@ -44,6 +44,7 @@ post_install do |installer|
       # Enable the required permissions for the permission_handler package
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
+        'PERMISSION_NOTIFICATIONS=1',
         'PERMISSION_PHOTOS=1',
         'PERMISSION_CAMERA=1',
         'PERMISSION_MICROPHONE=1'
