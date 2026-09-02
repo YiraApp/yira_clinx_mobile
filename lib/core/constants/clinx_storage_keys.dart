@@ -13,4 +13,5 @@ class ClinxStorageKeys {
   static const String appVersionInfo = 'app_version_info';
   static const String userData = 'user_data';
   static const String isUserLoggedIn = 'is_logged_in';
+  static const String isNewlyRegisteredUser = 'is_newly_registered_user';
 }

@@ -145,6 +145,9 @@ class _SignupScreenState extends State<SignupScreen> {
           OnSendSignupOtpEvent(
             mobileNumber: _mobileNumberController.text.trim(),
             countryCode: _selectedCountryCode,
+            email: _emailController.text.trim().isNotEmpty
+                ? _emailController.text.trim()
+                : null,
           ),
         );
   }

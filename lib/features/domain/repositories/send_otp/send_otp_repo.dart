@@ -12,5 +12,6 @@ abstract class SendOtpRepo {
   Future<SendOtpEntity?> sendSignupOtp({
     required String mobileNumber,
     required String countryCode,
+    String? email,
   });
 }

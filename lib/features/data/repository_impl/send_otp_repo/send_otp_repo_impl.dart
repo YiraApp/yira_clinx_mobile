@@ -61,12 +61,14 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
   Future<SendOtpEntity?> sendSignupOtp({
     required String mobileNumber,
     required String countryCode,
+    String? email,
   }) async {
     try {
       final Map<String, dynamic> requestBody = {
         "phoneNumber": mobileNumber.trim(),
         "identity": mobileNumber.trim(),
         "countryCode": countryCode.replaceAll('+', '').trim(),
+        if (email != null && email.trim().isNotEmpty) "email": email.trim(),
       };
 
       final response = await _apiClient.account(showSuccessSnack: true).post(

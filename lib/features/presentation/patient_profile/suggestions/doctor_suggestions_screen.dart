@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
+import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
@@ -177,26 +177,30 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
     }
   }
 
-  Future<void> _openFile(String? url) async {
-    if (url == null || url.isEmpty) return;
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Could not open attachment")),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error opening file: $e")),
-        );
-      }
-    }
+  void _openFile({
+    required String? url,
+    String? title,
+    String? fileName,
+    String? doctorName,
+    String? date,
+  }) {
+    if (url == null || url.trim().isEmpty) return;
+
+    final String effectiveTitle = (title != null && title.trim().isNotEmpty)
+        ? title.trim()
+        : (fileName ?? "Suggestion Document");
+    final String cleanUrl = url.trim();
+    final String ext = cleanUrl.split('?').first.split('.').last.toUpperCase();
+
+    InAppDocumentViewer.show(
+      context,
+      title: effectiveTitle,
+      category: "Doctor Suggestion",
+      fileUrl: cleanUrl,
+      fileType: ext.isNotEmpty ? ext : "PDF",
+      doctorName: doctorName,
+      date: date,
+    );
   }
 
   @override
@@ -436,7 +440,13 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                             if (filePath != null && filePath.isNotEmpty) ...[
                               const SizedBox(height: 12),
                               InkWell(
-                                onTap: () => _openFile(filePath),
+                                onTap: () => _openFile(
+                                  url: filePath,
+                                  title: title,
+                                  fileName: fileName,
+                                  doctorName: doctorName,
+                                  date: createdAt,
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
