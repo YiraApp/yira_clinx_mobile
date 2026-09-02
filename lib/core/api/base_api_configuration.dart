@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class EnvironmentService {
-  static Environment _currentEnv = Environment.local;
+  static Environment _currentEnv = Environment.qa;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   static String get _localHostUrl {
@@ -19,18 +19,18 @@ class EnvironmentService {
         );
       case Environment.dev:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.68.63:5000",
-          healthCampBaseUrl: "192.168.68.63:5000",
+          accountBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
+          healthCampBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
         );
       case Environment.qa:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.68.63:5000",
-          healthCampBaseUrl: "192.168.68.63:5000",
+          accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "192.168.68.63:5000",
-          healthCampBaseUrl: "192.168.68.63:5000",
+          accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
         );
     }
   }
