@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_route/app_routes.dart';
 import '../common_widgets/custom_border_button.dart';
 import '../common_widgets/custom_button.dart';
 import 'app_status_view.dart';
@@ -36,19 +38,36 @@ class ServerDownScreen extends StatelessWidget {
           textColor: Colors.white,
           noElevation: true,
           onPressed: () {
-
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.initial,
+                (route) => false,
+              );
+            }
           },
         ),
 
         const SizedBox(height: 12),
         CommonBorderButton(
           text: 'Contact Us',
-          icon:Icons.mail_outline_rounded,
+          icon: Icons.mail_outline_rounded,
           height: 50.0,
           borderColor: theme.colorScheme.primary,
           textColor: theme.colorScheme.primary,
-          onPressed: () {
-
+          onPressed: () async {
+            final Uri emailUri = Uri(
+              scheme: 'mailto',
+              path: 'support@yiralife.com',
+              queryParameters: {
+                'subject': 'Support Request - Yira Clinx App Error',
+              },
+            );
+            if (await canLaunchUrl(emailUri)) {
+              await launchUrl(emailUri);
+            }
           },
         ),
       ],

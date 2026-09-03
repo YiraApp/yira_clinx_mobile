@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 
 class ScanDoctorQrSheet extends StatefulWidget {
@@ -224,6 +225,24 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
           };
 
           await _saveDoctorLocally(realDoctor);
+
+          try {
+            await sl<ApiClient>().account(showSuccessSnack: false).post(
+              URLs.patientAccessConnectByQrUrl,
+              data: {
+                "doctorId": doctorUserId,
+                "hospitalId": doctorHospId,
+                "orgId": doctorOrgId,
+                "patientUserId": currentUser?.data?.id,
+              },
+              options: Options(
+                headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+              ),
+            );
+            debugPrint("[ScanDoctorQrSheet] Patient successfully linked with doctor on backend DB.");
+          } catch (e) {
+            debugPrint("[ScanDoctorQrSheet] Background sync connecting patient to doctor on backend: $e");
+          }
 
 
 

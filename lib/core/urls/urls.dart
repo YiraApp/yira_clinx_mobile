@@ -70,6 +70,7 @@ class URLs {
   static const patientAccessCheckUrl = "/v1/api/auth/patient-access/check";
   static const patientConsentsListUrl = "/v1/api/auth/patient-access/patient-consents";
   static const patientConsentRespondUrl = "/v1/api/auth/patient-access/respond";
+  static const patientAccessConnectByQrUrl = "/v1/api/auth/patient-access/connect-by-qr";
 
   /*In-App Notifications*/
   static const notificationsListUrl = "/v1/api/auth/notifications";

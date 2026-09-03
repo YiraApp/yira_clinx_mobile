@@ -8,7 +8,7 @@ import 'features/app_gate_way/app_gate_way.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  EnvironmentService.setEnvironment(Environment.local);
+  EnvironmentService.setEnvironment(Environment.qa);
 
   try {
     await Future.wait([

@@ -15,6 +15,7 @@ import '../../../use_cases/register_patient_use_case.dart';
 import '../../../use_cases/send_signup_otp_use_case.dart';
 import '../../../use_cases/send_otp_use_case.dart';
 import '../../../use_cases/update_fcm_token_use_case.dart';
+import '../../../../core/fcm_token/fcm_token_helper.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -104,9 +105,13 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
             false,
           ),
         ]);
-        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+        String tokenToSync = event.fcmToken;
+        if (tokenToSync.isEmpty || tokenToSync == 'no_token_available') {
+          tokenToSync = await FcmTokenHelper.getProductionFcmToken();
+        }
+        if (tokenToSync.isNotEmpty && tokenToSync != 'no_token_available') {
           try {
-            await updateFcmTokenUseCase.call(event.fcmToken);
+            await updateFcmTokenUseCase.call(tokenToSync);
             debugPrint("Production Login Pipeline - Remote FCM Token synced successfully.");
           } catch (fcmError, fcmStack) {
             debugPrint("CRITICAL (LoginBloc) - FCM Token sync failed background tracking: $fcmError\n$fcmStack");
@@ -154,9 +159,13 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
             false,
           ),
         ]);
-        if (event.fcmToken.isNotEmpty && event.fcmToken != 'no_token_available') {
+        String tokenToSync = event.fcmToken;
+        if (tokenToSync.isEmpty || tokenToSync == 'no_token_available') {
+          tokenToSync = await FcmTokenHelper.getProductionFcmToken();
+        }
+        if (tokenToSync.isNotEmpty && tokenToSync != 'no_token_available') {
           try {
-            await updateFcmTokenUseCase.call(event.fcmToken);
+            await updateFcmTokenUseCase.call(tokenToSync);
             debugPrint("Production Login Pipeline - Remote FCM Token synced successfully.");
           } catch (fcmError, fcmStack) {
             debugPrint("CRITICAL (LoginBloc) - FCM Token sync failed background tracking: $fcmError\n$fcmStack");
