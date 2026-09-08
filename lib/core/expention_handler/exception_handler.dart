@@ -16,16 +16,11 @@ class ExceptionHandler {
     bool isShownSnack = true,
     bool status = false
   }) {
-    if (statusCode == HttpStatus.unauthorized ||
-        statusCode == HttpStatus.forbidden) {
+    if (statusCode == HttpStatus.unauthorized) {
       if (_isRedirecting) return;
       _isRedirecting = true;
 
-      final targetRoute = statusCode == HttpStatus.unauthorized
-          ? AppRoutes.sessionExpired
-          : AppRoutes.serverDown;
-
-      NavigationService.navigateTo(targetRoute);
+      NavigationService.navigateTo(AppRoutes.sessionExpired);
 
       Future.delayed(const Duration(seconds: 2), () => _isRedirecting = false);
       return;

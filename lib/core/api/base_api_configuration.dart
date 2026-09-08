@@ -1,13 +1,9 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-
 class EnvironmentService {
   static Environment _currentEnv = Environment.qa;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   static String get _localHostUrl {
-    // 192.168.68.109 connects physical devices (moto g62 5G) over Wi-Fi, and localhost works via adb reverse
-    return "http://192.168.68.109:5000";
+    return "http://192.168.68.107:5000";
   }
 
   static EnvironmentConfig get config {
@@ -19,6 +15,7 @@ class EnvironmentService {
         );
       case Environment.dev:
         return const EnvironmentConfig(
+<<<<<<< HEAD
           accountBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
           healthCampBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
         );
@@ -31,6 +28,20 @@ class EnvironmentService {
         return const EnvironmentConfig(
           accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
           healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+=======
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+        );
+      case Environment.qa:
+        return const EnvironmentConfig(
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+        );
+      case Environment.production:
+        return const EnvironmentConfig(
+          accountBaseUrl: "clinicx-api-qa.azurewebsites.net",
+          healthCampBaseUrl: "clinicx-api-qa.azurewebsites.net",
+>>>>>>> 83dc558db0c95fe9b278dc079fc24432367dd908
         );
     }
   }
