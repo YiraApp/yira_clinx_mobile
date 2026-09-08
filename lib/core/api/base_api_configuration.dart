@@ -1,9 +1,9 @@
 class EnvironmentService {
-  static Environment _currentEnv = Environment.qa;
+  static Environment _currentEnv = Environment.local;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   static String get _localHostUrl {
-    return "http://192.168.68.107:5000";
+    return "http://192.168.1.157:5000";
   }
 
   static EnvironmentConfig get config {

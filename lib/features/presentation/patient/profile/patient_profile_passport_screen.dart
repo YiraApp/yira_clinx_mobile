@@ -15,6 +15,7 @@ import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
+import '../../splash/widgets/splash_preview_screen.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -728,7 +729,69 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       ),
                     ),
 
-                    // 8. Sign Out Tile
+                    // 8. Preview Splash Animation Tile
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: isDark ? 0.5 : 0.35),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(Icons.play_circle_outline_rounded, color: primaryColor, size: 20),
+                        ),
+                        title: Text(
+                          "Preview Splash Animation",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Watch the Yira cinematic splash screen",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11.5,
+                            color: isDark ? Colors.white60 : Colors.grey.shade600,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, anim, secAnim) =>
+                                  const SplashPreviewScreen(),
+                              transitionsBuilder: (context, anim, secAnim, child) {
+                                return FadeTransition(opacity: anim, child: child);
+                              },
+                              transitionDuration: const Duration(milliseconds: 400),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // 9. Sign Out Tile
                     Container(
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(

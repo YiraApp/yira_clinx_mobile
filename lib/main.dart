@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'core/api/base_api_configuration.dart';
 import 'core/local/global_session.dart';
@@ -8,6 +9,10 @@ import 'features/app_gate_way/app_gate_way.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   EnvironmentService.setEnvironment(Environment.qa);
 
   try {

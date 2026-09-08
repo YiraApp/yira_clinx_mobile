@@ -495,7 +495,7 @@ class AppRouter {
       case AppRoutes.patientVitalsTracking:
         final initialMetric = settings.arguments is VitalMetricType
             ? settings.arguments as VitalMetricType
-            : VitalMetricType.bloodPressure;
+            : VitalMetricType.all;
         return MaterialPageRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
       case AppRoutes.patientMyFamily:
         return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());

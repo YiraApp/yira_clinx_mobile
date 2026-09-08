@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/custom_setting_tile.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/setting_group_widget.dart';
+import 'package:yiraclinics/features/presentation/splash/widgets/splash_preview_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -121,8 +122,32 @@ final isTab = isTablet(context);
                     icon: Icons.palette_outlined,
                     title: "Theme settings",
                     subtitle: activeThemeModeString,
+                    showDivider: true,
                     onTap: () {
                       context.read<SettingsBloc>().add(ThemeNavEvent());
+                    },
+                  ),
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.play_circle_outline_rounded,
+                    title: "Preview Splash Animation",
+                    subtitle: "Test the Yira splash screen",
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (context, anim, secAnim) =>
+                              const SplashPreviewScreen(),
+                          transitionsBuilder: (context, anim, secAnim, child) {
+                            return FadeTransition(
+                              opacity: anim,
+                              child: child,
+                            );
+                          },
+                          transitionDuration:
+                              const Duration(milliseconds: 400),
+                        ),
+                      );
                     },
                   ),
                 ],

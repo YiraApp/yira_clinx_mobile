@@ -20,6 +20,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
   late final TextEditingController _weightController;
   late final TextEditingController _heightController;
 
+  Map<String, String> _errors = {};
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +61,157 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     _weightController.dispose();
     _heightController.dispose();
     super.dispose();
+  }
+
+  bool _validateInputs() {
+    final newErrors = <String, String>{};
+
+    final sysText = _bpSystolicController.text.trim();
+    final diaText = _bpDiastolicController.text.trim();
+    final pulseText = _pulseController.text.trim();
+    final tempText = _tempController.text.trim();
+    final spO2Text = _spO2Controller.text.trim();
+    final weightText = _weightController.text.trim();
+    final heightText = _heightController.text.trim();
+
+    // Check if at least one vital was entered
+    if (sysText.isEmpty &&
+        diaText.isEmpty &&
+        pulseText.isEmpty &&
+        tempText.isEmpty &&
+        spO2Text.isEmpty &&
+        weightText.isEmpty &&
+        heightText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter at least one vital reading.'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return false;
+    }
+
+    double? sysVal;
+    double? diaVal;
+
+    // 1. Systolic BP (Max: 260, Min: 40 mmHg)
+    if (sysText.isNotEmpty) {
+      sysVal = double.tryParse(sysText);
+      if (sysVal == null) {
+        newErrors['sys'] = 'Invalid number';
+      } else if (sysVal < 40) {
+        newErrors['sys'] = 'Min 40 mmHg';
+      } else if (sysVal > 260) {
+        newErrors['sys'] = 'Max 260 mmHg';
+      }
+    }
+
+    // 2. Diastolic BP (Max: 160, Min: 30 mmHg)
+    if (diaText.isNotEmpty) {
+      diaVal = double.tryParse(diaText);
+      if (diaVal == null) {
+        newErrors['dia'] = 'Invalid number';
+      } else if (diaVal < 30) {
+        newErrors['dia'] = 'Min 30 mmHg';
+      } else if (diaVal > 160) {
+        newErrors['dia'] = 'Max 160 mmHg';
+      }
+    }
+
+    // Logical BP consistency: Diastolic must be less than Systolic
+    if (sysVal != null && diaVal != null) {
+      if (diaVal >= sysVal) {
+        newErrors['dia'] = 'Must be < Systolic';
+      }
+    }
+
+    // 3. Pulse / Heart Rate (Max: 250, Min: 30 bpm)
+    if (pulseText.isNotEmpty) {
+      final pulseVal = double.tryParse(pulseText);
+      if (pulseVal == null) {
+        newErrors['pulse'] = 'Invalid number';
+      } else if (pulseVal < 30) {
+        newErrors['pulse'] = 'Min 30 bpm';
+      } else if (pulseVal > 250) {
+        newErrors['pulse'] = 'Max 250 bpm';
+      }
+    }
+
+    // 4. Body Temperature (Supports Fahrenheit or Celsius)
+    if (tempText.isNotEmpty) {
+      final tempVal = double.tryParse(tempText);
+      if (tempVal == null) {
+        newErrors['temp'] = 'Invalid number';
+      } else if (tempVal > 45) {
+        // Fahrenheit mode (Max: 108.0°F, Min: 90.0°F)
+        if (tempVal < 90.0) {
+          newErrors['temp'] = 'Min 90.0°F';
+        } else if (tempVal > 108.0) {
+          newErrors['temp'] = 'Max 108.0°F';
+        }
+      } else {
+        // Celsius mode (Max: 43.0°C, Min: 32.0°C)
+        if (tempVal < 32.0) {
+          newErrors['temp'] = 'Min 32.0°C';
+        } else if (tempVal > 43.0) {
+          newErrors['temp'] = 'Max 43.0°C';
+        }
+      }
+    }
+
+    // 5. SpO2 Oxygen Saturation (Max: 100%, Min: 50%)
+    if (spO2Text.isNotEmpty) {
+      final spO2Val = double.tryParse(spO2Text);
+      if (spO2Val == null) {
+        newErrors['spO2'] = 'Invalid number';
+      } else if (spO2Val < 50) {
+        newErrors['spO2'] = 'Min 50%';
+      } else if (spO2Val > 100) {
+        newErrors['spO2'] = 'Max 100%';
+      }
+    }
+
+    // 6. Weight (Max: 350 kg, Min: 2 kg)
+    if (weightText.isNotEmpty) {
+      final weightVal = double.tryParse(weightText);
+      if (weightVal == null) {
+        newErrors['weight'] = 'Invalid number';
+      } else if (weightVal < 2.0) {
+        newErrors['weight'] = 'Min 2 kg';
+      } else if (weightVal > 350.0) {
+        newErrors['weight'] = 'Max 350 kg';
+      }
+    }
+
+    // 7. Height (Max: 260 cm, Min: 30 cm)
+    if (heightText.isNotEmpty) {
+      final heightVal = double.tryParse(heightText);
+      if (heightVal == null) {
+        newErrors['height'] = 'Invalid number';
+      } else if (heightVal < 30.0) {
+        newErrors['height'] = 'Min 30 cm';
+      } else if (heightVal > 260.0) {
+        newErrors['height'] = 'Max 260 cm';
+      }
+    }
+
+    setState(() {
+      _errors = newErrors;
+    });
+
+    if (newErrors.isNotEmpty) {
+      final firstMsg = newErrors.values.first;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Validation error: $firstMsg'),
+          backgroundColor: const Color(0xFFEF4444),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+
+    return true;
   }
 
   @override
@@ -147,25 +300,30 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
             ),
             const SizedBox(height: 6),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: _buildInputField(
                     controller: _bpSystolicController,
-                    label: 'e.g. 120',
+                    label: 'Systolic (e.g. 120)',
                     icon: Icons.compress_rounded,
                     isDark: isDark,
+                    errorText: _errors['sys'],
+                    helperText: 'Max: 260 mmHg',
                   ),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
                   child: Text('/', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 ),
                 Expanded(
                   child: _buildInputField(
                     controller: _bpDiastolicController,
-                    label: 'e.g. 80',
+                    label: 'Diastolic (e.g. 80)',
                     icon: Icons.expand_rounded,
                     isDark: isDark,
+                    errorText: _errors['dia'],
+                    helperText: 'Max: 160 mmHg',
                   ),
                 ),
               ],
@@ -174,6 +332,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
 
             // Pulse Rate & Temperature
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
@@ -186,6 +345,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                         label: 'e.g. 72',
                         icon: Icons.monitor_heart_rounded,
                         isDark: isDark,
+                        errorText: _errors['pulse'],
+                        helperText: 'Max: 250 bpm',
                       ),
                     ],
                   ),
@@ -202,6 +363,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                         label: 'e.g. 98.6',
                         icon: Icons.thermostat_rounded,
                         isDark: isDark,
+                        errorText: _errors['temp'],
+                        helperText: 'Max: 108°F / 43°C',
                       ),
                     ],
                   ),
@@ -212,6 +375,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
 
             // SpO2 & Weight
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
@@ -224,6 +388,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                         label: 'e.g. 98',
                         icon: Icons.air_rounded,
                         isDark: isDark,
+                        errorText: _errors['spO2'],
+                        helperText: 'Max: 100%',
                       ),
                     ],
                   ),
@@ -240,6 +406,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                         label: 'e.g. 68',
                         icon: Icons.scale_rounded,
                         isDark: isDark,
+                        errorText: _errors['weight'],
+                        helperText: 'Max: 350 kg',
                       ),
                     ],
                   ),
@@ -256,6 +424,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
               label: 'e.g. 172',
               icon: Icons.height_rounded,
               isDark: isDark,
+              errorText: _errors['height'],
+              helperText: 'Max: 260 cm',
             ),
             const SizedBox(height: 24),
 
@@ -272,6 +442,8 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                   ),
                 ),
                 onPressed: () {
+                  if (!_validateInputs()) return;
+
                   final sys = _bpSystolicController.text.trim();
                   final dia = _bpDiastolicController.text.trim();
                   final bp = (sys.isNotEmpty && dia.isNotEmpty)
@@ -325,32 +497,92 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     required String label,
     required IconData icon,
     required bool isDark,
+    String? errorText,
+    String? helperText,
   }) {
-    return TextField(
-      controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: TextStyle(
-        fontFamily: appPoppinFont,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white : Colors.black87,
-      ),
-      decoration: InputDecoration(
-        hintText: label,
-        hintStyle: TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: 13,
-          color: isDark ? Colors.white38 : Colors.grey[400],
+    final hasError = errorText != null && errorText.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+          onChanged: (_) {
+            if (_errors.isNotEmpty) {
+              setState(() => _errors.clear());
+            }
+          },
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 12.5,
+              color: isDark ? Colors.white38 : Colors.grey[400],
+            ),
+            prefixIcon: Icon(
+              icon,
+              size: 18,
+              color: hasError ? const Color(0xFFEF4444) : (isDark ? Colors.white60 : Colors.grey[600]),
+            ),
+            filled: true,
+            fillColor: hasError
+                ? const Color(0xFFEF4444).withValues(alpha: 0.08)
+                : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: hasError ? const BorderSide(color: Color(0xFFEF4444), width: 1.2) : BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: hasError ? const BorderSide(color: Color(0xFFEF4444), width: 1.2) : BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: hasError ? const Color(0xFFEF4444) : Theme.of(context).primaryColor,
+                width: 1.5,
+              ),
+            ),
+          ),
         ),
-        prefixIcon: Icon(icon, size: 18, color: isDark ? Colors.white60 : Colors.grey[600]),
-        filled: true,
-        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
+        if (hasError) ...[
+          const SizedBox(height: 3),
+          Padding(
+            padding: const EdgeInsets.only(left: 4.0),
+            child: Text(
+              errorText,
+              style: const TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFEF4444),
+              ),
+            ),
+          ),
+        ] else if (helperText != null) ...[
+          const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.only(left: 4.0),
+            child: Text(
+              helperText,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 9.5,
+                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
