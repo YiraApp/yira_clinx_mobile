@@ -61,6 +61,9 @@ class LikedHospitalsService {
       dynamic emergencyBeds,
       dynamic icuBeds,
       dynamic ambulances,
+      dynamic logo,
+      dynamic logoUrl,
+      dynamic imageUrl,
       bool isLiked = false,
     }) {
       if (id == null) return;
@@ -74,6 +77,7 @@ class LikedHospitalsService {
       final key = '$hospIdStr|${hospNameStr.toLowerCase()}';
       if (!seenHospitalKeys.contains(key)) {
         seenHospitalKeys.add(key);
+        final resolvedLogo = (logo ?? logoUrl ?? imageUrl)?.toString();
         hospitals.add({
           'id': int.tryParse(hospIdStr) ?? hospIdStr,
           'name': hospNameStr,
@@ -97,6 +101,8 @@ class LikedHospitalsService {
           'emergencyBeds': emergencyBeds != null ? int.tryParse(emergencyBeds.toString()) : null,
           'icuBeds': icuBeds != null ? int.tryParse(icuBeds.toString()) : null,
           'ambulances': ambulances != null ? int.tryParse(ambulances.toString()) : null,
+          'logo': resolvedLogo,
+          'logoUrl': resolvedLogo,
           'isLiked': isLiked,
           'isLinked': true,
         });
@@ -115,6 +121,7 @@ class LikedHospitalsService {
       helplineNumber: '+91 8008123456',
       is24Hours: true,
       isLiked: true,
+      logo: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
     );
 
     // If patient has another latestHospitalId from session, add that as well
@@ -230,6 +237,7 @@ class LikedHospitalsService {
                         hospitalCode: h['hospitalCode'] ?? h['HospitalCode'] ?? h['code'],
                         city: h['city'] ?? h['City'],
                         address: h['address'] ?? h['Address'],
+                        logo: h['logo'] ?? h['Logo'] ?? h['logoUrl'] ?? h['LogoUrl'] ?? h['imageUrl'] ?? h['ImageUrl'] ?? h['hospitalLogo'],
                       );
                     }
                   }
@@ -254,6 +262,7 @@ class LikedHospitalsService {
                       hospitalCode: ws['hospitalCode'] ?? ws['HospitalCode'] ?? ws['code'],
                       city: ws['city'] ?? ws['City'],
                       address: ws['address'] ?? ws['Address'],
+                      logo: ws['logo'] ?? ws['Logo'] ?? ws['logoUrl'] ?? ws['LogoUrl'] ?? ws['imageUrl'] ?? ws['ImageUrl'] ?? ws['hospitalLogo'],
                     );
                   }
                 }
@@ -450,5 +459,49 @@ class LikedHospitalsService {
     } catch (e) {
       debugPrint('[LikedHospitalsService] Error saving linked doctor: $e');
     }
+  }
+
+  /// Retrieves the hospital logo from memory / cached liked hospitals by hospital ID or hospital Name.
+  String? getHospitalLogo(dynamic hospitalId, [String? hospitalName]) {
+    final hospIdStr = hospitalId?.toString().trim();
+    final nameLower = hospitalName?.toLowerCase().trim();
+
+    for (final h in linkedHospitalsNotifier.value) {
+      final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
+      final hName = (h['name'] ?? h['hospitalName'])?.toString().toLowerCase().trim();
+
+      if ((hospIdStr != null && hospIdStr.isNotEmpty && idStr == hospIdStr) ||
+          (nameLower != null && nameLower.isNotEmpty && hName == nameLower)) {
+        final logo = (h['logo'] ??
+                h['logoUrl'] ??
+                h['imageUrl'] ??
+                h['hospitalLogo'] ??
+                h['image'])
+            ?.toString();
+        if (logo != null && logo.trim().isNotEmpty) return logo.trim();
+      }
+    }
+
+    if (hospIdStr == '19' || nameLower == 'yira hospitals') {
+      return 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg';
+    }
+    return null;
+  }
+
+  /// Retrieves full hospital details by ID or Name from memory.
+  Map<String, dynamic>? getHospitalById(dynamic hospitalId, [String? hospitalName]) {
+    final hospIdStr = hospitalId?.toString().trim();
+    final nameLower = hospitalName?.toLowerCase().trim();
+
+    for (final h in linkedHospitalsNotifier.value) {
+      final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
+      final hName = (h['name'] ?? h['hospitalName'])?.toString().toLowerCase().trim();
+
+      if ((hospIdStr != null && hospIdStr.isNotEmpty && idStr == hospIdStr) ||
+          (nameLower != null && nameLower.isNotEmpty && hName == nameLower)) {
+        return h;
+      }
+    }
+    return null;
   }
 }

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
 import 'package:yiraclinics/features/domain/entities/notifications/app_notification_entity.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_bloc.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_event.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_state.dart';
-
-import 'package:yiraclinics/core/api/api_client.dart';
-import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+import 'package:yiraclinics/features/use_cases/notifications/clear_all_notifications_use_case.dart';
+import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
 
@@ -36,6 +38,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       _bloc = NotificationsBloc(
         getNotificationsUseCase: GetNotificationsUseCase(repository: repo),
         markNotificationReadUseCase: MarkNotificationReadUseCase(repository: repo),
+        clearAllNotificationsUseCase: ClearAllNotificationsUseCase(repository: repo),
+        deleteNotificationUseCase: DeleteNotificationUseCase(repository: repo),
       )..add(const FetchNotificationsEvent());
     }
   }
@@ -50,7 +54,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
 
-    if (diff.inMinutes < 1) {
+    if (diff.inSeconds < 45) {
       return "Just now";
     } else if (diff.inMinutes < 60) {
       return "${diff.inMinutes}m ago";
@@ -68,18 +72,29 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   IconData _getIconForType(String type) {
     switch (type.toUpperCase()) {
       case 'APPOINTMENT_BOOKED':
+        return Icons.event_available_rounded;
       case 'APPOINTMENT_STATUS':
         return Icons.calendar_month_rounded;
-      case 'MEDICAL_RECORD_ADDED':
-        return Icons.description_outlined;
+      case 'APPOINTMENT_REMINDER_10MIN':
+        return Icons.alarm_rounded;
       case 'PRESCRIPTION_ADDED':
         return Icons.medication_rounded;
+      case 'MEDICAL_RECORD_ADDED':
+        return Icons.description_outlined;
       case 'DOCTOR_SUGGESTION':
         return Icons.lightbulb_outline_rounded;
       case 'TELECONSULT_START':
         return Icons.video_camera_front_rounded;
-      default:
+      case 'PROMOTIONS':
+      case 'OFFER_PROMOTION':
+        return Icons.local_offer_outlined;
+      case 'HEALTH_TIPS':
+        return Icons.favorite_outline_rounded;
+      case 'SYSTEM_ALERT':
+      case 'BROADCAST':
         return Icons.notifications_active_outlined;
+      default:
+        return Icons.notifications_none_rounded;
     }
   }
 
@@ -87,17 +102,72 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     switch (type.toUpperCase()) {
       case 'APPOINTMENT_BOOKED':
       case 'APPOINTMENT_STATUS':
-        return const Color(0xFF3B82F6); // Blue
-      case 'DOCTOR_SUGGESTION':
-        return const Color(0xFF2563EB); // Royal Medical Blue
+        return const Color(0xFF2563EB); // Royal Blue
+      case 'APPOINTMENT_REMINDER_10MIN':
+        return const Color(0xFFD97706); // Amber
+      case 'PRESCRIPTION_ADDED':
+        return const Color(0xFF059669); // Emerald Green
       case 'MEDICAL_RECORD_ADDED':
         return const Color(0xFF0D9488); // Teal
-      case 'PRESCRIPTION_ADDED':
-        return const Color(0xFF10B981); // Emerald
+      case 'DOCTOR_SUGGESTION':
+        return const Color(0xFF6366F1); // Indigo
       case 'TELECONSULT_START':
-        return const Color(0xFF8B5CF6); // Violet
+        return const Color(0xFF7C3AED); // Violet
+      case 'PROMOTIONS':
+      case 'OFFER_PROMOTION':
+        return const Color(0xFFE11D48); // Rose
+      case 'HEALTH_TIPS':
+        return const Color(0xFF0284C7); // Cyan
+      case 'SYSTEM_ALERT':
+      case 'BROADCAST':
+        return const Color(0xFFEA580C); // Orange
       default:
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFF64748B); // Slate
+    }
+  }
+
+  String _getTypeLabel(String type) {
+    switch (type.toUpperCase()) {
+      case 'APPOINTMENT_BOOKED':
+        return 'Appointment';
+      case 'APPOINTMENT_STATUS':
+        return 'Status Update';
+      case 'APPOINTMENT_REMINDER_10MIN':
+        return 'Reminder';
+      case 'PRESCRIPTION_ADDED':
+        return 'Prescription';
+      case 'MEDICAL_RECORD_ADDED':
+        return 'Health Record';
+      case 'DOCTOR_SUGGESTION':
+        return 'Doctor Tip';
+      case 'TELECONSULT_START':
+        return 'Teleconsult';
+      case 'PROMOTIONS':
+      case 'OFFER_PROMOTION':
+        return 'Offer';
+      case 'HEALTH_TIPS':
+        return 'Wellness';
+      default:
+        return 'Notification';
+    }
+  }
+
+  String? _getActionChipLabel(String type) {
+    switch (type.toUpperCase()) {
+      case 'APPOINTMENT_BOOKED':
+      case 'APPOINTMENT_STATUS':
+      case 'APPOINTMENT_REMINDER_10MIN':
+        return 'View Appointment';
+      case 'PRESCRIPTION_ADDED':
+        return 'View Prescription';
+      case 'MEDICAL_RECORD_ADDED':
+        return 'View Record';
+      case 'DOCTOR_SUGGESTION':
+        return 'View Suggestion';
+      case 'TELECONSULT_START':
+        return 'Join Consultation';
+      default:
+        return null;
     }
   }
 
@@ -106,17 +176,320 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
 
-    if (notification.route != null && notification.route!.isNotEmpty) {
+    String? targetRoute = notification.route;
+    // Smart route resolution for missing or outdated routes
+    if (targetRoute == null || targetRoute.isEmpty || targetRoute == '/patientHome') {
+      final typeUpper = notification.type.toUpperCase();
+      if (typeUpper.contains('APPOINTMENT')) {
+        targetRoute = AppRoutes.appointmentDashboardScreen;
+      } else if (typeUpper == 'PRESCRIPTION_ADDED') {
+        targetRoute = AppRoutes.userPrescriptionManagement;
+      } else if (typeUpper == 'MEDICAL_RECORD_ADDED') {
+        targetRoute = AppRoutes.userTestResultScreen;
+      } else if (typeUpper == 'DOCTOR_SUGGESTION') {
+        targetRoute = AppRoutes.patientDoctorSuggestions;
+      }
+    }
+
+    if (targetRoute != null && targetRoute.isNotEmpty) {
       try {
         Navigator.pushNamed(
           context,
-          notification.route!,
+          targetRoute,
           arguments: notification.referenceId,
         );
       } catch (e) {
         debugPrint("Navigation from notification failed: $e");
+        _showNotificationDetailSheet(notification);
+      }
+    } else {
+      _showNotificationDetailSheet(notification);
+    }
+  }
+
+  void _showNotificationDetailSheet(AppNotificationEntity notification) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final typeColor = _getColorForType(notification.type);
+    final typeIcon = _getIconForType(notification.type);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white24 : Colors.black12,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: typeColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(typeIcon, color: typeColor, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: typeColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _getTypeLabel(notification.type).toUpperCase(),
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: typeColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatRelativeTime(notification.createdAt),
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                notification.title,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                notification.body,
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 14,
+                  height: 1.5,
+                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _bloc.add(DeleteNotificationEvent(notification.id));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Notification removed"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                      label: const Text(
+                        "Delete",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                      },
+                      child: const Text(
+                        "Done",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showClearAllConfirmationDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Clear Notifications",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Are you sure you want to clear all notifications? This will permanently remove them from your notification center.",
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 13.5,
+              height: 1.4,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _bloc.add(ClearAllNotificationsEvent());
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("All notifications cleared"),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text(
+                "Clear All",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Map<String, List<AppNotificationEntity>> _groupNotifications(List<AppNotificationEntity> list) {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final yesterdayStart = todayStart.subtract(const Duration(days: 1));
+
+    final Map<String, List<AppNotificationEntity>> groups = {
+      'Today': [],
+      'Yesterday': [],
+      'Earlier': [],
+    };
+
+    for (final item in list) {
+      if (item.createdAt.isAfter(todayStart)) {
+        groups['Today']!.add(item);
+      } else if (item.createdAt.isAfter(yesterdayStart)) {
+        groups['Yesterday']!.add(item);
+      } else {
+        groups['Earlier']!.add(item);
       }
     }
+
+    groups.removeWhere((key, value) => value.isEmpty);
+    return groups;
   }
 
   @override
@@ -129,9 +502,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           elevation: 0,
+          scrolledUnderElevation: 0,
           backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
           leading: IconButton(
             icon: Icon(
@@ -187,26 +561,44 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
           actions: [
             BlocBuilder<NotificationsBloc, NotificationsState>(
               builder: (context, state) {
-                final bool hasUnread = state is NotificationsLoadedState && state.unreadCount > 0;
-                if (!hasUnread) return const SizedBox.shrink();
+                if (state is! NotificationsLoadedState || state.notifications.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
-                return TextButton(
-                  onPressed: () {
-                    _bloc.add(MarkAllNotificationsAsReadEvent());
-                  },
-                  child: Text(
-                    "Mark all read",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 13.5 : 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
+                final hasUnread = state.unreadCount > 0;
+
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasUnread)
+                      TextButton(
+                        onPressed: () {
+                          _bloc.add(MarkAllNotificationsAsReadEvent());
+                        },
+                        child: Text(
+                          "Mark all read",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 13 : 12,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      tooltip: "Clear All Notifications",
+                      icon: Icon(
+                        Icons.delete_sweep_outlined,
+                        size: 22,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                      onPressed: () => _showClearAllConfirmationDialog(context),
                     ),
-                  ),
+                    const SizedBox(width: 4),
+                  ],
                 );
               },
             ),
-            const SizedBox(width: 8),
           ],
         ),
         body: BlocBuilder<NotificationsBloc, NotificationsState>(
@@ -217,29 +609,42 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
 
             if (state is NotificationsErrorState) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.cloud_off_rounded, size: 54, color: Colors.grey.shade400),
-                    const SizedBox(height: 12),
-                    Text(
-                      state.message,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
                       ),
-                      onPressed: () => _bloc.add(const FetchNotificationsEvent()),
-                      child: const Text("Retry", style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () => _bloc.add(const FetchNotificationsEvent()),
+                        child: const Text("Retry", style: TextStyle(fontFamily: appPoppinFont, color: Colors.white)),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -251,12 +656,13 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   : allNotifications;
 
               return RefreshIndicator(
+                color: primaryColor,
                 onRefresh: () async {
                   _bloc.add(const FetchNotificationsEvent(isRefresh: true));
                 },
                 child: Column(
                   children: [
-                    // Filter Chips Header
+                    // Segment Filter Header
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
@@ -271,7 +677,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       child: Row(
                         children: [
                           _buildFilterChip(
-                            label: "All (${allNotifications.length})",
+                            label: "All",
+                            count: allNotifications.length,
                             isSelected: !_filterOnlyUnread,
                             primaryColor: primaryColor,
                             isDark: isDark,
@@ -279,34 +686,36 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           ),
                           const SizedBox(width: 8),
                           _buildFilterChip(
-                            label: "Unread (${state.unreadCount})",
+                            label: "Unread",
+                            count: state.unreadCount,
                             isSelected: _filterOnlyUnread,
                             primaryColor: primaryColor,
                             isDark: isDark,
                             onTap: () => setState(() => _filterOnlyUnread = true),
                           ),
+                          const Spacer(),
+                          if (allNotifications.isNotEmpty)
+                            Text(
+                              "Swipe left to delete",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              ),
+                            ),
                         ],
                       ),
                     ),
 
-                    // List of Notifications
+                    // List of Grouped Notifications
                     Expanded(
                       child: displayList.isEmpty
-                          ? _buildEmptyState(isDark)
-                          : ListView.separated(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              itemCount: displayList.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                final item = displayList[index];
-                                return _buildNotificationTile(
-                                  context: context,
-                                  notification: item,
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  primaryColor: primaryColor,
-                                );
-                              },
+                          ? _buildEmptyState(isDark, isFiltered: _filterOnlyUnread)
+                          : _buildGroupedListView(
+                              groupedMap: _groupNotifications(displayList),
+                              isDark: isDark,
+                              isTab: isTab,
+                              primaryColor: primaryColor,
                             ),
                     ),
                   ],
@@ -323,6 +732,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
 
   Widget _buildFilterChip({
     required String label,
+    required int count,
     required bool isSelected,
     required Color primaryColor,
     required bool isDark,
@@ -332,7 +742,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor
@@ -345,17 +755,160 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
             width: 1,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: 12.5,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.25)
+                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "$count",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGroupedListView({
+    required Map<String, List<AppNotificationEntity>> groupedMap,
+    required bool isDark,
+    required bool isTab,
+    required Color primaryColor,
+  }) {
+    final groupKeys = groupedMap.keys.toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: groupKeys.length,
+      itemBuilder: (context, groupIndex) {
+        final groupTitle = groupKeys[groupIndex];
+        final items = groupedMap[groupTitle]!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 8, bottom: 8),
+              child: Row(
+                children: [
+                  Text(
+                    groupTitle.toUpperCase(),
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...items.map((item) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildDismissibleNotificationTile(
+                  context: context,
+                  notification: item,
+                  isDark: isDark,
+                  isTab: isTab,
+                  primaryColor: primaryColor,
+                ),
+              );
+            }),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDismissibleNotificationTile({
+    required BuildContext context,
+    required AppNotificationEntity notification,
+    required bool isDark,
+    required bool isTab,
+    required Color primaryColor,
+  }) {
+    return Dismissible(
+      key: Key(notification.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 22),
+            SizedBox(width: 6),
+            Text(
+              "Delete",
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onDismissed: (_) {
+        _bloc.add(DeleteNotificationEvent(notification.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Notification deleted"),
+            duration: const Duration(seconds: 2),
+            action: SnackBarAction(
+              label: "OK",
+              onPressed: () {},
+            ),
+          ),
+        );
+      },
+      child: _buildNotificationTile(
+        context: context,
+        notification: notification,
+        isDark: isDark,
+        isTab: isTab,
+        primaryColor: primaryColor,
       ),
     );
   }
@@ -370,80 +923,83 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final typeColor = _getColorForType(notification.type);
     final typeIcon = _getIconForType(notification.type);
     final relativeTime = _formatRelativeTime(notification.createdAt);
+    final actionLabel = _getActionChipLabel(notification.type);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _handleNotificationTap(notification),
+        onLongPress: () => _showNotificationDetailSheet(notification),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: isDark
-                ? (notification.isRead ? const Color(0xFF1E293B) : const Color(0xFF24344D))
+                ? (notification.isRead ? const Color(0xFF1E293B) : const Color(0xFF1E2C44))
                 : (notification.isRead ? Colors.white : const Color(0xFFF0F7FF)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isDark
-                  ? (notification.isRead ? const Color(0xFF334155) : primaryColor.withValues(alpha: 0.3))
-                  : (notification.isRead ? const Color(0xFFE2E8F0) : primaryColor.withValues(alpha: 0.2)),
-              width: notification.isRead ? 1 : 1.2,
+                  ? (notification.isRead ? const Color(0xFF334155) : primaryColor.withValues(alpha: 0.35))
+                  : (notification.isRead ? const Color(0xFFE2E8F0) : primaryColor.withValues(alpha: 0.25)),
+              width: notification.isRead ? 1 : 1.3,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.025),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Colored Icon Capsule
+              // Icon Capsule
               Container(
-                width: isTab ? 44 : 38,
-                height: isTab ? 44 : 38,
+                width: isTab ? 44 : 40,
+                height: isTab ? 44 : 40,
                 decoration: BoxDecoration(
-                  color: typeColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                  color: typeColor.withValues(alpha: isDark ? 0.22 : 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   typeIcon,
-                  size: isTab ? 22 : 19,
+                  size: isTab ? 22 : 20,
                   color: typeColor,
                 ),
               ),
               const SizedBox(width: 12),
 
-              // Title, Body & Timestamp
+              // Content Column
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Title and Time Row
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
                             notification.title,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
-                              fontSize: isTab ? 15 : 13.5,
+                              fontSize: isTab ? 14.5 : 13.5,
                               fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
                               letterSpacing: -0.2,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           relativeTime,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            fontSize: isTab ? 12 : 11,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
                             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
                           ),
@@ -451,22 +1007,45 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
+
+                    // Body
                     Text(
                       notification.body,
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: isTab ? 13.5 : 12.5,
+                        fontSize: isTab ? 13 : 12.5,
                         fontWeight: FontWeight.w400,
                         color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                         height: 1.35,
                       ),
                     ),
+
+                    // Quick Action Link (if available)
+                    if (actionLabel != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            actionLabel,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: typeColor,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(Icons.arrow_forward_ios_rounded, size: 10, color: typeColor),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
 
+              // Unread Indicator Dot
               if (!notification.isRead) ...[
                 const SizedBox(width: 8),
                 Container(
@@ -476,6 +1055,13 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   decoration: BoxDecoration(
                     color: primaryColor,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.5),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -486,38 +1072,40 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState(bool isDark, {bool isFiltered = false}) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 36),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.notifications_off_outlined,
-                size: 48,
+                isFiltered ? Icons.mark_email_read_outlined : Icons.notifications_none_rounded,
+                size: 50,
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
-              "No Notifications",
+              isFiltered ? "No Unread Notifications" : "All Caught Up!",
               style: TextStyle(
                 fontFamily: appPoppinFont,
-                fontSize: 16,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
-              "You're all caught up! Updates regarding appointments, prescriptions, and records will show up here.",
+              isFiltered
+                  ? "You have read all your notifications."
+                  : "You're all caught up! Updates regarding appointments, prescriptions, and health records will appear here.",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -526,6 +1114,16 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                 height: 1.4,
               ),
             ),
+            if (isFiltered) ...[
+              const SizedBox(height: 16),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () => setState(() => _filterOnlyUnread = false),
+                child: const Text("View All", style: TextStyle(fontFamily: appPoppinFont)),
+              ),
+            ],
           ],
         ),
       ),
@@ -549,8 +1147,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),

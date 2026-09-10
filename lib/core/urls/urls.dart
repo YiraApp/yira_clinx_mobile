@@ -44,6 +44,7 @@ class URLs {
 
   /*Patient Profile*/
   static const patientOverViewUrl = "/v1/api/auth/patient/overview";
+  static const patientVitalsUrl = "/v1/api/auth/patient/vitals";
 
   /*SNOMED CT Search*/
   static const snomedSearchUrl = "/v1/api/auth/snomed/search";
@@ -76,7 +77,13 @@ class URLs {
   static const notificationsListUrl = "/v1/api/auth/notifications";
   static const markNotificationReadUrl = "/v1/api/auth/notifications";
   static const markAllNotificationsReadUrl = "/v1/api/auth/notifications/mark-all-read";
+  static const clearAllNotificationsUrl = "/v1/api/auth/notifications/clear-all";
+  static const deleteNotificationUrl = "/v1/api/auth/notifications";
 
   /*Doctor Suggestions*/
   static const doctorSuggestionsUrl = "/v1/api/auth/doctor-suggestions";
+
+  /*Offer Banners & Promotions*/
+  static const offerBannersUrl = "/v1/api/auth/offers";
+  static const popupAdUrl = "/v1/api/auth/offers/popup";
 }

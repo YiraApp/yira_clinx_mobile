@@ -6,7 +6,7 @@ import 'package:yiraclinics/features/presentation/user_prescription/widgets/pres
 import '../../../core/colors/colors.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/medication/medication_entity.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/widgets/notification_badge_icon.dart';
 
 class PrescriptionManagementScreen extends StatefulWidget {
   const PrescriptionManagementScreen({super.key});
@@ -56,16 +56,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
             ),
           ),
           actions: [
-            IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.recentNotifications);
-              },
-              icon: Icon(
-                Icons.notifications_none_rounded,
-                size: 22,
-                color: isDark ? Colors.white70 : const Color(0xFF334155),
-              ),
-            ),
+            const NotificationBadgeIcon(size: 22),
             const SizedBox(width: 4),
           ],
         ),

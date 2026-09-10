@@ -2,8 +2,19 @@ class EnvironmentService {
   static Environment _currentEnv = Environment.local;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
+  // Local backend server URL for local development (matches local backend on port 5000)
+  // - 192.168.68.140:5000 enables connectivity for physical devices on Wi-Fi and emulators/simulators
+  static const String localHostIp = "192.168.68.140";
+  static const String localPort = "5000";
+  static String? _customBaseUrl;
+
+  static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
+
   static String get _localHostUrl {
-    return "http://192.168.1.157:5000";
+    if (_customBaseUrl != null && _customBaseUrl!.trim().isNotEmpty) {
+      return _customBaseUrl!.trim();
+    }
+    return "http://$localHostIp:$localPort";
   }
 
   static EnvironmentConfig get config {

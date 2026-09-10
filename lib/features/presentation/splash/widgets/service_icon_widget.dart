@@ -1,11 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 /// An attractive, vibrant 3D PNG healthcare service node widget for Light Mode.
 ///
 /// Features large, high-res colorful 3D PNG illustrations
-/// on elevated glassmorphic circular/rounded cards with drop shadows.
+/// on elevated rounded cards with drop shadows.
 class ServiceIconWidget extends StatelessWidget {
   final HealthcareService service;
   final double opacity;
@@ -20,7 +18,7 @@ class ServiceIconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (opacity <= 0.01) return const SizedBox.shrink();
+    if (opacity <= 0.005 || scale <= 0.005) return const SizedBox.shrink();
 
     return Opacity(
       opacity: opacity.clamp(0.0, 1.0),
@@ -29,13 +27,13 @@ class ServiceIconWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 3D Elevated Glassmorphic Card (Enlarged Size: 70x70)
+            // 3D Elevated Card (Enlarged Size: 70x70)
             Container(
               width: 70,
               height: 70,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
-                color: Colors.white.withValues(alpha: 0.92),
+                color: Colors.white,
                 border: Border.all(
                   color: Colors.white,
                   width: 2.0,
@@ -44,30 +42,27 @@ class ServiceIconWidget extends StatelessWidget {
                   // Soft ambient shadow
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 12,
+                    blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                   // Rich vibrant color glow
                   BoxShadow(
                     color: service.glowColor.withValues(alpha: 0.28),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(7.0),
-                      child: Image.asset(
-                        service.assetPath,
-                        width: 54,
-                        height: 54,
-                        fit: BoxFit.contain,
-                      ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(7.0),
+                    child: Image.asset(
+                      service.assetPath,
+                      width: 54,
+                      height: 54,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

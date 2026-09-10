@@ -28,6 +28,7 @@ class SaveMedicalRecordEvent extends MedicalRecordEvent {
   final String temperature;
   final String weight;
   final String height;
+  final String? spo2;
   final String diagnosis;
   final String treatmentPlan;
 
@@ -46,6 +47,7 @@ class SaveMedicalRecordEvent extends MedicalRecordEvent {
     required this.temperature,
     required this.weight,
     required this.height,
+    this.spo2,
     required this.diagnosis,
     required this.treatmentPlan,
   });

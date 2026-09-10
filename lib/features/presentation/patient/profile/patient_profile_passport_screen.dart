@@ -1,12 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
 import '../../../../core/local/global_session.dart';
+import '../../../../core/services/liked_hospitals_service.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../domain/entities/login/login_entity.dart';
@@ -475,7 +479,23 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               final gender = 'Male';
               final dob = '15 Aug 1994';
               final bloodGroup = medical?.bloodGroup ?? 'O+';
-              final hospital = data?.nextAppointment?.hospitalName ?? 'Yira Hospitals';
+              final hospital = data?.hospital?.name ?? data?.nextAppointment?.hospitalName ?? 'Yira Hospitals';
+              final hospitalLogo = data?.hospital?.logo ??
+                  data?.hospital?.imageUrl ??
+                  data?.nextAppointment?.hospitalLogo ??
+                  LikedHospitalsService.instance.getHospitalLogo(
+                    data?.hospital?.id ?? currentUser?.data?.latestHospitalId ?? 19,
+                    hospital,
+                  );
+              final hospitalCode = data?.hospital?.hospitalCode ?? 'Hosp11';
+              final hospitalAddress = data?.hospital?.address ??
+                  (data?.hospital?.city != null
+                      ? '${data!.hospital!.city}, ${data.hospital!.state ?? ""}'
+                      : 'Jubilee Hills, Road No 36, Hyderabad');
+              final hospitalHelpline = data?.hospital?.helplineNumber ??
+                  data?.hospital?.phone ??
+                  '+91 8008123456';
+              final is24Hours = data?.hospital?.is24Hours ?? true;
 
               return RefreshIndicator(
                 color: primaryColor,
@@ -492,7 +512,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     vertical: 12,
                   ),
                   children: [
-                    // 1. Executive Hero Header with Profile Picture Upload
+                    // 1. Executive Hero Header with Profile Picture Upload & Hospital Logo
                     _buildPatientHeroHeader(
                       context: context,
                       name: patientName,
@@ -501,6 +521,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       isPrimary: isPrimary,
                       mrn: mrn,
                       hospital: hospital,
+                      hospitalLogo: hospitalLogo,
                       isDark: isDark,
                       primaryColor: primaryColor,
                       isTab: isTab,
@@ -511,6 +532,21 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     _buildProfileCompletionCard(
                       context: context,
                       completionPct: 85,
+                      isDark: isDark,
+                      primaryColor: primaryColor,
+                      isTab: isTab,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2.5 Primary Healthcare Facility & Hospital Logo Card from DB
+                    _buildAffiliatedHospitalCard(
+                      context: context,
+                      hospitalName: hospital,
+                      hospitalLogo: hospitalLogo,
+                      hospitalCode: hospitalCode,
+                      address: hospitalAddress,
+                      helpline: hospitalHelpline,
+                      is24Hours: is24Hours,
                       isDark: isDark,
                       primaryColor: primaryColor,
                       isTab: isTab,
@@ -844,6 +880,432 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
+  Widget _buildHospitalLogoBadge({
+    required String? logoUrl,
+    required double size,
+    required bool isDark,
+    double radius = 8,
+  }) {
+    Widget fallbackIcon() {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+            width: 1,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.local_hospital_rounded,
+            size: size * 0.52,
+            color: const Color(0xFF0284C7),
+          ),
+        ),
+      );
+    }
+
+    final trimmed = (logoUrl ?? '').trim();
+    if (trimmed.isEmpty) {
+      return fallbackIcon();
+    }
+
+    Widget content;
+    if (trimmed.endsWith('.svg')) {
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        content = SvgPicture.network(
+          trimmed,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          placeholderBuilder: (_) => fallbackIcon(),
+        );
+      } else {
+        content = SvgPicture.asset(
+          trimmed,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+        );
+      }
+    } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      content = CachedNetworkImage(
+        imageUrl: trimmed,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Center(
+          child: SizedBox(
+            width: size * 0.4,
+            height: size * 0.4,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF0284C7),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => fallbackIcon(),
+      );
+    } else {
+      content = Image.asset(
+        trimmed,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => fallbackIcon(),
+      );
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius - 1),
+        child: Padding(
+          padding: EdgeInsets.all(size * 0.12),
+          child: content,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAffiliatedHospitalCard({
+    required BuildContext context,
+    required String hospitalName,
+    required String? hospitalLogo,
+    required String hospitalCode,
+    required String address,
+    required String helpline,
+    required bool is24Hours,
+    required bool isDark,
+    required Color primaryColor,
+    required bool isTab,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              isTab ? 20 : 16,
+              isTab ? 18 : 14,
+              isTab ? 20 : 16,
+              12,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.2 : 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.3 : 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.domain_rounded,
+                    size: 18,
+                    color: Color(0xFF0284C7),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Primary Healthcare Facility",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: isTab ? 16 : 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.16 : 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.verified_rounded,
+                        size: 12,
+                        color: Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Affiliated",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF10B981),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          ),
+
+          // Main Hospital Identity Feature (Logo + Name + Code)
+          Padding(
+            padding: EdgeInsets.all(isTab ? 20 : 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Prominent Hospital Logo from DB
+                _buildHospitalLogoBadge(
+                  logoUrl: hospitalLogo,
+                  size: isTab ? 54 : 46,
+                  isDark: isDark,
+                  radius: 13,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hospitalName,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? 16.5 : 15,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              hospitalCode.isNotEmpty ? 'CODE: $hospitalCode' : 'FACILITY #19',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Super-Specialty Network",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11,
+                              color: isDark ? Colors.white54 : Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Detail Rows
+          _buildFacilityDetailRow(
+            context: context,
+            label: "Campus Address",
+            value: address.isNotEmpty ? address : "Jubilee Hills, Road No 36, Hyderabad",
+            icon: Icons.location_on_outlined,
+            isDark: isDark,
+            isTab: isTab,
+          ),
+          _buildFacilityDetailRow(
+            context: context,
+            label: "Emergency & Helpline Desk",
+            value: helpline.isNotEmpty ? helpline : "+91 8008123456",
+            icon: Icons.phone_in_talk_rounded,
+            isDark: isDark,
+            isTab: isTab,
+            isCopyable: true,
+            isVerified: true,
+          ),
+          _buildFacilityDetailRow(
+            context: context,
+            label: "Facility Hours & Emergency Status",
+            value: is24Hours ? "Open 24/7 • Trauma & Emergency Active" : "OPD: 08:00 AM - 08:00 PM",
+            icon: Icons.access_time_rounded,
+            isDark: isDark,
+            isTab: isTab,
+            customValueColor: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFacilityDetailRow({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+    required bool isTab,
+    bool isCopyable = false,
+    bool isVerified = false,
+    Color? customValueColor,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isTab ? 20 : 16, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: isTab ? 16 : 15,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 11.5 : 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 13.5 : 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: customValueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isVerified) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF10B981)),
+                  SizedBox(width: 3),
+                  Text(
+                    "Verified",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
+          if (isCopyable) ...[
+            IconButton(
+              icon: Icon(
+                Icons.copy_rounded,
+                size: 15,
+                color: isDark ? Colors.white60 : Colors.grey[600],
+              ),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(4),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$label copied to clipboard'),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildPatientHeroHeader({
     required BuildContext context,
     required String name,
@@ -852,6 +1314,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     required bool isPrimary,
     required String mrn,
     required String hospital,
+    String? hospitalLogo,
     required bool isDark,
     required Color primaryColor,
     required bool isTab,
@@ -867,20 +1330,15 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
-          // Top Ambient Gradient Card
+          // Top Surface Card
           Container(
             width: double.infinity,
             padding: EdgeInsets.fromLTRB(
@@ -890,19 +1348,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               isTab ? 22 : 18,
             ),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? [
-                        primaryColor.withValues(alpha: 0.18),
-                        const Color(0xFF0F172A).withValues(alpha: 0.0),
-                      ]
-                    : [
-                        primaryColor.withValues(alpha: 0.09),
-                        Colors.white.withValues(alpha: 0.0),
-                      ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
@@ -1083,21 +1529,49 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
                 const SizedBox(height: 8),
 
-                // Hospital Tag
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.local_hospital_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      hospital,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: isDark ? Colors.white60 : Colors.grey[600],
-                      ),
+                // Hospital Tag with Database Logo
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHospitalLogoBadge(
+                        logoUrl: hospitalLogo,
+                        size: 18,
+                        isDark: isDark,
+                        radius: 5,
+                      ),
+                      const SizedBox(width: 7),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: isTab ? 260 : 180),
+                        child: Text(
+                          hospital,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 12,
+                        color: Color(0xFF10B981),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

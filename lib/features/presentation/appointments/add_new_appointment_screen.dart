@@ -1506,7 +1506,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       final rawDocName = (_selectedDoctorMap?['name'] ?? _selectedDoctor ?? 'Doctor').toString().trim();
       final cleanDocName = rawDocName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim();
       final formattedDocName = cleanDocName.isNotEmpty ? 'Dr. $cleanDocName' : 'your doctor';
-      final dateFormatted = _selectedDate != null ? DateFormat('dd MMM yyyy').format(_selectedDate!) : 'Selected Date';
+      final dateFormatted = DateFormat('dd MMM yyyy').format(_selectedDate);
       final slotTime = _selectedSlot.isNotEmpty ? _selectedSlot : '10:00 AM';
       NotificationService.instance.showNotification(
         title: "Appointment Confirmed",
@@ -2650,19 +2650,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             width: double.infinity,
                             height: 54,
                             decoration: BoxDecoration(
-                              gradient: isSubmitting
-                                  ? const LinearGradient(
-                                      colors: [Color(0xFF93C5FD), Color(0xFF60A5FA)],
-                                    )
-                                  : const LinearGradient(
-                                      colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                                    ),
+                              color: isSubmitting ? const Color(0xFF93C5FD) : const Color(0xFF2563EB),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF2563EB).withValues(alpha: isSubmitting ? 0.2 : 0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                                  color: const Color(0xFF2563EB).withValues(alpha: isSubmitting ? 0.15 : 0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
                                 ),
                               ],
                             ),
@@ -3490,9 +3484,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         width: double.infinity,
                         height: 48,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                          ),
+                          color: const Color(0xFF2563EB),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Center(
@@ -3681,13 +3673,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ─ Accent top strip ─
+              // ─ Accent top strip (Solid) ─
               Container(
-                height: 4,
+                height: 3,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [accentColor, accentColor.withValues(alpha: 0.4)],
-                  ),
+                  color: accentColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
               ),
               Padding(
@@ -3702,17 +3693,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                accentColor.withValues(alpha: 0.2),
-                                accentColor.withValues(alpha: 0.08),
-                              ],
-                            ),
+                            color: accentColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: accentColor.withValues(alpha: 0.3),
+                              color: accentColor.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Center(
@@ -3923,15 +3907,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF6366F1).withValues(alpha: isDark ? 0.15 : 0.08),
-                              const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.10 : 0.05),
-                            ],
-                          ),
+                          color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.15 : 0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.18),
                           ),
                         ),
                         child: Row(
@@ -4090,13 +4069,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─ Accent strip ─
+            // ─ Accent strip (Solid) ─
             Container(
               height: 3,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryColor, primaryColor.withValues(alpha: 0.3)],
-                ),
+                color: primaryColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
               ),
             ),
@@ -4112,14 +4089,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              primaryColor.withValues(alpha: 0.2),
-                              primaryColor.withValues(alpha: 0.08),
-                            ],
-                          ),
+                          color: primaryColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
@@ -4684,12 +4654,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      primaryColor.withValues(alpha: 0.2),
-                                      primaryColor.withValues(alpha: 0.08),
-                                    ],
-                                  ),
+                                  color: primaryColor.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Center(
@@ -5295,7 +5260,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           childAspectRatio: 2.2,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => Container(
+        itemBuilder: (context, index) => Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(10),
@@ -5372,7 +5337,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       childAspectRatio: 2.2,
                     ),
                     itemCount: 6,
-                    itemBuilder: (_, __) => Container(
+                    itemBuilder: (context, index) => Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),

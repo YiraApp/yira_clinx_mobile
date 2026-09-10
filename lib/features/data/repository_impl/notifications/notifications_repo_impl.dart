@@ -78,4 +78,38 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
       return false;
     }
   }
+
+  @override
+  Future<bool> clearAllNotifications() async {
+    try {
+      final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+      final response = await _apiClient.account(showSuccessSnack: false).post(
+        URLs.clearAllNotificationsUrl,
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("NotificationsRepositoryImpl clearAllNotifications error: $e");
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> deleteNotification(String notificationId) async {
+    try {
+      final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+      final response = await _apiClient.account(showSuccessSnack: false).delete(
+        "${URLs.deleteNotificationUrl}/$notificationId",
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint("NotificationsRepositoryImpl deleteNotification error: $e");
+      return false;
+    }
+  }
 }

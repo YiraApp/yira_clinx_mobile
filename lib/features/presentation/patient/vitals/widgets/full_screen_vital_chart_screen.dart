@@ -302,19 +302,25 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
         }
         return 'NORMAL';
       case VitalMetricType.heartRate:
-        final num = double.tryParse(value) ?? 72;
-        if (num >= 60 && num <= 100) return 'NORMAL';
-        if (num < 60) return 'LOW';
+        final cleanedHr = value.replaceAll(RegExp(r'[^\d.]'), '').trim();
+        final hrNum = double.tryParse(cleanedHr);
+        if (hrNum == null) return 'PENDING';
+        if (hrNum >= 60 && hrNum <= 100) return 'NORMAL';
+        if (hrNum < 60) return 'LOW';
         return 'ELEVATED';
       case VitalMetricType.spO2:
-        final num = double.tryParse(value) ?? 98;
-        if (num >= 95) return 'OPTIMAL';
-        if (num >= 90) return 'NORMAL';
+        final cleanedSp = value.replaceAll(RegExp(r'[^\d.]'), '').trim();
+        final spNum = double.tryParse(cleanedSp);
+        if (spNum == null) return 'PENDING';
+        if (spNum >= 95) return 'OPTIMAL';
+        if (spNum >= 90) return 'NORMAL';
         return 'LOW';
       case VitalMetricType.temperature:
-        final num = double.tryParse(value) ?? 98.4;
-        if (num >= 97.0 && num <= 99.0) return 'NORMAL';
-        if (num > 99.0) return 'FEVER';
+        final cleanedTemp = value.replaceAll(RegExp(r'[^\d.]'), '').trim();
+        final tempNum = double.tryParse(cleanedTemp);
+        if (tempNum == null) return 'PENDING';
+        if (tempNum >= 97.0 && tempNum <= 99.0) return 'NORMAL';
+        if (tempNum > 99.0) return 'FEVER';
         return 'LOW';
       case VitalMetricType.weight:
         return 'TRACKED';
@@ -1179,6 +1185,11 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
           interval = ((maxVal - minVal) / 5).ceilToDouble().clamp(1.0, 20.0);
           break;
       }
+    }
+
+    if (minVal != null && maxVal != null && minVal >= maxVal) {
+      minVal = math.max(0.0, minVal - 10.0);
+      maxVal = minVal + 20.0;
     }
 
     return NumericAxis(

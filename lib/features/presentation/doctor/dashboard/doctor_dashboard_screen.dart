@@ -19,9 +19,8 @@ import 'dashboard_patient_details_screen.dart';
 import 'doctor_dashboard_bloc/doctor_dashboard_bloc.dart';
 
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
-import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
-import 'package:yiraclinics/core/api/api_client.dart';
-import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
+import 'package:yiraclinics/core/widgets/notification_badge_icon.dart';
 
 import 'widgets/dashboard_section_header.dart';
 import 'widgets/dashboard_chart_card.dart';
@@ -40,7 +39,6 @@ class DoctorDashboardScreen extends StatefulWidget {
 class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   late final DoctorDashboardBloc _dashboardBloc;
   late final NavigationDrawerBloc _navigationDrawerBloc;
-  final ValueNotifier<int> _unreadNotificationsCount = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -63,27 +61,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Future<void> _fetchUnreadNotificationsCount() async {
-    try {
-      GetNotificationsUseCase useCase;
-      if (sl.isRegistered<GetNotificationsUseCase>()) {
-        useCase = sl<GetNotificationsUseCase>();
-      } else {
-        useCase = GetNotificationsUseCase(
-          repository: NotificationsRepositoryImpl(apiClient: sl<ApiClient>()),
-        );
-      }
-      final result = await useCase.call(page: 1, limit: 1);
-      if (result != null && mounted) {
-        _unreadNotificationsCount.value = result.unreadCount;
-      }
-    } catch (e) {
-      debugPrint("Error fetching unread notifications count: $e");
-    }
+    await NotificationBadgeService.instance.syncUnreadCount();
   }
 
   @override
   void dispose() {
-    _unreadNotificationsCount.dispose();
     super.dispose();
   }
 
@@ -224,62 +206,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   ],
                 ),
                 actions: [
-                  ValueListenableBuilder<int>(
-                    valueListenable: _unreadNotificationsCount,
-                    builder: (context, count, _) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          IconButton(
-                            tooltip: "Notifications",
-                            icon: Icon(
-                              Icons.notifications_none_outlined,
-                              color: adaptiveTextColor,
-                              size: isTabletDevice ? 24 : 22,
-                            ),
-                            onPressed: () async {
-                              await Navigator.pushNamed(context, AppRoutes.recentNotifications);
-                              _fetchUnreadNotificationsCount();
-                            },
-                          ),
-                          if (count > 0)
-                            Positioned(
-                              top: 7,
-                              right: 7,
-                              child: IgnorePointer(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEF4444),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: scaffoldBg,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      count > 99 ? "99+" : "$count",
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        height: 1,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
+                  NotificationBadgeIcon(
+                    iconColor: adaptiveTextColor,
+                    size: isTabletDevice ? 24 : 22,
                   ),
+                  const SizedBox(width: 4),
                   Padding(
                     padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
                     child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
@@ -805,7 +736,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           Icon(
             Icons.bar_chart_rounded,
             size: 36,
-            color: Colors.grey.withOpacity(0.4),
+            color: Colors.grey.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 6.0),
           Text(

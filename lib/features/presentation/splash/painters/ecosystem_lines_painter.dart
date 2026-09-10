@@ -43,10 +43,10 @@ class EcosystemLinesPainter extends CustomPainter {
 
   void _drawOrbitRing(
       Canvas canvas, Offset center, List<Offset> positions) {
-    if (convergence > 0.8) return;
+    if (convergence >= 0.95) return;
 
     final ringOpacity =
-        (revealProgress * 0.35 * (1.0 - convergence)).clamp(0.0, 1.0);
+        (revealProgress * 0.35 * (1.0 - pow(convergence, 1.4))).clamp(0.0, 1.0);
     if (ringOpacity <= 0.0) return;
 
     for (int i = 0; i < positions.length; i++) {
@@ -91,7 +91,7 @@ class EcosystemLinesPainter extends CustomPainter {
         center.dx + unitX * currentDistance, center.dy + unitY * currentDistance);
 
     final lineOpacity =
-        (lineReveal * 0.45 * (1.0 - convergence * 0.6)).clamp(0.0, 1.0);
+        (lineReveal * 0.45 * (1.0 - pow(convergence, 1.8))).clamp(0.0, 1.0);
 
     // Soft laser glow line
     final glowPaint = Paint()

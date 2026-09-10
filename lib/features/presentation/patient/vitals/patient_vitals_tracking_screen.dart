@@ -1,13 +1,17 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
+import '../../../../core/urls/urls.dart';
 import '../widgets/update_vitals_sheet.dart';
 import 'widgets/full_screen_vital_chart_screen.dart';
 import 'widgets/human_body_vitals_widget.dart';
@@ -58,23 +62,29 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
   void initState() {
     super.initState();
     _selectedMetric = widget.initialMetric;
-    _loadStoredVitals();
+    _loadVitalsFromApi();
   }
 
-  Future<void> _loadStoredVitals() async {
-    setState(() => _isLoading = true);
-    try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final userId = currentUser?.data?.id ?? '';
-      if (userId.isNotEmpty) {
+  Future<void> _loadVitalsFromApi({bool showLoading = true}) async {
+    if (showLoading && mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final token = currentUser?.data?.accessToken ?? '';
+
+    // First instant pass: populate from local cache if available to prevent flash
+    if (userId.isNotEmpty) {
+      try {
         final prefs = await SharedPreferences.getInstance();
         final savedStr = prefs.getString('patient_vitals_$userId');
         if (savedStr != null) {
           final Map<String, dynamic> decoded = jsonDecode(savedStr);
           final Map<String, String> loaded = {};
           decoded.forEach((key, value) {
-            if (value != null && value.toString().trim().isNotEmpty && value.toString().trim() != '--') {
-              loaded[key] = value.toString();
+            if (value != null && value.toString().trim().isNotEmpty && value.toString().trim() != '--' && value.toString().trim() != 'null') {
+              loaded[key] = value.toString().trim();
             }
           });
           _currentVitals = loaded;
@@ -84,17 +94,157 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         if (historyStr != null) {
           final List<dynamic> decodedList = jsonDecode(historyStr);
           _vitalsHistory = decodedList.map((e) => Map<String, dynamic>.from(e)).toList();
-        } else if (_currentVitals.isNotEmpty) {
-          final entry = Map<String, dynamic>.from(_currentVitals);
-          entry['timestamp'] = DateTime.now().toIso8601String();
-          _vitalsHistory = [entry];
-          await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
+        }
+      } catch (_) {}
+    }
+
+    // Dynamic Server Fetch via REST API
+    try {
+      final client = ApiClient();
+      final response = await client.account(showSuccessSnack: false).get(
+        URLs.patientVitalsUrl,
+        queryParameters: {
+          if (userId.isNotEmpty) 'patientId': userId,
+        },
+        options: Options(
+          headers: {
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic rawBody = response.data is Map<String, dynamic>
+            ? response.data
+            : (response.data is String ? jsonDecode(response.data) : null);
+
+        if (rawBody != null && rawBody['status'] == true) {
+          final data = rawBody['data'] as Map<String, dynamic>?;
+          await _processVitalsPayload(data, userId);
         }
       }
-    } catch (_) {}
-    await Future.delayed(const Duration(milliseconds: 120));
+    } catch (e) {
+      debugPrint("Vitals API fetch error (using cache): $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _processVitalsPayload(Map<String, dynamic>? data, String userId) async {
+    if (data == null) return;
+
+    final currentMap = data['current'] as Map<String, dynamic>?;
+    final historyList = data['history'] as List<dynamic>?;
+
+    final Map<String, String> parsedCurrent = {};
+    currentMap?.forEach((key, val) {
+      if (val != null &&
+          val.toString().trim().isNotEmpty &&
+          val.toString().trim() != '--' &&
+          val.toString().trim() != 'null') {
+        parsedCurrent[key] = val.toString().trim();
+      }
+    });
+
+    final List<Map<String, dynamic>> parsedHistory = [];
+    if (historyList != null) {
+      for (final item in historyList) {
+        if (item is Map) {
+          parsedHistory.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
+
     if (mounted) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _currentVitals = parsedCurrent;
+        _vitalsHistory = parsedHistory;
+      });
+    }
+
+    if (userId.isNotEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('patient_vitals_$userId', jsonEncode(parsedCurrent));
+        await prefs.setString('patient_vitals_history_$userId', jsonEncode(parsedHistory));
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _recordVitalsToApi(Map<String, String> result) async {
+    setState(() => _isLoading = true);
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final token = currentUser?.data?.accessToken ?? '';
+
+    try {
+      final client = ApiClient();
+      final response = await client.account(showSuccessSnack: false).post(
+        URLs.patientVitalsUrl,
+        data: {
+          'patientId': userId,
+          'bp': result['bp'],
+          'bpSystolic': result['bpSystolic'],
+          'bpDiastolic': result['bpDiastolic'],
+          'pulse': result['pulse'],
+          'temp': result['temp'],
+          'spO2': result['spO2'],
+          'weight': result['weight'],
+          'height': result['height'],
+        },
+        options: Options(
+          headers: {
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic rawBody = response.data is Map<String, dynamic>
+            ? response.data
+            : (response.data is String ? jsonDecode(response.data) : null);
+
+        if (rawBody != null && rawBody['status'] == true) {
+          final data = rawBody['data'] as Map<String, dynamic>?;
+          await _processVitalsPayload(data, userId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vitals recorded and synced with server successfully!'),
+                backgroundColor: Color(0xFF10B981),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("Vitals record API error (falling back to local cache): $e");
+      // Fallback to local save if offline
+      final now = DateTime.now();
+      final newEntry = Map<String, dynamic>.from(result);
+      newEntry['timestamp'] = now.toIso8601String();
+
+      setState(() {
+        _currentVitals = result;
+        _vitalsHistory.insert(0, newEntry);
+      });
+
+      if (userId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('patient_vitals_$userId', jsonEncode(result));
+          await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
+        } catch (_) {}
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -182,32 +332,12 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       backgroundColor: Colors.transparent,
       builder: (ctx) => UpdateVitalsSheet(
         currentVitals: _currentVitals,
-        onSave: (updated) {
-          setState(() {
-            _currentVitals = updated;
-          });
-        },
+        onSave: (updated) {},
       ),
     );
 
     if (result != null) {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final userId = currentUser?.data?.id ?? '';
-
-      final now = DateTime.now();
-      final newEntry = Map<String, dynamic>.from(result);
-      newEntry['timestamp'] = now.toIso8601String();
-
-      setState(() {
-        _currentVitals = result;
-        _vitalsHistory.add(newEntry);
-      });
-
-      if (userId.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('patient_vitals_$userId', jsonEncode(result));
-        await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
-      }
+      await _recordVitalsToApi(result);
     }
   }
 
@@ -548,15 +678,18 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: screenHorizontalSpacePadding,
-            vertical: 8,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          color: _primaryBlue,
+          onRefresh: () => _loadVitalsFromApi(showLoading: false),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            padding: const EdgeInsets.symmetric(
+              horizontal: screenHorizontalSpacePadding,
+              vertical: 8,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Time Range Selector (shown only for individual metrics, hidden for All Vitals)
               if (_selectedMetric != VitalMetricType.all) ...[
                 Row(
@@ -873,7 +1006,8 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   String? _getLastRecordedVitalsDate() {
@@ -1365,45 +1499,51 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Latest Reading',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Latest Reading',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        latestStr,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 26 : 22,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    const SizedBox(height: 2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            latestStr,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab ? 26 : 22,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        unit,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                        const SizedBox(width: 4),
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -1505,6 +1645,11 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           interval = ((maxVal - minVal) / 5).ceilToDouble().clamp(1.0, 20.0);
           break;
       }
+    }
+
+    if (minVal != null && maxVal != null && minVal >= maxVal) {
+      minVal = math.max(0.0, minVal - 10.0);
+      maxVal = minVal + 20.0;
     }
 
     return NumericAxis(

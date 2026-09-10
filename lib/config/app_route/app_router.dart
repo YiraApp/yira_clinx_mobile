@@ -96,7 +96,13 @@ class AppRouter {
   static Route onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
-        return MaterialPageRoute(settings: settings, builder: (_) => SplashScreen());
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => BlocProvider.value(
+            value: sl<ConfigBloc>(),
+            child: const SplashScreen(),
+          ),
+        );
       case AppRoutes.profile:
         final profileArgs = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(

@@ -23,13 +23,27 @@ class HeartbeatPainter extends CustomPainter {
     final midY = h / 2;
 
     final points = _generateHeartbeatPoints(w, midY, h);
-    final revealCount =
-        (points.length * revealProgress).round().clamp(2, points.length);
+    if (points.isEmpty) return;
+
+    final rawIndex = (points.length - 1) * revealProgress;
+    final floorIndex = rawIndex.floor().clamp(0, points.length - 1);
+    final frac = (rawIndex - floorIndex).clamp(0.0, 1.0);
 
     final path = Path();
     path.moveTo(points[0].dx, points[0].dy);
-    for (int i = 1; i < revealCount; i++) {
+    for (int i = 1; i <= floorIndex; i++) {
       path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    Offset tipPoint = points[floorIndex];
+    if (floorIndex < points.length - 1 && frac > 0.0) {
+      final p1 = points[floorIndex];
+      final p2 = points[floorIndex + 1];
+      tipPoint = Offset(
+        p1.dx + (p2.dx - p1.dx) * frac,
+        p1.dy + (p2.dy - p1.dy) * frac,
+      );
+      path.lineTo(tipPoint.dx, tipPoint.dy);
     }
 
     // Outer glow layer
@@ -52,11 +66,9 @@ class HeartbeatPainter extends CustomPainter {
     canvas.drawPath(path, linePaint);
 
     // Glowing photon tip at the leading edge
-    if (revealCount > 1 && revealCount <= points.length) {
-      final tipPoint = points[revealCount - 1];
-
+    if (revealProgress > 0.02 && revealProgress < 1.0) {
       final tipGlow = Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.8)
+        ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.85)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(tipPoint, 4.0, tipGlow);
 

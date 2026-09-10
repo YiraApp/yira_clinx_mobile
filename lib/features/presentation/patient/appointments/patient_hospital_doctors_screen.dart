@@ -140,13 +140,106 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Hospital Info Header Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        width: 1.1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.local_hospital_rounded,
+                            color: isDark ? const Color(0xFF93C5FD) : primaryColor,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                hospName,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                orgName,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11.5,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            "CONNECTED",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF059669),
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   // Search Bar
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        width: 1.1,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -161,7 +254,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 13,
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                       decoration: InputDecoration(
                         hintText: "Search doctor by name, specialty, or qualification...",
@@ -171,8 +264,14 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                           color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                         ),
                         prefixIcon: const Icon(Icons.search_rounded, size: 20, color: primaryColor),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 18),
+                                onPressed: () => setState(() => _searchQuery = ''),
+                              )
+                            : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                       ),
                     ),
                   ),
@@ -278,12 +377,13 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-            blurRadius: 12,
+            blurRadius: 14,
             offset: const Offset(0, 3),
           ),
         ],
@@ -311,7 +411,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                       ? Image.network(
                           imagePath,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildInitialsAvatar(initial),
+                          errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(initial),
                         )
                       : _buildInitialsAvatar(initial),
                 ),
@@ -408,40 +508,43 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
           ),
 
           const SizedBox(height: 12),
-          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
           const SizedBox(height: 12),
 
-          // Bottom Bar: Registration / Stats + Dynamic Consultation Fee + Book Action
+          // Bottom Bar: Dynamic Consultation Fee + Book Action
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Fee Tag
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Consultation Fee",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "CONSULTATION FEE",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        letterSpacing: 0.3,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    fee == 0 ? "Free" : "₹$fee",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: fee == 0 ? const Color(0xFF059669) : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    const SizedBox(height: 1),
+                    Text(
+                      fee == 0 ? "Free" : "₹$fee",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: fee == 0 ? const Color(0xFF059669) : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
-              // Book Appointment Action Button (InkWell container for robust layout constraints)
+              // Book Appointment Action Button
               InkWell(
                 onTap: () async {
                   final res = await Navigator.push(
@@ -468,30 +571,30 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                     widget.onAppointmentBooked?.call();
                   }
                 },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8.5),
                   decoration: BoxDecoration(
                     color: primaryColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withValues(alpha: 0.3),
+                        color: primaryColor.withValues(alpha: 0.28),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white),
-                      SizedBox(width: 6),
+                    children: const [
+                      Icon(Icons.calendar_today_rounded, size: 13, color: Colors.white),
+                      SizedBox(width: 5),
                       Text(
                         "Book Appointment",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
