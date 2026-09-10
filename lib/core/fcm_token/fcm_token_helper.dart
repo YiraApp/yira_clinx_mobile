@@ -28,25 +28,40 @@ class FcmTokenHelper {
           );
         } catch (_) {}
 
-        try {
-          final apnsToken = await messaging.getAPNSToken();
-          if (apnsToken != null) {
-            final String? token = await messaging.getToken();
-            if (token != null && token.isNotEmpty) {
-              return token;
+        // 1. Wait/retry for Apple APNs token (takes 1-3 seconds on iOS devices)
+        String? apnsToken;
+        for (int i = 0; i < 8; i++) {
+          try {
+            apnsToken = await messaging.getAPNSToken();
+            if (apnsToken != null && apnsToken.isNotEmpty) {
+              debugPrint("[FcmTokenHelper] APNS token acquired on attempt ${i + 1}");
+              break;
             }
-          } else {
-            debugPrint("APNS token not available on this iOS device/simulator yet, using local identifier fallback.");
+          } catch (e) {
+            debugPrint("[FcmTokenHelper] APNS attempt ${i + 1} error: $e");
           }
-        } catch (e) {
-          debugPrint("FCM getToken on iOS: $e");
+          await Future.delayed(const Duration(milliseconds: 500));
         }
 
-        // Fallback for iOS Simulator / local testing
+        // 2. Fetch real FCM registration token
+        try {
+          final String? token = await messaging.getToken();
+          if (token != null && token.isNotEmpty) {
+            debugPrint("[FcmTokenHelper] Real FCM token acquired: ${token.substring(0, 25)}...");
+            return token;
+          }
+        } catch (e) {
+          debugPrint("[FcmTokenHelper] FCM getToken on iOS error: $e");
+        }
+
+        // 3. Fallback for iOS Simulator ONLY
         try {
           final deviceInfo = DeviceInfoPlugin();
           final iosInfo = await deviceInfo.iosInfo;
-          return "ios_sim_${iosInfo.identifierForVendor ?? 'device'}";
+          if (!iosInfo.isPhysicalDevice) {
+            debugPrint("[FcmTokenHelper] Running on iOS Simulator, using simulator identifier");
+            return "ios_sim_${iosInfo.identifierForVendor ?? 'device'}";
+          }
         } catch (_) {
           return "ios_device_token";
         }

@@ -24,3 +24,13 @@ class MarkNotificationAsReadEvent extends NotificationsEvent {
 }
 
 class MarkAllNotificationsAsReadEvent extends NotificationsEvent {}
+
+class ClearAllNotificationsEvent extends NotificationsEvent {}
+
+class DeleteNotificationEvent extends NotificationsEvent {
+  final String notificationId;
+  const DeleteNotificationEvent(this.notificationId);
+
+  @override
+  List<Object?> get props => [notificationId];
+}

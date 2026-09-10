@@ -24,11 +24,11 @@ class PatientVitalsCard extends StatelessWidget {
     this.isLoading = false,
   });
 
-  void _openTracking(BuildContext context, VitalMetricType metric) {
+  void _openTracking(BuildContext context, [VitalMetricType? metric]) {
     Navigator.pushNamed(
       context,
       AppRoutes.patientVitalsTracking,
-      arguments: metric,
+      arguments: VitalMetricType.all,
     );
   }
 

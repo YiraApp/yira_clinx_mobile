@@ -1,13 +1,20 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:math' as math;
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
+import '../../../../core/urls/urls.dart';
 import '../widgets/update_vitals_sheet.dart';
+import 'widgets/full_screen_vital_chart_screen.dart';
+import 'widgets/human_body_vitals_widget.dart';
 
 enum VitalsTimeRange { all, today, sevenDays, dateRange }
 
@@ -55,23 +62,29 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
   void initState() {
     super.initState();
     _selectedMetric = widget.initialMetric;
-    _loadStoredVitals();
+    _loadVitalsFromApi();
   }
 
-  Future<void> _loadStoredVitals() async {
-    setState(() => _isLoading = true);
-    try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final userId = currentUser?.data?.id ?? '';
-      if (userId.isNotEmpty) {
+  Future<void> _loadVitalsFromApi({bool showLoading = true}) async {
+    if (showLoading && mounted) {
+      setState(() => _isLoading = true);
+    }
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final token = currentUser?.data?.accessToken ?? '';
+
+    // First instant pass: populate from local cache if available to prevent flash
+    if (userId.isNotEmpty) {
+      try {
         final prefs = await SharedPreferences.getInstance();
         final savedStr = prefs.getString('patient_vitals_$userId');
         if (savedStr != null) {
           final Map<String, dynamic> decoded = jsonDecode(savedStr);
           final Map<String, String> loaded = {};
           decoded.forEach((key, value) {
-            if (value != null && value.toString().trim().isNotEmpty && value.toString().trim() != '--') {
-              loaded[key] = value.toString();
+            if (value != null && value.toString().trim().isNotEmpty && value.toString().trim() != '--' && value.toString().trim() != 'null') {
+              loaded[key] = value.toString().trim();
             }
           });
           _currentVitals = loaded;
@@ -81,17 +94,157 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         if (historyStr != null) {
           final List<dynamic> decodedList = jsonDecode(historyStr);
           _vitalsHistory = decodedList.map((e) => Map<String, dynamic>.from(e)).toList();
-        } else if (_currentVitals.isNotEmpty) {
-          final entry = Map<String, dynamic>.from(_currentVitals);
-          entry['timestamp'] = DateTime.now().toIso8601String();
-          _vitalsHistory = [entry];
-          await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
+        }
+      } catch (_) {}
+    }
+
+    // Dynamic Server Fetch via REST API
+    try {
+      final client = ApiClient();
+      final response = await client.account(showSuccessSnack: false).get(
+        URLs.patientVitalsUrl,
+        queryParameters: {
+          if (userId.isNotEmpty) 'patientId': userId,
+        },
+        options: Options(
+          headers: {
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic rawBody = response.data is Map<String, dynamic>
+            ? response.data
+            : (response.data is String ? jsonDecode(response.data) : null);
+
+        if (rawBody != null && rawBody['status'] == true) {
+          final data = rawBody['data'] as Map<String, dynamic>?;
+          await _processVitalsPayload(data, userId);
         }
       }
-    } catch (_) {}
-    await Future.delayed(const Duration(milliseconds: 120));
+    } catch (e) {
+      debugPrint("Vitals API fetch error (using cache): $e");
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _processVitalsPayload(Map<String, dynamic>? data, String userId) async {
+    if (data == null) return;
+
+    final currentMap = data['current'] as Map<String, dynamic>?;
+    final historyList = data['history'] as List<dynamic>?;
+
+    final Map<String, String> parsedCurrent = {};
+    currentMap?.forEach((key, val) {
+      if (val != null &&
+          val.toString().trim().isNotEmpty &&
+          val.toString().trim() != '--' &&
+          val.toString().trim() != 'null') {
+        parsedCurrent[key] = val.toString().trim();
+      }
+    });
+
+    final List<Map<String, dynamic>> parsedHistory = [];
+    if (historyList != null) {
+      for (final item in historyList) {
+        if (item is Map) {
+          parsedHistory.add(Map<String, dynamic>.from(item));
+        }
+      }
+    }
+
     if (mounted) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _currentVitals = parsedCurrent;
+        _vitalsHistory = parsedHistory;
+      });
+    }
+
+    if (userId.isNotEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('patient_vitals_$userId', jsonEncode(parsedCurrent));
+        await prefs.setString('patient_vitals_history_$userId', jsonEncode(parsedHistory));
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _recordVitalsToApi(Map<String, String> result) async {
+    setState(() => _isLoading = true);
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final token = currentUser?.data?.accessToken ?? '';
+
+    try {
+      final client = ApiClient();
+      final response = await client.account(showSuccessSnack: false).post(
+        URLs.patientVitalsUrl,
+        data: {
+          'patientId': userId,
+          'bp': result['bp'],
+          'bpSystolic': result['bpSystolic'],
+          'bpDiastolic': result['bpDiastolic'],
+          'pulse': result['pulse'],
+          'temp': result['temp'],
+          'spO2': result['spO2'],
+          'weight': result['weight'],
+          'height': result['height'],
+        },
+        options: Options(
+          headers: {
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic rawBody = response.data is Map<String, dynamic>
+            ? response.data
+            : (response.data is String ? jsonDecode(response.data) : null);
+
+        if (rawBody != null && rawBody['status'] == true) {
+          final data = rawBody['data'] as Map<String, dynamic>?;
+          await _processVitalsPayload(data, userId);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Vitals recorded and synced with server successfully!'),
+                backgroundColor: Color(0xFF10B981),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint("Vitals record API error (falling back to local cache): $e");
+      // Fallback to local save if offline
+      final now = DateTime.now();
+      final newEntry = Map<String, dynamic>.from(result);
+      newEntry['timestamp'] = now.toIso8601String();
+
+      setState(() {
+        _currentVitals = result;
+        _vitalsHistory.insert(0, newEntry);
+      });
+
+      if (userId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('patient_vitals_$userId', jsonEncode(result));
+          await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
+        } catch (_) {}
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -179,33 +332,79 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       backgroundColor: Colors.transparent,
       builder: (ctx) => UpdateVitalsSheet(
         currentVitals: _currentVitals,
-        onSave: (updated) {
-          setState(() {
-            _currentVitals = updated;
-          });
-        },
+        onSave: (updated) {},
       ),
     );
 
     if (result != null) {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final userId = currentUser?.data?.id ?? '';
-
-      final now = DateTime.now();
-      final newEntry = Map<String, dynamic>.from(result);
-      newEntry['timestamp'] = now.toIso8601String();
-
-      setState(() {
-        _currentVitals = result;
-        _vitalsHistory.add(newEntry);
-      });
-
-      if (userId.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('patient_vitals_$userId', jsonEncode(result));
-        await prefs.setString('patient_vitals_history_$userId', jsonEncode(_vitalsHistory));
-      }
+      await _recordVitalsToApi(result);
     }
+  }
+
+  void _openFullScreenChart() {
+    _openFullScreenChartFor(_selectedMetric);
+  }
+
+  void _openFullScreenChartFor(VitalMetricType metric) {
+    if (metric == VitalMetricType.all) return;
+
+    final metricTitle = _getMetricTitle(metric);
+    final metricUnit = _getMetricUnit(metric);
+    final metricIcon = _getMetricIcon(metric);
+    final normalRangeText = _getMetricNormalRange(metric);
+
+    Color metricColor = _primaryBlue;
+    switch (metric) {
+      case VitalMetricType.all:
+        break;
+      case VitalMetricType.bloodPressure:
+        metricColor = const Color(0xFF8B5CF6);
+        break;
+      case VitalMetricType.heartRate:
+        metricColor = const Color(0xFFE11D48);
+        break;
+      case VitalMetricType.spO2:
+        metricColor = const Color(0xFF06B6D4);
+        break;
+      case VitalMetricType.temperature:
+        metricColor = const Color(0xFFF59E0B);
+        break;
+      case VitalMetricType.weight:
+        metricColor = const Color(0xFF10B981);
+        break;
+    }
+
+    FullScreenTimeRange initialRange = FullScreenTimeRange.all;
+    switch (_timeRange) {
+      case VitalsTimeRange.all:
+        initialRange = FullScreenTimeRange.all;
+        break;
+      case VitalsTimeRange.today:
+        initialRange = FullScreenTimeRange.oneDay;
+        break;
+      case VitalsTimeRange.sevenDays:
+        initialRange = FullScreenTimeRange.sevenDays;
+        break;
+      case VitalsTimeRange.dateRange:
+        initialRange = FullScreenTimeRange.oneMonth;
+        break;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FullScreenVitalChartScreen(
+          metricType: metric,
+          metricTitle: metricTitle,
+          metricUnit: metricUnit,
+          metricIcon: metricIcon,
+          metricColor: metricColor,
+          normalRangeText: normalRangeText,
+          vitalsHistory: _vitalsHistory,
+          currentVitals: _currentVitals,
+          initialRange: initialRange,
+        ),
+      ),
+    );
   }
 
   DateTimeRange _getActiveDateRange() {
@@ -412,40 +611,54 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     final metricTitle = _getMetricTitle(_selectedMetric);
     final metricIcon = _getMetricIcon(_selectedMetric);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
+    return PopScope(
+      canPop: _selectedMetric == VitalMetricType.all,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _selectedMetric != VitalMetricType.all) {
+          _switchMetric(VitalMetricType.all);
+        }
+      },
+      child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Vitals Tracking',
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Record Reading',
-            icon: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.edit_note_rounded, size: 18, color: _primaryBlue),
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: theme.scaffoldBackgroundColor,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              size: 20,
             ),
-            onPressed: _openUpdateVitals,
+            onPressed: () {
+              if (_selectedMetric != VitalMetricType.all) {
+                _switchMetric(VitalMetricType.all);
+              } else {
+                Navigator.pop(context);
+              }
+            },
           ),
+          title: Text(
+            _selectedMetric == VitalMetricType.all ? 'Vitals Tracking' : metricTitle,
+            style: const TextStyle(
+              fontFamily: appPoppinFont,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        actions: [
+          if (_selectedMetric != VitalMetricType.all)
+            IconButton(
+              tooltip: 'Full Screen Graph',
+              icon: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.open_in_full_rounded, size: 18, color: _primaryBlue),
+              ),
+              onPressed: _openFullScreenChart,
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -465,94 +678,52 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: screenHorizontalSpacePadding,
-            vertical: 8,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Metric Selection Horizontal Chips (with ALL option first)
-              SizedBox(
-                height: 38,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
+        child: RefreshIndicator(
+          color: _primaryBlue,
+          onRefresh: () => _loadVitalsFromApi(showLoading: false),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            padding: const EdgeInsets.symmetric(
+              horizontal: screenHorizontalSpacePadding,
+              vertical: 8,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+              // Time Range Selector (shown only for individual metrics, hidden for All Vitals)
+              if (_selectedMetric != VitalMetricType.all) ...[
+                Row(
                   children: [
-                    _buildMetricChip(
-                      type: VitalMetricType.all,
-                      label: 'All Vitals',
-                      icon: Icons.dashboard_customize_outlined,
+                    _buildTimeRangePill(
+                      label: 'All',
+                      range: VitalsTimeRange.all,
+                      isDark: isDark,
                     ),
-                    const SizedBox(width: 8),
-                    _buildMetricChip(
-                      type: VitalMetricType.bloodPressure,
-                      label: 'Blood Pressure',
-                      icon: Icons.favorite_outline_rounded,
+                    const SizedBox(width: 6),
+                    _buildTimeRangePill(
+                      label: 'Today',
+                      range: VitalsTimeRange.today,
+                      isDark: isDark,
                     ),
-                    const SizedBox(width: 8),
-                    _buildMetricChip(
-                      type: VitalMetricType.heartRate,
-                      label: 'Heart Rate',
-                      icon: Icons.monitor_heart_outlined,
+                    const SizedBox(width: 6),
+                    _buildTimeRangePill(
+                      label: '7 Days',
+                      range: VitalsTimeRange.sevenDays,
+                      isDark: isDark,
                     ),
-                    const SizedBox(width: 8),
-                    _buildMetricChip(
-                      type: VitalMetricType.spO2,
-                      label: 'SpO2',
-                      icon: Icons.air_rounded,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildMetricChip(
-                      type: VitalMetricType.temperature,
-                      label: 'Temperature',
-                      icon: Icons.thermostat_outlined,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildMetricChip(
-                      type: VitalMetricType.weight,
-                      label: 'Weight',
-                      icon: Icons.scale_outlined,
+                    const SizedBox(width: 6),
+                    _buildTimeRangePill(
+                      label: _timeRange == VitalsTimeRange.dateRange && _customDateRange != null
+                          ? '${DateFormat('d MMM').format(_customDateRange!.start)} - ${DateFormat('d MMM').format(_customDateRange!.end)}'
+                          : 'Custom',
+                      range: VitalsTimeRange.dateRange,
+                      isDark: isDark,
+                      icon: Icons.date_range_rounded,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // 2. Time Range Selector: All / Today / 7 Days / Custom Date Range
-              Row(
-                children: [
-                  _buildTimeRangePill(
-                    label: 'All',
-                    range: VitalsTimeRange.all,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildTimeRangePill(
-                    label: 'Today',
-                    range: VitalsTimeRange.today,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildTimeRangePill(
-                    label: '7 Days',
-                    range: VitalsTimeRange.sevenDays,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 6),
-                  _buildTimeRangePill(
-                    label: _timeRange == VitalsTimeRange.dateRange && _customDateRange != null
-                        ? '${DateFormat('d MMM').format(_customDateRange!.start)} - ${DateFormat('d MMM').format(_customDateRange!.end)}'
-                        : 'Custom',
-                    range: VitalsTimeRange.dateRange,
-                    isDark: isDark,
-                    icon: Icons.date_range_rounded,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
+              ],
 
               if (_isLoading) ...[
                 _buildShimmerCard(isDark, height: 220),
@@ -637,9 +808,35 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 ),
                 const SizedBox(height: 20),
               ] else if (_selectedMetric == VitalMetricType.all) ...[
-                // ─── ALL VITALS DASHBOARD OVERVIEW ──────────────────────────
+                // ─── ALL VITALS DASHBOARD ────────────────────────────────────
+                _buildLastRecordedHeader(isDark, isTab),
+                const SizedBox(height: 6),
+                HumanBodyVitalsWidget(
+                  currentVitals: _currentVitals,
+                  onVitalTapped: (metricKey) {
+                    switch (metricKey) {
+                      case 'bp':
+                        _switchMetric(VitalMetricType.bloodPressure);
+                        break;
+                      case 'pulse':
+                        _switchMetric(VitalMetricType.heartRate);
+                        break;
+                      case 'spO2':
+                        _switchMetric(VitalMetricType.spO2);
+                        break;
+                      case 'temp':
+                        _switchMetric(VitalMetricType.temperature);
+                        break;
+                      case 'weight':
+                      case 'height':
+                        _switchMetric(VitalMetricType.weight);
+                        break;
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
                 _buildAllVitalsOverviewCards(isDark, isTab),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 _buildHistoryLogs(isDark, isTab),
               ] else ...[
                 // ─── INDIVIDUAL METRIC FOCUSED VIEW ──────────────────────────
@@ -711,44 +908,89 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Expanded(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(metricIcon, color: _primaryBlue, size: 17),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      _selectedMetric == VitalMetricType.bloodPressure
+                                          ? 'BP Trend'
+                                          : '$metricTitle Trend',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab ? 15.5 : 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(metricIcon, color: _primaryBlue, size: 17),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$metricTitle Trend',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab ? 15.5 : 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${dataPoints.length} reading${dataPoints.length > 1 ? 's' : ''}',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: _openFullScreenChart,
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _primaryBlue.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.open_in_full_rounded, size: 11, color: _primaryBlue),
+                                        SizedBox(width: 3),
+                                        Text(
+                                          'Full Screen',
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: _primaryBlue,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${dataPoints.length} reading${dataPoints.length > 1 ? 's' : ''}',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                ),
-                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
-                          height: isTab ? 240 : 200,
+                          height: isTab ? 280 : 230,
                           child: _buildSyncfusionChart(dataPoints, isDark, metricUnit),
                         ),
                       ],
@@ -763,6 +1005,112 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           ),
         ),
       ),
+    ),
+  ),
+);
+}
+
+  String? _getLastRecordedVitalsDate() {
+    if (_vitalsHistory.isNotEmpty) {
+      for (int i = _vitalsHistory.length - 1; i >= 0; i--) {
+        final tsStr = _vitalsHistory[i]['timestamp']?.toString();
+        if (tsStr != null) {
+          final dt = DateTime.tryParse(tsStr);
+          if (dt != null) {
+            return _formatLastRecorded(dt);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  String _formatLastRecorded(DateTime dt) {
+    final now = DateTime.now();
+    final isToday = dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final yesterday = now.subtract(const Duration(days: 1));
+    final isYesterday = dt.year == yesterday.year && dt.month == yesterday.month && dt.day == yesterday.day;
+    final timeStr = DateFormat('hh:mm a').format(dt);
+
+    if (isToday) {
+      return 'Today, $timeStr';
+    } else if (isYesterday) {
+      return 'Yesterday, $timeStr';
+    } else {
+      return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+    }
+  }
+
+  Widget _buildLastRecordedHeader(bool isDark, bool isTab) {
+    final lastRecorded = _getLastRecordedVitalsDate() ?? 'Recently recorded';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isTab ? 18 : 14,
+        vertical: isTab ? 14 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.2)
+                : const Color(0xFF64748B).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.calendar_today_rounded,
+              color: _primaryBlue,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Last Vitals Recorded',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  lastRecorded,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 14 : 13,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -775,7 +1123,33 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     final height = _currentVitals['height'] ?? '--';
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10.0, left: 2, right: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Vitals',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? 16 : 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                'Tap card for trends',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 11,
+                  color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+        ),
         Row(
           children: [
             Expanded(
@@ -783,7 +1157,8 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Blood Pressure',
                 value: bp,
                 unit: bp != '--' ? 'mmHg' : '',
-                icon: Icons.favorite_outline_rounded,
+                icon: Icons.favorite_rounded,
+                color: const Color(0xFF8B5CF6),
                 targetMetric: VitalMetricType.bloodPressure,
                 status: bp != '--' ? 'Normal' : 'Pending',
                 isDark: isDark,
@@ -796,7 +1171,8 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Heart Rate',
                 value: pulse,
                 unit: pulse != '--' ? 'BPM' : '',
-                icon: Icons.monitor_heart_outlined,
+                icon: Icons.monitor_heart_rounded,
+                color: const Color(0xFFE11D48),
                 targetMetric: VitalMetricType.heartRate,
                 status: pulse != '--' ? 'Normal' : 'Pending',
                 isDark: isDark,
@@ -814,6 +1190,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 value: spO2,
                 unit: spO2 != '--' ? '%' : '',
                 icon: Icons.air_rounded,
+                color: const Color(0xFF06B6D4),
                 targetMetric: VitalMetricType.spO2,
                 status: spO2 != '--' ? 'Optimal' : 'Pending',
                 isDark: isDark,
@@ -825,8 +1202,9 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
               child: _buildOverviewTile(
                 title: 'Temperature',
                 value: temp,
-                unit: temp != '--' ? '°F' : '',
-                icon: Icons.thermostat_outlined,
+                unit: temp != '--' && !temp.endsWith('°F') && !temp.endsWith('°') ? '°F' : '',
+                icon: Icons.thermostat_rounded,
+                color: const Color(0xFFF59E0B),
                 targetMetric: VitalMetricType.temperature,
                 status: temp != '--' ? 'Normal' : 'Pending',
                 isDark: isDark,
@@ -843,7 +1221,8 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Weight',
                 value: weight,
                 unit: weight != '--' ? 'kg' : '',
-                icon: Icons.scale_outlined,
+                icon: Icons.scale_rounded,
+                color: const Color(0xFF10B981),
                 targetMetric: VitalMetricType.weight,
                 status: weight != '--' ? 'Tracked' : 'Pending',
                 isDark: isDark,
@@ -857,6 +1236,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 value: height,
                 unit: height != '--' ? 'cm' : '',
                 icon: Icons.height_rounded,
+                color: const Color(0xFF3B82F6),
                 targetMetric: VitalMetricType.weight,
                 status: height != '--' ? 'Tracked' : 'Pending',
                 isDark: isDark,
@@ -874,28 +1254,34 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     required String value,
     required String unit,
     required IconData icon,
+    required Color color,
     required VitalMetricType targetMetric,
     required String status,
     required bool isDark,
     required bool isTab,
   }) {
     final hasVal = value != '--';
+    final isGood = status == 'Normal' || status == 'Optimal' || status == 'Tracked';
 
     return InkWell(
       onTap: () => _switchMetric(targetMetric),
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: EdgeInsets.all(isTab ? 16 : 13),
+        padding: EdgeInsets.all(isTab ? 16 : 12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark
+                ? color.withValues(alpha: 0.25)
+                : color.withValues(alpha: 0.15),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFF64748B).withValues(alpha: 0.04),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.25)
+                  : color.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -905,102 +1291,107 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(icon, size: 15, color: _primaryBlue),
-                    const SizedBox(width: 5),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? 20 : 17,
-                    fontWeight: FontWeight.bold,
-                    color: hasVal ? (isDark ? Colors.white : const Color(0xFF0F172A)) : (isDark ? Colors.white38 : Colors.grey[400]),
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: isDark ? 0.20 : 0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
+                  child: Icon(icon, size: 14, color: color),
                 ),
-                if (unit.isNotEmpty) ...[
-                  const SizedBox(width: 3),
-                  Text(
-                    unit,
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    title,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: 10.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                      color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                InkWell(
+                  onTap: () => _openFullScreenChartFor(targetMetric),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: isDark ? 0.2 : 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.open_in_full_rounded,
+                      size: 11,
+                      color: color,
                     ),
                   ),
-                ],
+                ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricChip({
-    required VitalMetricType type,
-    required String label,
-    required IconData icon,
-  }) {
-    final isSelected = _selectedMetric == type;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      onTap: () => _switchMetric(type),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? _primaryBlue
-              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? _primaryBlue
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-              ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 20 : 17,
+                            fontWeight: FontWeight.bold,
+                            color: hasVal
+                                ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                : (isDark ? Colors.white38 : Colors.grey[400]),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (unit.isNotEmpty) ...[
+                        const SizedBox(width: 3),
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (isGood ? const Color(0xFF10B981) : const Color(0xFF94A3B8))
+                        .withValues(alpha: isDark ? 0.18 : 0.10),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: isGood ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1108,45 +1499,51 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Latest Reading',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Latest Reading',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        latestStr,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 26 : 22,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    const SizedBox(height: 2),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            latestStr,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab ? 26 : 22,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        unit,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                        const SizedBox(width: 4),
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -1211,10 +1608,78 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     );
   }
 
+  NumericAxis _getYAxisForMetric(VitalMetricType metric, List<VitalsDataPoint> points, bool isDark) {
+    double? minVal;
+    double? maxVal;
+    double? interval;
+
+    if (points.isNotEmpty) {
+      double lowest = points.map((p) => math.min(p.primaryValue, p.secondaryValue ?? p.primaryValue)).reduce(math.min);
+      double highest = points.map((p) => math.max(p.primaryValue, p.secondaryValue ?? p.primaryValue)).reduce(math.max);
+
+      switch (metric) {
+        case VitalMetricType.all:
+        case VitalMetricType.bloodPressure:
+          minVal = math.max(30.0, ((math.min(50.0, lowest - 15)) / 10).floor() * 10.0);
+          maxVal = math.min(240.0, ((math.max(150.0, highest + 15)) / 10).ceil() * 10.0);
+          interval = 20;
+          break;
+        case VitalMetricType.heartRate:
+          minVal = math.max(30.0, ((math.min(50.0, lowest - 10)) / 10).floor() * 10.0);
+          maxVal = math.min(220.0, ((math.max(120.0, highest + 10)) / 10).ceil() * 10.0);
+          interval = 20;
+          break;
+        case VitalMetricType.spO2:
+          minVal = math.max(75.0, ((math.min(90.0, lowest - 2)) / 5).floor() * 5.0);
+          maxVal = 102;
+          interval = 5;
+          break;
+        case VitalMetricType.temperature:
+          minVal = math.max(90.0, (lowest - 1.0).floorToDouble());
+          maxVal = math.min(106.0, (highest + 1.0).ceilToDouble());
+          interval = 1.0;
+          break;
+        case VitalMetricType.weight:
+          minVal = math.max(0.0, (lowest - 5.0).floorToDouble());
+          maxVal = (highest + 5.0).ceilToDouble();
+          interval = ((maxVal - minVal) / 5).ceilToDouble().clamp(1.0, 20.0);
+          break;
+      }
+    }
+
+    if (minVal != null && maxVal != null && minVal >= maxVal) {
+      minVal = math.max(0.0, minVal - 10.0);
+      maxVal = minVal + 20.0;
+    }
+
+    return NumericAxis(
+      minimum: minVal,
+      maximum: maxVal,
+      interval: interval,
+      axisLine: const AxisLine(width: 0),
+      majorTickLines: const MajorTickLines(size: 0),
+      majorGridLines: MajorGridLines(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+        dashArray: const [4, 4],
+      ),
+      labelStyle: TextStyle(
+        fontFamily: appPoppinFont,
+        fontSize: 10,
+        color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+      ),
+    );
+  }
+
   Widget _buildSyncfusionChart(List<VitalsDataPoint> points, bool isDark, String unit) {
     return SfCartesianChart(
       plotAreaBorderWidth: 0,
       margin: EdgeInsets.zero,
+      zoomPanBehavior: ZoomPanBehavior(
+        enablePinching: true,
+        enablePanning: true,
+        enableDoubleTapZooming: true,
+        zoomMode: ZoomMode.x,
+      ),
       primaryXAxis: DateTimeAxis(
         majorGridLines: const MajorGridLines(width: 0),
         axisLine: AxisLine(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
@@ -1224,20 +1689,9 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
         ),
         dateFormat: DateFormat('d MMM'),
+        edgeLabelPlacement: EdgeLabelPlacement.shift,
       ),
-      primaryYAxis: NumericAxis(
-        axisLine: const AxisLine(width: 0),
-        majorTickLines: const MajorTickLines(size: 0),
-        majorGridLines: MajorGridLines(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-          dashArray: const [4, 4],
-        ),
-        labelStyle: TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: 10,
-          color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-        ),
-      ),
+      primaryYAxis: _getYAxisForMetric(_selectedMetric, points, isDark),
       tooltipBehavior: TooltipBehavior(
         enable: true,
         header: '',
@@ -1246,6 +1700,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       ),
       series: <CartesianSeries>[
         SplineAreaSeries<VitalsDataPoint, DateTime>(
+          splineType: SplineType.monotonic,
           dataSource: points,
           xValueMapper: (VitalsDataPoint d, _) => d.date,
           yValueMapper: (VitalsDataPoint d, _) => d.primaryValue,
@@ -1264,6 +1719,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         ),
         if (points.isNotEmpty && points.first.secondaryValue != null)
           SplineSeries<VitalsDataPoint, DateTime>(
+            splineType: SplineType.monotonic,
             dataSource: points,
             xValueMapper: (VitalsDataPoint d, _) => d.date,
             yValueMapper: (VitalsDataPoint d, _) => d.secondaryValue,
@@ -1285,6 +1741,31 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
   }
 
   Widget _buildHistoryLogs(bool isDark, bool isTab) {
+    final isAllScreen = _selectedMetric == VitalMetricType.all;
+    final now = DateTime.now();
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    // For All Vitals screen, filter only past 7 days
+    final filteredHistory = isAllScreen
+        ? _vitalsHistory.where((item) {
+            final tsStr = item['timestamp']?.toString();
+            if (tsStr == null) return false;
+            final dt = DateTime.tryParse(tsStr);
+            return dt != null && dt.isAfter(sevenDaysAgo);
+          }).toList()
+        : _vitalsHistory;
+
+    final displayLogs = List<Map<String, dynamic>>.from(filteredHistory);
+    displayLogs.sort((a, b) {
+      final dtA = DateTime.tryParse(a['timestamp']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dtB = DateTime.tryParse(b['timestamp']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return dtB.compareTo(dtA);
+    });
+
+    final logsCount = isAllScreen
+        ? displayLogs.length
+        : (displayLogs.length > 5 ? 5 : displayLogs.length);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1304,69 +1785,119 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Recorded History',
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab ? 16 : 14.5,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recorded History',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: isTab ? 16 : 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+              if (isAllScreen)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Past 7 Days',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _primaryBlue,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _vitalsHistory.length > 5 ? 5 : _vitalsHistory.length,
-            separatorBuilder: (_, __) => Divider(
-              height: 1,
-              color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
-            ),
-            itemBuilder: (context, idx) {
-              final item = _vitalsHistory[_vitalsHistory.length - 1 - idx];
-              final tsStr = item['timestamp']?.toString();
-              DateTime dt = DateTime.now();
-              if (tsStr != null) dt = DateTime.tryParse(tsStr) ?? DateTime.now();
-              final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
-
-              final bp = item['bp'] ?? '--';
-              final pulse = item['pulse'] ?? '--';
-              final spO2 = item['spO2'] ?? '--';
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (logsCount == 0)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dateStr,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11,
-                            color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'BP: $bp • Pulse: $pulse • SpO2: $spO2%',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.history_rounded,
+                      size: 28,
+                      color: isDark ? Colors.white24 : Colors.grey[400],
                     ),
-                    const Icon(Icons.check_circle_outline_rounded, size: 16, color: _primaryBlue),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAllScreen
+                          ? 'No vitals recorded in the past 7 days'
+                          : 'No recorded history available',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                      ),
+                    ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: logsCount,
+              separatorBuilder: (_, _) => Divider(
+                height: 1,
+                color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+              ),
+              itemBuilder: (context, idx) {
+                final item = displayLogs[idx];
+                final tsStr = item['timestamp']?.toString();
+                DateTime dt = DateTime.now();
+                if (tsStr != null) dt = DateTime.tryParse(tsStr) ?? DateTime.now();
+                final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+
+                final bp = item['bp'] ?? '--';
+                final pulse = item['pulse'] ?? '--';
+                final spO2 = item['spO2'] ?? '--';
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateStr,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11,
+                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'BP: $bp • Pulse: $pulse • SpO2: $spO2%',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Icon(Icons.check_circle_outline_rounded, size: 16, color: _primaryBlue),
+                    ],
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

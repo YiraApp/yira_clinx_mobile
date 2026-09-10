@@ -39,6 +39,8 @@ import 'package:yiraclinics/features/data/repository_impl/notifications/notifica
 import 'package:yiraclinics/features/domain/repositories/notifications/notifications_repo.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
+import 'package:yiraclinics/features/use_cases/notifications/clear_all_notifications_use_case.dart';
+import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_bloc.dart';
 
 import 'package:yiraclinics/features/domain/repositories/app_theme/theme_repos.dart';
@@ -294,6 +296,12 @@ Future<void> init() async {
   sl.registerLazySingleton<MarkNotificationReadUseCase>(
     () => MarkNotificationReadUseCase(repository: sl<NotificationsRepository>()),
   );
+  sl.registerLazySingleton<ClearAllNotificationsUseCase>(
+    () => ClearAllNotificationsUseCase(repository: sl<NotificationsRepository>()),
+  );
+  sl.registerLazySingleton<DeleteNotificationUseCase>(
+    () => DeleteNotificationUseCase(repository: sl<NotificationsRepository>()),
+  );
   sl.registerLazySingleton<GetAppointmentDashboardUseCase>(
     () => GetAppointmentDashboardUseCase(sl<AppointmentRepo>()),
   );
@@ -503,6 +511,8 @@ Future<void> init() async {
     () => NotificationsBloc(
       getNotificationsUseCase: sl<GetNotificationsUseCase>(),
       markNotificationReadUseCase: sl<MarkNotificationReadUseCase>(),
+      clearAllNotificationsUseCase: sl<ClearAllNotificationsUseCase>(),
+      deleteNotificationUseCase: sl<DeleteNotificationUseCase>(),
     ),
   );
 }

@@ -58,27 +58,7 @@ class PatientTourController {
           tabIndex: 0,
         ),
 
-        // Step 2: Health Vitals Card
-        PatientTourStep(
-          id: 'step_vitals_card',
-          title: "Your Health Vitals & Daily Check",
-          description: "Monitor your latest Blood Pressure, Pulse, SpO2, and Weight. Tap 'Update Vitals' to log new measurements on the spot.",
-          targetKey: vitalsCardKey,
-          icon: Icons.monitor_heart_rounded,
-          position: TourCardPosition.bottom,
-          tabIndex: 0,
-        ),
 
-        // Step 3: Upcoming Consultations & Video Calls
-        PatientTourStep(
-          id: 'step_upcoming_appts',
-          title: "Upcoming Visits & 1-Tap Video Calls",
-          description: "See your upcoming confirmed consultations. For online visits, tap 'Video Call' to join doctor video rooms with zero latency.",
-          targetKey: upcomingAppointmentsKey,
-          icon: Icons.video_camera_front_rounded,
-          position: TourCardPosition.auto,
-          tabIndex: 0,
-        ),
 
         // Step 4: Quick Services Grid
         PatientTourStep(

@@ -4,9 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
 
@@ -111,19 +114,73 @@ class NotificationService {
     }
   }
 
+  Future<String?> _downloadAndSaveFile(String url, String fileName) async {
+    try {
+      final Directory directory = await getTemporaryDirectory();
+      final String filePath = '${directory.path}/$fileName';
+      final File file = File(filePath);
+      if (await file.exists()) {
+        try {
+          await file.delete();
+        } catch (_) {}
+      }
+      final response = await Dio().get(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      await file.writeAsBytes(response.data);
+      debugPrint("[NotificationService] Notification image downloaded to: $filePath");
+      return filePath;
+    } catch (e) {
+      debugPrint("[NotificationService] Error downloading notification image: $e");
+      return null;
+    }
+  }
+
   void _listenToActiveStateNotifications() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint("[NotificationService] Foreground notification received: ${message.data}");
+      NotificationBadgeService.instance.increment();
       final RemoteNotification? notification = message.notification;
       final String title = notification?.title ?? message.data['title'] ?? 'Yira Clinx';
       final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
+
+      final String? imageUrl = notification?.android?.imageUrl ??
+          notification?.apple?.imageUrl ??
+          message.data['imageUrl'] ??
+          message.data['image'];
 
       if (title.isNotEmpty || body.isNotEmpty) {
         final int notificationId = (message.messageId != null
             ? message.messageId.hashCode
             : DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
 
-        _localNotifications.show(
+        String? localImagePath;
+        if (imageUrl != null && imageUrl.isNotEmpty && imageUrl.startsWith("http")) {
+          final String extension = imageUrl.split('?').first.split('.').last;
+          final String safeExt = (extension.length <= 4 && extension.isNotEmpty) ? extension : 'jpg';
+          localImagePath = await _downloadAndSaveFile(imageUrl, 'notif_$notificationId.$safeExt');
+        }
+
+        BigPictureStyleInformation? bigPictureStyleInformation;
+        if (localImagePath != null && Platform.isAndroid) {
+          bigPictureStyleInformation = BigPictureStyleInformation(
+            FilePathAndroidBitmap(localImagePath),
+            largeIcon: FilePathAndroidBitmap(localImagePath),
+            contentTitle: title,
+            summaryText: body,
+            htmlFormatContentTitle: true,
+            htmlFormatSummaryText: true,
+            hideExpandedLargeIcon: false,
+          );
+        }
+
+        List<DarwinNotificationAttachment>? iosAttachments;
+        if (localImagePath != null && Platform.isIOS) {
+          iosAttachments = [DarwinNotificationAttachment(localImagePath)];
+        }
+
+        await _localNotifications.show(
           id: notificationId,
           title: title,
           body: body,
@@ -137,11 +194,13 @@ class NotificationService {
               playSound: true,
               enableVibration: true,
               icon: '@mipmap/ic_launcher',
+              styleInformation: bigPictureStyleInformation,
             ),
-            iOS: const DarwinNotificationDetails(
+            iOS: DarwinNotificationDetails(
               presentAlert: true,
               presentBadge: true,
               presentSound: true,
+              attachments: iosAttachments,
             ),
           ),
           payload: jsonEncode(message.data),

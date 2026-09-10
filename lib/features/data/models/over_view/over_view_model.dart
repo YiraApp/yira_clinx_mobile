@@ -41,6 +41,7 @@ class DataModel extends DataEntity {
     NextAppointmentModel? nextAppointment,
     List<NextAppointmentModel>? upcomingAppointments,
     LatestVitalsModel? latestVitals,
+    HospitalOverviewModel? hospital,
   }) : super(
     contactInformation: contactInformation,
     medicalInformation: medicalInformation,
@@ -50,6 +51,7 @@ class DataModel extends DataEntity {
     nextAppointment: nextAppointment,
     upcomingAppointments: upcomingAppointments,
     latestVitals: latestVitals,
+    hospital: hospital,
   );
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
@@ -100,6 +102,9 @@ class DataModel extends DataEntity {
           : (json['latestVitals'] != null && json['latestVitals'] is Map
               ? LatestVitalsModel.fromJson(Map<String, dynamic>.from(json['latestVitals'] as Map))
               : null),
+      hospital: json['hospital'] != null && json['hospital'] is Map
+          ? HospitalOverviewModel.fromJson(Map<String, dynamic>.from(json['hospital'] as Map))
+          : null,
     );
   }
 
@@ -128,6 +133,8 @@ class DataModel extends DataEntity {
             .toList(),
       if (latestVitals != null && latestVitals is LatestVitalsModel)
         'latest_vitals': (latestVitals as LatestVitalsModel).toJson(),
+      if (hospital != null && hospital is HospitalOverviewModel)
+        'hospital': (hospital as HospitalOverviewModel).toJson(),
     };
   }
 }
@@ -153,6 +160,7 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
     super.hospitalName,
     super.hospitalAddress,
     super.hospitalPhone,
+    super.hospitalLogo,
     super.doctorId,
     super.doctorName,
     super.doctorEmail,
@@ -203,6 +211,7 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
       hospitalName: (json['hospital_name'] ?? json['hospitalName'] ?? '').toString(),
       hospitalAddress: (json['hospital_address'] ?? json['hospitalAddress'] ?? '').toString(),
       hospitalPhone: (json['hospital_phone'] ?? json['hospitalPhone'] ?? '').toString(),
+      hospitalLogo: (json['hospital_logo'] ?? json['hospitalLogo'] ?? json['logo'] ?? json['image_url'] ?? json['imageUrl'] ?? '').toString(),
       doctorId: (json['doctor_id'] ?? json['doctorId'] ?? '').toString(),
       doctorName: (json['doctor_name'] ?? json['doctorName'] ?? 'Doctor').toString(),
       doctorEmail: (json['doctor_email'] ?? json['doctorEmail'] ?? '').toString(),
@@ -272,6 +281,7 @@ class PatientAppointmentModel extends PatientAppointmentEntity {
       'hospital_name': hospitalName,
       'hospital_address': hospitalAddress,
       'hospital_phone': hospitalPhone,
+      'hospital_logo': hospitalLogo,
       'doctor_id': doctorId,
       'doctor_name': doctorName,
       'doctor_email': doctorEmail,
@@ -606,6 +616,9 @@ class NextAppointmentModel extends NextAppointmentEntity {
     super.doctorSpecialty,
     super.hospitalId,
     super.hospitalName,
+    super.hospitalLogo,
+    super.hospitalAddress,
+    super.hospitalPhone,
     super.orgId,
     super.orgName,
     super.appointmentDate,
@@ -632,6 +645,9 @@ class NextAppointmentModel extends NextAppointmentEntity {
               ? json['hospitalId'] as int
               : int.tryParse((json['hospital_id'] ?? json['hospitalId'] ?? '').toString())),
       hospitalName: (json['hospital_name'] ?? json['hospitalName'])?.toString(),
+      hospitalLogo: (json['hospital_logo'] ?? json['hospitalLogo'] ?? json['logo'] ?? json['image_url'] ?? json['imageUrl'])?.toString(),
+      hospitalAddress: (json['hospital_address'] ?? json['hospitalAddress'])?.toString(),
+      hospitalPhone: (json['hospital_phone'] ?? json['hospitalPhone'])?.toString(),
       orgId: json['org_id'] is int
           ? json['org_id'] as int
           : (json['orgId'] is int
@@ -662,6 +678,9 @@ class NextAppointmentModel extends NextAppointmentEntity {
       'doctor_specialty': doctorSpecialty,
       'hospital_id': hospitalId,
       'hospital_name': hospitalName,
+      'hospital_logo': hospitalLogo,
+      'hospital_address': hospitalAddress,
+      'hospital_phone': hospitalPhone,
       'org_id': orgId,
       'org_name': orgName,
       'appointment_date': appointmentDate,
@@ -673,6 +692,63 @@ class NextAppointmentModel extends NextAppointmentEntity {
       'reason': reason,
       'status': status,
       'meeting_url': meetingUrl,
+    };
+  }
+}
+
+class HospitalOverviewModel extends HospitalOverviewEntity {
+  const HospitalOverviewModel({
+    super.id,
+    super.name,
+    super.hospitalCode,
+    super.logo,
+    super.imageUrl,
+    super.address,
+    super.city,
+    super.state,
+    super.helplineNumber,
+    super.phone,
+    super.is24Hours,
+  });
+
+  factory HospitalOverviewModel.fromJson(Map<String, dynamic> json) {
+    final logo = (json['logo'] ??
+            json['hospital_logo'] ??
+            json['hospitalLogo'] ??
+            json['image_url'] ??
+            json['imageUrl'] ??
+            json['image'])
+        ?.toString();
+    return HospitalOverviewModel(
+      id: json['id'] ?? json['hospital_id'] ?? json['hospitalId'],
+      name: (json['name'] ?? json['hospital_name'] ?? json['hospitalName'])?.toString(),
+      hospitalCode: (json['hospital_code'] ?? json['hospitalCode'] ?? json['code'])?.toString(),
+      logo: logo,
+      imageUrl: (json['image_url'] ?? json['imageUrl'] ?? logo)?.toString(),
+      address: (json['address'] ?? json['hospital_address'] ?? json['hospitalAddress'])?.toString(),
+      city: (json['city'] ?? json['City'])?.toString(),
+      state: (json['state'] ?? json['State'])?.toString(),
+      helplineNumber: (json['helpline_number'] ?? json['helplineNumber'])?.toString(),
+      phone: (json['phone'] ?? json['mobile_number'] ?? json['mobileNumber'])?.toString(),
+      is24Hours: json['is_24_hours'] == true ||
+          json['is24Hours'] == true ||
+          json['is_24_hours'] == 1,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'hospital_code': hospitalCode,
+      'logo': logo,
+      'image_url': imageUrl,
+      'address': address,
+      'city': city,
+      'state': state,
+      'helpline_number': helplineNumber,
+      'phone': phone,
+      'is_24_hours': is24Hours,
     };
   }
 }

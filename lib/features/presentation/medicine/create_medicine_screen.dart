@@ -8,11 +8,7 @@ import 'package:yiraclinics/features/presentation/medicine/widgets/diagnosis_tre
 import 'package:yiraclinics/features/presentation/medicine/widgets/vital_signs_section.dart';
 
 import '../../../core/colors/colors.dart';
-import '../../../core/common_drop_down/common_drop_down.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../core/common_widgets/common_text.dart';
-import '../../../core/common_widgets/custom_border_button.dart';
-import '../../../core/common_widgets/custom_button.dart';
 import 'medical_record_bloc/medical_record_bloc.dart';
 
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
@@ -559,6 +555,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                           temperature: _tempController.text,
                                           weight: _weightController.text,
                                           height: _heightController.text,
+                                          spo2: _oxygenSaturationController.text,
                                           diagnosis: _diagnosisController.text,
                                           treatmentPlan: combinedTreatment,
                                         ),

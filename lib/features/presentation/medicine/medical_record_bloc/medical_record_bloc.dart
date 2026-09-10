@@ -50,6 +50,8 @@ class MedicalRecordBloc extends Bloc<MedicalRecordEvent, MedicalRecordState> {
         'temperature': event.temperature,
         'weight': event.weight,
         'height': event.height,
+        if (event.spo2 != null && event.spo2!.trim().isNotEmpty)
+          'spo2': event.spo2!.trim(),
         'diagnosis': event.diagnosis,
         'treatmentPlan': event.treatmentPlan,
       };

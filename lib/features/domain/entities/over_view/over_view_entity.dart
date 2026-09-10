@@ -20,6 +20,7 @@ class DataEntity {
   final NextAppointmentEntity? nextAppointment;
   final List<NextAppointmentEntity>? upcomingAppointments;
   final LatestVitalsEntity? latestVitals;
+  final HospitalOverviewEntity? hospital;
 
   const DataEntity({
     this.contactInformation,
@@ -31,6 +32,7 @@ class DataEntity {
     this.nextAppointment,
     this.upcomingAppointments,
     this.latestVitals,
+    this.hospital,
   });
 }
 
@@ -54,6 +56,7 @@ class PatientAppointmentEntity {
   final String hospitalName;
   final String hospitalAddress;
   final String hospitalPhone;
+  final String hospitalLogo;
   final String doctorId;
   final String doctorName;
   final String doctorEmail;
@@ -90,6 +93,7 @@ class PatientAppointmentEntity {
     this.hospitalName = '',
     this.hospitalAddress = '',
     this.hospitalPhone = '',
+    this.hospitalLogo = '',
     this.doctorId = '',
     this.doctorName = '',
     this.doctorEmail = '',
@@ -210,6 +214,9 @@ class NextAppointmentEntity {
   final String? doctorSpecialty;
   final int? hospitalId;
   final String? hospitalName;
+  final String? hospitalLogo;
+  final String? hospitalAddress;
+  final String? hospitalPhone;
   final int? orgId;
   final String? orgName;
   final String? appointmentDate;
@@ -230,6 +237,9 @@ class NextAppointmentEntity {
     this.doctorSpecialty,
     this.hospitalId,
     this.hospitalName,
+    this.hospitalLogo,
+    this.hospitalAddress,
+    this.hospitalPhone,
     this.orgId,
     this.orgName,
     this.appointmentDate,
@@ -241,6 +251,34 @@ class NextAppointmentEntity {
     this.reason,
     this.status,
     this.meetingUrl,
+  });
+}
+
+class HospitalOverviewEntity {
+  final dynamic id;
+  final String? name;
+  final String? hospitalCode;
+  final String? logo;
+  final String? imageUrl;
+  final String? address;
+  final String? city;
+  final String? state;
+  final String? helplineNumber;
+  final String? phone;
+  final bool? is24Hours;
+
+  const HospitalOverviewEntity({
+    this.id,
+    this.name,
+    this.hospitalCode,
+    this.logo,
+    this.imageUrl,
+    this.address,
+    this.city,
+    this.state,
+    this.helplineNumber,
+    this.phone,
+    this.is24Hours,
   });
 }
 
