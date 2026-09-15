@@ -489,12 +489,12 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   );
               final hospitalCode = data?.hospital?.hospitalCode ?? 'Hosp11';
               final hospitalAddress = data?.hospital?.address ??
-                  (data?.hospital?.city != null
-                      ? '${data!.hospital!.city}, ${data.hospital!.state ?? ""}'
-                      : 'Jubilee Hills, Road No 36, Hyderabad');
+                  (data?.hospital?.city != null && data!.hospital!.city!.isNotEmpty
+                      ? '${data.hospital!.city}${data.hospital!.state != null && data.hospital!.state!.isNotEmpty ? ", ${data.hospital!.state}" : ""}'
+                      : '');
               final hospitalHelpline = data?.hospital?.helplineNumber ??
                   data?.hospital?.phone ??
-                  '+91 8008123456';
+                  '';
               final is24Hours = data?.hospital?.is24Hours ?? true;
 
               return RefreshIndicator(
@@ -1146,15 +1146,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            "Super-Specialty Network",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              color: isDark ? Colors.white54 : Colors.grey[600],
-                            ),
-                          ),
                         ],
                       ),
                     ],
@@ -1165,24 +1156,26 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
           ),
 
           // Detail Rows
-          _buildFacilityDetailRow(
-            context: context,
-            label: "Campus Address",
-            value: address.isNotEmpty ? address : "Jubilee Hills, Road No 36, Hyderabad",
-            icon: Icons.location_on_outlined,
-            isDark: isDark,
-            isTab: isTab,
-          ),
-          _buildFacilityDetailRow(
-            context: context,
-            label: "Emergency & Helpline Desk",
-            value: helpline.isNotEmpty ? helpline : "+91 8008123456",
-            icon: Icons.phone_in_talk_rounded,
-            isDark: isDark,
-            isTab: isTab,
-            isCopyable: true,
-            isVerified: true,
-          ),
+          if (address.isNotEmpty)
+            _buildFacilityDetailRow(
+              context: context,
+              label: "Campus Address",
+              value: address,
+              icon: Icons.location_on_outlined,
+              isDark: isDark,
+              isTab: isTab,
+            ),
+          if (helpline.isNotEmpty)
+            _buildFacilityDetailRow(
+              context: context,
+              label: "Emergency & Helpline Desk",
+              value: helpline,
+              icon: Icons.phone_in_talk_rounded,
+              isDark: isDark,
+              isTab: isTab,
+              isCopyable: true,
+              isVerified: true,
+            ),
           _buildFacilityDetailRow(
             context: context,
             label: "Facility Hours & Emergency Status",

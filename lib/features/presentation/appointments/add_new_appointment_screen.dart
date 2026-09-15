@@ -14,6 +14,7 @@ import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
+import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
@@ -1493,6 +1494,246 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     );
   }
 
+  Future<void> _processRazorpayPayment(
+    BookAppointmentSuccessState state,
+    double fee,
+  ) async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final payRes = await RazorpayPaymentService.instance.processPayment(
+      appointmentId: state.appointmentId!,
+      patientId: state.patientUserId ?? _selectedPatient?.userId ?? currentUser?.data?.id ?? '',
+      amount: fee,
+      providerId: state.doctorId ?? _selectedDoctorMap?['doctorId']?.toString(),
+      hospitalName: _selectedHospital?['name']?.toString(),
+      patientName: state.patientName ?? _selectedPatient?.name,
+      patientPhone: state.patientPhone ?? currentUser?.data?.phoneNumber?.toString(),
+      patientEmail: state.patientEmail ?? currentUser?.data?.email?.toString(),
+      isTeleConsultation: true,
+    );
+
+    if (!mounted) return;
+
+    if (payRes.success) {
+      _showSuccessSheet(context, state);
+    } else {
+      _showPaymentIncompleteSheet(context, state, fee, payRes.isCancelled, payRes.errorMessage);
+    }
+  }
+
+  Future<void> _cancelAppointment(int appointmentId) async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final token = currentUser?.data?.accessToken ?? '';
+    try {
+      await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.updateAppointmentStatusUrl,
+        data: {
+          "appointmentId": appointmentId.toString(),
+          "status": "Cancelled",
+        },
+        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+      );
+    } catch (e) {
+      debugPrint("Error cancelling appointment #$appointmentId: $e");
+    }
+  }
+
+  void _showPaymentIncompleteSheet(
+    BuildContext ctx,
+    BookAppointmentSuccessState state,
+    double fee,
+    bool isCancelled,
+    String? errorMessage,
+  ) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: ctx,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        bool isRetrying = false;
+        bool isCancelling = false;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.payment_rounded,
+                      color: Color(0xFFD97706),
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    isCancelled ? "Payment Cancelled" : "Payment Required",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Online consultation slots cannot be scheduled without payment. Please complete payment to book the doctor's slot, or cancel.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow(
+                          "Doctor",
+                          _selectedDoctorMap?['name']?.toString() ?? 'Doctor',
+                          Icons.person_outline_rounded,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildSummaryRow(
+                          "Amount Due",
+                          "₹${fee.toStringAsFixed(0)}",
+                          Icons.currency_rupee_rounded,
+                          isDark,
+                          highlight: true,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildSummaryRow(
+                          "Consultation",
+                          "Online Video Call",
+                          Icons.videocam_rounded,
+                          isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action 1: Pay to Schedule Slot
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: isRetrying || isCancelling
+                          ? null
+                          : () async {
+                              Navigator.pop(sheetContext);
+                              _processRazorpayPayment(state, fee);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        "Pay ₹${fee.toStringAsFixed(0)} to Schedule Slot",
+                        style: const TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Action 2: Cancel Booking (slot not scheduled)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: isRetrying || isCancelling
+                          ? null
+                          : () async {
+                              setSheetState(() => isCancelling = true);
+                              if (state.appointmentId != null) {
+                                await _cancelAppointment(state.appointmentId!);
+                              }
+                              if (!mounted) return;
+                              if (sheetContext.mounted) {
+                                Navigator.pop(sheetContext);
+                              }
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Booking cancelled. Slot was not scheduled."),
+                                    backgroundColor: Color(0xFFEF4444),
+                                  ),
+                                );
+                                if (Navigator.canPop(ctx)) {
+                                  Navigator.pop(ctx, false);
+                                }
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: isCancelling
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFEF4444)),
+                            )
+                          : const Text(
+                              "Cancel Booking",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showSuccessSheet(BuildContext context, BookAppointmentSuccessState state) {
     if (_selectedDoctorMap != null) {
       LikedHospitalsService.instance.saveLinkedDoctor(_selectedDoctorMap!);
@@ -1747,7 +1988,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     return BlocConsumer<AppointmentBloc, AppointmentState>(
       listener: (context, state) {
         if (state is BookAppointmentSuccessState) {
-          _showSuccessSheet(context, state);
+          final double fee = state.consultationFee ?? _consultationFee;
+          if (state.isTeleConsultation && fee > 0 && state.appointmentId != null) {
+            _processRazorpayPayment(state, fee);
+          } else {
+            _showSuccessSheet(context, state);
+          }
         } else if (state is AppointmentError) {
           _showValidationBanner(state.message);
         }
@@ -2187,6 +2433,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 _selectedVisitType = type;
                                 if (type == "Tele-Consult") {
                                   _isTeleConsultation = true;
+                                } else {
+                                  _isTeleConsultation = false;
                                 }
                               });
                             },
@@ -2286,12 +2534,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 _isTeleConsultation = val;
                                 if (val && _selectedVisitType != "Tele-Consult") {
                                   _selectedVisitType = "Tele-Consult";
+                                } else if (!val && _selectedVisitType == "Tele-Consult") {
+                                  _selectedVisitType = "Consultation";
                                 }
                               });
                             },
                           ),
                         ],
                       ),
+
+                      if (_isTeleConsultation) ...[
+                        const SizedBox(height: 14),
+                        _buildTeleconsultationPaymentSetup(isDark, isTab),
+                      ],
 
                       if (!isPatient) ...[
                         const SizedBox(height: 18),
@@ -2687,12 +2942,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     )
                                   : Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
-                                        SizedBox(width: 8),
+                                      children: [
+                                        Icon(
+                                          _isTeleConsultation ? Icons.lock_outline_rounded : Icons.check_circle_outline_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
                                         Text(
-                                          "Confirm & Book Appointment",
-                                          style: TextStyle(
+                                          _isTeleConsultation
+                                              ? (_consultationFee > 0
+                                                  ? "Pay ₹${_consultationFee.toStringAsFixed(0)} & Confirm"
+                                                  : "Confirm Tele-Consult")
+                                              : "Confirm & Book Appointment",
+                                          style: const TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
@@ -2733,6 +2996,200 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTeleconsultationPaymentSetup(bool isDark, bool isTab) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.payment_rounded,
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Teleconsultation Payment Setup",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      "Online payment required to confirm video slot",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 12),
+                    SizedBox(width: 3),
+                    Text(
+                      "Razorpay",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+          const SizedBox(height: 12),
+          // Fee details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Consultation Fee",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                ),
+              ),
+              Text(
+                _consultationFee == 0 ? "Free" : "₹${_consultationFee.toStringAsFixed(0)}",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: _consultationFee == 0 ? const Color(0xFF059669) : primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Video call platform
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Video Platform",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.videocam_rounded, size: 14, color: Color(0xFF0284C7)),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Zoom Video (Included)",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Payment options
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Accepted Modes",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                ),
+              ),
+              Text(
+                "UPI, GPay, Cards, NetBanking",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF059669)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "100% Encrypted & Secure Prepayment via Razorpay",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

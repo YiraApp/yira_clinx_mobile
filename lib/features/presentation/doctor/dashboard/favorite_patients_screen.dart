@@ -7,6 +7,8 @@ import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/features/domain/entities/dashboard/patient_entity.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
+import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
 
 class FavoritePatientsScreen extends StatefulWidget {
   const FavoritePatientsScreen({super.key});
@@ -316,7 +318,10 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
               )
             else
               ElevatedButton.icon(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pop(context);
+                  sl<NavigationDrawerBloc>().add(const PatientsNav());
+                },
                 icon: const Icon(Icons.people_outline_rounded, size: 18),
                 label: const Text("Browse Patients"),
                 style: ElevatedButton.styleFrom(

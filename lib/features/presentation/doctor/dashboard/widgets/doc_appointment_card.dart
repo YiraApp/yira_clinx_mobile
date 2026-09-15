@@ -295,51 +295,63 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                             !widget.statusLabel.toLowerCase().contains('completed') &&
                             !widget.statusLabel.toLowerCase().contains('cancelled') &&
                             !widget.statusLabel.toLowerCase().contains('past')) ...[
-                          InkWell(
-                            onTap: widget.onJoinCall,
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: widget.isTab ? 14.0 : 10.0,
-                                vertical: widget.isTab ? 7.0 : 5.5,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF2563EB),
-                                    Color(0xFF1D4ED8),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                          Builder(
+                            builder: (context) {
+                              final isPending = widget.statusLabel.toLowerCase().contains('pending') ||
+                                  widget.statusLabel.toLowerCase().contains('payment');
+
+                              return InkWell(
+                                onTap: widget.onJoinCall,
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: widget.isTab ? 14.0 : 10.0,
+                                    vertical: widget.isTab ? 7.0 : 5.5,
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.videocam_rounded,
-                                    size: widget.isTab ? 16 : 14,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "Join Call",
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: widget.isTab ? 12 : 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: isPending
+                                          ? const [
+                                              Color(0xFFD97706),
+                                              Color(0xFFB45309),
+                                            ]
+                                          : const [
+                                              Color(0xFF2563EB),
+                                              Color(0xFF1D4ED8),
+                                            ],
                                     ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (isPending ? const Color(0xFFD97706) : const Color(0xFF2563EB)).withValues(alpha: 0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isPending ? Icons.payment_rounded : Icons.videocam_rounded,
+                                        size: widget.isTab ? 16 : 14,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isPending ? "Pay to Join" : "Join Call",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: widget.isTab ? 12 : 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(width: 6),
                         ],

@@ -53,20 +53,39 @@ class _DoctorPatientProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 6 tabs for Appointment consultation record
-  final List<String> _tabs = [
-    'Info',
-    'Appointments',
-    'Medical Record',
-    'Prescribe',
-    'Notes',
-    'Documents',
-  ];
+  bool _isPatient() {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+    final roleId = (currentUser?.data?.latestRoleId ?? '').toUpperCase().trim();
+    return roleName.contains('patient') ||
+        roleName == 'user' ||
+        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
+  }
+
+  late final List<String> _tabs;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.initialTabIndex);
+    _tabs = _isPatient()
+        ? [
+            'Info',
+            'Appointments',
+            'Medical Record',
+            'Prescribe',
+            'Documents',
+          ]
+        : [
+            'Info',
+            'Appointments',
+            'Medical Record',
+            'Prescribe',
+            'Notes',
+            'Documents',
+          ];
+
+    final safeInitialTab = widget.initialTabIndex.clamp(0, _tabs.length - 1);
+    _pageController = PageController(initialPage: safeInitialTab);
 
     final currentDoctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
     _consentBloc = sl<PatientAccessConsentBloc>()
@@ -81,8 +100,8 @@ class _DoctorPatientProfileScreenState
         patientName: widget.patientName,
       ),
     );
-    if (widget.initialTabIndex != 0) {
-      context.read<PatientProfileBloc>().add(TabChanged(widget.initialTabIndex));
+    if (safeInitialTab != 0) {
+      context.read<PatientProfileBloc>().add(TabChanged(safeInitialTab));
     }
   }
 
@@ -226,8 +245,9 @@ class _DoctorPatientProfileScreenState
     bool isTab,
     DoctorAccessStatusLoaded? accessStatus,
   ) {
-    switch (activeTab) {
-      case 0:
+    final String tabName = (activeTab >= 0 && activeTab < _tabs.length) ? _tabs[activeTab] : '';
+    switch (tabName) {
+      case 'Info':
         // Info Tab (Patient Demographics, Contacts, Medical Info, Insurance, Visit History)
         return BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>(),
@@ -240,17 +260,20 @@ class _DoctorPatientProfileScreenState
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
             onPrescribeTap: () {
-              context.read<PatientProfileBloc>().add(const TabChanged(3));
+              final idx = _tabs.indexOf('Prescribe');
+              if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
             onNoteTap: () {
-              context.read<PatientProfileBloc>().add(const TabChanged(4));
+              final idx = _tabs.indexOf('Notes');
+              if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
             onScheduleTap: () {
-              context.read<PatientProfileBloc>().add(const TabChanged(1));
+              final idx = _tabs.indexOf('Appointments');
+              if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
           ),
         );
-      case 1:
+      case 'Appointments':
         // Appointments Tab (Dedicated tab showing all Appointments with full clinical records)
         return BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>(),
@@ -264,14 +287,16 @@ class _DoctorPatientProfileScreenState
             isTab: isTab,
             hasAccess: accessStatus?.hasAccess ?? true,
             onPrescribeTap: () {
-              context.read<PatientProfileBloc>().add(const TabChanged(3));
+              final idx = _tabs.indexOf('Prescribe');
+              if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
             onNoteTap: () {
-              context.read<PatientProfileBloc>().add(const TabChanged(4));
+              final idx = _tabs.indexOf('Notes');
+              if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
           ),
         );
-      case 2:
+      case 'Medical Record':
         // Medical Record Tab (Direct access for doctor consultations)
         return BlocProvider<MedicalHistoryBloc>(
           create: (_) => sl<MedicalHistoryBloc>(),
@@ -284,7 +309,7 @@ class _DoctorPatientProfileScreenState
             orgId: widget.orgId,
           ),
         );
-      case 3:
+      case 'Prescribe':
         // Prescribe Tab (Direct access for doctor to write & manage prescriptions)
         return BlocProvider<PrescriptionBloc>(
           create: (_) => sl<PrescriptionBloc>()
@@ -302,7 +327,7 @@ class _DoctorPatientProfileScreenState
             orgId: widget.orgId,
           ),
         );
-      case 4:
+      case 'Notes':
         // Notes Tab (Direct access for doctor to record clinical notes)
         return ClinicalNotesScreen(
           key: const ValueKey('NotesTabFrame'),
@@ -311,7 +336,7 @@ class _DoctorPatientProfileScreenState
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         );
-      case 5:
+      case 'Documents':
         // Documents Tab (Direct access for doctor to view & upload lab reports and docs)
         return BlocProvider<UploadedBloc>(
           create: (_) => sl<UploadedBloc>(),
@@ -327,7 +352,7 @@ class _DoctorPatientProfileScreenState
         return Center(
           key: const ValueKey('FallbackTabFrame'),
           child: Text(
-            '${_tabs[activeTab]} Tab Content',
+            '$tabName Tab Content',
             style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
         );

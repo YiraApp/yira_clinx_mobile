@@ -62,7 +62,9 @@ class DashBoardPatientVitalTile extends StatelessWidget {
           Row(
             children: [
               CommonText(
-                value ?? '--',
+                (value == null || value!.trim().isEmpty || value!.trim().toLowerCase() == 'none' || value!.trim().toLowerCase() == 'null')
+                    ? '--'
+                    : value!,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize:isTab? displayWidth(context) * 0.02: displayWidth(context) * 0.032,

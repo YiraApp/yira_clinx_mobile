@@ -13,6 +13,12 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
   final GetAppointmentDashboardUseCase getAppointmentDashboardUseCase;
   final AppointmentRepo appointmentRepo;
 
+  String? _currentDate;
+  String? _currentDateFrom;
+  String? _currentDateTo;
+  String? _currentStatus;
+  String? _currentSearch;
+
   AppointmentBloc({
     required this.getAppointmentDashboardUseCase,
     required this.appointmentRepo,
@@ -20,6 +26,20 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
     on<LoadAppointmentsEvent>((event, emit) async {
       emit(AppointmentLoading());
       try {
+        if (event.date != null || event.dateFrom != null || event.dateTo != null || event.status != null || event.search != null) {
+          _currentDate = event.date;
+          _currentDateFrom = event.dateFrom;
+          _currentDateTo = event.dateTo;
+          _currentStatus = event.status;
+          _currentSearch = event.search;
+        }
+
+        final targetDate = event.date ?? _currentDate;
+        final targetDateFrom = event.dateFrom ?? _currentDateFrom;
+        final targetDateTo = event.dateTo ?? _currentDateTo;
+        final targetStatus = event.status ?? _currentStatus;
+        final targetSearch = event.search ?? _currentSearch;
+
         final currentUser = GlobalSession.instance.userNotifier.value;
         final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
             ? currentUser.data!.id!.trim()
@@ -33,11 +53,11 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           doctorId: doctorId,
           orgId: orgId,
           hospitalId: hospitalId,
-          status: event.status,
-          search: event.search,
-          date: event.date,
-          dateFrom: event.dateFrom,
-          dateTo: event.dateTo,
+          status: targetStatus,
+          search: targetSearch,
+          date: targetDate,
+          dateFrom: targetDateFrom,
+          dateTo: targetDateTo,
         );
 
         if (result != null) {
@@ -82,7 +102,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         final int orgId = event.orgId ?? (currentUser?.data?.latestOrgId ?? 1);
         final int hospitalId = event.hospitalId ?? (currentUser?.data?.latestHospitalId ?? 1);
 
-        final success = await appointmentRepo.bookAppointment(
+        final bookingData = await appointmentRepo.bookAppointment(
           doctorId: doctorId,
           orgId: orgId,
           hospitalId: hospitalId,
@@ -108,15 +128,37 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           consultationFee: event.consultationFee,
         );
 
-        if (success) {
+        if (bookingData != null) {
+          int? appointmentId;
+          String? patientUserId;
+          final d = bookingData['data'];
+          if (d is Map<String, dynamic>) {
+            appointmentId = int.tryParse(d['appointmentId']?.toString() ?? '');
+            patientUserId = d['patientUserId']?.toString();
+          }
+          appointmentId ??= int.tryParse(bookingData['appointmentId']?.toString() ?? '');
+
           emit(BookAppointmentSuccessState(
             message: "Appointment booked successfully!",
             patientName: event.patientName,
             appointmentDate: event.appointmentDate,
             time: event.startTime,
             isTeleConsultation: event.isTeleConsultation ?? false,
+            appointmentId: appointmentId,
+            patientUserId: patientUserId ?? event.patientUserId,
+            consultationFee: event.consultationFee,
+            doctorId: doctorId,
+            hospitalId: hospitalId,
+            patientPhone: event.phoneNumber,
+            patientEmail: event.patientEmail,
           ));
-          add(LoadAppointmentsEvent());
+          add(LoadAppointmentsEvent(
+            date: _currentDate,
+            dateFrom: _currentDateFrom,
+            dateTo: _currentDateTo,
+            status: _currentStatus,
+            search: _currentSearch,
+          ));
         } else {
           emit(const AppointmentError("Failed to book appointment. Please try again."));
         }
@@ -133,7 +175,13 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         );
 
         if (success) {
-          add(LoadAppointmentsEvent());
+          add(LoadAppointmentsEvent(
+            date: _currentDate,
+            dateFrom: _currentDateFrom,
+            dateTo: _currentDateTo,
+            status: _currentStatus,
+            search: _currentSearch,
+          ));
         } else {
           emit(AppointmentError("Failed to update appointment status"));
         }

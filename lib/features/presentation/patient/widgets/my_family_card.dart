@@ -534,11 +534,20 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
 
                                 String newDepUserId = 'DEP-${DateTime.now().millisecondsSinceEpoch}';
 
+                                final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+                                String? validParentGuid;
+                                if (GlobalSession.instance.rootPrimaryUserId != null &&
+                                    uuidRegex.hasMatch(GlobalSession.instance.rootPrimaryUserId!)) {
+                                  validParentGuid = GlobalSession.instance.rootPrimaryUserId;
+                                } else if (primaryUserId.isNotEmpty && uuidRegex.hasMatch(primaryUserId)) {
+                                  validParentGuid = primaryUserId;
+                                }
+
                                 final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
                                   URLs.addDependentPatientUrl,
                                   data: {
                                     "primaryPhone": cleanPhone.isNotEmpty ? cleanPhone : primaryPhone,
-                                    "parentUserId": primaryUserId,
+                                    if (validParentGuid != null) "parentUserId": validParentGuid,
                                     "name": fullName,
                                     "relation": selectedRelation,
                                     "gender": selectedGender,

@@ -124,19 +124,19 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
         // 1. Primary Profile ALWAYS fixed at Index 0
         items.add(_FlatWorkspaceItem(
           roleId: primaryRoleId,
-          roleName: primaryRoleLabel,
+          roleName: 'Primary',
           orgId: currentUser?.data?.latestOrgId ?? 1,
-          orgName: primaryRoleLabel,
+          orgName: 'Family Profile',
           hospitalId: currentUser?.data?.latestHospitalId ?? 1,
           hospitalName: pPrimaryName,
-          location: primaryRoleLabel,
+          location: null,
           profileUserId: primaryProf.id ?? primaryUserId,
           firstName: primaryProf.firstName,
           lastName: primaryProf.lastName,
           gender: primaryProf.gender,
           dob: primaryProf.dob,
           phoneNumber: primaryProf.phoneNumber,
-          relation: primaryRoleLabel,
+          relation: 'Self',
         ));
 
         // 2. All other family members retain their exact fixed relations
@@ -161,12 +161,12 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
           items.add(_FlatWorkspaceItem(
             roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
-            roleName: pRel,
+            roleName: 'Family Member',
             orgId: 1,
-            orgName: pRel,
+            orgName: 'Family Profile',
             hospitalId: 1,
             hospitalName: pName,
-            location: pRel,
+            location: null,
             profileUserId: pUserId,
             firstName: p.firstName,
             lastName: p.lastName,
@@ -179,19 +179,19 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       } else {
         items.add(_FlatWorkspaceItem(
           roleId: primaryRoleId,
-          roleName: primaryRoleLabel,
+          roleName: 'Primary',
           orgId: currentUser?.data?.latestOrgId ?? 1,
-          orgName: primaryRoleLabel,
+          orgName: 'Family Profile',
           hospitalId: currentUser?.data?.latestHospitalId ?? 1,
           hospitalName: fallbackPrimaryName,
-          location: primaryRoleLabel,
+          location: null,
           profileUserId: primaryUserId,
           firstName: currentUser?.data?.firstName,
           lastName: currentUser?.data?.lastName,
           gender: currentUser?.data?.gender,
           dob: currentUser?.data?.dob,
           phoneNumber: currentUser?.data?.phoneNumber,
-          relation: primaryRoleLabel,
+          relation: 'Self',
         ));
       }
 
@@ -729,10 +729,12 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             item.hospitalId.toString() == activeHospitalId.toString());
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
 
-    // Format: "Teja Ch (Primary)" or "Ramesh Ch (Father)" or "Yira Hospital (Provider)"
-    final String displayTitle = item.roleName == 'User'
+    // Format: "Ramesh Ch" for patient or "Yira Hospital (Provider)" for staff
+    final String displayTitle = isPatientItem
         ? item.hospitalName
-        : "${item.hospitalName} (${item.roleName})";
+        : (item.roleName == 'User'
+            ? item.hospitalName
+            : "${item.hospitalName} (${item.roleName})");
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -791,7 +793,21 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                           color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
-                      if (item.orgName.isNotEmpty || item.location != null) ...[
+                      if (isPatientItem) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          item.relation != null && item.relation!.isNotEmpty
+                              ? item.relation!
+                              : (item.orgName.isNotEmpty ? item.orgName : 'Family Profile'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 12 : 11,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ] else if (item.orgName.isNotEmpty || item.location != null) ...[
                         const SizedBox(height: 2),
                         Text(
                           [

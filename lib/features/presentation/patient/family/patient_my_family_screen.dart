@@ -629,8 +629,52 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 final currentSession = GlobalSession.instance.userNotifier.value;
                                 final oldData = currentSession?.data;
                                 if (oldData != null) {
+                                  final token = oldData.accessToken ?? '';
+                                  final orgId = oldData.latestOrgId ?? 1;
+                                  final hospitalId = oldData.latestHospitalId ?? 1;
+                                  final cleanPhone = phoneCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+                                  final primaryPhone = (oldData.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
+
+                                  String newDepUserId = 'DEP-${DateTime.now().millisecondsSinceEpoch}';
+
+                                  final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+                                  String? validParentGuid;
+                                  if (GlobalSession.instance.rootPrimaryUserId != null &&
+                                      uuidRegex.hasMatch(GlobalSession.instance.rootPrimaryUserId!)) {
+                                    validParentGuid = GlobalSession.instance.rootPrimaryUserId;
+                                  } else if (oldData.id != null && uuidRegex.hasMatch(oldData.id!)) {
+                                    validParentGuid = oldData.id;
+                                  }
+
+                                  try {
+                                    final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+                                      URLs.addDependentPatientUrl,
+                                      data: {
+                                        "primaryPhone": cleanPhone.isNotEmpty ? cleanPhone : primaryPhone,
+                                        if (validParentGuid != null) "parentUserId": validParentGuid,
+                                        "name": fullName,
+                                        "relation": selectedRelation,
+                                        "gender": selectedGender,
+                                        "dob": dobCtrl.text.trim().isNotEmpty ? dobCtrl.text.trim() : null,
+                                        "orgId": orgId,
+                                        "hospitalId": hospitalId,
+                                      },
+                                      options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+                                    );
+
+                                    if (res.data != null && res.data is Map<String, dynamic>) {
+                                      final rawData = res.data as Map<String, dynamic>;
+                                      final data = rawData['data'];
+                                      if (data is Map<String, dynamic>) {
+                                        newDepUserId = (data['id'] ?? data['userId'] ?? newDepUserId).toString();
+                                      }
+                                    }
+                                  } catch (apiErr) {
+                                    debugPrint('API add-dependent notice: $apiErr');
+                                  }
+
                                   final newProfile = ProfileEntity(
-                                    id: 'dep_${DateTime.now().millisecondsSinceEpoch}',
+                                    id: newDepUserId,
                                     name: fullName,
                                     firstName: fullName.split(' ').first,
                                     lastName: fullName.contains(' ') ? fullName.substring(fullName.indexOf(' ') + 1) : '',
@@ -1170,7 +1214,12 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 } else if (val == 'switch') {
                                   _switchProfile(profile);
                                 } else if (val == 'book') {
-                                  PatientBookAppointmentSheet.show(context);
+                                  PatientBookAppointmentSheet.show(
+                                    context,
+                                    targetProfile: profile,
+                                    patientName: pName,
+                                    patientPhone: profile.phoneNumber,
+                                  );
                                 }
                               },
                               itemBuilder: (_) => [
@@ -1287,7 +1336,12 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                   ),
-                                  onPressed: () => PatientBookAppointmentSheet.show(context),
+                                  onPressed: () => PatientBookAppointmentSheet.show(
+                                    context,
+                                    targetProfile: profile,
+                                    patientName: pName,
+                                    patientPhone: profile.phoneNumber,
+                                  ),
                                   icon: const Icon(Icons.calendar_month_rounded, size: 14),
                                   label: const Text(
                                     'Book Visit',

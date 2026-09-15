@@ -44,6 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _cachedFcmToken = '';
+  bool _isOtpSheetOpen = false;
 
   // Password criteria states
   bool _hasMinLength = false;
@@ -270,6 +271,8 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showOtpVerificationSheet(SendOtpEntity sendOtpEntity) {
+    if (_isOtpSheetOpen) return;
+    _isOtpSheetOpen = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -296,7 +299,9 @@ class _SignupScreenState extends State<SignupScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      _isOtpSheetOpen = false;
+    });
   }
 
   @override

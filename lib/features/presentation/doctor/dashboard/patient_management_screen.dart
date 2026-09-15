@@ -27,6 +27,9 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   final List<String> _statusFilters = const [
     "All",
     "Favorites",
+    "Active",
+    "Male",
+    "Female",
   ];
 
   @override
@@ -223,58 +226,13 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      final bloc = context.read<DashboardBloc>();
-                      Navigator.pushNamed(context, AppRoutes.favoritePatientsScreen).then((_) {
-                        bloc.add(const GetDashboardData());
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFFDE68A),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            size: 16,
-                            color: Color(0xFFD97706),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Favorites",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: isTab ? 13 : 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFFD97706),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, size: 20),
-                    color: isDark ? Colors.white60 : Colors.grey.shade600,
-                    tooltip: "Refresh List",
-                    onPressed: () {
-                      context.read<DashboardBloc>().add(const GetDashboardData());
-                    },
-                  ),
-                ],
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                tooltip: "Refresh List",
+                onPressed: () {
+                  context.read<DashboardBloc>().add(const GetDashboardData());
+                },
               ),
             ],
           ),
@@ -362,9 +320,19 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
               setState(() {
                 _selectedFilter = filter;
               });
-              context.read<DashboardBloc>().add(
-                FilterPatients(status: filter == "All" ? "All" : filter),
-              );
+              if (filter == "All") {
+                context.read<DashboardBloc>().add(
+                  const FilterPatients(status: "All", gender: "All"),
+                );
+              } else if (filter == "Male" || filter == "Female") {
+                context.read<DashboardBloc>().add(
+                  FilterPatients(status: null, gender: filter),
+                );
+              } else {
+                context.read<DashboardBloc>().add(
+                  FilterPatients(status: filter, gender: null),
+                );
+              }
             },
             borderRadius: BorderRadius.circular(20),
             child: AnimatedContainer(

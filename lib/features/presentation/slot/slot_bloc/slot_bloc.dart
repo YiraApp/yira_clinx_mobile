@@ -242,9 +242,13 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
   }
 
   void _onInitializeSlots(InitializeSlotsEvent event, Emitter<SlotState> emit) async {
-    final SlotDataState currentState = state is SlotDataState
+    final SlotDataState rawState = state is SlotDataState
         ? state as SlotDataState
         : SlotDataState.initial();
+
+    final currentState = event.resetToToday
+        ? rawState.copyWith(targetDate: DateTime.now(), isSingleDay: true)
+        : rawState;
 
     emit(currentState.copyWith(isLoading: true, deploySuccess: false));
 

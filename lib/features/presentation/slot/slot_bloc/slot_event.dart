@@ -3,7 +3,10 @@ part of 'slot_bloc.dart';
 @immutable
 abstract class SlotEvent {}
 
-class InitializeSlotsEvent extends SlotEvent {}
+class InitializeSlotsEvent extends SlotEvent {
+  final bool resetToToday;
+  InitializeSlotsEvent({this.resetToToday = false});
+}
 
 class ChangeExecutionModeEvent extends SlotEvent {
   final bool isSingleDay;

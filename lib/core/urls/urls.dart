@@ -86,4 +86,15 @@ class URLs {
   /*Offer Banners & Promotions*/
   static const offerBannersUrl = "/v1/api/auth/offers";
   static const popupAdUrl = "/v1/api/auth/offers/popup";
+
+  /*Patient Fitness (Apple Health & Google Health Connect)*/
+  static const patientFitnessSyncUrl = "/v1/api/auth/patient/fitness/sync";
+  static const patientFitnessSummaryUrl = "/v1/api/auth/patient/fitness/summary";
+  static const patientFitnessStatusUrl = "/v1/api/auth/patient/fitness/status";
+  static const patientFitnessDisconnectUrl = "/v1/api/auth/patient/fitness/disconnect";
+
+  /*Online Payments & Razorpay*/
+  static const createPaymentOrderUrl = "/v1/api/auth/payments/create-order";
+  static const verifyPaymentUrl = "/v1/api/auth/payments/verify";
+  static const getPaymentByAppointmentUrl = "/v1/api/auth/payments/by-appointment";
 }

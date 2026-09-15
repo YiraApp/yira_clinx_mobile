@@ -31,10 +31,14 @@ class FavoritePatientsService {
     final set = list.map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
     favoriteIdsNotifier.value = set;
 
-    // Background sync with backend
-    _syncWithBackend(doctorId);
-
-    return set;
+    // Background sync with backend (await if local cache is empty so initial load populates)
+    if (set.isEmpty) {
+      await _syncWithBackend(doctorId);
+      return favoriteIdsNotifier.value;
+    } else {
+      _syncWithBackend(doctorId);
+      return set;
+    }
   }
 
   Future<void> _syncWithBackend(String? doctorId) async {

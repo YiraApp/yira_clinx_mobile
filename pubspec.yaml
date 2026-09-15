@@ -74,6 +74,8 @@ dependencies:
   file_picker: ^8.1.7
   qr_flutter: ^4.1.0
   mobile_scanner: ^7.4.0
+  health: ^13.3.1
+  razorpay_flutter: ^1.4.6
 
 
 dependency_overrides:
@@ -106,6 +108,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/images/dashboard_icons/
     - assets/images/icons_3d/
     - assets/json/
     - assets/images/svgs/

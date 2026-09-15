@@ -10,13 +10,21 @@ import 'package:yiraclinics/features/presentation/appointments/add_new_appointme
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
+
 class PatientHospitalDoctorsScreen extends StatefulWidget {
   final Map<String, dynamic> hospital;
+  final ProfileEntity? targetProfile;
+  final String? patientName;
+  final String? patientPhone;
   final VoidCallback? onAppointmentBooked;
 
   const PatientHospitalDoctorsScreen({
     super.key,
     required this.hospital,
+    this.targetProfile,
+    this.patientName,
+    this.patientPhone,
     this.onAppointmentBooked,
   });
 
@@ -28,6 +36,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
   List<Map<String, dynamic>> _doctors = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  bool _isBookingNavigating = false;
 
   @override
   void initState() {
@@ -544,15 +553,22 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                 ),
               ),
 
-              // Book Appointment Action Button
               InkWell(
                 onTap: () async {
+                  if (_isBookingNavigating) return;
+                  _isBookingNavigating = true;
                   final res = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
                         value: sl<AppointmentBloc>(),
                         child: AddNewAppointmentScreen(
+                          initialPatientName: widget.patientName ??
+                              widget.targetProfile?.name ??
+                              (widget.targetProfile != null
+                                  ? '${widget.targetProfile!.firstName ?? ''} ${widget.targetProfile!.lastName ?? ''}'.trim()
+                                  : null),
+                          initialPatientPhone: widget.patientPhone ?? widget.targetProfile?.phoneNumber,
                           initialDoctorId: (doc['doctorId'] ?? doc['userId'] ?? doc['id'])?.toString(),
                           initialDoctorName: docName,
                           initialHospitalId: hospId,
@@ -566,6 +582,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                       ),
                     ),
                   );
+                  _isBookingNavigating = false;
 
                   if (res == true && mounted) {
                     widget.onAppointmentBooked?.call();

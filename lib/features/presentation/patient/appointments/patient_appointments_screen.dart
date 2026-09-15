@@ -14,6 +14,7 @@ import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
 import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
 import 'package:yiraclinics/core/tour/patient_tour_mock_data.dart';
+import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'patient_book_appointment_sheet.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
@@ -130,6 +131,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         ? '${currentUser!.data!.firstName} ${currentUser.data!.lastName ?? ''}'.trim()
                         : 'Patient'),
                 'patientUserId': a['patient_user_id'] ?? a['userId'] ?? userId,
+                'doctorId': a['doctor_id'] ?? a['doctorId'],
+                'consultationFee': a['consultation_fee'] ?? a['consultationFee'] ?? a['fee'] ?? a['amount'],
                 'relation': a['relation'] ?? 'Self',
                 'isPrimary': a['is_primary'] ?? true,
               });
@@ -269,8 +272,24 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         } else {
           displayTime = rawStartTime;
         }
-      } else {
+      } else if (rawStartTime.toUpperCase().contains('AM') || rawStartTime.toUpperCase().contains('PM')) {
         displayTime = rawStartTime;
+      } else {
+        final parts = rawStartTime.split(':');
+        if (parts.isNotEmpty) {
+          final h = int.tryParse(parts[0].trim());
+          if (h != null) {
+            final min = parts.length > 1 ? (int.tryParse(parts[1].trim()) ?? 0).toString().padLeft(2, '0') : '00';
+            final ampm = h >= 12 ? 'PM' : 'AM';
+            var hour12 = h % 12;
+            if (hour12 == 0) hour12 = 12;
+            displayTime = '$hour12:$min $ampm';
+          } else {
+            displayTime = rawStartTime;
+          }
+        } else {
+          displayTime = rawStartTime;
+        }
       }
     }
 
@@ -283,6 +302,56 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
     if (parts.isEmpty) return 'Scheduled';
     return parts.join(' • ');
+  }
+
+  Future<void> _handlePayNow(Map<String, dynamic> apt) async {
+    final appointmentId = int.tryParse(apt['id']?.toString() ?? '');
+    if (appointmentId == null) return;
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final double fee = double.tryParse(apt['consultationFee']?.toString() ?? '500') ?? 500.0;
+    final patientId = apt['patientUserId']?.toString() ?? currentUser?.data?.id ?? '';
+    final doctorId = apt['doctorId']?.toString();
+    final hospitalName = apt['hospitalName']?.toString();
+    final patientName = apt['patientName']?.toString();
+
+    final payRes = await RazorpayPaymentService.instance.processPayment(
+      appointmentId: appointmentId,
+      patientId: patientId,
+      amount: fee,
+      providerId: doctorId,
+      hospitalName: hospitalName,
+      patientName: patientName,
+      patientPhone: currentUser?.data?.phoneNumber?.toString(),
+      patientEmail: currentUser?.data?.email?.toString(),
+      isTeleConsultation: true,
+    );
+
+    if (!mounted) return;
+
+    if (payRes.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Payment successful! Your appointment is now confirmed."),
+          backgroundColor: Color(0xFF059669),
+        ),
+      );
+      _loadAppointments();
+    } else if (payRes.isCancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Payment was cancelled. You can complete payment anytime."),
+          backgroundColor: Color(0xFFD97706),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Payment: ${payRes.errorMessage ?? 'Please try again'}"),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
   }
 
 
@@ -639,12 +708,19 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
                               final timeStr = _formatAppointmentDateTime(apt);
 
+                              final isPaymentPending = statusLabel.toLowerCase().contains('pending') ||
+                                  statusLabel.toLowerCase().contains('payment');
                               final isCompleted = statusLabel.toLowerCase().contains('complete');
+                              final isCancelled = statusLabel.toLowerCase().contains('cancel');
+
+                              final displayStatusLabel = isPaymentPending ? "Pending Payment" : statusLabel;
                               final statusColor = isCompleted
                                   ? const Color(0xFF059669)
-                                  : (statusLabel.toLowerCase().contains('cancel')
+                                  : (isCancelled
                                       ? const Color(0xFFEF4444)
-                                      : const Color(0xFF2563EB));
+                                      : (isPaymentPending
+                                          ? const Color(0xFFD97706)
+                                          : const Color(0xFF2563EB)));
 
                               return DocAppointmentCard(
                                 initials: initials,
@@ -652,7 +728,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 subtitle: hospitalName,
                                 description: condition.isNotEmpty ? condition : 'General Consultation',
                                 timeOrDate: timeStr,
-                                statusLabel: statusLabel,
+                                statusLabel: displayStatusLabel,
                                 statusColor: statusColor,
                                 statusTextColor: Colors.white,
                                 patientStatus: (patientName.isNotEmpty && patientName != 'Patient')
@@ -660,25 +736,27 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                     : (isTele ? 'Video Consultation' : 'In-Clinic Visit'),
                                 isTab: isTab,
                                 isTeleConsultation: isTele,
-                                onJoinCall: () {
-                                  if (meetingUrl.isNotEmpty) {
-                                    Utils.launchMeetingURL(
-                                      meetingUrl,
-                                      displayName: patientName,
-                                      onLaunchFailure: (err) {
-                                        if (context.mounted) {
+                                onJoinCall: isPaymentPending
+                                    ? () => _handlePayNow(apt)
+                                    : () {
+                                        if (meetingUrl.isNotEmpty) {
+                                          Utils.launchMeetingURL(
+                                            meetingUrl,
+                                            displayName: patientName,
+                                            onLaunchFailure: (err) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text(err)),
+                                                );
+                                              }
+                                            },
+                                          );
+                                        } else {
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(err)),
+                                            const SnackBar(content: Text('No meeting link available.')),
                                           );
                                         }
                                       },
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('No meeting link available.')),
-                                    );
-                                  }
-                                },
                                 onTap: () {
                                   final currentUser = GlobalSession.instance.userNotifier.value;
                                   Navigator.pushNamed(
