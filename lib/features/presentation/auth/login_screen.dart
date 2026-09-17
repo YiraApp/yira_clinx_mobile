@@ -150,7 +150,26 @@ class _LoginScreenState extends State<LoginScreen> {
             case NavForgotPasswordState():
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
               break;
-
+            case SendOtpFailureState():
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+              break;
+            case LoginFailure():
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage ?? "Login failed. Please try again."),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+              break;
             default:
               break;
           }

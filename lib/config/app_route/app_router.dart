@@ -212,6 +212,16 @@ class AppRouter {
         );
       case AppRoutes.addAppointmentScreen:
         final appointmentArgs = settings.arguments as Map<String, dynamic>?;
+        DateTime? initialDate;
+        final rawDate = appointmentArgs?['initialDate'] ??
+            appointmentArgs?['selectedDate'] ??
+            appointmentArgs?['date'] ??
+            appointmentArgs?['targetDate'];
+        if (rawDate is DateTime) {
+          initialDate = rawDate;
+        } else if (rawDate is String && rawDate.trim().isNotEmpty) {
+          initialDate = DateTime.tryParse(rawDate.trim());
+        }
         return MaterialPageRoute(
           settings: settings, 
           builder: (_) => BlocProvider.value(
@@ -223,6 +233,8 @@ class AppRouter {
               initialDoctorName: (appointmentArgs?['doctorName'] ?? appointmentArgs?['doctor']?['name'])?.toString(),
               initialHospitalId: appointmentArgs?['hospitalId'] ?? appointmentArgs?['doctor']?['hospitalId'],
               initialDoctor: appointmentArgs?['doctor'] as Map<String, dynamic>?,
+              initialDate: initialDate,
+              initialSlot: (appointmentArgs?['initialSlot'] ?? appointmentArgs?['slot'] ?? appointmentArgs?['time'] ?? appointmentArgs?['startTime'])?.toString(),
             ),
           ),
         );

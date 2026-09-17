@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 
@@ -20,6 +21,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
     required bool isReSend,
   }) async {
     try {
+      debugPrint('[SEND_OTP] Sending OTP to: $countryCode $mobileNumber (url: ${URLs.sendOtpUrl})');
       final Map<String, dynamic> requestBody = {
         "identity": mobileNumber.trim(),
         "countryCode": countryCode.replaceAll('+', '').trim(),
@@ -37,6 +39,9 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
 
       return SendOtpModel.fromJson(response.data as Map<String, dynamic>);
     } catch (error, stackTrace) {
+      if (error is DioException && error.response != null) {
+        debugPrint('[SEND_OTP] Backend error (${error.response?.statusCode}): ${error.response?.data}');
+      }
       developer.log(
         "sendOtp failed gracefully inside repository layer",
         error: error,

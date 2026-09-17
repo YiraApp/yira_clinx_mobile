@@ -21,12 +21,14 @@ class PatientAddNewAppointmentScreen extends StatefulWidget {
   final VoidCallback? onAppointmentBooked;
   final String? initialDoctorId;
   final dynamic initialHospitalId;
+  final DateTime? initialDate;
 
   const PatientAddNewAppointmentScreen({
     super.key,
     this.onAppointmentBooked,
     this.initialDoctorId,
     this.initialHospitalId,
+    this.initialDate,
   });
 
   @override
@@ -69,6 +71,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   @override
   void initState() {
     super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
     _loadInitialData();
   }
 

@@ -49,7 +49,6 @@ class PatientProfileHeader extends StatefulWidget {
 class _PatientProfileHeaderState extends State<PatientProfileHeader> {
   late String _currentStatus;
   bool _isUpdating = false;
-  bool _isFav = false;
 
   @override
   void initState() {
@@ -57,27 +56,15 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
     _currentStatus = (widget.initialStatus != null && widget.initialStatus!.trim().isNotEmpty)
         ? widget.initialStatus!.trim().toUpperCase()
         : 'CONFIRMED';
-    _checkFavorite();
-  }
-
-  void _checkFavorite() {
-    final pId = widget.patientId ?? '';
-    final altId = widget.patient.id;
-    _isFav = FavoritePatientsService().isFavorite(pId.isNotEmpty ? pId : altId, altId);
   }
 
   Future<void> _toggleFavorite() async {
     final pId = widget.patientId ?? widget.patient.id;
     final altId = widget.patient.id;
-    final isNowFav = await FavoritePatientsService().toggleFavorite(
+    await FavoritePatientsService().toggleFavorite(
       patientId: pId,
       alternateId: altId,
     );
-    if (mounted) {
-      setState(() {
-        _isFav = isNowFav;
-      });
-    }
   }
 
   void _showStatusPicker(BuildContext context) {
@@ -348,27 +335,36 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                     if (!isPatient) ...[
                       const SizedBox(width: 8),
                       // Favorite Star Button
-                      GestureDetector(
-                        onTap: _toggleFavorite,
-                        child: Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: _isFav
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.16),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _isFav
-                                  ? const Color(0xFFFDE68A)
-                                  : Colors.white.withValues(alpha: 0.25),
+                      ValueListenableBuilder<Set<String>>(
+                        valueListenable: FavoritePatientsService().favoriteIdsNotifier,
+                        builder: (context, favSet, _) {
+                          final isFav = FavoritePatientsService().isFavorite(
+                            widget.patientId ?? widget.patient.id,
+                            widget.patient.id,
+                          );
+                          return GestureDetector(
+                            onTap: _toggleFavorite,
+                            child: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: isFav
+                                    ? Colors.white
+                                    : Colors.white.withValues(alpha: 0.16),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isFav
+                                      ? const Color(0xFFFDE68A)
+                                      : Colors.white.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Icon(
+                                isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                                color: isFav ? const Color(0xFFD97706) : Colors.white,
+                                size: 17,
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            _isFav ? Icons.star_rounded : Icons.star_outline_rounded,
-                            color: _isFav ? const Color(0xFFD97706) : Colors.white,
-                            size: 17,
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                   ],

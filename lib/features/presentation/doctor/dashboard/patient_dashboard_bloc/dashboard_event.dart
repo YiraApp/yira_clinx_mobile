@@ -49,4 +49,11 @@ class ToggleFavoritePatientEvent extends DashboardEvent {
   List<Object?> get props => [patientId, alternateId];
 }
 
+class SyncFavoritesEvent extends DashboardEvent {
+  const SyncFavoritesEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
 

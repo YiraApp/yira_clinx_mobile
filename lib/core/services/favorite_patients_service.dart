@@ -16,10 +16,16 @@ class FavoritePatientsService {
 
   final ValueNotifier<Set<String>> favoriteIdsNotifier = ValueNotifier<Set<String>>({});
 
+  String _resolveDoctorId([String? doctorId]) {
+    if (doctorId != null && doctorId.trim().isNotEmpty) return doctorId.trim();
+    final user = GlobalSession.instance.userNotifier.value?.data;
+    if (user?.id != null && user!.id!.trim().isNotEmpty) return user.id!.trim();
+    if (user?.navigationId != null && user!.navigationId!.trim().isNotEmpty) return user.navigationId!.trim();
+    return '1';
+  }
+
   String _getStorageKey([String? doctorId]) {
-    final String docId = (doctorId != null && doctorId.trim().isNotEmpty)
-        ? doctorId.trim()
-        : (GlobalSession.instance.userNotifier.value?.data?.id ?? 'default_doc');
+    final String docId = _resolveDoctorId(doctorId);
     return 'doctor_fav_patients_$docId';
   }
 
@@ -40,7 +46,7 @@ class FavoritePatientsService {
   Future<void> _syncWithBackend(String? doctorId) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final String docId = doctorId ?? (currentUser?.data?.id ?? '1');
+      final String docId = _resolveDoctorId(doctorId);
       final int orgId = currentUser?.data?.latestOrgId ?? 1;
       final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
       final String token = currentUser?.data?.accessToken ?? '';
@@ -67,15 +73,13 @@ class FavoritePatientsService {
           favList = data;
         }
 
-        // Add exactly 1 unique canonical ID per patient
+        // Add both canonical userId and internal id per patient
         final Set<String> updatedSet = <String>{};
         for (final item in favList) {
           final uid = item['userId']?.toString().trim() ?? '';
           final id = item['id']?.toString().trim() ?? '';
-          final canonicalId = uid.isNotEmpty ? uid : id;
-          if (canonicalId.isNotEmpty) {
-            updatedSet.add(canonicalId);
-          }
+          if (uid.isNotEmpty) updatedSet.add(uid);
+          if (id.isNotEmpty) updatedSet.add(id);
         }
 
         favoriteIdsNotifier.value = updatedSet;
@@ -126,13 +130,14 @@ class FavoritePatientsService {
       }
       isNowFav = false;
     } else {
-      // Clean up any legacy duplicate before adding the single primary key
-      if (aId.isNotEmpty && aId != primaryKey) {
-        current.remove(aId);
-        await prefs.removeIdFromList(key, aId);
+      if (pId.isNotEmpty) {
+        current.add(pId);
+        await prefs.addIdToList(key, pId);
       }
-      current.add(primaryKey);
-      await prefs.addIdToList(key, primaryKey);
+      if (aId.isNotEmpty && aId != pId) {
+        current.add(aId);
+        await prefs.addIdToList(key, aId);
+      }
       isNowFav = true;
     }
 
@@ -170,7 +175,7 @@ class FavoritePatientsService {
   /// Fetch all favorite patients entities for the doctor
   Future<List<PatientEntity>> fetchFavoritePatients([String? doctorId]) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final String docId = doctorId ?? (currentUser?.data?.id ?? '1');
+    final String docId = _resolveDoctorId(doctorId);
     final int orgId = currentUser?.data?.latestOrgId ?? 1;
     final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
     final String token = currentUser?.data?.accessToken ?? '';

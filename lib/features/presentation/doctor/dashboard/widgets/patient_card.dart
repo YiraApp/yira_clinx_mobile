@@ -224,9 +224,7 @@ class PatientCard extends StatelessWidget {
           child: ValueListenableBuilder<Set<String>>(
             valueListenable: FavoritePatientsService().favoriteIdsNotifier,
             builder: (context, favSet, _) {
-              final bool isFav = favSet.contains(patient.userId) ||
-                  favSet.contains(patient.id) ||
-                  patient.isFavorite == true;
+              final bool isFav = FavoritePatientsService().isFavorite(patient.userId, patient.id);
 
               return InkWell(
                 onTap: onToggleFavorite,

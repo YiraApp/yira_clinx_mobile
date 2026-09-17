@@ -5,7 +5,6 @@ import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/services/favorite_patients_service.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_dashboard_bloc/dashboard_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/patient_card.dart';
 import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
@@ -23,6 +22,7 @@ class PatientManagementScreen extends StatefulWidget {
 class _PatientManagementScreenState extends State<PatientManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = "All";
+  late final DashboardBloc _dashboardBloc;
 
   final List<String> _statusFilters = const [
     "All",
@@ -30,8 +30,15 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _dashboardBloc = DashboardBloc()..add(const GetDashboardData());
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _dashboardBloc.close();
     super.dispose();
   }
 
@@ -41,12 +48,12 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     final bool isTab = isTablet(context);
     final primaryColor = Theme.of(context).primaryColor;
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: ProviderTourController().isTourActiveNotifier,
-      builder: (context, isTourActive, _) {
-        return BlocProvider(
-          create: (context) => DashboardBloc()..add(const GetDashboardData()),
-          child: GestureDetector(
+    return BlocProvider.value(
+      value: _dashboardBloc,
+      child: ValueListenableBuilder<bool>(
+        valueListenable: ProviderTourController().isTourActiveNotifier,
+        builder: (context, isTourActive, _) {
+          return GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -54,24 +61,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
               body: SafeArea(
                 child: BlocConsumer<DashboardBloc, DashboardState>(
                   buildWhen: (previous, state) => state is! ViewPatientDetailsState,
-                  listener: (context, state) {
-                    if (state is ViewPatientDetailsState) {
-                      final currentUser = GlobalSession.instance.userNotifier.value;
-                      final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
-                      final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.doctorPatientDetailProfileScreen,
-                        arguments: {
-                          'patientId': state.patientId,
-                          'patientName': state.patientName,
-                          'hospitalId': hospitalId,
-                          'orgId': orgId,
-                          'initialTabIndex': 0,
-                        },
-                      );
-                    }
-                  },
+                  listener: (context, state) {},
                   builder: (context, state) {
                     final displayPatients = isTourActive ? ProviderTourMockData.demoPatients : state.patients;
                     final totalCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.allPatients.length;
@@ -124,31 +114,34 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                                                 key: ValueKey(patient.id),
                                                 isTab: isTab,
                                                 patient: patient,
-                                                onToggleFavorite: () async {
+                                                onToggleFavorite: () {
                                                   if (!isTourActive) {
-                                                    final bloc = context.read<DashboardBloc>();
-                                                    await FavoritePatientsService().toggleFavorite(
-                                                      patientId: patient.userId,
-                                                      alternateId: patient.id,
+                                                    context.read<DashboardBloc>().add(
+                                                      ToggleFavoritePatientEvent(
+                                                        patientId: patient.userId,
+                                                        alternateId: patient.id,
+                                                      ),
                                                     );
-                                                    try {
-                                                      bloc.add(
-                                                        ToggleFavoritePatientEvent(
-                                                          patientId: patient.userId,
-                                                          alternateId: patient.id,
-                                                        ),
-                                                      );
-                                                    } catch (_) {}
                                                   }
                                                 },
                                                 onTap: () {
                                                   if (!isTourActive) {
-                                                    context.read<DashboardBloc>().add(
-                                                      ViewPatientDetailsEvent(
-                                                        patientId: patient.userId,
-                                                        patientName: patient.name,
-                                                      ),
-                                                    );
+                                                    final currentUser = GlobalSession.instance.userNotifier.value;
+                                                    final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '';
+                                                    final orgId = currentUser?.data?.latestOrgId?.toString() ?? '';
+                                                    Navigator.pushNamed(
+                                                      context,
+                                                      AppRoutes.doctorPatientDetailProfileScreen,
+                                                      arguments: {
+                                                        'patientId': patient.userId,
+                                                        'patientName': patient.name,
+                                                        'hospitalId': hospitalId,
+                                                        'orgId': orgId,
+                                                        'initialTabIndex': 0,
+                                                      },
+                                                    ).then((_) {
+                                                      _dashboardBloc.add(const SyncFavoritesEvent());
+                                                    });
                                                   }
                                                 },
                                               );
@@ -163,9 +156,9 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

@@ -44,6 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _cachedFcmToken = '';
+  bool _isOtpSheetOpen = false;
 
   // Password criteria states
   bool _hasMinLength = false;
@@ -270,6 +271,9 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   void _showOtpVerificationSheet(SendOtpEntity sendOtpEntity) {
+    if (_isOtpSheetOpen) return;
+    _isOtpSheetOpen = true;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -296,7 +300,9 @@ class _SignupScreenState extends State<SignupScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      _isOtpSheetOpen = false;
+    });
   }
 
   @override
@@ -333,21 +339,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 if (state is SignupOtpSentState) {
                   _showOtpVerificationSheet(state.sendOtpEntity);
                 } else if (state is SignupOtpFailureState) {
-                  if (state.errorMessage.toLowerCase().contains("already registered") ||
-                      state.errorMessage.toLowerCase().contains("already exists")) {
-                    _showAlreadyRegisteredDialog(state.errorMessage);
-                  } else {
-                    _showSnackBar(state.errorMessage, isError: true);
+                  if (!_isOtpSheetOpen) {
+                    if (state.errorMessage.toLowerCase().contains("already registered") ||
+                        state.errorMessage.toLowerCase().contains("already exists")) {
+                      _showAlreadyRegisteredDialog(state.errorMessage);
+                    } else {
+                      _showSnackBar(state.errorMessage, isError: true);
+                    }
                   }
                 } else if (state is SignupSuccessState) {
-                  _showSnackBar("Account created successfully!");
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.genderSelection,
-                    (route) => false,
-                  );
+                  if (!_isOtpSheetOpen) {
+                    _showSnackBar("Account created successfully!");
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.genderSelection,
+                      (route) => false,
+                    );
+                  }
                 } else if (state is SignupFailureState) {
-                  _showSnackBar(state.errorMessage, isError: true);
+                  if (!_isOtpSheetOpen) {
+                    _showSnackBar(state.errorMessage, isError: true);
+                  }
                 }
               },
               builder: (context, state) {
@@ -1236,6 +1248,12 @@ class _SignupOtpVerificationSheetState
               _errorMessage = state.errorMessage;
             });
           }
+        } else if (state is SignupOtpFailureState) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = state.errorMessage;
+            });
+          }
         } else if (state is SignupOtpSentState) {
           if (mounted) {
             setState(() {
@@ -1243,6 +1261,7 @@ class _SignupOtpVerificationSheetState
               _errorMessage = null;
             });
           }
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('OTP resent successfully!'),
@@ -1401,11 +1420,21 @@ class _SignupOtpVerificationSheetState
                     ),
                   );
                 }
+                if (state is SignupOtpLoadingState) {
+                  return const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                    ),
+                  );
+                }
                 return GestureDetector(
-                  onTap: state is SignupOtpLoadingState ? null : _onResendOtp,
-                  child: Text(
+                  onTap: _onResendOtp,
+                  child: const Text(
                     "Didn't receive code? Resend Code",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,

@@ -21,10 +21,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<SearchPatients>(_onSearchPatients);
     on<FilterPatients>(_onFilterPatients);
     on<ToggleFavoritePatientEvent>(_onToggleFavoritePatient);
+    on<SyncFavoritesEvent>(_onSyncFavorites);
     on<ViewPatientDetailsEvent>((event, emit) async {
       emit(ViewPatientDetailsState(
         patientId: event.patientId,
         patientName: event.patientName,
+        status: state.status,
+        patients: state.patients,
+        allPatients: state.allPatients,
+        selectedStatus: state.selectedStatus,
+        selectedGender: state.selectedGender,
+        errorMessage: state.errorMessage,
       ));
     });
   }
@@ -97,19 +104,28 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         ? currentUser.data!.id!.trim()
         : '1';
 
-    final isNowFav = await FavoritePatientsService().toggleFavorite(
+    await FavoritePatientsService().toggleFavorite(
       patientId: event.patientId,
       alternateId: event.alternateId,
       doctorId: doctorId,
     );
 
     final updatedAll = state.allPatients.map((p) {
-      final matchesPatientId = p.userId == event.patientId || p.id == event.patientId;
-      final matchesAltId = event.alternateId != null && (p.userId == event.alternateId || p.id == event.alternateId);
-      if (matchesPatientId || matchesAltId) {
-        return p.copyWith(isFavorite: isNowFav);
-      }
-      return p;
+      final isFav = FavoritePatientsService().isFavorite(p.userId, p.id);
+      return p.copyWith(isFavorite: isFav);
+    }).toList();
+
+    emit(state.copyWith(allPatients: updatedAll));
+    _applyFilters(emit);
+  }
+
+  void _onSyncFavorites(
+    SyncFavoritesEvent event,
+    Emitter<DashboardState> emit,
+  ) {
+    final updatedAll = state.allPatients.map((p) {
+      final isFav = FavoritePatientsService().isFavorite(p.userId, p.id);
+      return p.copyWith(isFavorite: isFav);
     }).toList();
 
     emit(state.copyWith(allPatients: updatedAll));

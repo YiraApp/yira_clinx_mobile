@@ -53,8 +53,24 @@ class ViewPatientDetailsState extends DashboardState {
     this.patientId,
     this.patientName,
     DateTime? time,
+    super.status,
+    super.patients,
+    super.allPatients,
+    super.selectedStatus,
+    super.selectedGender,
+    super.errorMessage,
   }) : timestamp = time ?? DateTime.now();
 
   @override
-  List<Object?> get props => [patientId, patientName, timestamp];
+  List<Object?> get props => [
+        patientId,
+        patientName,
+        timestamp,
+        status,
+        patients,
+        allPatients,
+        selectedStatus,
+        selectedGender,
+        errorMessage,
+      ];
 }

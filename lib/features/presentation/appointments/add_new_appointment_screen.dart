@@ -202,6 +202,8 @@ class AddNewAppointmentScreen extends StatefulWidget {
   final String? initialDoctorName;
   final dynamic initialHospitalId;
   final Map<String, dynamic>? initialDoctor;
+  final DateTime? initialDate;
+  final String? initialSlot;
 
   const AddNewAppointmentScreen({
     super.key,
@@ -211,6 +213,8 @@ class AddNewAppointmentScreen extends StatefulWidget {
     this.initialDoctorName,
     this.initialHospitalId,
     this.initialDoctor,
+    this.initialDate,
+    this.initialSlot,
   });
 
   @override
@@ -1276,6 +1280,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
+    if (widget.initialSlot != null && widget.initialSlot!.trim().isNotEmpty) {
+      _selectedSlot = widget.initialSlot!.trim();
+    }
     _patientFocusNode.addListener(() {
       if (mounted) {
         setState(() {

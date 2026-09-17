@@ -257,6 +257,16 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     return DateFormat('EEEE, MMM d').format(now);
   }
 
+  DateTime _getSelectedAppointmentDate() {
+    final now = DateTime.now();
+    if (_selectedDateLabel == "Tomorrow") {
+      return now.add(const Duration(days: 1));
+    } else if (_customDateRange != null) {
+      return _customDateRange!.start;
+    }
+    return now;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -386,7 +396,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         child: InkWell(
                           borderRadius: BorderRadius.circular(14),
                           onTap: () async {
-                            await Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
+                            final targetDate = _getSelectedAppointmentDate();
+                            await Navigator.pushNamed(
+                              context,
+                              AppRoutes.addAppointmentScreen,
+                              arguments: {
+                                'initialDate': targetDate,
+                                'date': targetDate,
+                              },
+                            );
                             if (mounted) {
                               _loadWithDateFilter();
                             }
@@ -1203,7 +1221,15 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () async {
-                  await Navigator.pushNamed(context, AppRoutes.addAppointmentScreen);
+                  final targetDate = _getSelectedAppointmentDate();
+                  await Navigator.pushNamed(
+                    context,
+                    AppRoutes.addAppointmentScreen,
+                    arguments: {
+                      'initialDate': targetDate,
+                      'date': targetDate,
+                    },
+                  );
                   if (mounted) {
                     _loadWithDateFilter();
                   }
