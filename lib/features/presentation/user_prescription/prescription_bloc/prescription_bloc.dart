@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:intl/intl.dart';
-import 'package:meta/meta.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
@@ -21,6 +21,40 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<LoadMedicationData>(_onLoadMedicationData);
     on<FilterByStatus>(_onFilterByStatus);
     on<LoadPrescriptionDetails>(_onLoadPrescriptionDetails);
+    on<AddManualPrescription>(_onAddManualPrescription);
+  }
+
+  Future<void> _onAddManualPrescription(AddManualPrescription event, Emitter<MedicationState> emit) async {
+    await addManualPrescription(event.payload);
+  }
+
+  Future<bool> addManualPrescription(Map<String, dynamic> payload) async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      final token = currentUser?.data?.accessToken ?? '';
+
+      final completePayload = Map<String, dynamic>.from(payload);
+      if (!completePayload.containsKey('patientId') || (completePayload['patientId'] as String?)?.isEmpty == true) {
+        completePayload['patientId'] = userId;
+      }
+
+      final response = await _apiClient.account(showSuccessSnack: true).post(
+        URLs.prescriptionsUrl,
+        data: completePayload,
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        add(LoadMedicationData());
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> _onLoadMedicationData(LoadMedicationData event, Emitter<MedicationState> emit) async {
@@ -49,15 +83,53 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
             for (var p in items) {
               if (p is Map<String, dynamic>) {
                 final doc = p['Doctor'];
-                final docName = doc != null
-                    ? 'Dr. ${doc['FirstName'] ?? ''} ${doc['LastName'] ?? ''}'.trim()
-                    : 'Consulting Physician';
-                final specialty = doc != null ? (doc['Specialty'] ?? 'General Medicine') : 'General Medicine';
+                String docName = 'Consulting Physician';
+                String specialty = 'General Medicine';
+
+                if (doc != null && doc is Map) {
+                  docName = 'Dr. ${doc['FirstName'] ?? ''} ${doc['LastName'] ?? ''}'.trim();
+                  specialty = (doc['Specialty'] ?? 'General Medicine').toString();
+                } else if (p['CreatedBy'] != null &&
+                    p['CreatedBy'].toString().trim().isNotEmpty &&
+                    p['CreatedBy'].toString().toLowerCase() != 'doctor') {
+                  final createdByStr = p['CreatedBy'].toString().trim();
+                  if (createdByStr.contains(' - ')) {
+                    final parts = createdByStr.split(' - ');
+                    docName = parts[0].trim();
+                    specialty = parts.length > 1 ? parts[1].trim() : 'External Healthcare';
+                  } else {
+                    docName = createdByStr;
+                    specialty = 'External Healthcare';
+                  }
+                  if (!docName.toLowerCase().startsWith('dr.') && !docName.toLowerCase().startsWith('dr ')) {
+                    docName = 'Dr. $docName';
+                  }
+                }
+
+                String doctorPhoto = '';
+                if (doc != null && doc is Map) {
+                  doctorPhoto = (doc['ImagePath'] ??
+                                 doc['imagePath'] ??
+                                 doc['Photo'] ??
+                                 doc['photo'] ??
+                                 doc['PhotoUrl'] ??
+                                 doc['photoUrl'] ??
+                                 doc['ProfilePhoto'] ??
+                                 doc['profilePhoto'] ??
+                                 '').toString().trim();
+                }
+                if (doctorPhoto.isEmpty) {
+                  doctorPhoto = (p['DoctorPhoto'] ??
+                                 p['doctorPhoto'] ??
+                                 p['DoctorImagePath'] ??
+                                 p['doctorImagePath'] ??
+                                 '').toString().trim();
+                }
                 final diags = p['Diagnoses'] ?? p['diagnoses'];
                 String condition = 'General Consultation';
                 if (diags is List && diags.isNotEmpty) {
                   final first = diags.first;
-                  condition = (first is Map ? (first['Diagnosis'] ?? first['name']) : first.toString()) ?? 'General Consultation';
+                  condition = (first is Map ? (first['Diagnosis'] ?? first['name'] ?? first['diagnosis']) : first.toString()) ?? 'General Consultation';
                 }
 
                 final medsRaw = p['Medications'] ?? p['medications'] ?? [];
@@ -93,17 +165,22 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                   } catch (_) {}
                 }
 
+                final pdfUrl = (p['PdfUrl'] ?? p['pdfUrl'] ?? '').toString();
+
                 realList.add({
                   "id": (p['Id'] ?? p['id'] ?? '').toString(),
                   "title": "Prescription for $condition",
                   "condition": condition,
                   "doctor": "$docName - $specialty",
+                  "doctorName": docName,
+                  "doctorPhoto": doctorPhoto,
                   "specialty": specialty,
                   "date": dateStr,
                   "status": "Active",
                   "pharmacy": "Yira Clinx E-Pharmacy",
                   "notes": (p['Notes'] ?? p['notes'] ?? 'Follow-up as advised. Take medicines as prescribed.').toString(),
                   "medications": medList,
+                  "pdfUrl": pdfUrl,
                   "needRefill": medList.isNotEmpty,
                 });
               }

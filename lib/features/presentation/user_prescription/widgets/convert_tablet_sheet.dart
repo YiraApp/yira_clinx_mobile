@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
+import 'package:yiraclinics/core/widgets/doctor_avatar_widget.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
 
 class ConvertTabletSheet extends StatefulWidget {
@@ -12,6 +13,7 @@ class ConvertTabletSheet extends StatefulWidget {
   final String? initialInstructions;
   final String? prescriptionId;
   final String? doctorName;
+  final String? doctorPhoto;
   final String? condition;
   final VoidCallback? onConverted;
 
@@ -22,6 +24,7 @@ class ConvertTabletSheet extends StatefulWidget {
     this.initialInstructions,
     this.prescriptionId,
     this.doctorName,
+    this.doctorPhoto,
     this.condition,
     this.onConverted,
   });
@@ -33,6 +36,7 @@ class ConvertTabletSheet extends StatefulWidget {
     String? initialInstructions,
     String? prescriptionId,
     String? doctorName,
+    String? doctorPhoto,
     String? condition,
     VoidCallback? onConverted,
   }) {
@@ -46,6 +50,7 @@ class ConvertTabletSheet extends StatefulWidget {
         initialInstructions: initialInstructions,
         prescriptionId: prescriptionId,
         doctorName: doctorName,
+        doctorPhoto: doctorPhoto,
         condition: condition,
         onConverted: onConverted,
       ),
@@ -171,6 +176,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
       times: List<String>.from(_times),
       mealRelation: _mealRelation,
       doctorName: widget.doctorName ?? '',
+      doctorPhoto: widget.doctorPhoto ?? '',
       condition: widget.condition ?? '',
     );
 
@@ -285,6 +291,33 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                           color: primaryColor,
                         ),
                       ),
+                      if (widget.doctorName != null && widget.doctorName!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            DoctorAvatarWidget(
+                              photoUrl: widget.doctorPhoto,
+                              doctorName: widget.doctorName,
+                              size: 16,
+                              borderRadius: 4,
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                "Prescribed by ${widget.doctorName}",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

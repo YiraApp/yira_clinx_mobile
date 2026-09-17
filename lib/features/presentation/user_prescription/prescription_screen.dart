@@ -10,6 +10,8 @@ import 'package:yiraclinics/features/presentation/user_prescription/widgets/pres
 import '../../../core/colors/colors.dart';
 import '../../../di/dependency_injection.dart';
 import 'package:yiraclinics/core/widgets/notification_badge_icon.dart';
+import 'package:yiraclinics/core/widgets/doctor_avatar_widget.dart';
+import 'add_user_prescription_screen.dart';
 
 class PrescriptionManagementScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -38,6 +40,20 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _navigateToAddPrescription(BuildContext ctx) async {
+    final bloc = ctx.read<MedicationBloc>();
+    final result = await Navigator.push<bool>(
+      ctx,
+      MaterialPageRoute(
+        builder: (_) => AddUserPrescriptionScreen(bloc: bloc),
+      ),
+    );
+    if (result == true) {
+      bloc.add(LoadMedicationData());
+      MedicationReminderService.instance.loadReminders();
+    }
   }
 
   @override
@@ -70,9 +86,24 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
-          actions: const [
-            NotificationBadgeIcon(size: 22),
-            SizedBox(width: 8),
+          actions: [
+            Builder(
+              builder: (ctx) => TextButton.icon(
+                onPressed: () => _navigateToAddPrescription(ctx),
+                icon: const Icon(Icons.add_rounded, size: 18, color: primaryColor),
+                label: const Text(
+                  "Add",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: primaryColor,
+                  ),
+                ),
+              ),
+            ),
+            const NotificationBadgeIcon(size: 22),
+            const SizedBox(width: 8),
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(50),
@@ -126,6 +157,23 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+        floatingActionButton: Builder(
+          builder: (ctx) => FloatingActionButton.extended(
+            onPressed: () => _navigateToAddPrescription(ctx),
+            backgroundColor: primaryColor,
+            elevation: 3,
+            icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+            label: const Text(
+              "Add Prescription",
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
           ),
@@ -329,6 +377,28 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                             ),
                             textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => _navigateToAddPrescription(context),
+                            icon: const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                            label: const Text(
+                              "Add External Prescription",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -348,10 +418,12 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                           condition: item['condition'] ?? 'General Consultation',
                           doctor: item['doctor'] ?? 'Doctor',
                           specialty: item['specialty'] ?? 'General Physician',
+                          doctorPhoto: (item['doctorPhoto'] ?? '').toString(),
                           date: item['date'] ?? '',
                           status: item['status'] ?? 'Active',
                           pharmacy: item['pharmacy'] ?? 'Yira Clinx E-Pharmacy',
                           medications: meds,
+                          pdfUrl: (item['pdfUrl'] ?? '').toString(),
                         );
                       },
                       childCount: displayedItems.length,
@@ -440,6 +512,9 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         final todayDoses = MedicationReminderService.instance.getTodayDoses();
         final now = DateTime.now();
         final todayStr = DateFormat('EEEE, MMM d').format(now);
+        final totalDosesCount = todayDoses.length;
+        final takenDosesCount = todayDoses.where((d) => d.isTaken).length;
+        final adherenceProgress = totalDosesCount > 0 ? (takenDosesCount / totalDosesCount) : 0.0;
 
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -447,67 +522,163 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── TODAY'S SCHEDULE HEADER ──
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Today's Medication Doses",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+              // ── TODAY'S ADHERENCE DASHBOARD CARD ──
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black26 : const Color(0xFF64748B).withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.09),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.calendar_month_rounded,
+                                size: 16,
+                                color: primaryColor,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Today's Schedule",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                Text(
+                                  todayStr,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            "$takenDosesCount/$totalDosesCount Taken",
+                            style: const TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (totalDosesCount > 0) ...[
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: adherenceProgress,
+                          minHeight: 6,
+                          backgroundColor: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            adherenceProgress == 1.0 ? const Color(0xFF10B981) : primaryColor,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       Text(
-                        todayStr,
+                        adherenceProgress == 1.0
+                            ? "All doses taken for today! Excellent job 🎉"
+                            : "${totalDosesCount - takenDosesCount} dose${(totalDosesCount - takenDosesCount) == 1 ? '' : 's'} remaining for today",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          color: isDark ? Colors.white60 : Colors.grey.shade600,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: adherenceProgress == 1.0
+                              ? const Color(0xFF10B981)
+                              : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                         ),
                       ),
                     ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      "${todayDoses.where((d) => d.isTaken).length}/${todayDoses.length} Taken",
-                      style: const TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF10B981),
-                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // ── TODAY'S SCHEDULE DOSES LIST ──
+              Row(
+                children: [
+                  const Icon(Icons.access_time_filled_rounded, size: 16, color: primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Scheduled Doses",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
 
-              const SizedBox(height: 12),
-
-              // Today's Doses Cards
               if (todayDoses.isEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
                   ),
-                  child: const Center(
-                    child: Text(
-                      "No pills scheduled for today.",
-                      style: TextStyle(fontSize: 12.5, color: Colors.grey),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, size: 28, color: Colors.grey.shade400),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "No doses scheduled for today.",
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -519,7 +690,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               // ── ACTIVE MEDICATION COURSES ──
               Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, size: 18, color: primaryColor),
+                  const Icon(Icons.medical_services_rounded, size: 16, color: primaryColor),
                   const SizedBox(width: 8),
                   Text(
                     "Active Medication Courses (${reminders.length})",
@@ -532,7 +703,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               ...reminders.map((reminder) => _buildActiveCourseCard(reminder, isDark)),
 
@@ -547,45 +718,78 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   Widget _buildTodayDoseCard(TodayMedicationDose dose, bool isDark) {
     final r = dose.reminder;
 
+    // Time-of-day Icon & Tint
+    IconData timeIcon = Icons.access_time_rounded;
+    Color timeColor = primaryColor;
+    final lowerTime = dose.time.toLowerCase();
+    if (lowerTime.contains('am')) {
+      timeIcon = Icons.wb_sunny_rounded;
+      timeColor = const Color(0xFFF59E0B);
+    } else if (lowerTime.contains('pm')) {
+      final hour = int.tryParse(dose.time.split(':').first.trim()) ?? 12;
+      if (hour < 5 || hour == 12) {
+        timeIcon = Icons.light_mode_rounded;
+        timeColor = const Color(0xFFF97316);
+      } else {
+        timeIcon = Icons.bedtime_rounded;
+        timeColor = const Color(0xFF8B5CF6);
+      }
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: dose.isTaken
-              ? const Color(0xFF10B981).withValues(alpha: 0.35)
-              : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+              ? const Color(0xFF10B981).withValues(alpha: 0.4)
+              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+          width: dose.isTaken ? 1.2 : 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black12 : const Color(0xFF64748B).withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Time badge
+          // Time badge with smart time-of-day icon
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: dose.isTaken
-                  ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                  : primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-              borderRadius: BorderRadius.circular(8),
+                  ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1)
+                  : timeColor.withValues(alpha: isDark ? 0.2 : 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: dose.isTaken
+                    ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                    : timeColor.withValues(alpha: 0.2),
+                width: 0.8,
+              ),
             ),
-            child: Row(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.access_time_rounded,
-                  size: 13,
-                  color: dose.isTaken ? const Color(0xFF10B981) : primaryColor,
+                  dose.isTaken ? Icons.check_rounded : timeIcon,
+                  size: 15,
+                  color: dose.isTaken ? const Color(0xFF10B981) : timeColor,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(height: 2),
                 Text(
                   dose.time,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 11.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: dose.isTaken ? const Color(0xFF10B981) : primaryColor,
+                    color: dose.isTaken ? const Color(0xFF10B981) : timeColor,
                   ),
                 ),
               ],
@@ -593,7 +797,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           ),
           const SizedBox(width: 12),
 
-          // Medicine Name & Meal timing
+          // Medicine Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,9 +806,9 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   r.medicineName,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    height: 1.25,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
                     decoration: dose.isTaken ? TextDecoration.lineThrough : null,
                     color: dose.isTaken
                         ? (isDark ? Colors.white38 : Colors.grey.shade400)
@@ -612,25 +816,48 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   ),
                 ),
                 if (r.mealRelation.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    r.mealRelation,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      color: isDark ? Colors.white54 : Colors.grey.shade600,
-                    ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(Icons.restaurant_rounded, size: 10.5, color: Color(0xFF8B5CF6)),
+                      const SizedBox(width: 3.5),
+                      Text(
+                        r.mealRelation,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 if (r.doctorName.isNotEmpty) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    "Prescribed by: ${r.doctorName}",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10.5,
-                      color: isDark ? Colors.white38 : Colors.grey.shade500,
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      DoctorAvatarWidget(
+                        photoUrl: r.doctorPhoto,
+                        doctorName: r.doctorName,
+                        size: 18,
+                        borderRadius: 5,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          r.doctorName.startsWith('Dr.') ? r.doctorName : "Dr. ${r.doctorName}",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white54 : const Color(0xFF475569),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],
@@ -648,12 +875,15 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
             borderRadius: BorderRadius.circular(8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
               decoration: BoxDecoration(
                 color: dose.isTaken
                     ? const Color(0xFF10B981)
-                    : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+                    : (isDark ? Colors.white12 : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: dose.isTaken ? const Color(0xFF10B981) : Colors.transparent,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -685,22 +915,27 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   Widget _buildActiveCourseCard(MedicationReminder r, bool isDark) {
     final finishDateStr = DateFormat('MMM d, yyyy').format(r.endDate);
     final daysLeft = r.daysRemaining;
-
-    final String durationLabel = r.isContinuous
-        ? "Continuous Medication • Daily reminders ongoing"
-        : (daysLeft > 0
-            ? "Day ${r.currentDayNumber} of ${r.durationDays} days • $daysLeft days left (until $finishDateStr)"
-            : "Course completed");
+    final totalDays = r.durationDays > 0 ? r.durationDays : 1;
+    final currentDay = r.currentDayNumber.clamp(0, totalDays);
+    final courseProgress = r.isContinuous ? 1.0 : (currentDay / totalDays).clamp(0.0, 1.0);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black12 : const Color(0xFF64748B).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -708,6 +943,31 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Pill icon container
+              Container(
+                width: 38,
+                height: 38,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.16 : 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.15),
+                    width: 0.8,
+                  ),
+                ),
+                child: Image.asset(
+                  'assets/images/dashboard_icons/pill_prescriptions_thick.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.medication_rounded,
+                    color: primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,45 +976,83 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                       r.medicineName,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 14,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        height: 1.25,
+                        height: 1.2,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      durationLabel,
+                      r.isContinuous
+                          ? "Continuous Medication • Daily alarms active"
+                          : (daysLeft > 0
+                              ? "Day $currentDay of $totalDays days • $daysLeft days left (until $finishDateStr)"
+                              : "Course completed"),
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                         color: r.isContinuous
                             ? primaryColor
                             : (isDark ? Colors.white60 : Colors.grey.shade600),
                       ),
                     ),
-                    if (r.doctorName.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        "Prescribed by: ${r.doctorName}",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11,
-                          color: isDark ? Colors.white54 : Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
+
               IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
-                tooltip: "Cancel Reminder",
+                icon: const Icon(Icons.alarm_off_rounded, size: 18, color: Colors.redAccent),
+                tooltip: "Stop Reminder",
                 onPressed: () => _confirmDeleteReminder(r),
               ),
             ],
           ),
+
+          if (!r.isContinuous && totalDays > 1) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: courseProgress,
+                minHeight: 5,
+                backgroundColor: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  courseProgress == 1.0 ? const Color(0xFF10B981) : primaryColor,
+                ),
+              ),
+            ),
+          ],
+
+          if (r.doctorName.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DoctorAvatarWidget(
+                  photoUrl: r.doctorPhoto,
+                  doctorName: r.doctorName,
+                  size: 18,
+                  borderRadius: 5,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    "Prescribed by ${r.doctorName.startsWith('Dr.') ? r.doctorName : 'Dr. ${r.doctorName}'}",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
 
           const SizedBox(height: 10),
 
@@ -764,10 +1062,14 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
             runSpacing: 6,
             children: r.times.map((t) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.07),
                   borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.18),
+                    width: 0.8,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

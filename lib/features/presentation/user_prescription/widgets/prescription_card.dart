@@ -5,6 +5,7 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
+import '../../../../core/widgets/doctor_avatar_widget.dart';
 import '../prescription_details_screen.dart';
 
 class PrescriptionCard extends StatelessWidget {
@@ -13,10 +14,12 @@ class PrescriptionCard extends StatelessWidget {
   final String condition;
   final String doctor;
   final String specialty;
+  final String? doctorPhoto;
   final String date;
   final String status;
   final String pharmacy;
   final List<Map<String, dynamic>> medications;
+  final String? pdfUrl;
 
   const PrescriptionCard({
     super.key,
@@ -25,19 +28,25 @@ class PrescriptionCard extends StatelessWidget {
     required this.condition,
     required this.doctor,
     required this.specialty,
+    this.doctorPhoto,
     required this.date,
     required this.status,
     required this.pharmacy,
     required this.medications,
+    this.pdfUrl,
   });
 
-  bool get isActive => status.toLowerCase() == 'active';
-
   String get _doctorNameOnly {
-    if (doctor.contains(' - ')) {
-      return doctor.split(' - ').first.trim();
+    String name = doctor;
+    if (name.contains(' - ')) {
+      name = name.split(' - ').first.trim();
     }
-    return doctor.trim().isNotEmpty ? doctor.trim() : 'Consulting Doctor';
+    name = name.trim();
+    if (name.isEmpty) return 'Consulting Doctor';
+    if (!name.toLowerCase().startsWith('dr.') && !name.toLowerCase().startsWith('dr ')) {
+      return 'Dr. $name';
+    }
+    return name;
   }
 
   String get _specialtyOnly {
@@ -66,14 +75,16 @@ class PrescriptionCard extends StatelessWidget {
   void _openPdf(BuildContext context) {
     final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
     final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-    final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/$id/pdf';
+    final effectivePdfUrl = (pdfUrl != null && pdfUrl!.trim().isNotEmpty)
+        ? (pdfUrl!.startsWith('http') ? pdfUrl! : '$baseUrl$pdfUrl')
+        : '$baseUrl/v1/api/auth/prescriptions/$id/pdf';
 
     InAppDocumentViewer.show(
       context,
       title: _doctorNameOnly.isNotEmpty ? '$_doctorNameOnly - Prescription' : 'Digital Prescription',
       category: 'Prescription',
       fileUrl: effectivePdfUrl,
-      hospitalName: 'Yira Super Speciality Hospitals',
+      hospitalName: _specialtyOnly.isNotEmpty ? _specialtyOnly : 'Yira Super Speciality Hospitals',
       isAppointmentDoc: true,
     );
   }
@@ -90,10 +101,12 @@ class PrescriptionCard extends StatelessWidget {
             'condition': condition,
             'doctor': doctor,
             'specialty': specialty,
+            'doctorPhoto': doctorPhoto,
             'date': date,
             'status': status,
             'pharmacy': pharmacy,
             'medications': medications,
+            'pdfUrl': pdfUrl,
           },
         ),
       ),
@@ -137,25 +150,11 @@ class PrescriptionCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Doctor Icon Avatar
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.medical_services_rounded,
-                          color: primaryColor,
-                          size: 20,
-                        ),
-                      ),
+                    // Doctor Avatar (Photo or Doctor Logo fallback)
+                    DoctorAvatarWidget(
+                      photoUrl: doctorPhoto,
+                      doctorName: _doctorNameOnly,
+                      size: isTablet(context) ? 46 : 42,
                     ),
                     const SizedBox(width: 12),
 
@@ -192,48 +191,41 @@ class PrescriptionCard extends StatelessWidget {
 
                     const SizedBox(width: 8),
 
-                    // Status Badge & PDF Action
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildStatusBadge(isDark),
-                        const SizedBox(width: 6),
-                        InkWell(
-                          onTap: () => _openPdf(context),
+                    // PDF Document Action (Active status badge removed)
+                    InkWell(
+                      onTap: () => _openPdf(context),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.08),
                           borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.09),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFF059669).withValues(alpha: 0.3),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.picture_as_pdf_rounded,
-                                  size: 13,
-                                  color: Color(0xFF059669),
-                                ),
-                                SizedBox(width: 3),
-                                Text(
-                                  "PDF",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF059669),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          border: Border.all(
+                            color: const Color(0xFF059669).withValues(alpha: 0.25),
+                            width: 0.8,
                           ),
                         ),
-                      ],
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf_rounded,
+                              size: 13,
+                              color: Color(0xFF059669),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              "PDF",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -395,43 +387,6 @@ class PrescriptionCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(bool isDark) {
-    final Color badgeColor = isActive ? const Color(0xFF10B981) : Colors.grey.shade500;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-      decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: badgeColor.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5.5,
-            height: 5.5,
-            decoration: BoxDecoration(
-              color: badgeColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 4.5),
-          Text(
-            isActive ? 'Active' : 'Completed',
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: badgeColor,
-            ),
-          ),
-        ],
       ),
     );
   }

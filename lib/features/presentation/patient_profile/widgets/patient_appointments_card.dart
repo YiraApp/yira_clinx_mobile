@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/widgets/doctor_avatar_widget.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
@@ -1456,10 +1457,16 @@ class PatientAppointmentsCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.medication_liquid_rounded, size: 16, color: primaryColor),
-                    const SizedBox(width: 6),
+                    DoctorAvatarWidget(
+                      doctorName: pres.doctorName,
+                      size: 22,
+                      borderRadius: 6,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      "Prescription • ${pres.date}",
+                      pres.doctorName.isNotEmpty
+                          ? "Dr. ${pres.doctorName.replaceFirst('Dr. ', '')} • ${pres.date}"
+                          : "Prescription • ${pres.date}",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 12.5,
