@@ -1401,7 +1401,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           spacing: 8,
                           runSpacing: 8,
                           children: _patientProfiles.map((p) {
-                            final isSelected = _selectedProfile?['userId'] == p['userId'];
+                            final isSelected = identical(_selectedProfile, p) ||
+                                (_selectedProfile?['userId'] == p['userId'] &&
+                                 _selectedProfile?['name'] == p['name'] &&
+                                 _selectedProfile?['relation'] == p['relation']);
                             return GestureDetector(
                               onTap: () => setState(() => _selectedProfile = p),
                               child: Container(
@@ -1807,10 +1810,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           ],
                         ),
 
-                        if (_isTeleConsultation) ...[
-                          const SizedBox(height: 14),
-                          _buildTeleconsultationPaymentSetup(isDark, isTab),
-                        ],
+                        // Teleconsultation payment setup removed per user request
 
                         const SizedBox(height: 18),
                         Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
@@ -1997,203 +1997,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     );
   }
 
-  Widget _buildTeleconsultationPaymentSetup(bool isDark, bool isTab) {
-    final double fee = (_selectedDoctor?['consultationFee'] != null)
-        ? (double.tryParse(_selectedDoctor!['consultationFee'].toString()) ?? 0.0)
-        : 0.0;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.payment_rounded,
-                  color: Color(0xFF2563EB),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Teleconsultation Payment Setup",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      "Online payment required to confirm video slot",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 12),
-                    SizedBox(width: 3),
-                    Text(
-                      "Razorpay",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-          const SizedBox(height: 12),
-          // Fee details
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Consultation Fee",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                ),
-              ),
-              Text(
-                fee == 0 ? "Free" : "₹${fee.toStringAsFixed(0)}",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: fee == 0 ? const Color(0xFF059669) : const Color(0xFF2563EB),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Video call platform
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Video Platform",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.videocam_rounded, size: 14, color: Color(0xFF0284C7)),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Zoom Video (Included)",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Payment options
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Accepted Modes",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-              ),
-              Text(
-                "UPI, GPay, Cards, NetBanking",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF059669)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    "100% Encrypted & Secure Prepayment via Razorpay",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionHeader(int number, String title, bool isDark) {
     return Row(
@@ -2707,9 +2510,51 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   }
 
   Widget _buildFullAppointmentShimmer(bool isDark, bool isTab) {
+    final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final highlightColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
+    final placeholderColor = isDark ? const Color(0xFF334155) : Colors.white;
+
+    Widget shimmerBlock({double? width, required double height, double radius = 8}) {
+      return Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: placeholderColor,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+    }
+
+    Widget sectionHeader(double labelWidth) {
+      return Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: placeholderColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          shimmerBlock(width: labelWidth, height: 14, radius: 4),
+        ],
+      );
+    }
+
+    Widget divider() {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Container(
+          height: 1,
+          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+        ),
+      );
+    }
+
     return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: SingleChildScrollView(
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: isTab ? 32 : 16, vertical: 16),
@@ -2728,70 +2573,197 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(width: 140, height: 16, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+                  // Section 1: Hospital & Assigned Doctor
+                  sectionHeader(180),
+                  const SizedBox(height: 14),
+                  // Hospital dropdown
+                  shimmerBlock(height: 50, radius: 12),
                   const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(width: 120, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 10),
+                  // Doctor cards row
                   SizedBox(
-                    height: 88,
+                    height: 90,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: 3,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (_, _) => Container(
-                        width: 220,
-                        padding: const EdgeInsets.all(10),
+                      separatorBuilder: (context, index) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) => Container(
+                        width: 200,
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: placeholderColor,
                           borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 36, height: 36,
+                                  decoration: BoxDecoration(
+                                    color: baseColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(width: 100, height: 10, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                                      const SizedBox(height: 6),
+                                      Container(width: 70, height: 8, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Container(width: 100, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 10),
+
+                  divider(),
+
+                  // Section 2: Patient Details
+                  sectionHeader(120),
+                  const SizedBox(height: 14),
+                  // Profile card placeholder
                   Container(
-                    width: double.infinity,
-                    height: 48,
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: placeholderColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(
+                            color: baseColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(width: 120, height: 12, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                              const SizedBox(height: 6),
+                              Container(width: 80, height: 10, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                            ],
+                          ),
+                        ),
+                        Container(width: 60, height: 24, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(6))),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 18),
-                  Container(width: 90, height: 14, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-                  const SizedBox(height: 10),
+
+                  divider(),
+
+                  // Section 3: Date & Available Slot
+                  sectionHeader(150),
+                  const SizedBox(height: 14),
+                  // Date picker strip
+                  SizedBox(
+                    height: 72,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: 5,
+                      separatorBuilder: (context, index) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) => Container(
+                        width: 52,
+                        decoration: BoxDecoration(
+                          color: placeholderColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(width: 20, height: 8, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                            const SizedBox(height: 6),
+                            Container(width: 24, height: 16, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                            const SizedBox(height: 6),
+                            Container(width: 20, height: 8, decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(3))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Slot grid
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: List.generate(6, (index) => Container(
-                      width: 92,
+                    children: List.generate(8, (_) => Container(
+                      width: 88,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: placeholderColor,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     )),
                   ),
-                  const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+
+                  divider(),
+
+                  // Section 4: Consultation Details
+                  sectionHeader(150),
+                  const SizedBox(height: 14),
+                  // Visit type chips
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(4, (_) => Container(
+                      width: 90,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: placeholderColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    )),
                   ),
+                  const SizedBox(height: 12),
+                  // Teleconsultation toggle row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      shimmerBlock(width: 180, height: 14, radius: 4),
+                      shimmerBlock(width: 42, height: 24, radius: 12),
+                    ],
+                  ),
+
+                  divider(),
+
+                  // Section 5: Reason / Chief Complaint
+                  sectionHeader(170),
+                  const SizedBox(height: 14),
+                  // Quick reason chips
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: List.generate(4, (i) => Container(
+                      width: 80 + (i * 10).toDouble(),
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: placeholderColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    )),
+                  ),
+                  const SizedBox(height: 10),
+                  // Text area placeholder
+                  shimmerBlock(height: 60, radius: 12),
+
+                  const SizedBox(height: 24),
+
+                  // Submit button
+                  shimmerBlock(height: 52, radius: 14),
                 ],
               ),
             ),

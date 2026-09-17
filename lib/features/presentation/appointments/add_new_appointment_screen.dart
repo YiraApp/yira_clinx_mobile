@@ -232,6 +232,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   // Search Mode: By Mobile (Default) vs By Patient Name
   PatientSearchMode _patientSearchMode = PatientSearchMode.byPhone;
   PatientOption? _selectedPatient;
+  bool _isChangingPatient = false;
 
   // Matching Accounts by Phone
   List<PatientOption> _matchingAccountsList = [];
@@ -467,11 +468,42 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
   final List<String> _genderOptions = const ["Male", "Female", "Other"];
 
+  bool _isSamePatient(PatientOption a, PatientOption b) {
+    if (identical(a, b)) return true;
+
+    final bool aIsPrimary = a.isPrimary ||
+        a.relation.toLowerCase().trim() == 'primary' ||
+        a.relation.toLowerCase().trim() == 'self';
+    final bool bIsPrimary = b.isPrimary ||
+        b.relation.toLowerCase().trim() == 'primary' ||
+        b.relation.toLowerCase().trim() == 'self';
+
+    if (aIsPrimary && bIsPrimary) {
+      return true;
+    }
+    if (aIsPrimary != bIsPrimary) {
+      return false;
+    }
+
+    if (a.id.isNotEmpty && b.id.isNotEmpty && a.id == b.id) {
+      return true;
+    }
+
+    final nameA = a.name.toLowerCase().trim();
+    final nameB = b.name.toLowerCase().trim();
+    if (nameA.isNotEmpty && nameA == nameB) {
+      return true;
+    }
+
+    return false;
+  }
+
   void _clearSelectedPatient() {
     setState(() {
       _patientSearchController.clear();
       _selectedGender = "Male";
       _selectedPatient = null;
+      _isChangingPatient = false;
       _showPatientDropdown = false;
       _nameError = null;
       _phoneError = null;
@@ -488,6 +520,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   void _selectPatientAccount(PatientOption account) {
     setState(() {
       _selectedPatient = account;
+      _isChangingPatient = false;
       _patientSearchController.text = account.name;
       _phoneController.text = account.phone;
       _selectedGender = account.gender.isNotEmpty ? account.gender : "Male";
@@ -696,7 +729,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             setState(() {
               _matchingAccountsList = accounts;
               if (accounts.isNotEmpty) {
-                if (_selectedPatient == null || !_matchingAccountsList.any((a) => a.id == _selectedPatient?.id || a.userId == _selectedPatient?.userId)) {
+                if (_selectedPatient == null || !_matchingAccountsList.any((a) => _isSamePatient(a, _selectedPatient!))) {
                   _selectedPatient = accounts.first;
                   _patientSearchController.text = accounts.first.name;
                   _selectedGender = accounts.first.gender.isNotEmpty ? accounts.first.gender : "Male";
@@ -727,6 +760,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     if (digits.length != 10 && _selectedPatient != null) {
       setState(() {
         _selectedPatient = null;
+        _isChangingPatient = false;
       });
     }
 
@@ -2125,31 +2159,63 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         children: [
                           _buildSectionHeader(1, "Patient Details", isDark),
                           if (_selectedPatient != null)
-                            InkWell(
-                              onTap: _clearSelectedPatient,
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: 0.1),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isChangingPatient) ...[
+                                  InkWell(
+                                    onTap: _clearSelectedPatient,
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      margin: const EdgeInsets.only(right: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        "Clear",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _isChangingPatient = !_isChangingPatient;
+                                    });
+                                  },
                                   borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  "Change ✕",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: primaryColor,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _isChangingPatient ? "Cancel" : "Change",
+                                      style: const TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: primaryColor,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                         ],
                       ),
                       const SizedBox(height: 12),
 
-                      if (_selectedPatient != null) ...[
+                      if (_selectedPatient != null && !_isChangingPatient) ...[
                         _buildSelectedPatientCard(isDark, isTab),
                       ] else ...[
                         // Two Distinct, Uncombined Options: Search by Mobile Number vs Search by Patient Name
@@ -2553,10 +2619,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         ],
                       ),
 
-                      if (_isTeleConsultation) ...[
-                        const SizedBox(height: 14),
-                        _buildTeleconsultationPaymentSetup(isDark, isTab),
-                      ],
+                      // Teleconsultation payment setup removed per user request
 
                       if (!isPatient) ...[
                         const SizedBox(height: 18),
@@ -3006,205 +3069,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTeleconsultationPaymentSetup(bool isDark, bool isTab) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.35),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.payment_rounded,
-                  color: primaryColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Teleconsultation Payment Setup",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      "Online payment required to confirm video slot",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryColor,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 12),
-                    SizedBox(width: 3),
-                    Text(
-                      "Razorpay",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-          const SizedBox(height: 12),
-          // Fee details
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Consultation Fee",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                ),
-              ),
-              Text(
-                _consultationFee == 0 ? "Free" : "₹${_consultationFee.toStringAsFixed(0)}",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: _consultationFee == 0 ? const Color(0xFF059669) : primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Video call platform
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Video Platform",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.videocam_rounded, size: 14, color: Color(0xFF0284C7)),
-                  const SizedBox(width: 4),
-                  Text(
-                    "Zoom Video (Included)",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Payment options
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Accepted Modes",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  "UPI, GPay, Cards, NetBanking",
-                  textAlign: TextAlign.end,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF059669)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    "100% Encrypted & Secure Prepayment via Razorpay",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -4662,7 +4526,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         ),
                         const SizedBox(width: 8),
                         InkWell(
-                          onTap: _clearSelectedPatient,
+                          onTap: () {
+                            setState(() {
+                              _isChangingPatient = true;
+                            });
+                          },
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -4692,87 +4560,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    // ─ Contact Info Row ─
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.phone_rounded,
-                            size: 13,
-                            color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            "+91 ${patient.phone}",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
-                            ),
-                          ),
-                          if (patient.displayAge.isNotEmpty) ...[
-                            Container(
-                              width: 1,
-                              height: 12,
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
-                            ),
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              patient.displayAge,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ),
-                          ],
-                          if (patient.email != null && patient.email!.isNotEmpty) ...[
-                            Container(
-                              width: 1,
-                              height: 12,
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
-                            ),
-                            Icon(
-                              Icons.email_outlined,
-                              size: 13,
-                              color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                patient.email!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
                     ),
                     // ─ Past visits badge ─
                     if (patient.pastAppointmentsCount > 0) ...[
@@ -4909,7 +4696,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             const SizedBox(width: 12),
             Flexible(
               child: Text(
-                "Searching matching accounts for +91 $cleanPhone...",
+                "Searching matching accounts...",
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
@@ -4984,7 +4771,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               ),
                             ),
                             Text(
-                              "No accounts found for +91 $cleanPhone",
+                              "No accounts found",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: 11,
@@ -5195,11 +4982,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             itemBuilder: (context, index) {
               final account = _matchingAccountsList[index];
               final bool isPrimaryItem = index == 0;
-              final bool isSelected = _selectedPatient != null
-                  ? ((_selectedPatient?.id.isNotEmpty == true && _selectedPatient?.id == account.id) ||
-                     (_selectedPatient?.userId.isNotEmpty == true && _selectedPatient?.userId == account.userId) ||
-                     (_selectedPatient!.name.toLowerCase().trim() == account.name.toLowerCase().trim()))
-                  : isPrimaryItem;
+              final bool isSelected = _selectedPatient != null && _isSamePatient(_selectedPatient!, account);
 
               final relLower = account.relation.toLowerCase();
               Color tileAccent;
@@ -5319,7 +5102,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    "+91 ${account.phone} • ${account.gender}${account.displayAge.isNotEmpty ? ' • ${account.displayAge}' : ''}",
+                                    "${account.gender}${account.displayAge.isNotEmpty ? ' • ${account.displayAge}' : ''}",
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -5549,7 +5332,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "Add dependent ($dependentsCount/6) under +91 ${_phoneController.text.trim()}",
+                                      "Add dependent ($dependentsCount/6)",
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 11,
