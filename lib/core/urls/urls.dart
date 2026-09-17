@@ -97,4 +97,7 @@ class URLs {
   static const createPaymentOrderUrl = "/v1/api/auth/payments/create-order";
   static const verifyPaymentUrl = "/v1/api/auth/payments/verify";
   static const getPaymentByAppointmentUrl = "/v1/api/auth/payments/by-appointment";
+
+  /*Account Management*/
+  static const accountDeactivateUrl = "/v1/api/auth/account/deactivate";
 }

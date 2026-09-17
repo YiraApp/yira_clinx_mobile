@@ -6,6 +6,8 @@ import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'patient_select_hospital_screen.dart';
 
 class PatientBookAppointmentSheet {
+  static bool _isOpening = false;
+
   static Future<void> show(
     BuildContext context, {
     ProfileEntity? targetProfile,
@@ -13,6 +15,9 @@ class PatientBookAppointmentSheet {
     String? patientPhone,
     VoidCallback? onAppointmentBooked,
   }) async {
+    if (_isOpening) return;
+    _isOpening = true;
+
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = (currentUser?.data?.id ?? '').trim();
     final effectiveName = patientName ??
@@ -62,6 +67,8 @@ class PatientBookAppointmentSheet {
           },
         );
       }
+    } finally {
+      _isOpening = false;
     }
 
     onAppointmentBooked?.call();

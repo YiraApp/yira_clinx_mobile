@@ -8,6 +8,7 @@ class SinglePrescriptionCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onView;
+  final VoidCallback? onPdfView;
   final bool isTab;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
@@ -19,6 +20,7 @@ class SinglePrescriptionCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onView,
+    this.onPdfView,
     required this.isTab,
   });
 
@@ -93,10 +95,51 @@ class SinglePrescriptionCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
 
-                    // Direct Action Buttons (Edit & Delete)
+                    // Direct Action Buttons (PDF, Edit & Delete)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (onPdfView != null) ...[
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onPdfView,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFF059669).withValues(alpha: 0.35),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.picture_as_pdf_rounded,
+                                      size: 14,
+                                      color: Color(0xFF059669),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "PDF",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         if (onEdit != null)
                           Material(
                             color: Colors.transparent,
@@ -306,9 +349,9 @@ class SinglePrescriptionCard extends StatelessWidget {
             ),
 
           // ── Bottom View Action Bar ──
-          if (onView != null)
+          if (onView != null || onPdfView != null)
             InkWell(
-              onTap: onView,
+              onTap: onPdfView ?? onView,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
@@ -324,14 +367,25 @@ class SinglePrescriptionCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "View Full Prescription Details",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _primaryBlue,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.picture_as_pdf_rounded,
+                          size: 15,
+                          color: _primaryBlue,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "View Full Prescription",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _primaryBlue,
+                          ),
+                        ),
+                      ],
                     ),
                     const Icon(
                       Icons.arrow_forward_ios_rounded,

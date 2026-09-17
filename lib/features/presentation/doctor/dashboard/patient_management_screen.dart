@@ -84,7 +84,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                       children: [
                         // Clean Top Bar & Search Section + Filter Pills
                         Container(
-                          key: ProviderTourController().patientsSearchKey,
+                          key: isTourActive ? ProviderTourController().patientsSearchKey : null,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -99,7 +99,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                         // Patient List View or Empty State
                         Expanded(
                           child: Container(
-                            key: ProviderTourController().patientsListKey,
+                            key: isTourActive ? ProviderTourController().patientsListKey : null,
                             child: (state.status == DashboardStatus.loading && !isTourActive)
                                 ? PatientCardListShimmer(itemCount: 5, isTab: isTab)
                                 : RefreshIndicator(

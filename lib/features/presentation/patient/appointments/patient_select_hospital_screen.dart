@@ -39,6 +39,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   final TextEditingController _searchController = TextEditingController();
 
   static const Color primaryBlue = Color(0xFF2563EB);
+  bool _isNavigating = false;
 
   @override
   void initState() {
@@ -83,19 +84,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     if (address.isNotEmpty) return address;
     if (city.isNotEmpty && state.isNotEmpty) return '$city, $state';
     if (city.isNotEmpty) return city;
-    return '';
-  }
-
-  String _formatHospitalTimings(Map<String, dynamic> hosp) {
-    final is24Hours = hosp['is24Hours'] == true || hosp['is24Hours'] == 1 || hosp['is24Hours'] == 'true';
-    if (is24Hours) return 'Open 24/7 • Emergency Ready';
-
-    final openTime = (hosp['openingTime'] ?? '').toString().trim();
-    final closeTime = (hosp['closingTime'] ?? '').toString().trim();
-
-    if (openTime.isNotEmpty && closeTime.isNotEmpty) {
-      return 'OPD: $openTime - $closeTime';
-    }
     return '';
   }
 
@@ -360,24 +348,43 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () async {
+            if (_isNavigating) return;
+            _isNavigating = true;
             HapticFeedback.lightImpact();
             await Navigator.pushNamed(context, AppRoutes.patientMyDoctors);
             if (mounted) _loadHospitals();
+            _isNavigating = false;
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(7),
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: primaryBlue,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.medical_services_rounded,
-                    size: 16,
                     color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.asset(
+                      'assets/images/dashboard_icons/connected_doctors_thick.png',
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -451,13 +458,8 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     final hospName = (hosp['name'] ?? hosp['hospitalName'] ?? 'Hospital').toString().trim();
     final orgName = (hosp['orgName'] ?? hosp['organizationName'] ?? '').toString().trim();
     final hospType = (hosp['hospitalType'] ?? '').toString().trim();
-    final hospCode = (hosp['hospitalCode'] ?? hosp['code'] ?? '').toString().trim();
-
     final locationStr = _formatHospitalLocation(hosp);
-    final timingsStr = _formatHospitalTimings(hosp);
     final helplineStr = _formatHospitalHelpline(hosp);
-    final totalBeds = hosp['totalBeds'];
-    final is24Hours = hosp['is24Hours'] == true || hosp['is24Hours'] == 1 || hosp['is24Hours'] == 'true';
     final logoUrl = (hosp['logo'] ??
             hosp['logoUrl'] ??
             hosp['imageUrl'] ??
@@ -474,7 +476,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
       subtitle = orgName;
     }
 
-    final hasAmenities = is24Hours || (totalBeds != null && totalBeds > 0) || helplineStr.isNotEmpty;
+    final hasAmenities = helplineStr.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -496,9 +498,11 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () {
+          onTap: () async {
+            if (_isNavigating) return;
+            _isNavigating = true;
             HapticFeedback.selectionClick();
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => PatientHospitalDoctorsScreen(
@@ -510,6 +514,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                 ),
               ),
             );
+            _isNavigating = false;
           },
           child: Padding(
             padding: EdgeInsets.all(isTab ? 18 : 14),
@@ -585,30 +590,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                               ],
                             ),
                           ],
-
-                          if (hospCode.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Text(
-                                "CODE: $hospCode",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -622,20 +603,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                     spacing: 6,
                     runSpacing: 5,
                     children: [
-                      if (is24Hours)
-                        _buildPillChip(
-                          label: "24/7 Emergency Active",
-                          icon: Icons.bolt_rounded,
-                          color: const Color(0xFF10B981),
-                          isDark: isDark,
-                        ),
-                      if (totalBeds != null && totalBeds > 0)
-                        _buildPillChip(
-                          label: "$totalBeds Beds Available",
-                          icon: Icons.hotel_rounded,
-                          color: const Color(0xFF8B5CF6),
-                          isDark: isDark,
-                        ),
                       if (helplineStr.isNotEmpty)
                         GestureDetector(
                           onTap: () {
@@ -668,41 +635,8 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
 
                 // ─── MEDIBUDDY BOTTOM ACTION BAR ──────────────────────────────
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (timingsStr.isNotEmpty) ...[
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: is24Hours ? const Color(0xFF10B981) : primaryBlue,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                timingsStr,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ] else ...[
-                      const Spacer(),
-                    ],
-
                     // Right MediBuddy Primary CTA Button
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),

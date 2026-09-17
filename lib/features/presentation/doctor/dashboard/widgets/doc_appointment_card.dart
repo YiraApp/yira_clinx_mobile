@@ -20,6 +20,7 @@ class DocAppointmentCard extends StatefulWidget {
   final bool isTab;
   final bool isTeleConsultation;
   final VoidCallback? onJoinCall;
+  final VoidCallback? onPrescriptionTap;
 
   const DocAppointmentCard({
     super.key,
@@ -37,6 +38,7 @@ class DocAppointmentCard extends StatefulWidget {
     required this.isTab,
     this.isTeleConsultation = false,
     this.onJoinCall,
+    this.onPrescriptionTap,
   });
 
   @override
@@ -352,6 +354,49 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                 ),
                               );
                             },
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+
+                        // Prescription quick button if provided
+                        if (widget.onPrescriptionTap != null) ...[
+                          InkWell(
+                            onTap: widget.onPrescriptionTap,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: widget.isTab ? 9.0 : 7.0,
+                                vertical: widget.isTab ? 6.0 : 4.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: primaryColor.withValues(alpha: 0.35),
+                                  width: 0.9,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.medication_rounded,
+                                    size: widget.isTab ? 14 : 12,
+                                    color: primaryColor,
+                                  ),
+                                  const SizedBox(width: 3.5),
+                                  Text(
+                                    "Prescription",
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: widget.isTab ? 11 : 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 6),
                         ],

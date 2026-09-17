@@ -637,6 +637,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
               }
             },
           ),
+          centerTitle: false,
           title: Text(
             _selectedMetric == VitalMetricType.all ? 'Vitals Tracking' : metricTitle,
             style: const TextStyle(
@@ -644,39 +645,60 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        actions: [
-          if (_selectedMetric != VitalMetricType.all)
-            IconButton(
-              tooltip: 'Full Screen Graph',
-              icon: Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                  borderRadius: BorderRadius.circular(10),
+          actions: [
+            if (_selectedMetric != VitalMetricType.all) ...[
+              IconButton(
+                tooltip: 'Full Screen Graph',
+                icon: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.open_in_full_rounded, size: 17, color: _primaryBlue),
                 ),
-                child: const Icon(Icons.open_in_full_rounded, size: 18, color: _primaryBlue),
+                onPressed: _openFullScreenChart,
               ),
-              onPressed: _openFullScreenChart,
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openUpdateVitals,
-        backgroundColor: _primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        icon: const Icon(Icons.add_rounded, size: 20),
-        label: Text(
-          _selectedMetric == VitalMetricType.all ? 'Record Vitals' : 'Record $metricTitle',
-          style: const TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8, top: 10, bottom: 10),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _openUpdateVitals,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: _primaryBlue,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.add_rounded, size: 15, color: Colors.white),
+                          SizedBox(width: 3),
+                          Text(
+                            'Record',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 4),
+          ],
         ),
-      ),
       body: SafeArea(
         child: RefreshIndicator(
           color: _primaryBlue,
@@ -1000,7 +1022,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 const SizedBox(height: 14),
                 _buildHistoryLogs(isDark, isTab),
               ],
-              const SizedBox(height: 70),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -1048,8 +1070,8 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: EdgeInsets.symmetric(
-        horizontal: isTab ? 18 : 14,
-        vertical: isTab ? 14 : 12,
+        horizontal: isTab ? 16 : 12,
+        vertical: isTab ? 14 : 11,
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -1070,18 +1092,18 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(9),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.calendar_today_rounded,
               color: _primaryBlue,
-              size: 18,
+              size: 16,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1091,22 +1113,67 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   'Last Vitals Recorded',
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   lastRecorded,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
-                    fontSize: isTab ? 14 : 13,
+                    fontSize: isTab ? 13 : 12,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _openUpdateVitals,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTab ? 14 : 11,
+                  vertical: isTab ? 9 : 7,
+                ),
+                decoration: BoxDecoration(
+                  color: _primaryBlue,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primaryBlue.withValues(alpha: 0.25),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1.5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.add_rounded, size: 15, color: Colors.white),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Record Vitals',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? 12 : 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

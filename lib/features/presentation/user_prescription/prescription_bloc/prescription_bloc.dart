@@ -154,6 +154,10 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   Future<void> _onLoadPrescriptionDetails(LoadPrescriptionDetails event, Emitter<MedicationState> emit) async {
     emit(state.copyWith(status: MedicationStatus.loading));
 
+    if (state.allPrescriptions.isEmpty) {
+      await _onLoadMedicationData(LoadMedicationData(), emit);
+    }
+
     final match = state.allPrescriptions.firstWhere(
       (p) => p['id'].toString() == event.prescriptionId.toString(),
       orElse: () => state.allPrescriptions.isNotEmpty ? state.allPrescriptions.first : {},

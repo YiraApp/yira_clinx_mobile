@@ -757,6 +757,12 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                           );
                                         }
                                       },
+                                onPrescriptionTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.userPrescriptionManagement,
+                                  );
+                                },
                                 onTap: () {
                                   final currentUser = GlobalSession.instance.userNotifier.value;
                                   Navigator.pushNamed(

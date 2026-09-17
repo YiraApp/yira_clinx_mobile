@@ -3149,13 +3149,18 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   color: isDark ? Colors.white60 : const Color(0xFF64748B),
                 ),
               ),
-              Text(
-                "UPI, GPay, Cards, NetBanking",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  "UPI, GPay, Cards, NetBanking",
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
                 ),
               ),
             ],
@@ -3507,9 +3512,18 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 ),
               ),
             ),
+            if (_selectedDoctorMap != null) ...[
+              const SizedBox(height: 12),
+              _buildDoctorInfoCard(_selectedDoctorMap!, isDark, isTab),
+            ],
           ],
         ],
       );
+    }
+
+    final docMap = _selectedDoctorMap ?? widget.initialDoctor;
+    if (docMap != null) {
+      return _buildDoctorInfoCard(docMap, isDark, isTab);
     }
 
     return Row(
@@ -3545,6 +3559,398 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ── Doctor Info Card (Displays all available doctor details from database) ──
+  Widget _buildDoctorInfoCard(Map<String, dynamic> doc, bool isDark, bool isTab) {
+    final docName = (doc['name'] ?? doc['displayName'] ?? 'Doctor').toString().trim();
+    final specialty = (doc['specialty'] ?? doc['Specialty'] ?? 'General Physician').toString().trim();
+    final subSpecialty = (doc['subSpecialty'] ?? doc['SubSpecialty'] ?? '').toString().trim();
+    final department = (doc['department'] ?? doc['Department'] ?? '').toString().trim();
+    final qualification = (doc['qualification'] ?? doc['Qualification'] ?? '').toString().trim();
+    final experience = (doc['experience'] ?? doc['Experience'] ?? '').toString().trim();
+    final regNo = (doc['registrationNumber'] ?? doc['RegistrationNumber'] ?? '').toString().trim();
+    final bio = (doc['bio'] ?? doc['Bio'] ?? '').toString().trim();
+    final hospitalName = (doc['hospitalName'] ?? doc['Hospital']?['Name'] ?? _selectedHospital?['name'] ?? '').toString().trim();
+    final email = (doc['email'] ?? doc['Email'] ?? '').toString().trim();
+    final phoneNumber = (doc['phoneNumber'] ?? doc['PhoneNumber'] ?? '').toString().trim();
+    final imagePath = (doc['imagePath'] ?? doc['ImagePath'] ?? doc['profileImage'] ?? '').toString().trim();
+    final rawFee = doc['consultationFee'] ?? doc['ConsultationFee'];
+    final fee = rawFee != null ? double.tryParse(rawFee.toString()) : null;
+
+    final initial = docName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim().isNotEmpty
+        ? docName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim()[0].toUpperCase()
+        : 'D';
+    final bool hasImage = imagePath.isNotEmpty && (imagePath.startsWith('http://') || imagePath.startsWith('https://'));
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isTab ? 16 : 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Row 1: Doctor Avatar + Name + Specialization & Hospital ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    width: isTab ? 54 : 48,
+                    height: isTab ? 54 : 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: hasImage
+                          ? Image.network(
+                              imagePath,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  initial,
+                                  style: const TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: primaryColor.withValues(alpha: 0.12),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initial,
+                                style: const TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            docName,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab ? 15 : 14,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      specialty,
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (hospitalName.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_hospital_rounded,
+                            size: 12,
+                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              hospitalName,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // ── Row 2: Specialty, Sub-Specialty, Qualification, Experience, Reg No Badges ──
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (subSpecialty.isNotEmpty && subSpecialty != specialty)
+                _buildDoctorDetailChip(
+                  icon: Icons.hub_rounded,
+                  label: subSpecialty,
+                  isDark: isDark,
+                  color: const Color(0xFF0284C7),
+                ),
+              if (qualification.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.school_rounded,
+                  label: qualification,
+                  isDark: isDark,
+                  color: const Color(0xFF7C3AED),
+                ),
+              if (experience.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.work_history_rounded,
+                  label: experience,
+                  isDark: isDark,
+                  color: const Color(0xFF0D9488),
+                ),
+              if (department.isNotEmpty && department != specialty && department != 'General')
+                _buildDoctorDetailChip(
+                  icon: Icons.apartment_rounded,
+                  label: department,
+                  isDark: isDark,
+                  color: const Color(0xFFD97706),
+                ),
+              if (regNo.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.badge_rounded,
+                  label: "Reg: $regNo",
+                  isDark: isDark,
+                  color: const Color(0xFF475569),
+                ),
+            ],
+          ),
+
+          // ── Row 3: Doctor Bio / About (if present) ──
+          if (bio.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      bio,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        height: 1.35,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Row 4: Consultation Fee & Contact Info ──
+          const SizedBox(height: 10),
+          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.payments_rounded,
+                      size: 13,
+                      color: Color(0xFF059669),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "CONSULTATION FEE",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      Text(
+                        fee == null || fee == 0 ? "Free Consultation" : "₹${fee.toStringAsFixed(0)}",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: fee == null || fee == 0
+                              ? const Color(0xFF059669)
+                              : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (phoneNumber.isNotEmpty || email.isNotEmpty)
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (phoneNumber.isNotEmpty) ...[
+                        Icon(Icons.phone_in_talk_rounded, size: 12, color: primaryColor),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            phoneNumber,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ] else if (email.isNotEmpty) ...[
+                        Icon(Icons.mail_outline_rounded, size: 12, color: primaryColor),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            email,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorDetailChip({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
+import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/utils/utils.dart';
@@ -351,6 +352,42 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF059669),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                          final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                          final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
+
+                          InAppDocumentViewer.show(
+                            context,
+                            title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
+                            category: 'Prescription',
+                            fileUrl: effectivePdfUrl,
+                            hospitalName: 'Yira Super Speciality Hospitals',
+                            isAppointmentDoc: true,
+                          );
+                        },
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                        label: const Text(
+                          "View Full Prescription (PDF)",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     if (onPrescribeTap != null)
                       SizedBox(
                         width: double.infinity,
@@ -1434,6 +1471,55 @@ class PatientAppointmentsCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
+                    InkWell(
+                      onTap: () {
+                        final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                        final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                        final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
+
+                        InAppDocumentViewer.show(
+                          context,
+                          title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
+                          category: 'Prescription',
+                          fileUrl: effectivePdfUrl,
+                          hospitalName: 'Yira Super Speciality Hospitals',
+                          isAppointmentDoc: true,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF059669).withValues(alpha: 0.35),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf_rounded,
+                              size: 11,
+                              color: Color(0xFF059669),
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              "PDF",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     Text(
                       "View Details",
                       style: TextStyle(

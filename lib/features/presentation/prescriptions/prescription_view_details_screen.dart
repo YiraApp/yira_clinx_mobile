@@ -7,6 +7,8 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../di/dependency_injection.dart';
 import '../../../core/common_widgets/custom_button.dart';
+import '../../../core/common_widgets/in_app_document_viewer.dart';
+import '../../../core/api/base_api_configuration.dart';
 import '../../../core/shimmer_widgets/base_shimmer.dart';
 
 class PrescriptionViewDetailsScreen extends StatelessWidget {
@@ -195,7 +197,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                           ),
                   ),
 
-                  // ── Close Button ──
+                  // ── Action Buttons ──
                   Container(
                     padding: EdgeInsets.only(
                       left: screenHorizontalSpacePadding,
@@ -212,15 +214,71 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                         width: 1,
                       ),
                     ),
-                    child: CustomElevatedButton(
-                      noElevation: true,
-                      backgroundColor: Colors.black,
-                      height: 50,
-                      width: double.infinity,
-                      text: "Close View",
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF059669),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 20),
+                            label: const Text(
+                              "View PDF",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            onPressed: () {
+                              final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                              final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                              final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
+                              final presId = state.prescriptionId ?? (validMeds.isNotEmpty ? validMeds.first.id : '');
+                              final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
+                                  ? state.pdfUrl!
+                                  : (presId.isNotEmpty ? '$baseUrl/v1/api/auth/prescriptions/$presId/pdf' : '');
+
+                              if (effectivePdfUrl.isNotEmpty) {
+                                InAppDocumentViewer.show(
+                                  context,
+                                  title: 'Digital Prescription',
+                                  category: 'Prescription',
+                                  fileUrl: effectivePdfUrl,
+                                  hospitalName: 'Yira Super Speciality Hospitals',
+                                  isAppointmentDoc: true,
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Prescription document is being processed.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: CustomElevatedButton(
+                            noElevation: true,
+                            backgroundColor: Colors.black,
+                            height: 50,
+                            width: double.infinity,
+                            text: "Close View",
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

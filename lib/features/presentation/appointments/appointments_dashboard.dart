@@ -662,7 +662,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 // ─── FILTERS ──────────────────────────────────
                 if (_showFilters)
                   Container(
-                    key: ProviderTourController().apptsFilterKey,
+                    key: isTourActive ? ProviderTourController().apptsFilterKey : null,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -922,7 +922,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 // ─── SCROLLABLE LIST CONTENT ───────────────
                 Expanded(
                   child: Container(
-                    key: ProviderTourController().apptsListKey,
+                    key: isTourActive ? ProviderTourController().apptsListKey : null,
                     child: _buildListContent(
                         state, appointments, isDark, theme, isTab, width),
                   ),

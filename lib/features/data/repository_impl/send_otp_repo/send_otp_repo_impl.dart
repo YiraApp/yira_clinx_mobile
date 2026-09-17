@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 
@@ -26,7 +27,10 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         "isResend": isReSend,
       };
 
-      final response = await _apiClient.account(showSuccessSnack: true).post(
+      final dio = _apiClient.account(showSuccessSnack: true);
+      debugPrint("[SendOtpRepo] POST ${dio.options.baseUrl}${URLs.sendOtpUrl} -> $requestBody");
+
+      final response = await dio.post(
         URLs.sendOtpUrl,
         data: requestBody,
       );
@@ -38,7 +42,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
       return SendOtpModel.fromJson(response.data as Map<String, dynamic>);
     } catch (error, stackTrace) {
       developer.log(
-        "sendOtp failed gracefully inside repository layer",
+        "sendOtp failed gracefully inside repository layer: ${_apiClient.account().options.baseUrl}${URLs.sendOtpUrl}",
         error: error,
         stackTrace: stackTrace,
         name: "SendOtpRepositoryImpl",

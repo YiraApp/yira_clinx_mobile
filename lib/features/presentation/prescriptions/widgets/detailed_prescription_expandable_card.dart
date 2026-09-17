@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';

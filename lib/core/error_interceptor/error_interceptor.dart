@@ -71,11 +71,23 @@ class ErrorInterceptor extends Interceptor {
         path.contains('forgot') ||
         path.contains('reset');
 
-    if (!isAuthEndpoint) {
+    final bool isDeactivatedError = displayMessage != null &&
+        displayMessage.toLowerCase().contains('deactivated');
+    final bool isInactiveError = displayMessage != null &&
+        (displayMessage.toLowerCase().contains('inactive') ||
+            displayMessage.toLowerCase().contains('contact admin'));
+
+    if (!isAuthEndpoint || isDeactivatedError || isInactiveError) {
+      String msg = displayMessage ?? '';
+      if (isDeactivatedError) {
+        msg = 'Your account was deactivated. Contact administrator.';
+      } else if (isInactiveError) {
+        msg = 'Your account is inactive. Contact admin.';
+      }
       ExceptionHandler.processException(
         statusCode: statusCode,
         status: false,
-        message: displayMessage,
+        message: msg,
       );
     }
 

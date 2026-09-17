@@ -8,5 +8,5 @@ abstract class PrescriptionRepository {
     String? orgId,
   });
 
-  Future<void> savePrescription(PrescriptionEntity prescription);
+  Future<PrescriptionEntity> savePrescription(PrescriptionEntity prescription);
 }

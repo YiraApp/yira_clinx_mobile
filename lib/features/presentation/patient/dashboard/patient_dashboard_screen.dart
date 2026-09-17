@@ -482,6 +482,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   },
                                 ),
 
+                                // 2. Prescriptions (Pill Icon)
+                                _buildServiceCard(
+                                  context: context,
+                                  title: 'Prescriptions',
+                                  imagePath: 'assets/images/dashboard_icons/pill_prescriptions_thick.png',
+                                  isDark: isDark,
+                                  isTab: isTab,
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.userPrescriptionManagement,
+                                  ),
+                                ),
+
                                 // 2. Health Records
                                 _buildServiceCard(
                                   context: context,
@@ -1468,6 +1481,17 @@ class _PressableCard extends StatefulWidget {
 
 class _PressableCardState extends State<_PressableCard> {
   bool _isPressed = false;
+  static int _lastGlobalClickTime = 0;
+
+  void _handleTap() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // Debounce rapid taps/double-clicks across quick cards
+    if (now - _lastGlobalClickTime < 750) {
+      return;
+    }
+    _lastGlobalClickTime = now;
+    widget.onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1475,7 +1499,7 @@ class _PressableCardState extends State<_PressableCard> {
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.onTap,
+      onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedScale(
         scale: _isPressed ? 0.97 : 1.0,

@@ -3,6 +3,7 @@ import '../../../domain/entities/prescriptions/prescription_item.dart';
 
 class PrescriptionModel extends PrescriptionEntity {
   const PrescriptionModel({
+    super.id,
     required super.patientId,
     super.appointmentId,
     super.hospitalId,
@@ -10,6 +11,7 @@ class PrescriptionModel extends PrescriptionEntity {
     required super.diagnoses,
     required super.medications,
     required super.additionalNotes,
+    super.pdfUrl,
   });
 
   factory PrescriptionModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class PrescriptionModel extends PrescriptionEntity {
     }
 
     return PrescriptionModel(
+      id: (json['id'] ?? json['Id'])?.toString(),
       patientId: (json['patientId'] ?? json['patient_id'] ?? json['PatientId'] ?? '').toString(),
       appointmentId: (json['appointmentId'] ?? json['appointment_id'] ?? json['AppointmentId'])?.toString(),
       hospitalId: (json['hospitalId'] ?? json['hospital_id'] ?? json['HospitalId'])?.toString(),
@@ -45,6 +48,7 @@ class PrescriptionModel extends PrescriptionEntity {
       diagnoses: parsedDiagnoses,
       medications: parsedMedications,
       additionalNotes: (json['additionalNotes'] ?? json['additional_notes'] ?? json['Notes'] ?? '').toString(),
+      pdfUrl: (json['pdfUrl'] ?? json['PdfUrl'] ?? json['pdf_url'])?.toString(),
     );
   }
 

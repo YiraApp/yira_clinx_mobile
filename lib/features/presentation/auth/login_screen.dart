@@ -8,7 +8,7 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/utils/dismiss_key_board.dart';
 import 'package:yiraclinics/features/presentation/auth/login_bloc/login_bloc.dart';
-import 'package:yiraclinics/features/presentation/auth/select_role_screen.dart';
+import '../../../core/utils/utils.dart';
 
 import '../../../core/common_input_fields/common_input_field.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
@@ -17,7 +17,6 @@ import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
 import '../../../core/models/select_role_model.dart';
-import '../../../core/services/network_services/network_listener/network_listener.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,9 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   payload.roleCount == 1 &&
                   payload.hospitalCount == 1 &&
                   payload.organizationCount == 1) {
-                final String role = (payload.latestUserRole ?? '')
-                    .toLowerCase()
-                    .trim();
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   AppRoutes.userConfiguration,
@@ -149,6 +145,37 @@ class _LoginScreenState extends State<LoginScreen> {
               break;
             case NavForgotPasswordState():
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
+              break;
+
+            case SendOtpFailureState(errorMessage: final msg):
+              final message = msg.toLowerCase().contains('deactivate')
+                  ? 'Your account was deactivated. Contact administrator.'
+                  : (msg.toLowerCase().contains('inactive') ||
+                          msg.toLowerCase().contains('contact admin'))
+                      ? 'Your account is inactive. Contact admin.'
+                      : (msg.isNotEmpty ? msg : 'Failed to send OTP. Please try again.');
+              Utils.showSnackBar(message: message, status: false);
+              break;
+
+            case LoginFailure(errorMessage: final msg):
+              final message = (msg != null && msg.toLowerCase().contains('deactivate'))
+                  ? 'Your account was deactivated. Contact administrator.'
+                  : (msg != null &&
+                          (msg.toLowerCase().contains('inactive') ||
+                              msg.toLowerCase().contains('contact admin')))
+                      ? 'Your account is inactive. Contact admin.'
+                      : (msg ?? 'Login failed. Please try again.');
+              Utils.showSnackBar(message: message, status: false);
+              break;
+
+            case SignInError(errorMessage: final msg):
+              final message = msg.toLowerCase().contains('deactivate')
+                  ? 'Your account was deactivated. Contact administrator.'
+                  : (msg.toLowerCase().contains('inactive') ||
+                          msg.toLowerCase().contains('contact admin'))
+                      ? 'Your account is inactive. Contact admin.'
+                      : (msg.isNotEmpty ? msg : 'Sign in error. Please try again.');
+              Utils.showSnackBar(message: message, status: false);
               break;
 
             default:

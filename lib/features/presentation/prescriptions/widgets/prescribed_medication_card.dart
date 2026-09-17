@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'medication_drop_down_selector.dart';
