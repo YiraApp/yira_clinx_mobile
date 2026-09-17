@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:yiraclinics/di/dependency_injection.dart';
@@ -51,24 +52,38 @@ class AppGateway extends StatelessWidget {
             builder: (context, navigationTree) {
               if (navigationTree == null) return const SizedBox.shrink();
 
-              return NotificationListenerWrapper(
-                onNotificationPayload: (payloadString) {
-                  try {
-                    final Map<String, dynamic> payload = jsonDecode(payloadString);
-                    final String? targetRoute = payload['route'];
-                    final String? itemId = payload['id'];
-
-                    if (targetRoute != null) {
-                      NavigationService.navigatorKey.currentState?.pushNamed(
-                        targetRoute,
-                        arguments: itemId,
-                      );
-                    }
-                  } catch (e) {
-                    debugPrint("Notification routing error: $e");
+              return NotificationListener<UserScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.direction != ScrollDirection.idle) {
+                    FocusManager.instance.primaryFocus?.unfocus();
                   }
+                  return false;
                 },
-                child: InternetGuard(child: navigationTree),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
+                  child: NotificationListenerWrapper(
+                    onNotificationPayload: (payloadString) {
+                      try {
+                        final Map<String, dynamic> payload = jsonDecode(payloadString);
+                        final String? targetRoute = payload['route'];
+                        final String? itemId = payload['id'];
+
+                        if (targetRoute != null) {
+                          NavigationService.navigatorKey.currentState?.pushNamed(
+                            targetRoute,
+                            arguments: itemId,
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint("Notification routing error: $e");
+                      }
+                    },
+                    child: InternetGuard(child: navigationTree),
+                  ),
+                ),
               );
             },
           );

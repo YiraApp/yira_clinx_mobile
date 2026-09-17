@@ -1,25 +1,33 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
+import '../../../../config/app_route/app_routes.dart';
+import '../../../../core/local/flutter_secure_storage.dart';
+import '../../../../core/local/shared_preferences.dart';
+import '../../../../core/utils/utils.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/services/liked_hospitals_service.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
+import '../../../../core/urls/urls.dart';
 import '../../../../di/dependency_injection.dart';
+import '../../../data/models/login/login_model.dart';
 import '../../../domain/entities/login/login_entity.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
-import '../../splash/widgets/splash_preview_screen.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -30,6 +38,8 @@ class PatientProfilePassportScreen extends StatefulWidget {
 
 class _PatientProfilePassportScreenState extends State<PatientProfilePassportScreen> {
   File? _localProfileImage;
+  String? _networkProfileImageUrl;
+  bool _isUploadingPhoto = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -45,14 +55,174 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       if (userId.isEmpty) return;
       final prefs = await SharedPreferences.getInstance();
       final savedPath = prefs.getString('patient_profile_image_$userId');
-      if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
-        if (mounted) {
-          setState(() {
+      final savedNetworkUrl = prefs.getString('patient_profile_network_image_$userId');
+
+      final activeProfile = currentUser?.data?.profiles?.isNotEmpty == true
+          ? currentUser!.data!.profiles!.first
+          : null;
+      final sessionImage = activeProfile?.imagePath;
+
+      if (mounted) {
+        setState(() {
+          if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
             _localProfileImage = File(savedPath);
-          });
-        }
+          }
+          _networkProfileImageUrl = (savedNetworkUrl != null && savedNetworkUrl.isNotEmpty)
+              ? savedNetworkUrl
+              : sessionImage;
+        });
       }
     } catch (_) {}
+  }
+
+  Future<void> _updateSessionImagePath(String newImagePath) async {
+    try {
+      final current = GlobalSession.instance.userNotifier.value;
+      if (current == null) return;
+
+      final updatedProfiles = (current.data?.profiles ?? []).map((p) {
+        return ProfileModel(
+          id: p.id,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          name: p.name,
+          phoneNumber: p.phoneNumber,
+          relation: p.relation,
+          isPrimary: p.isPrimary,
+          gender: p.gender,
+          dob: p.dob,
+          accountType: p.accountType,
+          imagePath: newImagePath,
+        );
+      }).toList();
+
+      final updatedData = DataModel(
+        accessToken: current.data?.accessToken,
+        refreshToken: current.data?.refreshToken,
+        accessTokenExpiry: current.data?.accessTokenExpiry,
+        refreshTokenExpiry: current.data?.refreshTokenExpiry,
+        id: current.data?.id,
+        isMobileVerified: current.data?.isMobileVerified,
+        isEmailVerified: current.data?.isEmailVerified,
+        roleCount: current.data?.roleCount,
+        hospitalCount: current.data?.hospitalCount,
+        organizationCount: current.data?.organizationCount,
+        roles: (current.data?.roles ?? []).map((r) => RoleModel.fromEntity(r)).toList(),
+        profiles: updatedProfiles,
+        firstName: current.data?.firstName,
+        lastName: current.data?.lastName,
+        email: current.data?.email,
+        phoneNumber: current.data?.phoneNumber,
+        countryCode: current.data?.countryCode,
+        gender: current.data?.gender,
+        dob: current.data?.dob,
+        height: current.data?.height,
+        weight: current.data?.weight,
+        heightUnit: current.data?.heightUnit,
+        weightUnit: current.data?.weightUnit,
+        latestUserRole: current.data?.latestUserRole,
+        latestHospitalId: current.data?.latestHospitalId,
+        latestOrgId: current.data?.latestOrgId,
+        latestRoleId: current.data?.latestRoleId,
+        navigationId: current.data?.navigationId,
+      );
+
+      final updatedLogin = LoginModel(
+        status: current.status,
+        message: current.message,
+        data: updatedData,
+      );
+
+      await GlobalSession.instance.update(updatedLogin);
+    } catch (e) {
+      debugPrint("Error updating session image path: $e");
+    }
+  }
+
+  Future<void> _uploadProfilePhoto(XFile picked) async {
+    final file = File(picked.path);
+    setState(() {
+      _localProfileImage = file;
+      _isUploadingPhoto = true;
+    });
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final token = currentUser?.data?.accessToken ?? '';
+    final hospitalId = currentUser?.data?.latestHospitalId;
+    final orgId = currentUser?.data?.latestOrgId;
+
+    if (userId.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('patient_profile_image_$userId', picked.path);
+    }
+
+    try {
+      final fileName = file.path.split('/').last;
+      final formData = FormData.fromMap({
+        "userId": userId,
+        "doctorId": userId,
+        "patientId": userId,
+        "hospitalId": hospitalId,
+        "orgId": orgId,
+        "photo": await MultipartFile.fromFile(
+          file.path,
+          filename: fileName,
+        ),
+      });
+
+      String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.providerProfileUploadPhotoUrl}";
+      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+        targetUrl = "http://$targetUrl";
+      }
+
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      final response = await dio.post(
+        targetUrl,
+        data: formData,
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      if (response.data != null && response.data['data'] != null) {
+        final data = response.data['data'];
+        final photoUrl = data['photoUrl']?.toString() ?? data['imagePath']?.toString() ?? '';
+        if (photoUrl.isNotEmpty) {
+          setState(() {
+            _networkProfileImageUrl = photoUrl;
+          });
+          if (userId.isNotEmpty) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('patient_profile_network_image_$userId', photoUrl);
+          }
+          await _updateSessionImagePath(photoUrl);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error uploading patient photo: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingPhoto = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated successfully!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _openPhotoPickerSheet() {
@@ -124,20 +294,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       Navigator.pop(ctx);
                       final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
                       if (picked != null) {
-                        final file = File(picked.path);
-                        setState(() => _localProfileImage = file);
-                        if (userId.isNotEmpty) {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setString('patient_profile_image_$userId', picked.path);
-                        }
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profile photo updated successfully!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
+                        await _uploadProfilePhoto(picked);
                       }
                     },
                   ),
@@ -153,27 +310,14 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       Navigator.pop(ctx);
                       final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
                       if (picked != null) {
-                        final file = File(picked.path);
-                        setState(() => _localProfileImage = file);
-                        if (userId.isNotEmpty) {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setString('patient_profile_image_$userId', picked.path);
-                        }
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profile photo updated successfully!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
+                        await _uploadProfilePhoto(picked);
                       }
                     },
                   ),
                 ),
               ],
             ),
-            if (_localProfileImage != null) ...[
+            if (_localProfileImage != null || (_networkProfileImageUrl != null && _networkProfileImageUrl!.isNotEmpty)) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
@@ -189,11 +333,16 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    setState(() => _localProfileImage = null);
+                    setState(() {
+                      _localProfileImage = null;
+                      _networkProfileImageUrl = null;
+                    });
                     if (userId.isNotEmpty) {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.remove('patient_profile_image_$userId');
+                      await prefs.remove('patient_profile_network_image_$userId');
                     }
+                    await _updateSessionImagePath('');
                   },
                 ),
               ),
@@ -258,6 +407,181 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
+  void _showDeleteAccountConfirmation(BuildContext context, Color primaryColor) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    bool isDeleting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Delete Account',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to delete your account? This action will:',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 13.5,
+                  color: isDark ? Colors.white70 : Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _deleteInfoRow(Icons.person_off_rounded, 'Deactivate your account', isDark),
+              const SizedBox(height: 6),
+              _deleteInfoRow(Icons.family_restroom_rounded, 'Deactivate all linked dependents', isDark),
+              const SizedBox(height: 6),
+              _deleteInfoRow(Icons.block_rounded, 'Revoke all active sessions', isDark),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  'This action cannot be undone. Contact support to reactivate.',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting ? null : () => Navigator.pop(ctx),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white60 : Colors.grey[600],
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              onPressed: isDeleting ? null : () async {
+                setDialogState(() => isDeleting = true);
+                try {
+                  final currentUser = GlobalSession.instance.userNotifier.value;
+                  final userId = currentUser?.data?.id ?? '';
+                  final token = currentUser?.data?.accessToken ?? '';
+
+                  String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.accountDeactivateUrl}";
+                  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                    targetUrl = "http://$targetUrl";
+                  }
+
+                  final dio = Dio(BaseOptions(
+                    connectTimeout: const Duration(seconds: 15),
+                    receiveTimeout: const Duration(seconds: 15),
+                  ));
+                  await dio.post(
+                    targetUrl,
+                    data: {'userId': userId},
+                    options: Options(headers: {
+                      HttpHeaders.authorizationHeader: 'Bearer $token',
+                      'Content-Type': 'application/json',
+                    }),
+                  );
+
+                  if (mounted) {
+                    Navigator.pop(ctx);
+                    await sl<SecureStorageService>().clearAllSecureData();
+                    await sl<SharedPrefsService>().clearAll();
+                    if (context.mounted) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        AppRoutes.signIn,
+                        (route) => false,
+                      );
+                      Utils.showSnackBar(
+                        message: 'Your account was deactivated. Contact administrator.',
+                        status: false,
+                      );
+                    }
+                  }
+                } catch (e) {
+                  setDialogState(() => isDeleting = false);
+                  if (mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: isDeleting
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Delete Account', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _deleteInfoRow(IconData icon, String text, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.red.shade400),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 12.5,
+              color: isDark ? Colors.white60 : Colors.grey[600],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _openEditProfileDialog(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -265,9 +589,454 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
     final currentUser = GlobalSession.instance.userNotifier.value;
+    final profiles = currentUser?.data?.profiles ?? [];
+    final activeProfile = profiles.isNotEmpty ? profiles.first : null;
     final nameController = TextEditingController(text: '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim());
-    final phoneController = TextEditingController(text: currentUser?.data?.phoneNumber ?? '');
-    final emailController = TextEditingController(text: currentUser?.data?.email ?? '');
+
+    final existingPhone = (currentUser?.data?.phoneNumber ?? '').trim();
+    final bool isPhoneAvailable = existingPhone.isNotEmpty;
+    final phoneController = TextEditingController(text: existingPhone);
+
+    final existingEmail = (currentUser?.data?.email ?? '').trim();
+    final bool isEmailAvailable = existingEmail.isNotEmpty;
+    final emailController = TextEditingController(text: existingEmail);
+
+    final existingDob = (currentUser?.data?.dob ?? activeProfile?.dob ?? '').trim();
+    final dobController = TextEditingController(text: existingDob);
+
+    final existingGender = (currentUser?.data?.gender ?? activeProfile?.gender ?? '').trim();
+    final genders = ['Male', 'Female', 'Other'];
+    String selectedGender = genders.contains(existingGender) ? existingGender : '';
+
+    final existingBloodGroup = ''; // bloodGroup comes from medical overview, not login entity
+    final bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    String selectedBloodGroup = bloodGroups.contains(existingBloodGroup) ? existingBloodGroup : '';
+
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Edit Profile Details',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _openPhotoPickerSheet();
+                      },
+                      icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                      label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Full Name
+                Text('Full Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: nameController,
+                  style: TextStyle(fontFamily: appPoppinFont, color: textColor),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    hintText: 'Enter your full name',
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Date of Birth
+                Text('Date of Birth', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: dobController,
+                  readOnly: true,
+                  style: TextStyle(fontFamily: appPoppinFont, color: textColor),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    hintText: 'Select date of birth',
+                    suffixIcon: Icon(Icons.calendar_month_rounded, size: 20, color: primaryColor),
+                  ),
+                  onTap: () async {
+                    DateTime initialDate = DateTime(1994, 1, 1);
+                    if (dobController.text.isNotEmpty) {
+                      try {
+                        initialDate = DateFormat('yyyy-MM-dd').parse(dobController.text);
+                      } catch (_) {
+                        try {
+                          initialDate = DateFormat('dd MMM yyyy').parse(dobController.text);
+                        } catch (_) {}
+                      }
+                    }
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: initialDate,
+                      firstDate: DateTime(1920),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setModalState(() {
+                        dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 14),
+
+                // Gender
+                Text('Gender', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: selectedGender.isEmpty ? null : selectedGender,
+                      hint: Text('Select gender', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
+                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
+                      items: genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                      onChanged: (v) {
+                        if (v != null) setModalState(() => selectedGender = v);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Blood Group
+                Text('Blood Group', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: selectedBloodGroup.isEmpty ? null : selectedBloodGroup,
+                      hint: Text('Select blood group', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
+                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
+                      items: bloodGroups.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                      onChanged: (v) {
+                        if (v != null) setModalState(() => selectedBloodGroup = v);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Phone Number
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                    if (isPhoneAvailable)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white10 : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Locked",
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: phoneController,
+                  readOnly: isPhoneAvailable,
+                  keyboardType: TextInputType.phone,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    color: isPhoneAvailable
+                        ? (isDark ? Colors.white60 : Colors.grey[600])
+                        : textColor,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: isPhoneAvailable
+                        ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
+                        : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    hintText: isPhoneAvailable ? null : "Add your mobile number",
+                    suffixIcon: isPhoneAvailable
+                        ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Email Address
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Email Address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                    if (isEmailAvailable)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white10 : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Locked",
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: emailController,
+                  readOnly: isEmailAvailable,
+                  keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    color: isEmailAvailable
+                        ? (isDark ? Colors.white60 : Colors.grey[600])
+                        : textColor,
+                  ),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: isEmailAvailable
+                        ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
+                        : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    hintText: isEmailAvailable ? null : "Add your email address",
+                    suffixIcon: isEmailAvailable
+                        ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Save Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: isSaving ? null : () async {
+                      setModalState(() => isSaving = true);
+                      try {
+                        final userId = currentUser?.data?.id ?? '';
+                        final token = currentUser?.data?.accessToken ?? '';
+                        final nameParts = nameController.text.trim().split(' ');
+                        final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+                        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+                        final body = <String, dynamic>{
+                          'userId': userId,
+                          'firstName': firstName,
+                          'lastName': lastName,
+                        };
+                        if (dobController.text.trim().isNotEmpty) body['dob'] = dobController.text.trim();
+                        if (selectedGender.isNotEmpty) body['gender'] = selectedGender;
+                        if (selectedBloodGroup.isNotEmpty) body['bloodGroup'] = selectedBloodGroup;
+                        if (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) {
+                          body['phoneNumber'] = phoneController.text.trim();
+                        }
+                        if (!isEmailAvailable && emailController.text.trim().isNotEmpty) {
+                          body['email'] = emailController.text.trim();
+                        }
+
+                        String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.providerProfileUpdateUrl}";
+                        if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                          targetUrl = "http://$targetUrl";
+                        }
+
+                        final dio = Dio(BaseOptions(
+                          connectTimeout: const Duration(seconds: 15),
+                          receiveTimeout: const Duration(seconds: 15),
+                        ));
+                        await dio.post(
+                          targetUrl,
+                          data: body,
+                          options: Options(headers: {
+                            HttpHeaders.authorizationHeader: 'Bearer $token',
+                            'Content-Type': 'application/json',
+                          }),
+                        );
+
+                        // Update GlobalSession locally
+                        final updatedProfiles = (currentUser?.data?.profiles ?? []).map((p) {
+                          return ProfileModel(
+                            id: p.id,
+                            firstName: firstName,
+                            lastName: lastName,
+                            name: '$firstName $lastName'.trim(),
+                            phoneNumber: p.phoneNumber,
+                            relation: p.relation,
+                            isPrimary: p.isPrimary,
+                            gender: selectedGender.isNotEmpty ? selectedGender : p.gender,
+                            dob: dobController.text.trim().isNotEmpty ? dobController.text.trim() : p.dob,
+                            accountType: p.accountType,
+                            imagePath: p.imagePath,
+                          );
+                        }).toList();
+
+                        final updatedData = DataModel(
+                          accessToken: currentUser?.data?.accessToken,
+                          refreshToken: currentUser?.data?.refreshToken,
+                          accessTokenExpiry: currentUser?.data?.accessTokenExpiry,
+                          refreshTokenExpiry: currentUser?.data?.refreshTokenExpiry,
+                          id: currentUser?.data?.id,
+                          isMobileVerified: currentUser?.data?.isMobileVerified,
+                          isEmailVerified: currentUser?.data?.isEmailVerified,
+                          roleCount: currentUser?.data?.roleCount,
+                          hospitalCount: currentUser?.data?.hospitalCount,
+                          organizationCount: currentUser?.data?.organizationCount,
+                          roles: (currentUser?.data?.roles ?? []).map((r) => RoleModel.fromEntity(r)).toList(),
+                          profiles: updatedProfiles,
+                          firstName: firstName,
+                          lastName: lastName,
+                          email: (!isEmailAvailable && emailController.text.trim().isNotEmpty) ? emailController.text.trim() : currentUser?.data?.email,
+                          phoneNumber: (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) ? phoneController.text.trim() : currentUser?.data?.phoneNumber,
+                          countryCode: currentUser?.data?.countryCode,
+                          gender: selectedGender.isNotEmpty ? selectedGender : currentUser?.data?.gender,
+                          dob: dobController.text.trim().isNotEmpty ? dobController.text.trim() : currentUser?.data?.dob,
+                          height: currentUser?.data?.height,
+                          weight: currentUser?.data?.weight,
+                          heightUnit: currentUser?.data?.heightUnit,
+                          weightUnit: currentUser?.data?.weightUnit,
+                          latestUserRole: currentUser?.data?.latestUserRole,
+                          latestHospitalId: currentUser?.data?.latestHospitalId,
+                          latestOrgId: currentUser?.data?.latestOrgId,
+                          latestRoleId: currentUser?.data?.latestRoleId,
+                          navigationId: currentUser?.data?.navigationId,
+                        );
+
+                        final updatedLogin = LoginModel(
+                          status: currentUser?.status,
+                          message: currentUser?.message,
+                          data: updatedData,
+                        );
+                        GlobalSession.instance.userNotifier.value = updatedLogin;
+
+                        if (mounted) {
+                          Navigator.pop(ctx);
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile updated successfully!'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setModalState(() => isSaving = false);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to update profile: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: isSaving
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 15)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openEditEmergencyContactDialog(BuildContext context, EmergencyContactEntity? emergency) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    final nameController = TextEditingController(text: emergency?.name ?? '');
+    final relationController = TextEditingController(text: 'Primary Contact');
+    final phoneController = TextEditingController(text: emergency?.phone ?? '');
 
     showModalBottomSheet(
       context: context,
@@ -300,34 +1069,22 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Edit Profile Details',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _openPhotoPickerSheet();
-                    },
-                    icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                    label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
-                  ),
-                ],
+              Text(
+                'Edit Emergency Contact',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
               ),
               const SizedBox(height: 16),
-              Text('Full Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              Text('Contact Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
               const SizedBox(height: 6),
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
+                  hintText: 'e.g. Spouse, Parent, Guardian',
                   filled: true,
                   fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -335,25 +1092,26 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
               ),
               const SizedBox(height: 14),
-              Text('Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              Text('Relationship', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: relationController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. Primary Contact, Brother, Sister',
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text('Emergency Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
               const SizedBox(height: 6),
               TextField(
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text('Email Address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
+                  hintText: '+91 91234 56789',
                   filled: true,
                   fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -365,7 +1123,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -374,7 +1132,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Profile information updated successfully!'),
+                        content: Text('Emergency contact updated successfully!'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -447,7 +1205,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               final contact = data?.contactInformation;
               final medical = data?.medicalInformation;
               final emergency = contact?.emergencyContact;
-              final insurance = data?.insurance;
 
               // Determine active member
               final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
@@ -474,12 +1231,12 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               final mrn = userId.isNotEmpty
                   ? 'MRN-${userId.length > 5 ? userId.substring(0, 5).toUpperCase() : userId}'
                   : 'MRN-90214';
-              final phone = contact?.phone ?? currentUser?.data?.phoneNumber ?? '+91 98765 43210';
-              final email = contact?.emailAddress ?? currentUser?.data?.email ?? 'patient@yiraclinics.com';
-              final gender = 'Male';
-              final dob = '15 Aug 1994';
-              final bloodGroup = medical?.bloodGroup ?? 'O+';
-              final hospital = data?.hospital?.name ?? data?.nextAppointment?.hospitalName ?? 'Yira Hospitals';
+              final phone = contact?.phone ?? currentUser?.data?.phoneNumber ?? '';
+              final email = contact?.emailAddress ?? currentUser?.data?.email ?? '';
+              final gender = currentUser?.data?.gender ?? activeProfile?.gender ?? '';
+              final dob = currentUser?.data?.dob ?? activeProfile?.dob ?? '';
+              final bloodGroup = medical?.bloodGroup ?? '';
+              final hospital = data?.hospital?.name ?? data?.nextAppointment?.hospitalName ?? '';
               final hospitalLogo = data?.hospital?.logo ??
                   data?.hospital?.imageUrl ??
                   data?.nextAppointment?.hospitalLogo ??
@@ -487,15 +1244,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     data?.hospital?.id ?? currentUser?.data?.latestHospitalId ?? 19,
                     hospital,
                   );
-              final hospitalCode = data?.hospital?.hospitalCode ?? 'Hosp11';
-              final hospitalAddress = data?.hospital?.address ??
-                  (data?.hospital?.city != null
-                      ? '${data!.hospital!.city}, ${data.hospital!.state ?? ""}'
-                      : 'Jubilee Hills, Road No 36, Hyderabad');
-              final hospitalHelpline = data?.hospital?.helplineNumber ??
-                  data?.hospital?.phone ??
-                  '+91 8008123456';
-              final is24Hours = data?.hospital?.is24Hours ?? true;
 
               return RefreshIndicator(
                 color: primaryColor,
@@ -528,32 +1276,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Profile Strength / Completeness Card
-                    _buildProfileCompletionCard(
-                      context: context,
-                      completionPct: 85,
-                      isDark: isDark,
-                      primaryColor: primaryColor,
-                      isTab: isTab,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 2.5 Primary Healthcare Facility & Hospital Logo Card from DB
-                    _buildAffiliatedHospitalCard(
-                      context: context,
-                      hospitalName: hospital,
-                      hospitalLogo: hospitalLogo,
-                      hospitalCode: hospitalCode,
-                      address: hospitalAddress,
-                      helpline: hospitalHelpline,
-                      is24Hours: is24Hours,
-                      isDark: isDark,
-                      primaryColor: primaryColor,
-                      isTab: isTab,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 3. Personal Information Card
+                    // 2. Personal Information Card
                     DoctorProfileSectionCard(
                       title: "Personal & Demographics",
                       icon: Icons.person_rounded,
@@ -576,43 +1299,43 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         ),
                         DoctorProfileFieldItem(
                           label: "Date of Birth",
-                          value: dob,
+                          value: dob.isNotEmpty ? dob : '-',
                           icon: Icons.cake_outlined,
                         ),
                         DoctorProfileFieldItem(
                           label: "Gender",
-                          value: gender,
+                          value: gender.isNotEmpty ? gender : '-',
                           icon: Icons.wc_outlined,
                         ),
                         DoctorProfileFieldItem(
                           label: "Blood Group",
-                          value: bloodGroup,
+                          value: bloodGroup.isNotEmpty ? bloodGroup : '-',
                           icon: Icons.bloodtype_outlined,
-                          customValueColor: Colors.redAccent,
+                          customValueColor: bloodGroup.isNotEmpty ? Colors.redAccent : null,
                         ),
                         DoctorProfileFieldItem(
                           label: "Phone Number",
-                          value: phone,
+                          value: phone.isNotEmpty ? phone : '-',
                           icon: Icons.phone_outlined,
-                          isCopyable: true,
+                          isCopyable: phone.isNotEmpty,
                         ),
                         DoctorProfileFieldItem(
                           label: "Email Address",
-                          value: email,
+                          value: email.isNotEmpty ? email : '-',
                           icon: Icons.email_outlined,
-                          isCopyable: true,
-                          isVerified: true,
+                          isCopyable: email.isNotEmpty,
+                          isVerified: email.isNotEmpty,
                         ),
                       ],
                     ),
 
-                    // 4. Emergency Contact Card
+                    // 3. Emergency Contact Card
                     DoctorProfileSectionCard(
                       title: "Emergency Contact",
                       icon: Icons.contact_phone_rounded,
                       iconColor: const Color(0xFF10B981),
                       isTab: isTab,
-                      onEdit: () => _openEditProfileDialog(context),
+                      onEdit: () => _openEditEmergencyContactDialog(context, emergency),
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Contact Name",
@@ -632,88 +1355,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         ),
                       ],
                     ),
-
-                    // 5. Insurance & Healthcare Coverage Card
-                    DoctorProfileSectionCard(
-                      title: "Insurance & Coverage",
-                      icon: Icons.shield_outlined,
-                      iconColor: const Color(0xFF0284C7),
-                      isTab: isTab,
-                      fields: [
-                        DoctorProfileFieldItem(
-                          label: "Insurance Provider",
-                          value: insurance?.policyName ?? "Universal Health Coverage",
-                          icon: Icons.business_outlined,
-                        ),
-                        DoctorProfileFieldItem(
-                          label: "Policy Number",
-                          value: insurance?.policyNumber ?? "POL-88219401",
-                          icon: Icons.numbers_outlined,
-                          isCopyable: true,
-                          isVerified: true,
-                        ),
-                        DoctorProfileFieldItem(
-                          label: "Coverage Status",
-                          value: "Active & Verified",
-                          icon: Icons.verified_user_rounded,
-                          customValueColor: const Color(0xFF10B981),
-                        ),
-                      ],
-                    ),
-
-                    // 6. Medical History & Allergies Card
-                    DoctorProfileSectionCard(
-                      title: "Medical Background & History",
-                      icon: Icons.healing_rounded,
-                      iconColor: const Color(0xFF8B5CF6),
-                      isTab: isTab,
-                      fields: [
-                        DoctorProfileFieldItem(
-                          label: "Known Allergies",
-                          value: (medical?.allergies != null && medical!.allergies!.isNotEmpty)
-                              ? medical.allergies!
-                              : "No known drug allergies",
-                          icon: Icons.warning_amber_rounded,
-                          customValueColor: Colors.orange,
-                        ),
-                        DoctorProfileFieldItem(
-                          label: "Chronic Conditions",
-                          value: (medical?.condition != null && medical!.condition!.isNotEmpty)
-                              ? medical.condition!
-                              : "None recorded",
-                          icon: Icons.health_and_safety_outlined,
-                        ),
-                        DoctorProfileFieldItem(
-                          label: "Total Consultations",
-                          value: "${medical?.totalVisits ?? 4} Visits",
-                          icon: Icons.medical_information_outlined,
-                        ),
-                      ],
-                    ),
-
-                    // 7. App Preferences & Security Card
-                    DoctorProfileSectionCard(
-                      title: "Security & Terms",
-                      icon: Icons.lock_outline_rounded,
-                      iconColor: const Color(0xFF64748B),
-                      isTab: isTab,
-                      fields: const [
-                        DoctorProfileFieldItem(
-                          label: "Data Privacy Policy",
-                          value: "Compliant with Health Data Standards",
-                          icon: Icons.privacy_tip_outlined,
-                        ),
-                        DoctorProfileFieldItem(
-                          label: "Encryption",
-                          value: "256-bit End-to-End Encrypted",
-                          icon: Icons.security_rounded,
-                          isVerified: true,
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 16),
 
-                    // 7.5. Spotlight Product Tour Tile
+                    // 4. Spotlight Product Tour Tile
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
@@ -765,19 +1409,19 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       ),
                     ),
 
-                    // 8. Preview Splash Animation Tile
+                    // Delete Account Tile
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: primaryColor.withValues(alpha: isDark ? 0.5 : 0.35),
-                          width: 1.2,
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          width: 1,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+                            color: Colors.orange.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -788,42 +1432,30 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: 0.14),
+                            color: Colors.orange.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(Icons.play_circle_outline_rounded, color: primaryColor, size: 20),
+                          child: const Icon(Icons.delete_forever_rounded, color: Colors.deepOrange, size: 20),
                         ),
-                        title: Text(
-                          "Preview Splash Animation",
+                        title: const Text(
+                          "Delete Account",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: Colors.deepOrange,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
                         subtitle: Text(
-                          "Watch the Yira cinematic splash screen",
+                          "Permanently deactivate your account",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
                             color: isDark ? Colors.white60 : Colors.grey.shade600,
                           ),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (context, anim, secAnim) =>
-                                  const SplashPreviewScreen(),
-                              transitionsBuilder: (context, anim, secAnim, child) {
-                                return FadeTransition(opacity: anim, child: child);
-                              },
-                              transitionDuration: const Duration(milliseconds: 400),
-                            ),
-                          );
-                        },
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.deepOrange, size: 14),
+                        onTap: () => _showDeleteAccountConfirmation(context, primaryColor),
                       ),
                     ),
 
@@ -987,324 +1619,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  Widget _buildAffiliatedHospitalCard({
-    required BuildContext context,
-    required String hospitalName,
-    required String? hospitalLogo,
-    required String hospitalCode,
-    required String address,
-    required String helpline,
-    required bool is24Hours,
-    required bool isDark,
-    required Color primaryColor,
-    required bool isTab,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.025),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              isTab ? 20 : 16,
-              isTab ? 18 : 14,
-              isTab ? 20 : 16,
-              12,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.2 : 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.3 : 0.15),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.domain_rounded,
-                    size: 18,
-                    color: Color(0xFF0284C7),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Primary Healthcare Facility",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 16 : 14.5,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.16 : 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.verified_rounded,
-                        size: 12,
-                        color: Color(0xFF10B981),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        "Affiliated",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(
-            height: 1,
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          ),
-
-          // Main Hospital Identity Feature (Logo + Name + Code)
-          Padding(
-            padding: EdgeInsets.all(isTab ? 20 : 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Prominent Hospital Logo from DB
-                _buildHospitalLogoBadge(
-                  logoUrl: hospitalLogo,
-                  size: isTab ? 54 : 46,
-                  isDark: isDark,
-                  radius: 13,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hospitalName,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 16.5 : 15,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Text(
-                              hospitalCode.isNotEmpty ? 'CODE: $hospitalCode' : 'FACILITY #19',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            "Super-Specialty Network",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              color: isDark ? Colors.white54 : Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Detail Rows
-          _buildFacilityDetailRow(
-            context: context,
-            label: "Campus Address",
-            value: address.isNotEmpty ? address : "Jubilee Hills, Road No 36, Hyderabad",
-            icon: Icons.location_on_outlined,
-            isDark: isDark,
-            isTab: isTab,
-          ),
-          _buildFacilityDetailRow(
-            context: context,
-            label: "Emergency & Helpline Desk",
-            value: helpline.isNotEmpty ? helpline : "+91 8008123456",
-            icon: Icons.phone_in_talk_rounded,
-            isDark: isDark,
-            isTab: isTab,
-            isCopyable: true,
-            isVerified: true,
-          ),
-          _buildFacilityDetailRow(
-            context: context,
-            label: "Facility Hours & Emergency Status",
-            value: is24Hours ? "Open 24/7 • Trauma & Emergency Active" : "OPD: 08:00 AM - 08:00 PM",
-            icon: Icons.access_time_rounded,
-            isDark: isDark,
-            isTab: isTab,
-            customValueColor: const Color(0xFF10B981),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFacilityDetailRow({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isDark,
-    required bool isTab,
-    bool isCopyable = false,
-    bool isVerified = false,
-    Color? customValueColor,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isTab ? 20 : 16, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              size: isTab ? 16 : 15,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? 11.5 : 10.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: isTab ? 13.5 : 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: customValueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isVerified) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF10B981)),
-                  SizedBox(width: 3),
-                  Text(
-                    "Verified",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF10B981),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          if (isCopyable) ...[
-            IconButton(
-              icon: Icon(
-                Icons.copy_rounded,
-                size: 15,
-                color: isDark ? Colors.white60 : Colors.grey[600],
-              ),
-              constraints: const BoxConstraints(),
-              padding: const EdgeInsets.all(4),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: value));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$label copied to clipboard'),
-                    duration: const Duration(seconds: 2),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _buildPatientHeroHeader({
     required BuildContext context,
@@ -1351,104 +1665,131 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: Column(
-              children: [
-                // Avatar with Camera Icon Overlay for Photo Upload
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    GestureDetector(
-                      onTap: _openPhotoPickerSheet,
-                      child: Container(
-                        width: isTab ? 96 : 84,
-                        height: isTab ? 96 : 84,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: primaryColor.withValues(alpha: 0.4),
-                            width: 3,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withValues(alpha: 0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: _localProfileImage != null
-                              ? Image.file(
-                                  _localProfileImage!,
-                                  width: isTab ? 96 : 84,
-                                  height: isTab ? 96 : 84,
-                                  fit: BoxFit.cover,
-                                )
-                              : _buildInitialsAvatar(initials, isTab, primaryColor),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 2,
-                      right: 2,
-                      child: GestureDetector(
-                        onTap: _openPhotoPickerSheet,
-                        child: Container(
-                          padding: const EdgeInsets.all(4.5),
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                              width: 2.0,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1.5),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+            child: Builder(
+              builder: (context) {
+                final currentUser = GlobalSession.instance.userNotifier.value;
+                final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
+                final activeProfile = profiles.isNotEmpty ? profiles.first : null;
 
-                // Tap to change photo subtitle button
-                GestureDetector(
-                  onTap: _openPhotoPickerSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                final bool hasLocalImage = _localProfileImage != null && _localProfileImage!.existsSync();
+                final String activeSessionImage = (activeProfile?.imagePath ?? '').trim();
+                final String resolvedNetworkUrl = (_networkProfileImageUrl != null && _networkProfileImageUrl!.trim().isNotEmpty)
+                    ? _networkProfileImageUrl!.trim()
+                    : activeSessionImage;
+                final bool hasNetworkImage = resolvedNetworkUrl.isNotEmpty;
+                final bool hasPhoto = hasLocalImage || hasNetworkImage;
+
+                return Column(
+                  children: [
+                    // Avatar with Camera Icon Overlay for Photo Upload
+                    Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        Icon(Icons.add_a_photo_outlined, size: 13, color: primaryColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          _localProfileImage != null ? "Change Photo" : "Add Photo",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: primaryColor,
+                        GestureDetector(
+                          onTap: _openPhotoPickerSheet,
+                          child: Container(
+                            width: isTab ? 96 : 84,
+                            height: isTab ? 96 : 84,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: primaryColor.withValues(alpha: 0.4),
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primaryColor.withValues(alpha: 0.3),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: _isUploadingPhoto
+                                  ? Center(
+                                      child: SizedBox(
+                                        width: 28,
+                                        height: 28,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    )
+                                  : hasLocalImage
+                                      ? Image.file(
+                                          _localProfileImage!,
+                                          width: isTab ? 96 : 84,
+                                          height: isTab ? 96 : 84,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : hasNetworkImage
+                                          ? _buildNetworkAvatar(resolvedNetworkUrl, initials, isTab, primaryColor)
+                                          : _buildInitialsAvatar(initials, isTab, primaryColor),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 2,
+                          right: 2,
+                          child: GestureDetector(
+                            onTap: _openPhotoPickerSheet,
+                            child: Container(
+                              padding: const EdgeInsets.all(4.5),
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  width: 2.0,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1.5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 10),
+
+                    // Tap to change photo subtitle button
+                    GestureDetector(
+                      onTap: _openPhotoPickerSheet,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(hasPhoto ? Icons.edit_outlined : Icons.add_a_photo_outlined, size: 13, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              hasPhoto ? "Change Photo" : "Add Photo",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
 
                 const SizedBox(height: 10),
 
@@ -1529,57 +1870,60 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
                 const SizedBox(height: 8),
 
-                // Hospital Tag with Database Logo
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHospitalLogoBadge(
-                        logoUrl: hospitalLogo,
-                        size: 18,
-                        isDark: isDark,
-                        radius: 5,
+                // Hospital Tag with Database Logo (only if hospital is available)
+                if (hospital.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        width: 1,
                       ),
-                      const SizedBox(width: 7),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: isTab ? 260 : 180),
-                        child: Text(
-                          hospital,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildHospitalLogoBadge(
+                          logoUrl: hospitalLogo,
+                          size: 18,
+                          isDark: isDark,
+                          radius: 5,
+                        ),
+                        const SizedBox(width: 7),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: isTab ? 260 : 180),
+                          child: Text(
+                            hospital,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 5),
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        size: 12,
-                        color: Color(0xFF10B981),
-                      ),
-                    ],
+                        const SizedBox(width: 5),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 12,
+                          color: Color(0xFF10B981),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
-            ),
-          ),
+            );
+          },
+        ),
+      ),
 
-          // Bottom Action Bar
+          // Compact Edit Profile Button
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
@@ -1590,40 +1934,71 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      side: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () => _openProfileSwitcher(context),
-                    icon: const Icon(Icons.people_outline_rounded, size: 16),
-                    label: const Text('Switch Member', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
+            child: Center(
+              child: SizedBox(
+                height: 34,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    foregroundColor: primaryColor,
                   ),
+                  onPressed: () => _openEditProfileDialog(context),
+                  icon: const Icon(Icons.edit_outlined, size: 14),
+                  label: const Text('Edit Profile', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () => _openEditProfileDialog(context),
-                    icon: const Icon(Icons.edit_rounded, size: 16),
-                    label: const Text('Edit Profile', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNetworkAvatar(String url, String initials, bool isTab, Color primaryColor) {
+    if (url.startsWith('data:image')) {
+      try {
+        final commaIdx = url.indexOf(',');
+        final base64Str = commaIdx != -1 ? url.substring(commaIdx + 1) : url;
+        final bytes = base64Decode(base64Str);
+        return Image.memory(
+          bytes,
+          width: isTab ? 96 : 84,
+          height: isTab ? 96 : 84,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(initials, isTab, primaryColor),
+        );
+      } catch (_) {
+        return _buildInitialsAvatar(initials, isTab, primaryColor);
+      }
+    }
+
+    String fullUrl = url;
+    if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+      final baseUrl = EnvironmentService.config.accountBaseUrl;
+      final formattedBase = baseUrl.startsWith('http') ? baseUrl : 'http://$baseUrl';
+      final cleanBase = formattedBase.endsWith('/') ? formattedBase.substring(0, formattedBase.length - 1) : formattedBase;
+      final cleanPath = fullUrl.startsWith('/') ? fullUrl : '/$fullUrl';
+      fullUrl = '$cleanBase$cleanPath';
+    }
+
+    return CachedNetworkImage(
+      imageUrl: fullUrl,
+      width: isTab ? 96 : 84,
+      height: isTab ? 96 : 84,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: primaryColor,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => _buildInitialsAvatar(initials, isTab, primaryColor),
     );
   }
 
@@ -1650,84 +2025,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  Widget _buildProfileCompletionCard({
-    required BuildContext context,
-    required int completionPct,
-    required bool isDark,
-    required Color primaryColor,
-    required bool isTab,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.verified_outlined, size: 18, color: primaryColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Profile Strength',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '$completionPct% Complete',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: completionPct / 100.0,
-              minHeight: 7,
-              backgroundColor: isDark ? Colors.white12 : Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Keep your profile updated for seamless hospital check-ins and verified prescriptions.',
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 11.5,
-              color: isDark ? Colors.white54 : Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildProfileShimmer(BuildContext context, bool isDark, bool isTab) {
     return SingleChildScrollView(

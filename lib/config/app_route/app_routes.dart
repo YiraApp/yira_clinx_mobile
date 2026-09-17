@@ -72,4 +72,6 @@ class AppRoutes {
   static const String patientVitalsTracking = '/patientVitalsTracking';
   static const String patientMyFamily = '/patientMyFamily';
   static const String patientDoctorSuggestions = '/patientDoctorSuggestions';
+  static const String patientConnectFitness = '/patientConnectFitness';
+  static const String patientFitnessTracking = '/patientFitnessTracking';
 }

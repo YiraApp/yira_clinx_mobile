@@ -75,7 +75,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
   List<PatientAppointmentEntity> _filterAppointments(List<PatientAppointmentEntity> baseList) {
     if (_activeFilter == 'All') return baseList;
-    return baseList.where((a) => a.status.toUpperCase() == _activeFilter.toUpperCase()).toList();
+    final target = _activeFilter.trim().toLowerCase();
+    return baseList.where((a) => a.status.trim().toLowerCase() == target).toList();
   }
 
   @override

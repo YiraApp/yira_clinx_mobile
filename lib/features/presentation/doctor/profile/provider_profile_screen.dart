@@ -376,11 +376,6 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Profile Strength / Completion Progress
-                    if (completionPct < 100) ...[
-                      _buildProfileCompletionCard(context, completionPct, profile, isDark, primaryColor, isTab),
-                      const SizedBox(height: 16),
-                    ],
 
                     // 3. Medical Credentials & Practice Card
                     DoctorProfileSectionCard(

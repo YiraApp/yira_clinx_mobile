@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
+import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/local/global_session.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
@@ -21,6 +23,15 @@ class PatientAppointmentsCard extends StatelessWidget {
     this.onPrescribeTap,
     this.onNoteTap,
   });
+
+  bool _isPatient() {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+    final roleId = (currentUser?.data?.latestRoleId ?? '').toUpperCase().trim();
+    return roleName.contains('patient') ||
+        roleName == 'user' ||
+        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
+  }
 
   // ═══════════════════════════════════════════════
   //  STATUS COLORS
@@ -318,7 +329,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                           color: isDark ? Colors.white54 : Colors.grey,
                         ),
                       ),
-                    if (pres.notes.isNotEmpty) ...[
+                    if (!_isPatient() && pres.notes.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       Text(
                         "DOCTOR NOTES",
@@ -341,6 +352,42 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF059669),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                          final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                          final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
+
+                          InAppDocumentViewer.show(
+                            context,
+                            title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
+                            category: 'Prescription',
+                            fileUrl: effectivePdfUrl,
+                            hospitalName: 'Yira Super Speciality Hospitals',
+                            isAppointmentDoc: true,
+                          );
+                        },
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                        label: const Text(
+                          "View Full Prescription (PDF)",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     if (onPrescribeTap != null)
                       SizedBox(
                         width: double.infinity,
@@ -1131,6 +1178,29 @@ class PatientAppointmentsCard extends StatelessWidget {
                               isDark: isDark,
                             ),
                           ]),
+                          const SizedBox(height: 10),
+                          _buildGridRow([
+                            _buildInfoTile(
+                              label: "Consultation Type",
+                              value: appt.isTeleConsultation ? "Video Call (Zoom)" : "In-Clinic Visit",
+                              icon: appt.isTeleConsultation ? Icons.videocam_rounded : Icons.storefront_rounded,
+                              isDark: isDark,
+                            ),
+                            _buildInfoTile(
+                              label: "Payment Mode",
+                              value: appt.isTeleConsultation ? "Paid Online (Razorpay)" : "Pay at Clinic Reception",
+                              icon: appt.isTeleConsultation ? Icons.check_circle_outline_rounded : Icons.payment_rounded,
+                              isDark: isDark,
+                              valueStyle: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: appt.isTeleConsultation
+                                    ? const Color(0xFF10B981)
+                                    : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                              ),
+                            ),
+                          ]),
                         ],
                       ),
 
@@ -1195,42 +1265,43 @@ class PatientAppointmentsCard extends StatelessWidget {
 
                       const SizedBox(height: 18),
 
-                      // 4️⃣ CLINICAL NOTES
-                      _buildSectionHeader(
-                        number: "4",
-                        title: "Clinical Notes (${appt.clinicalNotes.length})",
-                        icon: Icons.edit_note_rounded,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 10),
-                      if (appt.clinicalNotes.isNotEmpty)
-                        ...appt.clinicalNotes.map((n) => _buildClinicalNoteCard(
-                              context,
-                              n,
-                              isDark,
-                              primaryColor,
-                            ))
-                      else if (appt.notes.isNotEmpty)
-                        _buildInfoContainer(
+                      // 4️⃣ CLINICAL NOTES (Visible to Doctors only; hidden for Patients)
+                      if (!_isPatient()) ...[
+                        _buildSectionHeader(
+                          number: "4",
+                          title: "Clinical Notes (${appt.clinicalNotes.length})",
+                          icon: Icons.edit_note_rounded,
+                          color: primaryColor,
                           isDark: isDark,
-                          children: [
-                            _buildInfoTile(
-                              label: "Appointment Notes",
-                              value: appt.notes,
-                              icon: Icons.note_outlined,
-                              isDark: isDark,
-                            ),
-                          ],
-                        )
-                      else
-                        _buildEmptyTile("No clinical notes recorded for this appointment", Icons.edit_note_outlined, isDark),
-
-                      const SizedBox(height: 18),
+                        ),
+                        const SizedBox(height: 10),
+                        if (appt.clinicalNotes.isNotEmpty)
+                          ...appt.clinicalNotes.map((n) => _buildClinicalNoteCard(
+                                context,
+                                n,
+                                isDark,
+                                primaryColor,
+                              ))
+                        else if (appt.notes.isNotEmpty)
+                          _buildInfoContainer(
+                            isDark: isDark,
+                            children: [
+                              _buildInfoTile(
+                                label: "Appointment Notes",
+                                value: appt.notes,
+                                icon: Icons.note_outlined,
+                                isDark: isDark,
+                              ),
+                            ],
+                          )
+                        else
+                          _buildEmptyTile("No clinical notes recorded for this appointment", Icons.edit_note_outlined, isDark),
+                        const SizedBox(height: 18),
+                      ],
 
                       // 5️⃣ DOCUMENTS & LAB REPORTS
                       _buildSectionHeader(
-                        number: "5",
+                        number: _isPatient() ? "4" : "5",
                         title: "Documents & Reports (${appt.documents.length})",
                         icon: Icons.folder_shared_outlined,
                         color: primaryColor,
@@ -1251,7 +1322,7 @@ class PatientAppointmentsCard extends StatelessWidget {
 
                       // 6️⃣ MEDICAL RECORDS
                       _buildSectionHeader(
-                        number: "6",
+                        number: _isPatient() ? "5" : "6",
                         title: "Medical Records & Diagnoses (${appt.medicalRecords.length})",
                         icon: Icons.assignment_outlined,
                         color: primaryColor,
@@ -1272,7 +1343,7 @@ class PatientAppointmentsCard extends StatelessWidget {
 
                       // 7️⃣ PROVIDER & FACILITY DETAILS
                       _buildSectionHeader(
-                        number: "7",
+                        number: _isPatient() ? "6" : "7",
                         title: "Provider & Facility",
                         icon: Icons.local_hospital_outlined,
                         color: primaryColor,
@@ -1400,6 +1471,55 @@ class PatientAppointmentsCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
+                    InkWell(
+                      onTap: () {
+                        final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                        final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                        final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
+
+                        InAppDocumentViewer.show(
+                          context,
+                          title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
+                          category: 'Prescription',
+                          fileUrl: effectivePdfUrl,
+                          hospitalName: 'Yira Super Speciality Hospitals',
+                          isAppointmentDoc: true,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF059669).withValues(alpha: 0.35),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf_rounded,
+                              size: 11,
+                              color: Color(0xFF059669),
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              "PDF",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     Text(
                       "View Details",
                       style: TextStyle(
@@ -1938,8 +2058,9 @@ class PatientAppointmentsCard extends StatelessWidget {
         final appt = appointments[index];
         final statusColor = _getStatusColor(appt.status);
 
+        final bool isPatientUser = _isPatient();
         final int presCount = appt.prescriptions.length;
-        final int notesCount = appt.clinicalNotes.length;
+        final int notesCount = isPatientUser ? 0 : appt.clinicalNotes.length;
         final int docsCount = appt.documents.length;
         final int recsCount = appt.medicalRecords.length;
         final int totalRecords = presCount + notesCount + docsCount + recsCount;
@@ -2088,17 +2209,23 @@ class PatientAppointmentsCard extends StatelessWidget {
                             ? Icons.videocam_rounded
                             : Icons.location_on_rounded,
                         size: 12,
-                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                        color: appt.isTeleConsultation
+                            ? const Color(0xFF2563EB)
+                            : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                       ),
                       const SizedBox(width: 3.5),
                       Expanded(
                         child: Text(
-                          appt.appointmentType,
+                          appt.isTeleConsultation
+                              ? "${appt.appointmentType} • Paid Online"
+                              : "${appt.appointmentType} • Pay at Clinic",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: appt.isTeleConsultation
+                                ? const Color(0xFF2563EB)
+                                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

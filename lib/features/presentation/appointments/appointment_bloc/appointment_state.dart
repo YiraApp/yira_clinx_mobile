@@ -213,6 +213,14 @@ class BookAppointmentSuccessState extends AppointmentState {
   final String? appointmentDate;
   final String? time;
   final bool isTeleConsultation;
+  final int? appointmentId;
+  final String? patientUserId;
+  final double? consultationFee;
+  final String? doctorId;
+  final int? hospitalId;
+  final String? hospitalName;
+  final String? patientPhone;
+  final String? patientEmail;
 
   const BookAppointmentSuccessState({
     this.message = "Appointment booked successfully!",
@@ -220,6 +228,14 @@ class BookAppointmentSuccessState extends AppointmentState {
     this.appointmentDate,
     this.time,
     this.isTeleConsultation = false,
+    this.appointmentId,
+    this.patientUserId,
+    this.consultationFee,
+    this.doctorId,
+    this.hospitalId,
+    this.hospitalName,
+    this.patientPhone,
+    this.patientEmail,
   });
 
   @override

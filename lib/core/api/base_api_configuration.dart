@@ -3,7 +3,7 @@ class EnvironmentService {
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   // Local backend server URL for local development (matches local backend on port 5000)
-  // - 192.168.68.140:5000 enables connectivity for physical devices on Wi-Fi and emulators/simulators
+  // - 192.168.68.70:5000 enables connectivity for physical devices on Wi-Fi and emulators/simulators
   static const String localHostIp = "192.168.68.70";
   static const String localPort = "5000";
   static String? _customBaseUrl;

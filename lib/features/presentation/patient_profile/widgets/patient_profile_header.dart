@@ -48,6 +48,7 @@ class PatientProfileHeader extends StatefulWidget {
 
 class _PatientProfileHeaderState extends State<PatientProfileHeader> {
   late String _currentStatus;
+  bool _isBookingNavigating = false;
   bool _isUpdating = false;
 
   @override
@@ -243,8 +244,10 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                   children: [
                     // Book Appointment Button
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
+                      onTap: () async {
+                        if (_isBookingNavigating) return;
+                        _isBookingNavigating = true;
+                        await Navigator.pushNamed(
                           context,
                           AppRoutes.addAppointmentScreen,
                           arguments: {
@@ -252,6 +255,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                             'patientPhone': widget.patient.phone,
                           },
                         );
+                        _isBookingNavigating = false;
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

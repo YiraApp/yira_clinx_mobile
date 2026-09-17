@@ -87,9 +87,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       emit(state.copyWith(
         status: DashboardStatus.success,
-        patients: patients,
         allPatients: patients,
       ));
+      _applyFilters(emit);
     } catch (e) {
       emit(state.copyWith(status: DashboardStatus.failure, errorMessage: e.toString()));
     }

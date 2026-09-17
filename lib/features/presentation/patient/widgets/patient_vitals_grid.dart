@@ -18,10 +18,17 @@ class PatientVitalsGrid extends StatelessWidget {
     final primaryColor = Theme.of(context).primaryColor;
     final isTab = isTablet(context);
 
-    final bp = (vitals['bp'] != null && vitals['bp']!.isNotEmpty) ? vitals['bp']! : '--';
-    final pulse = (vitals['pulse'] != null && vitals['pulse']!.isNotEmpty) ? vitals['pulse']! : '--';
-    final temp = (vitals['temp'] != null && vitals['temp']!.isNotEmpty) ? vitals['temp']! : '--';
-    final spO2 = (vitals['spO2'] != null && vitals['spO2']!.isNotEmpty) ? vitals['spO2']! : '--';
+    String cleanVal(String? val) {
+      if (val == null) return '--';
+      final t = val.trim();
+      if (t.isEmpty || t.toLowerCase() == 'none' || t.toLowerCase() == 'null' || t == '--') return '--';
+      return t;
+    }
+
+    final bp = cleanVal(vitals['bp']);
+    final pulse = cleanVal(vitals['pulse']);
+    final temp = cleanVal(vitals['temp']);
+    final spO2 = cleanVal(vitals['spO2']);
 
     final items = [
       {

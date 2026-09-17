@@ -12,7 +12,7 @@ abstract class AppointmentRepo {
     String? dateTo,
   });
 
-  Future<bool> bookAppointment({
+  Future<Map<String, dynamic>?> bookAppointment({
     required String doctorId,
     required int orgId,
     required int hospitalId,

@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.paccore.yiralife"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = 1
         versionName = "2.0.0"

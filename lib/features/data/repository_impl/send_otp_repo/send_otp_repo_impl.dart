@@ -28,7 +28,10 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         "isResend": isReSend,
       };
 
-      final response = await _apiClient.account(showSuccessSnack: true).post(
+      final dio = _apiClient.account(showSuccessSnack: true);
+      debugPrint("[SendOtpRepo] POST ${dio.options.baseUrl}${URLs.sendOtpUrl} -> $requestBody");
+
+      final response = await dio.post(
         URLs.sendOtpUrl,
         data: requestBody,
       );
@@ -43,7 +46,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         debugPrint('[SEND_OTP] Backend error (${error.response?.statusCode}): ${error.response?.data}');
       }
       developer.log(
-        "sendOtp failed gracefully inside repository layer",
+        "sendOtp failed gracefully inside repository layer: ${_apiClient.account().options.baseUrl}${URLs.sendOtpUrl}",
         error: error,
         stackTrace: stackTrace,
         name: "SendOtpRepositoryImpl",

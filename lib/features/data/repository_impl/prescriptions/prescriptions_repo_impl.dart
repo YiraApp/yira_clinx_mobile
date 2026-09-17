@@ -73,12 +73,16 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
   }
 
   @override
-  Future<void> savePrescription(PrescriptionEntity prescription) async {
+  Future<PrescriptionEntity> savePrescription(PrescriptionEntity prescription) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
       final Map<String, dynamic> payload = {
+        if (prescription.id != null && prescription.id!.trim().isNotEmpty) ...{
+          'id': prescription.id!.trim(),
+          'Id': prescription.id!.trim(),
+        },
         'patientId': prescription.patientId,
         'doctorId': currentUser?.data?.id ?? '',
         if (prescription.appointmentId != null && prescription.appointmentId!.trim().isNotEmpty)
@@ -124,6 +128,21 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception("Server returned status code ${response.statusCode}");
       }
+
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        final mapData = response.data as Map<String, dynamic>;
+        final items = mapData['data'] ?? mapData['result'] ?? mapData['payload'];
+        if (items is List && items.isNotEmpty) {
+          final first = items.first;
+          if (first is Map<String, dynamic>) {
+            return PrescriptionModel.fromJson(first);
+          }
+        } else if (items is Map<String, dynamic>) {
+          return PrescriptionModel.fromJson(items);
+        }
+      }
+
+      return prescription;
     } catch (e, stackTrace) {
       developer.log(
         "Prescription save API call error",

@@ -58,7 +58,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
 
             return Scaffold(
               floatingActionButton: FloatingActionButton(
-                key: ProviderTourController().slotsFabKey,
+                key: (widget.isShellChild && isTourActive) ? ProviderTourController().slotsFabKey : null,
                 backgroundColor: primaryColor,
                 shape: const CircleBorder(),
                 onPressed: () async {
@@ -76,7 +76,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: SafeArea(
                 child: effectiveState != null
-                    ? _buildBodyContent(context, effectiveState, isTab)
+                    ? _buildBodyContent(context, effectiveState, isTab, isTourActive)
                     : SlotDashboardShimmer(isTab: isTab),
               ),
             );
@@ -200,7 +200,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     return items;
   }
 
-  Widget _buildBodyContent(BuildContext context, SlotDataState state, bool isTab) {
+  Widget _buildBodyContent(BuildContext context, SlotDataState state, bool isTab, bool isTourActive) {
     // Build effective breaks list for counters
     final List<BreakTimeEntity> effectiveBreaks = List<BreakTimeEntity>.from(state.breakTimes);
     if (effectiveBreaks.isEmpty && state.timeSlots.length > 1) {
@@ -246,7 +246,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       children: [
         SizedBox(height: screenTopPadding),
         Container(
-          key: ProviderTourController().slotsCalendarKey,
+          key: (widget.isShellChild && isTourActive) ? ProviderTourController().slotsCalendarKey : null,
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
           ),
@@ -304,7 +304,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
         ),
         Expanded(
           child: Container(
-            key: ProviderTourController().slotsListKey,
+            key: (widget.isShellChild && isTourActive) ? ProviderTourController().slotsListKey : null,
             child: state.isLoading
                 ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
                 : visibleItems.isEmpty

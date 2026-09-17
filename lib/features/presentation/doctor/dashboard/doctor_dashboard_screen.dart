@@ -172,7 +172,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                               : 'Healthcare Facility';
 
                           return GestureDetector(
-                            key: ProviderTourController().headerKey,
+                            key: isTourActive ? ProviderTourController().headerKey : null,
                             onTap: () => ProfileSwitcherSheet.show(context),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -224,7 +224,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         final double size = isTabletDevice ? 38 : 34;
 
                         return GestureDetector(
-                          key: ProviderTourController().profileKey,
+                          key: isTourActive ? ProviderTourController().profileKey : null,
                           onTap: () {
                             Navigator.pushNamed(context, AppRoutes.profile);
                           },
@@ -429,7 +429,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           const SizedBox(height: 12.0),
 
                           DashboardMetricsGrid(
-                            key: ProviderTourController().metricsKey,
+                            key: isTourActive ? ProviderTourController().metricsKey : null,
                             metrics: dashboard.metrics!,
                             primaryColor: primaryColor,
                             isTab: isTabletDevice,
@@ -445,7 +445,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       ),
                       sliver: SliverToBoxAdapter(
                         child: Container(
-                          key: ProviderTourController().scheduleKey,
+                          key: isTourActive ? ProviderTourController().scheduleKey : null,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -613,7 +613,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           DashboardChartCard(
-                            key: ProviderTourController().chartsKey,
+                            key: isTourActive ? ProviderTourController().chartsKey : null,
                             title: "Weekly Appointments",
                             badgeText:
                                 "Avg: ${dashboard.weeklyAppointments?.averagePerDay}/day",

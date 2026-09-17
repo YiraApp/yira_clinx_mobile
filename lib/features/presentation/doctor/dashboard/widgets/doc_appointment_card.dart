@@ -20,6 +20,7 @@ class DocAppointmentCard extends StatefulWidget {
   final bool isTab;
   final bool isTeleConsultation;
   final VoidCallback? onJoinCall;
+  final VoidCallback? onPrescriptionTap;
 
   const DocAppointmentCard({
     super.key,
@@ -37,6 +38,7 @@ class DocAppointmentCard extends StatefulWidget {
     required this.isTab,
     this.isTeleConsultation = false,
     this.onJoinCall,
+    this.onPrescriptionTap,
   });
 
   @override
@@ -295,46 +297,101 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                             !widget.statusLabel.toLowerCase().contains('completed') &&
                             !widget.statusLabel.toLowerCase().contains('cancelled') &&
                             !widget.statusLabel.toLowerCase().contains('past')) ...[
+                          Builder(
+                            builder: (context) {
+                              final isPending = widget.statusLabel.toLowerCase().contains('pending') ||
+                                  widget.statusLabel.toLowerCase().contains('payment');
+
+                              return InkWell(
+                                onTap: widget.onJoinCall,
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: widget.isTab ? 14.0 : 10.0,
+                                    vertical: widget.isTab ? 7.0 : 5.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: isPending
+                                          ? const [
+                                              Color(0xFFD97706),
+                                              Color(0xFFB45309),
+                                            ]
+                                          : const [
+                                              Color(0xFF2563EB),
+                                              Color(0xFF1D4ED8),
+                                            ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: (isPending ? const Color(0xFFD97706) : const Color(0xFF2563EB)).withValues(alpha: 0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isPending ? Icons.payment_rounded : Icons.videocam_rounded,
+                                        size: widget.isTab ? 16 : 14,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        isPending ? "Pay to Join" : "Join Call",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: widget.isTab ? 12 : 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+
+                        // Prescription quick button if provided
+                        if (widget.onPrescriptionTap != null) ...[
                           InkWell(
-                            onTap: widget.onJoinCall,
-                            borderRadius: BorderRadius.circular(10),
+                            onTap: widget.onPrescriptionTap,
+                            borderRadius: BorderRadius.circular(8),
                             child: Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: widget.isTab ? 14.0 : 10.0,
-                                vertical: widget.isTab ? 7.0 : 5.5,
+                                horizontal: widget.isTab ? 9.0 : 7.0,
+                                vertical: widget.isTab ? 6.0 : 4.5,
                               ),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF2563EB),
-                                    Color(0xFF1D4ED8),
-                                  ],
-                                ),
+                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
                                 borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                                border: Border.all(
+                                  color: primaryColor.withValues(alpha: 0.35),
+                                  width: 0.9,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.videocam_rounded,
-                                    size: widget.isTab ? 16 : 14,
-                                    color: Colors.white,
+                                    Icons.medication_rounded,
+                                    size: widget.isTab ? 14 : 12,
+                                    color: primaryColor,
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 3.5),
                                   Text(
-                                    "Join Call",
+                                    "Prescription",
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
-                                      fontSize: widget.isTab ? 12 : 11,
+                                      fontSize: widget.isTab ? 11 : 10,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                      color: primaryColor,
                                     ),
                                   ),
                                 ],

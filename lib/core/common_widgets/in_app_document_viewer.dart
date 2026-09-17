@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
+import '../local/global_session.dart';
 
 class InAppDocumentViewer extends StatefulWidget {
   final String title;
@@ -176,8 +177,13 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       });
 
       try {
+        final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
         final dio = Dio(
           BaseOptions(
+            headers: {
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
             connectTimeout: const Duration(seconds: 25),
             receiveTimeout: const Duration(seconds: 35),
             responseType: ResponseType.bytes,
@@ -628,8 +634,13 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     }
 
     if (_hasRemoteUrl) {
+      final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
       return SfPdfViewer.network(
         _effectiveUrl,
+        headers: {
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Bearer $token',
+        },
         controller: _pdfController,
         canShowScrollHead: true,
         canShowScrollStatus: true,

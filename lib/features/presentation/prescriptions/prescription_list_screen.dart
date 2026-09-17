@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/single_prescription_card.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/add_prescription_screen.dart';
@@ -10,6 +9,8 @@ import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
+import '../../../../core/common_widgets/in_app_document_viewer.dart';
+import '../../../../core/api/base_api_configuration.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
 
@@ -78,15 +79,19 @@ class PrescriptionListScreen extends StatelessWidget {
               }
             });
           } else if (state is SinglePrescriptionDetailsNavState) {
-            Navigator.pushNamed(
+            final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+            final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+            final presId = state.prescriptionId;
+            final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/$presId/pdf';
+            final patientName = patient?.name ?? '';
+
+            InAppDocumentViewer.show(
               context,
-              AppRoutes.prescriptionViewDetailsScreen,
-              arguments: {
-                'patientId': effectivePatientId,
-                'appointmentId': appointmentId,
-                'hospitalId': hospitalId,
-                'orgId': orgId,
-              },
+              title: patientName.isNotEmpty ? '$patientName - Prescription' : 'Digital Prescription',
+              category: 'Prescription',
+              fileUrl: effectivePdfUrl,
+              hospitalName: 'Yira Super Speciality Hospitals',
+              isAppointmentDoc: true,
             );
           }
         },
@@ -153,10 +158,38 @@ class PrescriptionListScreen extends StatelessWidget {
                             _confirmDeletePrescription(context, validMeds);
                           },
                     onView: () {
-                      context.read<PrescriptionBloc>().add(
-                            SinglePrescriptionDetailsNavEvent(
-                                prescriptionId: firstMed.id),
-                          );
+                      final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                      final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                      final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
+                          ? state.pdfUrl!
+                          : '$baseUrl/v1/api/auth/prescriptions/${firstMed.id}/pdf';
+                      final patientName = patient?.name ?? '';
+
+                      InAppDocumentViewer.show(
+                        context,
+                        title: patientName.isNotEmpty ? '$patientName - Prescription' : 'Digital Prescription',
+                        category: 'Prescription',
+                        fileUrl: effectivePdfUrl,
+                        hospitalName: 'Yira Super Speciality Hospitals',
+                        isAppointmentDoc: true,
+                      );
+                    },
+                    onPdfView: () {
+                      final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                      final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                      final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
+                          ? state.pdfUrl!
+                          : '$baseUrl/v1/api/auth/prescriptions/${firstMed.id}/pdf';
+                      final patientName = patient?.name ?? '';
+
+                      InAppDocumentViewer.show(
+                        context,
+                        title: patientName.isNotEmpty ? '$patientName - Prescription' : 'Digital Prescription',
+                        category: 'Prescription',
+                        fileUrl: effectivePdfUrl,
+                        hospitalName: 'Yira Super Speciality Hospitals',
+                        isAppointmentDoc: true,
+                      );
                     },
                     isTab: isTab,
                   ),

@@ -36,7 +36,6 @@ class LikedHospitalsService {
     final roleId = (currentUser?.data?.latestRoleId ?? '4FC67429-28AE-4106-93EF-436228282ED0').trim();
 
     final List<Map<String, dynamic>> hospitals = [];
-    final Set<String> seenHospitalKeys = {};
 
     void addHospital(
       dynamic id,
@@ -74,16 +73,16 @@ class LikedHospitalsService {
       // Filter out generic placeholder names
       if (hospNameStr.toLowerCase() == 'user' || hospNameStr.toLowerCase() == 'null') return;
 
-      final key = '$hospIdStr|${hospNameStr.toLowerCase()}';
-      if (!seenHospitalKeys.contains(key)) {
-        seenHospitalKeys.add(key);
-        final resolvedLogo = (logo ?? logoUrl ?? imageUrl)?.toString();
+      final resolvedLogo = (logo ?? logoUrl ?? imageUrl)?.toString();
+      final existingIndex = hospitals.indexWhere((h) => h['id']?.toString() == hospIdStr);
+
+      if (existingIndex == -1) {
         hospitals.add({
           'id': int.tryParse(hospIdStr) ?? hospIdStr,
           'name': hospNameStr,
-          'hospitalCode': (hospitalCode ?? 'HOSP-$hospIdStr').toString(),
+          'hospitalCode': hospitalCode?.toString(),
           'orgId': orgId != null ? (int.tryParse(orgId.toString()) ?? 1) : 1,
-          'orgName': (orgName ?? 'Healthcare Facility').toString(),
+          'orgName': orgName?.toString(),
           'hospitalType': hospitalType?.toString(),
           'address': address?.toString(),
           'city': city?.toString(),
@@ -106,116 +105,47 @@ class LikedHospitalsService {
           'isLiked': isLiked,
           'isLinked': true,
         });
+      } else {
+        final cur = hospitals[existingIndex];
+        if (hospNameStr.isNotEmpty) cur['name'] = hospNameStr;
+        if (hospitalCode != null && hospitalCode.toString().isNotEmpty) cur['hospitalCode'] = hospitalCode.toString();
+        if (hospitalType != null && hospitalType.toString().isNotEmpty) cur['hospitalType'] = hospitalType.toString();
+        if (address != null && address.toString().isNotEmpty) cur['address'] = address.toString();
+        if (city != null && city.toString().isNotEmpty) cur['city'] = city.toString();
+        if (state != null && state.toString().isNotEmpty) cur['state'] = state.toString();
+        if (helplineNumber != null && helplineNumber.toString().isNotEmpty) cur['helplineNumber'] = helplineNumber.toString();
+        if (mobileNumber != null && mobileNumber.toString().isNotEmpty) cur['mobileNumber'] = mobileNumber.toString();
+        if (email != null && email.toString().isNotEmpty) cur['email'] = email.toString();
+        if (website != null && website.toString().isNotEmpty) cur['website'] = website.toString();
+        if (openingTime != null && openingTime.toString().isNotEmpty) cur['openingTime'] = openingTime.toString();
+        if (closingTime != null && closingTime.toString().isNotEmpty) cur['closingTime'] = closingTime.toString();
+        if (is24Hours != null) cur['is24Hours'] = is24Hours == true || is24Hours == 1 || is24Hours == '1' || is24Hours == 'true';
+        if (totalBeds != null) cur['totalBeds'] = int.tryParse(totalBeds.toString());
+        if (emergencyBeds != null) cur['emergencyBeds'] = int.tryParse(emergencyBeds.toString());
+        if (icuBeds != null) cur['icuBeds'] = int.tryParse(icuBeds.toString());
+        if (ambulances != null) cur['ambulances'] = int.tryParse(ambulances.toString());
+        if (resolvedLogo != null && resolvedLogo.isNotEmpty) {
+          cur['logo'] = resolvedLogo;
+          cur['logoUrl'] = resolvedLogo;
+        }
+        if (orgName != null && orgName.toString().isNotEmpty) cur['orgName'] = orgName.toString();
       }
     }
 
-    // 0. Ensure Default Organization & Hospital (Yira Hospitals) is always added for every patient with actual ID 19
-    addHospital(
-      19,
-      'Yira Hospitals',
-      orgId: 1,
-      orgName: 'yira',
-      city: 'Hyderabad',
-      address: 'Jubilee Hills, Road No 36, Hyderabad',
-      hospitalType: 'Super-Specialty Hospital',
-      helplineNumber: '+91 8008123456',
-      is24Hours: true,
-      isLiked: true,
-      logo: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
-    );
-
-    // If patient has another latestHospitalId from session, add that as well
-    final sessionHospId = currentUser?.data?.latestHospitalId;
-    if (sessionHospId != null && sessionHospId != 19) {
-      final sessionOrgId = currentUser?.data?.latestOrgId ?? 1;
-      addHospital(
-        sessionHospId,
-        'Hospital ($sessionHospId)',
-        orgId: sessionOrgId,
-        orgName: 'Healthcare Facility',
-        isLiked: true,
-      );
-    }
-
-    // 1. Load from initial arguments if provided
-    if (initialDoctor != null) {
-      final docHospId = initialDoctor['hospitalId'];
-      final docHospName = initialDoctor['hospitalName'];
-      if (docHospId != null && docHospName != null) {
-        addHospital(
-          docHospId,
-          docHospName,
-          orgId: initialDoctor['orgId'],
-          orgName: initialDoctor['orgName'],
-          hospitalCode: initialDoctor['hospitalCode'],
-          city: initialDoctor['city'],
-          address: initialDoctor['address'],
-        );
-      }
-    }
-
+    // 1. Fetch registered workspaces & hospitals directly from database API first
     if (resolvedPatientId.isNotEmpty) {
       try {
-        final prefs = await SharedPreferences.getInstance();
-
-        // 2. Load hospitals from Patient's Linked Doctors
-        final linkedDocsKey = 'patient_linked_doctors_$resolvedPatientId';
-        final localDocsStr = prefs.getString(linkedDocsKey);
-        if (localDocsStr != null && localDocsStr.isNotEmpty) {
-          final List<dynamic> localDocs = jsonDecode(localDocsStr);
-          for (final doc in localDocs) {
-            if (doc is Map<String, dynamic>) {
-              final hId = doc['hospitalId'];
-              final hName = doc['hospitalName'];
-              if (hId != null && hName != null) {
-                addHospital(
-                  hId,
-                  hName,
-                  orgId: doc['orgId'],
-                  orgName: doc['orgName'],
-                  hospitalCode: doc['hospitalCode'],
-                  city: doc['city'],
-                  address: doc['address'],
-                );
-              }
-            }
-          }
-        }
-
-        // 3. Load hospitals from Patient's Saved/Liked Hospitals list
-        final likedHospKey = 'patient_liked_hospitals_$resolvedPatientId';
-        final likedHospStr = prefs.getString(likedHospKey);
-        if (likedHospStr != null && likedHospStr.isNotEmpty) {
-          final List<dynamic> likedList = jsonDecode(likedHospStr);
-          for (final h in likedList) {
-            if (h is Map<String, dynamic>) {
-              final hId = h['id'] ?? h['hospitalId'];
-              final hName = h['name'] ?? h['hospitalName'];
-              if (hId != null && hName != null) {
-                addHospital(
-                  hId,
-                  hName,
-                  orgId: h['orgId'],
-                  orgName: h['orgName'],
-                  hospitalCode: h['hospitalCode'] ?? h['code'],
-                  hospitalType: h['hospitalType'],
-                  city: h['city'],
-                  address: h['address'],
-                  isLiked: true,
-                );
-              }
-            }
-          }
-        }
-
-        // 4. Fetch registered workspaces from backend API (Linked Hospitals)
         final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
           URLs.workspaceDetailsUrl,
           queryParameters: {
             'userId': resolvedPatientId,
             'roleId': roleId,
           },
-          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            receiveTimeout: const Duration(seconds: 8),
+            sendTimeout: const Duration(seconds: 8),
+          ),
         );
 
         if (res.data != null && res.data['data'] != null) {
@@ -235,8 +165,20 @@ class LikedHospitalsService {
                         orgId: orgId,
                         orgName: orgName,
                         hospitalCode: h['hospitalCode'] ?? h['HospitalCode'] ?? h['code'],
+                        hospitalType: h['hospitalType'] ?? h['HospitalType'],
                         city: h['city'] ?? h['City'],
+                        state: h['state'] ?? h['State'],
                         address: h['address'] ?? h['Address'],
+                        helplineNumber: h['helplineNumber'] ?? h['HelplineNumber'],
+                        mobileNumber: h['mobileNumber'] ?? h['MobileNumber'],
+                        email: h['email'] ?? h['Email'],
+                        website: h['website'] ?? h['Website'],
+                        totalBeds: h['totalBeds'] ?? h['TotalBeds'],
+                        emergencyBeds: h['emergencyBeds'] ?? h['EmergencyBeds'],
+                        icuBeds: h['icuBeds'] ?? h['ICUBeds'],
+                        openingTime: h['openingTime'] ?? h['OpeningTime'],
+                        closingTime: h['closingTime'] ?? h['ClosingTime'],
+                        is24Hours: h['is24Hours'] ?? h['Is24Hours'],
                         logo: h['logo'] ?? h['Logo'] ?? h['logoUrl'] ?? h['LogoUrl'] ?? h['imageUrl'] ?? h['ImageUrl'] ?? h['hospitalLogo'],
                       );
                     }
@@ -260,12 +202,99 @@ class LikedHospitalsService {
                       orgId: orgId,
                       orgName: orgName,
                       hospitalCode: ws['hospitalCode'] ?? ws['HospitalCode'] ?? ws['code'],
+                      hospitalType: ws['hospitalType'] ?? ws['HospitalType'],
                       city: ws['city'] ?? ws['City'],
+                      state: ws['state'] ?? ws['State'],
                       address: ws['address'] ?? ws['Address'],
+                      helplineNumber: ws['helplineNumber'] ?? ws['HelplineNumber'],
+                      mobileNumber: ws['mobileNumber'] ?? ws['MobileNumber'],
+                      email: ws['email'] ?? ws['Email'],
+                      website: ws['website'] ?? ws['Website'],
+                      totalBeds: ws['totalBeds'] ?? ws['TotalBeds'],
+                      emergencyBeds: ws['emergencyBeds'] ?? ws['EmergencyBeds'],
+                      icuBeds: ws['icuBeds'] ?? ws['ICUBeds'],
+                      openingTime: ws['openingTime'] ?? ws['OpeningTime'],
+                      closingTime: ws['closingTime'] ?? ws['ClosingTime'],
+                      is24Hours: ws['is24Hours'] ?? ws['Is24Hours'],
                       logo: ws['logo'] ?? ws['Logo'] ?? ws['logoUrl'] ?? ws['LogoUrl'] ?? ws['imageUrl'] ?? ws['ImageUrl'] ?? ws['hospitalLogo'],
                     );
                   }
                 }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[LikedHospitalsService] Error loading workspaces from backend: $e');
+      }
+    }
+
+    // 2. Load from initial arguments if provided
+    if (initialDoctor != null) {
+      final docHospId = initialDoctor['hospitalId'];
+      final docHospName = initialDoctor['hospitalName'];
+      if (docHospId != null && docHospName != null) {
+        addHospital(
+          docHospId,
+          docHospName,
+          orgId: initialDoctor['orgId'],
+          orgName: initialDoctor['orgName'],
+          hospitalCode: initialDoctor['hospitalCode'],
+          city: initialDoctor['city'],
+          address: initialDoctor['address'],
+        );
+      }
+    }
+
+    if (resolvedPatientId.isNotEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+
+        // 3. Load hospitals from Patient's Linked Doctors
+        final linkedDocsKey = 'patient_linked_doctors_$resolvedPatientId';
+        final localDocsStr = prefs.getString(linkedDocsKey);
+        if (localDocsStr != null && localDocsStr.isNotEmpty) {
+          final List<dynamic> localDocs = jsonDecode(localDocsStr);
+          for (final doc in localDocs) {
+            if (doc is Map<String, dynamic>) {
+              final hId = doc['hospitalId'];
+              final hName = doc['hospitalName'];
+              if (hId != null && hName != null) {
+                addHospital(
+                  hId,
+                  hName,
+                  orgId: doc['orgId'],
+                  orgName: doc['orgName'],
+                  hospitalCode: doc['hospitalCode'],
+                  city: doc['city'],
+                  address: doc['address'],
+                );
+              }
+            }
+          }
+        }
+
+        // 4. Load hospitals from Patient's Saved/Liked Hospitals list
+        final likedHospKey = 'patient_liked_hospitals_$resolvedPatientId';
+        final likedHospStr = prefs.getString(likedHospKey);
+        if (likedHospStr != null && likedHospStr.isNotEmpty) {
+          final List<dynamic> likedList = jsonDecode(likedHospStr);
+          for (final h in likedList) {
+            if (h is Map<String, dynamic>) {
+              final hId = h['id'] ?? h['hospitalId'];
+              final hName = h['name'] ?? h['hospitalName'];
+              if (hId != null && hName != null) {
+                addHospital(
+                  hId,
+                  hName,
+                  orgId: h['orgId'],
+                  orgName: h['orgName'],
+                  hospitalCode: h['hospitalCode'] ?? h['code'],
+                  hospitalType: h['hospitalType'],
+                  city: h['city'],
+                  address: h['address'],
+                  isLiked: true,
+                );
               }
             }
           }

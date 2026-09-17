@@ -10,7 +10,6 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
-import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 
 class MyFamilyCard extends StatefulWidget {
@@ -26,8 +25,6 @@ class MyFamilyCard extends StatefulWidget {
 }
 
 class _MyFamilyCardState extends State<MyFamilyCard> {
-  bool _isSwitching = false;
-  String? _switchingProfileId;
   final Map<String, String> _memberImages = {};
 
   @override
@@ -97,114 +94,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
     return raw;
   }
 
-  Future<void> _switchProfile(ProfileEntity targetProfile) async {
-    final currentSession = GlobalSession.instance.userNotifier.value;
-    if (currentSession?.data == null) return;
 
-    final targetId = targetProfile.id ?? '';
-    if (targetId.isEmpty || targetId == currentSession!.data!.id) return;
-
-    setState(() {
-      _isSwitching = true;
-      _switchingProfileId = targetId;
-    });
-
-    try {
-      final oldData = currentSession.data!;
-      final bool isDep = targetProfile.isPrimary == false ||
-          targetProfile.accountType == 'Dependent' ||
-          (targetProfile.relation != null &&
-              targetProfile.relation!.toLowerCase() != 'self' &&
-              targetProfile.relation!.toLowerCase() != 'primary' &&
-              targetProfile.relation!.toLowerCase() != 'admin');
-
-      final String targetRoleId = isDep
-          ? '4FC67429-28AE-4106-93EF-436228282ED0'
-          : (oldData.latestRoleId ?? '4FC67429-28AE-4106-93EF-436228282ED0');
-      final dynamic targetOrgId = oldData.latestOrgId ?? 1;
-      final dynamic targetHospitalId = oldData.latestHospitalId ?? 1;
-
-      // Update backend session if possible
-      try {
-        final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
-        await updateUseCase(UpdateLatestOrgDetailsModelParams(
-          userId: targetId,
-          latestRoleId: targetRoleId,
-          latestOrgId: targetOrgId,
-          latestHospitalId: targetHospitalId,
-        ));
-      } catch (_) {}
-
-      final updatedData = DataEntity(
-        id: targetId,
-        accessToken: oldData.accessToken,
-        refreshToken: oldData.refreshToken,
-        accessTokenExpiry: oldData.accessTokenExpiry,
-        refreshTokenExpiry: oldData.refreshTokenExpiry,
-        isMobileVerified: oldData.isMobileVerified,
-        isEmailVerified: oldData.isEmailVerified,
-        roleCount: oldData.roleCount,
-        hospitalCount: oldData.hospitalCount,
-        organizationCount: oldData.organizationCount,
-        roles: oldData.roles,
-        firstName: targetProfile.firstName ?? oldData.firstName,
-        lastName: targetProfile.lastName ?? oldData.lastName,
-        email: oldData.email,
-        phoneNumber: targetProfile.phoneNumber ?? oldData.phoneNumber,
-        countryCode: oldData.countryCode,
-        gender: targetProfile.gender ?? oldData.gender,
-        dob: targetProfile.dob ?? oldData.dob,
-        height: oldData.height,
-        weight: oldData.weight,
-        heightUnit: oldData.heightUnit,
-        weightUnit: oldData.weightUnit,
-        latestRoleId: targetRoleId,
-        latestOrgId: targetOrgId,
-        latestHospitalId: targetHospitalId,
-        latestUserRole: 'Patient',
-        navigationId: '1',
-        profiles: oldData.profiles,
-      );
-
-      await GlobalSession.instance.update(
-        LoginEntity(
-          status: true,
-          message: 'Session switched',
-          data: updatedData,
-        ),
-      );
-
-      if (mounted) {
-        final targetName = (targetProfile.name?.isNotEmpty ?? false)
-            ? targetProfile.name!
-            : '${targetProfile.firstName ?? ''} ${targetProfile.lastName ?? ''}'.trim();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched profile to $targetName'),
-            backgroundColor: const Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        widget.onProfileSwitched?.call();
-        // Refresh configuration / dashboard
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.userConfiguration,
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      debugPrint('Error switching profile: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSwitching = false;
-          _switchingProfileId = null;
-        });
-      }
-    }
-  }
 
   void _showAddMemberSheet(BuildContext context, bool isDark) {
     final theme = Theme.of(context);
@@ -230,71 +120,93 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          return Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
+          return Padding(
             padding: EdgeInsets.only(
-              top: 18,
-              left: 20,
-              right: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(sheetCtx).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Pinned Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 14, 12),
+                      child: Column(
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white24 : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.group_add_rounded, color: primaryColor, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Add Family Member',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Link a dependent under your primary account',
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 11,
+                                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, size: 20),
+                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                onPressed: () => Navigator.pop(sheetCtx),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.group_add_rounded, color: primaryColor, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                    const Divider(height: 1, thickness: 1),
+                    // Scrollable Form Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Add Family Member',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                            ),
-                            Text(
-                              'Link a dependent under your primary account',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11.5,
-                                color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
 
                   if (formError != null) ...[
                     Container(
@@ -534,11 +446,20 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
 
                                 String newDepUserId = 'DEP-${DateTime.now().millisecondsSinceEpoch}';
 
+                                final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+                                String? validParentGuid;
+                                if (GlobalSession.instance.rootPrimaryUserId != null &&
+                                    uuidRegex.hasMatch(GlobalSession.instance.rootPrimaryUserId!)) {
+                                  validParentGuid = GlobalSession.instance.rootPrimaryUserId;
+                                } else if (primaryUserId.isNotEmpty && uuidRegex.hasMatch(primaryUserId)) {
+                                  validParentGuid = primaryUserId;
+                                }
+
                                 final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
                                   URLs.addDependentPatientUrl,
                                   data: {
                                     "primaryPhone": cleanPhone.isNotEmpty ? cleanPhone : primaryPhone,
-                                    "parentUserId": primaryUserId,
+                                    if (validParentGuid != null) "parentUserId": validParentGuid,
                                     "name": fullName,
                                     "relation": selectedRelation,
                                     "gender": selectedGender,
@@ -665,11 +586,16 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  ),
+);
+},
+),
+);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -678,8 +604,6 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
     final primaryColor = theme.primaryColor;
     final isTab = isTablet(context);
 
-    final currentUser = GlobalSession.instance.userNotifier.value;
-    final activeUserId = (currentUser?.data?.id ?? '').trim();
     final familyProfiles = _getFamilyProfiles();
 
     return Container(
@@ -752,7 +676,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         ],
                       ),
                       Text(
-                        'Tap a member to switch active profile',
+                        'Manage family members & dependents',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 11,
@@ -848,9 +772,6 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
 
                 final profile = familyProfiles[index];
                 final pId = (profile.id ?? '').trim();
-                final isActive = (pId.isNotEmpty && pId == activeUserId) ||
-                    (pId.isEmpty && profile.isPrimary == true && (activeUserId.isEmpty || activeUserId == currentUser?.data?.id));
-                final isThisSwitching = _isSwitching && _switchingProfileId == pId;
 
                 final rawRel = (profile.relation ?? '').trim();
                 final bool isFam = rawRel.isNotEmpty &&
@@ -875,16 +796,14 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 final cachedImg = _memberImages[pId];
 
                 return InkWell(
-                  onTap: isActive || _isSwitching ? null : () => _switchProfile(profile),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.patientMyFamily),
                   borderRadius: BorderRadius.circular(16),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 104,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isActive
-                          ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                          : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -894,91 +813,65 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Avatar + Active Indicator Badge
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFF2563EB),
-                              ),
-                              child: ClipOval(
-                                child: isThisSwitching
-                                    ? const Center(
-                                        child: SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        // Avatar
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF2563EB),
+                          ),
+                          child: ClipOval(
+                            child: (cachedImg != null &&
+                                    cachedImg.isNotEmpty &&
+                                    (cachedImg.startsWith('http') || File(cachedImg).existsSync())
+                                ? (cachedImg.startsWith('http')
+                                    ? Image.network(
+                                        cachedImg,
+                                        width: 38,
+                                        height: 38,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Center(
+                                          child: Text(
+                                            initials,
+                                            style: const TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                         ),
                                       )
-                                    : (cachedImg != null &&
-                                            cachedImg.isNotEmpty &&
-                                            (cachedImg.startsWith('http') || File(cachedImg).existsSync())
-                                        ? (cachedImg.startsWith('http')
-                                            ? Image.network(
-                                                cachedImg,
-                                                width: 38,
-                                                height: 38,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => Center(
-                                                  child: Text(
-                                                    initials,
-                                                    style: const TextStyle(
-                                                      fontFamily: appPoppinFont,
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              )
-                                            : Image.file(
-                                                File(cachedImg),
-                                                width: 38,
-                                                height: 38,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => Center(
-                                                  child: Text(
-                                                    initials,
-                                                    style: const TextStyle(
-                                                      fontFamily: appPoppinFont,
-                                                      fontSize: 13,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ))
-                                        : Center(
-                                            child: Text(
-                                              initials,
-                                              style: const TextStyle(
-                                                fontFamily: appPoppinFont,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
+                                    : Image.file(
+                                        File(cachedImg),
+                                        width: 38,
+                                        height: 38,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Center(
+                                          child: Text(
+                                            initials,
+                                            style: const TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
                                             ),
-                                          )),
-                              ),
-                            ),
-                            if (isActive)
-                              Positioned(
-                                right: -2,
-                                bottom: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF10B981),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.check, size: 10, color: Colors.white),
-                                ),
-                              ),
-                          ],
+                                          ),
+                                        ),
+                                      ))
+                                : Center(
+                                    child: Text(
+                                      initials,
+                                      style: const TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )),
+                          ),
                         ),
                         const SizedBox(height: 6),
 
@@ -991,28 +884,26 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: FontWeight.w600,
                             color: isDark ? Colors.white : const Color(0xFF0F172A),
                           ),
                         ),
 
-                        // Relation / Status Pill
+                        // Relation Pill
                         const SizedBox(height: 2),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
-                            color: isActive
-                                ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.25 : 0.12)
-                                : badgeColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                            color: badgeColor.withValues(alpha: isDark ? 0.2 : 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            isActive ? 'Active' : relation,
+                            isPrimary ? 'Self' : relation,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              color: isActive ? const Color(0xFF10B981) : badgeColor,
+                              color: badgeColor,
                             ),
                           ),
                         ),

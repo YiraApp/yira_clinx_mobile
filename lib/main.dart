@@ -14,6 +14,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   EnvironmentService.setEnvironment(Environment.local);
+  debugPrint('[Environment] Initialized base URL: ${EnvironmentService.config.accountBaseUrl}');
 
   try {
     await Future.wait([

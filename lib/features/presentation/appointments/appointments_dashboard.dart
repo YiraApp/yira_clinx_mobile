@@ -32,6 +32,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   DateTimeRange? _customDateRange;
   String _selectedStatus = "All Status";
   bool _showFilters = true;
+  bool _isBookingNavigating = false;
 
   final List<String> _dateOptions = const [
     "Today",
@@ -267,6 +268,16 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
     return now;
   }
 
+  String _getHeaderDateString() {
+    final now = DateTime.now();
+    if (_selectedDateLabel == "Tomorrow") {
+      return DateFormat('EEEE, MMM d, yyyy').format(now.add(const Duration(days: 1)));
+    } else if (_customDateRange != null) {
+      return '${DateFormat('MMM d, yyyy').format(_customDateRange!.start)} - ${DateFormat('MMM d, yyyy').format(_customDateRange!.end)}';
+    }
+    return DateFormat('EEEE, MMM d, yyyy').format(now);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -377,7 +388,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              DateFormat('EEEE, MMM d, yyyy').format(DateTime.now()),
+                              _getHeaderDateString(),
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w400,
@@ -396,6 +407,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         child: InkWell(
                           borderRadius: BorderRadius.circular(14),
                           onTap: () async {
+                            if (_isBookingNavigating) return;
+                            _isBookingNavigating = true;
                             final targetDate = _getSelectedAppointmentDate();
                             await Navigator.pushNamed(
                               context,
@@ -405,6 +418,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                 'date': targetDate,
                               },
                             );
+                            _isBookingNavigating = false;
                             if (mounted) {
                               _loadWithDateFilter();
                             }
@@ -666,7 +680,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 // ─── FILTERS ──────────────────────────────────
                 if (_showFilters)
                   Container(
-                    key: ProviderTourController().apptsFilterKey,
+                    key: isTourActive ? ProviderTourController().apptsFilterKey : null,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -926,7 +940,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 // ─── SCROLLABLE LIST CONTENT ───────────────
                 Expanded(
                   child: Container(
-                    key: ProviderTourController().apptsListKey,
+                    key: isTourActive ? ProviderTourController().apptsListKey : null,
                     child: _buildListContent(
                         state, appointments, isDark, theme, isTab, width),
                   ),
@@ -1130,9 +1144,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
               const SizedBox(height: 20),
               TextButton.icon(
                 onPressed: () {
-                  context
-                      .read<AppointmentBloc>()
-                      .add(LoadAppointmentsEvent());
+                  _loadWithDateFilter();
                 },
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text("Try Again"),
@@ -1221,6 +1233,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
               child: InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () async {
+                  if (_isBookingNavigating) return;
+                  _isBookingNavigating = true;
                   final targetDate = _getSelectedAppointmentDate();
                   await Navigator.pushNamed(
                     context,
@@ -1230,6 +1244,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                       'date': targetDate,
                     },
                   );
+                  _isBookingNavigating = false;
                   if (mounted) {
                     _loadWithDateFilter();
                   }

@@ -14,6 +14,7 @@ import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'package:yiraclinics/features/presentation/appointments/add_new_appointment_screen.dart' show DoctorSlotItem;
 import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 
@@ -482,7 +483,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     };
 
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: true).post(
+      final res = await sl<ApiClient>().account(showSuccessSnack: !_isTeleConsultation).post(
         URLs.bookAppointmentUrl,
         data: body,
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
@@ -490,6 +491,59 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         if (!mounted) return;
+
+        final dynamic rawData = res.data;
+        int? appointmentId;
+        String? patientUserId;
+        if (rawData is Map<String, dynamic>) {
+          final d = rawData['data'];
+          if (d is Map<String, dynamic>) {
+            appointmentId = int.tryParse(d['appointmentId']?.toString() ?? '');
+            patientUserId = d['patientUserId']?.toString();
+          }
+          appointmentId ??= int.tryParse(rawData['appointmentId']?.toString() ?? '');
+        }
+
+        final double fee = (_selectedDoctor?['consultationFee'] != null)
+            ? (double.tryParse(_selectedDoctor!['consultationFee'].toString()) ?? 0.0)
+            : 0.0;
+
+        // For Teleconsultation: patient pays online consultation fee via Razorpay
+        if (_isTeleConsultation && fee > 0 && appointmentId != null) {
+          final resolvedPatientId = patientUserId ?? profile['userId']?.toString() ?? currentUser?.data?.id ?? '';
+          final payRes = await RazorpayPaymentService.instance.processPayment(
+            appointmentId: appointmentId,
+            patientId: resolvedPatientId,
+            amount: fee,
+            providerId: doctorId,
+            hospitalName: _selectedHospital?['name']?.toString(),
+            patientName: profile['name']?.toString(),
+            patientPhone: profile['phone']?.toString() ?? currentUser?.data?.phoneNumber?.toString(),
+            patientEmail: currentUser?.data?.email?.toString(),
+            isTeleConsultation: true,
+          );
+
+          if (!mounted) return;
+
+          if (payRes.success) {
+            widget.onAppointmentBooked?.call();
+            _showSuccessSheet(context);
+          } else {
+            _showPaymentIncompleteSheet(
+              context,
+              appointmentId: appointmentId,
+              patientUserId: resolvedPatientId,
+              fee: fee,
+              doctorId: doctorId,
+              patientProfile: profile,
+              isCancelled: payRes.isCancelled,
+              errorMessage: payRes.errorMessage,
+            );
+          }
+          return;
+        }
+
+        // For In-Person/Clinic visits: pay at clinic
         widget.onAppointmentBooked?.call();
         _showSuccessSheet(context);
         return;
@@ -501,6 +555,260 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  Future<void> _cancelAppointment(int appointmentId) async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final token = currentUser?.data?.accessToken ?? '';
+    try {
+      await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.updateAppointmentStatusUrl,
+        data: {
+          "appointmentId": appointmentId.toString(),
+          "status": "Cancelled",
+        },
+        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+      );
+    } catch (e) {
+      debugPrint("Error cancelling appointment #$appointmentId: $e");
+    }
+  }
+
+  void _showPaymentIncompleteSheet(
+    BuildContext ctx, {
+    required int appointmentId,
+    required String patientUserId,
+    required double fee,
+    required String doctorId,
+    required Map<String, dynamic> patientProfile,
+    required bool isCancelled,
+    String? errorMessage,
+  }) {
+    final isDark = Theme.of(ctx).brightness == Brightness.dark;
+    final currentUser = GlobalSession.instance.userNotifier.value;
+
+    showModalBottomSheet(
+      context: ctx,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        bool isRetrying = false;
+        bool isCancelling = false;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.payment_rounded,
+                      color: Color(0xFFD97706),
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    isCancelled ? "Payment Cancelled" : "Payment Required",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Online consultation slots cannot be scheduled without payment. Please complete payment to book the doctor's slot, or cancel.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow(
+                          "Doctor",
+                          _selectedDoctor?['name'] ?? 'Doctor',
+                          Icons.person_outline_rounded,
+                          isDark,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildSummaryRow(
+                          "Amount Due",
+                          "₹${fee.toStringAsFixed(0)}",
+                          Icons.currency_rupee_rounded,
+                          isDark,
+                          highlight: true,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildSummaryRow(
+                          "Consultation",
+                          "Online Video Call",
+                          Icons.videocam_rounded,
+                          isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action 1: Retry Payment
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: isRetrying || isCancelling
+                          ? null
+                          : () async {
+                              setSheetState(() => isRetrying = true);
+                              final payRes = await RazorpayPaymentService.instance.processPayment(
+                                appointmentId: appointmentId,
+                                patientId: patientUserId,
+                                amount: fee,
+                                providerId: doctorId,
+                                hospitalName: _selectedHospital?['name']?.toString(),
+                                patientName: patientProfile['name']?.toString(),
+                                patientPhone: patientProfile['phone']?.toString() ?? currentUser?.data?.phoneNumber?.toString(),
+                                patientEmail: currentUser?.data?.email?.toString(),
+                                isTeleConsultation: true,
+                              );
+
+                              if (!mounted || !sheetContext.mounted) return;
+                              setSheetState(() => isRetrying = false);
+
+                              if (payRes.success) {
+                                Navigator.pop(sheetContext);
+                                widget.onAppointmentBooked?.call();
+                                if (ctx.mounted) {
+                                  _showSuccessSheet(ctx);
+                                }
+                              } else if (payRes.isCancelled) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    const SnackBar(content: Text("Payment cancelled. Slot not scheduled.")),
+                                  );
+                                }
+                              } else {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(content: Text("Payment failed: ${payRes.errorMessage ?? 'Please try again'}")),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: isRetrying
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : Text(
+                              "Pay ₹${fee.toStringAsFixed(0)} to Schedule Slot",
+                              style: const TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Action 2: Cancel Booking (slot not scheduled)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: isRetrying || isCancelling
+                          ? null
+                          : () async {
+                              setSheetState(() => isCancelling = true);
+                              await _cancelAppointment(appointmentId);
+                              if (!mounted) return;
+                              if (sheetContext.mounted) {
+                                Navigator.pop(sheetContext);
+                              }
+                              if (ctx.mounted) {
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Booking cancelled. Slot was not scheduled."),
+                                    backgroundColor: Color(0xFFEF4444),
+                                  ),
+                                );
+                                if (Navigator.canPop(ctx)) {
+                                  Navigator.pop(ctx, false);
+                                }
+                              }
+                            },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: isCancelling
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFEF4444)),
+                            )
+                          : const Text(
+                              "Cancel Booking",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showSuccessSheet(BuildContext ctx) {
@@ -984,7 +1292,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _filteredDoctors.length,
-                                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                separatorBuilder: (_, _) => const SizedBox(width: 10),
                                 itemBuilder: (context, index) {
                                   final doc = _filteredDoctors[index];
                                   final isSelected = (_selectedDoctor?['doctorId'] ?? _selectedDoctor?['id']) == (doc['doctorId'] ?? doc['id']);
@@ -1075,6 +1383,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 },
                               ),
                             ),
+                            if (_selectedDoctor != null) ...[
+                              const SizedBox(height: 12),
+                              _buildDoctorInfoCard(_selectedDoctor!, isDark, isTab),
+                            ],
                           ],
                         ],
 
@@ -1190,7 +1502,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: 14,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, _) => const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final date = DateTime.now().add(Duration(days: index));
                               final isSelected = DateFormat('yyyy-MM-dd').format(date) ==
@@ -1412,6 +1724,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   _selectedVisitType = type;
                                   if (type == "Tele-Consult") {
                                     _isTeleConsultation = true;
+                                  } else {
+                                    _isTeleConsultation = false;
                                   }
                                 });
                               },
@@ -1484,12 +1798,19 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   _isTeleConsultation = val;
                                   if (val && _selectedVisitType != "Tele-Consult") {
                                     _selectedVisitType = "Tele-Consult";
+                                  } else if (!val && _selectedVisitType == "Tele-Consult") {
+                                    _selectedVisitType = "Consultation";
                                   }
                                 });
                               },
                             ),
                           ],
                         ),
+
+                        if (_isTeleConsultation) ...[
+                          const SizedBox(height: 14),
+                          _buildTeleconsultationPaymentSetup(isDark, isTab),
+                        ],
 
                         const SizedBox(height: 18),
                         Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
@@ -1595,9 +1916,11 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _selectedSlot != null
-                        ? "${DateFormat('d MMM').format(_selectedDate)} • ${_selectedSlot!['label']}"
-                        : "Select a slot",
+                    _isTeleConsultation
+                        ? "Online Teleconsultation"
+                        : (_selectedSlot != null
+                            ? "${DateFormat('d MMM').format(_selectedDate)} • ${_selectedSlot!['label']}"
+                            : "Select a slot"),
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontWeight: FontWeight.bold,
@@ -1607,7 +1930,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   ),
                   Text(
                     _selectedDoctor != null
-                        ? "${_selectedDoctor!['name']} (₹${_selectedDoctor!['consultationFee'] ?? 0})"
+                        ? "${_selectedDoctor!['name']} (${_isTeleConsultation ? 'Pay Online: ' : ''}₹${_selectedDoctor!['consultationFee'] ?? 0})"
                         : "Select a doctor",
                     style: const TextStyle(
                       fontFamily: appPoppinFont,
@@ -1634,27 +1957,240 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           height: 20,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Confirm Booking",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(width: 6),
-                            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-                          ],
+                      : Builder(
+                          builder: (context) {
+                            final double fee = (_selectedDoctor?['consultationFee'] != null)
+                                ? (double.tryParse(_selectedDoctor!['consultationFee'].toString()) ?? 0.0)
+                                : 0.0;
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _isTeleConsultation ? Icons.lock_outline_rounded : Icons.check_circle_outline_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _isTeleConsultation
+                                      ? (fee > 0 ? "Pay ₹${fee.toStringAsFixed(0)} & Confirm" : "Confirm Tele-Consult")
+                                      : "Confirm Booking",
+                                  style: const TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                              ],
+                            );
+                          },
                         ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTeleconsultationPaymentSetup(bool isDark, bool isTab) {
+    final double fee = (_selectedDoctor?['consultationFee'] != null)
+        ? (double.tryParse(_selectedDoctor!['consultationFee'].toString()) ?? 0.0)
+        : 0.0;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.payment_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Teleconsultation Payment Setup",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      "Online payment required to confirm video slot",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flash_on_rounded, color: Colors.white, size: 12),
+                    SizedBox(width: 3),
+                    Text(
+                      "Razorpay",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+          const SizedBox(height: 12),
+          // Fee details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Consultation Fee",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                ),
+              ),
+              Text(
+                fee == 0 ? "Free" : "₹${fee.toStringAsFixed(0)}",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: fee == 0 ? const Color(0xFF059669) : const Color(0xFF2563EB),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Video call platform
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Video Platform",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.videocam_rounded, size: 14, color: Color(0xFF0284C7)),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Zoom Video (Included)",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Payment options
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Accepted Modes",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                ),
+              ),
+              Text(
+                "UPI, GPay, Cards, NetBanking",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF059669)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "100% Encrypted & Secure Prepayment via Razorpay",
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1694,6 +2230,399 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     );
   }
 
+  // ── Doctor Info Card (Displays all available doctor details from database) ──
+  Widget _buildDoctorInfoCard(Map<String, dynamic> doc, bool isDark, bool isTab) {
+    const primaryColor = Color(0xFF2563EB);
+    final docName = (doc['name'] ?? doc['displayName'] ?? 'Doctor').toString().trim();
+    final specialty = (doc['specialty'] ?? doc['Specialty'] ?? 'General Physician').toString().trim();
+    final subSpecialty = (doc['subSpecialty'] ?? doc['SubSpecialty'] ?? '').toString().trim();
+    final department = (doc['department'] ?? doc['Department'] ?? '').toString().trim();
+    final qualification = (doc['qualification'] ?? doc['Qualification'] ?? '').toString().trim();
+    final experience = (doc['experience'] ?? doc['Experience'] ?? '').toString().trim();
+    final regNo = (doc['registrationNumber'] ?? doc['RegistrationNumber'] ?? '').toString().trim();
+    final bio = (doc['bio'] ?? doc['Bio'] ?? '').toString().trim();
+    final hospitalName = (doc['hospitalName'] ?? doc['Hospital']?['Name'] ?? _selectedHospital?['name'] ?? '').toString().trim();
+    final email = (doc['email'] ?? doc['Email'] ?? '').toString().trim();
+    final phoneNumber = (doc['phoneNumber'] ?? doc['PhoneNumber'] ?? '').toString().trim();
+    final imagePath = (doc['imagePath'] ?? doc['ImagePath'] ?? doc['profileImage'] ?? '').toString().trim();
+    final rawFee = doc['consultationFee'] ?? doc['ConsultationFee'];
+    final fee = rawFee != null ? double.tryParse(rawFee.toString()) : null;
+
+    final initial = docName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim().isNotEmpty
+        ? docName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim()[0].toUpperCase()
+        : 'D';
+    final bool hasImage = imagePath.isNotEmpty && (imagePath.startsWith('http://') || imagePath.startsWith('https://'));
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isTab ? 16 : 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Row 1: Doctor Avatar + Name + Specialization & Hospital ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                children: [
+                  Container(
+                    width: isTab ? 54 : 48,
+                    height: isTab ? 54 : 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: primaryColor.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: hasImage
+                          ? Image.network(
+                              imagePath,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: primaryColor.withValues(alpha: 0.12),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  initial,
+                                  style: const TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: primaryColor.withValues(alpha: 0.12),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initial,
+                                style: const TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            docName,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: isTab ? 15 : 14,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      specialty,
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (hospitalName.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.local_hospital_rounded,
+                            size: 12,
+                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              hospitalName,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // ── Row 2: Specialty, Sub-Specialty, Qualification, Experience, Reg No Badges ──
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (subSpecialty.isNotEmpty && subSpecialty != specialty)
+                _buildDoctorDetailChip(
+                  icon: Icons.hub_rounded,
+                  label: subSpecialty,
+                  isDark: isDark,
+                  color: const Color(0xFF0284C7),
+                ),
+              if (qualification.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.school_rounded,
+                  label: qualification,
+                  isDark: isDark,
+                  color: const Color(0xFF7C3AED),
+                ),
+              if (experience.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.work_history_rounded,
+                  label: experience,
+                  isDark: isDark,
+                  color: const Color(0xFF0D9488),
+                ),
+              if (department.isNotEmpty && department != specialty && department != 'General')
+                _buildDoctorDetailChip(
+                  icon: Icons.apartment_rounded,
+                  label: department,
+                  isDark: isDark,
+                  color: const Color(0xFFD97706),
+                ),
+              if (regNo.isNotEmpty)
+                _buildDoctorDetailChip(
+                  icon: Icons.badge_rounded,
+                  label: "Reg: $regNo",
+                  isDark: isDark,
+                  color: const Color(0xFF475569),
+                ),
+            ],
+          ),
+
+          // ── Row 3: Doctor Bio / About (if present) ──
+          if (bio.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      bio,
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        height: 1.35,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // ── Row 4: Consultation Fee & Contact Info ──
+          const SizedBox(height: 10),
+          Divider(height: 1, color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669).withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.payments_rounded,
+                      size: 13,
+                      color: Color(0xFF059669),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "CONSULTATION FEE",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      Text(
+                        fee == null || fee == 0 ? "Free Consultation" : "₹${fee.toStringAsFixed(0)}",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: fee == null || fee == 0
+                              ? const Color(0xFF059669)
+                              : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (phoneNumber.isNotEmpty || email.isNotEmpty)
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (phoneNumber.isNotEmpty) ...[
+                        const Icon(Icons.phone_in_talk_rounded, size: 12, color: primaryColor),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            phoneNumber,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ] else if (email.isNotEmpty) ...[
+                        const Icon(Icons.mail_outline_rounded, size: 12, color: primaryColor),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            email,
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorDetailChip({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInputLabel(String label, bool isDark, bool isTab) {
     return Text(
       label,
@@ -1715,8 +2644,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: 3,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (_, __) => Container(
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (_, _) => Container(
             width: 220,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -1817,8 +2746,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: 3,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
-                      itemBuilder: (_, __) => Container(
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (_, _) => Container(
                         width: 220,
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(

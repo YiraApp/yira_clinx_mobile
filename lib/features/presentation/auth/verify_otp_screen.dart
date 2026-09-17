@@ -13,6 +13,7 @@ import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/constants/constants.dart';
 import '../../../core/fcm_token/fcm_token_helper.dart';
 import '../../../core/models/select_role_model.dart';
+import '../../../core/utils/utils.dart';
 
 class VerifyOtpScreen extends StatefulWidget {
   final SendOtpEntity sendOtpEntity;
@@ -180,13 +181,23 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                     } else if (state is SignInError) {
                       _isSubmitting = false;
                       _isVerified = false;
-                      _showErrorMessage(
-                          _parseErrorMessage(state.errorMessage));
+                      final errorMsg = _parseErrorMessage(state.errorMessage);
+                      _showErrorMessage(errorMsg);
+                      if (errorMsg.toLowerCase().contains('deactivated')) {
+                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
+                        Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
+                      }
                     } else if (state is LoginFailure) {
                       _isSubmitting = false;
                       _isVerified = false;
-                      _showErrorMessage(
-                          _parseErrorMessage(state.errorMessage ?? 'Verification failed'));
+                      final errorMsg = _parseErrorMessage(state.errorMessage ?? 'Verification failed');
+                      _showErrorMessage(errorMsg);
+                      if (errorMsg.toLowerCase().contains('deactivated')) {
+                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
+                        Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
+                      }
                     } else if (state is ReSendOtpSuccessState) {
                       _clearError();
                       if (mounted) {
@@ -206,8 +217,13 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                         );
                       }
                     } else if (state is ReSendOtpFailureState) {
-                      _showErrorMessage(
-                          _parseErrorMessage(state.errorMessage));
+                      final errorMsg = _parseErrorMessage(state.errorMessage);
+                      _showErrorMessage(errorMsg);
+                      if (errorMsg.toLowerCase().contains('deactivated')) {
+                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
+                        Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
+                      }
                     }
                   },
                   builder: (context, state) {

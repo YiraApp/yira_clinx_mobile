@@ -10,13 +10,21 @@ import 'package:yiraclinics/features/presentation/appointments/add_new_appointme
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
 
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
+
 class PatientHospitalDoctorsScreen extends StatefulWidget {
   final Map<String, dynamic> hospital;
+  final ProfileEntity? targetProfile;
+  final String? patientName;
+  final String? patientPhone;
   final VoidCallback? onAppointmentBooked;
 
   const PatientHospitalDoctorsScreen({
     super.key,
     required this.hospital,
+    this.targetProfile,
+    this.patientName,
+    this.patientPhone,
     this.onAppointmentBooked,
   });
 
@@ -28,6 +36,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
   List<Map<String, dynamic>> _doctors = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  bool _isBookingNavigating = false;
 
   @override
   void initState() {
@@ -140,98 +149,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hospital Info Header Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        width: 1.1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.local_hospital_rounded,
-                            color: isDark ? const Color(0xFF93C5FD) : primaryColor,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                hospName,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                  letterSpacing: -0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                orgName,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11.5,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            "CONNECTED",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF059669),
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
                   // Search Bar
                   Container(
                     decoration: BoxDecoration(
@@ -544,15 +461,22 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                 ),
               ),
 
-              // Book Appointment Action Button
               InkWell(
                 onTap: () async {
+                  if (_isBookingNavigating) return;
+                  _isBookingNavigating = true;
                   final res = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => BlocProvider.value(
                         value: sl<AppointmentBloc>(),
                         child: AddNewAppointmentScreen(
+                          initialPatientName: widget.patientName ??
+                              widget.targetProfile?.name ??
+                              (widget.targetProfile != null
+                                  ? '${widget.targetProfile!.firstName ?? ''} ${widget.targetProfile!.lastName ?? ''}'.trim()
+                                  : null),
+                          initialPatientPhone: widget.patientPhone ?? widget.targetProfile?.phoneNumber,
                           initialDoctorId: (doc['doctorId'] ?? doc['userId'] ?? doc['id'])?.toString(),
                           initialDoctorName: docName,
                           initialHospitalId: hospId,
@@ -566,6 +490,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                       ),
                     ),
                   );
+                  _isBookingNavigating = false;
 
                   if (res == true && mounted) {
                     widget.onAppointmentBooked?.call();

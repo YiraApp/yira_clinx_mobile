@@ -413,30 +413,51 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
         const SizedBox(height: 18),
         _buildSectionHeader("Contact Information", Icons.contact_phone_outlined, primaryColor, isDark),
         const SizedBox(height: 12),
-        _buildTextField(
-          label: "Email Address *",
-          controller: _emailController,
-          icon: Icons.email_outlined,
-          isDark: isDark,
-          primaryColor: primaryColor,
-          keyboardType: TextInputType.emailAddress,
-          hint: "doctor@hospital.com",
-          validator: (val) {
-            if (val == null || val.trim().isEmpty) return "Email is required";
-            if (!val.contains('@')) return "Enter a valid email address";
-            return null;
+        Builder(
+          builder: (context) {
+            final bool isEmailPresent = widget.profile.email?.trim().isNotEmpty == true;
+            final bool isPhonePresent = widget.profile.phoneNumber?.trim().isNotEmpty == true;
+            return Column(
+              children: [
+                _buildTextField(
+                  label: "Email Address *",
+                  controller: _emailController,
+                  icon: Icons.email_outlined,
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.emailAddress,
+                  hint: isEmailPresent ? null : "doctor@hospital.com",
+                  readOnly: isEmailPresent,
+                  helperText: isEmailPresent ? "Registered email address cannot be changed" : "Add your registered email address",
+                  validator: (val) {
+                    if (!isEmailPresent) {
+                      if (val == null || val.trim().isEmpty) return "Email is required";
+                      if (!val.contains('@')) return "Enter a valid email address";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                _buildTextField(
+                  label: "Phone Number *",
+                  controller: _phoneController,
+                  icon: Icons.phone_outlined,
+                  isDark: isDark,
+                  primaryColor: primaryColor,
+                  keyboardType: TextInputType.phone,
+                  hint: isPhonePresent ? null : "+91 98765 43210",
+                  readOnly: isPhonePresent,
+                  helperText: isPhonePresent ? "Registered mobile number cannot be changed" : "Add your registered mobile number",
+                  validator: (val) {
+                    if (!isPhonePresent) {
+                      if (val == null || val.trim().isEmpty) return "Phone number is required";
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            );
           },
-        ),
-        const SizedBox(height: 14),
-        _buildTextField(
-          label: "Phone Number *",
-          controller: _phoneController,
-          icon: Icons.phone_outlined,
-          isDark: isDark,
-          primaryColor: primaryColor,
-          keyboardType: TextInputType.phone,
-          hint: "+91 98765 43210",
-          validator: (val) => val == null || val.trim().isEmpty ? "Phone number is required" : null,
         ),
         const SizedBox(height: 18),
         _buildSectionHeader("Personal Demographics", Icons.accessibility_new_rounded, primaryColor, isDark),
@@ -616,22 +637,50 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     String? Function(String?)? validator,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    String? helperText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+              ),
+            ),
+            if (readOnly)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white10 : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Registered (Locked)",
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, color: isDark ? Colors.white60 : Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
@@ -639,7 +688,9 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             fontFamily: appPoppinFont,
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: isDark ? Colors.white : Colors.black87,
+            color: readOnly
+                ? (isDark ? Colors.white54 : Colors.grey[600])
+                : (isDark ? Colors.white : Colors.black87),
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -649,10 +700,21 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               color: isDark ? Colors.white30 : Colors.grey.shade400,
             ),
             prefixIcon: maxLines == 1
-                ? Icon(icon, size: 19, color: primaryColor.withOpacity(0.8))
+                ? Icon(icon, size: 19, color: primaryColor.withValues(alpha: readOnly ? 0.4 : 0.8))
                 : null,
+            suffixIcon: suffixIcon ?? (readOnly
+                ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                : null),
+            helperText: helperText,
+            helperStyle: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 11,
+              color: isDark ? Colors.white38 : Colors.grey[500],
+            ),
             filled: true,
-            fillColor: isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC),
+            fillColor: readOnly
+                ? (isDark ? const Color(0xFF161F30) : Colors.grey.shade200)
+                : (isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),

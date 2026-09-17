@@ -108,7 +108,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
   }
 
   @override
-  Future<bool> bookAppointment({
+  Future<Map<String, dynamic>?> bookAppointment({
     required String doctorId,
     required int orgId,
     required int hospitalId,
@@ -164,7 +164,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
     try {
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).post(
+      final response = await _apiClient.account(showSuccessSnack: isTeleConsultation != true).post(
         endPoint,
         data: requestBody,
         options: Options(
@@ -176,15 +176,16 @@ class AppointmentRepoImpl implements AppointmentRepo {
         if (response.data != null && response.data is Map<String, dynamic>) {
           final rawData = response.data as Map<String, dynamic>;
           if (rawData['status'] == false || rawData['success'] == false) {
-            return false;
+            return null;
           }
+          return rawData;
         }
-        return true;
+        return {'status': true};
       }
     } catch (e) {
       developer.log("Error booking appointment", error: e, name: "AppointmentRepoImpl");
     }
-    return false;
+    return null;
   }
 
   @override

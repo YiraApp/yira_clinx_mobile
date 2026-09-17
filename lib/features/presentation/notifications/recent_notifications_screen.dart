@@ -523,38 +523,43 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                 unreadCount = state.unreadCount;
               }
 
-              return Row(
-                children: [
-                  Text(
-                    "Notifications",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab ? 20 : 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  if (unreadCount > 0) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(12),
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Notifications",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? 20 : 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
                       ),
-                      child: Text(
-                        "$unreadCount new",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: isTab ? 12 : 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                    ),
+                    if (unreadCount > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "$unreadCount new",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 12 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               );
             },
           ),
@@ -572,6 +577,11 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   children: [
                     if (hasUnread)
                       TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         onPressed: () {
                           _bloc.add(MarkAllNotificationsAsReadEvent());
                         },
@@ -587,6 +597,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       ),
                     IconButton(
                       tooltip: "Clear All Notifications",
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                       icon: Icon(
                         Icons.delete_sweep_outlined,
                         size: 22,

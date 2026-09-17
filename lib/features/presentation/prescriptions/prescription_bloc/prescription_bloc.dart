@@ -54,6 +54,8 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
               ? [MedicationItem(id: DateTime.now().millisecondsSinceEpoch.toString(), name: '')]
               : data.medications,
           additionalNotes: data.additionalNotes,
+          pdfUrl: data.pdfUrl,
+          prescriptionId: data.id,
         ));
       }
     } catch (_) {}
@@ -68,6 +70,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
       final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
 
       final payload = PrescriptionEntity(
+        id: state.prescriptionId,
         patientId: event.patientId,
         appointmentId: event.appointmentId,
         hospitalId: event.hospitalId,
@@ -84,6 +87,8 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
         diagnoses: synchronizedData.diagnoses,
         medications: synchronizedData.medications,
         additionalNotes: synchronizedData.additionalNotes,
+        pdfUrl: synchronizedData.pdfUrl,
+        prescriptionId: synchronizedData.id,
       ));
     } catch (e) {
       emit(state.copyWith(

@@ -51,6 +51,8 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
         sl<AppointmentBloc>().add(LoadAppointmentsEvent());
       } else if (index == 0) {
         sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+      } else if (index == 3) {
+        sl<SlotBloc>().add(InitializeSlotsEvent(resetToToday: true));
       }
     }
   }
