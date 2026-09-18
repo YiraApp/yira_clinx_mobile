@@ -127,6 +127,28 @@ class MedicationReminderService {
     });
   }
 
+  MedicationReminder? getReminderForMedicine(String? prescriptionId, String medicineName) {
+    final cleanName = medicineName.trim().toLowerCase();
+    try {
+      return remindersNotifier.value.firstWhere((r) {
+        final matchName = r.medicineName.trim().toLowerCase() == cleanName;
+        if (prescriptionId != null && prescriptionId.isNotEmpty) {
+          return matchName && r.prescriptionId == prescriptionId;
+        }
+        return matchName;
+      });
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> deleteMedicineReminder(String? prescriptionId, String medicineName) async {
+    final reminder = getReminderForMedicine(prescriptionId, medicineName);
+    if (reminder != null) {
+      await deleteReminder(reminder.id);
+    }
+  }
+
   List<TodayMedicationDose> getTodayDoses() {
     final List<TodayMedicationDose> doses = [];
     final now = DateTime.now();

@@ -14,6 +14,7 @@ class MedicationReminder {
   final List<String> times; // e.g. ['08:00 AM', '10:30 AM', '01:00 PM', '04:00 PM', '08:00 PM']
   final String mealRelation; // 'After Food', 'Before Food', 'Anytime'
   final String doctorName;
+  final String doctorPhoto;
   final String condition;
   final Map<String, bool> takenDoses; // e.g. {'2026-09-17_08:00 AM': true}
   final bool isActive;
@@ -32,6 +33,7 @@ class MedicationReminder {
     required this.times,
     this.mealRelation = 'After Food',
     this.doctorName = '',
+    this.doctorPhoto = '',
     this.condition = '',
     Map<String, bool>? takenDoses,
     this.isActive = true,
@@ -77,6 +79,7 @@ class MedicationReminder {
     List<String>? times,
     String? mealRelation,
     String? doctorName,
+    String? doctorPhoto,
     String? condition,
     Map<String, bool>? takenDoses,
     bool? isActive,
@@ -95,6 +98,7 @@ class MedicationReminder {
       times: times ?? this.times,
       mealRelation: mealRelation ?? this.mealRelation,
       doctorName: doctorName ?? this.doctorName,
+      doctorPhoto: doctorPhoto ?? this.doctorPhoto,
       condition: condition ?? this.condition,
       takenDoses: takenDoses ?? Map<String, bool>.from(this.takenDoses),
       isActive: isActive ?? this.isActive,
@@ -116,6 +120,7 @@ class MedicationReminder {
       'times': times,
       'mealRelation': mealRelation,
       'doctorName': doctorName,
+      'doctorPhoto': doctorPhoto,
       'condition': condition,
       'takenDoses': takenDoses,
       'isActive': isActive,
@@ -138,6 +143,7 @@ class MedicationReminder {
       times: timesList,
       mealRelation: map['mealRelation'] ?? 'After Food',
       doctorName: map['doctorName'] ?? '',
+      doctorPhoto: map['doctorPhoto'] ?? '',
       condition: map['condition'] ?? '',
       takenDoses: Map<String, bool>.from(map['takenDoses'] ?? {}),
       isActive: map['isActive'] ?? true,

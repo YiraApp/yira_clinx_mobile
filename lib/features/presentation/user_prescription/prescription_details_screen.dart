@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -10,6 +11,7 @@ import 'package:yiraclinics/features/presentation/user_prescription/widgets/conv
 import '../../../di/dependency_injection.dart';
 import '../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../core/api/base_api_configuration.dart';
+import '../../../core/widgets/doctor_avatar_widget.dart';
 
 class PrescriptionDetailScreen extends StatelessWidget {
   final String prescriptionId;
@@ -32,10 +34,16 @@ class PrescriptionDetailScreen extends StatelessWidget {
   }
 
   String _cleanDoctorName(String raw) {
-    if (raw.contains(' - ')) {
-      return raw.split(' - ').first.trim();
+    String name = raw;
+    if (name.contains(' - ')) {
+      name = name.split(' - ').first.trim();
     }
-    return raw.trim().isNotEmpty ? raw.trim() : 'Consulting Doctor';
+    name = name.trim();
+    if (name.isEmpty) return 'Consulting Doctor';
+    if (!name.toLowerCase().startsWith('dr.') && !name.toLowerCase().startsWith('dr ')) {
+      return 'Dr. $name';
+    }
+    return name;
   }
 
   String _cleanSpecialty(String rawSpecialty, String docName) {
@@ -100,21 +108,30 @@ class PrescriptionDetailScreen extends StatelessWidget {
             ),
           ),
           actions: [
-            IconButton(
-              tooltip: "View Full Prescription PDF",
-              icon: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF059669)),
-              onPressed: () {
-                final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
-                final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/$prescriptionId/pdf';
+            BlocBuilder<MedicationBloc, MedicationState>(
+              builder: (context, state) {
+                final data = state.selectedPrescriptionDetail ?? initialData;
+                final customPdf = data?['pdfUrl']?.toString();
+                final docName = _cleanDoctorName(data?['doctor'] ?? 'Doctor');
+                return IconButton(
+                  tooltip: "View Full Prescription PDF",
+                  icon: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF059669)),
+                  onPressed: () {
+                    final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                    final effectivePdfUrl = (customPdf != null && customPdf.trim().isNotEmpty)
+                        ? (customPdf.startsWith('http') ? customPdf : '$baseUrl$customPdf')
+                        : '$baseUrl/v1/api/auth/prescriptions/$prescriptionId/pdf';
 
-                InAppDocumentViewer.show(
-                  context,
-                  title: 'Digital Prescription',
-                  category: 'Prescription',
-                  fileUrl: effectivePdfUrl,
-                  hospitalName: 'Yira Super Speciality Hospitals',
-                  isAppointmentDoc: true,
+                    InAppDocumentViewer.show(
+                      context,
+                      title: '$docName - Prescription',
+                      category: 'Prescription',
+                      fileUrl: effectivePdfUrl,
+                      hospitalName: 'Prescription Document',
+                      isAppointmentDoc: true,
+                    );
+                  },
                 );
               },
             ),
@@ -221,7 +238,8 @@ class PrescriptionDetailScreen extends StatelessWidget {
                           context,
                           Map<String, dynamic>.from(med),
                           isDark,
-                          doctorName: (data['doctor'] ?? '').toString(),
+                          doctorName: _cleanDoctorName((data['doctor'] ?? '').toString()),
+                          doctorPhoto: (data['doctorPhoto'] ?? '').toString(),
                           condition: (data['condition'] ?? '').toString(),
                         )),
 
@@ -305,8 +323,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
     final String date = (data['date'] ?? 'Recent').toString();
     final String pharmacy = (data['pharmacy'] ?? 'Yira Clinx E-Pharmacy').toString();
     final String condition = (data['condition'] ?? 'General Consultation').toString();
-    final String status = (data['status'] ?? 'Active').toString();
-    final bool isActive = status.toLowerCase() == 'active';
 
     final String docName = _cleanDoctorName(rawDoc);
     final String specialty = _cleanSpecialty(rawSpecialty, rawDoc);
@@ -331,25 +347,14 @@ class PrescriptionDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Doctor Profile row with status & digital Rx badge
+          // Doctor Profile row with Digital Rx badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.medical_services_rounded,
-                  color: primaryColor,
-                  size: 22,
-                ),
+              DoctorAvatarWidget(
+                photoUrl: (data['doctorPhoto'] ?? '').toString(),
+                doctorName: docName,
+                size: 46,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -378,60 +383,32 @@ class PrescriptionDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: (isActive ? const Color(0xFF10B981) : Colors.grey).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: (isActive ? const Color(0xFF10B981) : Colors.grey).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: isActive ? const Color(0xFF10B981) : Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          status,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            color: isActive ? const Color(0xFF10B981) : Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.2),
+                    width: 0.8,
                   ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified_rounded, size: 12, color: primaryColor),
+                    SizedBox(width: 4),
+                    Text(
                       "Digital Rx",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 9.5,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: primaryColor,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -546,6 +523,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
     Map<String, dynamic> med,
     bool isDark, {
     String? doctorName,
+    String? doctorPhoto,
     String? condition,
   }) {
     final String name = (med['name'] ?? 'Medication').toString();
@@ -575,47 +553,53 @@ class PrescriptionDetailScreen extends StatelessWidget {
         (mealTag.isEmpty || instructions.toLowerCase().trim() != mealTag.toLowerCase());
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2A3447) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.transparent : Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: isDark ? Colors.black26 : const Color(0xFF64748B).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Medicine Header: 3D Pill Icon + Name ──
+          // ── Medicine Header: 3D Pill Icon + Name & Status ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                'assets/images/dashboard_icons/pill_prescriptions_thick.png',
-                width: 34,
-                height: 34,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
+              Container(
+                width: 44,
+                height: 44,
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.16 : 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.18),
+                    width: 1,
                   ),
-                  child: const Icon(
+                ),
+                child: Image.asset(
+                  'assets/images/dashboard_icons/pill_prescriptions_thick.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.medication_rounded,
                     color: primaryColor,
-                    size: 22,
+                    size: 24,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,91 +608,21 @@ class PrescriptionDetailScreen extends StatelessWidget {
                       name,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 14.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
-
-                    // Schedule & Duration Tags (NO single tablet or 1 Tablet quantity)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.access_time_filled_rounded, size: 12, color: primaryColor),
-                              const SizedBox(width: 4),
-                              Text(
-                                scheduleText,
-                                style: const TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (duration.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0EA5E9).withValues(alpha: isDark ? 0.2 : 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.calendar_today_rounded, size: 11, color: Color(0xFF0EA5E9)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  duration,
-                                  style: const TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF0EA5E9),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (mealTag.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.2 : 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.restaurant_rounded, size: 11, color: Color(0xFF8B5CF6)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  mealTag,
-                                  style: const TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF8B5CF6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
+                    const SizedBox(height: 3),
+                    Text(
+                      "Prescribed Medication",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -716,22 +630,120 @@ class PrescriptionDetailScreen extends StatelessWidget {
             ],
           ),
 
+          const SizedBox(height: 12),
+
+          // ── Administration Schedule & Timing Badges ──
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.2),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.access_time_filled_rounded, size: 12, color: primaryColor),
+                    const SizedBox(width: 4.5),
+                    Text(
+                      scheduleText,
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (mealTag.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.2 : 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.restaurant_rounded, size: 12, color: Color(0xFF8B5CF6)),
+                      const SizedBox(width: 4.5),
+                      Text(
+                        mealTag,
+                        style: const TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF8B5CF6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (duration.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0EA5E9).withValues(alpha: isDark ? 0.2 : 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF0EA5E9)),
+                      const SizedBox(width: 4.5),
+                      Text(
+                        duration,
+                        style: const TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0EA5E9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
           if (showCustomInstructions) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
+                color: isDark ? const Color(0xFF151C28) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isDark ? Colors.white10 : const Color(0xFFEEF2F6),
+                  width: 0.8,
                 ),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.info_outline_rounded, size: 13, color: Color(0xFF10B981)),
-                  const SizedBox(width: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF10B981)),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       instructions,
@@ -739,6 +751,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        height: 1.35,
                       ),
                     ),
                   ),
@@ -747,37 +760,122 @@ class PrescriptionDetailScreen extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 10),
+          if (doctorName != null && doctorName.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : const Color(0xFFEDF2F7),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                children: [
+                  DoctorAvatarWidget(
+                    photoUrl: doctorPhoto,
+                    doctorName: doctorName,
+                    size: 20,
+                    borderRadius: 6,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Prescribed by $doctorName",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 12),
 
           // ── Convert to Medication reminder button / status badge ──
           ValueListenableBuilder<List<MedicationReminder>>(
             valueListenable: MedicationReminderService.instance.remindersNotifier,
             builder: (context, reminders, _) {
               final isConverted = MedicationReminderService.instance.isMedicineConverted(prescriptionId, name);
+              final activeReminder = MedicationReminderService.instance.getReminderForMedicine(prescriptionId, name);
 
               if (isConverted) {
                 return Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.16 : 0.08),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      width: 0.9,
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
                     children: [
-                      Icon(Icons.alarm_on_rounded, size: 15, color: Color(0xFF10B981)),
-                      SizedBox(width: 6),
-                      Text(
-                        "Daily Alarm Reminder Active",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
                           color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      const Icon(Icons.alarm_on_rounded, size: 16, color: Color(0xFF10B981)),
+                      const SizedBox(width: 6),
+                      const Expanded(
+                        child: Text(
+                          "Daily Alarm Active",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF10B981),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => _confirmStopReminder(context, activeReminder, name),
+                        borderRadius: BorderRadius.circular(7),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: isDark ? 0.2 : 0.1),
+                            borderRadius: BorderRadius.circular(7),
+                            border: Border.all(
+                              color: Colors.redAccent.withValues(alpha: 0.4),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.alarm_off_rounded, size: 13, color: Colors.redAccent),
+                              SizedBox(width: 4),
+                              Text(
+                                "Stop Alarm",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -787,7 +885,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
 
               return SizedBox(
                 width: double.infinity,
-                height: 38,
+                height: 40,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     ConvertTabletSheet.show(
@@ -797,6 +895,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                       initialInstructions: instructions,
                       prescriptionId: prescriptionId,
                       doctorName: doctorName,
+                      doctorPhoto: doctorPhoto,
                       condition: condition,
                     );
                   },
@@ -804,14 +903,14 @@ class PrescriptionDetailScreen extends StatelessWidget {
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  icon: const Icon(Icons.add_alarm_rounded, size: 15),
+                  icon: const Icon(Icons.add_alarm_rounded, size: 16),
                   label: const Text(
                     "Set Daily Medication Alarm",
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -830,25 +929,99 @@ class PrescriptionDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
         ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.note_alt_outlined, size: 18, color: primaryColor),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              notes,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12.5,
-                color: isDark ? Colors.white70 : const Color(0xFF334155),
-                height: 1.4,
+          Row(
+            children: [
+              const Icon(Icons.notes_rounded, size: 16, color: primaryColor),
+              const SizedBox(width: 6),
+              Text(
+                "Doctor's Advice & Instructions",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            notes,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 12.5,
+              height: 1.5,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmStopReminder(BuildContext context, MedicationReminder? reminder, String medicineName) {
+    HapticFeedback.selectionClick();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.alarm_off_rounded, color: Colors.redAccent, size: 22),
+            SizedBox(width: 8),
+            Text(
+              "Stop Alarm?",
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to stop the daily medication alarm for $medicineName?",
+          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              "Keep Active",
+              style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              if (reminder != null) {
+                await MedicationReminderService.instance.deleteReminder(reminder.id);
+              } else {
+                await MedicationReminderService.instance.deleteMedicineReminder(prescriptionId, medicineName);
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Alarm reminder stopped for $medicineName"),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: const Color(0xFF334155),
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              "Stop Alarm",
+              style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
             ),
           ),
         ],

@@ -24,3 +24,10 @@ class LoadPrescriptionDetails extends MedicationEvent {
   @override
   List<Object?> get props => [prescriptionId];
 }
+
+class AddManualPrescription extends MedicationEvent {
+  final Map<String, dynamic> payload;
+  const AddManualPrescription(this.payload);
+  @override
+  List<Object?> get props => [payload];
+}
