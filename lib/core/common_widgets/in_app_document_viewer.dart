@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
+import 'package:yiraclinics/core/api/base_api_configuration.dart';
 import '../local/global_session.dart';
 
 class InAppDocumentViewer extends StatefulWidget {
@@ -102,10 +103,18 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
   String get _effectiveUrl {
     final u = (widget.fileUrl ?? '').trim();
     if (u.isEmpty) return '';
-    if (!u.startsWith('http://') && !u.startsWith('https://') && !u.contains('://')) {
-      return 'https://$u';
+    String normalized = u;
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://') && !normalized.contains('://')) {
+      normalized = 'https://$normalized';
     }
-    return u;
+    // If an older database record has localhost or a local IP with port 5000, rewrite to QA URL
+    if (EnvironmentService.config.accountBaseUrl.startsWith('https://') &&
+        (normalized.contains('localhost:5000') ||
+         normalized.contains('127.0.0.1:5000') ||
+         RegExp(r'192\.168\.\d+\.\d+:5000').hasMatch(normalized))) {
+      normalized = normalized.replaceAll(RegExp(r'https?://[^/]+'), EnvironmentService.config.accountBaseUrl);
+    }
+    return normalized;
   }
 
   bool get _isImage {

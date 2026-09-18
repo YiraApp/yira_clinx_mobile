@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/constants/constants.dart';
@@ -148,6 +149,12 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
         String effectiveUrl = fileUrl;
         if (!effectiveUrl.startsWith('http://') && !effectiveUrl.startsWith('https://')) {
           effectiveUrl = 'https://$effectiveUrl';
+        }
+        if (EnvironmentService.config.accountBaseUrl.startsWith('https://') &&
+            (effectiveUrl.contains('localhost:5000') ||
+             effectiveUrl.contains('127.0.0.1:5000') ||
+             RegExp(r'192\.168\.\d+\.\d+:5000').hasMatch(effectiveUrl))) {
+          effectiveUrl = effectiveUrl.replaceAll(RegExp(r'https?://[^/]+'), EnvironmentService.config.accountBaseUrl);
         }
         final dio = Dio();
         await dio.download(
