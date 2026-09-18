@@ -13,7 +13,7 @@ const reSendOtpDuration = 30;
 
 // ************ project title *************
 
-const projectTitle = "Yira ClinX";
+const projectTitle = "Yira Health";
 const professionalRole = "provider";
 const userRole = "patient";
 

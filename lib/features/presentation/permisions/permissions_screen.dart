@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/permisions/permission_bloc/permission_bloc.dart';
 import 'package:yiraclinics/features/presentation/permisions/widgets/permission_card_tile.dart';
@@ -97,7 +96,7 @@ class PermissionsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 10),
                               CommonText(
-                                'To provide clinical-grade monitoring and seamless care, Yira Clinx requires the following access.',
+                                'To provide clinical-grade monitoring and seamless care, Yira Health requires the following access.',
                                 style: TextStyle(
                                   fontWeight: FontWeight.normal,
                                   fontFamily: appPoppinFont,

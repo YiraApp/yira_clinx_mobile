@@ -22,6 +22,8 @@ class CloseAccountButtonSection extends StatelessWidget {
     final width = displayWidth(context);
     final isTab = isTablet(context);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -44,7 +46,7 @@ class CloseAccountButtonSection extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isButtonEnabled
                       ? Colors.red.shade600
-                      : Colors.red.shade200,
+                      : (isDark ? Colors.red.shade900.withValues(alpha: 0.4) : Colors.red.shade200),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(fieldBorderRadius),
@@ -68,7 +70,9 @@ class CloseAccountButtonSection extends StatelessWidget {
             height: isTab ? 56 : 48,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(
+                  color: isDark ? Colors.white12 : Colors.grey.shade300,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
@@ -80,7 +84,7 @@ class CloseAccountButtonSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? width * 0.02 : width * 0.038,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: isDark ? Colors.white70 : Colors.grey.shade600,
                 ),
               ),
             ),

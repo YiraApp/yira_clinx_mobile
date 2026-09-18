@@ -14,6 +14,7 @@ import 'package:yiraclinics/core/services/network_services/network_bloc/network_
 import 'package:yiraclinics/core/widgets/internet_guard.dart';
 import 'package:yiraclinics/core/widgets/notificatio_wrapper.dart';
 
+import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
@@ -36,6 +37,7 @@ class AppGateway extends StatelessWidget {
         buildWhen: (previous, current) => previous.themeMode != current.themeMode,
         builder: (context, themeState) {
           return MaterialApp(
+            title: projectTitle,
             navigatorKey: NavigationService.navigatorKey,
             navigatorObservers: [
               _RouteLoggingObserver(),

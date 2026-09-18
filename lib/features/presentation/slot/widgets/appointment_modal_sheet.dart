@@ -16,10 +16,11 @@ class AppointmentModalSheet extends StatelessWidget {
   });
 
   static void show(BuildContext context, SlotEntity slot, SlotBloc bloc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(fieldBorderRadius)),
       ),
@@ -29,6 +30,7 @@ class AppointmentModalSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
     final isBlocked = currentSlot.label == 'Blocked';
 
@@ -58,7 +60,7 @@ class AppointmentModalSheet extends StatelessWidget {
           ),
           CommonText(
             'Slot Time: ${currentSlot.startTime} - ${currentSlot.endTime}',
-            style: textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            style: textTheme.bodyMedium?.copyWith(color: isDark ? Colors.white60 : Colors.grey),
           ),
           const SizedBox(height: 20),
           if (currentSlot.hasAppointment) ...[
@@ -66,8 +68,11 @@ class AppointmentModalSheet extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F9FA),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,8 +113,8 @@ class AppointmentModalSheet extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black,
+                      backgroundColor: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                      foregroundColor: isDark ? Colors.white : Colors.black,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                       elevation: 0,
@@ -125,10 +130,14 @@ class AppointmentModalSheet extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isBlocked ? const Color(0xFFFFF1F2) : const Color(0xFFF8FAFC),
+                color: isBlocked
+                    ? (isDark ? Colors.redAccent.withValues(alpha: 0.12) : const Color(0xFFFFF1F2))
+                    : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                 border: Border.all(
-                  color: isBlocked ? Colors.redAccent.withOpacity(0.3) : const Color(0xFFE2E8F0),
+                  color: isBlocked
+                      ? Colors.redAccent.withValues(alpha: 0.3)
+                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
               ),
               child: Column(
@@ -156,7 +165,9 @@ class AppointmentModalSheet extends StatelessWidget {
                     isBlocked
                         ? 'This slot is marked offline and patients cannot book appointments during this time.'
                         : 'This slot is open and available for patient appointments.',
-                    style: textTheme.bodyMedium?.copyWith(color: Colors.grey.shade700),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: isDark ? Colors.white70 : Colors.grey.shade700,
+                    ),
                   ),
                 ],
               ),
@@ -190,8 +201,8 @@ class AppointmentModalSheet extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black,
+                      backgroundColor: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                      foregroundColor: isDark ? Colors.white : Colors.black,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
                       elevation: 0,

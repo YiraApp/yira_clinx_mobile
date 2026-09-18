@@ -286,17 +286,20 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Left items: Video Call button + Patient Status pill
+                  // Left items: Video Call button + Prescription button + Patient Status pill
                   Expanded(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         // Video call badge (Only for upcoming/active appointments, not past/completed/cancelled)
                         if (widget.isTeleConsultation &&
                             !widget.statusLabel.toLowerCase().contains('completed') &&
                             !widget.statusLabel.toLowerCase().contains('cancelled') &&
-                            !widget.statusLabel.toLowerCase().contains('past')) ...[
+                            !widget.statusLabel.toLowerCase().contains('past'))
                           Builder(
                             builder: (context) {
                               final isPending = widget.statusLabel.toLowerCase().contains('pending') ||
@@ -355,11 +358,9 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                               );
                             },
                           ),
-                          const SizedBox(width: 6),
-                        ],
 
                         // Prescription quick button if provided
-                        if (widget.onPrescriptionTap != null) ...[
+                        if (widget.onPrescriptionTap != null)
                           InkWell(
                             onTap: widget.onPrescriptionTap,
                             borderRadius: BorderRadius.circular(8),
@@ -398,70 +399,66 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
-                        ],
 
                         // Patient Status Pill (e.g. For: John Doe / New Patient / Follow-up)
                         if (widget.patientStatus != null &&
                             widget.patientStatus!.trim().isNotEmpty &&
                             widget.patientStatus!.trim().toLowerCase() != 'active' &&
-                            widget.patientStatus!.trim().toLowerCase() != 'inactive') ...[
-                          Flexible(
-                            child: Builder(
-                              builder: (context) {
-                                final isForFamily = widget.patientStatus!.startsWith('For:');
-                                final badgeBg = isForFamily
-                                    ? (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF))
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9));
-                                final badgeText = isForFamily
-                                    ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
-                                    : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));
-                                final badgeBorder = isForFamily
-                                    ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFBFDBFE))
-                                    : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
+                            widget.patientStatus!.trim().toLowerCase() != 'inactive')
+                          Builder(
+                            builder: (context) {
+                              final isForFamily = widget.patientStatus!.startsWith('For:');
+                              final badgeBg = isForFamily
+                                  ? (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF))
+                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9));
+                              final badgeText = isForFamily
+                                  ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
+                                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));
+                              final badgeBorder = isForFamily
+                                  ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFBFDBFE))
+                                  : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
 
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 7, vertical: 3.5),
-                                  decoration: BoxDecoration(
-                                    color: badgeBg,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: badgeBorder,
-                                      width: 1,
+                              return Container(
+                                constraints: BoxConstraints(maxWidth: width * 0.45),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 3.5),
+                                decoration: BoxDecoration(
+                                  color: badgeBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: badgeBorder,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isForFamily ? Icons.family_restroom_rounded : Icons.medical_services_outlined,
+                                      size: 11,
+                                      color: badgeText,
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isForFamily ? Icons.family_restroom_rounded : Icons.medical_services_outlined,
-                                        size: 11,
-                                        color: badgeText,
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Flexible(
-                                        child: Text(
-                                          widget.patientStatus!,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: widget.isTab
-                                                ? width * 0.011
-                                                : 10.0,
-                                            fontWeight: FontWeight.w600,
-                                            color: badgeText,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 3),
+                                    Flexible(
+                                      child: Text(
+                                        widget.patientStatus!,
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: widget.isTab
+                                              ? width * 0.011
+                                              : 10.0,
+                                          fontWeight: FontWeight.w600,
+                                          color: badgeText,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                        ],
                       ],
                     ),
                   ),
