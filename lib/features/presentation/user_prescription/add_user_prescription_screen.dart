@@ -234,6 +234,9 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
   }
 
   Future<void> _pickFromFiles() async {
+    final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
+    if (!hasPermission || !mounted) return;
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,

@@ -5,6 +5,7 @@ import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/custom_dialogue/custom_dialogue.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/custom_setting_tile.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/setting_group_widget.dart';
@@ -16,8 +17,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final width = displayWidth(context);
-final isTab = isTablet(context);
+    final isTab = isTablet(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CommonAppBar(
@@ -154,6 +154,68 @@ final isTab = isTablet(context);
               ),
               const SizedBox(height: fieldSpace),
 
+              _buildSectionHeader(context, "Legal & Policies", isTab),
+              const SizedBox(height: titleSpace),
+              SettingsGroupCard(
+                isTab: isTab,
+                children: [
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.description_outlined,
+                    title: "Terms & Conditions",
+                    subtitle: "Usage policies & terms of service",
+                    showDivider: true,
+                    onTap: () {
+                      CustomUrlDialog.customLauncherDialogue(
+                        context,
+                        'Terms & Conditions',
+                        'Review our terms and conditions, user agreement, and operational policies governing your access and usage of Yira Clinx platform.',
+                        Theme.of(context).primaryColor,
+                        'https://yira.ai/terms-and-conditions/',
+                        'More',
+                        'assets/images/ic_read_abt_us.png',
+                      );
+                    },
+                  ),
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.privacy_tip_outlined,
+                    title: "Privacy Policy",
+                    subtitle: "Data privacy & personal health record protection",
+                    showDivider: true,
+                    onTap: () {
+                      CustomUrlDialog.customLauncherDialogue(
+                        context,
+                        'Privacy Policy',
+                        'We prioritize your privacy and data security. Read our privacy policy to understand how your medical and personal data is collected, protected, and processed.',
+                        Theme.of(context).primaryColor,
+                        'https://yira.ai/privacy-policy/',
+                        'More',
+                        'assets/images/ic_privacy_plc.png',
+                      );
+                    },
+                  ),
+                  CustomSettingTile(
+                    isTab: isTab,
+                    icon: Icons.receipt_long_outlined,
+                    title: "Cancellation & Refund Policy",
+                    subtitle: "Appointment cancellation rules & refund guidelines",
+                    onTap: () {
+                      CustomUrlDialog.customLauncherDialogue(
+                        context,
+                        'Cancellation & Refund Policy',
+                        'Learn about our policies regarding appointment cancellations, rescheduled consultations, payment reversals, and refund processing.',
+                        Theme.of(context).primaryColor,
+                        'https://yira.ai/cancellation-and-refund-policy/',
+                        'More',
+                        'assets/images/ic_read_abt_us.png',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: fieldSpace),
+
               _buildSectionHeader(context, "Terminate Account",isTab),
               const SizedBox(height: titleSpace),
               SettingsGroupCard(
@@ -230,33 +292,6 @@ final isTab = isTablet(context);
         color: (isDark ? textLightDarkColor : scoreSubTextColor),
         letterSpacing: 1.1,
       ),
-    );
-  }
-
-  void _showDeleteConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Delete Account?"),
-          content: const Text(
-            "This action is permanent and cannot be undone. All clinical data, profile records, and configurations will be permanently deleted.",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Delete"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

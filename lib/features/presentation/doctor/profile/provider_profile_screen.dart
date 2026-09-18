@@ -10,6 +10,7 @@ import 'package:yiraclinics/core/custom_dialogue/custom_dialogue.dart';
 import 'package:yiraclinics/core/custom_dialogue/sign_out_alert.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
+import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/provider_profile/provider_profile_entity.dart';
 import 'edit_provider_profile_screen.dart';
@@ -61,18 +62,6 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     );
   }
 
-  int _calculateProfileCompletion(ProviderProfileEntity profile) {
-    int total = 7;
-    int filled = 0;
-    if (profile.name != null && profile.name!.isNotEmpty) filled++;
-    if (profile.email != null && profile.email!.isNotEmpty) filled++;
-    if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty) filled++;
-    if (profile.specialty != null && profile.specialty!.isNotEmpty) filled++;
-    if (profile.qualification != null && profile.qualification!.isNotEmpty) filled++;
-    if (profile.registrationNumber != null && profile.registrationNumber!.isNotEmpty) filled++;
-    if (profile.bio != null && profile.bio!.isNotEmpty) filled++;
-    return ((filled / total) * 100).round();
-  }
 
   Future<void> _showPhotoPickerSheet(BuildContext context, ProviderProfileEntity profile) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -142,6 +131,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     isDark: isDark,
                     onTap: () async {
                       Navigator.pop(ctx);
+                      final hasPerm = await PermissionHelper.ensureCameraPermission(context);
+                      if (!hasPerm) return;
                       final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
                       if (picked != null) {
                         setState(() => _localPhotoFile = File(picked.path));
@@ -165,6 +156,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     isDark: isDark,
                     onTap: () async {
                       Navigator.pop(ctx);
+                      final hasPerm = await PermissionHelper.ensurePhotosPermission(context);
+                      if (!hasPerm) return;
                       final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
                       if (picked != null) {
                         setState(() => _localPhotoFile = File(picked.path));
@@ -344,7 +337,6 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
             if (state is ProviderProfileLoadedState) {
               final profile = state.profile;
-              final completionPct = _calculateProfileCompletion(profile);
 
               return RefreshIndicator(
                 color: primaryColor,
@@ -516,101 +508,6 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     );
   }
 
-  Widget _buildProfileCompletionCard(
-    BuildContext context,
-    int completionPct,
-    ProviderProfileEntity profile,
-    bool isDark,
-    Color primaryColor,
-    bool isTab,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 16,
-                    color: primaryColor,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Profile Strength",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                "$completionPct%",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: primaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: completionPct / 100.0,
-              minHeight: 6,
-              backgroundColor: isDark ? Colors.white10 : Colors.grey.shade300,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                completionPct > 80 ? const Color(0xFF10B981) : primaryColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Complete your profile for verified patient trust",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 10.5,
-                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-              InkWell(
-                onTap: () => _openEditProfile(context, profile),
-                child: Text(
-                  "Complete >",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: primaryColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBioCard(
     BuildContext context,
@@ -721,6 +618,26 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
+            icon: Icons.description_outlined,
+            iconColor: const Color(0xFF0284C7),
+            title: "Terms & Conditions",
+            subtitle: "Clinician terms & platform policies",
+            isDark: isDark,
+            isTab: isTab,
+            onTap: () {
+              CustomUrlDialog.customLauncherDialogue(
+                context,
+                'Terms & Conditions',
+                'Review our terms and conditions, user agreement, and operational policies governing your access and usage of Yira Clinx platform.',
+                primaryColor,
+                'https://yira.ai/terms-and-conditions/',
+                'More',
+                'assets/images/ic_read_abt_us.png',
+              );
+            },
+          ),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          _buildSettingsTile(
             icon: Icons.privacy_tip_outlined,
             iconColor: const Color(0xFFF59E0B),
             title: "Privacy Policy",
@@ -731,11 +648,31 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               CustomUrlDialog.customLauncherDialogue(
                 context,
                 'Privacy Policy',
-                'We at Yira Clinx recognize that as a healthcare professional...',
+                'We at Yira Clinx recognize that as a healthcare professional, your privacy and patient data security are vital. Read our privacy policy to understand how information is collected, protected, and handled.',
                 primaryColor,
-                'https://yira.ai/clinx-privacy',
+                'https://yira.ai/privacy-policy/',
                 'More',
                 'assets/images/ic_privacy_plc.png',
+              );
+            },
+          ),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          _buildSettingsTile(
+            icon: Icons.receipt_long_outlined,
+            iconColor: const Color(0xFF10B981),
+            title: "Cancellation & Refund Policy",
+            subtitle: "Cancellation rules & refund guidelines",
+            isDark: isDark,
+            isTab: isTab,
+            onTap: () {
+              CustomUrlDialog.customLauncherDialogue(
+                context,
+                'Cancellation & Refund Policy',
+                'Learn about our policies regarding appointment cancellations, rescheduled consultations, payment reversals, and refund processing.',
+                primaryColor,
+                'https://yira.ai/cancellation-and-refund-policy/',
+                'More',
+                'assets/images/ic_read_abt_us.png',
               );
             },
           ),

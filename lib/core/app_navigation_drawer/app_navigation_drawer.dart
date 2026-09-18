@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/features/presentation/auth/role_bloc/role_bloc.dart';
 import '../../di/dependency_injection.dart';
 import '../../features/domain/entities/side_menu/side_menu_entity.dart';
 import '../colors/colors.dart';
@@ -48,7 +46,7 @@ class AppNavigationDrawer extends StatelessWidget {
             color: containerBgColor,
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black54 : Colors.black.withOpacity(0.04),
+                color: isDark ? Colors.black54 : Colors.black.withValues(alpha: 0.04),
                 blurRadius: 24,
                 offset: const Offset(4, 0),
               ),
@@ -112,9 +110,9 @@ class AppNavigationDrawer extends StatelessWidget {
                   CustomUrlDialog.customLauncherDialogue(
                     context,
                     'Privacy Policy',
-                    'We at Yira Clinx recognize that as a healthcare professional...',
+                    'We at Yira Clinx prioritize your privacy and data security. Read our privacy policy to understand how personal and healthcare information is collected and managed.',
                     primaryColor,
-                    'https://yira.ai/clinx-privacy',
+                    'https://yira.ai/privacy-policy/',
                     'More',
                     'assets/images/ic_privacy_plc.png',
                   );

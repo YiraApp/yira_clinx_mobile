@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 
@@ -128,6 +129,9 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
   }
 
   Future<void> _pickFromGallery() async {
+    final bool hasPermission = await PermissionHelper.ensurePhotosPermission(context);
+    if (!hasPermission || !mounted) return;
+
     try {
       final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
       if (image != null) {

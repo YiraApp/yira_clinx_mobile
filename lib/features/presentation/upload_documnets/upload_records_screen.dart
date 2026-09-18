@@ -250,7 +250,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           }
         }
       } else {
-        final bool hasPermission = await PermissionHelper.ensurePhotosPermission(context);
+        final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
         if (!hasPermission) {
           _isPicking = false;
           return;

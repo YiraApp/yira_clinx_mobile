@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/custom_dialogue/custom_dialogue.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
 import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/local/flutter_secure_storage.dart';
@@ -18,6 +19,7 @@ import '../../../../core/local/shared_preferences.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/services/liked_hospitals_service.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/urls/urls.dart';
 import '../../../../di/dependency_injection.dart';
@@ -295,6 +297,8 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     isDark: isDark,
                     onTap: () async {
                       Navigator.pop(ctx);
+                      final hasPerm = await PermissionHelper.ensureCameraPermission(context);
+                      if (!hasPerm) return;
                       final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
                       if (picked != null) {
                         await _uploadProfilePhoto(picked);
@@ -311,6 +315,8 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     isDark: isDark,
                     onTap: () async {
                       Navigator.pop(ctx);
+                      final hasPerm = await PermissionHelper.ensurePhotosPermission(context);
+                      if (!hasPerm) return;
                       final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
                       if (picked != null) {
                         await _uploadProfilePhoto(picked);
@@ -1409,6 +1415,158 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         onTap: () {
                           PatientTourController().restartTour(context: context);
                         },
+                      ),
+                    ),
+
+                    // 5. Legal & Policies Card
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          // 1. Terms & Conditions
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.description_outlined, color: Color(0xFF0284C7), size: 20),
+                            ),
+                            title: Text(
+                              "Terms & Conditions",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Usage terms & service policies",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                            onTap: () {
+                              CustomUrlDialog.customLauncherDialogue(
+                                context,
+                                'Terms & Conditions',
+                                'Review our terms and conditions, user agreement, and operational policies governing your access and usage of Yira Clinx platform.',
+                                primaryColor,
+                                'https://yira.ai/terms-and-conditions/',
+                                'More',
+                                'assets/images/ic_read_abt_us.png',
+                              );
+                            },
+                          ),
+                          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+
+                          // 2. Privacy Policy (below Terms & Conditions)
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.privacy_tip_outlined, color: Color(0xFFF59E0B), size: 20),
+                            ),
+                            title: Text(
+                              "Privacy Policy",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Data privacy & personal health record protection",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                            onTap: () {
+                              CustomUrlDialog.customLauncherDialogue(
+                                context,
+                                'Privacy Policy',
+                                'We prioritize your privacy and data security. Read our privacy policy to understand how your medical and personal data is collected, protected, and processed.',
+                                primaryColor,
+                                'https://yira.ai/privacy-policy/',
+                                'More',
+                                'assets/images/ic_privacy_plc.png',
+                              );
+                            },
+                          ),
+                          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+
+                          // 3. Cancellation & Refund Policy
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.receipt_long_outlined, color: Color(0xFF10B981), size: 20),
+                            ),
+                            title: Text(
+                              "Cancellation & Refund Policy",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Appointment cancellation & refund guidelines",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                            onTap: () {
+                              CustomUrlDialog.customLauncherDialogue(
+                                context,
+                                'Cancellation & Refund Policy',
+                                'Learn about our policies regarding appointment cancellations, rescheduled consultations, payment reversals, and refund processing.',
+                                primaryColor,
+                                'https://yira.ai/cancellation-and-refund-policy/',
+                                'More',
+                                'assets/images/ic_read_abt_us.png',
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
 

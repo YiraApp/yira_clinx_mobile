@@ -6,6 +6,7 @@ import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 
 class AddDoctorSuggestionSheet extends StatefulWidget {
@@ -82,6 +83,9 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
 
   Future<void> _pickFile() async {
     FocusScope.of(context).unfocus();
+    final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
+    if (!hasPermission || !mounted) return;
+
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,

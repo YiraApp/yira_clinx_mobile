@@ -10,6 +10,7 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
+import '../../../../core/services/permission_helper.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../di/dependency_injection.dart';
@@ -203,12 +204,15 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     }
   }
 
-  void _openUploadDocumentDialog(
+  Future<void> _openUploadDocumentDialog(
     BuildContext blocContext,
     String userId,
     String orgId,
     String hospitalId,
-  ) {
+  ) async {
+    final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
+    if (!hasPermission || !mounted) return;
+
     final titleController = TextEditingController();
     final notesController = TextEditingController();
     String? selectedFilePath;
@@ -335,6 +339,9 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   // File Picker Container
                   InkWell(
                     onTap: () async {
+                      final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
+                      if (!hasPermission) return;
+
                       try {
                         final result = await FilePicker.platform.pickFiles(
                           type: FileType.custom,
@@ -608,7 +615,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                   hospitalId: hospitalId,
                                 );
 
-                                if (uploaded != null) {
+                                if (uploaded != null && blocContext.mounted) {
                                   blocContext.read<UploadedBloc>().add(AddUploadedRecord(uploaded));
                                 }
 

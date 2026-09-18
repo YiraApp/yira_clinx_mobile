@@ -12,6 +12,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
 
@@ -102,6 +103,13 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
 
   Future<void> _pickAndSaveImage(String profileId, ImageSource source) async {
     try {
+      if (source == ImageSource.camera) {
+        final hasPerm = await PermissionHelper.ensureCameraPermission(context);
+        if (!hasPerm) return;
+      } else {
+        final hasPerm = await PermissionHelper.ensurePhotosPermission(context);
+        if (!hasPerm) return;
+      }
       final XFile? picked = await _picker.pickImage(source: source, imageQuality: 85);
       if (picked != null) {
         final prefs = await SharedPreferences.getInstance();

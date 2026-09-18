@@ -6,6 +6,7 @@ import '../common_size_helpers/common_size_helpers.dart';
 import '../common_widgets/common_buttons.dart';
 import '../common_widgets/common_text.dart';
 import '../common_widgets/custom_button.dart';
+import '../utils/utils.dart';
 
 class CustomUrlDialog {
   static Future<dynamic> customLauncherDialogue(
@@ -48,7 +49,7 @@ class CustomUrlDialog {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24.0),
         side: BorderSide(
-          color: isDark ? buttonPrimaryColor.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+          color: isDark ? buttonPrimaryColor.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.1),
           width: 1.5,
         ),
       ),
@@ -59,7 +60,7 @@ class CustomUrlDialog {
             width: 40,
             height: 4.5,
             decoration: BoxDecoration(
-              color: buttonPrimaryColor.withOpacity(0.3),
+              color: buttonPrimaryColor.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -68,7 +69,7 @@ class CustomUrlDialog {
             height: displayHeight(context) * 0.08,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: buttonPrimaryColor.withOpacity(0.06),
+              color: buttonPrimaryColor.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
             child: Image.asset(icon),
@@ -98,7 +99,7 @@ class CustomUrlDialog {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
@@ -148,7 +149,7 @@ class CustomUrlDialog {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24.0),
         side: BorderSide(
-          color: isDark ? buttonPrimaryColor.withOpacity(0.2) : Colors.grey.withOpacity(0.15),
+          color: isDark ? buttonPrimaryColor.withValues(alpha: 0.2) : Colors.grey.withValues(alpha: 0.15),
           width: 1.5,
         ),
       ),
@@ -159,7 +160,7 @@ class CustomUrlDialog {
             width: 35,
             height: 4,
             decoration: BoxDecoration(
-              color: buttonPrimaryColor.withOpacity(0.3),
+              color: buttonPrimaryColor.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(10),
             ),
           ),
@@ -168,7 +169,7 @@ class CustomUrlDialog {
             height: displayHeight(context) * 0.08,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: buttonPrimaryColor.withOpacity(0.06),
+              color: buttonPrimaryColor.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
             child: Image.asset(icon),
@@ -198,7 +199,7 @@ class CustomUrlDialog {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
@@ -263,7 +264,7 @@ class CustomUrlDialog {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24.0),
             side: BorderSide(
-              color: isDark ? buttonPrimaryColor.withOpacity(0.15) : Colors.grey.withOpacity(0.15),
+              color: isDark ? buttonPrimaryColor.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.15),
               width: 1.5,
             ),
           ),
@@ -274,7 +275,7 @@ class CustomUrlDialog {
                 width: 35,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: buttonPrimaryColor.withOpacity(0.3),
+                  color: buttonPrimaryColor.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -348,7 +349,7 @@ class CustomUrlDialog {
     );
   }
 
-static Widget _buildContactGrid(BuildContext context, Color primaryColor, bool isDark) {
+  static Widget _buildContactGrid(BuildContext context, Color primaryColor, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -357,10 +358,6 @@ static Widget _buildContactGrid(BuildContext context, Color primaryColor, bool i
       ),
       child: Column(
         children: [
-          _buildContactRowItem(context, Icons.phone_in_talk_rounded, '8121005474', primaryColor, isDark, () {
-            _launchURL('tel:+918121005474');
-          }),
-          const SizedBox(height: 8),
           _buildContactRowItem(context, Icons.alternate_email_rounded, 'contact@yira.ai', primaryColor, isDark, () {
             _launchURL('mailto:contact@yira.ai');
           }),
@@ -459,7 +456,7 @@ static Widget _buildContactGrid(BuildContext context, Color primaryColor, bool i
           const SizedBox(height: 8),
         ],
         CommonButtons.getTextButton(
-          'Dismiss',
+          'Cancel',
           context,
           isDark ? headingsDarkColor : Colors.black54,
           cancelFontSize,
@@ -472,7 +469,8 @@ static Widget _buildContactGrid(BuildContext context, Color primaryColor, bool i
   }
 
   static void _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-
+    if (urlString.isNotEmpty) {
+      await Utils.launchURL(urlString);
+    }
   }
 }

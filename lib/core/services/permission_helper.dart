@@ -14,45 +14,19 @@ class PermissionHelper {
 
   static bool _hasRequestedInitial = false;
 
-  /// Requests Notifications, Photos/Media, and Camera permissions once at app startup
+  /// Requests Notification permission once at app startup.
+  /// All other permissions (Camera, Photos/Storage) are collected on-demand when needed.
   static Future<void> requestAppLaunchPermissions() async {
     if (_hasRequestedInitial || kIsWeb) return;
     _hasRequestedInitial = true;
 
     try {
-      debugPrint('[PermissionHelper] Starting app launch permissions sequence...');
+      debugPrint('[PermissionHelper] Requesting app launch notification permission...');
 
-      // 1. Notification Permission
+      // Only Notification Permission at app launch
       await NotificationService.instance.requestNotificationPermissions();
-      await Future.delayed(const Duration(milliseconds: 500));
 
-      // 2. Photos / Storage Permission
-      if (Platform.isIOS) {
-        final photosStatus = await Permission.photos.request();
-        debugPrint('[PermissionHelper] iOS Photos permission status: $photosStatus');
-        await Future.delayed(const Duration(milliseconds: 400));
-        final cameraStatus = await Permission.camera.request();
-        debugPrint('[PermissionHelper] iOS Camera permission status: $cameraStatus');
-      } else if (Platform.isAndroid) {
-        try {
-          final androidInfo = await DeviceInfoPlugin().androidInfo;
-          if (androidInfo.version.sdkInt >= 33) {
-            final photosStatus = await Permission.photos.request();
-            debugPrint('[PermissionHelper] Android 13+ Photos status: $photosStatus');
-          } else {
-            final storageStatus = await Permission.storage.request();
-            debugPrint('[PermissionHelper] Android Storage status: $storageStatus');
-          }
-        } catch (e) {
-          final storageStatus = await Permission.storage.request();
-          debugPrint('[PermissionHelper] Android Storage fallback status: $storageStatus');
-        }
-
-        await Future.delayed(const Duration(milliseconds: 400));
-        final cameraStatus = await Permission.camera.request();
-        debugPrint('[PermissionHelper] Android Camera status: $cameraStatus');
-      }
-      debugPrint('[PermissionHelper] App launch permissions sequence completed.');
+      debugPrint('[PermissionHelper] App launch notification permission completed.');
     } catch (e) {
       debugPrint('[PermissionHelper] requestAppLaunchPermissions error: $e');
     }
@@ -94,6 +68,49 @@ class PermissionHelper {
           title: 'Photo Library Access Needed',
           message:
               'To select and upload medical records and photos, please enable Photo Library access in your device settings.',
+        );
+      }
+    }
+
+    return await permission.isGranted || await permission.isLimited;
+  }
+
+  /// Verifies Document/Storage permission on-demand before file picking with fallback to Settings dialog
+  static Future<bool> ensureDocumentPermission(BuildContext context) async {
+    if (kIsWeb) return true;
+
+    Permission permission = Permission.photos;
+    if (Platform.isAndroid) {
+      try {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt < 33) {
+          permission = Permission.storage;
+        }
+      } catch (_) {
+        permission = Permission.storage;
+      }
+    }
+
+    var status = await permission.status;
+
+    if (status.isGranted || status.isLimited) {
+      return true;
+    }
+
+    if (status.isDenied) {
+      status = await permission.request();
+      if (status.isGranted || status.isLimited) {
+        return true;
+      }
+    }
+
+    if (status.isPermanentlyDenied || status.isRestricted || status.isDenied) {
+      if (context.mounted) {
+        await _showPermissionSettingsDialog(
+          context: context,
+          title: 'Storage & Document Access Needed',
+          message:
+              'To select and upload medical records, reports, and documents, please enable storage access in your device settings.',
         );
       }
     }
