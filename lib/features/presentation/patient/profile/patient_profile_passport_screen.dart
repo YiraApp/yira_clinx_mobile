@@ -13,10 +13,7 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/custom_dialogue.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
-import '../../../../config/app_route/app_routes.dart';
-import '../../../../core/local/flutter_secure_storage.dart';
-import '../../../../core/local/shared_preferences.dart';
-import '../../../../core/utils/utils.dart';
+import '../../../../core/custom_dialogue/delete_account_alert.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/services/liked_hospitals_service.dart';
 import '../../../../core/services/permission_helper.dart';
@@ -417,178 +414,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   }
 
   void _showDeleteAccountConfirmation(BuildContext context, Color primaryColor) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    bool isDeleting = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Are you sure you want to delete your account? This action will:',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13.5,
-                  color: isDark ? Colors.white70 : Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _deleteInfoRow(Icons.person_off_rounded, 'Deactivate your account', isDark),
-              const SizedBox(height: 6),
-              _deleteInfoRow(Icons.family_restroom_rounded, 'Deactivate all linked dependents', isDark),
-              const SizedBox(height: 6),
-              _deleteInfoRow(Icons.block_rounded, 'Revoke all active sessions', isDark),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
-                ),
-                child: Text(
-                  'This action cannot be undone. Contact support to reactivate.',
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red.shade700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white60 : Colors.grey[600],
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-              onPressed: isDeleting ? null : () async {
-                setDialogState(() => isDeleting = true);
-                try {
-                  final currentUser = GlobalSession.instance.userNotifier.value;
-                  final userId = currentUser?.data?.id ?? '';
-                  final token = currentUser?.data?.accessToken ?? '';
-
-                  String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.accountDeactivateUrl}";
-                  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-                    targetUrl = "http://$targetUrl";
-                  }
-
-                  final dio = Dio(BaseOptions(
-                    connectTimeout: const Duration(seconds: 15),
-                    receiveTimeout: const Duration(seconds: 15),
-                  ));
-                  await dio.post(
-                    targetUrl,
-                    data: {'userId': userId},
-                    options: Options(headers: {
-                      HttpHeaders.authorizationHeader: 'Bearer $token',
-                      'Content-Type': 'application/json',
-                    }),
-                  );
-
-                  if (mounted) {
-                    Navigator.pop(ctx);
-                    await sl<SecureStorageService>().clearAllSecureData();
-                    await sl<SharedPrefsService>().clearAll();
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.signIn,
-                        (route) => false,
-                      );
-                      Utils.showSnackBar(
-                        message: 'Your account was deactivated. Contact administrator.',
-                        status: false,
-                      );
-                    }
-                  }
-                } catch (e) {
-                  setDialogState(() => isDeleting = false);
-                  if (mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: isDeleting
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Delete Account', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _deleteInfoRow(IconData icon, String text, bool isDark) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.red.shade400),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 12.5,
-              color: isDark ? Colors.white60 : Colors.grey[600],
-            ),
-          ),
-        ),
-      ],
-    );
+    DeleteAccountAlert.showCustomDialog(context, isDoctor: false);
   }
 
   void _openEditProfileDialog(BuildContext context) {
@@ -1608,7 +1434,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           ),
                         ),
                         subtitle: Text(
-                          "Permanently deactivate your account",
+                          "Permanently delete account and all profile data",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,

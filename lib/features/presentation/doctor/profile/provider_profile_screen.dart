@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/custom_dialogue/custom_dialogue.dart';
 import 'package:yiraclinics/core/custom_dialogue/sign_out_alert.dart';
+import 'package:yiraclinics/core/custom_dialogue/delete_account_alert.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
@@ -721,6 +722,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             isDark: isDark,
             isTab: isTab,
             onTap: () => ProfileSwitcherSheet.show(context),
+          ),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          _buildSettingsTile(
+            icon: Icons.delete_forever_rounded,
+            iconColor: Colors.deepOrange.shade600,
+            title: "Delete Account",
+            subtitle: "Permanently delete account and all doctor data",
+            isDark: isDark,
+            isTab: isTab,
+            isDestructive: true,
+            onTap: () => DeleteAccountAlert.showCustomDialog(context, isDoctor: true),
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(

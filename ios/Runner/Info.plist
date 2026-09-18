@@ -26,6 +26,8 @@
     <string>$(FLUTTER_BUILD_NUMBER)</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
 
     <!-- Background Modes for Push Notifications -->
     <key>UIBackgroundModes</key>
@@ -76,6 +78,12 @@
     <string>Yira Health uses Apple Health to read your steps, heart rate, active calories, sleep, and distance to track your fitness and provide health insights.</string>
     <key>NSHealthUpdateUsageDescription</key>
     <string>Yira Health needs permission to log health metrics to Apple Health if requested.</string>
+
+    <!-- Location Permissions -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Yira Health needs your location to find nearby hospitals, clinics, and healthcare providers.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Yira Health needs your location to discover nearby healthcare facilities and doctors.</string>
 
     <key>UIApplicationSceneManifest</key>
     <dict>

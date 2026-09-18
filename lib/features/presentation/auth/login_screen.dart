@@ -147,34 +147,73 @@ class _LoginScreenState extends State<LoginScreen> {
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
               break;
             case SendOtpFailureState(errorMessage: final msg):
-              final message = msg.toLowerCase().contains('deactivate')
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg.toLowerCase().contains('inactive') ||
-                          msg.toLowerCase().contains('contact admin'))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg.isNotEmpty ? msg : 'Failed to send OTP. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              final isDeletedOrNotRegistered = msg.toLowerCase().contains('register') ||
+                  msg.toLowerCase().contains('no account') ||
+                  msg.toLowerCase().contains('not registered') ||
+                  msg.toLowerCase().contains('not exist') ||
+                  msg.toLowerCase().contains('deleted') ||
+                  msg.toLowerCase().contains('deactivat') ||
+                  msg.toLowerCase().contains('create account');
+              if (isDeletedOrNotRegistered) {
+                Utils.showSnackBar(
+                  message: 'Account does not exist. Please create an account.',
+                  status: false,
+                );
+                Navigator.pushNamed(context, AppRoutes.signup);
+              } else {
+                final message = (msg.toLowerCase().contains('inactive') ||
+                            msg.toLowerCase().contains('contact admin'))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (msg.isNotEmpty ? msg : 'Failed to send OTP. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
 
             case LoginFailure(errorMessage: final msg):
-              final message = (msg != null && msg.toLowerCase().contains('deactivate'))
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg != null &&
-                          (msg.toLowerCase().contains('inactive') ||
-                              msg.toLowerCase().contains('contact admin')))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg ?? 'Login failed. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              final errorStr = msg ?? '';
+              final isDeletedOrNotRegistered = errorStr.toLowerCase().contains('register') ||
+                  errorStr.toLowerCase().contains('no account') ||
+                  errorStr.toLowerCase().contains('not registered') ||
+                  errorStr.toLowerCase().contains('not exist') ||
+                  errorStr.toLowerCase().contains('deleted') ||
+                  errorStr.toLowerCase().contains('deactivat') ||
+                  errorStr.toLowerCase().contains('create account');
+              if (isDeletedOrNotRegistered) {
+                Utils.showSnackBar(
+                  message: 'Account does not exist. Please create an account.',
+                  status: false,
+                );
+                Navigator.pushNamed(context, AppRoutes.signup);
+              } else {
+                final message = (errorStr.toLowerCase().contains('inactive') ||
+                            errorStr.toLowerCase().contains('contact admin'))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (errorStr.isNotEmpty ? errorStr : 'Login failed. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
 
             case SignInError(errorMessage: final msg):
-              final message = msg.toLowerCase().contains('deactivate')
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg.toLowerCase().contains('inactive') ||
-                          msg.toLowerCase().contains('contact admin'))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg.isNotEmpty ? msg : 'Sign in error. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              final isDeletedOrNotRegistered = msg.toLowerCase().contains('register') ||
+                  msg.toLowerCase().contains('no account') ||
+                  msg.toLowerCase().contains('not registered') ||
+                  msg.toLowerCase().contains('not exist') ||
+                  msg.toLowerCase().contains('deleted') ||
+                  msg.toLowerCase().contains('deactivat') ||
+                  msg.toLowerCase().contains('create account');
+              if (isDeletedOrNotRegistered) {
+                Utils.showSnackBar(
+                  message: 'Account does not exist. Please create an account.',
+                  status: false,
+                );
+                Navigator.pushNamed(context, AppRoutes.signup);
+              } else {
+                final message = (msg.toLowerCase().contains('inactive') ||
+                            msg.toLowerCase().contains('contact admin'))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (msg.isNotEmpty ? msg : 'Sign in error. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
             default:
               break;

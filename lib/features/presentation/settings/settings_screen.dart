@@ -6,6 +6,7 @@ import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/custom_dialogue/custom_dialogue.dart';
+import 'package:yiraclinics/core/custom_dialogue/delete_account_alert.dart';
 import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_bloc.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/custom_setting_tile.dart';
 import 'package:yiraclinics/features/presentation/settings/widgets/setting_group_widget.dart';
@@ -268,8 +269,7 @@ class SettingsScreen extends StatelessWidget {
 
               break;
             case DeleteAccountNavState():
-              Navigator.pushNamed(context, AppRoutes.closeAccountScreen);
-
+              DeleteAccountAlert.showCustomDialog(context);
               break;
 
             default:

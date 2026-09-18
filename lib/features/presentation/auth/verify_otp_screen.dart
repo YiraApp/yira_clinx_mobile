@@ -183,8 +183,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                       _isVerified = false;
                       final errorMsg = _parseErrorMessage(state.errorMessage);
                       _showErrorMessage(errorMsg);
-                      if (errorMsg.toLowerCase().contains('deactivated')) {
-                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      final isDeletedOrNotRegistered = errorMsg.toLowerCase().contains('register') ||
+                          errorMsg.toLowerCase().contains('no account') ||
+                          errorMsg.toLowerCase().contains('not registered') ||
+                          errorMsg.toLowerCase().contains('not exist') ||
+                          errorMsg.toLowerCase().contains('deleted') ||
+                          errorMsg.toLowerCase().contains('deactivat') ||
+                          errorMsg.toLowerCase().contains('create account');
+                      if (isDeletedOrNotRegistered) {
+                        Utils.showSnackBar(message: 'Account does not exist. Please create an account.', status: false);
+                        Navigator.pushNamed(context, AppRoutes.signup);
                       } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
                         Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
                       }
@@ -193,8 +201,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                       _isVerified = false;
                       final errorMsg = _parseErrorMessage(state.errorMessage ?? 'Verification failed');
                       _showErrorMessage(errorMsg);
-                      if (errorMsg.toLowerCase().contains('deactivated')) {
-                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      final isDeletedOrNotRegistered = errorMsg.toLowerCase().contains('register') ||
+                          errorMsg.toLowerCase().contains('no account') ||
+                          errorMsg.toLowerCase().contains('not registered') ||
+                          errorMsg.toLowerCase().contains('not exist') ||
+                          errorMsg.toLowerCase().contains('deleted') ||
+                          errorMsg.toLowerCase().contains('deactivat') ||
+                          errorMsg.toLowerCase().contains('create account');
+                      if (isDeletedOrNotRegistered) {
+                        Utils.showSnackBar(message: 'Account does not exist. Please create an account.', status: false);
+                        Navigator.pushNamed(context, AppRoutes.signup);
                       } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
                         Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
                       }
@@ -219,8 +235,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                     } else if (state is ReSendOtpFailureState) {
                       final errorMsg = _parseErrorMessage(state.errorMessage);
                       _showErrorMessage(errorMsg);
-                      if (errorMsg.toLowerCase().contains('deactivated')) {
-                        Utils.showSnackBar(message: 'Your account was deactivated. Contact administrator.', status: false);
+                      final isDeletedOrNotRegistered = errorMsg.toLowerCase().contains('register') ||
+                          errorMsg.toLowerCase().contains('no account') ||
+                          errorMsg.toLowerCase().contains('not registered') ||
+                          errorMsg.toLowerCase().contains('not exist') ||
+                          errorMsg.toLowerCase().contains('deleted') ||
+                          errorMsg.toLowerCase().contains('deactivat') ||
+                          errorMsg.toLowerCase().contains('create account');
+                      if (isDeletedOrNotRegistered) {
+                        Utils.showSnackBar(message: 'Account does not exist. Please create an account.', status: false);
+                        Navigator.pushNamed(context, AppRoutes.signup);
                       } else if (errorMsg.toLowerCase().contains('inactive') || errorMsg.toLowerCase().contains('contact admin')) {
                         Utils.showSnackBar(message: 'Your account is inactive. Contact admin.', status: false);
                       }

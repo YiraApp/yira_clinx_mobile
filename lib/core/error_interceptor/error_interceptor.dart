@@ -126,16 +126,19 @@ class ErrorInterceptor extends Interceptor {
       }
     }
 
-    final bool isDeactivatedError = displayMessage != null &&
-        displayMessage.toLowerCase().contains('deactivated');
+    final bool isAccountDeletedError = displayMessage != null &&
+        (displayMessage.toLowerCase().contains('deactivated') ||
+            displayMessage.toLowerCase().contains('deleted') ||
+            displayMessage.toLowerCase().contains('not exist') ||
+            displayMessage.toLowerCase().contains('no account'));
     final bool isInactiveError = displayMessage != null &&
         (displayMessage.toLowerCase().contains('inactive') ||
             displayMessage.toLowerCase().contains('contact admin'));
 
-    if (!isAuthEndpoint || isDeactivatedError || isInactiveError) {
+    if (!isAuthEndpoint || isAccountDeletedError || isInactiveError) {
       String msg = displayMessage ?? '';
-      if (isDeactivatedError) {
-        msg = 'Your account was deactivated. Contact administrator.';
+      if (isAccountDeletedError) {
+        msg = 'Account does not exist. Please create an account.';
       } else if (isInactiveError) {
         msg = 'Your account is inactive. Contact admin.';
       }
