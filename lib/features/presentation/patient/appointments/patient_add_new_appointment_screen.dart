@@ -2039,9 +2039,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     final docName = (doc['name'] ?? doc['displayName'] ?? 'Doctor').toString().trim();
     final specialty = (doc['specialty'] ?? doc['Specialty'] ?? 'General Physician').toString().trim();
     final subSpecialty = (doc['subSpecialty'] ?? doc['SubSpecialty'] ?? '').toString().trim();
-    final department = (doc['department'] ?? doc['Department'] ?? '').toString().trim();
-    final qualification = (doc['qualification'] ?? doc['Qualification'] ?? '').toString().trim();
-    final experience = (doc['experience'] ?? doc['Experience'] ?? '').toString().trim();
     final regNo = (doc['registrationNumber'] ?? doc['RegistrationNumber'] ?? '').toString().trim();
     final bio = (doc['bio'] ?? doc['Bio'] ?? '').toString().trim();
     final hospitalName = (doc['hospitalName'] ?? doc['Hospital']?['Name'] ?? _selectedHospital?['name'] ?? '').toString().trim();
@@ -2206,49 +2203,30 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
             ],
           ),
 
-          // ── Row 2: Specialty, Sub-Specialty, Qualification, Experience, Reg No Badges ──
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (subSpecialty.isNotEmpty && subSpecialty != specialty)
-                _buildDoctorDetailChip(
-                  icon: Icons.hub_rounded,
-                  label: subSpecialty,
-                  isDark: isDark,
-                  color: const Color(0xFF0284C7),
-                ),
-              if (qualification.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.school_rounded,
-                  label: qualification,
-                  isDark: isDark,
-                  color: const Color(0xFF7C3AED),
-                ),
-              if (experience.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.work_history_rounded,
-                  label: experience,
-                  isDark: isDark,
-                  color: const Color(0xFF0D9488),
-                ),
-              if (department.isNotEmpty && department != specialty && department != 'General')
-                _buildDoctorDetailChip(
-                  icon: Icons.apartment_rounded,
-                  label: department,
-                  isDark: isDark,
-                  color: const Color(0xFFD97706),
-                ),
-              if (regNo.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.badge_rounded,
-                  label: "Reg: $regNo",
-                  isDark: isDark,
-                  color: const Color(0xFF475569),
-                ),
-            ],
-          ),
+          // ── Row 2: Sub-Specialty / Reg No in Plain Style (MBBS, experience & administrator removed per user request) ──
+          if ((subSpecialty.isNotEmpty && subSpecialty != specialty) || regNo.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (subSpecialty.isNotEmpty && subSpecialty != specialty)
+                  _buildDoctorDetailChip(
+                    icon: Icons.hub_rounded,
+                    label: subSpecialty,
+                    isDark: isDark,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+                if (regNo.isNotEmpty)
+                  _buildDoctorDetailChip(
+                    icon: Icons.badge_rounded,
+                    label: "Reg: $regNo",
+                    isDark: isDark,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+              ],
+            ),
+          ],
 
           // ── Row 3: Doctor Bio / About (if present) ──
           if (bio.isNotEmpty) ...[
@@ -2398,19 +2376,19 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
           width: 0.8,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: color),
+          Icon(icon, size: 11, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
           const SizedBox(width: 4),
           Text(
             label,
@@ -2418,7 +2396,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
-              color: color,
+              color: isDark ? Colors.white70 : const Color(0xFF475569),
             ),
           ),
         ],

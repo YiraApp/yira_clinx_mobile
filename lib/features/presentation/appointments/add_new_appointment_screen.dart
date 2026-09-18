@@ -3441,9 +3441,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     final docName = (doc['name'] ?? doc['displayName'] ?? 'Doctor').toString().trim();
     final specialty = (doc['specialty'] ?? doc['Specialty'] ?? 'General Physician').toString().trim();
     final subSpecialty = (doc['subSpecialty'] ?? doc['SubSpecialty'] ?? '').toString().trim();
-    final department = (doc['department'] ?? doc['Department'] ?? '').toString().trim();
-    final qualification = (doc['qualification'] ?? doc['Qualification'] ?? '').toString().trim();
-    final experience = (doc['experience'] ?? doc['Experience'] ?? '').toString().trim();
     final regNo = (doc['registrationNumber'] ?? doc['RegistrationNumber'] ?? '').toString().trim();
     final bio = (doc['bio'] ?? doc['Bio'] ?? '').toString().trim();
     final hospitalName = (doc['hospitalName'] ?? doc['Hospital']?['Name'] ?? _selectedHospital?['name'] ?? '').toString().trim();
@@ -3608,49 +3605,30 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ],
           ),
 
-          // ── Row 2: Specialty, Sub-Specialty, Qualification, Experience, Reg No Badges ──
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (subSpecialty.isNotEmpty && subSpecialty != specialty)
-                _buildDoctorDetailChip(
-                  icon: Icons.hub_rounded,
-                  label: subSpecialty,
-                  isDark: isDark,
-                  color: const Color(0xFF0284C7),
-                ),
-              if (qualification.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.school_rounded,
-                  label: qualification,
-                  isDark: isDark,
-                  color: const Color(0xFF7C3AED),
-                ),
-              if (experience.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.work_history_rounded,
-                  label: experience,
-                  isDark: isDark,
-                  color: const Color(0xFF0D9488),
-                ),
-              if (department.isNotEmpty && department != specialty && department != 'General')
-                _buildDoctorDetailChip(
-                  icon: Icons.apartment_rounded,
-                  label: department,
-                  isDark: isDark,
-                  color: const Color(0xFFD97706),
-                ),
-              if (regNo.isNotEmpty)
-                _buildDoctorDetailChip(
-                  icon: Icons.badge_rounded,
-                  label: "Reg: $regNo",
-                  isDark: isDark,
-                  color: const Color(0xFF475569),
-                ),
-            ],
-          ),
+          // ── Row 2: Sub-Specialty / Reg No in Plain Style (MBBS, experience & administrator removed per user request) ──
+          if ((subSpecialty.isNotEmpty && subSpecialty != specialty) || regNo.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (subSpecialty.isNotEmpty && subSpecialty != specialty)
+                  _buildDoctorDetailChip(
+                    icon: Icons.hub_rounded,
+                    label: subSpecialty,
+                    isDark: isDark,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+                if (regNo.isNotEmpty)
+                  _buildDoctorDetailChip(
+                    icon: Icons.badge_rounded,
+                    label: "Reg: $regNo",
+                    isDark: isDark,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+              ],
+            ),
+          ],
 
           // ── Row 3: Doctor Bio / About (if present) ──
           if (bio.isNotEmpty) ...[
@@ -3800,19 +3778,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
           width: 0.8,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: color),
+          Icon(icon, size: 11, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
           const SizedBox(width: 4),
           Text(
             label,
@@ -3820,7 +3798,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
-              color: color,
+              color: isDark ? Colors.white70 : const Color(0xFF475569),
             ),
           ),
         ],
@@ -4382,7 +4360,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   Widget _buildSelectedPatientCard(bool isDark, bool isTab) {
     final patient = _selectedPatient!;
     final bool isIndependent = patient.isPrimary || patient.relation.toLowerCase() == 'self';
-    final Color accentColor = isIndependent ? const Color(0xFF2563EB) : const Color(0xFF059669);
+    const Color accentColor = Color(0xFF2563EB);
 
     return Container(
       width: double.infinity,
@@ -4567,24 +4545,24 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.15 : 0.08),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.18),
+                            color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.history_rounded, size: 13, color: Color(0xFF6366F1)),
+                            Icon(Icons.history_rounded, size: 13, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                             const SizedBox(width: 5),
                             Text(
                               "${patient.pastAppointmentsCount} Prior Consultation(s)",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF6366F1),
+                                color: isDark ? Colors.white70 : const Color(0xFF475569),
                               ),
                             ),
                             if (patient.lastVisitDate != null && patient.lastVisitDate!.isNotEmpty) ...[
@@ -4594,7 +4572,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF6366F1).withValues(alpha: 0.7),
+                                  color: isDark ? Colors.white54 : const Color(0xFF64748B),
                                 ),
                               ),
                             ],
@@ -4984,29 +4962,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               final bool isPrimaryItem = index == 0;
               final bool isSelected = _selectedPatient != null && _isSamePatient(_selectedPatient!, account);
 
-              final relLower = account.relation.toLowerCase();
-              Color tileAccent;
-              IconData relationIcon;
-
-              if (isPrimaryItem) {
-                tileAccent = const Color(0xFF2563EB);
-                relationIcon = Icons.person_rounded;
-              } else if (relLower.contains('child') || relLower.contains('son') || relLower.contains('daughter')) {
-                tileAccent = const Color(0xFF059669);
-                relationIcon = Icons.child_care_rounded;
-              } else if (relLower.contains('spouse') || relLower.contains('wife') || relLower.contains('husband')) {
-                tileAccent = const Color(0xFFE11D48);
-                relationIcon = Icons.favorite_rounded;
-              } else if (relLower.contains('father') || relLower.contains('mother') || relLower.contains('parent')) {
-                tileAccent = const Color(0xFF0D9488);
-                relationIcon = Icons.family_restroom_rounded;
-              } else if (relLower.contains('brother') || relLower.contains('sister')) {
-                tileAccent = const Color(0xFF7C3AED);
-                relationIcon = Icons.people_rounded;
-              } else {
-                tileAccent = const Color(0xFFD97706);
-                relationIcon = Icons.group_rounded;
-              }
+              // Uniform blue theme and same icon for all matching accounts per user request
+              const Color tileAccent = Color(0xFF2563EB);
+              const IconData relationIcon = Icons.person_rounded;
 
               final String badgeText = isPrimaryItem ? "Primary" : account.relation;
 
@@ -5173,10 +5131,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   runSpacing: 6,
                   children: [
                     _buildQuickRelationChip("Child", Icons.child_care_rounded, const Color(0xFF2563EB), isDark),
-                    _buildQuickRelationChip("Spouse", Icons.favorite_rounded, const Color(0xFFE11D48), isDark),
-                    _buildQuickRelationChip("Father", Icons.man_rounded, const Color(0xFF0891B2), isDark),
-                    _buildQuickRelationChip("Mother", Icons.woman_rounded, const Color(0xFFD946EF), isDark),
-                    _buildQuickRelationChip("Other", Icons.group_add_rounded, const Color(0xFF6366F1), isDark),
+                    _buildQuickRelationChip("Spouse", Icons.favorite_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Father", Icons.man_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Mother", Icons.woman_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Other", Icons.group_add_rounded, const Color(0xFF2563EB), isDark),
                   ],
                 ),
               ],
@@ -5245,13 +5203,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     bool isSavingDependent = false;
 
     final List<Map<String, dynamic>> relations = [
-      {"label": "Spouse", "icon": Icons.favorite_rounded, "color": const Color(0xFFE11D48)},
+      {"label": "Spouse", "icon": Icons.favorite_rounded, "color": const Color(0xFF2563EB)},
       {"label": "Child", "icon": Icons.child_care_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Father", "icon": Icons.man_rounded, "color": const Color(0xFF0891B2)},
-      {"label": "Mother", "icon": Icons.woman_rounded, "color": const Color(0xFFD946EF)},
-      {"label": "Brother", "icon": Icons.people_rounded, "color": const Color(0xFF059669)},
-      {"label": "Sister", "icon": Icons.people_rounded, "color": const Color(0xFFF97316)},
-      {"label": "Other", "icon": Icons.group_add_rounded, "color": const Color(0xFF6366F1)},
+      {"label": "Father", "icon": Icons.man_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Mother", "icon": Icons.woman_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Brother", "icon": Icons.people_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Sister", "icon": Icons.people_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Other", "icon": Icons.group_add_rounded, "color": const Color(0xFF2563EB)},
     ];
 
     showModalBottomSheet(
