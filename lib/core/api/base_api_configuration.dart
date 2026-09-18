@@ -1,5 +1,5 @@
 class EnvironmentService {
-  static Environment _currentEnv = Environment.qa;
+  static Environment _currentEnv = Environment.production;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   // Local backend server URL for local development (matches local backend on port 5000)
@@ -36,8 +36,8 @@ class EnvironmentService {
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
+          healthCampBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
         );
     }
   }
