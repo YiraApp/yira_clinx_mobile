@@ -7,6 +7,7 @@ import '../../../core/constants/clinx_storage_keys.dart';
 import '../../../core/global_session/global_menu_session.dart';
 import '../../../core/local/global_session.dart';
 import '../../../core/local/shared_preferences.dart';
+import '../../../core/services/permission_helper.dart';
 import '../../../core/urls/urls.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/repositories/side_menu/side_menu_repo.dart';
@@ -93,6 +94,7 @@ class _SplashScreenState extends State<SplashScreen> {
         AppRoutes.signIn,
         (route) => false,
       );
+      _requestNotificationPermissionAfterSplash();
       return;
     }
 
@@ -103,6 +105,7 @@ class _SplashScreenState extends State<SplashScreen> {
         context,
         _pendingSuccessState!,
       );
+      _requestNotificationPermissionAfterSplash();
     } else if (_configFailed) {
       _hasNavigated = true;
       Navigator.pushNamedAndRemoveUntil(
@@ -110,7 +113,14 @@ class _SplashScreenState extends State<SplashScreen> {
         AppRoutes.signIn,
         (route) => false,
       );
+      _requestNotificationPermissionAfterSplash();
     }
+  }
+
+  void _requestNotificationPermissionAfterSplash() {
+    Future.delayed(const Duration(milliseconds: 600), () {
+      PermissionHelper.requestAppLaunchPermissions();
+    });
   }
 
   @override

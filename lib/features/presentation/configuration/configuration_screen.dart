@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import '../../../core/services/network_services/network_listener/network_listener.dart';
+import '../../../core/services/permission_helper.dart';
 import '../splash/yira_splash_screen.dart';
 import 'config_bloc.dart';
 
@@ -102,6 +103,9 @@ class UserConfigurationScreen extends StatefulWidget {
           arguments: state.coreData,
         );
       }
+      Future.delayed(const Duration(milliseconds: 600), () {
+        PermissionHelper.requestAppLaunchPermissions();
+      });
     }
   }
 
@@ -139,6 +143,9 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
               AppRoutes.signIn,
               (route) => false,
             );
+            Future.delayed(const Duration(milliseconds: 600), () {
+              PermissionHelper.requestAppLaunchPermissions();
+            });
           }
         },
         listenWhen: (previous, current) =>

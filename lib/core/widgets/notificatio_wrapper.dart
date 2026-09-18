@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/notification_services/notification_services.dart';
-import '../services/permission_helper.dart';
 
 class NotificationListenerWrapper extends StatefulWidget {
   final Widget child;
@@ -27,7 +26,6 @@ class _NotificationListenerWrapperState extends State<NotificationListenerWrappe
           context,
           widget.onNotificationPayload
       );
-      await PermissionHelper.requestAppLaunchPermissions();
     });
   }
 

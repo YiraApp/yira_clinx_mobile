@@ -20,14 +20,6 @@ class FcmTokenHelper {
         }
         return androidToken ?? '';
       } else if (Platform.isIOS) {
-        try {
-          await messaging.requestPermission(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-        } catch (_) {}
-
         // 1. Wait/retry for Apple APNs token (takes 1-3 seconds on iOS devices)
         String? apnsToken;
         for (int i = 0; i < 8; i++) {

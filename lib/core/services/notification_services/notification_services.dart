@@ -44,7 +44,7 @@ class NotificationService {
   ) async {
     if (_isInitialized) return;
     try {
-      await requestNotificationPermissions();
+      // NOTE: Permission is NOT requested here. It is requested after splash screen completes.
 
       await _fcm.setForegroundNotificationPresentationOptions(
         alert: true,
@@ -56,9 +56,9 @@ class NotificationService {
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
       const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
       );
 
       const InitializationSettings initSettings = InitializationSettings(
@@ -83,9 +83,6 @@ class NotificationService {
       _listenToTokenRefresh();
 
       _isInitialized = true;
-
-      // Initial token sync
-      syncFcmTokenWithBackend();
     } catch (e) {
       debugPrint("NotificationService initialization error: $e");
     }
@@ -107,8 +104,25 @@ class NotificationService {
         await androidPlugin?.requestNotificationsPermission();
       }
 
-      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+      // On iOS, also request via IOS Flutter Local Notifications
+      if (!kIsWeb && Platform.isIOS) {
+        final iosPlugin = _localNotifications
+            .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
+        await iosPlugin?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+
+      final isGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      if (isGranted) {
+        syncFcmTokenWithBackend();
+      }
+
+      return isGranted;
     } catch (e) {
       debugPrint("requestNotificationPermissions error: $e");
       return false;
