@@ -675,9 +675,9 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
 
                   const SizedBox(height: 22),
 
-                  // 2. High-Contrast Title: "Yira ClinX"
+                  // 2. High-Contrast Title: "Yira Health"
                   Text(
-                    'Yira ClinX',
+                    'Yira Health',
                     style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w800,

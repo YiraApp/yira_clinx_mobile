@@ -386,7 +386,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         initialRange = FullScreenTimeRange.sevenDays;
         break;
       case VitalsTimeRange.dateRange:
-        initialRange = FullScreenTimeRange.oneMonth;
+        initialRange = FullScreenTimeRange.custom;
         break;
     }
 
@@ -402,6 +402,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           vitalsHistory: _vitalsHistory,
           currentVitals: _currentVitals,
           initialRange: initialRange,
+          initialCustomRange: _customDateRange,
         ),
       ),
     );
@@ -445,10 +446,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
 
     for (final entry in _vitalsHistory) {
       final tsStr = entry['timestamp']?.toString();
-      DateTime dt = DateTime.now();
-      if (tsStr != null) {
-        dt = DateTime.tryParse(tsStr) ?? DateTime.now();
-      }
+      if (tsStr == null || tsStr.trim().isEmpty) continue;
+      final parsed = DateTime.tryParse(tsStr.trim());
+      if (parsed == null) continue;
+      final dt = parsed.toLocal();
 
       if (dt.isBefore(range.start) || dt.isAfter(range.end)) {
         continue;
@@ -1033,16 +1034,22 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
 }
 
   String? _getLastRecordedVitalsDate() {
+    DateTime? latestDt;
     if (_vitalsHistory.isNotEmpty) {
-      for (int i = _vitalsHistory.length - 1; i >= 0; i--) {
-        final tsStr = _vitalsHistory[i]['timestamp']?.toString();
-        if (tsStr != null) {
-          final dt = DateTime.tryParse(tsStr);
+      for (final entry in _vitalsHistory) {
+        final tsStr = entry['timestamp']?.toString();
+        if (tsStr != null && tsStr.trim().isNotEmpty) {
+          final dt = DateTime.tryParse(tsStr.trim())?.toLocal();
           if (dt != null) {
-            return _formatLastRecorded(dt);
+            if (latestDt == null || dt.isAfter(latestDt)) {
+              latestDt = dt;
+            }
           }
         }
       }
+    }
+    if (latestDt != null) {
+      return _formatLastRecorded(latestDt);
     }
     return null;
   }
@@ -1755,7 +1762,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           fontSize: 10,
           color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
         ),
-        dateFormat: DateFormat('d MMM'),
+        dateFormat: _timeRange == VitalsTimeRange.today ? DateFormat('h:mm a') : DateFormat('d MMM'),
         edgeLabelPlacement: EdgeLabelPlacement.shift,
       ),
       primaryYAxis: _getYAxisForMetric(_selectedMetric, points, isDark),

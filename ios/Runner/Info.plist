@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Yira Clinx</string>
+    <string>Yira Health</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Yira Clinx</string>
+    <string>Yira Health</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -43,7 +43,7 @@
         <true/>
     </dict>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>Yira Clinx needs access to the local network to communicate with the local server.</string>
+    <string>Yira Health needs access to the local network to communicate with the local server.</string>
 
     <!-- URL Launcher Queries Schemes -->
     <key>LSApplicationQueriesSchemes</key>
@@ -61,21 +61,21 @@
 
     <!-- Photo Library Permissions -->
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Yira Clinx needs access to your photo library to allow you to select and upload profile pictures and documents.</string>
+    <string>Yira Health needs access to your photo library to allow you to select and upload profile pictures and documents.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Yira Clinx requires permission to save downloaded files and images to your device.</string>
+    <string>Yira Health requires permission to save downloaded files and images to your device.</string>
 
     <!-- Camera & Microphone Permissions -->
     <key>NSCameraUsageDescription</key>
-    <string>Yira Clinx needs camera access to scan Doctor QR codes, take profile photos, and upload medical documents.</string>
+    <string>Yira Health needs camera access to scan Doctor QR codes, take profile photos, and upload medical documents.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Yira Clinx needs microphone access to capture audio if you choose to record video uploads.</string>
+    <string>Yira Health needs microphone access to capture audio if you choose to record video uploads.</string>
 
     <!-- Apple HealthKit Permissions -->
     <key>NSHealthShareUsageDescription</key>
-    <string>Yira Clinx uses Apple Health to read your steps, heart rate, active calories, sleep, and distance to track your fitness and provide health insights.</string>
+    <string>Yira Health uses Apple Health to read your steps, heart rate, active calories, sleep, and distance to track your fitness and provide health insights.</string>
     <key>NSHealthUpdateUsageDescription</key>
-    <string>Yira Clinx needs permission to log health metrics to Apple Health if requested.</string>
+    <string>Yira Health needs permission to log health metrics to Apple Health if requested.</string>
 
     <key>UIApplicationSceneManifest</key>
     <dict>

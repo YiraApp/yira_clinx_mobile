@@ -4,7 +4,6 @@ import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../core/colors/colors.dart';
-import '../../../core/common_appbar/common_app_bar.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/local/flutter_secure_storage.dart';
@@ -37,7 +36,7 @@ class LogoutScreen extends StatelessWidget {
                 ? displayWidth(context) * 0.022
                 : displayWidth(context) * 0.046,
             fontWeight: FontWeight.w700,
-            color: adaptiveTextColor,
+            color: isDarkMode ? Colors.white : adaptiveTextColor,
             letterSpacing: -0.5,
           ),
         ),
@@ -75,7 +74,7 @@ class LogoutScreen extends StatelessWidget {
                     height: isTabletDevice ? 190 : refWidth * 0.44,
                     width: isTabletDevice ? 190 : refWidth * 0.44,
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.03),
+                      color: theme.primaryColor.withValues(alpha: 0.03),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -83,7 +82,7 @@ class LogoutScreen extends StatelessWidget {
                     height: isTabletDevice ? 150 : refWidth * 0.35,
                     width: isTabletDevice ? 150 : refWidth * 0.35,
                     decoration: BoxDecoration(
-                      color: theme.primaryColor.withOpacity(0.06),
+                      color: theme.primaryColor.withValues(alpha: 0.06),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -97,8 +96,8 @@ class LogoutScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: theme.primaryColor.withOpacity(
-                            isDarkMode ? 0.15 : 0.08,
+                          color: theme.primaryColor.withValues(
+                            alpha: isDarkMode ? 0.15 : 0.08,
                           ),
                           blurRadius: 24,
                           offset: const Offset(0, 10),

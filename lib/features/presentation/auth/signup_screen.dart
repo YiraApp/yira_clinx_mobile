@@ -292,7 +292,7 @@ class _SignupScreenState extends State<SignupScreen> {
         loginBloc: context.read<LoginBloc>(),
         onSuccess: (loginEntity) {
           Navigator.of(sheetContext).pop();
-          _showSnackBar("Account created successfully! Welcome to Yira Clinx.");
+          _showSnackBar("Account created successfully! Welcome to Yira Health.");
           Navigator.pushNamedAndRemoveUntil(
             context,
             AppRoutes.genderSelection,
@@ -412,7 +412,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             const SizedBox(height: 3),
                             CommonText(
-                              'Join Yira Clinx and start your health journey',
+                              'Join Yira Health and start your health journey',
                               style: TextStyle(
                                 fontSize: isTab ? 13.5 : 12.5,
                                 fontWeight: FontWeight.w400,

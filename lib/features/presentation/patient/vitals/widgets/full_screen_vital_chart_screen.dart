@@ -6,7 +6,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../../../core/constants/constants.dart';
 import '../patient_vitals_tracking_screen.dart';
 
-enum FullScreenTimeRange { oneDay, sevenDays, oneMonth, threeMonths, oneYear, all }
+enum FullScreenTimeRange { oneDay, sevenDays, oneMonth, threeMonths, oneYear, custom, all }
 
 enum FullScreenChartStyle { splineArea, splineLine, columnBar }
 
@@ -20,6 +20,7 @@ class FullScreenVitalChartScreen extends StatefulWidget {
   final List<Map<String, dynamic>> vitalsHistory;
   final Map<String, String> currentVitals;
   final FullScreenTimeRange initialRange;
+  final DateTimeRange? initialCustomRange;
 
   const FullScreenVitalChartScreen({
     super.key,
@@ -32,6 +33,7 @@ class FullScreenVitalChartScreen extends StatefulWidget {
     required this.vitalsHistory,
     required this.currentVitals,
     this.initialRange = FullScreenTimeRange.all,
+    this.initialCustomRange,
   });
 
   @override
@@ -40,6 +42,7 @@ class FullScreenVitalChartScreen extends StatefulWidget {
 
 class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen> {
   late FullScreenTimeRange _selectedRange;
+  DateTimeRange? _customDateRange;
   FullScreenChartStyle _chartStyle = FullScreenChartStyle.splineArea;
   late TrackballBehavior _trackballBehavior;
   late ZoomPanBehavior _zoomPanBehavior;
@@ -50,6 +53,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
   void initState() {
     super.initState();
     _selectedRange = widget.initialRange;
+    _customDateRange = widget.initialCustomRange;
 
     // Allow both orientations during fullscreen trading view
     SystemChrome.setPreferredOrientations([
@@ -140,17 +144,59 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
     }
   }
 
+  Future<void> _pickCustomDateRange() async {
+    final now = DateTime.now();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: now.subtract(const Duration(days: 365 * 3)),
+      lastDate: now.add(const Duration(days: 1)),
+      initialDateRange: _customDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 14)),
+            end: now,
+          ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: widget.metricColor,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1E293B),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: widget.metricColor,
+                    onPrimary: Colors.white,
+                  ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customDateRange = picked;
+        _selectedRange = FullScreenTimeRange.custom;
+      });
+    }
+  }
+
   DateTimeRange _getDateRange(FullScreenTimeRange range) {
     final now = DateTime.now();
-    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
     final todayStart = DateTime(now.year, now.month, now.day);
 
     switch (range) {
       case FullScreenTimeRange.oneDay:
         return DateTimeRange(start: todayStart, end: todayEnd);
       case FullScreenTimeRange.sevenDays:
+        // Today + previous 6 days = 7 calendar days total
         return DateTimeRange(
-          start: todayStart.subtract(const Duration(days: 7)),
+          start: todayStart.subtract(const Duration(days: 6)),
           end: todayEnd,
         );
       case FullScreenTimeRange.oneMonth:
@@ -168,11 +214,55 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
           start: todayStart.subtract(const Duration(days: 365)),
           end: todayEnd,
         );
+      case FullScreenTimeRange.custom:
+        if (_customDateRange != null) {
+          final s = _customDateRange!.start;
+          final e = _customDateRange!.end;
+          return DateTimeRange(
+            start: DateTime(s.year, s.month, s.day),
+            end: DateTime(e.year, e.month, e.day, 23, 59, 59, 999),
+          );
+        }
+        return DateTimeRange(
+          start: todayStart.subtract(const Duration(days: 14)),
+          end: todayEnd,
+        );
       case FullScreenTimeRange.all:
         return DateTimeRange(
           start: DateTime(2000, 1, 1),
           end: todayEnd.add(const Duration(days: 365)),
         );
+    }
+  }
+
+  DateFormat get _xAxisDateFormat {
+    switch (_selectedRange) {
+      case FullScreenTimeRange.oneDay:
+        return DateFormat('h:mm a');
+      case FullScreenTimeRange.sevenDays:
+        return DateFormat('E, d MMM');
+      case FullScreenTimeRange.oneMonth:
+      case FullScreenTimeRange.threeMonths:
+      case FullScreenTimeRange.custom:
+        return DateFormat('d MMM');
+      case FullScreenTimeRange.oneYear:
+      case FullScreenTimeRange.all:
+        return DateFormat('MMM yy');
+    }
+  }
+
+  DateTimeIntervalType get _xAxisIntervalType {
+    switch (_selectedRange) {
+      case FullScreenTimeRange.oneDay:
+        return DateTimeIntervalType.hours;
+      case FullScreenTimeRange.sevenDays:
+      case FullScreenTimeRange.oneMonth:
+      case FullScreenTimeRange.custom:
+        return DateTimeIntervalType.days;
+      case FullScreenTimeRange.threeMonths:
+      case FullScreenTimeRange.oneYear:
+      case FullScreenTimeRange.all:
+        return DateTimeIntervalType.months;
     }
   }
 
@@ -182,10 +272,15 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
 
     for (final entry in widget.vitalsHistory) {
       final tsStr = entry['timestamp']?.toString();
-      DateTime dt = DateTime.now();
-      if (tsStr != null) {
-        dt = DateTime.tryParse(tsStr) ?? DateTime.now();
+      if (tsStr == null || tsStr.trim().isEmpty) {
+        continue;
       }
+      final parsed = DateTime.tryParse(tsStr.trim());
+      if (parsed == null) {
+        continue;
+      }
+      // Ensure timestamp is accurately parsed and converted to device local timezone
+      final dt = parsed.toLocal();
 
       if (dt.isBefore(range.start) || dt.isAfter(range.end)) {
         continue;
@@ -269,20 +364,28 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
   }
 
   String _getLatestTimestampString() {
-    if (widget.vitalsHistory.isNotEmpty) {
-      for (int i = widget.vitalsHistory.length - 1; i >= 0; i--) {
-        final tsStr = widget.vitalsHistory[i]['timestamp']?.toString();
-        if (tsStr != null) {
-          final dt = DateTime.tryParse(tsStr);
-          if (dt != null) {
-            final now = DateTime.now();
-            final isToday = dt.year == now.year && dt.month == now.month && dt.day == now.day;
-            final timeStr = DateFormat('hh:mm a').format(dt);
-            if (isToday) return 'Today at $timeStr';
-            return DateFormat('d MMM, hh:mm a').format(dt);
+    DateTime? latestDt;
+    for (final entry in widget.vitalsHistory) {
+      final tsStr = entry['timestamp']?.toString();
+      if (tsStr != null && tsStr.trim().isNotEmpty) {
+        final parsed = DateTime.tryParse(tsStr.trim())?.toLocal();
+        if (parsed != null) {
+          if (latestDt == null || parsed.isAfter(latestDt)) {
+            latestDt = parsed;
           }
         }
       }
+    }
+
+    if (latestDt != null) {
+      final now = DateTime.now();
+      final isToday = latestDt.year == now.year && latestDt.month == now.month && latestDt.day == now.day;
+      final yesterday = now.subtract(const Duration(days: 1));
+      final isYesterday = latestDt.year == yesterday.year && latestDt.month == yesterday.month && latestDt.day == yesterday.day;
+      final timeStr = DateFormat('hh:mm a').format(latestDt);
+      if (isToday) return 'Today at $timeStr';
+      if (isYesterday) return 'Yesterday at $timeStr';
+      return DateFormat('d MMM, hh:mm a').format(latestDt);
     }
     return 'Recent';
   }
@@ -687,6 +790,16 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                   _buildTimePill('1Y', FullScreenTimeRange.oneYear, isDark),
                   const SizedBox(width: 4),
                   _buildTimePill('ALL', FullScreenTimeRange.all, isDark),
+                  const SizedBox(width: 4),
+                  _buildTimePill(
+                    _selectedRange == FullScreenTimeRange.custom && _customDateRange != null
+                        ? '${DateFormat('d MMM').format(_customDateRange!.start)} - ${DateFormat('d MMM').format(_customDateRange!.end)}'
+                        : 'Custom',
+                    FullScreenTimeRange.custom,
+                    isDark,
+                    icon: Icons.calendar_month_rounded,
+                    onTap: _pickCustomDateRange,
+                  ),
                   if (high > 0) ...[
                     const SizedBox(width: 10),
                     _buildOverlayStat('H', high.toStringAsFixed(1), const Color(0xFFEF4444)),
@@ -1074,6 +1187,16 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                   _buildTimePill('1Y', FullScreenTimeRange.oneYear, isDark),
                   const SizedBox(width: 5),
                   _buildTimePill('ALL', FullScreenTimeRange.all, isDark),
+                  const SizedBox(width: 5),
+                  _buildTimePill(
+                    _selectedRange == FullScreenTimeRange.custom && _customDateRange != null
+                        ? '${DateFormat('d MMM').format(_customDateRange!.start)} - ${DateFormat('d MMM').format(_customDateRange!.end)}'
+                        : 'Custom',
+                    FullScreenTimeRange.custom,
+                    isDark,
+                    icon: Icons.calendar_month_rounded,
+                    onTap: _pickCustomDateRange,
+                  ),
                 ],
               ),
             ),
@@ -1098,15 +1221,22 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
     );
   }
 
-  Widget _buildTimePill(String label, FullScreenTimeRange range, bool isDark) {
+  Widget _buildTimePill(
+    String label,
+    FullScreenTimeRange range,
+    bool isDark, {
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
     final isSelected = _selectedRange == range;
 
     return InkWell(
-      onTap: () {
-        if (_selectedRange != range) {
-          setState(() => _selectedRange = range);
-        }
-      },
+      onTap: onTap ??
+          () {
+            if (_selectedRange != range) {
+              setState(() => _selectedRange = range);
+            }
+          },
       borderRadius: BorderRadius.circular(7),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
@@ -1126,18 +1256,35 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                     : const Color(0xFFE2E8F0),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: 10.5,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : isDark
-                    ? Colors.white70
-                    : const Color(0xFF475569),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 11,
+                color: isSelected
+                    ? Colors.white
+                    : isDark
+                        ? Colors.white70
+                        : const Color(0xFF475569),
+              ),
+              const SizedBox(width: 3.5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 10.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? Colors.white
+                    : isDark
+                        ? Colors.white70
+                        : const Color(0xFF475569),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1213,6 +1360,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
 
   Widget _buildTradingChart(List<VitalsDataPoint> points, bool isDark, bool isLandscape) {
     final normalBand = _getClinicalNormalBand();
+    final range = _getDateRange(_selectedRange);
 
     return SfCartesianChart(
       plotAreaBorderWidth: 0,
@@ -1247,7 +1395,10 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
           fontSize: 9.5,
           color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
         ),
-        dateFormat: DateFormat('d MMM'),
+        dateFormat: _xAxisDateFormat,
+        intervalType: _xAxisIntervalType,
+        minimum: _selectedRange == FullScreenTimeRange.oneDay ? range.start : null,
+        maximum: _selectedRange == FullScreenTimeRange.oneDay ? range.end : null,
         edgeLabelPlacement: EdgeLabelPlacement.shift,
       ),
       primaryYAxis: _getYAxisForMetric(widget.metricType, points, isDark, normalBand),

@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
@@ -142,7 +143,7 @@ class NotificationService {
       debugPrint("[NotificationService] Foreground notification received: ${message.data}");
       NotificationBadgeService.instance.increment();
       final RemoteNotification? notification = message.notification;
-      final String title = notification?.title ?? message.data['title'] ?? 'Yira Clinx';
+      final String title = notification?.title ?? message.data['title'] ?? projectTitle;
       final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
 
       final String? imageUrl = notification?.android?.imageUrl ??
