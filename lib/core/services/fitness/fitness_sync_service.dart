@@ -61,6 +61,17 @@ class FitnessSyncService {
       final userId = currentUser?.data?.id ?? '';
       final prefs = await SharedPreferences.getInstance();
 
+      final isExplicitlyDisconnected = (userId.isNotEmpty
+              ? prefs.getBool('fitness_user_disconnected_$userId')
+              : null) ??
+          prefs.getBool('fitness_user_disconnected_default') ??
+          false;
+
+      if (isExplicitlyDisconnected) {
+        isConnectedNotifier.value = false;
+        return false;
+      }
+
       bool connected = false;
       if (userId.isNotEmpty) {
         connected = prefs.getBool('fitness_connected_$userId') ?? false;
@@ -96,6 +107,18 @@ class FitnessSyncService {
       final userId = currentUser?.data?.id ?? '';
 
       final prefs = await SharedPreferences.getInstance();
+
+      final isExplicitlyDisconnected = (userId.isNotEmpty
+              ? prefs.getBool('fitness_user_disconnected_$userId')
+              : null) ??
+          prefs.getBool('fitness_user_disconnected_default') ??
+          false;
+
+      if (isExplicitlyDisconnected) {
+        isConnectedNotifier.value = false;
+        return;
+      }
+
       bool isConnected = false;
       if (userId.isNotEmpty) {
         isConnected = prefs.getBool('fitness_connected_$userId') ?? false;
@@ -162,8 +185,10 @@ class FitnessSyncService {
         final prefs = await SharedPreferences.getInstance();
         if (userId.isNotEmpty) {
           await prefs.setBool('fitness_connected_$userId', true);
+          await prefs.setBool('fitness_user_disconnected_$userId', false);
         }
         await prefs.setBool('fitness_connected_default', true);
+        await prefs.setBool('fitness_user_disconnected_default', false);
         isConnectedNotifier.value = true;
 
         // Immediately sync recent 30 days of data
@@ -220,9 +245,11 @@ class FitnessSyncService {
       final prefs = await SharedPreferences.getInstance();
       if (userId.isNotEmpty) {
         await prefs.setBool('fitness_connected_$userId', false);
+        await prefs.setBool('fitness_user_disconnected_$userId', true);
         await prefs.remove('fitness_today_cached_$userId');
       }
       await prefs.setBool('fitness_connected_default', false);
+      await prefs.setBool('fitness_user_disconnected_default', true);
       await prefs.remove('fitness_today_cached_default');
       isConnectedNotifier.value = false;
       todayFitnessNotifier.value = null;

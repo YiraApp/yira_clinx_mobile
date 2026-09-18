@@ -19,20 +19,26 @@ import 'patient_book_appointment_sheet.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
+  final bool isActive;
 
-  const PatientAppointmentsScreen({super.key, this.onNavigateTab});
+  const PatientAppointmentsScreen({
+    super.key,
+    this.onNavigateTab,
+    this.isActive = false,
+  });
 
   @override
-  State<PatientAppointmentsScreen> createState() => _PatientAppointmentsScreenState();
+  State<PatientAppointmentsScreen> createState() => PatientAppointmentsScreenState();
 }
 
-class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
+class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
   Timer? _debounce;
   final TextEditingController _searchController = TextEditingController();
 
   String _activeTab = "upcoming"; // "upcoming" | "completed"
   String _selectedStatus = "All Status";
   bool _isLoading = true;
+  DateTime? _lastLoadTime;
 
   List<Map<String, dynamic>> _allAppointments = [];
 
@@ -52,6 +58,18 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     _loadAppointments();
   }
 
+  void reload({bool isPullToRefresh = false, bool force = true}) {
+    _loadAppointments(isPullToRefresh: isPullToRefresh, force: force);
+  }
+
+  @override
+  void didUpdateWidget(covariant PatientAppointmentsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _loadAppointments();
+    }
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -66,8 +84,16 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     });
   }
 
-  Future<void> _loadAppointments() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadAppointments({bool isPullToRefresh = false, bool force = false}) async {
+    final now = DateTime.now();
+    if (!force && _lastLoadTime != null && now.difference(_lastLoadTime!).inMilliseconds < 400) {
+      return;
+    }
+    _lastLoadTime = now;
+
+    if (!isPullToRefresh && mounted) {
+      setState(() => _isLoading = true);
+    }
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final token = currentUser?.data?.accessToken ?? '';
@@ -185,8 +211,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               day = val;
             } else if (month == null && val >= 1 && val <= 12) {
               month = val;
-            } else if (year == null) {
-              year = val;
+            } else {
+              year ??= val;
             }
           }
         }
@@ -460,333 +486,360 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           body: SafeArea(
-            child: Column(
-              children: [
-                // ─── 1. HEADER WITH BOOK BUTTON ──────────────────────────────
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    screenHorizontalSpacePadding,
-                    isTab ? 20 : 14,
-                    screenHorizontalSpacePadding,
-                    0,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "My Appointments",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontWeight: FontWeight.w700,
-                                fontSize: isTab ? width * 0.028 : width * 0.058,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+            child: RefreshIndicator(
+              color: primaryBlue,
+              onRefresh: () => _loadAppointments(isPullToRefresh: true, force: true),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // ─── 1. HEADER, TABS & FILTER (SLIVER) ─────────────────────
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ─── 1. HEADER WITH BOOK BUTTON ──────────────────────
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            screenHorizontalSpacePadding,
+                            isTab ? 20 : 14,
+                            screenHorizontalSpacePadding,
+                            0,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "My Appointments",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: isTab ? width * 0.028 : width * 0.058,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    Text(
+                                      "Manage your upcoming visits & past consultations",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab ? width * 0.015 : width * 0.03,
+                                        color: isDark ? Colors.white38 : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                        Text(
-                          "Manage your upcoming visits & past consultations",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? width * 0.015 : width * 0.03,
-                            color: isDark ? Colors.white38 : const Color(0xFF64748B),
+                              const SizedBox(width: 4),
+
+                              // Book New Appointment Action Button (Solid Dashboard Primary Color)
+                              Material(
+                                color: primaryBlue,
+                                borderRadius: BorderRadius.circular(12),
+                                elevation: 0,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    PatientBookAppointmentSheet.show(
+                                      context,
+                                      onAppointmentBooked: _loadAppointments,
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isTab ? 16 : 14,
+                                      vertical: isTab ? 10 : 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          "Book Visit",
+                                          style: TextStyle(
+                                            fontFamily: appPoppinFont,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: isTab ? 14 : 12.5,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+
+                        const SizedBox(height: 14),
+
+                        // ─── 2. UPCOMING VS COMPLETED SEGMENTED STAT TABS ────
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildTabStatCard(
+                                  title: "Upcoming",
+                                  count: "${effectiveUpcoming.length}",
+                                  subtitle: "Today & Future",
+                                  icon: Icons.hourglass_top_rounded,
+                                  iconColor: const Color(0xFF2563EB),
+                                  isActive: _activeTab == "upcoming",
+                                  onTap: () => setState(() => _activeTab = "upcoming"),
+                                  isDark: isDark,
+                                  isTab: isTab,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildTabStatCard(
+                                  title: "Completed",
+                                  count: "${effectiveCompleted.length}",
+                                  subtitle: "Past Consultations",
+                                  icon: Icons.check_circle_outline_rounded,
+                                  iconColor: const Color(0xFF059669),
+                                  isActive: _activeTab == "completed",
+                                  onTap: () => setState(() => _activeTab = "completed"),
+                                  isDark: isDark,
+                                  isTab: isTab,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // ─── 3. SEARCH & STATUS FILTER ───────────────────────
+                        Container(
+                          key: PatientTourController().apptsFilterKey,
+                          padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    onChanged: _onSearchChanged,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 13,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "Search doctor, hospital, condition...",
+                                      hintStyle: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: 12,
+                                        color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                      ),
+                                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
+                                      suffixIcon: _searchController.text.isNotEmpty
+                                          ? IconButton(
+                                              icon: const Icon(Icons.clear_rounded, size: 16),
+                                              onPressed: () {
+                                                _searchController.clear();
+                                                setState(() {});
+                                              },
+                                            )
+                                          : null,
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Status Filter Dropdown
+                              Container(
+                                height: 42,
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedStatus,
+                                    icon: const Icon(Icons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
+                                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                    items: _statusOptions.map((s) {
+                                      return DropdownMenuItem(value: s, child: Text(s));
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) setState(() => _selectedStatus = val);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 4),
 
-                  // Book New Appointment Action Button (Solid Dashboard Primary Color)
-                  Material(
-                    color: primaryBlue,
-                    borderRadius: BorderRadius.circular(12),
-                    elevation: 0,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        PatientBookAppointmentSheet.show(
-                          context,
-                          onAppointmentBooked: _loadAppointments,
-                        );
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isTab ? 16 : 14,
-                          vertical: isTab ? 10 : 8,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.add_rounded, color: Colors.white, size: 18),
-                            const SizedBox(width: 5),
-                            Text(
-                              "Book Visit",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontWeight: FontWeight.bold,
-                                fontSize: isTab ? 14 : 12.5,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
+                  // ─── 2. APPOINTMENTS LIST / SHIMMER / EMPTY STATE ───────────
+                  if (_isLoading && !isTourActive && _allAppointments.isEmpty)
+                    _buildLoadingShimmerSliver(isTab, isDark)
+                  else if (effectiveFiltered.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Container(
+                        key: PatientTourController().apptsListKey,
+                        child: _buildEmptyState(isDark),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ─── 2. UPCOMING VS COMPLETED SEGMENTED STAT TABS ──────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildTabStatCard(
-                      title: "Upcoming",
-                      count: "${effectiveUpcoming.length}",
-                      subtitle: "Today & Future",
-                      icon: Icons.hourglass_top_rounded,
-                      iconColor: const Color(0xFF2563EB),
-                      isActive: _activeTab == "upcoming",
-                      onTap: () => setState(() => _activeTab = "upcoming"),
-                      isDark: isDark,
-                      isTab: isTab,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildTabStatCard(
-                      title: "Completed",
-                      count: "${effectiveCompleted.length}",
-                      subtitle: "Past Consultations",
-                      icon: Icons.check_circle_outline_rounded,
-                      iconColor: const Color(0xFF059669),
-                      isActive: _activeTab == "completed",
-                      onTap: () => setState(() => _activeTab = "completed"),
-                      isDark: isDark,
-                      isTab: isTab,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ─── 3. SEARCH & STATUS FILTER ────────────────────────────────
-            Container(
-              key: PatientTourController().apptsFilterKey,
-              padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        screenHorizontalSpacePadding,
+                        4,
+                        screenHorizontalSpacePadding,
+                        24,
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: _onSearchChanged,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 13,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        decoration: InputDecoration(
-                          hintText: "Search doctor, hospital, condition...",
-                          hintStyle: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                          ),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 16),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() {});
+                      sliver: SliverList.separated(
+                        itemCount: effectiveFiltered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final apt = effectiveFiltered[index];
+                          final docName = (apt['doctorName'] ?? 'Doctor').toString();
+                          final initials = docName.replaceFirst('Dr. ', '').trim().isNotEmpty
+                              ? (docName.replaceFirst('Dr. ', '').trim())[0].toUpperCase()
+                              : 'DR';
+                          final hospitalName = (apt['hospitalName'] ?? apt['hospital_name'] ?? 'Healthcare Facility').toString();
+                          final statusLabel = (apt['status'] ?? 'Scheduled').toString();
+                          final isTele = apt['isTeleConsultation'] == true ||
+                              apt['is_tele_consultation'] == true ||
+                              apt['isTeleconsultation'] == true ||
+                              (apt['appointmentType'] ?? '').toString().toLowerCase().contains('video') ||
+                              (apt['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
+                              (apt['appointment_type'] ?? '').toString().toLowerCase().contains('video') ||
+                              (apt['appointment_type'] ?? '').toString().toLowerCase().contains('tele') ||
+                              (apt['appointmentMode'] ?? '').toString().toLowerCase().contains('video') ||
+                              (apt['appointment_mode'] ?? '').toString().toLowerCase().contains('video') ||
+                              (apt['meetingUrl'] ?? apt['meeting_url'] ?? '').toString().trim().isNotEmpty;
+                          final meetingUrl = (apt['meetingUrl'] ?? apt['meeting_url'] ?? '').toString();
+                          final condition = (apt['condition'] ?? apt['reason'] ?? 'General Consultation').toString();
+                          final patientName = (apt['patientName'] ?? apt['patient_name'] ?? 'Patient').toString();
+
+                          final timeStr = _formatAppointmentDateTime(apt);
+
+                          final isPaymentPending = statusLabel.toLowerCase().contains('pending') ||
+                              statusLabel.toLowerCase().contains('payment');
+                          final isCompleted = statusLabel.toLowerCase().contains('complete');
+                          final isCancelled = statusLabel.toLowerCase().contains('cancel');
+
+                          final displayStatusLabel = isPaymentPending ? "Pending Payment" : statusLabel;
+                          final statusColor = isCompleted
+                              ? const Color(0xFF059669)
+                              : (isCancelled
+                                  ? const Color(0xFFEF4444)
+                                  : (isPaymentPending
+                                      ? const Color(0xFFD97706)
+                                      : const Color(0xFF2563EB)));
+
+                          final card = DocAppointmentCard(
+                            initials: initials,
+                            name: docName,
+                            subtitle: hospitalName,
+                            description: condition.isNotEmpty ? condition : 'General Consultation',
+                            timeOrDate: timeStr,
+                            statusLabel: displayStatusLabel,
+                            statusColor: statusColor,
+                            statusTextColor: Colors.white,
+                            patientStatus: (patientName.isNotEmpty && patientName != 'Patient')
+                                ? 'For: $patientName'
+                                : (isTele ? 'Video Consultation' : 'In-Clinic Visit'),
+                            isTab: isTab,
+                            isTeleConsultation: isTele,
+                            onJoinCall: isPaymentPending
+                                ? () => _handlePayNow(apt)
+                                : () {
+                                    if (meetingUrl.isNotEmpty) {
+                                      Utils.launchMeetingURL(
+                                        meetingUrl,
+                                        displayName: patientName,
+                                        onLaunchFailure: (err) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(err)),
+                                            );
+                                          }
+                                        },
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('No meeting link available.')),
+                                      );
+                                    }
                                   },
-                                )
-                              : null,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Status Filter Dropdown
-                  Container(
-                    height: 42,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedStatus,
-                        icon: const Icon(Icons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
-                        dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        items: _statusOptions.map((s) {
-                          return DropdownMenuItem(value: s, child: Text(s));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => _selectedStatus = val);
+                            onPrescriptionTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.userPrescriptionManagement,
+                              ).then((_) {
+                                if (mounted) _loadAppointments();
+                              });
+                            },
+                            onTap: () {
+                              final currentUser = GlobalSession.instance.userNotifier.value;
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.doctorPatientProfileScreen,
+                                arguments: {
+                                  'patientId': apt['patientUserId'] ?? currentUser?.data?.id ?? '',
+                                  'appointmentId': apt['id']?.toString() ?? '',
+                                  'hospitalId': apt['hospitalId']?.toString() ?? '1',
+                                  'orgId': apt['organizationId']?.toString() ?? '1',
+                                  'patientName': patientName,
+                                  'initialStatus': statusLabel,
+                                },
+                              ).then((_) {
+                                if (mounted) _loadAppointments();
+                              });
+                            },
+                          );
+
+                          if (index == 0) {
+                            return KeyedSubtree(
+                              key: PatientTourController().apptsListKey,
+                              child: card,
+                            );
+                          }
+                          return card;
                         },
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            // ─── 5. APPOINTMENTS LIST VIEW ────────────────────────────────
-            Expanded(
-              key: PatientTourController().apptsListKey,
-              child: (_isLoading && !isTourActive)
-                  ? _buildLoadingShimmer(isTab)
-                  : effectiveFiltered.isEmpty
-                      ? _buildEmptyState(isDark)
-                      : RefreshIndicator(
-                          color: const Color(0xFF2563EB),
-                          onRefresh: _loadAppointments,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(
-                              screenHorizontalSpacePadding,
-                              4,
-                              screenHorizontalSpacePadding,
-                              24,
-                            ),
-                            itemCount: effectiveFiltered.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              final apt = effectiveFiltered[index];
-                              final docName = (apt['doctorName'] ?? 'Doctor').toString();
-                              final initials = docName.replaceFirst('Dr. ', '').trim().isNotEmpty
-                                  ? (docName.replaceFirst('Dr. ', '').trim())[0].toUpperCase()
-                                  : 'DR';
-                              final hospitalName = (apt['hospitalName'] ?? apt['hospital_name'] ?? 'Healthcare Facility').toString();
-                              final statusLabel = (apt['status'] ?? 'Scheduled').toString();
-                              final isTele = apt['isTeleConsultation'] == true ||
-                                  apt['is_tele_consultation'] == true ||
-                                  apt['isTeleconsultation'] == true ||
-                                  (apt['appointmentType'] ?? '').toString().toLowerCase().contains('video') ||
-                                  (apt['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
-                                  (apt['appointment_type'] ?? '').toString().toLowerCase().contains('video') ||
-                                  (apt['appointment_type'] ?? '').toString().toLowerCase().contains('tele') ||
-                                  (apt['appointmentMode'] ?? '').toString().toLowerCase().contains('video') ||
-                                  (apt['appointment_mode'] ?? '').toString().toLowerCase().contains('video') ||
-                                  (apt['meetingUrl'] ?? apt['meeting_url'] ?? '').toString().trim().isNotEmpty;
-                              final meetingUrl = (apt['meetingUrl'] ?? apt['meeting_url'] ?? '').toString();
-                              final condition = (apt['condition'] ?? apt['reason'] ?? 'General Consultation').toString();
-                              final patientName = (apt['patientName'] ?? apt['patient_name'] ?? 'Patient').toString();
-
-                              final timeStr = _formatAppointmentDateTime(apt);
-
-                              final isPaymentPending = statusLabel.toLowerCase().contains('pending') ||
-                                  statusLabel.toLowerCase().contains('payment');
-                              final isCompleted = statusLabel.toLowerCase().contains('complete');
-                              final isCancelled = statusLabel.toLowerCase().contains('cancel');
-
-                              final displayStatusLabel = isPaymentPending ? "Pending Payment" : statusLabel;
-                              final statusColor = isCompleted
-                                  ? const Color(0xFF059669)
-                                  : (isCancelled
-                                      ? const Color(0xFFEF4444)
-                                      : (isPaymentPending
-                                          ? const Color(0xFFD97706)
-                                          : const Color(0xFF2563EB)));
-
-                              return DocAppointmentCard(
-                                initials: initials,
-                                name: docName,
-                                subtitle: hospitalName,
-                                description: condition.isNotEmpty ? condition : 'General Consultation',
-                                timeOrDate: timeStr,
-                                statusLabel: displayStatusLabel,
-                                statusColor: statusColor,
-                                statusTextColor: Colors.white,
-                                patientStatus: (patientName.isNotEmpty && patientName != 'Patient')
-                                    ? 'For: $patientName'
-                                    : (isTele ? 'Video Consultation' : 'In-Clinic Visit'),
-                                isTab: isTab,
-                                isTeleConsultation: isTele,
-                                onJoinCall: isPaymentPending
-                                    ? () => _handlePayNow(apt)
-                                    : () {
-                                        if (meetingUrl.isNotEmpty) {
-                                          Utils.launchMeetingURL(
-                                            meetingUrl,
-                                            displayName: patientName,
-                                            onLaunchFailure: (err) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text(err)),
-                                                );
-                                              }
-                                            },
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('No meeting link available.')),
-                                          );
-                                        }
-                                      },
-                                onPrescriptionTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.userPrescriptionManagement,
-                                  );
-                                },
-                                onTap: () {
-                                  final currentUser = GlobalSession.instance.userNotifier.value;
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.doctorPatientProfileScreen,
-                                    arguments: {
-                                      'patientId': apt['patientUserId'] ?? currentUser?.data?.id ?? '',
-                                      'appointmentId': apt['id']?.toString() ?? '',
-                                      'hospitalId': apt['hospitalId']?.toString() ?? '1',
-                                      'orgId': apt['organizationId']?.toString() ?? '1',
-                                      'patientName': patientName,
-                                      'initialStatus': statusLabel,
-                                    },
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
     );
   }
@@ -903,103 +956,109 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     );
   }
 
-  Widget _buildLoadingShimmer(bool isTab) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ListView.builder(
-      padding: const EdgeInsets.all(screenHorizontalSpacePadding),
-      itemCount: 4,
-      itemBuilder: (_, __) => Padding(
-        padding: const EdgeInsets.only(bottom: 12.0),
-        child: Container(
-          padding: const EdgeInsets.all(14.0),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              width: 1,
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            ),
-          ),
-          child: BaseShimmer(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildShimmerItem(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          width: 1,
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: BaseShimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 130,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            width: 90,
-                            height: 11,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 65,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Divider(
-                  height: 1,
-                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 130,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 90,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    Container(
-                      width: 85,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 65,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              color: isDark ? Colors.white10 : Colors.grey.shade200,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 120,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                Container(
+                  width: 85,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingShimmerSliver(bool isTab, bool isDark) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: screenHorizontalSpacePadding,
+        vertical: 6,
+      ),
+      sliver: SliverList.separated(
+        itemCount: 4,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (context, index) => _buildShimmerItem(isDark),
       ),
     );
   }

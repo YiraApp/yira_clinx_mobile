@@ -76,7 +76,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         content: Text(
           Platform.isIOS
               ? 'Are you sure you want to unlink Apple Health? You can reconnect anytime.'
-              : 'Are you sure you want to unlink Google Health Connect? You can reconnect anytime.',
+              : 'Are you sure you want to unlink Health Connect? You can reconnect anytime.',
         ),
         actions: [
           TextButton(
@@ -106,12 +106,14 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     final primaryColor = theme.primaryColor;
     final isTab = isTablet(context);
 
-    final platformName = Platform.isIOS ? 'Apple Health' : 'Google Health Connect';
+    final platformName = Platform.isIOS ? 'Apple Health' : 'Health Connect';
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
+        centerTitle: false,
+        titleSpacing: 0,
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : const Color(0xFF0F172A)),
@@ -119,6 +121,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'My Fitness Insights',
@@ -131,6 +134,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
               ),
             ),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 6,
@@ -141,12 +145,16 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  'Connected with $platformName',
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                Flexible(
+                  child: Text(
+                    'Connected with $platformName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
                   ),
                 ),
               ],
@@ -345,7 +353,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
 
   /// Interactive Spline Chart Card with glowing gradient area fills
   Widget _buildInteractiveGraphCard({required bool isDark, required bool isTab}) {
-    final points = _summary?.chartPoints ?? [];
+    final points = _getNormalizedPoints();
     final metricConfig = _getMetricConfig(_selectedMetric);
     final themeColor = metricConfig.color;
 
@@ -493,7 +501,9 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                         String label = '';
                         try {
                           final parsed = DateTime.parse(rawDate);
-                          label = DateFormat.E().format(parsed); // e.g. Mon, Tue
+                          label = _selectedPeriod == FitnessPeriod.month
+                              ? DateFormat('d/M').format(parsed)
+                              : DateFormat.E().format(parsed);
                         } catch (_) {
                           label = rawDate;
                         }
@@ -577,19 +587,93 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     );
   }
 
+  /// Generates a continuous, padded list of points matching the exact selected period:
+  /// - 1 day for 'Today'
+  /// - 7 consecutive days for '7 Days'
+  /// - 30 consecutive days for '30 Days'
+  List<ChartFitnessPoint> _getNormalizedPoints() {
+    final rawPoints = _summary?.chartPoints ?? [];
+    if (_selectedPeriod == FitnessPeriod.day) {
+      if (rawPoints.isNotEmpty) return rawPoints;
+      final today = _summary?.today ?? FitnessSyncService.instance.todayFitnessNotifier.value;
+      if (today != null) {
+        return [
+          ChartFitnessPoint(
+            date: today.date,
+            steps: today.steps,
+            calories: today.calories,
+            distanceMeters: today.distanceMeters,
+            heartRateAvg: today.heartRateAvg,
+            heartRateMin: today.heartRateMin,
+            heartRateMax: today.heartRateMax,
+            bloodOxygen: today.bloodOxygen,
+            sleepMinutes: today.sleepMinutes,
+            weightKg: today.weightKg,
+          ),
+        ];
+      }
+      return [ChartFitnessPoint(date: DateTime.now().toIso8601String().split('T')[0])];
+    }
+
+    final int targetDays = _selectedPeriod == FitnessPeriod.week ? 7 : 30;
+    final now = DateTime.now();
+
+    // Map existing points by date "YYYY-MM-DD"
+    final Map<String, ChartFitnessPoint> pointMap = {};
+    for (final p in rawPoints) {
+      final key = p.date.split('T')[0];
+      pointMap[key] = p;
+    }
+
+    // Ensure today's live metrics from sensor are blended if backend record has 0 steps
+    final todayLive = FitnessSyncService.instance.todayFitnessNotifier.value;
+    final todayStr =
+        "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+    if (todayLive != null &&
+        (!pointMap.containsKey(todayStr) || (pointMap[todayStr]?.steps ?? 0) == 0)) {
+      pointMap[todayStr] = ChartFitnessPoint(
+        date: todayStr,
+        steps: todayLive.steps,
+        calories: todayLive.calories,
+        distanceMeters: todayLive.distanceMeters,
+        heartRateAvg: todayLive.heartRateAvg,
+        heartRateMin: todayLive.heartRateMin,
+        heartRateMax: todayLive.heartRateMax,
+        bloodOxygen: todayLive.bloodOxygen,
+        sleepMinutes: todayLive.sleepMinutes,
+        weightKg: todayLive.weightKg,
+      );
+    }
+
+    final List<ChartFitnessPoint> normalized = [];
+    for (int i = targetDays - 1; i >= 0; i--) {
+      final d = now.subtract(Duration(days: i));
+      final dateStr =
+          "${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+      if (pointMap.containsKey(dateStr)) {
+        normalized.add(pointMap[dateStr]!);
+      } else {
+        normalized.add(ChartFitnessPoint(date: dateStr));
+      }
+    }
+
+    return normalized;
+  }
+
   /// 4 Statistics Highlights below the chart
   Widget _buildAnalyticsSummaryGrid({required bool isDark, required bool isTab}) {
-    final points = _summary?.chartPoints ?? [];
+    final points = _getNormalizedPoints();
 
     final metricConfig = _getMetricConfig(_selectedMetric);
     final themeColor = metricConfig.color;
 
     // Calculate dynamic stats for selected metric
-    final values = points.map((p) => _extractMetricValue(p, _selectedMetric)).where((v) => v > 0).toList();
-    final avg = values.isNotEmpty ? (values.reduce((a, b) => a + b) / values.length) : 0.0;
-    final peak = values.isNotEmpty ? values.reduce((a, b) => a > b ? a : b) : 0.0;
-    final lowest = values.isNotEmpty ? values.reduce((a, b) => a < b ? a : b) : 0.0;
+    final values = points.map((p) => _extractMetricValue(p, _selectedMetric)).toList();
+    final nonZeroValues = values.where((v) => v > 0).toList();
     final total = values.isNotEmpty ? values.reduce((a, b) => a + b) : 0.0;
+    final avg = nonZeroValues.isNotEmpty ? (total / nonZeroValues.length) : 0.0;
+    final peak = nonZeroValues.isNotEmpty ? nonZeroValues.reduce((a, b) => a > b ? a : b) : 0.0;
+    final lowest = nonZeroValues.isNotEmpty ? nonZeroValues.reduce((a, b) => a < b ? a : b) : 0.0;
 
     return GridView.count(
       crossAxisCount: isTab ? 4 : 2,

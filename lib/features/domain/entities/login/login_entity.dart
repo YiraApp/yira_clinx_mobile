@@ -36,6 +36,7 @@ class DataEntity {
   final String? heightUnit;
   final String? weightUnit;
   final String? navigationId;
+  final String? imagePath;
 
   DataEntity({
     this.accessToken,
@@ -66,6 +67,7 @@ class DataEntity {
     this.latestHospitalId,
     this.latestRoleId,
     this.navigationId,
+    this.imagePath,
   });
 }
 

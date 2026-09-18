@@ -1,10 +1,15 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import '../api/base_api_configuration.dart';
 import '../constants/constants.dart';
 import '../expention_handler/exception_handler.dart';
+import '../local/global_session.dart';
+import '../urls/urls.dart';
 
 class ErrorInterceptor extends Interceptor {
   final bool showSuccessSnack;
+  static bool _isRefreshing = false;
 
   ErrorInterceptor({this.showSuccessSnack = true});
   @override
@@ -37,7 +42,7 @@ class ErrorInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     int statusCode = err.response?.statusCode ?? 0;
 
     switch (err.type) {
@@ -69,7 +74,57 @@ class ErrorInterceptor extends Interceptor {
         path.contains('sendotp') ||
         path.contains('verify') ||
         path.contains('forgot') ||
-        path.contains('reset');
+        path.contains('reset') ||
+        path.contains('refresh');
+
+    // Attempt transparent token refresh on 401 Unauthorized
+    if (statusCode == HttpStatus.unauthorized && !isAuthEndpoint && !_isRefreshing) {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final String? refreshToken = currentUser?.data?.refreshToken;
+
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        _isRefreshing = true;
+        try {
+          final refreshDio = Dio(BaseOptions(
+            baseUrl: EnvironmentService.config.accountBaseUrl,
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 15),
+          ));
+
+          final refreshRes = await refreshDio.post(
+            URLs.refreshTokenUrl,
+            data: {'refreshToken': refreshToken},
+          );
+
+          if (refreshRes.statusCode == HttpStatus.ok && refreshRes.data != null) {
+            final dynamic raw = refreshRes.data;
+            final dynamic payload = raw is Map<String, dynamic> ? (raw['data'] ?? raw['result'] ?? raw) : null;
+            final String? newAccess = payload?['accessToken']?.toString();
+            final String? newRefresh = payload?['refreshToken']?.toString() ?? refreshToken;
+
+            if (newAccess != null && newAccess.isNotEmpty) {
+              await GlobalSession.instance.updateTokens(
+                newAccessToken: newAccess,
+                newRefreshToken: newRefresh!,
+              );
+
+              _isRefreshing = false;
+
+              // Retry original request with freshly acquired access token
+              final retryOptions = err.requestOptions;
+              retryOptions.headers[HttpHeaders.authorizationHeader] = 'Bearer $newAccess';
+
+              final retryResponse = await refreshDio.fetch(retryOptions);
+              return handler.resolve(retryResponse);
+            }
+          }
+        } catch (refreshErr) {
+          debugPrint('⚠️ [ErrorInterceptor] Transparent token refresh failed: $refreshErr');
+        } finally {
+          _isRefreshing = false;
+        }
+      }
+    }
 
     final bool isDeactivatedError = displayMessage != null &&
         displayMessage.toLowerCase().contains('deactivated');

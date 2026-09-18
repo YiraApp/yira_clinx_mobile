@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 
@@ -33,6 +34,8 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.BASAL_ENERGY_BURNED,
+        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
@@ -53,9 +56,14 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.TOTAL_CALORIES_BURNED,
+        HealthDataType.BASAL_ENERGY_BURNED,
+        HealthDataType.WORKOUT,
+        HealthDataType.NUTRITION,
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.SLEEP_SESSION,
         HealthDataType.SLEEP_DEEP,
         HealthDataType.SLEEP_REM,
         HealthDataType.SLEEP_LIGHT,
@@ -77,6 +85,7 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
@@ -85,6 +94,8 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
+        HealthDataType.TOTAL_CALORIES_BURNED,
+        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
@@ -134,9 +145,27 @@ class FitnessService {
         );
         return (hasSteps == true) || (hasHeart == true) || (hasEnergy == true);
       } else {
-        final permissions = List.filled(coreTypes.length, HealthDataAccess.READ);
-        final hasGranted = await _health.hasPermissions(coreTypes, permissions: permissions);
-        return hasGranted ?? false;
+        // On Android Health Connect, check individual core metrics so that if the user granted
+        // Steps, Heart Rate, Calories, Distance, etc., the app recognizes authorization correctly
+        // rather than failing due to containsAll on ungranted optional types.
+        final typesToCheck = [
+          HealthDataType.STEPS,
+          HealthDataType.HEART_RATE,
+          HealthDataType.ACTIVE_ENERGY_BURNED,
+          HealthDataType.TOTAL_CALORIES_BURNED,
+          HealthDataType.WORKOUT,
+          HealthDataType.DISTANCE_DELTA,
+          HealthDataType.SLEEP_ASLEEP,
+          HealthDataType.BLOOD_OXYGEN,
+          HealthDataType.WEIGHT,
+        ];
+        for (final t in typesToCheck) {
+          try {
+            final has = await _health.hasPermissions([t], permissions: [HealthDataAccess.READ]);
+            if (has == true) return true;
+          } catch (_) {}
+        }
+        return false;
       }
     } catch (e) {
       debugPrint('⚠️ [FitnessService] Error checking permissions: $e');
@@ -175,14 +204,13 @@ class FitnessService {
       }
 
       final granted = await _health.requestAuthorization(types, permissions: permissions);
-      if (!granted) return false;
-
-      // Check whether user actually allowed permissions
+      // On Android Health Connect, requestAuthorization may return true or false depending
+      // on whether all or partial permissions were granted. Verify if any core permission is granted.
       final verified = await hasPermissions();
-      return verified;
+      return granted || verified;
     } catch (e) {
       debugPrint('⚠️ [FitnessService] Error requesting health permissions: $e');
-      rethrow;
+      return await hasPermissions();
     }
   }
 
@@ -212,23 +240,54 @@ class FitnessService {
     }
 
     // 2. Query all health data points for today
+    int sleepStagesMinutes = 0;
+    int sleepSessionMinutes = 0;
+
     try {
-      final dataPoints = await _health.getHealthDataFromTypes(
+      final cleanPoints = await _safeGetHealthData(
         startTime: midnight,
         endTime: now,
         types: supportedTypes,
       );
 
-      final cleanPoints = _health.removeDuplicates(dataPoints);
-
       final List<double> hrValues = [];
+      int stepsFromPoints = 0;
+      double activeCalories = 0.0;
+      double totalCaloriesFromPoints = 0.0;
+      double workoutCalories = 0.0;
+      double basalCalories = 0.0;
 
       for (final point in cleanPoints) {
         final val = _extractNumericValue(point.value);
 
         switch (point.type) {
+          case HealthDataType.STEPS:
+            stepsFromPoints += val.toInt();
+            break;
           case HealthDataType.ACTIVE_ENERGY_BURNED:
-            totalCalories += val;
+            activeCalories += val;
+            break;
+          case HealthDataType.TOTAL_CALORIES_BURNED:
+            totalCaloriesFromPoints += val;
+            break;
+          case HealthDataType.BASAL_ENERGY_BURNED:
+            basalCalories += val;
+            break;
+          case HealthDataType.WORKOUT:
+            if (point.value is WorkoutHealthValue) {
+              final w = point.value as WorkoutHealthValue;
+              if (w.totalEnergyBurned != null && w.totalEnergyBurned! > 0) {
+                workoutCalories += w.totalEnergyBurned!.toDouble();
+              }
+              if (w.totalSteps != null && w.totalSteps! > 0) {
+                stepsFromPoints += w.totalSteps!;
+              }
+              if (w.totalDistance != null && w.totalDistance! > 0) {
+                totalDistance += w.totalDistance!.toDouble();
+              }
+            } else if (val > 0) {
+              workoutCalories += val;
+            }
             break;
           case HealthDataType.DISTANCE_WALKING_RUNNING:
           case HealthDataType.DISTANCE_DELTA:
@@ -247,11 +306,38 @@ class FitnessService {
           case HealthDataType.SLEEP_DEEP:
           case HealthDataType.SLEEP_REM:
           case HealthDataType.SLEEP_LIGHT:
-            sleepMinutes += point.dateTo.difference(point.dateFrom).inMinutes;
+            sleepStagesMinutes += point.dateTo.difference(point.dateFrom).inMinutes;
+            break;
+          case HealthDataType.SLEEP_SESSION:
+            sleepSessionMinutes += point.dateTo.difference(point.dateFrom).inMinutes;
             break;
           default:
             break;
         }
+      }
+
+      sleepMinutes = sleepStagesMinutes > 0 ? sleepStagesMinutes : sleepSessionMinutes;
+
+      // Compute total calories without double counting
+      if (totalCaloriesFromPoints > 0) {
+        final maxActive = math.max(activeCalories, workoutCalories);
+        totalCalories = math.max(totalCaloriesFromPoints, maxActive);
+      } else if (activeCalories > 0 && workoutCalories > 0) {
+        totalCalories = math.max(activeCalories, workoutCalories);
+      } else if (activeCalories > 0) {
+        totalCalories = activeCalories;
+      } else if (workoutCalories > 0) {
+        totalCalories = workoutCalories;
+      } else if (basalCalories > 0) {
+        totalCalories = basalCalories;
+      }
+
+      if (totalSteps == 0 && stepsFromPoints > 0) {
+        totalSteps = stepsFromPoints;
+      }
+
+      if (totalCalories == 0 && totalSteps > 0) {
+        totalCalories = totalSteps * 0.04;
       }
 
       if (hrValues.isNotEmpty) {
@@ -264,11 +350,28 @@ class FitnessService {
       debugPrint('⚠️ [FitnessService] Error reading today points: $e');
     }
 
+    // Weight fallback: if weight wasn't logged today, fetch latest from past 30 days
+    if (weightKg == 0) {
+      try {
+        final monthAgo = midnight.subtract(const Duration(days: 30));
+        final weightPoints = await _safeGetHealthData(
+          startTime: monthAgo,
+          endTime: now,
+          types: [HealthDataType.WEIGHT],
+        );
+        if (weightPoints.isNotEmpty) {
+          weightPoints.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
+          final lastW = _extractNumericValue(weightPoints.last.value);
+          if (lastW > 0) weightKg = lastW;
+        }
+      } catch (_) {}
+    }
+
     // If sleep data for today was 0, check last night's window (8 PM yesterday to noon today)
     if (sleepMinutes == 0) {
       try {
         final yesterdayEvening = midnight.subtract(const Duration(hours: 4));
-        final sleepPoints = await _health.getHealthDataFromTypes(
+        final sleepPoints = await _safeGetHealthData(
           startTime: yesterdayEvening,
           endTime: now,
           types: [
@@ -276,12 +379,19 @@ class FitnessService {
             HealthDataType.SLEEP_DEEP,
             HealthDataType.SLEEP_REM,
             HealthDataType.SLEEP_LIGHT,
+            HealthDataType.SLEEP_SESSION,
           ],
         );
-        final cleanSleep = _health.removeDuplicates(sleepPoints);
-        for (final p in cleanSleep) {
-          sleepMinutes += p.dateTo.difference(p.dateFrom).inMinutes;
+        int fallbackStages = 0;
+        int fallbackSession = 0;
+        for (final p in sleepPoints) {
+          if (p.type == HealthDataType.SLEEP_SESSION) {
+            fallbackSession += p.dateTo.difference(p.dateFrom).inMinutes;
+          } else {
+            fallbackStages += p.dateTo.difference(p.dateFrom).inMinutes;
+          }
         }
+        sleepMinutes = fallbackStages > 0 ? fallbackStages : fallbackSession;
       } catch (_) {}
     }
 
@@ -307,72 +417,178 @@ class FitnessService {
     };
   }
 
-  /// Fetch past N days of daily aggregates to sync with backend
+  /// Fetch past N days of daily aggregates to sync with backend.
+  /// Queries in a single batch over the entire window to avoid Android Health Connect
+  /// IPC rate-limiting and timeouts.
   Future<List<Map<String, dynamic>>> fetchHistoricalBatch({int days = 30}) async {
     await configure();
     final List<Map<String, dynamic>> records = [];
     final now = DateTime.now();
 
+    // Query in ONE single batch from start of history window to now
+    final earliestDate = now.subtract(Duration(days: days));
+    final rangeStart = DateTime(earliestDate.year, earliestDate.month, earliestDate.day, 0, 0, 0);
+
+    List<HealthDataPoint> allPoints = [];
+    try {
+      allPoints = await _safeGetHealthData(
+        startTime: rangeStart,
+        endTime: now,
+        types: supportedTypes,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [FitnessService] Error reading batch health points: $e');
+    }
+
+    // Group health points by local calendar date "YYYY-MM-DD"
+    final Map<String, List<HealthDataPoint>> pointsByDate = {};
+    for (final p in allPoints) {
+      final dateKey =
+          "${p.dateFrom.year.toString().padLeft(4, '0')}-${p.dateFrom.month.toString().padLeft(2, '0')}-${p.dateFrom.day.toString().padLeft(2, '0')}";
+      pointsByDate.putIfAbsent(dateKey, () => []).add(p);
+    }
+
+    // Direct aggregated steps for today if available
+    int todayAggregatedSteps = 0;
+    try {
+      final midnight = DateTime(now.year, now.month, now.day);
+      final s = await _health.getTotalStepsInInterval(midnight, now);
+      todayAggregatedSteps = s ?? 0;
+    } catch (_) {}
+
     for (int i = 0; i < days; i++) {
       final targetDate = now.subtract(Duration(days: i));
-      final dayStart = DateTime(targetDate.year, targetDate.month, targetDate.day, 0, 0, 0);
-      final dayEnd = i == 0 ? now : DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
+      final dateStr =
+          "${targetDate.year.toString().padLeft(4, '0')}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}";
+
+      final dayPoints = pointsByDate[dateStr] ?? [];
 
       int steps = 0;
-      double calories = 0.0;
+      double activeCalories = 0.0;
+      double totalCaloriesFromPoints = 0.0;
+      double workoutCalories = 0.0;
+      double basalCalories = 0.0;
       double distance = 0.0;
+      final List<double> hrs = [];
+      double spO2 = 0.0;
+      int sleepStages = 0;
+      int sleepSession = 0;
+      double weight = 0.0;
+
+      for (final p in dayPoints) {
+        final val = _extractNumericValue(p.value);
+        switch (p.type) {
+          case HealthDataType.STEPS:
+            steps += val.toInt();
+            break;
+          case HealthDataType.ACTIVE_ENERGY_BURNED:
+            activeCalories += val;
+            break;
+          case HealthDataType.TOTAL_CALORIES_BURNED:
+            totalCaloriesFromPoints += val;
+            break;
+          case HealthDataType.BASAL_ENERGY_BURNED:
+            basalCalories += val;
+            break;
+          case HealthDataType.WORKOUT:
+            if (p.value is WorkoutHealthValue) {
+              final w = p.value as WorkoutHealthValue;
+              if (w.totalEnergyBurned != null && w.totalEnergyBurned! > 0) {
+                workoutCalories += w.totalEnergyBurned!.toDouble();
+              }
+              if (w.totalSteps != null && w.totalSteps! > 0) {
+                steps += w.totalSteps!;
+              }
+              if (w.totalDistance != null && w.totalDistance! > 0) {
+                distance += w.totalDistance!.toDouble();
+              }
+            } else if (val > 0) {
+              workoutCalories += val;
+            }
+            break;
+          case HealthDataType.DISTANCE_WALKING_RUNNING:
+          case HealthDataType.DISTANCE_DELTA:
+            distance += val;
+            break;
+          case HealthDataType.HEART_RATE:
+            if (val > 0) hrs.add(val);
+            break;
+          case HealthDataType.BLOOD_OXYGEN:
+            if (val > 0) spO2 = val;
+            break;
+          case HealthDataType.WEIGHT:
+            if (val > 0) weight = val;
+            break;
+          case HealthDataType.SLEEP_ASLEEP:
+          case HealthDataType.SLEEP_DEEP:
+          case HealthDataType.SLEEP_REM:
+          case HealthDataType.SLEEP_LIGHT:
+            sleepStages += p.dateTo.difference(p.dateFrom).inMinutes;
+            break;
+          case HealthDataType.SLEEP_SESSION:
+            sleepSession += p.dateTo.difference(p.dateFrom).inMinutes;
+            break;
+          default:
+            break;
+        }
+      }
+
+      final daySleep = sleepStages > 0 ? sleepStages : sleepSession;
+
+      double dayCalories = 0.0;
+      if (totalCaloriesFromPoints > 0) {
+        final maxActive = math.max(activeCalories, workoutCalories);
+        dayCalories = math.max(totalCaloriesFromPoints, maxActive);
+      } else if (activeCalories > 0 && workoutCalories > 0) {
+        dayCalories = math.max(activeCalories, workoutCalories);
+      } else if (activeCalories > 0) {
+        dayCalories = activeCalories;
+      } else if (workoutCalories > 0) {
+        dayCalories = workoutCalories;
+      } else if (basalCalories > 0) {
+        dayCalories = basalCalories;
+      }
+
+      // Today preference: use native interval aggregation if higher
+      if (i == 0 && todayAggregatedSteps > steps) {
+        steps = todayAggregatedSteps;
+      }
+
+      // For recent 7 days, if point steps is 0, attempt interval query fallback
+      if (steps == 0 && i < 7) {
+        try {
+          final dayStart = DateTime(targetDate.year, targetDate.month, targetDate.day, 0, 0, 0);
+          final dayEnd = i == 0 ? now : DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
+          final stepCount = await _health.getTotalStepsInInterval(dayStart, dayEnd);
+          if (stepCount != null && stepCount > 0) {
+            steps = stepCount;
+          }
+        } catch (_) {}
+      }
+
+      if (dayCalories == 0 && steps > 0) {
+        dayCalories = steps * 0.04;
+      }
+
       double avgHr = 0.0;
       double minHr = 0.0;
       double maxHr = 0.0;
-      double spO2 = 0.0;
-      int sleep = 0;
-      double weight = 0.0;
+      if (hrs.isNotEmpty) {
+        avgHr = hrs.reduce((a, b) => a + b) / hrs.length;
+        minHr = hrs.reduce((a, b) => a < b ? a : b);
+        maxHr = hrs.reduce((a, b) => a > b ? a : b);
+      }
 
-      try {
-        final stepCount = await _health.getTotalStepsInInterval(dayStart, dayEnd);
-        steps = stepCount ?? 0;
-      } catch (_) {}
-
-      try {
-        final points = await _health.getHealthDataFromTypes(
-          startTime: dayStart,
-          endTime: dayEnd,
-          types: supportedTypes,
-        );
-
-        final cleanPoints = _health.removeDuplicates(points);
-        final List<double> hrs = [];
-
-        for (final p in cleanPoints) {
-          final val = _extractNumericValue(p.value);
-          if (p.type == HealthDataType.ACTIVE_ENERGY_BURNED) calories += val;
-          if (p.type == HealthDataType.DISTANCE_WALKING_RUNNING || p.type == HealthDataType.DISTANCE_DELTA) distance += val;
-          if (p.type == HealthDataType.HEART_RATE && val > 0) hrs.add(val);
-          if (p.type == HealthDataType.BLOOD_OXYGEN && val > 0) spO2 = val;
-          if (p.type == HealthDataType.WEIGHT && val > 0) weight = val;
-          if (p.type == HealthDataType.SLEEP_ASLEEP || p.type == HealthDataType.SLEEP_DEEP || p.type == HealthDataType.SLEEP_REM) {
-            sleep += p.dateTo.difference(p.dateFrom).inMinutes;
-          }
-        }
-
-        if (hrs.isNotEmpty) {
-          avgHr = hrs.reduce((a, b) => a + b) / hrs.length;
-          minHr = hrs.reduce((a, b) => a < b ? a : b);
-          maxHr = hrs.reduce((a, b) => a > b ? a : b);
-        }
-      } catch (_) {}
-
-      final dateStr = targetDate.toIso8601String().split('T')[0];
       records.add({
         'date': dateStr,
         'steps': steps,
-        'calories': double.parse(calories.toStringAsFixed(1)),
+        'calories': double.parse(dayCalories.toStringAsFixed(1)),
         'distanceMeters': double.parse(distance.toStringAsFixed(1)),
         'heartRateAvg': double.parse(avgHr.toStringAsFixed(1)),
         'heartRateMin': double.parse(minHr.toStringAsFixed(1)),
         'heartRateMax': double.parse(maxHr.toStringAsFixed(1)),
         'bloodOxygen': double.parse(spO2.toStringAsFixed(1)),
-        'sleepMinutes': sleep,
+        'sleepMinutes': daySleep,
         'weightKg': double.parse(weight.toStringAsFixed(1)),
         'source': platformSourceName,
       });
@@ -385,7 +601,35 @@ class FitnessService {
   double _extractNumericValue(HealthValue value) {
     if (value is NumericHealthValue) {
       return value.numericValue.toDouble();
+    } else if (value is WorkoutHealthValue) {
+      return (value.totalEnergyBurned ?? 0).toDouble();
+    } else if (value is NutritionHealthValue) {
+      return (value.calories ?? 0).toDouble();
     }
     return 0.0;
+  }
+
+  /// Safely queries health data points per type.
+  /// If any single data type fails (e.g. permission ungranted, or device sensor missing),
+  /// it gracefully skips it without aborting the other metrics.
+  Future<List<HealthDataPoint>> _safeGetHealthData({
+    required DateTime startTime,
+    required DateTime endTime,
+    required List<HealthDataType> types,
+  }) async {
+    final List<HealthDataPoint> allPoints = [];
+    for (final type in types) {
+      try {
+        final pts = await _health.getHealthDataFromTypes(
+          startTime: startTime,
+          endTime: endTime,
+          types: [type],
+        );
+        allPoints.addAll(pts);
+      } catch (e) {
+        debugPrint('⚠️ [FitnessService] Skipping unsupported/denied type $type: $e');
+      }
+    }
+    return _health.removeDuplicates(allPoints);
   }
 }

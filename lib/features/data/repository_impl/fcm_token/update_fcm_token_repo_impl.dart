@@ -46,15 +46,21 @@ class UpdateFcmRepoImpl extends UpdateFcmRepository {
         "fcmToken": fcmToken,
       };
 
+      final Map<String, dynamic> requestHeaders = {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        'x-user-id': currentUser?.data?.id ?? '',
+        'x-device-id': deviceId,
+      };
+      if (token.trim().isNotEmpty) {
+        requestHeaders[HttpHeaders.authorizationHeader] = 'Bearer $token';
+      }
+
       final response = await _apiClient.account(showSuccessSnack: false).post(
         URLs.updateFcmTokenUrl,
         data: requestBody,
         options: Options(
           extra: {'showSuccessSnack': false},
-          headers: {
-            HttpHeaders.contentTypeHeader: 'application/json',
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-          },
+          headers: requestHeaders,
         ),
       );
 

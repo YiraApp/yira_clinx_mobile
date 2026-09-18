@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import '../../../../config/app_route/app_routes.dart';
@@ -73,16 +75,81 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       if (userId.isEmpty) return;
       final prefs = await SharedPreferences.getInstance();
 
-      final imgPath = prefs.getString('patient_profile_image_$userId');
+      final localPath = prefs.getString('patient_profile_image_$userId');
+      final networkUrl = prefs.getString('patient_profile_network_image_$userId') ??
+          currentUser?.data?.imagePath ??
+          (currentUser?.data?.profiles?.isNotEmpty == true ? currentUser!.data!.profiles!.first.imagePath : null);
 
       if (mounted) {
         setState(() {
-          if (imgPath != null && imgPath.isNotEmpty && File(imgPath).existsSync()) {
-            _profileImagePath = imgPath;
+          if (localPath != null && localPath.isNotEmpty && File(localPath).existsSync()) {
+            _profileImagePath = localPath;
+          } else if (networkUrl != null && networkUrl.isNotEmpty) {
+            _profileImagePath = networkUrl;
           }
         });
       }
     } catch (_) {}
+  }
+
+  Widget _buildDashboardAvatar(String? imgPath, String patientName, Color primaryColor) {
+    if (imgPath != null && imgPath.isNotEmpty) {
+      if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
+        return CachedNetworkImage(
+          imageUrl: imgPath,
+          width: 36,
+          height: 36,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: primaryColor.withValues(alpha: 0.1),
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 1.5, color: primaryColor),
+            ),
+          ),
+          errorWidget: (context, url, error) => _buildDashboardInitials(patientName, primaryColor),
+        );
+      } else if (imgPath.startsWith('data:image')) {
+        try {
+          final commaIdx = imgPath.indexOf(',');
+          final base64Str = commaIdx != -1 ? imgPath.substring(commaIdx + 1) : imgPath;
+          return Image.memory(
+            base64Decode(base64Str),
+            width: 36,
+            height: 36,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _buildDashboardInitials(patientName, primaryColor),
+          );
+        } catch (_) {}
+      } else if (File(imgPath).existsSync()) {
+        return Image.file(
+          File(imgPath),
+          width: 36,
+          height: 36,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildDashboardInitials(patientName, primaryColor),
+        );
+      }
+    }
+    return _buildDashboardInitials(patientName, primaryColor);
+  }
+
+  Widget _buildDashboardInitials(String patientName, Color primaryColor) {
+    return Container(
+      color: primaryColor.withValues(alpha: 0.15),
+      alignment: Alignment.center,
+      child: Text(
+        patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
+        style: TextStyle(
+          fontFamily: appPoppinFont,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          color: primaryColor,
+        ),
+      ),
+    );
   }
 
   void _openProfileSwitcher() {
@@ -378,26 +445,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         ),
                       ),
                       child: ClipOval(
-                        child: (_profileImagePath != null && _profileImagePath!.isNotEmpty && File(_profileImagePath!).existsSync())
-                            ? Image.file(
-                                File(_profileImagePath!),
-                                width: 36,
-                                height: 36,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                color: primaryColor.withValues(alpha: 0.15),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                              ),
+                        child: _buildDashboardAvatar(_profileImagePath, patientName, primaryColor),
                       ),
                     ),
                   ),

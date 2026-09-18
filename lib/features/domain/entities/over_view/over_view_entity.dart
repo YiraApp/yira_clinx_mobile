@@ -115,6 +115,7 @@ class PatientAppointmentEntity {
 class AppointmentPrescriptionEntity {
   final String id;
   final String date;
+  final String time;
   final String notes;
   final String doctorName;
   final List<AppointmentMedicationEntity> medications;
@@ -123,6 +124,7 @@ class AppointmentPrescriptionEntity {
   const AppointmentPrescriptionEntity({
     required this.id,
     this.date = '',
+    this.time = '',
     this.notes = '',
     this.doctorName = '',
     this.medications = const [],

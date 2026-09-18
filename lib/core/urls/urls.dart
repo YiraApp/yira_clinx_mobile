@@ -5,6 +5,7 @@ class URLs {
   static const loginUrl = "/v1/api/auth/login";
   static const sendOtpUrl = "/v1/api/auth/sendotp";
   static const updateFcmTokenUrl = "/v1/api/auth/device-token";
+  static const refreshTokenUrl = "/v1/api/auth/refresh";
   static const getVersionAndTokenStatus = "/v1/api/auth/app-version/status";
 
   /*Work Space*/

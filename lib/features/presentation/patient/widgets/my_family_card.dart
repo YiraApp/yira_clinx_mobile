@@ -41,7 +41,9 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
       for (final p in profiles) {
         final pId = (p.id ?? '').trim();
         if (pId.isNotEmpty) {
-          final path = prefs.getString('patient_profile_image_$pId');
+          final path = prefs.getString('patient_profile_image_$pId') ??
+              prefs.getString('patient_profile_network_image_$pId') ??
+              p.imagePath;
           if (path != null && path.isNotEmpty) {
             loaded[pId] = path;
           }
@@ -528,6 +530,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                     latestHospitalId: d.latestHospitalId,
                                     latestUserRole: d.latestUserRole,
                                     navigationId: d.navigationId,
+                                    imagePath: d.imagePath,
                                     profiles: oldProfiles,
                                   );
 

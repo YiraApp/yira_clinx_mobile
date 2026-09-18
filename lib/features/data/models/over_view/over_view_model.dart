@@ -301,6 +301,7 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
   const AppointmentPrescriptionModel({
     required super.id,
     super.date,
+    super.time,
     super.notes,
     super.doctorName,
     List<AppointmentMedicationModel> super.medications = const [],
@@ -309,22 +310,33 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
 
   factory AppointmentPrescriptionModel.fromJson(Map<String, dynamic> json) {
     return AppointmentPrescriptionModel(
-      id: (json['id'] ?? '').toString(),
-      date: (json['date'] ?? json['createdAt'] ?? '').toString(),
+      id: (json['id'] ?? json['Id'] ?? '').toString(),
+      date: (json['date'] ?? json['Date'] ?? json['createdAt'] ?? json['CreatedAt'] ?? '').toString(),
+      time: (json['time'] ?? json['Time'] ?? json['formatted_time'] ?? '').toString(),
       notes: json['notes']?.toString() ?? '',
-      doctorName: (json['doctor_name'] ?? json['doctorName'] ?? '').toString(),
+      doctorName: (json['doctor_name'] ?? json['doctorName'] ?? json['DoctorName'] ?? '').toString(),
       medications: json['medications'] is List
           ? (json['medications'] as List)
               .whereType<Map>()
               .map((m) => AppointmentMedicationModel.fromJson(Map<String, dynamic>.from(m)))
               .toList()
-          : const [],
+          : (json['Medications'] is List
+              ? (json['Medications'] as List)
+                  .whereType<Map>()
+                  .map((m) => AppointmentMedicationModel.fromJson(Map<String, dynamic>.from(m)))
+                  .toList()
+              : const []),
       diagnoses: json['diagnoses'] is List
           ? (json['diagnoses'] as List)
               .whereType<Map>()
               .map((d) => AppointmentDiagnosisModel.fromJson(Map<String, dynamic>.from(d)))
               .toList()
-          : const [],
+          : (json['Diagnoses'] is List
+              ? (json['Diagnoses'] as List)
+                  .whereType<Map>()
+                  .map((d) => AppointmentDiagnosisModel.fromJson(Map<String, dynamic>.from(d)))
+                  .toList()
+              : const []),
     );
   }
 
@@ -332,6 +344,7 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
     return {
       'id': id,
       'date': date,
+      'time': time,
       'notes': notes,
       'doctor_name': doctorName,
       'medications': medications.map((m) => m is AppointmentMedicationModel ? m.toJson() : null).whereType<Map<String, dynamic>>().toList(),

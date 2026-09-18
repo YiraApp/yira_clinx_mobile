@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/local/global_session.dart';
 import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -14,11 +16,71 @@ class PatientConnectFitnessScreen extends StatefulWidget {
   State<PatientConnectFitnessScreen> createState() => _PatientConnectFitnessScreenState();
 }
 
-class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScreen> {
+class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScreen> with WidgetsBindingObserver {
   bool _isConnecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkExistingPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkExistingPermission();
+    }
+  }
+
+  Future<void> _checkExistingPermission() async {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final prefs = await SharedPreferences.getInstance();
+
+    final isExplicitlyDisconnected = (userId.isNotEmpty
+            ? prefs.getBool('fitness_user_disconnected_$userId')
+            : null) ??
+        prefs.getBool('fitness_user_disconnected_default') ??
+        false;
+
+    if (isExplicitlyDisconnected) {
+      // User explicitly disconnected. Stay on connect screen and await user tap.
+      return;
+    }
+
+    final hasPerms = await FitnessService.instance.hasPermissions();
+    if (hasPerms && mounted) {
+      if (userId.isNotEmpty) {
+        await prefs.setBool('fitness_connected_$userId', true);
+      }
+      await prefs.setBool('fitness_connected_default', true);
+      FitnessSyncService.instance.isConnectedNotifier.value = true;
+      FitnessSyncService.instance.syncNow(silent: true, days: 7);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.patientFitnessTracking);
+      }
+    }
+  }
 
   Future<void> _handleConnect() async {
     setState(() => _isConnecting = true);
+
+    // Clear explicit disconnect flag upon user initiating connection
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final userId = currentUser?.data?.id ?? '';
+    final prefs = await SharedPreferences.getInstance();
+    if (userId.isNotEmpty) {
+      await prefs.setBool('fitness_user_disconnected_$userId', false);
+    }
+    await prefs.setBool('fitness_user_disconnected_default', false);
+
     final result = await FitnessSyncService.instance.connectFitness();
     if (!mounted) return;
 
@@ -227,7 +289,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
     final isTab = isTablet(context);
 
     final isIos = Platform.isIOS;
-    final platformName = isIos ? 'Apple Health' : 'Google Health Connect';
+    final platformName = isIos ? 'Apple Health' : 'Health Connect';
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
@@ -522,7 +584,9 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
 
           // Description
           Text(
-            'Seamlessly synchronizes the past 30 days of daily activity and keeps your vitals, steps, and sleep continuously up to date.',
+            isIos
+                ? 'Seamlessly synchronizes the past 30 days of daily activity and keeps your vitals, steps, and sleep continuously up to date.'
+                : 'Seamlessly synchronizes the past 30 days of daily activity from Health Connect (including Google Fit, Samsung Health, and wearable trackers).',
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: 12.5,

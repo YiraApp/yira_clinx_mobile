@@ -115,15 +115,15 @@ class ChartFitnessPoint {
 
   ChartFitnessPoint({
     required this.date,
-    required this.steps,
-    required this.calories,
-    required this.distanceMeters,
-    required this.heartRateAvg,
-    required this.heartRateMin,
-    required this.heartRateMax,
-    required this.bloodOxygen,
-    required this.sleepMinutes,
-    required this.weightKg,
+    this.steps = 0,
+    this.calories = 0.0,
+    this.distanceMeters = 0.0,
+    this.heartRateAvg = 0.0,
+    this.heartRateMin = 0.0,
+    this.heartRateMax = 0.0,
+    this.bloodOxygen = 0.0,
+    this.sleepMinutes = 0,
+    this.weightKg = 0.0,
     this.hourly = const [],
   });
 

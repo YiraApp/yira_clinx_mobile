@@ -76,6 +76,31 @@ class GlobalSession {
     }
   }
 
+  Future<void> updateTokens({
+    required String newAccessToken,
+    required String newRefreshToken,
+  }) async {
+    final current = userNotifier.value;
+    if (current == null || current.data == null) return;
+
+    try {
+      final Map<String, dynamic> jsonMap =
+          (current is LoginModel ? current.toJson() : LoginModel.fromEntity(current).toJson());
+
+      if (jsonMap['data'] is Map<String, dynamic>) {
+        final dataMap = jsonMap['data'] as Map<String, dynamic>;
+        dataMap['accessToken'] = newAccessToken;
+        dataMap['refreshToken'] = newRefreshToken;
+      }
+
+      final updatedModel = LoginModel.fromJson(jsonMap);
+      await update(updatedModel);
+      debugPrint("GlobalSession: Access token refreshed and persisted cleanly.");
+    } catch (e) {
+      debugPrint("CRITICAL (GlobalSession): Failed to update tokens: $e");
+    }
+  }
+
   Future<void> clear() async {
     userNotifier.value = null;
     try {

@@ -62,6 +62,7 @@ class DataModel extends DataEntity {
     super.latestOrgId,
     super.latestRoleId,
     super.navigationId,
+    super.imagePath,
   }) : super(roles: roles, profiles: profiles);
 
   factory DataModel.fromJson(Map<String, dynamic> json) {
@@ -98,6 +99,7 @@ class DataModel extends DataEntity {
       latestOrgId: json['latestOrgId'],
       latestRoleId: json['latestRoleId'],
       navigationId: json['navigationId'],
+      imagePath: (json['imagePath'] ?? json['ImagePath'] ?? json['photoUrl'] ?? json['profileImageUrl'])?.toString(),
     );
   }
 
@@ -131,6 +133,7 @@ class DataModel extends DataEntity {
       latestHospitalId: entity.latestHospitalId,
       latestOrgId: entity.latestOrgId,
       navigationId: entity.navigationId,
+      imagePath: entity.imagePath,
     );
   }
 
@@ -164,6 +167,7 @@ class DataModel extends DataEntity {
       'latestOrgId': latestOrgId,
       'latestRoleId': latestRoleId,
       'navigationId': navigationId,
+      'imagePath': imagePath,
     };
   }
 }

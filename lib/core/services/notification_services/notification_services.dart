@@ -313,8 +313,12 @@ class NotificationService {
       }
 
       if (sl.isRegistered<UpdateFcmTokenUseCase>()) {
-        await sl<UpdateFcmTokenUseCase>().call(token);
-        debugPrint("[NotificationService] FCM token registered with backend successfully for user ${currentUser.data?.id}");
+        final result = await sl<UpdateFcmTokenUseCase>().call(token);
+        if (result != null) {
+          debugPrint("[NotificationService] FCM token registered with backend successfully for user ${currentUser.data?.id}");
+        } else {
+          debugPrint("[NotificationService] FCM token update call returned null for user ${currentUser.data?.id}");
+        }
       }
     } catch (e) {
       debugPrint("[NotificationService] Error sending FCM token to backend: $e");

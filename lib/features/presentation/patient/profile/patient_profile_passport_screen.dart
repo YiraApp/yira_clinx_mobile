@@ -60,7 +60,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final activeProfile = currentUser?.data?.profiles?.isNotEmpty == true
           ? currentUser!.data!.profiles!.first
           : null;
-      final sessionImage = activeProfile?.imagePath;
+      final sessionImage = (currentUser?.data?.imagePath?.isNotEmpty == true)
+          ? currentUser!.data!.imagePath
+          : activeProfile?.imagePath;
 
       if (mounted) {
         setState(() {
@@ -125,6 +127,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         latestOrgId: current.data?.latestOrgId,
         latestRoleId: current.data?.latestRoleId,
         navigationId: current.data?.navigationId,
+        imagePath: newImagePath,
       );
 
       final updatedLogin = LoginModel(

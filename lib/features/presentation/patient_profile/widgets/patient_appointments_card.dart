@@ -102,64 +102,77 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              Icons.medication_liquid_rounded,
-                              color: primaryColor,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Prescription Details",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: isTab ? 17 : 16,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              Text(
-                                pres.date.isNotEmpty ? "Date: ${pres.date}" : "ID: ${pres.id}",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11.5,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                ),
+                              child: Icon(
+                                Icons.medication_liquid_rounded,
+                                color: primaryColor,
+                                size: 22,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Prescription Details",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: isTab ? 17 : 16,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatPrescriptionDateTime(pres),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 11.5,
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      if (pres.doctorName.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            pres.doctorName,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
+                      if (pres.doctorName.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              pres.doctorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
                             ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ],
@@ -1430,6 +1443,47 @@ class PatientAppointmentsCard extends StatelessWidget {
   //  SUB-CARD BUILDERS (Detail Sheet)
   // ═══════════════════════════════════════════════
 
+  String _formatPrescriptionDateTime(AppointmentPrescriptionEntity pres) {
+    final rawDate = pres.date.trim();
+    final rawTime = pres.time.trim();
+
+    // 1. If rawDate is an ISO datetime string or contains parseable date & time
+    final parsed = DateTime.tryParse(rawDate);
+    if (parsed != null) {
+      final local = parsed.toLocal();
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      final datePart = "${months[local.month - 1]} ${local.day}, ${local.year}";
+
+      String timePart = rawTime;
+      if (timePart.isEmpty && (local.hour != 0 || local.minute != 0)) {
+        final hour = local.hour % 12 == 0 ? 12 : local.hour % 12;
+        final min = local.minute < 10 ? "0${local.minute}" : "${local.minute}";
+        final ampm = local.hour >= 12 ? "PM" : "AM";
+        timePart = "$hour:$min $ampm";
+      }
+
+      return timePart.isNotEmpty ? "$datePart • $timePart" : datePart;
+    }
+
+    // 2. If rawDate is already formatted (e.g. "Mar 18, 2026")
+    if (rawDate.isNotEmpty) {
+      if (rawTime.isNotEmpty) {
+        if (rawDate.toLowerCase().contains(rawTime.toLowerCase())) {
+          return rawDate;
+        }
+        return "$rawDate • $rawTime";
+      }
+      return rawDate;
+    }
+
+    // 3. If rawDate is empty but rawTime exists
+    if (rawTime.isNotEmpty) {
+      return rawTime;
+    }
+
+    return "Date not specified";
+  }
+
   Widget _buildPrescriptionCard(
     BuildContext context,
     AppointmentPrescriptionEntity pres,
@@ -1452,24 +1506,31 @@ class PatientAppointmentsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.medication_liquid_rounded, size: 16, color: primaryColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Prescription • ${pres.date}",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 13, color: primaryColor),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          _formatPrescriptionDateTime(pres),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     InkWell(
                       onTap: () {
@@ -1488,8 +1549,8 @@ class PatientAppointmentsCard extends StatelessWidget {
                       },
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                        margin: const EdgeInsets.only(right: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -1511,7 +1572,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                               "PDF",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: 10,
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF059669),
                               ),
@@ -1524,12 +1585,12 @@ class PatientAppointmentsCard extends StatelessWidget {
                       "View Details",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: primaryColor,
                       ),
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 2),
                     Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
                   ],
                 ),
@@ -1632,35 +1693,42 @@ class PatientAppointmentsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.edit_note_rounded, size: 16, color: primaryColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_note_rounded, size: 15, color: primaryColor),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "Read Note",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: primaryColor,
                       ),
                     ),
-                    const SizedBox(width: 3),
+                    const SizedBox(width: 2),
                     Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
                   ],
                 ),
@@ -1896,13 +1964,17 @@ class PatientAppointmentsCard extends StatelessWidget {
         const SizedBox(width: 8),
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? 13.5 : 12.5,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab ? 13.5 : 12.5,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
           ),
         ),
       ],

@@ -21,6 +21,7 @@ class PatientMainShellScreen extends StatefulWidget {
 
 class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   late int _currentIndex;
+  final GlobalKey<PatientAppointmentsScreenState> _appointmentsKey = GlobalKey<PatientAppointmentsScreenState>();
 
   @override
   void initState() {
@@ -29,6 +30,9 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     _currentIndex = widget.initialIndex;
     PatientTourController().registerTabSwitcher((index) {
       if (mounted) {
+        if (index == 1) {
+          _appointmentsKey.currentState?.reload();
+        }
         setState(() {
           _currentIndex = index;
         });
@@ -44,6 +48,9 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
 
   void _onTabSelected(int index) {
     HapticFeedback.selectionClick();
+    if (index == 1) {
+      _appointmentsKey.currentState?.reload();
+    }
     setState(() {
       _currentIndex = index;
     });
@@ -71,7 +78,11 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
 
     final List<Widget> pages = [
       PatientDashboardScreen(onNavigateTab: _onTabSelected),
-      PatientAppointmentsScreen(onNavigateTab: _onTabSelected),
+      PatientAppointmentsScreen(
+        key: _appointmentsKey,
+        onNavigateTab: _onTabSelected,
+        isActive: _currentIndex == 1,
+      ),
       const PatientConsentApprovalScreen(showBackButton: false),
       const PatientProfilePassportScreen(),
     ];

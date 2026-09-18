@@ -304,8 +304,53 @@ class LikedHospitalsService {
       }
     }
 
+    // Ensure default hospital (Yira Hospitals) is always present and at the top
+    final bool hasDefault = hospitals.any(isDefaultHospital);
+    if (!hasDefault) {
+      addHospital(
+        19,
+        'Yira Hospitals',
+        orgId: 1,
+        orgName: 'yira',
+        hospitalCode: 'Hosp11',
+        hospitalType: 'General',
+        city: 'K.V.Rangareddy',
+        state: 'Telangana',
+        country: 'India',
+        address: '6-123, kota , andhra pradesh',
+        mobileNumber: '9908875796',
+        is24Hours: true,
+        logo: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+        logoUrl: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+      );
+    }
+
+    for (final h in hospitals) {
+      if (isDefaultHospital(h)) {
+        h['isDefault'] = true;
+      }
+    }
+
+    hospitals.sort((a, b) {
+      final aIsDef = isDefaultHospital(a);
+      final bIsDef = isDefaultHospital(b);
+      if (aIsDef && !bIsDef) return -1;
+      if (!aIsDef && bIsDef) return 1;
+      final aName = (a['name'] ?? a['hospitalName'] ?? '').toString();
+      final bName = (b['name'] ?? b['hospitalName'] ?? '').toString();
+      return aName.compareTo(bName);
+    });
+
     linkedHospitalsNotifier.value = hospitals;
     return hospitals;
+  }
+
+  /// Determines whether a hospital is the system default hospital (Yira Hospitals)
+  static bool isDefaultHospital(Map<String, dynamic> h) {
+    final name = (h['name'] ?? h['hospitalName'] ?? '').toString().toLowerCase();
+    final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
+    final isDef = h['isDefault'] == true || h['isDefault'] == 1 || h['isDefault'] == 'true';
+    return isDef || name.contains('yira') || idStr == '19';
   }
 
   /// Retrieves all doctors linked to this patient that belong to the given hospital.

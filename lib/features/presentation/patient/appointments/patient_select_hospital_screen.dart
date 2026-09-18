@@ -46,6 +46,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     super.initState();
     if (widget.initialHospitals != null && widget.initialHospitals!.isNotEmpty) {
       _hospitals = List.from(widget.initialHospitals!);
+      _prioritizeDefaultHospital(_hospitals);
       _isLoading = false;
     } else {
       _loadHospitals();
@@ -58,6 +59,48 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     super.dispose();
   }
 
+  bool _isDefaultHospital(Map<String, dynamic> h) {
+    return LikedHospitalsService.isDefaultHospital(h);
+  }
+
+  void _prioritizeDefaultHospital(List<Map<String, dynamic>> list) {
+    final bool hasDefault = list.any(_isDefaultHospital);
+    if (!hasDefault) {
+      list.insert(0, {
+        'id': 19,
+        'name': 'Yira Hospitals',
+        'orgId': 1,
+        'orgName': 'yira',
+        'hospitalCode': 'Hosp11',
+        'hospitalType': 'General',
+        'city': 'K.V.Rangareddy',
+        'state': 'Telangana',
+        'country': 'India',
+        'address': '6-123, kota , andhra pradesh',
+        'mobileNumber': '9908875796',
+        'is24Hours': true,
+        'isDefault': true,
+        'isLinked': true,
+        'logo': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+        'logoUrl': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+      });
+    }
+
+    for (final h in list) {
+      if (_isDefaultHospital(h)) {
+        h['isDefault'] = true;
+      }
+    }
+
+    list.sort((a, b) {
+      final aIsDef = _isDefaultHospital(a);
+      final bIsDef = _isDefaultHospital(b);
+      if (aIsDef && !bIsDef) return -1;
+      if (!aIsDef && bIsDef) return 1;
+      return 0;
+    });
+  }
+
   Future<void> _loadHospitals() async {
     setState(() => _isLoading = true);
     final currentUser = GlobalSession.instance.userNotifier.value;
@@ -65,6 +108,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
 
     try {
       final list = await LikedHospitalsService.instance.getLikedAndLinkedHospitals(patientId: userId);
+      _prioritizeDefaultHospital(list);
       if (mounted) {
         setState(() {
           _hospitals = list;
@@ -119,6 +163,15 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
           addr.contains(q) ||
           type.contains(q);
     }).toList();
+
+    // Default hospital (Yira Hospitals) always stays at top
+    filteredHospitals.sort((a, b) {
+      final aIsDef = _isDefaultHospital(a);
+      final bIsDef = _isDefaultHospital(b);
+      if (aIsDef && !bIsDef) return -1;
+      if (!aIsDef && bIsDef) return 1;
+      return 0;
+    });
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
@@ -477,18 +530,23 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     }
 
     final hasAmenities = helplineStr.isNotEmpty;
+    final isDefault = _isDefaultHospital(hosp);
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          width: 1.1,
+          color: isDefault
+              ? primaryBlue.withValues(alpha: isDark ? 0.6 : 0.4)
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+          width: isDefault ? 1.4 : 1.1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.035),
+            color: isDefault
+                ? primaryBlue.withValues(alpha: isDark ? 0.15 : 0.08)
+                : Colors.black.withValues(alpha: isDark ? 0.25 : 0.035),
             blurRadius: 10,
             offset: const Offset(0, 2.5),
           ),
@@ -539,18 +597,54 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Hospital Name (Full width, no star)
-                          Text(
-                            hospName,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: isTab ? 16 : 14.5,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              letterSpacing: -0.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          // Hospital Name with Default Badge if applicable
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  hospName,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 16 : 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    letterSpacing: -0.3,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isDefault) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue.withValues(alpha: isDark ? 0.25 : 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: primaryBlue.withValues(alpha: isDark ? 0.45 : 0.25),
+                                      width: 0.9,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.check_circle_rounded, size: 10.5, color: primaryBlue),
+                                      SizedBox(width: 3.5),
+                                      Text(
+                                        "Default",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: primaryBlue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
 
                           if (subtitle.isNotEmpty) ...[
