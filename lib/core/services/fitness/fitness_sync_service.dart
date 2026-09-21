@@ -31,6 +31,20 @@ class FitnessConnectResult {
   bool get isSuccess => status == FitnessConnectStatus.success;
 }
 
+class FitnessSyncResult {
+  final bool isSuccess;
+  final String message;
+  final int recordsSynced;
+  final TodayFitnessData? todayData;
+
+  const FitnessSyncResult({
+    required this.isSuccess,
+    required this.message,
+    this.recordsSynced = 0,
+    this.todayData,
+  });
+}
+
 class FitnessSyncService {
   FitnessSyncService._();
   static final FitnessSyncService instance = FitnessSyncService._();
@@ -273,17 +287,53 @@ class FitnessSyncService {
   }
 
   /// Synchronize health data between device sensors and the backend MSSQL database
-  Future<void> syncNow({bool silent = false, int days = 30}) async {
-    if (isSyncingNotifier.value) return;
+  Future<FitnessSyncResult> syncNow({bool silent = false, int days = 7}) async {
+    if (isSyncingNotifier.value) {
+      return const FitnessSyncResult(
+        isSuccess: true,
+        message: 'Sync is already in progress',
+      );
+    }
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
     final token = currentUser?.data?.accessToken ?? '';
 
-    if (userId.isEmpty) return;
+    if (userId.isEmpty) {
+      return const FitnessSyncResult(
+        isSuccess: false,
+        message: 'User session expired. Please log in again.',
+      );
+    }
 
     try {
       if (!silent) isSyncingNotifier.value = true;
+
+      // 0. Verify connection and permissions
+      if (Platform.isAndroid) {
+        final isAvailable = await FitnessService.instance.isHealthConnectAvailable();
+        if (!isAvailable) {
+          return const FitnessSyncResult(
+            isSuccess: false,
+            message: 'Google Health Connect is not available or needs update.',
+          );
+        }
+      }
+
+      bool hasPerms = await FitnessService.instance.hasPermissions();
+      if (!hasPerms) {
+        if (!silent) {
+          hasPerms = await FitnessService.instance.requestPermissions();
+        }
+        if (!hasPerms) {
+          return FitnessSyncResult(
+            isSuccess: false,
+            message: Platform.isIOS
+                ? 'Apple Health permissions required. Please allow access in Settings.'
+                : 'Health Connect permissions required. Please allow access in Settings.',
+          );
+        }
+      }
 
       // 1. Fetch today's metrics from native store
       final todayMap = await FitnessService.instance.fetchTodayMetrics();
@@ -293,19 +343,32 @@ class FitnessSyncService {
       // Cache locally immediately
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('fitness_today_cached_$userId', jsonEncode(todayMap));
+      if (userId.isNotEmpty) {
+        await prefs.setBool('fitness_connected_$userId', true);
+      }
+      await prefs.setBool('fitness_connected_default', true);
+      isConnectedNotifier.value = true;
 
       // 2. Fetch recent historical batch
       final batchRecords = await FitnessService.instance.fetchHistoricalBatch(days: days);
 
-      // 3. Push to backend MSSQL database via REST
-      if (token.isNotEmpty && batchRecords.isNotEmpty) {
+      // 3. Ensure today's record is included in the payload sent to backend
+      final recordsToSend = List<Map<String, dynamic>>.from(batchRecords);
+      final todayDateStr = todayMap['date']?.toString();
+      final hasTodayInBatch = recordsToSend.any((r) => r['date'] == todayDateStr);
+      if (!hasTodayInBatch && todayMap.isNotEmpty) {
+        recordsToSend.insert(0, todayMap);
+      }
+
+      // 4. Push to backend MSSQL database via REST
+      if (token.isNotEmpty && recordsToSend.isNotEmpty) {
         final client = ApiClient();
         final response = await client.account(showSuccessSnack: false).post(
           URLs.patientFitnessSyncUrl,
           data: {
             'patientId': userId,
             'source': FitnessService.instance.platformSourceName,
-            'records': batchRecords,
+            'records': recordsToSend,
           },
           options: Options(
             headers: {
@@ -315,11 +378,33 @@ class FitnessSyncService {
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          debugPrint('✅ [FitnessSyncService] Successfully synced ${batchRecords.length} days to database');
+          debugPrint('✅ [FitnessSyncService] Successfully synced ${recordsToSend.length} days to database');
+          return FitnessSyncResult(
+            isSuccess: true,
+            message: 'Fitness data synchronized successfully',
+            recordsSynced: recordsToSend.length,
+            todayData: todayData,
+          );
+        } else {
+          return FitnessSyncResult(
+            isSuccess: false,
+            message: 'Server returned error status ${response.statusCode}',
+          );
         }
       }
+
+      return FitnessSyncResult(
+        isSuccess: true,
+        message: 'Fitness data updated locally',
+        recordsSynced: recordsToSend.length,
+        todayData: todayData,
+      );
     } catch (e) {
       debugPrint('⚠️ [FitnessSyncService] Sync error: $e');
+      return FitnessSyncResult(
+        isSuccess: false,
+        message: 'Sync error: $e',
+      );
     } finally {
       if (!silent) isSyncingNotifier.value = false;
     }
@@ -334,12 +419,17 @@ class FitnessSyncService {
     if (userId.isEmpty) return null;
 
     try {
+      final now = DateTime.now();
+      final todayStr =
+          "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
       final client = ApiClient();
       final response = await client.account(showSuccessSnack: false).get(
         URLs.patientFitnessSummaryUrl,
         queryParameters: {
           'patientId': userId,
           'period': period,
+          'todayDate': todayStr,
         },
         options: Options(
           headers: {

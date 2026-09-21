@@ -530,11 +530,12 @@ class ContactInformationModel extends ContactInformationEntity {
 }
 
 class EmergencyContactModel extends EmergencyContactEntity {
-  const EmergencyContactModel({super.name, super.phone});
+  const EmergencyContactModel({super.name, super.relationship, super.phone});
 
   factory EmergencyContactModel.fromJson(Map<String, dynamic> json) {
     return EmergencyContactModel(
       name: json['name']?.toString(),
+      relationship: (json['relationship'] ?? json['relation'])?.toString(),
       phone: json['phone']?.toString(),
     );
   }
@@ -542,6 +543,7 @@ class EmergencyContactModel extends EmergencyContactEntity {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'relationship': relationship,
       'phone': phone,
     };
   }

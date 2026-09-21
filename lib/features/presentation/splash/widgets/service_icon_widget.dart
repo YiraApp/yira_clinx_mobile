@@ -1,19 +1,109 @@
 import 'package:flutter/material.dart';
 
+/// Static visual card for a healthcare service node.
+/// Can be pre-built and cached to prevent rebuilds on every animation tick.
+class ServiceCardVisual extends StatelessWidget {
+  final HealthcareService service;
+
+  const ServiceCardVisual({super.key, required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 3D Elevated Card (Enlarged Size: 70x70)
+        Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: Colors.white,
+            border: Border.all(
+              color: Colors.white,
+              width: 2.0,
+            ),
+            boxShadow: [
+              // Soft ambient shadow
+              const BoxShadow(
+                color: Color(0x12000000), // black with 0.07 alpha
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+              // Rich vibrant color glow
+              BoxShadow(
+                color: service.glowColor.withValues(alpha: 0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(7.0),
+                child: Image.asset(
+                  service.assetPath,
+                  width: 54,
+                  height: 54,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                  gaplessPlayback: true,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 5),
+
+        // High-Contrast Bold Text Label
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D000000), // black with 0.05 alpha
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Text(
+            service.label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Inter',
+              color: Color(0xFF0F172A), // Crisp dark slate
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// An attractive, vibrant 3D PNG healthcare service node widget for Light Mode.
-///
-/// Features large, high-res colorful 3D PNG illustrations
-/// on elevated rounded cards with drop shadows.
 class ServiceIconWidget extends StatelessWidget {
   final HealthcareService service;
   final double opacity;
   final double scale;
+  final Widget? child;
 
   const ServiceIconWidget({
     super.key,
     required this.service,
     required this.opacity,
     this.scale = 1.0,
+    this.child,
   });
 
   @override
@@ -24,83 +114,7 @@ class ServiceIconWidget extends StatelessWidget {
       opacity: opacity.clamp(0.0, 1.0),
       child: Transform.scale(
         scale: scale,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 3D Elevated Card (Enlarged Size: 70x70)
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                color: Colors.white,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2.0,
-                ),
-                boxShadow: [
-                  // Soft ambient shadow
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.07),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                  // Rich vibrant color glow
-                  BoxShadow(
-                    color: service.glowColor.withValues(alpha: 0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(7.0),
-                    child: Image.asset(
-                      service.assetPath,
-                      width: 54,
-                      height: 54,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 5),
-
-            // High-Contrast Bold Text Label
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.90),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Text(
-                service.label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Inter',
-                  color: Color(0xFF0F172A), // Crisp dark slate
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: child ?? ServiceCardVisual(service: service),
       ),
     );
   }

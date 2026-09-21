@@ -489,15 +489,81 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
     );
   }
 
-  void _showAddCustomSlotDialog(BuildContext context, SlotDataState dataState) {
-    TimeOfDay startTime = const TimeOfDay(hour: 17, minute: 0);
-    if (dataState.slots.isNotEmpty) {
-      try {
-        final last = dataState.slots.last;
-        final dt = DateFormat('h:mm a').parse(last.endTime);
-        startTime = TimeOfDay(hour: dt.hour, minute: dt.minute);
-      } catch (_) {}
+  /// Robust time string to minutes parser (handles 12h, 24h, non-breaking spaces)
+  int _robustTimeToMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
+    final cleaned = timeStr.replaceAll(RegExp(r'[\s\u00A0\u2000-\u200B\u202F]+'), ' ').trim();
+    final match = RegExp(r'^(\d{1,2}):(\d{2})\s*([a-zA-Z]{2})?', caseSensitive: false).firstMatch(cleaned);
+    if (match != null) {
+      int hour = int.parse(match.group(1)!);
+      int minute = int.parse(match.group(2)!);
+      String? ampm = match.group(3)?.toUpperCase();
+      if (ampm == 'PM' && hour < 12) hour += 12;
+      if (ampm == 'AM' && hour == 12) hour = 0;
+      return hour * 60 + minute;
     }
+    return 0;
+  }
+
+  /// Find the next available non-overlapping start time for a custom slot
+  TimeOfDay _findNextAvailableSlotStart(SlotDataState dataState) {
+    final duration = dataState.durationMinutes;
+
+    // Collect all occupied intervals (slots + breaks)
+    List<List<int>> occupied = [];
+    for (final slot in dataState.slots) {
+      final s = _robustTimeToMinutes(slot.startTime);
+      final e = _robustTimeToMinutes(slot.endTime);
+      if (e > s) occupied.add([s, e]);
+    }
+    for (final brk in dataState.breakTimes) {
+      final s = _robustTimeToMinutes(brk.fromTime);
+      final e = _robustTimeToMinutes(brk.toTime);
+      if (e > s) occupied.add([s, e]);
+    }
+    occupied.sort((a, b) => a[0].compareTo(b[0]));
+
+    // Determine shift boundaries
+    int shiftStart = _robustTimeToMinutes(dataState.fromTime);
+    int shiftEnd = _robustTimeToMinutes(dataState.toTime);
+    if (shiftStart == 0 && shiftEnd == 0) {
+      shiftStart = 9 * 60; // 9:00 AM default
+      shiftEnd = 21 * 60;  // 9:00 PM default
+    }
+
+    // Start looking from the latest occupied end time, or shift start if empty
+    int candidateStart = shiftStart;
+    if (occupied.isNotEmpty) {
+      candidateStart = occupied.map((o) => o[1]).reduce((a, b) => a > b ? a : b);
+    }
+    if (candidateStart < shiftStart) candidateStart = shiftStart;
+
+    // Verify candidate doesn't overlap with any occupied interval
+    bool isValid(int start, int end) {
+      return !occupied.any((o) => start < o[1] && end > o[0]);
+    }
+
+    // Try from candidate, advance past conflicts
+    for (int attempt = 0; attempt < 100; attempt++) {
+      final candidateEnd = candidateStart + duration;
+      if (candidateEnd > 24 * 60) break;
+      if (isValid(candidateStart, candidateEnd)) {
+        return TimeOfDay(hour: candidateStart ~/ 60, minute: candidateStart % 60);
+      }
+      // Jump past the conflicting interval
+      final conflict = occupied.firstWhere(
+        (o) => candidateStart < o[1] && candidateEnd > o[0],
+        orElse: () => [candidateStart + 1, candidateStart + 1],
+      );
+      candidateStart = conflict[1];
+    }
+
+    // Ultimate fallback
+    return TimeOfDay(hour: candidateStart ~/ 60, minute: candidateStart % 60);
+  }
+
+  void _showAddCustomSlotDialog(BuildContext context, SlotDataState dataState) {
+    TimeOfDay startTime = _findNextAvailableSlotStart(dataState);
 
     final duration = dataState.durationMinutes;
     int endTotalMin = (startTime.hour * 60 + startTime.minute + duration) % (24 * 60);
@@ -670,16 +736,9 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                     // Overlap check against existing slots
                     SlotEntity? conflict;
                     for (final existing in dataState.slots) {
-                      int eStart = 0;
-                      int eEnd = 0;
-                      try {
-                        final dtS = DateFormat('h:mm a').parse(existing.startTime);
-                        eStart = dtS.hour * 60 + dtS.minute;
-                        final dtE = DateFormat('h:mm a').parse(existing.endTime);
-                        eEnd = dtE.hour * 60 + dtE.minute;
-                      } catch (_) {
-                        continue;
-                      }
+                      final eStart = _robustTimeToMinutes(existing.startTime);
+                      final eEnd = _robustTimeToMinutes(existing.endTime);
+                      if (eEnd <= eStart) continue;
 
                       if (startMin < eEnd && endMin > eStart) {
                         conflict = existing;

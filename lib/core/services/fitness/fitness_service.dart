@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../local/global_session.dart';
 
 class FitnessService {
   FitnessService._();
@@ -28,7 +30,7 @@ class FitnessService {
     return 'Unknown';
   }
 
-  /// Supported health data types for iOS & Android
+  /// Supported health data types for iOS & Android (streamlined to active dashboard metrics)
   List<HealthDataType> get supportedTypes {
     if (Platform.isIOS) {
       return [
@@ -37,19 +39,14 @@ class FitnessService {
         HealthDataType.BASAL_ENERGY_BURNED,
         HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
+        HealthDataType.RESTING_HEART_RATE,
         HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.SLEEP_DEEP,
         HealthDataType.SLEEP_REM,
         HealthDataType.SLEEP_LIGHT,
-        HealthDataType.SLEEP_AWAKE,
         HealthDataType.BLOOD_OXYGEN,
-        HealthDataType.RESTING_HEART_RATE,
         HealthDataType.WEIGHT,
-        HealthDataType.HEIGHT,
-        HealthDataType.WATER,
-        HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
-        HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
       ];
     } else {
       // Android Google Health Connect
@@ -59,22 +56,16 @@ class FitnessService {
         HealthDataType.TOTAL_CALORIES_BURNED,
         HealthDataType.BASAL_ENERGY_BURNED,
         HealthDataType.WORKOUT,
-        HealthDataType.NUTRITION,
         HealthDataType.HEART_RATE,
+        HealthDataType.RESTING_HEART_RATE,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.SLEEP_SESSION,
         HealthDataType.SLEEP_DEEP,
         HealthDataType.SLEEP_REM,
         HealthDataType.SLEEP_LIGHT,
-        HealthDataType.SLEEP_AWAKE,
         HealthDataType.BLOOD_OXYGEN,
-        HealthDataType.RESTING_HEART_RATE,
         HealthDataType.WEIGHT,
-        HealthDataType.HEIGHT,
-        HealthDataType.WATER,
-        HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
-        HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
       ];
     }
   }
@@ -89,6 +80,7 @@ class FitnessService {
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.BLOOD_OXYGEN,
       ];
     } else {
       return [
@@ -99,6 +91,7 @@ class FitnessService {
         HealthDataType.HEART_RATE,
         HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.BLOOD_OXYGEN,
       ];
     }
   }
@@ -129,25 +122,30 @@ class FitnessService {
   Future<bool> hasPermissions() async {
     await configure();
     try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      final prefs = await SharedPreferences.getInstance();
+
+      final isExplicitlyDisconnected = (userId.isNotEmpty
+              ? prefs.getBool('fitness_user_disconnected_$userId')
+              : null) ??
+          prefs.getBool('fitness_user_disconnected_default') ??
+          false;
+
+      if (isExplicitlyDisconnected) return false;
+
       if (Platform.isIOS) {
-        // On iOS, verify whether any core metrics have write permissions granted
-        final hasSteps = await _health.hasPermissions(
-          [HealthDataType.STEPS],
-          permissions: [HealthDataAccess.WRITE],
-        );
-        final hasHeart = await _health.hasPermissions(
-          [HealthDataType.HEART_RATE],
-          permissions: [HealthDataAccess.WRITE],
-        );
-        final hasEnergy = await _health.hasPermissions(
-          [HealthDataType.ACTIVE_ENERGY_BURNED],
-          permissions: [HealthDataAccess.WRITE],
-        );
-        return (hasSteps == true) || (hasHeart == true) || (hasEnergy == true);
+        // On iOS HealthKit, read permissions are private and cannot be directly queried.
+        // If the user previously connected and hasn't explicitly disconnected, consider authorized.
+        final connected = (userId.isNotEmpty ? prefs.getBool('fitness_connected_$userId') : null) ??
+            prefs.getBool('fitness_connected_default') ??
+            false;
+        return connected;
       } else {
-        // On Android Health Connect, check individual core metrics so that if the user granted
-        // Steps, Heart Rate, Calories, Distance, etc., the app recognizes authorization correctly
-        // rather than failing due to containsAll on ungranted optional types.
+        // On Android Health Connect, verify whether core types have READ permissions.
+        final isAvailable = await isHealthConnectAvailable();
+        if (!isAvailable) return false;
+
         final typesToCheck = [
           HealthDataType.STEPS,
           HealthDataType.HEART_RATE,
@@ -165,7 +163,11 @@ class FitnessService {
             if (has == true) return true;
           } catch (_) {}
         }
-        return false;
+
+        // Fallback: check stored pref if user previously authorized
+        return (userId.isNotEmpty ? prefs.getBool('fitness_connected_$userId') : null) ??
+            prefs.getBool('fitness_connected_default') ??
+            false;
       }
     } catch (e) {
       debugPrint('⚠️ [FitnessService] Error checking permissions: $e');
@@ -178,34 +180,10 @@ class FitnessService {
     await configure();
     try {
       final types = supportedTypes;
-      List<HealthDataAccess> permissions;
-      if (Platform.isIOS) {
-        // Types in HealthKit that support both read and write
-        const writeableTypes = {
-          HealthDataType.STEPS,
-          HealthDataType.ACTIVE_ENERGY_BURNED,
-          HealthDataType.HEART_RATE,
-          HealthDataType.DISTANCE_WALKING_RUNNING,
-          HealthDataType.SLEEP_ASLEEP,
-          HealthDataType.WEIGHT,
-          HealthDataType.HEIGHT,
-          HealthDataType.WATER,
-          HealthDataType.BLOOD_OXYGEN,
-        };
-
-        permissions = types.map((t) {
-          if (writeableTypes.contains(t)) {
-            return HealthDataAccess.READ_WRITE;
-          }
-          return HealthDataAccess.READ;
-        }).toList();
-      } else {
-        permissions = List.filled(types.length, HealthDataAccess.READ);
-      }
+      // Request READ access for all supported types on both iOS & Android
+      final permissions = List.filled(types.length, HealthDataAccess.READ);
 
       final granted = await _health.requestAuthorization(types, permissions: permissions);
-      // On Android Health Connect, requestAuthorization may return true or false depending
-      // on whether all or partial permissions were granted. Verify if any core permission is granted.
       final verified = await hasPermissions();
       return granted || verified;
     } catch (e) {
@@ -297,7 +275,10 @@ class FitnessService {
             if (val > 0) hrValues.add(val);
             break;
           case HealthDataType.BLOOD_OXYGEN:
-            if (val > 0) bloodOxygen = val;
+            if (val > 0) {
+              final normalized = (val <= 1.0) ? val * 100.0 : val;
+              bloodOxygen = normalized;
+            }
             break;
           case HealthDataType.WEIGHT:
             if (val > 0) weightKg = val;
@@ -514,7 +495,10 @@ class FitnessService {
             if (val > 0) hrs.add(val);
             break;
           case HealthDataType.BLOOD_OXYGEN:
-            if (val > 0) spO2 = val;
+            if (val > 0) {
+              final normalized = (val <= 1.0) ? val * 100.0 : val;
+              spO2 = normalized;
+            }
             break;
           case HealthDataType.WEIGHT:
             if (val > 0) weight = val;
@@ -554,8 +538,8 @@ class FitnessService {
         steps = todayAggregatedSteps;
       }
 
-      // For recent 7 days, if point steps is 0, attempt interval query fallback
-      if (steps == 0 && i < 7) {
+      // For any historical day where steps is 0, attempt interval query fallback
+      if (steps == 0) {
         try {
           final dayStart = DateTime(targetDate.year, targetDate.month, targetDate.day, 0, 0, 0);
           final dayEnd = i == 0 ? now : DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
@@ -617,6 +601,19 @@ class FitnessService {
     required DateTime endTime,
     required List<HealthDataType> types,
   }) async {
+    // 1. Fast path: try querying all types in a single batch (completes in ~100ms)
+    try {
+      final batchPoints = await _health.getHealthDataFromTypes(
+        startTime: startTime,
+        endTime: endTime,
+        types: types,
+      );
+      return _health.removeDuplicates(batchPoints);
+    } catch (e) {
+      debugPrint('⚠️ [FitnessService] Batch query failed, falling back to individual type queries: $e');
+    }
+
+    // 2. Fallback: query each type individually in case one single type is unsupported or denied
     final List<HealthDataPoint> allPoints = [];
     for (final type in types) {
       try {

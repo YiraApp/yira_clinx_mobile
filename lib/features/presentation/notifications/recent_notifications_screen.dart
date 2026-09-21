@@ -16,6 +16,8 @@ import 'package:yiraclinics/features/use_cases/notifications/clear_all_notificat
 import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
+import 'package:yiraclinics/features/presentation/patient/documents/patient_documents_screen.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 
 class RecentNotificationsScreen extends StatefulWidget {
   const RecentNotificationsScreen({super.key});
@@ -152,6 +154,27 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     }
   }
 
+  bool _isPatient() {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final navId = currentUser?.data?.navigationId?.toString().trim();
+    final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+    final roleId = (currentUser?.data?.latestRoleId ?? '').toUpperCase().trim();
+
+    final isDoctor = roleName.contains('doctor') ||
+        roleName.contains('provider') ||
+        roleName.contains('physician') ||
+        navId == '2';
+
+    if (isDoctor) return false;
+
+    return navId == '1' ||
+        roleName.contains('patient') ||
+        roleName == 'user' ||
+        roleName.contains('consumer') ||
+        roleName.contains('client') ||
+        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
+  }
+
   String? _getActionChipLabel(String type) {
     switch (type.toUpperCase()) {
       case 'APPOINTMENT_BOOKED':
@@ -161,6 +184,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       case 'PRESCRIPTION_ADDED':
         return 'View Prescription';
       case 'MEDICAL_RECORD_ADDED':
+        // For provider, do not show View Record button. Only and only patients show that view record.
+        if (!_isPatient()) {
+          return null;
+        }
         return 'View Record';
       case 'DOCTOR_SUGGESTION':
         return 'View Suggestion';
@@ -176,16 +203,37 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
 
+    final typeUpper = notification.type.toUpperCase();
+    final isPatient = _isPatient();
+
+    // Check if it is a medical record notification or test result route
+    if (typeUpper == 'MEDICAL_RECORD_ADDED' ||
+        notification.route == '/userTestResultScreen' ||
+        notification.route == AppRoutes.userTestResultScreen ||
+        notification.route == '/patientDocuments' ||
+        notification.route == AppRoutes.patientDocuments) {
+      if (isPatient) {
+        // Patients navigate directly to Health Records
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const PatientDocumentsScreen(),
+          ),
+        );
+      } else {
+        // Providers do not navigate to Health Records/Test Results; show detail sheet
+        _showNotificationDetailSheet(notification);
+      }
+      return;
+    }
+
     String? targetRoute = notification.route;
     // Smart route resolution for missing or outdated routes
     if (targetRoute == null || targetRoute.isEmpty || targetRoute == '/patientHome') {
-      final typeUpper = notification.type.toUpperCase();
       if (typeUpper.contains('APPOINTMENT')) {
         targetRoute = AppRoutes.appointmentDashboardScreen;
       } else if (typeUpper == 'PRESCRIPTION_ADDED') {
         targetRoute = AppRoutes.userPrescriptionManagement;
-      } else if (typeUpper == 'MEDICAL_RECORD_ADDED') {
-        targetRoute = AppRoutes.userTestResultScreen;
       } else if (typeUpper == 'DOCTOR_SUGGESTION') {
         targetRoute = AppRoutes.patientDoctorSuggestions;
       }

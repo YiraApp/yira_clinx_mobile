@@ -147,34 +147,46 @@ class _LoginScreenState extends State<LoginScreen> {
               Navigator.pushNamed(context, AppRoutes.forgotPassword);
               break;
             case SendOtpFailureState(errorMessage: final msg):
-              final message = msg.toLowerCase().contains('deactivate')
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg.toLowerCase().contains('inactive') ||
-                          msg.toLowerCase().contains('contact admin'))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg.isNotEmpty ? msg : 'Failed to send OTP. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              if (msg.toLowerCase().contains('delete')) {
+                _showAccountDeletedDialog(context, msg);
+              } else {
+                final message = msg.toLowerCase().contains('deactivate')
+                    ? 'Your account was deactivated. Contact administrator.'
+                    : (msg.toLowerCase().contains('inactive') ||
+                            msg.toLowerCase().contains('contact admin'))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (msg.isNotEmpty ? msg : 'Failed to send OTP. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
 
             case LoginFailure(errorMessage: final msg):
-              final message = (msg != null && msg.toLowerCase().contains('deactivate'))
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg != null &&
-                          (msg.toLowerCase().contains('inactive') ||
-                              msg.toLowerCase().contains('contact admin')))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg ?? 'Login failed. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              if (msg != null && msg.toLowerCase().contains('delete')) {
+                _showAccountDeletedDialog(context, msg);
+              } else {
+                final message = (msg != null && msg.toLowerCase().contains('deactivate'))
+                    ? 'Your account was deactivated. Contact administrator.'
+                    : (msg != null &&
+                            (msg.toLowerCase().contains('inactive') ||
+                                msg.toLowerCase().contains('contact admin')))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (msg ?? 'Login failed. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
 
             case SignInError(errorMessage: final msg):
-              final message = msg.toLowerCase().contains('deactivate')
-                  ? 'Your account was deactivated. Contact administrator.'
-                  : (msg.toLowerCase().contains('inactive') ||
-                          msg.toLowerCase().contains('contact admin'))
-                      ? 'Your account is inactive. Contact admin.'
-                      : (msg.isNotEmpty ? msg : 'Sign in error. Please try again.');
-              Utils.showSnackBar(message: message, status: false);
+              if (msg.toLowerCase().contains('delete')) {
+                _showAccountDeletedDialog(context, msg);
+              } else {
+                final message = msg.toLowerCase().contains('deactivate')
+                    ? 'Your account was deactivated. Contact administrator.'
+                    : (msg.toLowerCase().contains('inactive') ||
+                            msg.toLowerCase().contains('contact admin'))
+                        ? 'Your account is inactive. Contact admin.'
+                        : (msg.isNotEmpty ? msg : 'Sign in error. Please try again.');
+                Utils.showSnackBar(message: message, status: false);
+              }
               break;
             default:
               break;
@@ -272,8 +284,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         height: 50,
                                         decoration: BoxDecoration(
                                           color: isDarkMode
-                                              ? darkModeCardColor.withOpacity(
-                                            0.9,
+                                              ? darkModeCardColor.withValues(
+                                            alpha: 0.9,
                                           )
                                               : filedBg,
                                           borderRadius: BorderRadius.circular(
@@ -688,6 +700,86 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showAccountDeletedDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_off_rounded, color: Colors.red, size: 22),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  "Account Deleted",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message.isNotEmpty
+                ? message
+                : "User account is deleted. Please contact administrator or sign up for new user registration.",
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 13,
+              color: isDark ? Colors.white70 : Colors.black87,
+              height: 1.45,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                "Close",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white54 : Colors.grey.shade600,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, AppRoutes.signup);
+              },
+              child: const Text(
+                "Sign Up",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

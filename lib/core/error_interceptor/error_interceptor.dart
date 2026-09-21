@@ -22,11 +22,17 @@ class ErrorInterceptor extends Interceptor {
     final String? serverMessage = data['message']?.toString();
 
     if (!isSuccess) {
-      ExceptionHandler.processException(
-        status: false,
-        statusCode: HttpStatus.ok,
-        message: serverMessage,
-      );
+      final bool suppressErrorSnack =
+          response.requestOptions.extra['suppressErrorSnack'] == true ||
+          response.requestOptions.path.toLowerCase().contains('device-token');
+
+      if (!suppressErrorSnack) {
+        ExceptionHandler.processException(
+          status: false,
+          statusCode: HttpStatus.ok,
+          message: serverMessage,
+        );
+      }
 
       return handler.reject(
         DioException(
@@ -100,12 +106,12 @@ class ErrorInterceptor extends Interceptor {
             final dynamic raw = refreshRes.data;
             final dynamic payload = raw is Map<String, dynamic> ? (raw['data'] ?? raw['result'] ?? raw) : null;
             final String? newAccess = payload?['accessToken']?.toString();
-            final String? newRefresh = payload?['refreshToken']?.toString() ?? refreshToken;
+            final String newRefresh = payload?['refreshToken']?.toString() ?? refreshToken;
 
             if (newAccess != null && newAccess.isNotEmpty) {
               await GlobalSession.instance.updateTokens(
                 newAccessToken: newAccess,
-                newRefreshToken: newRefresh!,
+                newRefreshToken: newRefresh,
               );
 
               _isRefreshing = false;
@@ -132,7 +138,16 @@ class ErrorInterceptor extends Interceptor {
         (displayMessage.toLowerCase().contains('inactive') ||
             displayMessage.toLowerCase().contains('contact admin'));
 
-    if (!isAuthEndpoint || isDeactivatedError || isInactiveError) {
+    final bool suppressErrorSnack =
+        err.requestOptions.extra['suppressErrorSnack'] == true ||
+        err.requestOptions.path.toLowerCase().contains('device-token');
+
+    final bool suppressSessionExpired =
+        err.requestOptions.extra['suppressSessionExpired'] == true;
+
+    if (!suppressErrorSnack &&
+        !suppressSessionExpired &&
+        (!isAuthEndpoint || isDeactivatedError || isInactiveError)) {
       String msg = displayMessage ?? '';
       if (isDeactivatedError) {
         msg = 'Your account was deactivated. Contact administrator.';

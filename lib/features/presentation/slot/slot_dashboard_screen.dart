@@ -32,12 +32,22 @@ class SlotDashBoardScreen extends StatefulWidget {
 class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
   final _calendarControllerToday = AdvancedCalendarController.today();
   final events = <DateTime>[DateTime.now()];
+  final ScrollController _scrollController = ScrollController();
+  DateTime? _lastAutoScrolledDate;
+  int? _lastAutoScrolledTab;
 
   @override
   void initState() {
     context.read<SlotBloc>().add(InitializeSlotsEvent());
     super.initState();
   }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _openSlotDetailsDialog(BuildContext context, SlotEntity legacySlot,bool isTab) {
     SlotDetailsDialog.show(context, legacySlot);
   }
@@ -50,7 +60,16 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       builder: (context, isTourActive, _) {
         return BlocConsumer<SlotBloc, SlotState>(
           buildWhen: (previous, current) => current is SlotDataState,
-          listener: (context, state) {},
+          listener: (context, state) {
+            if (state is SlotDataState) {
+              if (state.isLoading) {
+                _lastAutoScrolledDate = null;
+              } else if (state.timeSlots.isNotEmpty) {
+                final visibleItems = _buildVisibleItems(state);
+                _checkAndScrollToPresentSlot(state, visibleItems);
+              }
+            }
+          },
           builder: (context, state) {
             final effectiveState = isTourActive
                 ? ProviderTourMockData.demoSlotDataState
@@ -133,6 +152,74 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       final todayOnly = DateTime(now.year, now.month, now.day);
       return dateOnly.isBefore(todayOnly);
     }
+  }
+
+  int _findPresentTimeSlotIndex(List<dynamic> visibleItems) {
+    if (visibleItems.isEmpty) return 0;
+    final now = DateTime.now();
+    final currentMins = now.hour * 60 + now.minute;
+
+    for (int i = 0; i < visibleItems.length; i++) {
+      final item = visibleItems[i];
+      final timeStr = item is TimeSlot ? item.time : (item as BreakTimeEntity).fromTime;
+      final slotStartMins = _timeToMinutes(timeStr);
+
+      int slotDuration = 15;
+      if (item is TimeSlot) {
+        final match = RegExp(r'(\d+)').firstMatch(item.duration);
+        if (match != null) {
+          slotDuration = int.tryParse(match.group(1)!) ?? 15;
+        }
+      } else if (item is BreakTimeEntity) {
+        final endMins = _timeToMinutes(item.toTime);
+        if (endMins > slotStartMins) {
+          slotDuration = endMins - slotStartMins;
+        }
+      }
+
+      final slotEndMins = slotStartMins + slotDuration;
+
+      // If current time is within this slot or this is the first slot starting at or after now
+      if (currentMins < slotEndMins) {
+        return i;
+      }
+    }
+
+    return visibleItems.length - 1;
+  }
+
+  void _checkAndScrollToPresentSlot(SlotDataState state, List<dynamic> visibleItems) {
+    final now = DateTime.now();
+    final isToday = state.targetDate.year == now.year &&
+        state.targetDate.month == now.month &&
+        state.targetDate.day == now.day;
+
+    if (!isToday || visibleItems.isEmpty || state.isLoading) return;
+
+    final dateKey = DateTime(state.targetDate.year, state.targetDate.month, state.targetDate.day);
+    if (_lastAutoScrolledDate == dateKey && _lastAutoScrolledTab == state.selectedTabIndex) {
+      return;
+    }
+
+    _lastAutoScrolledDate = dateKey;
+    _lastAutoScrolledTab = state.selectedTabIndex;
+
+    final targetIndex = _findPresentTimeSlotIndex(visibleItems);
+    if (targetIndex <= 0) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final double itemHeight = isTablet(context) ? 95.0 : 82.0;
+      final double targetOffset = targetIndex * itemHeight;
+      final double maxScroll = _scrollController.position.maxScrollExtent;
+      final double clampedOffset = targetOffset.clamp(0.0, maxScroll);
+
+      _scrollController.animateTo(
+        clampedOffset,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   List<dynamic> _buildVisibleItems(SlotDataState state) {
@@ -239,6 +326,9 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     final breakCount = effectiveBreaks.length;
 
     final visibleItems = _buildVisibleItems(state);
+    if (!state.isLoading && visibleItems.isNotEmpty) {
+      _checkAndScrollToPresentSlot(state, visibleItems);
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -252,8 +342,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
           ),
           child: AdvancedCalendar(
             onDateChanged: (date) {
-              context.read<SlotBloc>().add(UpdateTargetDateEvent(date));
-              context.read<SlotBloc>().add(InitializeSlotsEvent());
+              context.read<SlotBloc>().add(InitializeSlotsEvent(targetDate: date));
             },
             handlerColor: isDark
                 ? Colors.white.withValues(alpha: 0.2)
@@ -309,29 +398,41 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 ? TimeSlotListShimmer(itemCount: 5, isTab: isTab)
                 : visibleItems.isEmpty
                   ? Center(
-                      child: Padding(
+                      child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24.0),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.event_note_rounded,
-                              size: 48,
-                              color: isDark ? Colors.white24 : Colors.grey.shade300,
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.event_note_rounded,
+                                size: 48,
+                                color: isDark ? Colors.white38 : Colors.grey.shade400,
+                              ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             CommonText(
-                              "No slots scheduled for this date",
+                              state.timeSlots.isEmpty
+                                  ? "No slots scheduled for this date"
+                                  : "No ${['slots', 'booked slots', 'available slots', 'blocked slots', 'breaks'][state.selectedTabIndex.clamp(0, 4)]} for this date",
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w600,
-                                fontSize: isTab ? 16 : 14,
+                                fontSize: isTab ? 16 : 15,
                                 color: isDark ? Colors.white70 : Colors.grey.shade700,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             CommonText(
-                              "Tap '+' at the bottom to configure consultation hours and generate your schedule.",
+                              state.timeSlots.isEmpty
+                                  ? "Configure consultation hours and generate your schedule for this date."
+                                  : "All scheduled slots appear under the 'All' tab.",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
@@ -339,11 +440,45 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                                 color: isDark ? Colors.white38 : Colors.grey.shade500,
                               ),
                             ),
+                            if (state.timeSlots.isEmpty) ...[
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: () async {
+                                  await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.smartSlotSchedulerScreen,
+                                  );
+                                  if (context.mounted) {
+                                    context.read<SlotBloc>().add(InitializeSlotsEvent(targetDate: state.targetDate));
+                                  }
+                                },
+                                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                                label: const CommonText(
+                                  "Add Slots",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                     )
                   : ListView.builder(
+                      controller: _scrollController,
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(
                         horizontal: screenHorizontalSpacePadding,

@@ -86,15 +86,38 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
   // Background particles
   late final List<SplashParticle> _particles;
 
+  // Cached static cards for each healthcare node to prevent GC and widget rebuild churn
+  late final List<Widget> _cachedServiceCards;
+
   // Hand center in exact visual center
   static const Offset _handCenter = Offset(0.5, 0.48);
 
   @override
   void initState() {
     super.initState();
-    _particles = generateSplashParticles(count: 32);
+    _particles = generateSplashParticles(count: 20);
+    _cachedServiceCards = splashHealthcareServices
+        .map((s) => ServiceCardVisual(service: s))
+        .toList(growable: false);
     _setupAnimations();
     _startAnimationSequence();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAssets();
+  }
+
+  void _precacheAssets() {
+    // Warm up image cache to eliminate decoding freezes on Android devices
+    precacheImage(
+      const AssetImage('assets/images/yira_hand_light_centered.png'),
+      context,
+    );
+    for (final service in splashHealthcareServices) {
+      precacheImage(AssetImage(service.assetPath), context);
+    }
   }
 
   void _setupAnimations() {
@@ -481,69 +504,69 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
         final nodeTransforms = _calculateNodeTransforms(size);
         final rawPositions = nodeTransforms.map((t) => t.position).toList();
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
-          body: Opacity(
-            opacity: _screenFadeIn.value.clamp(0.0, 1.0),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // ── Layer 1: Pristine Light Mode Gradient & Particles ──
-                RepaintBoundary(
-                  child: Opacity(
-                    opacity: _bgFadeIn.value,
+        return ColoredBox(
+          color: const Color(0xFFF8FAFC),
+          child: FadeTransition(
+            opacity: _screenFadeIn,
+            child: SizedBox.expand(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // ── Layer 1: Pristine Light Mode Gradient & Particles ──
+                  RepaintBoundary(
                     child: CustomPaint(
                       size: size,
                       painter: SplashBackgroundPainter(
                         animationValue: _bgController.value,
+                        fadeIn: _bgFadeIn.value,
                         particles: _particles,
                       ),
                     ),
                   ),
-                ),
 
-                // ── Layer 2: Connecting Royal Blue Laser Lines ──
-                RepaintBoundary(
-                  child: CustomPaint(
-                    size: size,
-                    painter: EcosystemLinesPainter(
-                      iconPositions: rawPositions,
-                      revealProgress: _linesReveal.value,
-                      convergence: _convergeFactor.value,
-                      dashOffset: _bgController.value * 4,
-                      convergenceCenter: _handCenter,
+                  // ── Layer 2: Connecting Royal Blue Laser Lines ──
+                  RepaintBoundary(
+                    child: CustomPaint(
+                      size: size,
+                      painter: EcosystemLinesPainter(
+                        iconPositions: rawPositions,
+                        revealProgress: _linesReveal.value,
+                        convergence: _convergeFactor.value,
+                        dashOffset: _bgController.value * 4,
+                        convergenceCenter: _handCenter,
+                      ),
                     ),
                   ),
-                ),
 
-                // ── Layer 3: Centered Cybernetic Hand ("Health in Your Hands") ──
-                _buildCenteredHand(size),
+                  // ── Layer 3: Centered Cybernetic Hand ("Health in Your Hands") ──
+                  _buildCenteredHand(size),
 
-                // ── Layer 4: Biometric Rings & Shockwave ──
-                RepaintBoundary(
-                  child: CustomPaint(
-                    size: size,
-                    painter: HandGlowPainter(
-                      fadeIn: (_handFadeIn.value *
-                              (1.0 - pow(_shockwaveProgress.value, 1.4)))
-                          .clamp(0.0, 1.0),
-                      glowPulse: sin(_bgController.value * 2 * pi * 3),
-                      scale: _handScale.value,
-                      shockwaveProgress: _shockwaveProgress.value,
-                      normalizedCenter: _handCenter,
+                  // ── Layer 4: Biometric Rings & Shockwave ──
+                  RepaintBoundary(
+                    child: CustomPaint(
+                      size: size,
+                      painter: HandGlowPainter(
+                        fadeIn: (_handFadeIn.value *
+                                (1.0 - pow(_shockwaveProgress.value, 1.4)))
+                            .clamp(0.0, 1.0),
+                        glowPulse: sin(_bgController.value * 2 * pi * 3),
+                        scale: _handScale.value,
+                        shockwaveProgress: _shockwaveProgress.value,
+                        normalizedCenter: _handCenter,
+                      ),
                     ),
                   ),
-                ),
 
-                // ── Layer 5: 8 Enlarged Colorful 3D PNG Healthcare Nodes ──
-                _buildHealthcareNodes(size, nodeTransforms),
+                  // ── Layer 5: 8 Enlarged Colorful 3D PNG Healthcare Nodes ──
+                  _buildHealthcareNodes(size, nodeTransforms),
 
-                // ── Layer 6: Brand Climax (Logo, Tagline, ECG Heartbeat) ──
-                _buildBrandClimax(size),
+                  // ── Layer 6: Brand Climax (Logo, Tagline, ECG Heartbeat) ──
+                  _buildBrandClimax(size),
 
-                // ── Layer 7: Bottom Security Environment Badge ──
-                _buildBottomBadge(size),
-              ],
+                  // ── Layer 7: Bottom Security Environment Badge ──
+                  _buildBottomBadge(size),
+                ],
+              ),
             ),
           ),
         );
@@ -551,7 +574,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
     );
   }
 
-  /// Builds the cybernetic hand centered on the screen.
+  /// Builds the cybernetic hand centered on the screen without expensive Opacity saveLayer.
   Widget _buildCenteredHand(Size size) {
     final handDissolve =
         (1.0 - pow(_shockwaveProgress.value, 1.4)).clamp(0.0, 1.0);
@@ -567,35 +590,39 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
       left: size.width * _handCenter.dx - handWidth / 2,
       top: size.height * _handCenter.dy - handHeight / 2,
       child: RepaintBoundary(
-        child: Opacity(
-          opacity: handOpacity,
-          child: Image.asset(
-            'assets/images/yira_hand_light_centered.png',
-            width: handWidth,
-            height: handHeight,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Center(
-                child: Icon(
-                  Icons.volunteer_activism_rounded,
-                  size: 96,
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.9),
-                ),
-              );
-            },
-          ),
+        child: Image.asset(
+          'assets/images/yira_hand_light_centered.png',
+          width: handWidth,
+          height: handHeight,
+          fit: BoxFit.contain,
+          color: Color.fromRGBO(255, 255, 255, handOpacity),
+          colorBlendMode: BlendMode.modulate,
+          filterQuality: FilterQuality.medium,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Icon(
+                Icons.volunteer_activism_rounded,
+                size: 96,
+                color: Color(0xFF2563EB).withValues(alpha: handOpacity * 0.9),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  /// Builds the 8 enlarged, colorful 3D PNG healthcare nodes with hardware-accelerated transforms.
+  /// Builds the 8 enlarged, colorful 3D PNG healthcare nodes using cached cards.
   Widget _buildHealthcareNodes(Size size, List<NodeTransform> transforms) {
     final services = splashHealthcareServices;
 
     return Stack(
       children: List.generate(services.length, (i) {
         final t = transforms[i];
+        if (t.opacity <= 0.005 || t.scale <= 0.005) {
+          return const SizedBox.shrink();
+        }
 
         return Positioned(
           left: t.position.dx * size.width - 35,
@@ -605,6 +632,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
               service: services[i],
               opacity: t.opacity,
               scale: t.scale,
+              child: _cachedServiceCards[i],
             ),
           ),
         );

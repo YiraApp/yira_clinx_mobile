@@ -325,9 +325,10 @@ class ContactInformationEntity {
 
 class EmergencyContactEntity {
   final String? name;
+  final String? relationship;
   final String? phone;
 
-  const EmergencyContactEntity({this.name, this.phone});
+  const EmergencyContactEntity({this.name, this.relationship, this.phone});
 }
 
 class MedicalInformationEntity {

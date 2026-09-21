@@ -5,7 +5,8 @@ abstract class SlotEvent {}
 
 class InitializeSlotsEvent extends SlotEvent {
   final bool resetToToday;
-  InitializeSlotsEvent({this.resetToToday = false});
+  final DateTime? targetDate;
+  InitializeSlotsEvent({this.resetToToday = false, this.targetDate});
 }
 
 class ChangeExecutionModeEvent extends SlotEvent {

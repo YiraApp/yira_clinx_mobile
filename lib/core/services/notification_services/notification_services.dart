@@ -7,9 +7,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
@@ -307,8 +309,10 @@ class NotificationService {
 
   Future<void> _sendTokenToBackend(String token) async {
     try {
+      final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
+          (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
       final currentUser = GlobalSession.instance.userNotifier.value;
-      if (currentUser == null || (currentUser.data?.id ?? '').isEmpty) {
+      if (!isLoggedIn || currentUser == null || (currentUser.data?.id ?? '').isEmpty) {
         debugPrint("[NotificationService] Skipping token sync: user not logged in yet");
         return;
       }

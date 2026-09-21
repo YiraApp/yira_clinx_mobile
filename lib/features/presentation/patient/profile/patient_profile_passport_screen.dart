@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -41,13 +42,49 @@ class PatientProfilePassportScreen extends StatefulWidget {
 class _PatientProfilePassportScreenState extends State<PatientProfilePassportScreen> {
   File? _localProfileImage;
   String? _networkProfileImageUrl;
+  bool _photoRemovedExplicitly = false;
   bool _isUploadingPhoto = false;
   final ImagePicker _picker = ImagePicker();
+  String? _cachedBloodGroup;
+  String? _cachedEmergencyName;
+  String? _cachedEmergencyRelation;
+  String? _cachedEmergencyPhone;
+
+  static String _cleanValue(String? val, [String fallback = '-']) {
+    if (val == null) return fallback;
+    final trimmed = val.trim();
+    if (trimmed.isEmpty ||
+        trimmed.toLowerCase() == 'none' ||
+        trimmed.toLowerCase() == 'null') {
+      return fallback;
+    }
+    return trimmed;
+  }
 
   @override
   void initState() {
     super.initState();
     _loadProfilePhoto();
+    _loadCachedEmergencyContact();
+  }
+
+  Future<void> _loadCachedEmergencyContact() async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final userId = currentUser?.data?.id ?? '';
+      if (userId.isEmpty) return;
+      final prefs = await SharedPreferences.getInstance();
+      final n = prefs.getString('patient_emergency_name_$userId');
+      final r = prefs.getString('patient_emergency_relation_$userId');
+      final p = prefs.getString('patient_emergency_phone_$userId');
+      if (mounted) {
+        setState(() {
+          if (n != null && n.isNotEmpty) _cachedEmergencyName = n;
+          if (r != null && r.isNotEmpty) _cachedEmergencyRelation = r;
+          if (p != null && p.isNotEmpty) _cachedEmergencyPhone = p;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadProfilePhoto() async {
@@ -56,6 +93,19 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final userId = currentUser?.data?.id ?? '';
       if (userId.isEmpty) return;
       final prefs = await SharedPreferences.getInstance();
+      final bool wasExplicitlyRemoved = prefs.getBool('patient_profile_removed_$userId') ?? false;
+
+      if (wasExplicitlyRemoved) {
+        if (mounted) {
+          setState(() {
+            _photoRemovedExplicitly = true;
+            _localProfileImage = null;
+            _networkProfileImageUrl = '';
+          });
+        }
+        return;
+      }
+
       final savedPath = prefs.getString('patient_profile_image_$userId');
       final savedNetworkUrl = prefs.getString('patient_profile_network_image_$userId');
 
@@ -68,6 +118,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
 
       if (mounted) {
         setState(() {
+          _photoRemovedExplicitly = false;
           if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
             _localProfileImage = File(savedPath);
           }
@@ -147,6 +198,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   Future<void> _uploadProfilePhoto(XFile picked) async {
     final file = File(picked.path);
     setState(() {
+      _photoRemovedExplicitly = false;
       _localProfileImage = file;
       _isUploadingPhoto = true;
     });
@@ -160,6 +212,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     if (userId.isNotEmpty) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('patient_profile_image_$userId', picked.path);
+      await prefs.remove('patient_profile_removed_$userId');
     }
 
     try {
@@ -193,7 +246,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         data: formData,
         options: Options(
           headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
             'Content-Type': 'multipart/form-data',
           },
         ),
@@ -203,12 +256,20 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         final data = response.data['data'];
         final photoUrl = data['photoUrl']?.toString() ?? data['imagePath']?.toString() ?? '';
         if (photoUrl.isNotEmpty) {
+          try {
+            await CachedNetworkImage.evictFromCache(photoUrl);
+            PaintingBinding.instance.imageCache.clear();
+            PaintingBinding.instance.imageCache.clearLiveImages();
+          } catch (_) {}
+
           setState(() {
+            _photoRemovedExplicitly = false;
             _networkProfileImageUrl = photoUrl;
           });
           if (userId.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('patient_profile_network_image_$userId', photoUrl);
+            await prefs.remove('patient_profile_removed_$userId');
           }
           await _updateSessionImagePath(photoUrl);
         }
@@ -220,14 +281,87 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         setState(() {
           _isUploadingPhoto = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated successfully!'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _showSuccessSnackBar(context, 'Profile photo updated successfully!');
       }
     }
+  }
+
+  void _showSuccessSnackBar(BuildContext ctx, String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(ctx).hideCurrentSnackBar();
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white24,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF10B981), // Emerald Green
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(BuildContext ctx, String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(ctx).hideCurrentSnackBar();
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white24,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFEF4444), // Alert Red
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   void _openPhotoPickerSheet() {
@@ -236,6 +370,17 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final primaryColor = theme.primaryColor;
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
+    String currentPhotoUrl = '';
+    if (_localProfileImage != null) {
+      currentPhotoUrl = _localProfileImage!.path;
+    } else if (!_photoRemovedExplicitly) {
+      if (_networkProfileImageUrl != null && _networkProfileImageUrl!.isNotEmpty) {
+        currentPhotoUrl = _networkProfileImageUrl!;
+      } else {
+        currentPhotoUrl = (currentUser?.data?.imagePath ?? '').trim();
+      }
+    }
+    final bool canRemove = currentPhotoUrl.isNotEmpty;
 
     showModalBottomSheet(
       context: context,
@@ -326,7 +471,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
               ],
             ),
-            if (_localProfileImage != null || (_networkProfileImageUrl != null && _networkProfileImageUrl!.isNotEmpty)) ...[
+            if (canRemove) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
@@ -343,15 +488,69 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   onPressed: () async {
                     Navigator.pop(ctx);
                     setState(() {
+                      _photoRemovedExplicitly = true;
                       _localProfileImage = null;
-                      _networkProfileImageUrl = null;
+                      _networkProfileImageUrl = '';
                     });
+
+                    PaintingBinding.instance.imageCache.clear();
+                    PaintingBinding.instance.imageCache.clearLiveImages();
+
                     if (userId.isNotEmpty) {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.remove('patient_profile_image_$userId');
                       await prefs.remove('patient_profile_network_image_$userId');
+                      await prefs.setBool('patient_profile_removed_$userId', true);
                     }
+
                     await _updateSessionImagePath('');
+
+                    // Send removal request to backend
+                    try {
+                      final token = currentUser?.data?.accessToken ?? '';
+                      final platFormData = GlobalSession.instance.platformNotifier.value ?? GlobalSession.instance.cachedPlatformInfo;
+                      String deviceId = platFormData?.deviceId ?? '';
+                      if (deviceId.isEmpty || deviceId == 'unknown_id') {
+                        deviceId = (userId.trim().isNotEmpty) ? "dev_${userId.trim()}" : 'fallback_production_id';
+                      }
+
+                      await sl<ApiClient>().account(showSuccessSnack: false).post(
+                        URLs.providerProfileUpdateUrl,
+                        data: {
+                          'userId': userId,
+                          'patientId': userId,
+                          'doctorId': userId,
+                          'deviceId': deviceId,
+                          'imagePath': '',
+                          'profileImageUrl': '',
+                        },
+                        options: Options(
+                          headers: {
+                            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+                            'x-user-id': userId,
+                            'x-device-id': deviceId,
+                            'Content-Type': 'application/json',
+                          },
+                        ),
+                      );
+                    } catch (e) {
+                      debugPrint("Backend photo removal error: $e");
+                    }
+
+                    if (mounted && context.mounted) {
+                      _showSuccessSnackBar(context, 'Profile photo removed successfully!');
+                      try {
+                        final currentOrgId = currentUser?.data?.latestOrgId ?? 0;
+                        final currentHospId = currentUser?.data?.latestHospitalId ?? 0;
+                        context.read<PatientOverViewBloc>().add(
+                          LoadPatientData(
+                            userId,
+                            orgId: currentOrgId.toString(),
+                            hospitalId: currentHospId.toString(),
+                          ),
+                        );
+                      } catch (_) {}
+                    }
                   },
                 ),
               ),
@@ -533,32 +732,28 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     }),
                   );
 
-                  if (mounted) {
+                  if (ctx.mounted) {
                     Navigator.pop(ctx);
-                    await sl<SecureStorageService>().clearAllSecureData();
-                    await sl<SharedPrefsService>().clearAll();
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.signIn,
-                        (route) => false,
-                      );
-                      Utils.showSnackBar(
-                        message: 'Your account was deactivated. Contact administrator.',
-                        status: false,
-                      );
-                    }
+                  }
+                  await sl<SecureStorageService>().clearAllSecureData();
+                  await sl<SharedPrefsService>().clearAll();
+                  if (mounted && context.mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRoutes.signIn,
+                      (route) => false,
+                    );
+                    Utils.showSnackBar(
+                      message: 'Your account was deactivated. Contact administrator.',
+                      status: false,
+                    );
                   }
                 } catch (e) {
                   setDialogState(() => isDeleting = false);
-                  if (mounted) {
+                  if (ctx.mounted) {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
+                  }
+                  if (mounted && context.mounted) {
+                    _showErrorSnackBar(context, 'Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}');
                   }
                 }
               },
@@ -591,7 +786,69 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
-  void _openEditProfileDialog(BuildContext context) {
+  DateTime? _parseFlexibleDate(String? raw) {
+    if (raw == null) return null;
+    final clean = raw.trim();
+    if (clean.isEmpty || clean == '0' || clean.toLowerCase() == 'none' || clean.toLowerCase() == 'null') {
+      return null;
+    }
+
+    // Try standard ISO-8601 (e.g. 1995-09-24 or 1995-09-24T00:00:00.000Z)
+    try {
+      final dt = DateTime.parse(clean);
+      if (dt.year > 1900 && dt.year < 2100) return dt;
+    } catch (_) {}
+
+    // Regex check for DD-MM-YYYY or DD/MM/YYYY
+    final dmyMatch = RegExp(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$').firstMatch(clean);
+    if (dmyMatch != null) {
+      final d = int.tryParse(dmyMatch.group(1)!) ?? 1;
+      final m = int.tryParse(dmyMatch.group(2)!) ?? 1;
+      final y = int.tryParse(dmyMatch.group(3)!) ?? 1990;
+      try {
+        return DateTime(y, m, d);
+      } catch (_) {}
+    }
+
+    // Regex check for YYYY-MM-DD or YYYY/MM/DD
+    final ymdMatch = RegExp(r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$').firstMatch(clean);
+    if (ymdMatch != null) {
+      final y = int.tryParse(ymdMatch.group(1)!) ?? 1990;
+      final m = int.tryParse(ymdMatch.group(2)!) ?? 1;
+      final d = int.tryParse(ymdMatch.group(3)!) ?? 1;
+      try {
+        return DateTime(y, m, d);
+      } catch (_) {}
+    }
+
+    final formats = [
+      'dd-MM-yyyy',
+      'yyyy-MM-dd',
+      'dd/MM/yyyy',
+      'yyyy/MM/dd',
+      'dd MMM yyyy',
+      'MMM dd, yyyy',
+      'd MMM yyyy',
+      'MMMM d, yyyy',
+    ];
+    for (final fmt in formats) {
+      try {
+        return DateFormat(fmt).parse(clean);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  String _formatDisplayDob(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return '-';
+    final parsed = _parseFlexibleDate(raw);
+    if (parsed != null) {
+      return DateFormat('dd MMM yyyy').format(parsed);
+    }
+    return raw.trim();
+  }
+
+  void _openEditProfileDialog(BuildContext context, [String? currentBloodGroup]) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
@@ -611,76 +868,209 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final emailController = TextEditingController(text: existingEmail);
 
     final existingDob = (currentUser?.data?.dob ?? activeProfile?.dob ?? '').trim();
-    final dobController = TextEditingController(text: existingDob);
+    final parsedExistingDob = _parseFlexibleDate(existingDob);
+    final initialDobText = parsedExistingDob != null
+        ? DateFormat('yyyy-MM-dd').format(parsedExistingDob)
+        : '';
+    final dobController = TextEditingController(text: initialDobText);
 
     final existingGender = (currentUser?.data?.gender ?? activeProfile?.gender ?? '').trim();
     final genders = ['Male', 'Female', 'Other'];
-    String selectedGender = genders.contains(existingGender) ? existingGender : '';
+    String selectedGender = '';
+    for (final g in genders) {
+      if (g.toLowerCase() == existingGender.toLowerCase()) {
+        selectedGender = g;
+        break;
+      }
+    }
 
-    final existingBloodGroup = ''; // bloodGroup comes from medical overview, not login entity
+    // Resolve existing blood group from argument, cached variable, or current overview state
+    String existingBloodGroup = (currentBloodGroup ?? _cachedBloodGroup ?? '').trim();
+    if (existingBloodGroup.isEmpty || existingBloodGroup.toLowerCase() == 'none' || existingBloodGroup.toLowerCase() == 'null') {
+      try {
+        final overViewState = context.read<PatientOverViewBloc>().state;
+        if (overViewState is LoadPatientDataState) {
+          final bg = overViewState.patientOverViewEntity.data?.medicalInformation?.bloodGroup?.trim();
+          if (bg != null && bg.isNotEmpty && bg.toLowerCase() != 'none' && bg.toLowerCase() != 'null') {
+            existingBloodGroup = bg;
+          }
+        }
+      } catch (_) {}
+    }
+
     final bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-    String selectedBloodGroup = bloodGroups.contains(existingBloodGroup) ? existingBloodGroup : '';
+    String selectedBloodGroup = '';
+    if (existingBloodGroup.isNotEmpty) {
+      final raw = existingBloodGroup.replaceAll(' ', '').toUpperCase();
+      for (final bg in bloodGroups) {
+        if (bg.toUpperCase() == raw ||
+            '${bg}VE'.toUpperCase() == raw ||
+            (raw.startsWith(bg) && (raw.contains('POS') || raw.contains('NEG')))) {
+          selectedBloodGroup = bg;
+          break;
+        }
+      }
+      if (selectedBloodGroup.isEmpty && existingBloodGroup.toLowerCase() != 'none' && existingBloodGroup.toLowerCase() != 'null') {
+        bloodGroups.add(existingBloodGroup);
+        selectedBloodGroup = existingBloodGroup;
+      }
+    }
 
     bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+        builder: (ctx, setModalState) {
+          Future<void> pickDateFromCalendar() async {
+            FocusScope.of(ctx).unfocus();
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            final minDate = DateTime(1920, 1, 1);
+            DateTime initialDate = _parseFlexibleDate(dobController.text.trim()) ??
+                parsedExistingDob ??
+                DateTime(1995, 1, 1);
+            final initDateOnly = DateTime(initialDate.year, initialDate.month, initialDate.day);
+            DateTime safeInitial = initDateOnly;
+            if (safeInitial.isAfter(today)) safeInitial = today;
+            if (safeInitial.isBefore(minDate)) safeInitial = minDate;
+
+            final picked = await showDatePicker(
+              context: ctx,
+              initialDate: safeInitial,
+              firstDate: minDate,
+              lastDate: today,
+              useRootNavigator: true,
+              builder: (dateCtx, child) {
+                return Theme(
+                  data: isDark
+                      ? ThemeData.dark().copyWith(
+                          colorScheme: ColorScheme.dark(
+                            primary: primaryColor,
+                            onPrimary: Colors.white,
+                            surface: const Color(0xFF1E293B),
+                            onSurface: Colors.white,
+                          ),
+                          dialogTheme: const DialogThemeData(
+                            backgroundColor: Color(0xFF1E293B),
+                          ),
+                        )
+                      : ThemeData.light().copyWith(
+                          colorScheme: ColorScheme.light(
+                            primary: primaryColor,
+                            onPrimary: Colors.white,
+                            surface: Colors.white,
+                            onSurface: const Color(0xFF0F172A),
+                          ),
+                          dialogTheme: const DialogThemeData(
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            );
+            if (picked != null) {
+              setModalState(() {
+                dobController.text = DateFormat('yyyy-MM-dd').format(picked);
+              });
+            }
+          }
+
+          final bottomInset = MediaQuery.of(ctx).viewInsets.bottom;
+          return AnimatedPadding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ],
+              ),
+              padding: const EdgeInsets.only(
+                top: 16,
+                left: 20,
+                right: 20,
+                bottom: 24,
+              ),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Edit Profile Details',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _openPhotoPickerSheet();
-                      },
-                      icon: const Icon(Icons.camera_alt_rounded, size: 16),
-                      label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Edit Profile Details',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () {
+                            FocusScope.of(ctx).unfocus();
+                            Navigator.pop(ctx);
+                            _openPhotoPickerSheet();
+                          },
+                          icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                          label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100,
+                            padding: const EdgeInsets.all(6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: Icon(Icons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
+                          tooltip: 'Close',
+                          onPressed: () {
+                            FocusScope.of(ctx).unfocus();
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                 // Full Name
                 Text('Full Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
@@ -699,43 +1089,65 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 const SizedBox(height: 14),
 
                 // Date of Birth
-                Text('Date of Birth', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Date of Birth',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: pickDateFromCalendar,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.calendar_month_rounded, size: 14, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Open Calendar',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 TextField(
                   controller: dobController,
-                  readOnly: true,
+                  keyboardType: TextInputType.datetime,
                   style: TextStyle(fontFamily: appPoppinFont, color: textColor),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    hintText: 'Select date of birth',
-                    suffixIcon: Icon(Icons.calendar_month_rounded, size: 20, color: primaryColor),
+                    hintText: 'YYYY-MM-DD or DD-MM-YYYY',
+                    hintStyle: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 13,
+                      color: isDark ? Colors.white38 : Colors.grey,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.calendar_month_rounded, size: 20, color: primaryColor),
+                      tooltip: 'Select date from calendar',
+                      onPressed: pickDateFromCalendar,
+                    ),
                   ),
-                  onTap: () async {
-                    DateTime initialDate = DateTime(1994, 1, 1);
-                    if (dobController.text.isNotEmpty) {
-                      try {
-                        initialDate = DateFormat('yyyy-MM-dd').parse(dobController.text);
-                      } catch (_) {
-                        try {
-                          initialDate = DateFormat('dd MMM yyyy').parse(dobController.text);
-                        } catch (_) {}
-                      }
-                    }
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: initialDate,
-                      firstDate: DateTime(1920),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setModalState(() {
-                        dobController.text = DateFormat('yyyy-MM-dd').format(picked);
-                      });
-                    }
-                  },
                 ),
                 const SizedBox(height: 14),
 
@@ -895,263 +1307,580 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 ),
                 const SizedBox(height: 24),
 
-                // Save Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                // Action Buttons: Cancel and Save
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          side: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () {
+                                FocusScope.of(ctx).unfocus();
+                                Navigator.pop(ctx);
+                              },
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : Colors.grey[700],
+                          ),
+                        ),
+                      ),
                     ),
-                    onPressed: isSaving ? null : () async {
-                      setModalState(() => isSaving = true);
-                      try {
-                        final userId = currentUser?.data?.id ?? '';
-                        final token = currentUser?.data?.accessToken ?? '';
-                        final nameParts = nameController.text.trim().split(' ');
-                        final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-                        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isSaving ? null : () async {
+                          setModalState(() => isSaving = true);
+                          try {
+                            final userId = currentUser?.data?.id ?? '';
+                            final token = currentUser?.data?.accessToken ?? '';
+                            final nameParts = nameController.text.trim().split(' ');
+                            final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+                            final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-                        final body = <String, dynamic>{
-                          'userId': userId,
-                          'firstName': firstName,
-                          'lastName': lastName,
-                        };
-                        if (dobController.text.trim().isNotEmpty) body['dob'] = dobController.text.trim();
-                        if (selectedGender.isNotEmpty) body['gender'] = selectedGender;
-                        if (selectedBloodGroup.isNotEmpty) body['bloodGroup'] = selectedBloodGroup;
-                        if (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) {
-                          body['phoneNumber'] = phoneController.text.trim();
-                        }
-                        if (!isEmailAvailable && emailController.text.trim().isNotEmpty) {
-                          body['email'] = emailController.text.trim();
-                        }
+                            // Resolve deviceId to satisfy authMiddleware and backend device telemetry
+                            final platFormData = GlobalSession.instance.platformNotifier.value ?? GlobalSession.instance.cachedPlatformInfo;
+                            String deviceId = platFormData?.deviceId ?? '';
+                            if (deviceId.isEmpty || deviceId == 'unknown_id') {
+                              deviceId = (userId.trim().isNotEmpty)
+                                  ? "dev_${userId.trim()}"
+                                  : 'fallback_production_id';
+                            }
 
-                        String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.providerProfileUpdateUrl}";
-                        if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-                          targetUrl = "http://$targetUrl";
-                        }
+                            final rawDobText = dobController.text.trim();
+                            final parsedDob = _parseFlexibleDate(rawDobText);
+                            if (rawDobText.isNotEmpty && parsedDob == null) {
+                              setModalState(() => isSaving = false);
+                              _showErrorSnackBar(ctx, 'Please enter a valid date of birth (e.g. YYYY-MM-DD or DD-MM-YYYY)');
+                              return;
+                            }
+                            final body = <String, dynamic>{
+                              'userId': userId,
+                              'patientId': userId,
+                              'doctorId': userId,
+                              'deviceId': deviceId,
+                              'firstName': firstName,
+                              'lastName': lastName,
+                            };
+                            if (parsedDob != null) {
+                              final isoDate = DateFormat('yyyy-MM-dd').format(parsedDob);
+                              body['dob'] = isoDate;
+                              body['dateOfBirth'] = isoDate;
+                            }
+                            if (selectedGender.isNotEmpty) body['gender'] = selectedGender;
+                            if (selectedBloodGroup.isNotEmpty) body['bloodGroup'] = selectedBloodGroup;
+                            if (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) {
+                              body['phoneNumber'] = phoneController.text.trim();
+                            }
+                            if (!isEmailAvailable && emailController.text.trim().isNotEmpty) {
+                              body['email'] = emailController.text.trim();
+                            }
+                            final hospId = currentUser?.data?.latestHospitalId;
+                            if (hospId != null && hospId > 0) body['hospitalId'] = hospId;
+                            final orgId = currentUser?.data?.latestOrgId;
+                            if (orgId != null && orgId > 0) body['orgId'] = orgId;
 
-                        final dio = Dio(BaseOptions(
-                          connectTimeout: const Duration(seconds: 15),
-                          receiveTimeout: const Duration(seconds: 15),
-                        ));
-                        await dio.post(
-                          targetUrl,
-                          data: body,
-                          options: Options(headers: {
-                            HttpHeaders.authorizationHeader: 'Bearer $token',
-                            'Content-Type': 'application/json',
-                          }),
-                        );
+                            // Use sl<ApiClient>().account which handles HTTPS base URL, timeouts, and transparent token refresh
+                            await sl<ApiClient>().account(showSuccessSnack: false).post(
+                              URLs.providerProfileUpdateUrl,
+                              data: body,
+                              options: Options(
+                                headers: {
+                                  if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+                                  'x-user-id': userId,
+                                  'x-device-id': deviceId,
+                                  'Content-Type': 'application/json',
+                                },
+                              ),
+                            );
 
-                        // Update GlobalSession locally
-                        final updatedProfiles = (currentUser?.data?.profiles ?? []).map((p) {
-                          return ProfileModel(
-                            id: p.id,
-                            firstName: firstName,
-                            lastName: lastName,
-                            name: '$firstName $lastName'.trim(),
-                            phoneNumber: p.phoneNumber,
-                            relation: p.relation,
-                            isPrimary: p.isPrimary,
-                            gender: selectedGender.isNotEmpty ? selectedGender : p.gender,
-                            dob: dobController.text.trim().isNotEmpty ? dobController.text.trim() : p.dob,
-                            accountType: p.accountType,
-                            imagePath: p.imagePath,
-                          );
-                        }).toList();
+                            final resolvedDob = parsedDob != null
+                                ? DateFormat('yyyy-MM-dd').format(parsedDob)
+                                : (currentUser?.data?.dob ?? activeProfile?.dob);
 
-                        final updatedData = DataModel(
-                          accessToken: currentUser?.data?.accessToken,
-                          refreshToken: currentUser?.data?.refreshToken,
-                          accessTokenExpiry: currentUser?.data?.accessTokenExpiry,
-                          refreshTokenExpiry: currentUser?.data?.refreshTokenExpiry,
-                          id: currentUser?.data?.id,
-                          isMobileVerified: currentUser?.data?.isMobileVerified,
-                          isEmailVerified: currentUser?.data?.isEmailVerified,
-                          roleCount: currentUser?.data?.roleCount,
-                          hospitalCount: currentUser?.data?.hospitalCount,
-                          organizationCount: currentUser?.data?.organizationCount,
-                          roles: (currentUser?.data?.roles ?? []).map((r) => RoleModel.fromEntity(r)).toList(),
-                          profiles: updatedProfiles,
-                          firstName: firstName,
-                          lastName: lastName,
-                          email: (!isEmailAvailable && emailController.text.trim().isNotEmpty) ? emailController.text.trim() : currentUser?.data?.email,
-                          phoneNumber: (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) ? phoneController.text.trim() : currentUser?.data?.phoneNumber,
-                          countryCode: currentUser?.data?.countryCode,
-                          gender: selectedGender.isNotEmpty ? selectedGender : currentUser?.data?.gender,
-                          dob: dobController.text.trim().isNotEmpty ? dobController.text.trim() : currentUser?.data?.dob,
-                          height: currentUser?.data?.height,
-                          weight: currentUser?.data?.weight,
-                          heightUnit: currentUser?.data?.heightUnit,
-                          weightUnit: currentUser?.data?.weightUnit,
-                          latestUserRole: currentUser?.data?.latestUserRole,
-                          latestHospitalId: currentUser?.data?.latestHospitalId,
-                          latestOrgId: currentUser?.data?.latestOrgId,
-                          latestRoleId: currentUser?.data?.latestRoleId,
-                          navigationId: currentUser?.data?.navigationId,
-                        );
+                            // Update GlobalSession locally
+                            final updatedProfiles = (currentUser?.data?.profiles ?? []).map((p) {
+                              return ProfileModel(
+                                id: p.id,
+                                firstName: firstName,
+                                lastName: lastName,
+                                name: '$firstName $lastName'.trim(),
+                                phoneNumber: p.phoneNumber,
+                                relation: p.relation,
+                                isPrimary: p.isPrimary,
+                                gender: selectedGender.isNotEmpty ? selectedGender : p.gender,
+                                dob: resolvedDob ?? p.dob,
+                                accountType: p.accountType,
+                                imagePath: p.imagePath,
+                              );
+                            }).toList();
 
-                        final updatedLogin = LoginModel(
-                          status: currentUser?.status,
-                          message: currentUser?.message,
-                          data: updatedData,
-                        );
-                        GlobalSession.instance.userNotifier.value = updatedLogin;
+                            final updatedData = DataModel(
+                              accessToken: currentUser?.data?.accessToken,
+                              refreshToken: currentUser?.data?.refreshToken,
+                              accessTokenExpiry: currentUser?.data?.accessTokenExpiry,
+                              refreshTokenExpiry: currentUser?.data?.refreshTokenExpiry,
+                              id: currentUser?.data?.id,
+                              isMobileVerified: currentUser?.data?.isMobileVerified,
+                              isEmailVerified: currentUser?.data?.isEmailVerified,
+                              roleCount: currentUser?.data?.roleCount,
+                              hospitalCount: currentUser?.data?.hospitalCount,
+                              organizationCount: currentUser?.data?.organizationCount,
+                              roles: (currentUser?.data?.roles ?? []).map((r) => RoleModel.fromEntity(r)).toList(),
+                              profiles: updatedProfiles,
+                              firstName: firstName,
+                              lastName: lastName,
+                              email: (!isEmailAvailable && emailController.text.trim().isNotEmpty) ? emailController.text.trim() : currentUser?.data?.email,
+                              phoneNumber: (!isPhoneAvailable && phoneController.text.trim().isNotEmpty) ? phoneController.text.trim() : currentUser?.data?.phoneNumber,
+                              countryCode: currentUser?.data?.countryCode,
+                              gender: selectedGender.isNotEmpty ? selectedGender : currentUser?.data?.gender,
+                              dob: resolvedDob ?? currentUser?.data?.dob,
+                              height: currentUser?.data?.height,
+                              weight: currentUser?.data?.weight,
+                              heightUnit: currentUser?.data?.heightUnit,
+                              weightUnit: currentUser?.data?.weightUnit,
+                              latestUserRole: currentUser?.data?.latestUserRole,
+                              latestHospitalId: currentUser?.data?.latestHospitalId,
+                              latestOrgId: currentUser?.data?.latestOrgId,
+                              latestRoleId: currentUser?.data?.latestRoleId,
+                              navigationId: currentUser?.data?.navigationId,
+                            );
 
-                        if (mounted) {
-                          Navigator.pop(ctx);
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profile updated successfully!'),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        setModalState(() => isSaving = false);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to update profile: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    child: isSaving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 15)),
-                  ),
+                            final updatedLogin = LoginModel(
+                              status: currentUser?.status,
+                              message: currentUser?.message,
+                              data: updatedData,
+                            );
+                            GlobalSession.instance.userNotifier.value = updatedLogin;
+
+                            if (selectedBloodGroup.isNotEmpty) {
+                              _cachedBloodGroup = selectedBloodGroup;
+                            }
+
+                            // Dismiss keyboard and close modal smoothly first
+                            if (ctx.mounted) {
+                              FocusScope.of(ctx).unfocus();
+                              Navigator.pop(ctx);
+                            }
+
+                            // Trigger UI update and background reload after smooth dismissal
+                            if (mounted && context.mounted) {
+                              setState(() {});
+                              _showSuccessSnackBar(context, 'Profile updated successfully!');
+
+                              try {
+                                final currentUserId = currentUser?.data?.id ?? '';
+                                final currentOrgId = currentUser?.data?.latestOrgId ?? 0;
+                                final currentHospId = currentUser?.data?.latestHospitalId ?? 0;
+                                if (currentUserId.isNotEmpty && mounted && context.mounted) {
+                                  context.read<PatientOverViewBloc>().add(
+                                    LoadPatientData(
+                                      currentUserId,
+                                      orgId: currentOrgId.toString(),
+                                      hospitalId: currentHospId.toString(),
+                                    ),
+                                  );
+                                }
+                              } catch (_) {}
+                            }
+                          } catch (e) {
+                            setModalState(() => isSaving = false);
+                            if (mounted && context.mounted) {
+                              String errorMsg = 'Failed to update profile';
+                              if (e is DioException) {
+                                final respData = e.response?.data;
+                                if (respData is Map && respData['message'] != null) {
+                                  errorMsg = respData['message'].toString();
+                                } else if (e.message != null && e.message!.isNotEmpty) {
+                                  errorMsg = e.message!;
+                                }
+                              } else {
+                                errorMsg = e.toString();
+                              }
+                              if (errorMsg.length > 90) {
+                                errorMsg = '${errorMsg.substring(0, 90)}...';
+                              }
+                              _showErrorSnackBar(context, errorMsg);
+                            }
+                          }
+                        },
+                        child: isSaving
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 14)),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
+      );
+    },
+  ),
+);
   }
 
   void _openEditEmergencyContactDialog(BuildContext context, EmergencyContactEntity? emergency) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
-    final nameController = TextEditingController(text: emergency?.name ?? '');
-    final relationController = TextEditingController(text: 'Primary Contact');
-    final phoneController = TextEditingController(text: emergency?.phone ?? '');
+    final initialName = _cleanValue(_cachedEmergencyName ?? emergency?.name, '');
+    final initialPhone = _cleanValue(_cachedEmergencyPhone ?? emergency?.phone, '');
+    final initialRelation = _cleanValue(_cachedEmergencyRelation ?? emergency?.relationship, '');
+
+    final nameController = TextEditingController(text: initialName);
+    final phoneController = TextEditingController(text: initialPhone);
+
+    final relationshipOptions = [
+      'Father',
+      'Mother',
+      'Spouse',
+      'Brother',
+      'Sister',
+      'Son',
+      'Daughter',
+      'Guardian',
+      'Friend',
+      'Other',
+    ];
+
+    String selectedRelation = '';
+    String otherRelationText = '';
+    if (initialRelation.isNotEmpty) {
+      for (final opt in relationshipOptions) {
+        if (opt.toLowerCase() == initialRelation.toLowerCase()) {
+          selectedRelation = opt;
+          break;
+        }
+      }
+      if (selectedRelation.isEmpty) {
+        selectedRelation = 'Other';
+        otherRelationText = initialRelation;
+      }
+    }
+
+    final otherRelationController = TextEditingController(text: otherRelationText);
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: EdgeInsets.only(
-          top: 20,
-          left: 20,
-          right: 20,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
+      barrierColor: Colors.black54,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final bottomInset = MediaQuery.of(ctx).viewInsets.bottom;
+          return AnimatedPadding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Edit Emergency Contact',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
+              padding: const EdgeInsets.only(
+                top: 16,
+                left: 20,
+                right: 20,
+                bottom: 24,
               ),
-              const SizedBox(height: 16),
-              Text('Contact Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. Spouse, Parent, Guardian',
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text('Relationship', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: relationController,
-                decoration: InputDecoration(
-                  hintText: 'e.g. Primary Contact, Brother, Sister',
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text('Emergency Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  hintText: '+91 91234 56789',
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Emergency contact updated successfully!'),
-                        behavior: SnackBarBehavior.floating,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    );
-                  },
-                  child: const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 15)),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Edit Emergency Contact',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          style: IconButton.styleFrom(
+                            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade100,
+                            padding: const EdgeInsets.all(6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: Icon(Icons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
+                          tooltip: 'Close',
+                          onPressed: () {
+                            FocusScope.of(ctx).unfocus();
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Contact Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: nameController,
+                      style: TextStyle(fontFamily: appPoppinFont, color: textColor),
+                      decoration: InputDecoration(
+                        hintText: 'Enter contact name',
+                        hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text('Relationship', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: selectedRelation.isEmpty ? null : selectedRelation,
+                          hint: Text(
+                            'Select relationship',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 14,
+                              color: isDark ? Colors.white38 : Colors.grey,
+                            ),
+                          ),
+                          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
+                          items: relationshipOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setModalState(() {
+                                selectedRelation = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    if (selectedRelation == 'Other') ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: otherRelationController,
+                        style: TextStyle(fontFamily: appPoppinFont, color: textColor),
+                        decoration: InputDecoration(
+                          hintText: 'Enter relationship (e.g. Uncle, Colleague, Neighbor)',
+                          hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Text('Emergency Phone Number', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: TextStyle(fontFamily: appPoppinFont, color: textColor),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. +91 91234 56789',
+                        hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: BorderSide(color: isDark ? Colors.white24 : Colors.grey[300]!),
+                            ),
+                            onPressed: isSaving
+                                ? null
+                                : () {
+                                    FocusScope.of(ctx).unfocus();
+                                    Navigator.pop(ctx);
+                                  },
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    setModalState(() => isSaving = true);
+                                    try {
+                                      final finalName = nameController.text.trim();
+                                      final finalRelation = selectedRelation == 'Other'
+                                          ? otherRelationController.text.trim()
+                                          : selectedRelation;
+                                      final finalPhone = phoneController.text.trim();
+
+                                      final currentUser = GlobalSession.instance.userNotifier.value;
+                                      final userId = currentUser?.data?.id ?? '';
+                                      final token = currentUser?.data?.accessToken ?? '';
+
+                                      // 1. Cache values locally immediately
+                                      _cachedEmergencyName = finalName;
+                                      _cachedEmergencyRelation = finalRelation;
+                                      _cachedEmergencyPhone = finalPhone;
+
+                                      if (userId.isNotEmpty) {
+                                        final prefs = await SharedPreferences.getInstance();
+                                        await prefs.setString('patient_emergency_name_$userId', finalName);
+                                        await prefs.setString('patient_emergency_relation_$userId', finalRelation);
+                                        await prefs.setString('patient_emergency_phone_$userId', finalPhone);
+                                      }
+
+                                      // 2. Call backend updatePatientProfile API (/api/users/patient/profile)
+                                      try {
+                                        final platFormData = GlobalSession.instance.platformNotifier.value ?? GlobalSession.instance.cachedPlatformInfo;
+                                        String deviceId = platFormData?.deviceId ?? '';
+                                        if (deviceId.isEmpty || deviceId == 'unknown_id') {
+                                          deviceId = (userId.trim().isNotEmpty) ? "dev_${userId.trim()}" : 'fallback_production_id';
+                                        }
+
+                                        await sl<ApiClient>().account(showSuccessSnack: false).post(
+                                          '/api/users/patient/profile',
+                                          data: {
+                                            'personalInfo': {
+                                              'emergencyContact': {
+                                                'name': finalName,
+                                                'relationship': finalRelation,
+                                                'phone': finalPhone,
+                                              },
+                                            },
+                                          },
+                                          options: Options(
+                                            headers: {
+                                              if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+                                              'x-user-id': userId,
+                                              'x-device-id': deviceId,
+                                              'Content-Type': 'application/json',
+                                            },
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        debugPrint("Backend emergency contact update error: $e");
+                                      }
+
+                                      // 3. Smooth dismissal
+                                      if (ctx.mounted) {
+                                        FocusScope.of(ctx).unfocus();
+                                        Navigator.pop(ctx);
+                                      }
+
+                                      // 4. Update UI & reload overview
+                                      if (mounted && context.mounted) {
+                                        setState(() {});
+                                        _showSuccessSnackBar(context, 'Emergency contact updated successfully!');
+                                        try {
+                                          final currentOrgId = currentUser?.data?.latestOrgId ?? 0;
+                                          final currentHospId = currentUser?.data?.latestHospitalId ?? 0;
+                                          context.read<PatientOverViewBloc>().add(
+                                            LoadPatientData(
+                                              userId,
+                                              orgId: currentOrgId.toString(),
+                                              hospitalId: currentHospId.toString(),
+                                            ),
+                                          );
+                                        } catch (_) {}
+                                      }
+                                    } catch (e) {
+                                      setModalState(() => isSaving = false);
+                                      if (mounted && context.mounted) {
+                                        _showErrorSnackBar(context, 'Failed to update emergency contact: $e');
+                                      }
+                                    }
+                                  },
+                            child: isSaving
+                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Text('Save Changes', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 14)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1245,6 +1974,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               final gender = currentUser?.data?.gender ?? activeProfile?.gender ?? '';
               final dob = currentUser?.data?.dob ?? activeProfile?.dob ?? '';
               final bloodGroup = medical?.bloodGroup ?? '';
+              if (bloodGroup.isNotEmpty && bloodGroup.toLowerCase() != 'none' && bloodGroup.toLowerCase() != 'null') {
+                _cachedBloodGroup = bloodGroup;
+              }
               final hospital = data?.hospital?.name ?? data?.nextAppointment?.hospitalName ?? '';
               final hospitalLogo = data?.hospital?.logo ??
                   data?.hospital?.imageUrl ??
@@ -1253,6 +1985,10 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     data?.hospital?.id ?? currentUser?.data?.latestHospitalId ?? 19,
                     hospital,
                   );
+
+              final displayEmergencyName = _cleanValue(_cachedEmergencyName ?? emergency?.name, '-');
+              final displayEmergencyRelation = _cleanValue(_cachedEmergencyRelation ?? emergency?.relationship, '-');
+              final displayEmergencyPhone = _cleanValue(_cachedEmergencyPhone ?? emergency?.phone, '-');
 
               return RefreshIndicator(
                 color: primaryColor,
@@ -1282,6 +2018,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       isDark: isDark,
                       primaryColor: primaryColor,
                       isTab: isTab,
+                      bloodGroup: bloodGroup,
                     ),
                     const SizedBox(height: 16),
 
@@ -1291,7 +2028,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       icon: Icons.person_rounded,
                       iconColor: primaryColor,
                       isTab: isTab,
-                      onEdit: () => _openEditProfileDialog(context),
+                      onEdit: () => _openEditProfileDialog(context, bloodGroup),
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Full Name",
@@ -1308,7 +2045,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         ),
                         DoctorProfileFieldItem(
                           label: "Date of Birth",
-                          value: dob.isNotEmpty ? dob : '-',
+                          value: _formatDisplayDob(dob),
                           icon: Icons.cake_outlined,
                         ),
                         DoctorProfileFieldItem(
@@ -1318,9 +2055,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         ),
                         DoctorProfileFieldItem(
                           label: "Blood Group",
-                          value: bloodGroup.isNotEmpty ? bloodGroup : '-',
+                          value: bloodGroup.isNotEmpty
+                              ? bloodGroup
+                              : (_cachedBloodGroup?.isNotEmpty == true ? _cachedBloodGroup! : '-'),
                           icon: Icons.bloodtype_outlined,
-                          customValueColor: bloodGroup.isNotEmpty ? Colors.redAccent : null,
+                          customValueColor: (bloodGroup.isNotEmpty || _cachedBloodGroup?.isNotEmpty == true)
+                              ? Colors.redAccent
+                              : null,
                         ),
                         DoctorProfileFieldItem(
                           label: "Phone Number",
@@ -1348,19 +2089,19 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Contact Name",
-                          value: emergency?.name ?? "Family Member",
+                          value: displayEmergencyName,
                           icon: Icons.person_outline_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Relationship",
-                          value: "Primary Contact",
+                          value: displayEmergencyRelation,
                           icon: Icons.family_restroom_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Phone Number",
-                          value: emergency?.phone ?? "+91 91234 56789",
+                          value: displayEmergencyPhone,
                           icon: Icons.phone_forwarded_rounded,
-                          isCopyable: true,
+                          isCopyable: displayEmergencyPhone != '-',
                         ),
                       ],
                     ),
@@ -1793,6 +2534,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     required bool isDark,
     required Color primaryColor,
     required bool isTab,
+    String? bloodGroup,
   }) {
     return Container(
       key: PatientTourController().passportProfileCardKey,
@@ -1832,11 +2574,17 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
                 final activeProfile = profiles.isNotEmpty ? profiles.first : null;
 
-                final bool hasLocalImage = _localProfileImage != null && _localProfileImage!.existsSync();
-                final String activeSessionImage = (activeProfile?.imagePath ?? '').trim();
-                final String resolvedNetworkUrl = (_networkProfileImageUrl != null && _networkProfileImageUrl!.trim().isNotEmpty)
-                    ? _networkProfileImageUrl!.trim()
-                    : activeSessionImage;
+                final bool hasLocalImage = !_photoRemovedExplicitly && _localProfileImage != null && _localProfileImage!.existsSync();
+                final String activeSessionImage = !_photoRemovedExplicitly
+                    ? (currentUser?.data?.imagePath?.isNotEmpty == true
+                        ? currentUser!.data!.imagePath!.trim()
+                        : (activeProfile?.imagePath ?? '').trim())
+                    : '';
+                final String resolvedNetworkUrl = !_photoRemovedExplicitly
+                    ? ((_networkProfileImageUrl != null)
+                        ? _networkProfileImageUrl!.trim()
+                        : activeSessionImage)
+                    : '';
                 final bool hasNetworkImage = resolvedNetworkUrl.isNotEmpty;
                 final bool hasPhoto = hasLocalImage || hasNetworkImage;
 
@@ -2105,7 +2853,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     foregroundColor: primaryColor,
                   ),
-                  onPressed: () => _openEditProfileDialog(context),
+                  onPressed: () => _openEditProfileDialog(context, bloodGroup),
                   icon: const Icon(Icons.edit_outlined, size: 14),
                   label: const Text('Edit Profile', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
@@ -2145,6 +2893,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     }
 
     return CachedNetworkImage(
+      key: ValueKey(fullUrl),
       imageUrl: fullUrl,
       width: isTab ? 96 : 84,
       height: isTab ? 96 : 84,

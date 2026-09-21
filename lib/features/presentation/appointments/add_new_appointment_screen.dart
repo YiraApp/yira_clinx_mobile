@@ -199,6 +199,7 @@ class TreatmentPlanOption {
 class AddNewAppointmentScreen extends StatefulWidget {
   final String? initialPatientName;
   final String? initialPatientPhone;
+  final String? initialPatientId;
   final String? initialDoctorId;
   final String? initialDoctorName;
   final dynamic initialHospitalId;
@@ -210,6 +211,7 @@ class AddNewAppointmentScreen extends StatefulWidget {
     super.key,
     this.initialPatientName,
     this.initialPatientPhone,
+    this.initialPatientId,
     this.initialDoctorId,
     this.initialDoctorName,
     this.initialHospitalId,
@@ -533,7 +535,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       return false;
     }
 
+    // Match by id
     if (a.id.isNotEmpty && b.id.isNotEmpty && a.id == b.id) {
+      return true;
+    }
+    // Match by userId
+    if (a.userId.isNotEmpty && b.userId.isNotEmpty && a.userId == b.userId) {
+      return true;
+    }
+    // Cross-match id with userId
+    if (a.id.isNotEmpty && b.userId.isNotEmpty && a.id == b.userId) {
+      return true;
+    }
+    if (a.userId.isNotEmpty && b.id.isNotEmpty && a.userId == b.id) {
       return true;
     }
 
@@ -778,9 +792,33 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               _matchingAccountsList = accounts;
               if (accounts.isNotEmpty) {
                 if (_selectedPatient == null || !_matchingAccountsList.any((a) => _isSamePatient(a, _selectedPatient!))) {
-                  _selectedPatient = accounts.first;
-                  _patientSearchController.text = accounts.first.name;
-                  _selectedGender = accounts.first.gender.isNotEmpty ? accounts.first.gender : "Male";
+                  // Try to match by initialPatientId first (for dependent patient navigation)
+                  PatientOption? bestMatch;
+                  final preferredId = widget.initialPatientId;
+                  final preferredName = widget.initialPatientName;
+                  if (preferredId != null && preferredId.isNotEmpty) {
+                    bestMatch = accounts.cast<PatientOption?>().firstWhere(
+                      (a) => a!.id == preferredId || a.userId == preferredId,
+                      orElse: () => null,
+                    );
+                  }
+                  // Fallback: match by name (including phonetic variations like Raghu/Ragu)
+                  if (bestMatch == null && preferredName != null && preferredName.isNotEmpty) {
+                    final target = preferredName.toLowerCase().trim();
+                    bestMatch = accounts.cast<PatientOption?>().firstWhere(
+                      (a) => a!.name.toLowerCase().trim() == target,
+                      orElse: () => null,
+                    );
+                    // Loose substring match
+                    bestMatch ??= accounts.cast<PatientOption?>().firstWhere(
+                      (a) => a!.name.toLowerCase().contains(target) || target.contains(a.name.toLowerCase().trim()),
+                      orElse: () => null,
+                    );
+                  }
+                  bestMatch ??= accounts.first;
+                  _selectedPatient = bestMatch;
+                  _patientSearchController.text = bestMatch.name;
+                  _selectedGender = bestMatch.gender.isNotEmpty ? bestMatch.gender : "Male";
                 }
               }
             });

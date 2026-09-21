@@ -22,18 +22,38 @@ class GetWorkSpaceDetailsImpl extends GetWorkSpaceDetailsRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';
 
+      final platFormData = GlobalSession.instance.platformNotifier.value ??
+          GlobalSession.instance.cachedPlatformInfo;
+      String deviceId = platFormData?.deviceId ?? '';
+      if (deviceId.isEmpty || deviceId == 'unknown_id') {
+        deviceId = (userId.trim().isNotEmpty)
+            ? 'dev_${userId.trim()}'
+            : 'device_${DateTime.now().millisecondsSinceEpoch}';
+      }
+
       final Map<String, dynamic> queryParameters = {
         "userId": userId.trim(),
         "roleId": roleId.trim(),
+        "deviceId": deviceId,
       };
+
+      final Map<String, dynamic> headers = {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        'x-user-id': userId.trim(),
+        'x-device-id': deviceId,
+      };
+      if (token.isNotEmpty) {
+        headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+      }
+
       final response = await _apiClient
-          .account(showSuccessSnack: true)
+          .account(showSuccessSnack: false)
           .get(
             URLs.workspaceDetailsUrl,
             queryParameters: queryParameters,
-
             options: Options(
-              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+              headers: headers,
+              extra: {'suppressSessionExpired': true},
             ),
           );
       if (response.data == null || response.data is! Map<String, dynamic>) {

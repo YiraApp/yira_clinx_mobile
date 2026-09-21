@@ -59,7 +59,11 @@ class UpdateFcmRepoImpl extends UpdateFcmRepository {
         URLs.updateFcmTokenUrl,
         data: requestBody,
         options: Options(
-          extra: {'showSuccessSnack': false},
+          extra: {
+            'showSuccessSnack': false,
+            'suppressErrorSnack': true,
+            'suppressSessionExpired': true,
+          },
           headers: requestHeaders,
         ),
       );

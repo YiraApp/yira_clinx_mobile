@@ -4,9 +4,11 @@ import 'package:yiraclinics/core/local/flutter_secure_storage.dart';
 import '../../di/dependency_injection.dart';
 import '../../features/data/models/login/login_model.dart';
 import '../../features/domain/entities/login/login_entity.dart';
+import '../constants/clinx_storage_keys.dart';
 import '../package/domain/plat_form_info_entity.dart';
 import '../services/notification_services/notification_services.dart';
 import '../use_cases/get_plat_form_info_usecase.dart';
+import 'shared_preferences.dart';
 
 class GlobalSession {
   GlobalSession._internal();
@@ -24,6 +26,12 @@ class GlobalSession {
   Future<void> initialize(SecureStorageService secureStorageService) async {
     _secureStorage = secureStorageService;
     try {
+      final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
+          (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
+      if (!isLoggedIn) {
+        userNotifier.value = null;
+        return;
+      }
       final String? userJson = await _secureStorage.readSecureValue<String>(SecureCacheKey.userData);
       if (userJson != null) {
         final Map<String, dynamic> userMap = jsonDecode(userJson);

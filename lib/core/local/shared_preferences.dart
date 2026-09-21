@@ -26,6 +26,15 @@ class SharedPrefsService {
       return null;
     }
   }
+  Future<bool> remove(String key) async {
+    try {
+      return await _prefs.remove(key);
+    } catch (e) {
+      print("SharedPrefsService Remove Error: $e");
+      return false;
+    }
+  }
+
   Future<bool> clearAll() async {
     try {
       return await _prefs.clear();

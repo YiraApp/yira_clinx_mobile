@@ -248,7 +248,9 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
 
     final currentState = event.resetToToday
         ? rawState.copyWith(targetDate: DateTime.now(), isSingleDay: true)
-        : rawState;
+        : (event.targetDate != null
+            ? rawState.copyWith(targetDate: event.targetDate, isSingleDay: true)
+            : rawState);
 
     emit(currentState.copyWith(isLoading: true, deploySuccess: false));
 
@@ -278,9 +280,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
 
       List<SlotEntity> slots = fetchedLegacySlots;
       List<TimeSlot> timeSlots = fetchedModernSlots;
-      List<BreakTimeEntity> breaks = fetchedBreaks.isNotEmpty
-          ? fetchedBreaks
-          : List<BreakTimeEntity>.from(currentState.breakTimes);
+      List<BreakTimeEntity> breaks = fetchedBreaks;
 
       // Auto-detect break gaps between fetched slots if breaks list is empty
       if (breaks.isEmpty && timeSlots.length > 1) {
@@ -303,20 +303,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         }
       }
 
-      // Always calculate slots on frontend if API returns empty schedule
-      if (slots.isEmpty) {
-        slots = _generateScheduleSlots(
-          durationMinutes: currentState.durationMinutes,
-          bufferType: currentState.bufferType,
-          fromTime: currentState.fromTime,
-          toTime: currentState.toTime,
-          breakTimes: breaks,
-          targetDate: currentState.targetDate,
-          isSingleDay: currentState.isSingleDay,
-        );
-        timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
-      }
-
+      // Only display slots that exist in the backend database — do NOT synthesize fake slots
       emit(currentState.copyWith(
         slots: slots,
         timeSlots: timeSlots,
@@ -325,20 +312,11 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         deploySuccess: false,
       ));
     } catch (e) {
-      debugPrint('SlotBloc: InitializeSlots fallback to frontend calculation: $e');
-      final slots = _generateScheduleSlots(
-        durationMinutes: currentState.durationMinutes,
-        bufferType: currentState.bufferType,
-        fromTime: currentState.fromTime,
-        toTime: currentState.toTime,
-        breakTimes: currentState.breakTimes,
-        targetDate: currentState.targetDate,
-        isSingleDay: currentState.isSingleDay,
-      );
-      final timeSlots = _mapSlotsToTimeSlots(slots, currentState.durationMinutes);
+      debugPrint('SlotBloc: InitializeSlots error: $e');
       emit(currentState.copyWith(
-        slots: slots,
-        timeSlots: timeSlots,
+        slots: const [],
+        timeSlots: const [],
+        breakTimes: const [],
         isLoading: false,
         deploySuccess: false,
       ));
@@ -552,6 +530,14 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         ? state as SlotDataState
         : SlotDataState.initial();
 
+    // If slots are currently empty, simply update targetDate without generating mock slots
+    if (currentState.slots.isEmpty) {
+      emit(currentState.copyWith(
+        targetDate: event.selectedDate,
+      ));
+      return;
+    }
+
     final newSlots = _generateScheduleSlots(
       durationMinutes: currentState.durationMinutes,
       bufferType: currentState.bufferType,
@@ -697,6 +683,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         timeSlots: updatedModern,
         isLoading: false,
       ));
+    } else {
+      debugPrint("SlotBloc: _onAddCustomSlot overlap detected for $start - $end, slot not added");
     }
   }
 

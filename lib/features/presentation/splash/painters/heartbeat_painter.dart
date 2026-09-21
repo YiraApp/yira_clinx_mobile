@@ -46,21 +46,20 @@ class HeartbeatPainter extends CustomPainter {
       path.lineTo(tipPoint.dx, tipPoint.dy);
     }
 
-    // Outer glow layer
+    // Outer soft glow layer (layered stroke, zero GPU blur pass)
     final glowPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.45)
+      ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.40)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0
+      ..strokeWidth = 4.2
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(path, glowPaint);
 
     // Core crisp line (Royal Blue)
     final linePaint = Paint()
       ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.95)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(path, linePaint);
@@ -68,9 +67,8 @@ class HeartbeatPainter extends CustomPainter {
     // Glowing photon tip at the leading edge
     if (revealProgress > 0.02 && revealProgress < 1.0) {
       final tipGlow = Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.85)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      canvas.drawCircle(tipPoint, 4.0, tipGlow);
+        ..color = const Color(0xFF38BDF8).withValues(alpha: opacity * 0.50);
+      canvas.drawCircle(tipPoint, 4.5, tipGlow);
 
       final tipCore = Paint()
         ..color = const Color(0xFF2563EB).withValues(alpha: opacity);
@@ -83,7 +81,7 @@ class HeartbeatPainter extends CustomPainter {
     final points = <Offset>[];
     final segmentWidth = width;
     final amplitude = height * 0.40;
-    const totalSteps = 120;
+    const totalSteps = 60; // 60 steps provide ultra smooth curve with half the allocations
 
     for (int i = 0; i <= totalSteps; i++) {
       final t = i / totalSteps;

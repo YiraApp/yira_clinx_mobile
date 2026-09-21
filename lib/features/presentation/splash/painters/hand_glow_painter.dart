@@ -58,20 +58,22 @@ class HandGlowPainter extends CustomPainter {
 
   void _drawAmbientGlow(Canvas canvas, Offset center, double radius) {
     final pulseScale = 1.0 + glowPulse * 0.07;
+    final r = radius * 1.05 * pulseScale;
 
-    // Outer soft blue halo
-    final outerPaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: fadeIn * 0.14)
-      ..maskFilter =
-          MaskFilter.blur(BlurStyle.normal, radius * 0.9 * pulseScale);
-    canvas.drawCircle(center, radius * 1.05 * pulseScale, outerPaint);
-
-    // Mid blue halo
-    final midPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.18)
-      ..maskFilter =
-          MaskFilter.blur(BlurStyle.normal, radius * 0.5 * pulseScale);
-    canvas.drawCircle(center, radius * 0.65 * pulseScale, midPaint);
+    // Single-pass hardware-accelerated radial gradient aura (zero GPU blur overhead)
+    final glowGradient = ui.Gradient.radial(
+      center,
+      r,
+      [
+        Color(0xFF2563EB).withValues(alpha: fadeIn * 0.16),
+        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.09),
+        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.03),
+        Colors.transparent,
+      ],
+      [0.0, 0.45, 0.78, 1.0],
+    );
+    final glowPaint = Paint()..shader = glowGradient;
+    canvas.drawCircle(center, r, glowPaint);
   }
 
   void _drawBiometricRings(Canvas canvas, Offset center, double radius) {
@@ -83,7 +85,7 @@ class HandGlowPainter extends CustomPainter {
     ringPaint
       ..color = const Color(0xFF2563EB).withValues(alpha: fadeIn * 0.35)
       ..strokeWidth = 1.2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+      ..maskFilter = null;
     canvas.drawCircle(center, radius * 0.80, ringPaint);
 
     // Ring 2: Outer dashed precision ring
@@ -131,8 +133,8 @@ class HandGlowPainter extends CustomPainter {
       center,
       orbRadius,
       [
-        const Color(0xFF2563EB).withValues(alpha: fadeIn * 0.35),
-        const Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.15),
+        Color(0xFF2563EB).withValues(alpha: fadeIn * 0.35),
+        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.15),
         Colors.transparent,
       ],
       [0.0, 0.55, 1.0],
@@ -147,12 +149,17 @@ class HandGlowPainter extends CustomPainter {
     final currentRadius = maxRadius * shockwaveProgress;
     final opacity = (1.0 - shockwaveProgress).clamp(0.0, 1.0);
 
-    // Primary shockwave ring in vibrant royal blue
-    final wavePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.7)
+    // Primary shockwave ring in vibrant royal blue (crisp layered strokes, no blur)
+    final outerWavePaint = Paint()
+      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.35)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0 * (1.0 - shockwaveProgress * 0.5)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      ..strokeWidth = 6.0 * (1.0 - shockwaveProgress * 0.4);
+    canvas.drawCircle(center, currentRadius, outerWavePaint);
+
+    final wavePaint = Paint()
+      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.85)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5 * (1.0 - shockwaveProgress * 0.4);
     canvas.drawCircle(center, currentRadius, wavePaint);
 
     // Cyan trailing ring
@@ -162,19 +169,27 @@ class HandGlowPainter extends CustomPainter {
       final trailPaint = Paint()
         ..color = const Color(0xFF0284C7).withValues(alpha: trailOpacity)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+        ..strokeWidth = 2.0;
       canvas.drawCircle(center, trailRadius, trailPaint);
     }
 
-    // Light flash
+    // Light flash - smooth GPU radial gradient instead of 430px blur
     if (shockwaveProgress < 0.45) {
       final flashOpacity =
-          ((1.0 - shockwaveProgress / 0.45) * 0.7).clamp(0.0, 1.0);
-      final flashPaint = Paint()
-        ..color = const Color(0xFFE0EDFF).withValues(alpha: flashOpacity)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * 0.4);
-      canvas.drawCircle(center, size.width * 0.35, flashPaint);
+          ((1.0 - shockwaveProgress / 0.45) * 0.65).clamp(0.0, 1.0);
+      final flashRadius = size.width * 0.42;
+      final flashGradient = ui.Gradient.radial(
+        center,
+        flashRadius,
+        [
+          Color(0xFFE0EDFF).withValues(alpha: flashOpacity),
+          Color(0xFFE0EDFF).withValues(alpha: flashOpacity * 0.35),
+          Colors.transparent,
+        ],
+        [0.0, 0.5, 1.0],
+      );
+      final flashPaint = Paint()..shader = flashGradient;
+      canvas.drawCircle(center, flashRadius, flashPaint);
     }
   }
 

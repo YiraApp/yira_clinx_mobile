@@ -13,7 +13,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  EnvironmentService.setEnvironment(Environment.qa);
+  EnvironmentService.setEnvironment(Environment.local);
   debugPrint('[Environment] Initialized base URL: ${EnvironmentService.config.accountBaseUrl}');
 
   try {

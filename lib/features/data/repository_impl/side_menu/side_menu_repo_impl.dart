@@ -32,8 +32,18 @@ class SideMenuRepoImpl extends SideMenuRepo {
     required int latestHospitalId,
   }) async {
     var endPoint = URLs.sideMenuUrl;
+    final platFormData = GlobalSession.instance.platformNotifier.value ??
+        GlobalSession.instance.cachedPlatformInfo;
+    String deviceId = platFormData?.deviceId ?? '';
+    if (deviceId.isEmpty || deviceId == 'unknown_id') {
+      deviceId = (userId.trim().isNotEmpty)
+          ? 'dev_${userId.trim()}'
+          : 'device_${DateTime.now().millisecondsSinceEpoch}';
+    }
+
     var requestBody = {
       "userId": userId.trim(),
+      "deviceId": deviceId,
       "roleId": latestRoleId.trim(),
       "latestRoleId": latestRoleId.trim(),
       "orgId": latestOrgId,
@@ -44,7 +54,15 @@ class SideMenuRepoImpl extends SideMenuRepo {
     final String fullCacheKey = _generateDeterministicCacheKey(
       customPrefix: sideMenuKey,
       baseUrl: endPoint,
-      params: requestBody,
+      params: {
+        "userId": userId.trim(),
+        "roleId": latestRoleId.trim(),
+        "latestRoleId": latestRoleId.trim(),
+        "orgId": latestOrgId,
+        "latestOrgId": latestOrgId,
+        "hospitalId": latestHospitalId,
+        "latestHospitalId": latestHospitalId,
+      },
     );
     final List<ConnectivityResult> connectivityResults = await _connectivity
         .checkConnectivity();
@@ -62,11 +80,21 @@ class SideMenuRepoImpl extends SideMenuRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final response = await _apiClient.account(showSuccessSnack: true).post(
+      final Map<String, dynamic> headers = {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        'x-user-id': userId.trim(),
+        'x-device-id': deviceId,
+      };
+      if (token.isNotEmpty) {
+        headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+      }
+
+      final response = await _apiClient.account(showSuccessSnack: false).post(
         endPoint,
         data: requestBody,
         options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          headers: headers,
+          extra: {'suppressSessionExpired': true},
         ),
       );
 

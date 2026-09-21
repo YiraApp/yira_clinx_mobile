@@ -253,6 +253,8 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                           arguments: {
                             'patientName': widget.patient.name,
                             'patientPhone': widget.patient.phone,
+                            'patientId': widget.patientId ?? widget.patient.id,
+                            'patientUserId': widget.patientId ?? widget.patient.id,
                           },
                         );
                         _isBookingNavigating = false;

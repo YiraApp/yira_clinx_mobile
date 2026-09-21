@@ -9,15 +9,18 @@ import 'package:flutter/material.dart';
 /// with subtle floating bioluminescent particles.
 class SplashBackgroundPainter extends CustomPainter {
   final double animationValue;
+  final double fadeIn;
   final List<SplashParticle> _particles;
 
   SplashBackgroundPainter({
     required this.animationValue,
+    this.fadeIn = 1.0,
     required List<SplashParticle> particles,
   }) : _particles = particles;
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (fadeIn <= 0.005) return;
     _drawGradientBackground(canvas, size);
     _drawParticles(canvas, size);
   }
@@ -27,14 +30,14 @@ class SplashBackgroundPainter extends CustomPainter {
     final centerX = size.width * 0.5 + sin(animationValue * 2 * pi) * 15;
     final centerY = size.height * 0.42 + cos(animationValue * 2 * pi) * 12;
 
-    // Clean, crisp medical light background
+    // Clean, crisp medical light background with fadeIn alpha
     final baseGradient = ui.Gradient.radial(
       Offset(centerX, centerY),
       size.height * 0.85,
       [
-        const Color(0xFFE6F0FA), // Soft luminous ice blue aura
-        const Color(0xFFF1F6FD), // Delicate sky white
-        const Color(0xFFF8FAFC), // Crisp clinical white
+        Color(0xFFE6F0FA).withValues(alpha: fadeIn), // Soft luminous ice blue aura
+        Color(0xFFF1F6FD).withValues(alpha: fadeIn), // Delicate sky white
+        Color(0xFFF8FAFC).withValues(alpha: fadeIn), // Crisp clinical white
       ],
       [0.0, 0.55, 1.0],
     );
@@ -43,13 +46,13 @@ class SplashBackgroundPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
     // Subtle royal blue ambient energy pulse at center
-    final pulse = 0.05 + 0.03 * sin(animationValue * 2 * pi);
+    final pulse = (0.05 + 0.03 * sin(animationValue * 2 * pi)) * fadeIn;
     final accentGradient = ui.Gradient.radial(
       Offset(size.width * 0.5, size.height * 0.42),
       size.width * 0.75,
       [
-        const Color(0xFF2563EB).withValues(alpha: pulse),
-        const Color(0xFF38BDF8).withValues(alpha: pulse * 0.5),
+        Color(0xFF2563EB).withValues(alpha: pulse),
+        Color(0xFF38BDF8).withValues(alpha: pulse * 0.5),
         Colors.transparent,
       ],
       [0.0, 0.45, 1.0],
@@ -59,6 +62,9 @@ class SplashBackgroundPainter extends CustomPainter {
   }
 
   void _drawParticles(Canvas canvas, Size size) {
+    final glowPaint = Paint()..style = PaintingStyle.fill;
+    final corePaint = Paint()..style = PaintingStyle.fill;
+
     for (final particle in _particles) {
       final progress = (animationValue + particle.phaseOffset) % 1.0;
 
@@ -69,26 +75,26 @@ class SplashBackgroundPainter extends CustomPainter {
       final y = (particle.baseY - progress * particle.speed) % 1.0 * size.height;
 
       final opacity =
-          (sin(progress * pi) * particle.maxOpacity).clamp(0.0, 1.0);
+          ((sin(progress * pi) * particle.maxOpacity) * fadeIn).clamp(0.0, 1.0);
 
-      if (opacity <= 0.0) continue;
+      if (opacity <= 0.005) continue;
 
-      // Soft glow
-      final glowPaint = Paint()
-        ..color = particle.color.withValues(alpha: opacity * 0.3)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, particle.radius * 2.5);
-      canvas.drawCircle(Offset(x, y), particle.radius * 2.0, glowPaint);
+      final pos = Offset(x, y);
+
+      // Hardware-accelerated soft halo (no expensive raster blur pass)
+      glowPaint.color = particle.color.withValues(alpha: opacity * 0.25);
+      canvas.drawCircle(pos, particle.radius * 2.2, glowPaint);
 
       // Core particle
-      final corePaint = Paint()
-        ..color = particle.color.withValues(alpha: opacity * 0.85);
-      canvas.drawCircle(Offset(x, y), particle.radius, corePaint);
+      corePaint.color = particle.color.withValues(alpha: opacity * 0.90);
+      canvas.drawCircle(pos, particle.radius, corePaint);
     }
   }
 
   @override
   bool shouldRepaint(SplashBackgroundPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
+    return oldDelegate.animationValue != animationValue ||
+        oldDelegate.fadeIn != fadeIn;
   }
 }
 

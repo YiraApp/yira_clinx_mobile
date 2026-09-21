@@ -93,17 +93,16 @@ class EcosystemLinesPainter extends CustomPainter {
     final lineOpacity =
         (lineReveal * 0.45 * (1.0 - pow(convergence, 1.8))).clamp(0.0, 1.0);
 
-    // Soft laser glow line
+    // Soft laser halo line (no GPU blur pass)
     final glowPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.5)
-      ..strokeWidth = 2.6
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.40)
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round;
     canvas.drawLine(center, endPoint, glowPaint);
 
     // Core crisp royal blue beam
     final corePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: lineOpacity)
+      ..color = const Color(0xFF2563EB).withValues(alpha: lineOpacity * 0.95)
       ..strokeWidth = 1.3
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(center, endPoint, corePaint);
@@ -117,11 +116,10 @@ class EcosystemLinesPainter extends CustomPainter {
       final pulseY = center.dy + unitY * pulseDist;
       final pulsePos = Offset(pulseX, pulseY);
 
-      // Photon glow
+      // Photon soft halo
       final photonGlow = Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.8)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
-      canvas.drawCircle(pulsePos, 3.8, photonGlow);
+        ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.45);
+      canvas.drawCircle(pulsePos, 4.0, photonGlow);
 
       // Photon core
       final photonCore = Paint()

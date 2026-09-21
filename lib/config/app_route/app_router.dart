@@ -23,6 +23,7 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/dashboard_pat
 import 'package:yiraclinics/features/presentation/doctor/dashboard/doctor_main_shell_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/favorite_patients_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/patient_main_shell_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/documents/patient_documents_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/consultation_summary_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/digital_consent_sign_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/self_service/online_bill_payment_screen.dart';
@@ -61,8 +62,6 @@ import 'package:yiraclinics/features/presentation/settings/setting_bloc/setting_
 import 'package:yiraclinics/features/presentation/settings/settings_screen.dart';
 import 'package:yiraclinics/features/presentation/slot/slot_bloc/slot_bloc.dart';
 import 'package:yiraclinics/features/presentation/slot/smart_scheduler_screen.dart';
-import 'package:yiraclinics/features/presentation/test_results/test_result_bloc/test_result_bloc.dart';
-import 'package:yiraclinics/features/presentation/test_results/test_result_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import '../../core/models/select_role_model.dart';
@@ -206,11 +205,9 @@ class AppRouter {
           ),
         );
       case AppRoutes.userTestResultScreen:
-        return MaterialPageRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<TestResultsBloc>(),
-            child: TestResultsScreen(),
-          ),
+        return MaterialPageRoute(
+          settings: settings, 
+          builder: (_) => const PatientDocumentsScreen(),
         );
       case AppRoutes.addAppointmentScreen:
         final appointmentArgs = settings.arguments as Map<String, dynamic>?;
@@ -231,6 +228,7 @@ class AppRouter {
             child: AddNewAppointmentScreen(
               initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
               initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
+              initialPatientId: (appointmentArgs?['patientId'] ?? appointmentArgs?['patientUserId'] ?? appointmentArgs?['id'])?.toString(),
               initialDoctorId: (appointmentArgs?['doctorId'] ?? appointmentArgs?['doctor']?['doctorId'] ?? appointmentArgs?['doctor']?['id'])?.toString(),
               initialDoctorName: (appointmentArgs?['doctorName'] ?? appointmentArgs?['doctor']?['name'])?.toString(),
               initialHospitalId: appointmentArgs?['hospitalId'] ?? appointmentArgs?['doctor']?['hospitalId'],
@@ -489,7 +487,7 @@ class AppRouter {
       case AppRoutes.patientAppointments:
         return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 1));
       case AppRoutes.patientDocuments:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
+        return MaterialPageRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
       case AppRoutes.patientProfile:
         return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
       case AppRoutes.uploadDocumentsViaLink:

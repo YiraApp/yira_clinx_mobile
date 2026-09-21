@@ -37,16 +37,43 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   FitnessPeriod _selectedPeriod = FitnessPeriod.week;
 
   bool _isLoading = true;
+  bool _isManualSyncing = false;
   PatientFitnessSummaryResponse? _summary;
 
   @override
   void initState() {
     super.initState();
-    _loadSummary();
+    FitnessSyncService.instance.todayFitnessNotifier.addListener(_onTodayNotifierChanged);
+    _initialLoadAndAutoSync();
   }
 
-  Future<void> _loadSummary() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    FitnessSyncService.instance.todayFitnessNotifier.removeListener(_onTodayNotifierChanged);
+    super.dispose();
+  }
+
+  void _onTodayNotifierChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Initial load from cache/backend first, then automatically trigger native sensor sync
+  Future<void> _initialLoadAndAutoSync() async {
+    await _loadSummary(showSpinner: true);
+
+    // Auto-sync silently with Health Connect / Apple Health in background
+    if (mounted) {
+      await FitnessSyncService.instance.syncNow(silent: true);
+      if (mounted) {
+        await _loadSummary(showSpinner: false);
+      }
+    }
+  }
+
+  Future<void> _loadSummary({bool showSpinner = false}) async {
+    if (showSpinner && mounted) {
+      setState(() => _isLoading = true);
+    }
     final periodStr = _selectedPeriod == FitnessPeriod.day
         ? 'day'
         : _selectedPeriod == FitnessPeriod.week
@@ -63,9 +90,57 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   }
 
   Future<void> _handleManualSync() async {
-    setState(() => _isLoading = true);
-    await FitnessSyncService.instance.syncNow(silent: false);
-    await _loadSummary();
+    setState(() => _isManualSyncing = true);
+    try {
+      final syncResult = await FitnessSyncService.instance.syncNow(silent: false);
+      await _loadSummary(showSpinner: false);
+
+      if (!mounted) return;
+      if (syncResult.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(child: Text(syncResult.message)),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(child: Text(syncResult.message)),
+              ],
+            ),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Fix',
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.patientConnectFitness);
+              },
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isManualSyncing = false);
+      }
+    }
   }
 
   void _handleDisconnect() {
@@ -164,14 +239,16 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         actions: [
           IconButton(
             tooltip: 'Sync with device',
-            icon: _isLoading
+            icon: (_isManualSyncing || FitnessSyncService.instance.isSyncingNotifier.value)
                 ? const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : Icon(Icons.sync_rounded, color: primaryColor),
-            onPressed: _isLoading ? null : _handleManualSync,
+            onPressed: (_isManualSyncing || FitnessSyncService.instance.isSyncingNotifier.value)
+                ? null
+                : _handleManualSync,
           ),
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert_rounded, color: isDark ? Colors.white70 : Colors.black87),
@@ -215,13 +292,13 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                     const SizedBox(height: 18),
 
                     // 4. Main Interactive Graph Card (New Age Design)
-                    _isLoading
+                    _isLoading && _summary == null
                         ? FitnessGraphCardShimmer(isDark: isDark, isTab: isTab)
                         : _buildInteractiveGraphCard(isDark: isDark, isTab: isTab),
                     const SizedBox(height: 18),
 
                     // 5. Analytics Summary Highlights (2x2 Grid)
-                    _isLoading
+                    _isLoading && _summary == null
                         ? FitnessAnalyticsGridShimmer(isDark: isDark, isTab: isTab)
                         : _buildAnalyticsSummaryGrid(isDark: isDark, isTab: isTab),
                     const SizedBox(height: 24),
@@ -597,6 +674,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
       if (rawPoints.isNotEmpty) return rawPoints;
       final today = _summary?.today ?? FitnessSyncService.instance.todayFitnessNotifier.value;
       if (today != null) {
+        final rawSpo2 = today.bloodOxygen;
+        final normalizedSpo2 = (rawSpo2 > 0 && rawSpo2 <= 1.0) ? rawSpo2 * 100.0 : rawSpo2;
         return [
           ChartFitnessPoint(
             date: today.date,
@@ -606,7 +685,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             heartRateAvg: today.heartRateAvg,
             heartRateMin: today.heartRateMin,
             heartRateMax: today.heartRateMax,
-            bloodOxygen: today.bloodOxygen,
+            bloodOxygen: normalizedSpo2,
             sleepMinutes: today.sleepMinutes,
             weightKg: today.weightKg,
           ),
@@ -622,7 +701,21 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     final Map<String, ChartFitnessPoint> pointMap = {};
     for (final p in rawPoints) {
       final key = p.date.split('T')[0];
-      pointMap[key] = p;
+      final rawSpo2 = p.bloodOxygen;
+      final normalizedSpo2 = (rawSpo2 > 0 && rawSpo2 <= 1.0) ? rawSpo2 * 100.0 : rawSpo2;
+      pointMap[key] = ChartFitnessPoint(
+        date: p.date,
+        steps: p.steps,
+        calories: p.calories,
+        distanceMeters: p.distanceMeters,
+        heartRateAvg: p.heartRateAvg,
+        heartRateMin: p.heartRateMin,
+        heartRateMax: p.heartRateMax,
+        bloodOxygen: normalizedSpo2,
+        sleepMinutes: p.sleepMinutes,
+        weightKg: p.weightKg,
+        hourly: p.hourly,
+      );
     }
 
     // Ensure today's live metrics from sensor are blended if backend record has 0 steps
@@ -631,6 +724,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     if (todayLive != null &&
         (!pointMap.containsKey(todayStr) || (pointMap[todayStr]?.steps ?? 0) == 0)) {
+      final rawSpo2 = todayLive.bloodOxygen;
+      final normalizedSpo2 = (rawSpo2 > 0 && rawSpo2 <= 1.0) ? rawSpo2 * 100.0 : rawSpo2;
       pointMap[todayStr] = ChartFitnessPoint(
         date: todayStr,
         steps: todayLive.steps,
@@ -639,7 +734,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         heartRateAvg: todayLive.heartRateAvg,
         heartRateMin: todayLive.heartRateMin,
         heartRateMax: todayLive.heartRateMax,
-        bloodOxygen: todayLive.bloodOxygen,
+        bloodOxygen: normalizedSpo2,
         sleepMinutes: todayLive.sleepMinutes,
         weightKg: todayLive.weightKg,
       );
@@ -835,7 +930,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
       case FitnessMetricType.distance:
         return double.parse((point.distanceMeters / 1000.0).toStringAsFixed(2));
       case FitnessMetricType.bloodOxygen:
-        return point.bloodOxygen;
+        final raw = point.bloodOxygen;
+        return (raw > 0 && raw <= 1.0) ? raw * 100.0 : raw;
       case FitnessMetricType.weight:
         return point.weightKg;
     }
@@ -846,7 +942,10 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     if (type == FitnessMetricType.steps) return value.toInt().toString();
     if (type == FitnessMetricType.calories) return value.toInt().toString();
     if (type == FitnessMetricType.heartRate) return value.toInt().toString();
-    if (type == FitnessMetricType.bloodOxygen) return '${value.toStringAsFixed(1)}%';
+    if (type == FitnessMetricType.bloodOxygen) {
+      final v = (value > 0 && value <= 1.0) ? value * 100.0 : value;
+      return '${v.toStringAsFixed(1)}%';
+    }
     return value.toStringAsFixed(1);
   }
 
@@ -856,7 +955,12 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     required bool isTab,
     required Color primaryColor,
   }) {
-    final today = _summary?.today ?? FitnessSyncService.instance.todayFitnessNotifier.value;
+    final todayBackend = _summary?.today;
+    final todayLive = FitnessSyncService.instance.todayFitnessNotifier.value;
+    final today = (todayLive != null && (todayLive.steps > 0 || todayLive.heartRateAvg > 0 || todayBackend == null))
+        ? todayLive
+        : (todayBackend ?? todayLive);
+
     final steps = today?.steps ?? 0;
     final calories = today?.calories ?? 0.0;
     final heartRate = today?.heartRateAvg ?? 0.0;
@@ -864,7 +968,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         ? today.sleepFormatted
         : '0h 0m';
     final distanceKm = ((today?.distanceMeters ?? 0.0) / 1000).toStringAsFixed(2);
-    final spo2 = today?.bloodOxygen ?? 0.0;
+    final rawSpo2 = today?.bloodOxygen ?? 0.0;
+    final spo2 = (rawSpo2 > 0 && rawSpo2 <= 1.0) ? rawSpo2 * 100.0 : rawSpo2;
 
     return Container(
       padding: const EdgeInsets.all(18),

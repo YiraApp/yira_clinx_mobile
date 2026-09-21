@@ -13,6 +13,7 @@ import '../../domain/repositories/side_menu/side_menu_repo.dart';
 import '../configuration/config_bloc.dart';
 import '../configuration/configuration_screen.dart';
 import 'auth_bloc/auth_bloc.dart';
+import 'widgets/service_icon_widget.dart';
 import 'yira_splash_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -36,6 +37,19 @@ class _SplashScreenState extends State<SplashScreen> {
     _sharedPrefsService = sl<SharedPrefsService>();
     context.read<AuthBloc>().add(AppStarted());
     _initializeFlow();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Warm up image cache ahead of animation execution to prevent decode spikes
+    precacheImage(
+      const AssetImage('assets/images/yira_hand_light_centered.png'),
+      context,
+    );
+    for (final service in splashHealthcareServices) {
+      precacheImage(AssetImage(service.assetPath), context);
+    }
   }
 
   void _initializeFlow() async {

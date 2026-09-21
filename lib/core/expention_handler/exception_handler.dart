@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 
+import '../../di/dependency_injection.dart';
+import '../constants/clinx_storage_keys.dart';
 import '../constants/constants.dart';
+import '../local/shared_preferences.dart';
 import '../navigation_services/navigation_services.dart';
 import '../utils/utils.dart';
 
@@ -17,6 +20,24 @@ class ExceptionHandler {
     bool status = false
   }) {
     if (statusCode == HttpStatus.unauthorized) {
+      // Only redirect to sessionExpired if user is actually logged in
+      final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
+          (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
+      if (!isLoggedIn) {
+        return;
+      }
+
+      // Do not redirect if user is already on auth, splash, or sessionExpired screens
+      final currentRoute = NavigationService.currentRoute;
+      if (currentRoute == AppRoutes.sessionExpired ||
+          currentRoute == AppRoutes.signIn ||
+          currentRoute == AppRoutes.signup ||
+          currentRoute == AppRoutes.initial ||
+          currentRoute == AppRoutes.verifyOtp ||
+          currentRoute == AppRoutes.forgotPassword) {
+        return;
+      }
+
       if (_isRedirecting) return;
       _isRedirecting = true;
 

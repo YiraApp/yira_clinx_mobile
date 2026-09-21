@@ -52,6 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _hasNumber = false;
   bool _hasSpecialChar = false;
   int _passwordStrength = 0; // 0 to 4
+  String? _emailErrorText;
 
   @override
   void initState() {
@@ -59,6 +60,13 @@ class _SignupScreenState extends State<SignupScreen> {
     _loadDeviceToken();
     _passwordController.addListener(_validatePasswordStrength);
     _confirmPasswordController.addListener(() => setState(() {}));
+    _emailController.addListener(() {
+      if (_emailErrorText != null) {
+        setState(() {
+          _emailErrorText = null;
+        });
+      }
+    });
   }
 
   Future<void> _loadDeviceToken() async {
@@ -340,8 +348,19 @@ class _SignupScreenState extends State<SignupScreen> {
                   _showOtpVerificationSheet(state.sendOtpEntity);
                 } else if (state is SignupOtpFailureState) {
                   if (!_isOtpSheetOpen) {
-                    if (state.errorMessage.toLowerCase().contains("already registered") ||
-                        state.errorMessage.toLowerCase().contains("already exists")) {
+                    final err = state.errorMessage.toLowerCase();
+                    if ((err.contains("mobile") || err.contains("user exists") || err.contains("yira") || err.contains("account exists")) &&
+                        (err.contains("already exists") || err.contains("already registered") || err.contains("exists in yira") || err.contains("please login"))) {
+                      // Mobile number / primary user already exists -> prompt to Sign In
+                      _showAlreadyRegisteredDialog(state.errorMessage);
+                    } else if (err.contains("email") && (err.contains("already in use") || err.contains("already registered") || err.contains("already exists") || err.contains("different email"))) {
+                      // Email is already in use -> show inline error and focus email field so user can change it
+                      setState(() {
+                        _emailErrorText = state.errorMessage;
+                      });
+                      _showSnackBar(state.errorMessage, isError: true);
+                      _emailFocus.requestFocus();
+                    } else if (err.contains("already registered") || err.contains("already exists") || err.contains("exists in yira") || err.contains("please login")) {
                       _showAlreadyRegisteredDialog(state.errorMessage);
                     } else {
                       _showSnackBar(state.errorMessage, isError: true);
@@ -358,7 +377,21 @@ class _SignupScreenState extends State<SignupScreen> {
                   }
                 } else if (state is SignupFailureState) {
                   if (!_isOtpSheetOpen) {
-                    _showSnackBar(state.errorMessage, isError: true);
+                    final err = state.errorMessage.toLowerCase();
+                    if ((err.contains("mobile") || err.contains("user exists") || err.contains("yira") || err.contains("account exists")) &&
+                        (err.contains("already exists") || err.contains("already registered") || err.contains("exists in yira") || err.contains("please login"))) {
+                      _showAlreadyRegisteredDialog(state.errorMessage);
+                    } else if (err.contains("email") && (err.contains("already in use") || err.contains("already registered") || err.contains("already exists") || err.contains("different email"))) {
+                      setState(() {
+                        _emailErrorText = state.errorMessage;
+                      });
+                      _showSnackBar(state.errorMessage, isError: true);
+                      _emailFocus.requestFocus();
+                    } else if (err.contains("already registered") || err.contains("already exists") || err.contains("exists in yira") || err.contains("please login")) {
+                      _showAlreadyRegisteredDialog(state.errorMessage);
+                    } else {
+                      _showSnackBar(state.errorMessage, isError: true);
+                    }
                   }
                 }
               },
@@ -550,7 +583,11 @@ class _SignupScreenState extends State<SignupScreen> {
                                 prefixIcon: Icons.mail_outline_rounded,
                                 keyboardType: TextInputType.emailAddress,
                                 isDark: isDark,
+                                errorText: _emailErrorText,
                                 validator: (val) {
+                                  if (_emailErrorText != null) {
+                                    return _emailErrorText;
+                                  }
                                   if (val != null && val.trim().isNotEmpty) {
                                     final emailRegex = RegExp(r'^[\w\.-]+@[\w-]+\.\w{2,4}$');
                                     if (!emailRegex.hasMatch(val.trim())) {
@@ -745,6 +782,7 @@ class _SignupScreenState extends State<SignupScreen> {
     bool autocorrect = false,
     bool enableSuggestions = false,
     String? Function(String?)? validator,
+    String? errorText,
   }) {
     return TextFormField(
       controller: controller,
@@ -766,6 +804,12 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       validator: validator,
       decoration: InputDecoration(
+        errorText: errorText,
+        errorStyle: const TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: 11,
+          color: Colors.redAccent,
+        ),
         hintText: hintText,
         hintStyle: TextStyle(
           fontFamily: appPoppinFont,

@@ -13,6 +13,7 @@ import 'package:yiraclinics/core/navigation_services/navigation_services.dart';
 import 'package:yiraclinics/core/services/network_services/network_bloc/network_bloc.dart';
 import 'package:yiraclinics/core/widgets/internet_guard.dart';
 import 'package:yiraclinics/core/widgets/notificatio_wrapper.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
@@ -72,6 +73,27 @@ class AppGateway extends StatelessWidget {
                         final Map<String, dynamic> payload = jsonDecode(payloadString);
                         final String? targetRoute = payload['route'];
                         final String? itemId = payload['id'];
+                        final String? type = payload['type'];
+
+                        final typeUpper = (type ?? '').toUpperCase();
+                        if (typeUpper == 'MEDICAL_RECORD_ADDED' ||
+                            targetRoute == '/userTestResultScreen' ||
+                            targetRoute == AppRoutes.userTestResultScreen ||
+                            targetRoute == '/patientDocuments' ||
+                            targetRoute == AppRoutes.patientDocuments) {
+                          final currentUser = GlobalSession.instance.userNotifier.value;
+                          final navId = currentUser?.data?.navigationId?.toString().trim();
+                          final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+                          final isDoctor = roleName.contains('doctor') || roleName.contains('provider') || navId == '2';
+                          final isPatient = !isDoctor && (navId == '1' || roleName.contains('patient') || roleName == 'user');
+
+                          if (isPatient) {
+                            NavigationService.navigatorKey.currentState?.pushNamed(
+                              AppRoutes.patientDocuments,
+                            );
+                          }
+                          return;
+                        }
 
                         if (targetRoute != null) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
@@ -166,6 +188,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
     final routeName = route.settings.name;
+    NavigationService.currentRoute = routeName;
     final filePath = _getFilePath(routeName);
     debugPrint("[ROUTE_NAVIGATED] Pushed Route: $routeName (args: ${route.settings.arguments}) | File: $filePath");
   }
@@ -174,6 +197,9 @@ class _RouteLoggingObserver extends NavigatorObserver {
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
     final routeName = route.settings.name;
+    if (previousRoute != null) {
+      NavigationService.currentRoute = previousRoute.settings.name;
+    }
     final filePath = _getFilePath(routeName);
     debugPrint("[ROUTE_NAVIGATED] Popped Route: $routeName | File: $filePath");
   }
@@ -183,6 +209,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     if (newRoute != null) {
       final routeName = newRoute.settings.name;
+      NavigationService.currentRoute = routeName;
       final filePath = _getFilePath(routeName);
       debugPrint("[ROUTE_NAVIGATED] Replaced Route to: $routeName | File: $filePath");
     }

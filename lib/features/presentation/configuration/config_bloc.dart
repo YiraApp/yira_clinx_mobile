@@ -127,35 +127,45 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
           }
         }
 
+        final currentSessionData = GlobalSession.instance.userNotifier.value?.data;
+
         final finalData = DataEntity(
-          accessToken: result.data?.accessToken,
-          refreshToken: result.data?.refreshToken,
-          accessTokenExpiry: result.data?.accessTokenExpiry,
-          refreshTokenExpiry: result.data?.refreshTokenExpiry,
-          id: result.data?.id,
-          isMobileVerified: result.data?.isMobileVerified,
-          isEmailVerified: result.data?.isEmailVerified,
-          roleCount: result.data?.roleCount,
-          hospitalCount: result.data?.hospitalCount,
-          organizationCount: result.data?.organizationCount,
-          latestUserRole: result.data?.latestUserRole,
-          latestOrgId: result.data?.latestOrgId,
-          latestHospitalId: result.data?.latestHospitalId,
-          latestRoleId: result.data?.latestRoleId,
-          roles: result.data?.roles ?? GlobalSession.instance.userNotifier.value?.data?.roles,
-          profiles: mergedProfiles.isNotEmpty ? mergedProfiles : result.data?.profiles,
-          firstName: result.data?.firstName,
-          lastName: result.data?.lastName,
-          email: result.data?.email,
-          phoneNumber: result.data?.phoneNumber,
-          countryCode: result.data?.countryCode,
-          gender: result.data?.gender,
-          dob: result.data?.dob,
-          height: result.data?.height,
-          weight: result.data?.weight,
-          heightUnit: result.data?.heightUnit,
-          weightUnit: result.data?.weightUnit,
-          navigationId: result.data?.navigationId,
+          accessToken: (result.data?.accessToken != null &&
+                  result.data!.accessToken!.trim().isNotEmpty)
+              ? result.data!.accessToken
+              : currentSessionData?.accessToken,
+          refreshToken: (result.data?.refreshToken != null &&
+                  result.data!.refreshToken!.trim().isNotEmpty)
+              ? result.data!.refreshToken
+              : currentSessionData?.refreshToken,
+          accessTokenExpiry: result.data?.accessTokenExpiry ??
+              currentSessionData?.accessTokenExpiry,
+          refreshTokenExpiry: result.data?.refreshTokenExpiry ??
+              currentSessionData?.refreshTokenExpiry,
+          id: result.data?.id ?? currentSessionData?.id,
+          isMobileVerified: result.data?.isMobileVerified ?? currentSessionData?.isMobileVerified,
+          isEmailVerified: result.data?.isEmailVerified ?? currentSessionData?.isEmailVerified,
+          roleCount: result.data?.roleCount ?? currentSessionData?.roleCount,
+          hospitalCount: result.data?.hospitalCount ?? currentSessionData?.hospitalCount,
+          organizationCount: result.data?.organizationCount ?? currentSessionData?.organizationCount,
+          latestUserRole: result.data?.latestUserRole ?? currentSessionData?.latestUserRole,
+          latestOrgId: result.data?.latestOrgId ?? currentSessionData?.latestOrgId,
+          latestHospitalId: result.data?.latestHospitalId ?? currentSessionData?.latestHospitalId,
+          latestRoleId: result.data?.latestRoleId ?? currentSessionData?.latestRoleId,
+          roles: result.data?.roles ?? currentSessionData?.roles,
+          profiles: mergedProfiles.isNotEmpty ? mergedProfiles : (result.data?.profiles ?? currentSessionData?.profiles),
+          firstName: result.data?.firstName ?? currentSessionData?.firstName,
+          lastName: result.data?.lastName ?? currentSessionData?.lastName,
+          email: result.data?.email ?? currentSessionData?.email,
+          phoneNumber: result.data?.phoneNumber ?? currentSessionData?.phoneNumber,
+          countryCode: result.data?.countryCode ?? currentSessionData?.countryCode,
+          gender: result.data?.gender ?? currentSessionData?.gender,
+          dob: result.data?.dob ?? currentSessionData?.dob,
+          height: result.data?.height ?? currentSessionData?.height,
+          weight: result.data?.weight ?? currentSessionData?.weight,
+          heightUnit: result.data?.heightUnit ?? currentSessionData?.heightUnit,
+          weightUnit: result.data?.weightUnit ?? currentSessionData?.weightUnit,
+          navigationId: result.data?.navigationId ?? currentSessionData?.navigationId,
         );
 
         final updatedLoginResult = LoginEntity(
@@ -166,15 +176,6 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
 
         await GlobalSession.instance.update(updatedLoginResult);
         final userDataPayload = finalData;
-
-        if (userDataPayload == null) {
-          emit(
-            GetDataFailureState(
-              "User metadata payload resolving returned empty context.",
-            ),
-          );
-          return;
-        }
 
         await Future.microtask(() {});
 
