@@ -143,6 +143,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
           frequency: event.frequency ?? item.frequency,
           duration: event.duration ?? item.duration,
           route: event.route ?? item.route,
+          instructions: event.instructions ?? item.instructions,
         );
       }
       return item;

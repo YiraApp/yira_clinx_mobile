@@ -1,8 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
 
 class TodayMedicationDose {
@@ -31,6 +36,9 @@ class MedicationReminderService {
     if (_isInitialized) return;
     await loadReminders();
     _isInitialized = true;
+
+    // Asynchronously synchronize with backend for active user
+    fetchRemoteReminders();
   }
 
   Future<List<MedicationReminder>> loadReminders() async {
@@ -48,6 +56,53 @@ class MedicationReminderService {
     }
     remindersNotifier.value = [];
     return [];
+  }
+
+  /// Fetches reminders saved on the backend MSSQL database and merges with local doses
+  Future<void> fetchRemoteReminders() async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      if (token.isEmpty) return;
+
+      final client = ApiClient();
+      final response = await client.account(showSuccessSnack: false).get(
+        URLs.patientMedicationRemindersUrl,
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final dynamic data = response.data['data'] ?? response.data['result'];
+        if (data is List) {
+          final currentMap = {for (var r in remindersNotifier.value) r.id: r};
+          final List<MedicationReminder> remoteList = [];
+
+          for (final item in data) {
+            final parsed = MedicationReminder.fromMap(Map<String, dynamic>.from(item));
+            // Preserve locally tracked dose completion status
+            final localExisting = currentMap[parsed.id];
+            if (localExisting != null && localExisting.takenDoses.isNotEmpty) {
+              final mergedDoses = Map<String, bool>.from(parsed.takenDoses)..addAll(localExisting.takenDoses);
+              remoteList.add(parsed.copyWith(takenDoses: mergedDoses));
+            } else {
+              remoteList.add(parsed);
+            }
+          }
+
+          if (remoteList.isNotEmpty) {
+            remindersNotifier.value = remoteList;
+            await _persistList(remoteList);
+            debugPrint("[MedicationReminderService] Successfully synced ${remoteList.length} reminders from backend");
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Remote fetch ignored (offline/fallback): $e");
+    }
   }
 
   Future<void> saveReminder(MedicationReminder reminder) async {
@@ -70,8 +125,51 @@ class MedicationReminderService {
         body: "We'll notify you to take ${reminder.medicineName} (${reminder.mealRelation}) for ${reminder.durationDays} days at $timesStr.",
         payload: jsonEncode({'type': 'medication_reminder', 'id': reminder.id}),
       );
+
+      // Asynchronously send to backend scheduler
+      _syncSaveReminderToBackend(reminder);
     } catch (e) {
       debugPrint("[MedicationReminderService] Error saving reminder: $e");
+    }
+  }
+
+  Future<void> _syncSaveReminderToBackend(MedicationReminder reminder) async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      final userId = currentUser?.data?.id ?? '';
+      if (token.isEmpty || userId.isEmpty) return;
+
+      final client = ApiClient();
+      await client.account(showSuccessSnack: false).post(
+        URLs.patientMedicationRemindersUrl,
+        data: {
+          'id': reminder.id,
+          'userId': userId,
+          'prescriptionId': reminder.prescriptionId,
+          'medicineName': reminder.medicineName,
+          'dosage': reminder.dosage,
+          'instructions': reminder.instructions,
+          'mealRelation': reminder.mealRelation,
+          'times': reminder.times,
+          'startDate': reminder.startDate.toIso8601String(),
+          'endDate': reminder.endDate.toIso8601String(),
+          'durationDays': reminder.durationDays,
+          'isContinuous': reminder.isContinuous,
+          'doctorName': reminder.doctorName,
+          'doctorPhoto': reminder.doctorPhoto,
+          'condition': reminder.condition,
+          'isActive': reminder.isActive,
+        },
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+      debugPrint("[MedicationReminderService] Successfully synced reminder ${reminder.id} to backend scheduler");
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Error syncing reminder to backend: $e");
     }
   }
 
@@ -111,8 +209,78 @@ class MedicationReminderService {
       currentList.removeWhere((r) => r.id == reminderId);
       remindersNotifier.value = currentList;
       await _persistList(currentList);
+
+      // Asynchronously delete from backend
+      _syncDeleteReminderToBackend(reminderId);
     } catch (e) {
       debugPrint("[MedicationReminderService] Error deleting reminder: $e");
+    }
+  }
+
+  Future<void> _syncDeleteReminderToBackend(String reminderId) async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      if (token.isEmpty) return;
+
+      final client = ApiClient();
+      await client.account(showSuccessSnack: false).delete(
+        "${URLs.patientMedicationRemindersUrl}/$reminderId",
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+      debugPrint("[MedicationReminderService] Successfully deactivated reminder $reminderId on backend");
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Error deactivating reminder on backend: $e");
+    }
+  }
+
+  /// Syncs all existing local reminders to the backend in a batch
+  Future<void> syncAllToBackend() async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      final userId = currentUser?.data?.id ?? '';
+      if (token.isEmpty || userId.isEmpty) return;
+
+      final remindersList = remindersNotifier.value;
+      if (remindersList.isEmpty) return;
+
+      final client = ApiClient();
+      await client.account(showSuccessSnack: false).post(
+        URLs.patientMedicationRemindersSyncUrl,
+        data: {
+          'userId': userId,
+          'reminders': remindersList.map((r) => {
+            'id': r.id,
+            'prescriptionId': r.prescriptionId,
+            'medicineName': r.medicineName,
+            'dosage': r.dosage,
+            'instructions': r.instructions,
+            'mealRelation': r.mealRelation,
+            'times': r.times,
+            'startDate': r.startDate.toIso8601String(),
+            'endDate': r.endDate.toIso8601String(),
+            'durationDays': r.durationDays,
+            'isContinuous': r.isContinuous,
+            'doctorName': r.doctorName,
+            'doctorPhoto': r.doctorPhoto,
+            'condition': r.condition,
+            'isActive': r.isActive,
+          }).toList(),
+        },
+        options: Options(
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+          },
+        ),
+      );
+      debugPrint("[MedicationReminderService] Synced ${remindersList.length} local reminders to backend in batch");
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Error in syncAllToBackend: $e");
     }
   }
 

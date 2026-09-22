@@ -9,6 +9,7 @@ class MedicationItem extends Equatable {
   final String? frequency;
   final String? duration;
   final String? route;
+  final String? instructions;
 
   const MedicationItem({
     required this.id,
@@ -17,7 +18,11 @@ class MedicationItem extends Equatable {
     this.frequency,
     this.duration,
     this.route,
+    this.instructions,
   });
+
+  /// Alias for instructions / note
+  String? get note => instructions;
 
   MedicationItem copyWith({
     String? id,
@@ -26,6 +31,7 @@ class MedicationItem extends Equatable {
     String? frequency,
     String? duration,
     String? route,
+    String? instructions,
   }) {
     return MedicationItem(
       id: id ?? this.id,
@@ -34,9 +40,10 @@ class MedicationItem extends Equatable {
       frequency: frequency ?? this.frequency,
       duration: duration ?? this.duration,
       route: route ?? this.route,
+      instructions: instructions ?? this.instructions,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, dosage, frequency, duration, route];
+  List<Object?> get props => [id, name, dosage, frequency, duration, route, instructions];
 }

@@ -99,20 +99,25 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
         'notes': prescription.additionalNotes,
         'diagnoses': prescription.diagnoses,
         'medications': prescription.medications.map((m) {
-          int durationVal = 7;
+          int? durationVal;
           if (m.duration != null && m.duration!.isNotEmpty) {
             final match = RegExp(r'(\d+)').firstMatch(m.duration!);
             if (match != null) {
-              durationVal = int.tryParse(match.group(1)!) ?? 7;
+              durationVal = int.tryParse(match.group(1)!);
             }
           }
           return {
             'medication': m.name,
             'dosage': m.dosage ?? '',
             'frequency': m.frequency ?? '',
-            'durationValue': durationVal,
-            'durationUnit': 'Days',
+            if (durationVal != null) ...{
+              'durationValue': durationVal,
+              'durationUnit': 'Days',
+            },
+            'duration': m.duration ?? (durationVal != null ? '$durationVal Days' : ''),
             'route': m.route ?? '',
+            'instructions': m.instructions ?? '',
+            'note': m.instructions ?? '',
           };
         }).toList(),
       };

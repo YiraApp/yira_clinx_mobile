@@ -101,4 +101,8 @@ class URLs {
 
   /*Account Management*/
   static const accountDeactivateUrl = "/v1/api/auth/account/deactivate";
+
+  /*Patient Medication Reminders*/
+  static const patientMedicationRemindersUrl = "/v1/api/auth/patient/medication-reminders";
+  static const patientMedicationRemindersSyncUrl = "/v1/api/auth/patient/medication-reminders/sync";
 }

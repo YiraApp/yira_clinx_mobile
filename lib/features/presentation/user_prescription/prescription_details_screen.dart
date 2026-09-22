@@ -112,6 +112,12 @@ class PrescriptionDetailScreen extends StatelessWidget {
               builder: (context, state) {
                 final data = state.selectedPrescriptionDetail ?? initialData;
                 final customPdf = data?['pdfUrl']?.toString();
+                final bool hasPdf = customPdf != null &&
+                    customPdf.trim().isNotEmpty &&
+                    customPdf.trim().toLowerCase() != 'null';
+                if (!hasPdf) {
+                  return const SizedBox.shrink();
+                }
                 final docName = _cleanDoctorName(data?['doctor'] ?? 'Doctor');
                 return IconButton(
                   tooltip: "View Full Prescription PDF",
@@ -119,9 +125,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                   onPressed: () {
                     final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                     final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                    final effectivePdfUrl = (customPdf != null && customPdf.trim().isNotEmpty)
-                        ? (customPdf.startsWith('http') ? customPdf : '$baseUrl$customPdf')
-                        : '$baseUrl/v1/api/auth/prescriptions/$prescriptionId/pdf';
+                    final effectivePdfUrl = customPdf.startsWith('http') ? customPdf : '$baseUrl$customPdf';
 
                     InAppDocumentViewer.show(
                       context,
@@ -268,44 +272,48 @@ class PrescriptionDetailScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   _buildNotesBox(context, (data['notes'] ?? 'Follow-up as advised. Take medicines as prescribed.').toString(), isDark),
 
-                  const SizedBox(height: 20),
-
                   // ── Full Prescription PDF Button ──
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF059669),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                      label: const Text(
-                        "View Full Prescription (PDF)",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
+                  if (data['pdfUrl'] != null &&
+                      data['pdfUrl'].toString().trim().isNotEmpty &&
+                      data['pdfUrl'].toString().trim().toLowerCase() != 'null') ...[
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF059669),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                      ),
-                      onPressed: () {
-                        final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
-                        final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                        final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/$prescriptionId/pdf';
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                        label: const Text(
+                          "View Full Prescription (PDF)",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        onPressed: () {
+                          final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                          final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                          final pUrl = data['pdfUrl'].toString().trim();
+                          final effectivePdfUrl = pUrl.startsWith('http') ? pUrl : '$baseUrl$pUrl';
 
-                        InAppDocumentViewer.show(
-                          context,
-                          title: 'Digital Prescription',
-                          category: 'Prescription',
-                          fileUrl: effectivePdfUrl,
-                          hospitalName: 'Yira Super Speciality Hospitals',
-                          isAppointmentDoc: true,
-                        );
-                      },
+                          InAppDocumentViewer.show(
+                            context,
+                            title: 'Digital Prescription',
+                            category: 'Prescription',
+                            fileUrl: effectivePdfUrl,
+                            hospitalName: 'Yira Super Speciality Hospitals',
+                            isAppointmentDoc: true,
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: 30),
                 ],
@@ -530,7 +538,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
     final String rawDosage = (med['dosage'] ?? '').toString();
     final String freq = (med['frequency'] ?? '').toString();
     final String instructions = (med['instructions'] ?? 'Take as directed by doctor').toString();
-    final String duration = (med['duration'] ?? '7 Days').toString();
     final String scheduleText = _cleanSchedule(rawDosage, freq);
 
     // Extract meal timing if mentioned
@@ -687,34 +694,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF8B5CF6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              if (duration.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0EA5E9).withValues(alpha: isDark ? 0.2 : 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF0EA5E9)),
-                      const SizedBox(width: 4.5),
-                      Text(
-                        duration,
-                        style: const TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0EA5E9),
                         ),
                       ),
                     ],

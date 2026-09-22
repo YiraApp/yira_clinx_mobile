@@ -371,6 +371,7 @@ class _AddPrescriptionRecordScreenState
                         currentFreq: item.frequency,
                         currentDuration: item.duration,
                         currentRoute: item.route,
+                        currentInstructions: item.instructions,
                         showRemove: medCount > 1,
                         onRemove: () {
                           context
@@ -417,6 +418,14 @@ class _AddPrescriptionRecordScreenState
                               .add(UpdateMedicationDetails(
                                 id: item.id,
                                 route: val,
+                              ));
+                        },
+                        onInstructionsChanged: (val) {
+                          context
+                              .read<PrescriptionBloc>()
+                              .add(UpdateMedicationDetails(
+                                id: item.id,
+                                instructions: val,
                               ));
                         },
                       );

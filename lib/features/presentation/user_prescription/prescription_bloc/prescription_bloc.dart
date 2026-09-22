@@ -141,14 +141,21 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                       final dosage = (m['Dosage'] ?? m['dosage'] ?? '').toString();
                       final freq = (m['FrequencyType'] ?? m['frequency'] ?? '').toString();
                       final inst = (m['Instructions'] ?? m['instructions'] ?? '').toString();
-                      final durVal = (m['DurationValue'] ?? m['durationValue'] ?? 7).toString();
-                      final durUnit = (m['DurationUnit'] ?? m['durationUnit'] ?? 'Days').toString();
+                      final rawDurVal = m['DurationValue'] ?? m['durationValue'];
+                      final rawDurUnit = (m['DurationUnit'] ?? m['durationUnit'] ?? '').toString().trim();
+                      String durationStr = '';
+                      if (rawDurVal != null && rawDurVal.toString().trim().isNotEmpty && rawDurVal.toString().trim() != '0') {
+                        final valStr = rawDurVal.toString().trim();
+                        durationStr = rawDurUnit.isNotEmpty ? "$valStr $rawDurUnit" : "$valStr Days";
+                      } else if (m['duration'] != null && m['duration'].toString().trim().isNotEmpty) {
+                        durationStr = m['duration'].toString().trim();
+                      }
                       medList.add({
                         "name": name,
                         "code": (m['ConceptId'] ?? m['conceptId'] ?? '').toString(),
                         "dosage": dosage.isNotEmpty ? "$dosage${freq.isNotEmpty ? ' - $freq' : ''}" : freq,
                         "instructions": inst.isNotEmpty ? inst : 'Take as directed by doctor',
-                        "duration": "$durVal $durUnit",
+                        "duration": durationStr,
                         "frequency": freq,
                         "needRefill": true,
                       });
