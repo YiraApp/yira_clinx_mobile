@@ -77,6 +77,12 @@
     <key>NSHealthUpdateUsageDescription</key>
     <string>Yira Health needs permission to log health metrics to Apple Health if requested.</string>
 
+    <!-- Location Permissions -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Yira Health needs access to your location to help you find nearby clinics, hospitals, and doctors.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Yira Health needs access to your location to help you find nearby clinics, hospitals, and doctors.</string>
+
     <key>UIApplicationSceneManifest</key>
     <dict>
        <key>UIApplicationSupportsMultipleScenes</key>

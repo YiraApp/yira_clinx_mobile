@@ -1,7 +1,9 @@
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/custom_dialogue/custom_dialogue.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -45,6 +47,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
   String _cachedFcmToken = '';
   bool _isOtpSheetOpen = false;
+  bool _acceptedTermsAndPrivacy = false;
+  bool _termsError = false;
 
   // Password criteria states
   bool _hasMinLength = false;
@@ -146,6 +150,17 @@ class _SignupScreenState extends State<SignupScreen> {
         isError: true,
       );
       _confirmPasswordFocus.requestFocus();
+      return;
+    }
+
+    if (!_acceptedTermsAndPrivacy) {
+      setState(() {
+        _termsError = true;
+      });
+      _showSnackBar(
+        "Please accept the Terms & Conditions and Privacy Policy to continue.",
+        isError: true,
+      );
       return;
     }
 
@@ -648,7 +663,12 @@ class _SignupScreenState extends State<SignupScreen> {
                                 _buildPasswordMatchIndicator(isDark),
                               ],
 
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
+
+                              // Terms & Conditions and Privacy Policy Consent Checkbox
+                              _buildTermsAndPrivacyCheckbox(isDark, isTab),
+
+                              const SizedBox(height: 20),
 
                               // Sign Up Action Button
                               isSubmitting
@@ -723,6 +743,139 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   // ── Helper Widgets ──
+
+  Widget _buildTermsAndPrivacyCheckbox(bool isDark, bool isTab) {
+    final bool hasError = _termsError && !_acceptedTermsAndPrivacy;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: _acceptedTermsAndPrivacy,
+                onChanged: (val) {
+                  setState(() {
+                    _acceptedTermsAndPrivacy = val ?? false;
+                    if (_acceptedTermsAndPrivacy) {
+                      _termsError = false;
+                    }
+                  });
+                },
+                activeColor: primaryColor,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                side: BorderSide(
+                  color: hasError
+                      ? Colors.redAccent.shade700
+                      : (isDark ? Colors.white38 : Colors.grey.shade400),
+                  width: hasError ? 2.0 : 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  text: 'By clicking Create Account, you accept our ',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 12 : 11,
+                    fontWeight: FontWeight.w400,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    height: 1.35,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: 'Terms & Conditions',
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          context.dismissKeyboard();
+                          CustomUrlDialog.customLauncherDialogue(
+                            context,
+                            'Terms & Conditions',
+                            'Review our terms and conditions, user agreement, and operational policies governing your access and usage of Yira Clinx platform.',
+                            primaryColor,
+                            'https://yira.ai/terms-and-conditions/',
+                            'More',
+                            'assets/images/ic_read_abt_us.png',
+                          );
+                        },
+                    ),
+                    TextSpan(
+                      text: ' and ',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Privacy Policy',
+                      style: const TextStyle(
+                        fontFamily: appPoppinFont,
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          context.dismissKeyboard();
+                          CustomUrlDialog.customLauncherDialogue(
+                            context,
+                            'Privacy Policy',
+                            'We prioritize your privacy and data security. Read our privacy policy to understand how your medical and personal data is collected, protected, and processed.',
+                            primaryColor,
+                            'https://yira.ai/privacy-policy/',
+                            'More',
+                            'assets/images/ic_privacy_plc.png',
+                          );
+                        },
+                    ),
+                    const TextSpan(text: '. '),
+                    const TextSpan(
+                      text: '*',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (hasError) ...[
+          const SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.only(left: 32),
+            child: Text(
+              'Please accept the Terms & Conditions and Privacy Policy to proceed',
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: 11,
+                color: Colors.redAccent.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
   Widget _buildSectionHeader(String title, IconData icon, bool isDark) {
     return Row(

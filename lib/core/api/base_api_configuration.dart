@@ -1,5 +1,5 @@
 class EnvironmentService {
-  static Environment _currentEnv = Environment.local;
+  static Environment _currentEnv = Environment.dev;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   // Local backend server URL for local development (matches local backend on port 5000)
