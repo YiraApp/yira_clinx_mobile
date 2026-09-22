@@ -5,8 +5,6 @@ import 'package:yiraclinics/features/presentation/prescriptions/prescription_blo
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/prescribed_medication_card.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../core/common_widgets/in_app_document_viewer.dart';
-import '../../../core/local/global_session.dart';
 import '../../../di/dependency_injection.dart';
 
 class AddPrescriptionRecordScreen extends StatefulWidget {
@@ -89,7 +87,6 @@ class _AddPrescriptionRecordScreenState
           }
           if (state.status == PrescriptionStatus.submitSuccess &&
               state.errorMessage == null) {
-            final pdfUrl = state.pdfUrl;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Row(
@@ -111,23 +108,6 @@ class _AddPrescriptionRecordScreenState
               ),
             );
             Navigator.pop(context, true);
-
-            if (pdfUrl != null && pdfUrl.isNotEmpty) {
-              final user = GlobalSession.instance.userNotifier.value?.data;
-              final docName = user != null
-                  ? '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim()
-                  : 'Consulting Doctor';
-
-              InAppDocumentViewer.show(
-                context,
-                title: 'Digital Prescription',
-                category: 'Prescription',
-                fileUrl: pdfUrl,
-                doctorName: docName.isNotEmpty ? docName : 'Consulting Doctor',
-                hospitalName: 'Yira Super Speciality Hospitals',
-                isAppointmentDoc: true,
-              );
-            }
           } else if (state.status == PrescriptionStatus.submitFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
