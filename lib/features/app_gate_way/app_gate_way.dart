@@ -95,6 +95,15 @@ class AppGateway extends StatelessWidget {
                           return;
                         }
 
+                        if (typeUpper == 'MEDICATION_REMINDER' ||
+                            targetRoute == '/prescriptions' ||
+                            targetRoute == AppRoutes.prescriptionListScreen) {
+                          NavigationService.navigatorKey.currentState?.pushNamed(
+                            AppRoutes.prescriptionListScreen,
+                          );
+                          return;
+                        }
+
                         if (targetRoute != null) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
                             targetRoute,

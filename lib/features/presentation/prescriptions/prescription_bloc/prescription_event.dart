@@ -48,6 +48,7 @@ class UpdateMedicationDetails extends PrescriptionEvent {
   final String? frequency;
   final String? duration;
   final String? route;
+  final String? instructions;
 
   const UpdateMedicationDetails({
     required this.id,
@@ -56,6 +57,7 @@ class UpdateMedicationDetails extends PrescriptionEvent {
     this.frequency,
     this.duration,
     this.route,
+    this.instructions,
   });
 }
 

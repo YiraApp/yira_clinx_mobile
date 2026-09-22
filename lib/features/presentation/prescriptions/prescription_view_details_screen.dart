@@ -239,11 +239,16 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                             onPressed: () {
                               final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                               final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                              final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
-                              final presId = state.prescriptionId ?? (validMeds.isNotEmpty ? validMeds.first.id : '');
-                              final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
-                                  ? state.pdfUrl!
-                                  : (presId.isNotEmpty ? '$baseUrl/v1/api/auth/prescriptions/$presId/pdf' : '');
+                              final String? directPdf = (state.pdfUrl != null && state.pdfUrl!.trim().isNotEmpty && state.pdfUrl!.trim().toLowerCase() != 'null')
+                                  ? state.pdfUrl!.trim()
+                                  : null;
+                              final String? presId = (state.prescriptionId != null && state.prescriptionId!.trim().isNotEmpty)
+                                  ? state.prescriptionId!.trim()
+                                  : (appointmentId != null && appointmentId!.trim().isNotEmpty ? appointmentId!.trim() : null);
+
+                              final effectivePdfUrl = directPdf != null
+                                  ? (directPdf.startsWith('http') ? directPdf : '$baseUrl$directPdf')
+                                  : (presId != null ? '$baseUrl/v1/api/auth/prescriptions/$presId/pdf' : '');
 
                               if (effectivePdfUrl.isNotEmpty) {
                                 InAppDocumentViewer.show(

@@ -81,18 +81,25 @@ class PrescriptionListScreen extends StatelessWidget {
           } else if (state is SinglePrescriptionDetailsNavState) {
             final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
             final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+            final String? directPdf = (state.pdfUrl != null && state.pdfUrl!.trim().isNotEmpty && state.pdfUrl!.trim().toLowerCase() != 'null')
+                ? state.pdfUrl!.trim()
+                : null;
             final presId = state.prescriptionId;
-            final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/$presId/pdf';
+            final effectivePdfUrl = directPdf != null
+                ? (directPdf.startsWith('http') ? directPdf : '$baseUrl$directPdf')
+                : (presId != null && presId.isNotEmpty ? '$baseUrl/v1/api/auth/prescriptions/$presId/pdf' : '');
             final patientName = patient?.name ?? '';
 
-            InAppDocumentViewer.show(
-              context,
-              title: patientName.isNotEmpty ? '$patientName - Prescription' : 'Digital Prescription',
-              category: 'Prescription',
-              fileUrl: effectivePdfUrl,
-              hospitalName: 'Yira Super Speciality Hospitals',
-              isAppointmentDoc: true,
-            );
+            if (effectivePdfUrl.isNotEmpty) {
+              InAppDocumentViewer.show(
+                context,
+                title: patientName.isNotEmpty ? '$patientName - Prescription' : 'Digital Prescription',
+                category: 'Prescription',
+                fileUrl: effectivePdfUrl,
+                hospitalName: 'Yira Super Speciality Hospitals',
+                isAppointmentDoc: true,
+              );
+            }
           }
         },
         builder: (context, state) {
@@ -118,8 +125,6 @@ class PrescriptionListScreen extends StatelessWidget {
                 ),
               );
             } else {
-              final firstMed = validMeds.first;
-
               bodyWidget = ListView(
                 padding: EdgeInsets.zero,
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -160,9 +165,26 @@ class PrescriptionListScreen extends StatelessWidget {
                     onView: () {
                       final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                       final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                      final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
-                          ? state.pdfUrl!
-                          : '$baseUrl/v1/api/auth/prescriptions/${firstMed.id}/pdf';
+                      final String? directPdf = (state.pdfUrl != null && state.pdfUrl!.trim().isNotEmpty && state.pdfUrl!.trim().toLowerCase() != 'null')
+                          ? state.pdfUrl!.trim()
+                          : null;
+                      final String? presId = (state.prescriptionId != null && state.prescriptionId!.trim().isNotEmpty)
+                          ? state.prescriptionId!.trim()
+                          : (appointmentId != null && appointmentId!.trim().isNotEmpty ? appointmentId!.trim() : null);
+
+                      if (directPdf == null && presId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Prescription document is still being processed.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final effectivePdfUrl = directPdf != null
+                          ? (directPdf.startsWith('http') ? directPdf : '$baseUrl$directPdf')
+                          : '$baseUrl/v1/api/auth/prescriptions/$presId/pdf';
                       final patientName = patient?.name ?? '';
 
                       InAppDocumentViewer.show(
@@ -177,9 +199,26 @@ class PrescriptionListScreen extends StatelessWidget {
                     onPdfView: () {
                       final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                       final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                      final effectivePdfUrl = (state.pdfUrl != null && state.pdfUrl!.isNotEmpty)
-                          ? state.pdfUrl!
-                          : '$baseUrl/v1/api/auth/prescriptions/${firstMed.id}/pdf';
+                      final String? directPdf = (state.pdfUrl != null && state.pdfUrl!.trim().isNotEmpty && state.pdfUrl!.trim().toLowerCase() != 'null')
+                          ? state.pdfUrl!.trim()
+                          : null;
+                      final String? presId = (state.prescriptionId != null && state.prescriptionId!.trim().isNotEmpty)
+                          ? state.prescriptionId!.trim()
+                          : (appointmentId != null && appointmentId!.trim().isNotEmpty ? appointmentId!.trim() : null);
+
+                      if (directPdf == null && presId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Prescription document is still being processed.'),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final effectivePdfUrl = directPdf != null
+                          ? (directPdf.startsWith('http') ? directPdf : '$baseUrl$directPdf')
+                          : '$baseUrl/v1/api/auth/prescriptions/$presId/pdf';
                       final patientName = patient?.name ?? '';
 
                       InAppDocumentViewer.show(

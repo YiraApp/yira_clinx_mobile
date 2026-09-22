@@ -18,12 +18,14 @@ class PrescribedPrescriptionCard extends StatefulWidget {
   final String? currentFreq;
   final String? currentDuration;
   final String? currentRoute;
+  final String? currentInstructions;
   final VoidCallback onRemove;
   final Function(String name, String? dosage, String? route) onDrugSelected;
   final Function(String?) onDosageChanged;
   final Function(String?) onFreqChanged;
   final Function(String?) onDurationChanged;
   final Function(String?) onRouteChanged;
+  final Function(String?)? onInstructionsChanged;
   final bool isTab;
   final bool showRemove;
 
@@ -35,12 +37,14 @@ class PrescribedPrescriptionCard extends StatefulWidget {
     this.currentFreq,
     this.currentDuration,
     this.currentRoute,
+    this.currentInstructions,
     required this.onRemove,
     required this.onDrugSelected,
     required this.onDosageChanged,
     required this.onFreqChanged,
     required this.onDurationChanged,
     required this.onRouteChanged,
+    this.onInstructionsChanged,
     required this.isTab,
     this.showRemove = true,
   });
@@ -54,6 +58,7 @@ class _PrescribedPrescriptionCardState
     extends State<PrescribedPrescriptionCard> {
   late TextEditingController _dosageController;
   late TextEditingController _durationController;
+  late TextEditingController _instructionsController;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
 
@@ -88,6 +93,8 @@ class _PrescribedPrescriptionCardState
     super.initState();
     _dosageController = TextEditingController(text: widget.currentDosage ?? '');
     _durationController = TextEditingController();
+    _instructionsController =
+        TextEditingController(text: widget.currentInstructions ?? '');
     _syncDurationState();
   }
 
@@ -121,12 +128,17 @@ class _PrescribedPrescriptionCardState
     if (oldWidget.currentDuration != widget.currentDuration) {
       _syncDurationState();
     }
+    if (oldWidget.currentInstructions != widget.currentInstructions &&
+        _instructionsController.text != (widget.currentInstructions ?? '')) {
+      _instructionsController.text = widget.currentInstructions ?? '';
+    }
   }
 
   @override
   void dispose() {
     _dosageController.dispose();
     _durationController.dispose();
+    _instructionsController.dispose();
     super.dispose();
   }
 
@@ -538,6 +550,29 @@ class _PrescribedPrescriptionCardState
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+
+                // 5. Note / Special Instructions (Optional)
+                _FieldLabel('Note (Instructions)', isDark, isRequired: false),
+                const SizedBox(height: 5),
+                TextField(
+                  controller: _instructionsController,
+                  onChanged: (val) => widget.onInstructionsChanged?.call(val),
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.done,
+                  maxLines: 2,
+                  minLines: 1,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 13 : 13,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                  decoration: _fieldDecoration(
+                    'e.g. Take after meals, with warm water (Optional)',
+                    isDark,
+                    theme,
+                  ),
                 ),
               ],
             ),

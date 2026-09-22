@@ -72,7 +72,13 @@ class PrescriptionCard extends StatelessWidget {
     }
   }
 
+  bool get _hasPdf =>
+      pdfUrl != null &&
+      pdfUrl!.trim().isNotEmpty &&
+      pdfUrl!.trim().toLowerCase() != 'null';
+
   void _openPdf(BuildContext context) {
+    if (!_hasPdf) return;
     final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
     final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
     final effectivePdfUrl = (pdfUrl != null && pdfUrl!.trim().isNotEmpty)
@@ -189,44 +195,46 @@ class PrescriptionCard extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 8),
+                    if (_hasPdf) ...[
+                      const SizedBox(width: 8),
 
-                    // PDF Document Action (Active status badge removed)
-                    InkWell(
-                      onTap: () => _openPdf(context),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(0xFF059669).withValues(alpha: 0.25),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.picture_as_pdf_rounded,
-                              size: 13,
-                              color: Color(0xFF059669),
+                      // PDF Document Action
+                      InkWell(
+                        onTap: () => _openPdf(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFF059669).withValues(alpha: 0.25),
+                              width: 0.8,
                             ),
-                            SizedBox(width: 4),
-                            Text(
-                              "PDF",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 13,
                                 color: Color(0xFF059669),
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 4),
+                              Text(
+                                "PDF",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF059669),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
 

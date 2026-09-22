@@ -12,6 +12,7 @@ import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 
 class MyFamilyCard extends StatefulWidget {
   final VoidCallback? onProfileSwitched;
@@ -31,7 +32,21 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
   @override
   void initState() {
     super.initState();
+    GlobalSession.instance.userNotifier.addListener(_onUserSessionChanged);
     _loadMemberImages();
+  }
+
+  @override
+  void dispose() {
+    GlobalSession.instance.userNotifier.removeListener(_onUserSessionChanged);
+    super.dispose();
+  }
+
+  void _onUserSessionChanged() {
+    _loadMemberImages();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadMemberImages() async {
@@ -126,7 +141,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
 
 
 
-  void _showAddMemberSheet(BuildContext context, bool isDark) {
+  Future<void> _showAddMemberSheet(bool isDark) async {
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
     final currentUser = GlobalSession.instance.userNotifier.value?.data;
@@ -144,7 +159,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
 
     final relations = const ['Spouse', 'Child', 'Son', 'Daughter', 'Father', 'Mother', 'Brother', 'Sister', 'Other'];
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -437,6 +452,82 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 14),
+
+                  // Primary Mobile Number (Autofilled & Blocked)
+                  Row(
+                    children: [
+                      Text(
+                        'Primary Mobile Number',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lock_rounded, size: 10, color: primaryColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Autofilled & Blocked',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: phoneController,
+                    readOnly: true,
+                    enabled: false,
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                      suffixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Dependents are automatically linked under your primary registered mobile number.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11,
+                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                    ),
+                  ),
                   const SizedBox(height: 22),
 
                   // Submit Button
@@ -571,11 +662,17 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                   );
                                 }
 
+                                try {
+                                  await sl<ConfigUseCase>().call(null);
+                                } catch (_) {}
+                                await _loadMemberImages();
+
                                 if (sheetCtx.mounted) {
                                   Navigator.pop(sheetCtx);
                                 }
                                 if (mounted) {
                                   setState(() {});
+<<<<<<< HEAD
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -585,6 +682,15 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                       ),
                                     );
                                   }
+=======
+                                  ScaffoldMessenger.of(this.context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('$fullName has been added to My Family!'),
+                                      backgroundColor: const Color(0xFF10B981),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+>>>>>>> 5f2cdadb8ffc67a7b739a3d07e474d17e4ef3b3a
                                 }
                               } catch (e) {
                                 setSheetState(() {
@@ -664,61 +770,69 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                      borderRadius: BorderRadius.circular(12),
+              InkWell(
+                onTap: () async {
+                  await Navigator.pushNamed(context, AppRoutes.patientMyFamily);
+                  await _loadMemberImages();
+                  if (mounted) setState(() {});
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.family_restroom_rounded, color: primaryColor, size: 20),
                     ),
-                    child: Icon(Icons.family_restroom_rounded, color: primaryColor, size: 20),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'My Family',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: isTab ? 17 : 15,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${familyProfiles.length}',
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'My Family',
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
-                                fontSize: 11,
+                                fontSize: isTab ? 17 : 15,
                                 fontWeight: FontWeight.bold,
-                                color: primaryColor,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        'Manage family members & dependents',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11,
-                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${familyProfiles.length}',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Text(
+                          'Manage family members & dependents',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11,
+                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -730,7 +844,11 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
                 ),
-                onPressed: () => _showAddMemberSheet(context, isDark),
+                onPressed: () async {
+                  await _showAddMemberSheet(isDark);
+                  await _loadMemberImages();
+                  if (mounted) setState(() {});
+                },
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: const Text(
                   'Add',
@@ -762,7 +880,11 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 // Last item is "+ Add Member" quick action card
                 if (index == familyProfiles.length) {
                   return InkWell(
-                    onTap: () => _showAddMemberSheet(context, isDark),
+                    onTap: () async {
+                      await _showAddMemberSheet(isDark);
+                      await _loadMemberImages();
+                      if (mounted) setState(() {});
+                    },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       width: 92,
@@ -831,7 +953,8 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 return InkWell(
                   onTap: () async {
                     await Navigator.pushNamed(context, AppRoutes.patientMyFamily);
-                    _loadMemberImages();
+                    await _loadMemberImages();
+                    if (mounted) setState(() {});
                   },
                   borderRadius: BorderRadius.circular(16),
                   child: AnimatedContainer(

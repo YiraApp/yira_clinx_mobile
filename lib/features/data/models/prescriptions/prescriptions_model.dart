@@ -73,6 +73,7 @@ class MedicationItemModel extends MedicationItem {
     super.frequency,
     super.duration,
     super.route,
+    super.instructions,
   });
 
   factory MedicationItemModel.fromJson(Map<String, dynamic> json) {
@@ -87,6 +88,7 @@ class MedicationItemModel extends MedicationItem {
     }
 
     final route = (json['route'] ?? json['Route'])?.toString();
+    final instructions = (json['instructions'] ?? json['Instructions'] ?? json['note'] ?? json['Note'])?.toString();
     final id = (json['id'] ?? json['Id'] ?? DateTime.now().millisecondsSinceEpoch.toString()).toString();
 
     return MedicationItemModel(
@@ -96,6 +98,7 @@ class MedicationItemModel extends MedicationItem {
       frequency: frequency,
       duration: duration,
       route: route,
+      instructions: instructions,
     );
   }
 
@@ -107,6 +110,7 @@ class MedicationItemModel extends MedicationItem {
       frequency: entity.frequency,
       duration: entity.duration,
       route: entity.route,
+      instructions: entity.instructions,
     );
   }
 
@@ -118,6 +122,7 @@ class MedicationItemModel extends MedicationItem {
       'frequency': frequency,
       'duration': duration,
       'route': route,
+      'instructions': instructions,
     };
   }
 }

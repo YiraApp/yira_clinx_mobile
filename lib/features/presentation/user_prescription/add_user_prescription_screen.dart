@@ -359,6 +359,8 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
         'specialty': _selectedSpecialty,
         'notes': _doctorNotesController.text.trim(),
         'createdAt': _consultationDate.toIso8601String(),
+        'isManual': true,
+        'isPatientManual': true,
         'diagnoses': [
           {'diagnosis': condition}
         ],

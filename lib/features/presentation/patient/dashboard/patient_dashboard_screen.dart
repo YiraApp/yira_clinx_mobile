@@ -652,10 +652,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   imagePath: 'assets/images/dashboard_icons/my_family_thick.png',
                                   isDark: isDark,
                                   isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientMyFamily,
-                                  ),
+                                  onTap: () async {
+                                    await Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.patientMyFamily,
+                                    );
+                                    if (mounted) setState(() {});
+                                  },
                                 ),
                               ],
                             ),

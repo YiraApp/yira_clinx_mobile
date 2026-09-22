@@ -104,17 +104,33 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     final u = (widget.fileUrl ?? '').trim();
     if (u.isEmpty) return '';
     String normalized = u;
+    final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+
     if (!normalized.startsWith('http://') && !normalized.startsWith('https://') && !normalized.contains('://')) {
-      normalized = 'https://$normalized';
+      if (normalized.startsWith('/')) {
+        normalized = '$baseUrl$normalized';
+      } else {
+        normalized = 'https://$normalized';
+      }
     }
-    // If an older database record has localhost or a local IP with port 5000, rewrite to QA URL
-    if (EnvironmentService.config.accountBaseUrl.startsWith('https://') &&
+    // If an older database record has localhost or a local IP with port 5000, rewrite to current backend base URL
+    if (baseUrl.startsWith('http') &&
         (normalized.contains('localhost:5000') ||
          normalized.contains('127.0.0.1:5000') ||
-         RegExp(r'192\.168\.\d+\.\d+:5000').hasMatch(normalized))) {
-      normalized = normalized.replaceAll(RegExp(r'https?://[^/]+'), EnvironmentService.config.accountBaseUrl);
+         RegExp(r'192\.168\.\d+\.\d+(:\d+)?').hasMatch(normalized))) {
+      normalized = normalized.replaceAll(RegExp(r'https?://[^/]+'), baseUrl);
     }
     return normalized;
+  }
+
+  bool _isCloudStorageUrl(String url) {
+    final uri = Uri.tryParse(url);
+    final host = uri?.host.toLowerCase() ?? '';
+    return host.contains('blob.core.windows.net') ||
+        host.contains('s3.amazonaws.com') ||
+        host.contains('storage.googleapis.com') ||
+        host.contains('azureedge.net');
   }
 
   bool get _isImage {
@@ -189,14 +205,27 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
         final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
         final dio = Dio(
           BaseOptions(
-            headers: {
-              if (token != null && token.isNotEmpty)
-                'Authorization': 'Bearer $token',
-            },
             connectTimeout: const Duration(seconds: 25),
             receiveTimeout: const Duration(seconds: 35),
             responseType: ResponseType.bytes,
             followRedirects: true,
+            maxRedirects: 5,
+          ),
+        );
+
+        // Crucial: Strip Authorization header when requesting or redirected to cloud storage (e.g. Azure Blob)
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              final isCloud = _isCloudStorageUrl(options.uri.toString());
+              if (isCloud) {
+                options.headers.remove('Authorization');
+                options.headers.remove('authorization');
+              } else if (token != null && token.isNotEmpty) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+              return handler.next(options);
+            },
           ),
         );
 
@@ -217,6 +246,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           setState(() {
             _documentBytes = bytes;
             _isLoading = false;
+            _pdfLoadFailed = false;
           });
           return;
         }
@@ -287,8 +317,25 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       }
       final savePath = '${dir.path}/$cleanTitle';
 
-      if (_hasRemoteUrl) {
+      if (_documentBytes != null && _documentBytes!.isNotEmpty) {
+        await File(savePath).writeAsBytes(_documentBytes!);
+      } else if (_hasRemoteUrl) {
+        final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
         final dio = Dio();
+        dio.interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              final isCloud = _isCloudStorageUrl(options.uri.toString());
+              if (isCloud) {
+                options.headers.remove('Authorization');
+                options.headers.remove('authorization');
+              } else if (token != null && token.isNotEmpty) {
+                options.headers['Authorization'] = 'Bearer $token';
+              }
+              return handler.next(options);
+            },
+          ),
+        );
         await dio.download(
           _effectiveUrl,
           savePath,
@@ -644,10 +691,11 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
 
     if (_hasRemoteUrl) {
       final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
+      final isCloud = _isCloudStorageUrl(_effectiveUrl);
       return SfPdfViewer.network(
         _effectiveUrl,
         headers: {
-          if (token != null && token.isNotEmpty)
+          if (!isCloud && token != null && token.isNotEmpty)
             'Authorization': 'Bearer $token',
         },
         controller: _pdfController,
@@ -708,27 +756,56 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: 220,
-                height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: _downloadDocument,
-                  icon: const Icon(Icons.file_download_outlined, size: 18),
-                  label: const Text(
-                    'Download File',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.bold,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _pdfLoadFailed = false;
+                        _isLoading = true;
+                        _downloadProgress = 0.0;
+                      });
+                      _loadDocumentData();
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text(
+                      'Retry Preview',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _primaryBlue,
+                      side: const BorderSide(color: _primaryBlue, width: 1.2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryBlue,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ElevatedButton.icon(
+                    onPressed: _downloadDocument,
+                    icon: const Icon(Icons.file_download_outlined, size: 18),
+                    label: const Text(
+                      'Download File',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryBlue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),

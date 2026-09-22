@@ -32,92 +32,129 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   bool _isRefetching = false;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     _loadMemberImages();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refetchFamilyApi();
+      _refreshFamilyData();
     });
   }
 
-  Future<void> _refetchFamilyApi() async {
-    if (_isRefetching) return;
-    if (mounted) setState(() => _isRefetching = true);
+  Future<void> _refreshFamilyData() async {
+    if (_isRefreshing) return;
+    if (mounted) setState(() => _isRefreshing = true);
+
     try {
-      final configUseCase = sl<ConfigUseCase>();
-      final freshData = await configUseCase(null);
-      if (freshData != null && freshData.data != null) {
-        final currentSession = GlobalSession.instance.userNotifier.value;
-        final currentProfiles = currentSession?.data?.profiles ?? [];
-        final freshProfiles = freshData.data?.profiles ?? [];
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+      final primaryPhone = (currentUser?.data?.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
 
-        final Map<String, ProfileEntity> map = {};
-        for (final p in currentProfiles) {
-          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
+      // 1. Fetch fresh user data from ConfigUseCase (getUserData endpoint)
+      if (sl.isRegistered<ConfigUseCase>()) {
+        final freshLogin = await sl<ConfigUseCase>().call(null);
+        if (freshLogin != null && freshLogin.data != null) {
+          await GlobalSession.instance.update(freshLogin);
         }
-        for (final p in freshProfiles) {
-          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
-        }
-
-        final mergedProfiles = map.values.toList();
-        int primaryIdx = mergedProfiles.indexWhere((p) {
-          final r = (p.relation ?? '').trim().toLowerCase();
-          final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
-          return p.isPrimary == true && !isFam;
-        });
-        if (primaryIdx > 0) {
-          final primary = mergedProfiles.removeAt(primaryIdx);
-          mergedProfiles.insert(0, primary);
-        }
-
-        final currentData = currentSession?.data;
-        final updatedData = DataModel(
-          accessToken: freshData.data?.accessToken ?? currentData?.accessToken,
-          refreshToken: freshData.data?.refreshToken ?? currentData?.refreshToken,
-          accessTokenExpiry: freshData.data?.accessTokenExpiry ?? currentData?.accessTokenExpiry,
-          refreshTokenExpiry: freshData.data?.refreshTokenExpiry ?? currentData?.refreshTokenExpiry,
-          id: currentData?.id ?? freshData.data?.id,
-          isMobileVerified: freshData.data?.isMobileVerified ?? currentData?.isMobileVerified,
-          isEmailVerified: freshData.data?.isEmailVerified ?? currentData?.isEmailVerified,
-          roleCount: freshData.data?.roleCount ?? currentData?.roleCount,
-          hospitalCount: freshData.data?.hospitalCount ?? currentData?.hospitalCount,
-          organizationCount: freshData.data?.organizationCount ?? currentData?.organizationCount,
-          roles: (freshData.data?.roles ?? currentData?.roles ?? []).map((r) => r is RoleModel ? r : RoleModel.fromEntity(r)).toList(),
-          profiles: mergedProfiles.map((p) => p is ProfileModel ? p : ProfileModel.fromEntity(p)).toList(),
-          firstName: currentData?.firstName ?? freshData.data?.firstName,
-          lastName: currentData?.lastName ?? freshData.data?.lastName,
-          email: currentData?.email ?? freshData.data?.email,
-          phoneNumber: currentData?.phoneNumber ?? freshData.data?.phoneNumber,
-          countryCode: currentData?.countryCode ?? freshData.data?.countryCode,
-          gender: currentData?.gender ?? freshData.data?.gender,
-          dob: currentData?.dob ?? freshData.data?.dob,
-          height: freshData.data?.height ?? currentData?.height,
-          weight: freshData.data?.weight ?? currentData?.weight,
-          heightUnit: freshData.data?.heightUnit ?? currentData?.heightUnit,
-          weightUnit: freshData.data?.weightUnit ?? currentData?.weightUnit,
-          latestUserRole: currentData?.latestUserRole ?? freshData.data?.latestUserRole,
-          latestHospitalId: currentData?.latestHospitalId ?? freshData.data?.latestHospitalId,
-          latestOrgId: currentData?.latestOrgId ?? freshData.data?.latestOrgId,
-          latestRoleId: currentData?.latestRoleId ?? freshData.data?.latestRoleId,
-          navigationId: currentData?.navigationId ?? freshData.data?.navigationId,
-          imagePath: currentData?.imagePath ?? freshData.data?.imagePath,
-        );
-
-        final newLogin = LoginModel(
-          status: freshData.status ?? currentSession?.status,
-          message: freshData.message ?? currentSession?.message,
-          data: updatedData,
-        );
-
-        await GlobalSession.instance.update(newLogin);
-        await _loadMemberImages();
       }
+
+      // 2. Query all matching accounts/dependents by primary phone from backend
+      if (primaryPhone.isNotEmpty && token.isNotEmpty) {
+        try {
+          final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            URLs.patientAccountsByPhoneUrl,
+            data: {"phone": primaryPhone},
+            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          );
+
+          if (res.data != null && res.data['data'] is List) {
+            final list = res.data['data'] as List;
+            final currentSession = GlobalSession.instance.userNotifier.value;
+            final currentProfiles = List<ProfileEntity>.from(currentSession?.data?.profiles ?? []);
+
+            bool hasNewProfiles = false;
+            for (final item in list) {
+              final itemUserId = (item['id'] ?? item['userId'] ?? '').toString().trim();
+              if (itemUserId.isNotEmpty && !currentProfiles.any((p) => (p.id ?? '').trim() == itemUserId)) {
+                final fName = (item['firstName'] ?? '').toString().trim();
+                final lName = (item['lastName'] ?? '').toString().trim();
+                final depName = '$fName $lName'.trim();
+                final rel = (item['relation'] ?? 'Dependent').toString().trim();
+
+                currentProfiles.add(
+                  ProfileEntity(
+                    id: itemUserId,
+                    name: depName.isNotEmpty ? depName : 'Family Member',
+                    firstName: fName,
+                    lastName: lName,
+                    phoneNumber: (item['phoneNumber'] ?? primaryPhone).toString(),
+                    relation: rel.isNotEmpty ? rel : 'Dependent',
+                    gender: (item['gender'] ?? 'Other').toString(),
+                    dob: item['dob']?.toString(),
+                    isPrimary: item['isPrimary'] == true,
+                    accountType: 'Dependent',
+                  ),
+                );
+                hasNewProfiles = true;
+              }
+            }
+
+            if (hasNewProfiles && currentSession?.data != null) {
+              final oldData = currentSession!.data!;
+              final updatedData = DataEntity(
+                id: oldData.id,
+                accessToken: oldData.accessToken,
+                refreshToken: oldData.refreshToken,
+                accessTokenExpiry: oldData.accessTokenExpiry,
+                refreshTokenExpiry: oldData.refreshTokenExpiry,
+                isMobileVerified: oldData.isMobileVerified,
+                isEmailVerified: oldData.isEmailVerified,
+                roleCount: oldData.roleCount,
+                hospitalCount: oldData.hospitalCount,
+                organizationCount: oldData.organizationCount,
+                roles: oldData.roles,
+                firstName: oldData.firstName,
+                lastName: oldData.lastName,
+                email: oldData.email,
+                phoneNumber: oldData.phoneNumber,
+                countryCode: oldData.countryCode,
+                gender: oldData.gender,
+                dob: oldData.dob,
+                height: oldData.height,
+                weight: oldData.weight,
+                heightUnit: oldData.heightUnit,
+                weightUnit: oldData.weightUnit,
+                latestUserRole: oldData.latestUserRole,
+                latestOrgId: oldData.latestOrgId,
+                latestHospitalId: oldData.latestHospitalId,
+                latestRoleId: oldData.latestRoleId,
+                navigationId: oldData.navigationId,
+                imagePath: oldData.imagePath,
+                profiles: currentProfiles,
+              );
+              await GlobalSession.instance.update(
+                LoginEntity(
+                  status: currentSession.status,
+                  message: currentSession.message,
+                  data: updatedData,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint("[PatientMyFamily] Error syncing patient accounts by phone: $e");
+        }
+      }
+
+      await _loadMemberImages();
     } catch (e) {
-      debugPrint("Error refetching family API: $e");
+      debugPrint("[PatientMyFamily] Error refreshing family: $e");
     } finally {
-      if (mounted) setState(() => _isRefetching = false);
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
     }
   }
 
@@ -488,8 +525,11 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   }
 
   void _showAddMemberSheet(BuildContext context, bool isDark) {
+    final currentSession = GlobalSession.instance.userNotifier.value;
+    final primaryMobileNumber = (currentSession?.data?.phoneNumber ?? '').trim();
+
     final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController(text: primaryMobileNumber);
     final dobCtrl = TextEditingController();
     String selectedRelation = 'Spouse';
     String selectedGender = 'Female';
@@ -798,29 +838,73 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                             ),
                             const SizedBox(height: 14),
 
-                            // Phone Number
-                            Text(
-                              'Phone Number (Optional)',
-                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: textColor),
+                            // Primary Mobile Number (Autofilled & Blocked)
+                            Row(
+                              children: [
+                                Text(
+                                  'Primary Mobile Number',
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: textColor),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                  decoration: BoxDecoration(
+                                    color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.lock_rounded, size: 10, color: _primaryBlue),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Autofilled & Blocked',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: _primaryBlue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 6),
                             TextField(
                               controller: phoneCtrl,
-                              keyboardType: TextInputType.phone,
+                              readOnly: true,
+                              enabled: false,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              ),
                               decoration: InputDecoration(
-                                hintText: 'e.g. +91 9876543210',
-                                hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white38 : Colors.grey[400]),
+                                prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                                suffixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+                                fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                disabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Dependents are automatically linked under your primary registered mobile number.',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 11,
+                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                               ),
                             ),
                             const SizedBox(height: 22),
@@ -949,6 +1033,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                           if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                                           if (mounted) {
                                             setState(() {});
+                                            _refreshFamilyData();
                                             ScaffoldMessenger.of(this.context).showSnackBar(
                                               SnackBar(
                                                 content: Text('$fullName has been added to My Family!'),
@@ -1162,6 +1247,24 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Refresh Family',
+            icon: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: _isRefreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: _primaryBlue),
+                    )
+                  : const Icon(Icons.refresh_rounded, color: _primaryBlue, size: 18),
+            ),
+            onPressed: _isRefreshing ? null : _refreshFamilyData,
+          ),
+          IconButton(
             tooltip: 'Add Family Member',
             icon: Container(
               padding: const EdgeInsets.all(7),
@@ -1240,16 +1343,16 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             // 2. Members List
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _refetchFamilyApi,
+                onRefresh: _refreshFamilyData,
                 color: _primaryBlue,
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: screenHorizontalSpacePadding,
-                  vertical: 8,
-                ),
-                itemCount: filteredProfiles.length,
-                itemBuilder: (context, index) {
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: screenHorizontalSpacePadding,
+                    vertical: 8,
+                  ),
+                  itemCount: filteredProfiles.length,
+                  itemBuilder: (context, index) {
                   final profile = filteredProfiles[index];
                   final pId = (profile.id ?? '').trim();
                   final bool isPrimary = (profile.isPrimary == true);
@@ -1503,7 +1606,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
               ),
             ),
           ),
-        ],
+          ],
         ),
       ),
     );
