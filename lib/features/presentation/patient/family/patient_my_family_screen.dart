@@ -13,7 +13,9 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
+import 'package:yiraclinics/features/data/models/login/login_model.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
+import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
 
 class PatientMyFamilyScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   final Map<String, String> _memberImages = {};
   final ImagePicker _picker = ImagePicker();
   String _searchQuery = '';
+  bool _isRefetching = false;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
 
@@ -34,6 +37,88 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   void initState() {
     super.initState();
     _loadMemberImages();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refetchFamilyApi();
+    });
+  }
+
+  Future<void> _refetchFamilyApi() async {
+    if (_isRefetching) return;
+    if (mounted) setState(() => _isRefetching = true);
+    try {
+      final configUseCase = sl<ConfigUseCase>();
+      final freshData = await configUseCase(null);
+      if (freshData != null && freshData.data != null) {
+        final currentSession = GlobalSession.instance.userNotifier.value;
+        final currentProfiles = currentSession?.data?.profiles ?? [];
+        final freshProfiles = freshData.data?.profiles ?? [];
+
+        final Map<String, ProfileEntity> map = {};
+        for (final p in currentProfiles) {
+          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
+        }
+        for (final p in freshProfiles) {
+          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
+        }
+
+        final mergedProfiles = map.values.toList();
+        int primaryIdx = mergedProfiles.indexWhere((p) {
+          final r = (p.relation ?? '').trim().toLowerCase();
+          final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+          return p.isPrimary == true && !isFam;
+        });
+        if (primaryIdx > 0) {
+          final primary = mergedProfiles.removeAt(primaryIdx);
+          mergedProfiles.insert(0, primary);
+        }
+
+        final currentData = currentSession?.data;
+        final updatedData = DataModel(
+          accessToken: freshData.data?.accessToken ?? currentData?.accessToken,
+          refreshToken: freshData.data?.refreshToken ?? currentData?.refreshToken,
+          accessTokenExpiry: freshData.data?.accessTokenExpiry ?? currentData?.accessTokenExpiry,
+          refreshTokenExpiry: freshData.data?.refreshTokenExpiry ?? currentData?.refreshTokenExpiry,
+          id: currentData?.id ?? freshData.data?.id,
+          isMobileVerified: freshData.data?.isMobileVerified ?? currentData?.isMobileVerified,
+          isEmailVerified: freshData.data?.isEmailVerified ?? currentData?.isEmailVerified,
+          roleCount: freshData.data?.roleCount ?? currentData?.roleCount,
+          hospitalCount: freshData.data?.hospitalCount ?? currentData?.hospitalCount,
+          organizationCount: freshData.data?.organizationCount ?? currentData?.organizationCount,
+          roles: (freshData.data?.roles ?? currentData?.roles ?? []).map((r) => r is RoleModel ? r : RoleModel.fromEntity(r)).toList(),
+          profiles: mergedProfiles.map((p) => p is ProfileModel ? p : ProfileModel.fromEntity(p)).toList(),
+          firstName: currentData?.firstName ?? freshData.data?.firstName,
+          lastName: currentData?.lastName ?? freshData.data?.lastName,
+          email: currentData?.email ?? freshData.data?.email,
+          phoneNumber: currentData?.phoneNumber ?? freshData.data?.phoneNumber,
+          countryCode: currentData?.countryCode ?? freshData.data?.countryCode,
+          gender: currentData?.gender ?? freshData.data?.gender,
+          dob: currentData?.dob ?? freshData.data?.dob,
+          height: freshData.data?.height ?? currentData?.height,
+          weight: freshData.data?.weight ?? currentData?.weight,
+          heightUnit: freshData.data?.heightUnit ?? currentData?.heightUnit,
+          weightUnit: freshData.data?.weightUnit ?? currentData?.weightUnit,
+          latestUserRole: currentData?.latestUserRole ?? freshData.data?.latestUserRole,
+          latestHospitalId: currentData?.latestHospitalId ?? freshData.data?.latestHospitalId,
+          latestOrgId: currentData?.latestOrgId ?? freshData.data?.latestOrgId,
+          latestRoleId: currentData?.latestRoleId ?? freshData.data?.latestRoleId,
+          navigationId: currentData?.navigationId ?? freshData.data?.navigationId,
+          imagePath: currentData?.imagePath ?? freshData.data?.imagePath,
+        );
+
+        final newLogin = LoginModel(
+          status: freshData.status ?? currentSession?.status,
+          message: freshData.message ?? currentSession?.message,
+          data: updatedData,
+        );
+
+        await GlobalSession.instance.update(newLogin);
+        await _loadMemberImages();
+      }
+    } catch (e) {
+      debugPrint("Error refetching family API: $e");
+    } finally {
+      if (mounted) setState(() => _isRefetching = false);
+    }
   }
 
   Future<void> _loadMemberImages() async {
@@ -44,7 +129,8 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       for (final p in profiles) {
         final pId = (p.id ?? '').trim();
         if (pId.isNotEmpty) {
-          final path = prefs.getString('patient_profile_image_$pId') ??
+          final path = prefs.getString('patient_profile_network_image_$pId') ??
+              prefs.getString('patient_profile_image_$pId') ??
               prefs.getString('profile_image_$pId') ??
               p.imagePath;
           if (path != null && path.isNotEmpty) {
@@ -65,38 +151,65 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final List<ProfileEntity> raw = [...(currentUser?.data?.profiles ?? [])];
 
-    if (raw.isEmpty && currentUser?.data != null) {
-      final d = currentUser!.data!;
-      raw.add(
-        ProfileEntity(
-          id: d.id,
-          firstName: d.firstName,
-          lastName: d.lastName,
-          name: '${d.firstName ?? ''} ${d.lastName ?? ''}'.trim().isNotEmpty
-              ? '${d.firstName ?? ''} ${d.lastName ?? ''}'.trim()
-              : 'Primary Account',
-          phoneNumber: d.phoneNumber,
-          relation: 'Self',
-          isPrimary: true,
-          gender: d.gender,
-          dob: d.dob,
-          accountType: 'Independent',
-        ),
-      );
+    // Deduplicate profiles by unique ID
+    final Map<String, ProfileEntity> map = {};
+    for (final p in raw) {
+      if (p.id != null && p.id!.isNotEmpty) {
+        map[p.id!] = p;
+      }
+    }
+    List<ProfileEntity> unique = map.values.toList();
+
+    // Identify the true root primary user ID
+    final rootPrimaryGuid = GlobalSession.instance.rootPrimaryUserId;
+
+    int primaryIdx = -1;
+    if (rootPrimaryGuid != null && rootPrimaryGuid.isNotEmpty) {
+      primaryIdx = unique.indexWhere((p) => p.id == rootPrimaryGuid);
+    }
+    if (primaryIdx == -1) {
+      primaryIdx = unique.indexWhere((p) {
+        final r = (p.relation ?? '').trim().toLowerCase();
+        final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+        return p.isPrimary == true && !isFam;
+      });
+    }
+    if (primaryIdx == -1 && unique.isNotEmpty) {
+      primaryIdx = 0;
     }
 
-    // Ensure primary profile is first
-    int primaryIdx = raw.indexWhere((p) {
-      final r = (p.relation ?? '').trim().toLowerCase();
-      final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
-      return p.isPrimary == true && !isFam;
-    });
     if (primaryIdx > 0) {
-      final primary = raw.removeAt(primaryIdx);
-      raw.insert(0, primary);
+      final primary = unique.removeAt(primaryIdx);
+      unique.insert(0, primary);
     }
 
-    return raw;
+    // Ensure ONLY index 0 is marked isPrimary == true, all others are strictly isPrimary == false
+    final List<ProfileEntity> sanitized = [];
+    for (int i = 0; i < unique.length; i++) {
+      final p = unique[i];
+      final bool isRootPrimary = (i == 0);
+      final rawRel = (p.relation ?? '').trim();
+      final bool hasFamilyRel = rawRel.isNotEmpty &&
+          rawRel.toLowerCase() != 'self' &&
+          rawRel.toLowerCase() != 'primary' &&
+          rawRel.toLowerCase() != 'admin';
+
+      sanitized.add(ProfileEntity(
+        id: p.id,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        name: p.name,
+        phoneNumber: p.phoneNumber,
+        relation: isRootPrimary ? 'Self' : (hasFamilyRel ? rawRel : 'Dependent'),
+        isPrimary: isRootPrimary,
+        gender: p.gender,
+        dob: p.dob,
+        accountType: isRootPrimary ? 'Independent' : 'Dependent',
+        imagePath: p.imagePath,
+      ));
+    }
+
+    return sanitized;
   }
 
 
@@ -112,6 +225,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       }
       final XFile? picked = await _picker.pickImage(source: source, imageQuality: 85);
       if (picked != null) {
+        final file = File(picked.path);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('patient_profile_image_$profileId', picked.path);
         await prefs.setString('profile_image_$profileId', picked.path);
@@ -119,6 +233,116 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         setState(() {
           _memberImages[profileId] = picked.path;
         });
+
+        // Upload photo to backend database
+        try {
+          final currentUser = GlobalSession.instance.userNotifier.value;
+          final token = currentUser?.data?.accessToken ?? '';
+          final fileName = file.path.split(RegExp(r'[/\\]')).last;
+
+          final formData = FormData.fromMap({
+            "userId": profileId,
+            "patientId": profileId,
+            "doctorId": profileId,
+            "photo": await MultipartFile.fromFile(
+              file.path,
+              filename: fileName,
+            ),
+          });
+
+          final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            URLs.providerProfileUploadPhotoUrl,
+            data: formData,
+            options: Options(
+              headers: {
+                if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+                'x-user-id': profileId,
+              },
+            ),
+          );
+
+          if (response.data != null && response.data['data'] != null) {
+            final data = response.data['data'];
+            final photoUrl = data['photoUrl']?.toString() ??
+                data['imagePath']?.toString() ??
+                data['profileImageUrl']?.toString() ??
+                '';
+            if (photoUrl.isNotEmpty) {
+              await prefs.setString('patient_profile_network_image_$profileId', photoUrl);
+              if (mounted) {
+                setState(() {
+                  _memberImages[profileId] = photoUrl;
+                });
+              }
+
+              // Also update GlobalSession profiles list
+              final currentSession = GlobalSession.instance.userNotifier.value;
+              if (currentSession?.data != null) {
+                final isPrimary = profileId == currentSession!.data!.id;
+                final updatedProfiles = (currentSession.data!.profiles ?? []).map((p) {
+                  if (p.id == profileId) {
+                    return ProfileModel(
+                      id: p.id,
+                      firstName: p.firstName,
+                      lastName: p.lastName,
+                      name: p.name,
+                      phoneNumber: p.phoneNumber,
+                      relation: p.relation,
+                      isPrimary: p.isPrimary,
+                      gender: p.gender,
+                      dob: p.dob,
+                      accountType: p.accountType,
+                      imagePath: photoUrl,
+                    );
+                  }
+                  return p is ProfileModel ? p : ProfileModel.fromEntity(p);
+                }).toList();
+
+                final currentData = currentSession.data!;
+                final updatedData = DataModel(
+                  accessToken: currentData.accessToken,
+                  refreshToken: currentData.refreshToken,
+                  accessTokenExpiry: currentData.accessTokenExpiry,
+                  refreshTokenExpiry: currentData.refreshTokenExpiry,
+                  id: currentData.id,
+                  isMobileVerified: currentData.isMobileVerified,
+                  isEmailVerified: currentData.isEmailVerified,
+                  roleCount: currentData.roleCount,
+                  hospitalCount: currentData.hospitalCount,
+                  organizationCount: currentData.organizationCount,
+                  roles: (currentData.roles ?? []).map((r) => r is RoleModel ? r : RoleModel.fromEntity(r)).toList(),
+                  profiles: updatedProfiles,
+                  firstName: currentData.firstName,
+                  lastName: currentData.lastName,
+                  email: currentData.email,
+                  phoneNumber: currentData.phoneNumber,
+                  countryCode: currentData.countryCode,
+                  gender: currentData.gender,
+                  dob: currentData.dob,
+                  height: currentData.height,
+                  weight: currentData.weight,
+                  heightUnit: currentData.heightUnit,
+                  weightUnit: currentData.weightUnit,
+                  latestUserRole: currentData.latestUserRole,
+                  latestHospitalId: currentData.latestHospitalId,
+                  latestOrgId: currentData.latestOrgId,
+                  latestRoleId: currentData.latestRoleId,
+                  navigationId: currentData.navigationId,
+                  imagePath: isPrimary ? photoUrl : currentData.imagePath,
+                );
+
+                final newModel = LoginModel(
+                  status: currentSession.status,
+                  message: currentSession.message,
+                  data: updatedData,
+                );
+                await GlobalSession.instance.update(newModel);
+              }
+            }
+          }
+        } catch (uploadErr) {
+          debugPrint("Backend member photo upload error: $uploadErr");
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -805,7 +1029,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             width: size,
             height: size,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildInitialsChild(initials, size, isDark),
+            errorBuilder: (_, _, _) => _buildInitialsChild(initials, size, isDark),
           );
         } catch (_) {
           avatarContent = _buildInitialsChild(initials, size, isDark);
@@ -816,7 +1040,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildInitialsChild(initials, size, isDark),
+          errorBuilder: (_, _, _) => _buildInitialsChild(initials, size, isDark),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return _buildInitialsChild(initials, size, isDark);
@@ -828,7 +1052,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildInitialsChild(initials, size, isDark),
+          errorBuilder: (_, _, _) => _buildInitialsChild(initials, size, isDark),
         );
       }
     } else {
@@ -1006,10 +1230,20 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 ),
               ),
 
+            if (_isRefetching)
+              const LinearProgressIndicator(
+                minHeight: 2.5,
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation<Color>(_primaryBlue),
+              ),
+
             // 2. Members List
             Expanded(
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
+              child: RefreshIndicator(
+                onRefresh: _refetchFamilyApi,
+                color: _primaryBlue,
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
                   horizontal: screenHorizontalSpacePadding,
                   vertical: 8,
@@ -1018,13 +1252,13 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 itemBuilder: (context, index) {
                   final profile = filteredProfiles[index];
                   final pId = (profile.id ?? '').trim();
-
+                  final bool isPrimary = (profile.isPrimary == true);
                   final rawRel = (profile.relation ?? '').trim();
                   final bool isFam = rawRel.isNotEmpty &&
                       rawRel.toLowerCase() != 'self' &&
                       rawRel.toLowerCase() != 'primary' &&
                       rawRel.toLowerCase() != 'admin';
-                  final String relation = isFam ? rawRel : ((profile.isPrimary == true) ? 'Primary (Self)' : 'Dependent');
+                  final String relation = isPrimary ? 'Primary User' : (isFam ? rawRel : 'Dependent');
 
                   final pName = (profile.name?.isNotEmpty ?? false)
                       ? profile.name!
@@ -1098,57 +1332,52 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Wrap(
-                                    crossAxisAlignment: WrapCrossAlignment.center,
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          relation,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                          ),
+                                  // Member Badge (Exactly ONE tag per member)
+                                  if (isPrimary)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                          width: 0.8,
                                         ),
                                       ),
-                                      if (profile.isPrimary == true || !isFam)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1),
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(
-                                              color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                                              width: 0.8,
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.verified_user_rounded, size: 10, color: Color(0xFF10B981)),
+                                          SizedBox(width: 3.5),
+                                          Text(
+                                            'Primary User',
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF10B981),
                                             ),
                                           ),
-                                          child: const Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(Icons.verified_user_rounded, size: 10, color: Color(0xFF10B981)),
-                                              SizedBox(width: 3.5),
-                                              Text(
-                                                'Primary User',
-                                                style: TextStyle(
-                                                  fontFamily: appPoppinFont,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF10B981),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        relation,
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white70 : const Color(0xFF475569),
                                         ),
-                                    ],
-                                  ),
+                                      ),
+                                    ),
                                   if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty) ...[
                                     const SizedBox(height: 4),
                                     Row(
@@ -1273,7 +1502,8 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 },
               ),
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );

@@ -115,6 +115,7 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
             gender: p.gender,
             dob: p.dob,
             accountType: isRealPrimary ? 'Independent' : 'Dependent',
+            imagePath: p.imagePath,
           );
         }).toList();
 
@@ -166,6 +167,7 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
           heightUnit: result.data?.heightUnit ?? currentSessionData?.heightUnit,
           weightUnit: result.data?.weightUnit ?? currentSessionData?.weightUnit,
           navigationId: result.data?.navigationId ?? currentSessionData?.navigationId,
+          imagePath: result.data?.imagePath ?? currentSessionData?.imagePath,
         );
 
         final updatedLoginResult = LoginEntity(

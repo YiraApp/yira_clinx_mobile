@@ -49,6 +49,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isOtpSheetOpen = false;
   bool _acceptedTermsAndPrivacy = false;
   bool _termsError = false;
+  bool _autoValidate = false;
 
   // Password criteria states
   bool _hasMinLength = false;
@@ -131,7 +132,16 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _onSignUpPressed() {
     context.dismissKeyboard();
+
+    setState(() {
+      _autoValidate = true;
+      if (!_acceptedTermsAndPrivacy) {
+        _termsError = true;
+      }
+    });
+
     if (!_formKey.currentState!.validate()) {
+      _showSnackBar("Please fill all required fields correctly.", isError: true);
       return;
     }
 
@@ -154,9 +164,6 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (!_acceptedTermsAndPrivacy) {
-      setState(() {
-        _termsError = true;
-      });
       _showSnackBar(
         "Please accept the Terms & Conditions and Privacy Policy to continue.",
         isError: true,
@@ -501,6 +508,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         child: Form(
                           key: _formKey,
+                          autovalidateMode: _autoValidate
+                              ? AutovalidateMode.onUserInteraction
+                              : AutovalidateMode.disabled,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -655,6 +665,15 @@ class _SignupScreenState extends State<SignupScreen> {
                                 isDark: isDark,
                                 onToggleVisibility: () =>
                                     setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                validator: (val) {
+                                  if (val == null || val.isEmpty) {
+                                    return 'Please confirm your password';
+                                  }
+                                  if (val != _passwordController.text) {
+                                    return 'Passwords do not match';
+                                  }
+                                  return null;
+                                },
                               ),
 
                               // Confirm Password Match Indicator
@@ -858,21 +877,6 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ],
         ),
-        if (hasError) ...[
-          const SizedBox(height: 5),
-          Padding(
-            padding: const EdgeInsets.only(left: 32),
-            child: Text(
-              'Please accept the Terms & Conditions and Privacy Policy to proceed',
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                color: Colors.redAccent.shade700,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -959,9 +963,9 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: InputDecoration(
         errorText: errorText,
         errorStyle: const TextStyle(
-          fontFamily: appPoppinFont,
-          fontSize: 11,
-          color: Colors.redAccent,
+          fontSize: 0,
+          height: 0,
+          color: Colors.transparent,
         ),
         hintText: hintText,
         hintStyle: TextStyle(
@@ -995,7 +999,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1062,6 +1066,11 @@ class _SignupScreenState extends State<SignupScreen> {
             context.read<LoginBloc>().add(OnCountryCodeChanged(_selectedCountryCode));
           },
         ),
+        errorStyle: const TextStyle(
+          fontSize: 0,
+          height: 0,
+          color: Colors.transparent,
+        ),
         filled: true,
         fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF9FAFC),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
@@ -1083,7 +1092,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade600, width: 1.5),
         ),
       ),
     );
@@ -1098,6 +1111,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required VoidCallback onToggleVisibility,
     required bool isDark,
     TextInputAction textInputAction = TextInputAction.next,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -1116,13 +1130,19 @@ class _SignupScreenState extends State<SignupScreen> {
         fontSize: 13,
         color: isDark ? Colors.white : Colors.black87,
       ),
-      validator: (val) {
-        if (val == null || val.isEmpty) {
-          return 'Password is required';
-        }
-        return null;
-      },
+      validator: validator ??
+          (val) {
+            if (val == null || val.isEmpty) {
+              return 'Password is required';
+            }
+            return null;
+          },
       decoration: InputDecoration(
+        errorStyle: const TextStyle(
+          fontSize: 0,
+          height: 0,
+          color: Colors.transparent,
+        ),
         hintText: hintText,
         hintStyle: TextStyle(
           fontFamily: appPoppinFont,
@@ -1163,7 +1183,11 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade600, width: 1.5),
         ),
       ),
     );

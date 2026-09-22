@@ -7,6 +7,8 @@ import 'package:yiraclinics/features/domain/use_cases/provider_profile/get_provi
 import 'package:yiraclinics/features/domain/use_cases/provider_profile/update_provider_profile_use_case.dart';
 import 'package:yiraclinics/features/domain/use_cases/provider_profile/upload_provider_photo_use_case.dart';
 
+import 'package:yiraclinics/features/data/models/login/login_model.dart';
+
 part 'provider_profile_event.dart';
 part 'provider_profile_state.dart';
 
@@ -24,6 +26,84 @@ class ProviderProfileBloc extends Bloc<ProviderProfileEvent, ProviderProfileStat
     on<RefreshProviderProfileEvent>(_onRefreshProviderProfile);
     on<UpdateDoctorProfileEvent>(_onUpdateDoctorProfile);
     on<UploadDoctorPhotoEvent>(_onUploadDoctorPhoto);
+  }
+
+  Future<void> _syncDoctorToGlobalSession({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? phoneNumber,
+    String? gender,
+    String? dob,
+    String? imagePath,
+    int? hospitalId,
+    int? orgId,
+  }) async {
+    try {
+      final currentSession = GlobalSession.instance.userNotifier.value;
+      if (currentSession?.data != null) {
+        final currentData = currentSession!.data!;
+        final effectiveImage = imagePath ?? currentData.imagePath;
+
+        final updatedProfiles = (currentData.profiles ?? []).map((p) {
+          if (p.isPrimary == true || p.id == currentData.id) {
+            return ProfileModel(
+              id: p.id,
+              firstName: firstName ?? p.firstName,
+              lastName: lastName ?? p.lastName,
+              name: '${firstName ?? p.firstName ?? ''} ${lastName ?? p.lastName ?? ''}'.trim(),
+              phoneNumber: phoneNumber ?? p.phoneNumber,
+              relation: p.relation,
+              isPrimary: p.isPrimary,
+              gender: gender ?? p.gender,
+              dob: dob ?? p.dob,
+              accountType: p.accountType,
+              imagePath: effectiveImage,
+            );
+          }
+          return p is ProfileModel ? p : ProfileModel.fromEntity(p);
+        }).toList();
+
+        final updatedData = DataModel(
+          accessToken: currentData.accessToken,
+          refreshToken: currentData.refreshToken,
+          accessTokenExpiry: currentData.accessTokenExpiry,
+          refreshTokenExpiry: currentData.refreshTokenExpiry,
+          id: currentData.id,
+          isMobileVerified: currentData.isMobileVerified,
+          isEmailVerified: currentData.isEmailVerified,
+          roleCount: currentData.roleCount,
+          hospitalCount: currentData.hospitalCount,
+          organizationCount: currentData.organizationCount,
+          roles: (currentData.roles ?? []).map((r) => r is RoleModel ? r : RoleModel.fromEntity(r)).toList(),
+          profiles: updatedProfiles,
+          firstName: firstName ?? currentData.firstName,
+          lastName: lastName ?? currentData.lastName,
+          email: email ?? currentData.email,
+          phoneNumber: phoneNumber ?? currentData.phoneNumber,
+          countryCode: currentData.countryCode,
+          gender: gender ?? currentData.gender,
+          dob: dob ?? currentData.dob,
+          height: currentData.height,
+          weight: currentData.weight,
+          heightUnit: currentData.heightUnit,
+          weightUnit: currentData.weightUnit,
+          latestUserRole: currentData.latestUserRole,
+          latestHospitalId: hospitalId ?? currentData.latestHospitalId,
+          latestOrgId: orgId ?? currentData.latestOrgId,
+          latestRoleId: currentData.latestRoleId,
+          navigationId: currentData.navigationId,
+          imagePath: effectiveImage,
+        );
+
+        final newModel = LoginModel(
+          status: currentSession.status,
+          message: currentSession.message,
+          data: updatedData,
+        );
+        await GlobalSession.instance.update(newModel);
+      }
+    } catch (_) {}
   }
 
   Future<void> _onLoadProviderProfile(
@@ -60,6 +140,17 @@ class ProviderProfileBloc extends Bloc<ProviderProfileEvent, ProviderProfileStat
       emit(currentLoaded.copyWith(isUpdating: true));
       try {
         final updatedProfile = await updateProviderProfileUseCase(profile: event.profile);
+        await _syncDoctorToGlobalSession(
+          firstName: updatedProfile.firstName,
+          lastName: updatedProfile.lastName,
+          email: updatedProfile.email,
+          phoneNumber: updatedProfile.phoneNumber,
+          gender: updatedProfile.gender,
+          dob: updatedProfile.dob,
+          imagePath: updatedProfile.imagePath ?? updatedProfile.profileImageUrl,
+          hospitalId: updatedProfile.hospitalId,
+          orgId: updatedProfile.orgId,
+        );
         emit(ProviderProfileLoadedState(profile: updatedProfile, isUpdating: false));
       } catch (e) {
         emit(currentLoaded.copyWith(isUpdating: false));
@@ -67,6 +158,17 @@ class ProviderProfileBloc extends Bloc<ProviderProfileEvent, ProviderProfileStat
     } else {
       try {
         final updatedProfile = await updateProviderProfileUseCase(profile: event.profile);
+        await _syncDoctorToGlobalSession(
+          firstName: updatedProfile.firstName,
+          lastName: updatedProfile.lastName,
+          email: updatedProfile.email,
+          phoneNumber: updatedProfile.phoneNumber,
+          gender: updatedProfile.gender,
+          dob: updatedProfile.dob,
+          imagePath: updatedProfile.imagePath ?? updatedProfile.profileImageUrl,
+          hospitalId: updatedProfile.hospitalId,
+          orgId: updatedProfile.orgId,
+        );
         emit(ProviderProfileLoadedState(profile: updatedProfile));
       } catch (e) {
         emit(ProviderProfileErrorState(message: e.toString()));
@@ -85,6 +187,12 @@ class ProviderProfileBloc extends Bloc<ProviderProfileEvent, ProviderProfileStat
         final photoUrl = await uploadProviderPhotoUseCase(
           userId: event.userId,
           photoFile: event.photoFile,
+          hospitalId: event.hospitalId,
+          orgId: event.orgId,
+        );
+
+        await _syncDoctorToGlobalSession(
+          imagePath: photoUrl,
           hospitalId: event.hospitalId,
           orgId: event.orgId,
         );

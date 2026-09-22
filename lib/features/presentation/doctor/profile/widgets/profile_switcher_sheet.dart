@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -8,6 +11,8 @@ import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
@@ -46,6 +51,28 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     });
 
     try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      String? resolveProfileImage(String? profId, String? serverImage) {
+        if (serverImage != null && serverImage.trim().isNotEmpty) {
+          return serverImage.trim();
+        }
+        if (profId != null && profId.trim().isNotEmpty) {
+          final id = profId.trim();
+          final idLower = id.toLowerCase();
+          final idUpper = id.toUpperCase();
+          for (final keyId in [id, idLower, idUpper]) {
+            final net = prefs.getString('patient_profile_network_image_$keyId');
+            if (net != null && net.trim().isNotEmpty) return net.trim();
+            final loc = prefs.getString('patient_profile_image_$keyId') ??
+                prefs.getString('profile_image_$keyId') ??
+                prefs.getString('doctor_profile_image_$keyId');
+            if (loc != null && loc.trim().isNotEmpty) return loc.trim();
+          }
+        }
+        return null;
+      }
+
       final currentUser = GlobalSession.instance.userNotifier.value;
       final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
       final List<RoleEntity> allRoles = currentUser?.data?.roles ?? [];
@@ -99,11 +126,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       final String primaryRoleId = primaryHasPatientRole
           ? '4FC67429-28AE-4106-93EF-436228282ED0'
-          : (primaryHasProviderRole ? providerRoleEntity!.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
-
-      final String primaryRoleLabel = primaryHasPatientRole
-          ? 'Primary'
-          : (primaryHasProviderRole ? 'Doctor' : 'Primary');
+          : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
 
       // 1. Add Family Profiles (Primary + Dependents)
       if (profiles.isNotEmpty) {
@@ -112,36 +135,64 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
           return p.isPrimary == true && !isFam;
         });
-        if (primaryIndex == -1) primaryIndex = 0;
 
-        final primaryProf = profiles[primaryIndex];
-        final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
-            ? primaryProf.name!
-            : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
-                ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
-                : fallbackPrimaryName;
+        if (primaryIndex != -1) {
+          final primaryProf = profiles[primaryIndex];
+          final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
+              ? primaryProf.name!
+              : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
+                  ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
+                  : fallbackPrimaryName;
 
-        // 1. Primary Profile ALWAYS fixed at Index 0
-        items.add(_FlatWorkspaceItem(
-          roleId: primaryRoleId,
-          roleName: 'Primary',
-          orgId: currentUser?.data?.latestOrgId ?? 1,
-          orgName: 'Family Profile',
-          hospitalId: currentUser?.data?.latestHospitalId ?? 1,
-          hospitalName: pPrimaryName,
-          location: null,
-          profileUserId: primaryProf.id ?? primaryUserId,
-          firstName: primaryProf.firstName,
-          lastName: primaryProf.lastName,
-          gender: primaryProf.gender,
-          dob: primaryProf.dob,
-          phoneNumber: primaryProf.phoneNumber,
-          relation: 'Self',
-        ));
+          final String? primaryImage = resolveProfileImage(
+            primaryProf.id ?? primaryUserId,
+            primaryProf.imagePath ?? currentUser?.data?.imagePath,
+          );
+
+          items.add(_FlatWorkspaceItem(
+            roleId: primaryRoleId,
+            roleName: 'Primary',
+            orgId: currentUser?.data?.latestOrgId ?? 1,
+            orgName: 'Family Profile',
+            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+            hospitalName: pPrimaryName,
+            location: null,
+            profileUserId: primaryProf.id ?? primaryUserId,
+            firstName: primaryProf.firstName,
+            lastName: primaryProf.lastName,
+            gender: primaryProf.gender,
+            dob: primaryProf.dob,
+            phoneNumber: primaryProf.phoneNumber,
+            relation: 'Self',
+            imagePath: primaryImage,
+          ));
+        } else {
+          final String? primaryImage = resolveProfileImage(
+            primaryUserId,
+            currentUser?.data?.imagePath,
+          );
+          items.add(_FlatWorkspaceItem(
+            roleId: primaryRoleId,
+            roleName: 'Primary',
+            orgId: currentUser?.data?.latestOrgId ?? 1,
+            orgName: 'Family Profile',
+            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+            hospitalName: fallbackPrimaryName,
+            location: null,
+            profileUserId: primaryUserId,
+            firstName: currentUser?.data?.firstName,
+            lastName: currentUser?.data?.lastName,
+            gender: currentUser?.data?.gender,
+            dob: currentUser?.data?.dob,
+            phoneNumber: currentUser?.data?.phoneNumber,
+            relation: 'Self',
+            imagePath: primaryImage,
+          ));
+        }
 
         // 2. All other family members retain their exact fixed relations
         for (int i = 0; i < profiles.length; i++) {
-          if (i == primaryIndex) continue;
+          if (primaryIndex != -1 && i == primaryIndex) continue;
 
           final p = profiles[i];
           final rawRel = (p.relation ?? '').trim();
@@ -158,6 +209,10 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                   : pRel;
 
           final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
+          final String? depImage = resolveProfileImage(
+            pUserId,
+            p.imagePath,
+          );
 
           items.add(_FlatWorkspaceItem(
             roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
@@ -174,9 +229,15 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             dob: p.dob,
             phoneNumber: p.phoneNumber,
             relation: pRel,
+            imagePath: depImage,
           ));
         }
       } else {
+        final String? fallbackImage = resolveProfileImage(
+          primaryUserId,
+          currentUser?.data?.imagePath,
+        );
+
         items.add(_FlatWorkspaceItem(
           roleId: primaryRoleId,
           roleName: 'Primary',
@@ -192,6 +253,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           dob: currentUser?.data?.dob,
           phoneNumber: currentUser?.data?.phoneNumber,
           relation: 'Self',
+          imagePath: fallbackImage,
         ));
       }
 
@@ -243,6 +305,10 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                     final hospitalName = hospital.hospitalName ?? 'Healthcare Facility';
                     final location = hospital.city ?? hospital.address;
 
+                    final String? docImage = (roleName == 'Provider' || roleName.toLowerCase().contains('doctor'))
+                        ? resolveProfileImage(primaryUserId, currentUser?.data?.imagePath)
+                        : null;
+
                     items.add(_FlatWorkspaceItem(
                       roleId: roleId,
                       roleName: roleName,
@@ -252,6 +318,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                       hospitalName: hospitalName,
                       location: location,
                       profileUserId: primaryUserId,
+                      imagePath: docImage,
                     ));
                     addedAnyHospital = true;
                   }
@@ -381,6 +448,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             latestUserRole: latestUserRole,
             navigationId: navigationId,
             profiles: oldData.profiles,
+            imagePath: item.imagePath ?? oldData.imagePath,
           );
 
           await GlobalSession.instance.update(
@@ -760,19 +828,22 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             child: Row(
               children: [
-                // Icon
+                // Icon / Profile Avatar
                 Container(
-                  padding: const EdgeInsets.all(9),
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: isActive
                         ? roleColor
                         : roleColor.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    _getRoleIcon(item.roleName),
-                    size: 18,
-                    color: isActive ? Colors.white : roleColor,
+                  clipBehavior: Clip.antiAlias,
+                  child: _buildItemAvatar(
+                    item: item,
+                    isActive: isActive,
+                    roleColor: roleColor,
+                    isDark: isDark,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -982,6 +1053,74 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       ),
     );
   }
+
+  Widget _buildItemAvatar({
+    required _FlatWorkspaceItem item,
+    required bool isActive,
+    required Color roleColor,
+    required bool isDark,
+  }) {
+    final defaultIcon = Center(
+      child: Icon(
+        _getRoleIcon(item.roleName),
+        size: 18,
+        color: isActive ? Colors.white : roleColor,
+      ),
+    );
+
+    final img = item.imagePath?.trim();
+    if (img == null || img.isEmpty) {
+      return defaultIcon;
+    }
+
+    if (img.startsWith('data:image')) {
+      try {
+        final commaIdx = img.indexOf(',');
+        final b64 = commaIdx != -1 ? img.substring(commaIdx + 1) : img;
+        return Image.memory(
+          base64Decode(b64),
+          width: 38,
+          height: 38,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => defaultIcon,
+        );
+      } catch (_) {
+        return defaultIcon;
+      }
+    } else if (img.startsWith('http://') || img.startsWith('https://')) {
+      return CachedNetworkImage(
+        imageUrl: img,
+        width: 38,
+        height: 38,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: roleColor,
+            ),
+          ),
+        ),
+        errorWidget: (_, _, _) => defaultIcon,
+      );
+    } else {
+      try {
+        final f = File(img);
+        if (f.existsSync()) {
+          return Image.file(
+            f,
+            width: 38,
+            height: 38,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => defaultIcon,
+          );
+        }
+      } catch (_) {}
+      return defaultIcon;
+    }
+  }
 }
 
 class _FlatWorkspaceItem {
@@ -999,6 +1138,7 @@ class _FlatWorkspaceItem {
   final String? dob;
   final String? phoneNumber;
   final String? relation;
+  final String? imagePath;
 
   _FlatWorkspaceItem({
     required this.roleId,
@@ -1015,5 +1155,6 @@ class _FlatWorkspaceItem {
     this.dob,
     this.phoneNumber,
     this.relation,
+    this.imagePath,
   });
 }

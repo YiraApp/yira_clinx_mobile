@@ -75,10 +75,25 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       if (userId.isEmpty) return;
       final prefs = await SharedPreferences.getInstance();
 
-      final localPath = prefs.getString('patient_profile_image_$userId');
+      final localPath = prefs.getString('patient_profile_image_$userId') ??
+          prefs.getString('patient_profile_image_${userId.toLowerCase()}') ??
+          prefs.getString('patient_profile_image_${userId.toUpperCase()}');
+
+      String? matchingProfileImg;
+      if (currentUser?.data?.profiles != null) {
+        for (final p in currentUser!.data!.profiles!) {
+          if (p.id == userId && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
+            matchingProfileImg = p.imagePath!.trim();
+            break;
+          }
+        }
+      }
+
       final networkUrl = prefs.getString('patient_profile_network_image_$userId') ??
+          prefs.getString('patient_profile_network_image_${userId.toLowerCase()}') ??
+          prefs.getString('patient_profile_network_image_${userId.toUpperCase()}') ??
           currentUser?.data?.imagePath ??
-          (currentUser?.data?.profiles?.isNotEmpty == true ? currentUser!.data!.profiles!.first.imagePath : null);
+          matchingProfileImg;
 
       if (mounted) {
         setState(() {
@@ -90,6 +105,24 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         });
       }
     } catch (_) {}
+  }
+
+  String? _resolvePatientAvatarPath(LoginEntity? user) {
+    final raw = user?.data?.imagePath;
+    if (raw != null && raw.trim().isNotEmpty) return raw.trim();
+    final activeId = user?.data?.id;
+    final profiles = user?.data?.profiles;
+    if (profiles != null && profiles.isNotEmpty && activeId != null) {
+      for (final p in profiles) {
+        if (p.id == activeId && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
+          return p.imagePath!.trim();
+        }
+      }
+    }
+    if (_profileImagePath != null && _profileImagePath!.trim().isNotEmpty) {
+      return _profileImagePath!.trim();
+    }
+    return null;
   }
 
   Widget _buildDashboardAvatar(String? imgPath, String patientName, Color primaryColor) {
@@ -427,11 +460,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 Padding(
                   padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       if (widget.onNavigateTab != null) {
                         widget.onNavigateTab!(3);
                       } else {
-                        Navigator.pushNamed(context, AppRoutes.patientProfile);
+                        await Navigator.pushNamed(context, AppRoutes.patientProfile);
+                        _loadCachedProfileImage();
                       }
                     },
                     child: Container(
@@ -445,7 +479,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         ),
                       ),
                       child: ClipOval(
-                        child: _buildDashboardAvatar(_profileImagePath, patientName, primaryColor),
+                        child: _buildDashboardAvatar(
+                          _resolvePatientAvatarPath(currentUser),
+                          patientName,
+                          primaryColor,
+                        ),
                       ),
                     ),
                   ),

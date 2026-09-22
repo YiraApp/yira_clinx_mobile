@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
+import 'package:yiraclinics/features/domain/entities/notifications/app_notification_entity.dart';
 import 'package:yiraclinics/features/use_cases/notifications/clear_all_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
@@ -38,7 +39,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     if (payload != null) {
       NotificationBadgeService.instance.setUnreadCount(payload.unreadCount);
       emit(NotificationsLoadedState(
-        notifications: payload.notifications,
+        notifications: List<AppNotificationEntity>.from(payload.notifications),
         unreadCount: payload.unreadCount,
         total: payload.total,
       ));
@@ -55,26 +56,18 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     if (state is NotificationsLoadedState) {
       final currentState = state as NotificationsLoadedState;
-      final target = currentState.notifications.firstWhere(
-        (n) => n.id == event.notificationId,
-        orElse: () => currentState.notifications.first,
-      );
+      final index = currentState.notifications.indexWhere((n) => n.id == event.notificationId);
+      if (index == -1) return;
 
-      final wasUnread = !target.isRead;
-      final updatedList = currentState.notifications.map((n) {
-        if (n.id == event.notificationId) {
-          return n.copyWith(isRead: true);
-        }
-        return n;
-      }).toList();
+      final target = currentState.notifications[index];
+      if (target.isRead) return;
 
-      final newUnread = wasUnread
-          ? (currentState.unreadCount - 1).clamp(0, currentState.total)
-          : currentState.unreadCount;
+      final updatedList = List<AppNotificationEntity>.from(currentState.notifications);
+      updatedList[index] = target.copyWith(isRead: true);
 
-      if (wasUnread) {
-        NotificationBadgeService.instance.decrement();
-      }
+      final newUnread = (currentState.unreadCount - 1).clamp(0, currentState.total);
+
+      NotificationBadgeService.instance.decrement();
 
       emit(currentState.copyWith(
         notifications: updatedList,
@@ -125,12 +118,12 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   ) async {
     if (state is NotificationsLoadedState) {
       final currentState = state as NotificationsLoadedState;
-      final target = currentState.notifications.firstWhere(
-        (n) => n.id == event.notificationId,
-        orElse: () => currentState.notifications.first,
-      );
+      final index = currentState.notifications.indexWhere((n) => n.id == event.notificationId);
+      if (index == -1) return;
 
+      final target = currentState.notifications[index];
       final wasUnread = !target.isRead;
+
       final updatedList = currentState.notifications.where((n) => n.id != event.notificationId).toList();
 
       final newUnread = wasUnread
@@ -144,7 +137,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       emit(currentState.copyWith(
         notifications: updatedList,
         unreadCount: newUnread,
-        total: updatedList.length,
+        total: (currentState.total - 1).clamp(0, 999999),
       ));
 
       await deleteNotificationUseCase.call(event.notificationId);

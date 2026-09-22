@@ -216,7 +216,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     }
 
     try {
-      final fileName = file.path.split('/').last;
+      final fileName = file.path.split(RegExp(r'[/\\]')).last;
       final formData = FormData.fromMap({
         "userId": userId,
         "doctorId": userId,
@@ -229,32 +229,23 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         ),
       });
 
-      String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.providerProfileUploadPhotoUrl}";
-      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-        targetUrl = "http://$targetUrl";
-      }
-
-      final dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-        ),
-      );
-
-      final response = await dio.post(
-        targetUrl,
+      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.providerProfileUploadPhotoUrl,
         data: formData,
         options: Options(
           headers: {
             if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
-            'Content-Type': 'multipart/form-data',
+            'x-user-id': userId,
           },
         ),
       );
 
       if (response.data != null && response.data['data'] != null) {
         final data = response.data['data'];
-        final photoUrl = data['photoUrl']?.toString() ?? data['imagePath']?.toString() ?? '';
+        final photoUrl = data['photoUrl']?.toString() ??
+            data['imagePath']?.toString() ??
+            data['profileImageUrl']?.toString() ??
+            '';
         if (photoUrl.isNotEmpty) {
           try {
             await CachedNetworkImage.evictFromCache(photoUrl);
@@ -262,26 +253,35 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
             PaintingBinding.instance.imageCache.clearLiveImages();
           } catch (_) {}
 
-          setState(() {
-            _photoRemovedExplicitly = false;
-            _networkProfileImageUrl = photoUrl;
-          });
+          if (mounted) {
+            setState(() {
+              _photoRemovedExplicitly = false;
+              _networkProfileImageUrl = photoUrl;
+            });
+          }
           if (userId.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setString('patient_profile_network_image_$userId', photoUrl);
             await prefs.remove('patient_profile_removed_$userId');
           }
           await _updateSessionImagePath(photoUrl);
+          if (mounted) {
+            _showSuccessSnackBar(context, 'Profile photo updated successfully!');
+          }
+          return;
         }
       }
+      throw Exception('Server did not return a valid photo URL');
     } catch (e) {
       debugPrint("Error uploading patient photo: $e");
+      if (mounted) {
+        _showErrorSnackBar(context, 'Failed to save photo to database: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {
           _isUploadingPhoto = false;
         });
-        _showSuccessSnackBar(context, 'Profile photo updated successfully!');
       }
     }
   }
@@ -1459,6 +1459,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               latestOrgId: currentUser?.data?.latestOrgId,
                               latestRoleId: currentUser?.data?.latestRoleId,
                               navigationId: currentUser?.data?.navigationId,
+                              imagePath: currentUser?.data?.imagePath ?? activeProfile?.imagePath ?? _networkProfileImageUrl,
                             );
 
                             final updatedLogin = LoginModel(
@@ -1466,7 +1467,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               message: currentUser?.message,
                               data: updatedData,
                             );
-                            GlobalSession.instance.userNotifier.value = updatedLogin;
+                            await GlobalSession.instance.update(updatedLogin);
 
                             if (selectedBloodGroup.isNotEmpty) {
                               _cachedBloodGroup = selectedBloodGroup;

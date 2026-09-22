@@ -102,6 +102,19 @@ class ApiClient {
       ),
     );
 
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.data is FormData) {
+            options.headers.remove('Content-Type');
+            options.headers.remove('content-type');
+            options.contentType = null;
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+
     dio.interceptors.add(ErrorInterceptor(showSuccessSnack: showSuccessSnack));
 
     return dio;

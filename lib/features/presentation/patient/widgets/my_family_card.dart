@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -62,38 +63,65 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final List<ProfileEntity> raw = [...(currentUser?.data?.profiles ?? [])];
 
-    if (raw.isEmpty && currentUser?.data != null) {
-      final d = currentUser!.data!;
-      raw.add(
-        ProfileEntity(
-          id: d.id,
-          firstName: d.firstName,
-          lastName: d.lastName,
-          name: '${d.firstName ?? ''} ${d.lastName ?? ''}'.trim().isNotEmpty
-              ? '${d.firstName ?? ''} ${d.lastName ?? ''}'.trim()
-              : 'Primary Account',
-          phoneNumber: d.phoneNumber,
-          relation: 'Self',
-          isPrimary: true,
-          gender: d.gender,
-          dob: d.dob,
-          accountType: 'Independent',
-        ),
-      );
+    // Deduplicate profiles by unique ID
+    final Map<String, ProfileEntity> map = {};
+    for (final p in raw) {
+      if (p.id != null && p.id!.isNotEmpty) {
+        map[p.id!] = p;
+      }
+    }
+    List<ProfileEntity> unique = map.values.toList();
+
+    // Identify the true root primary user ID
+    final rootPrimaryGuid = GlobalSession.instance.rootPrimaryUserId;
+
+    int primaryIdx = -1;
+    if (rootPrimaryGuid != null && rootPrimaryGuid.isNotEmpty) {
+      primaryIdx = unique.indexWhere((p) => p.id == rootPrimaryGuid);
+    }
+    if (primaryIdx == -1) {
+      primaryIdx = unique.indexWhere((p) {
+        final r = (p.relation ?? '').trim().toLowerCase();
+        final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+        return p.isPrimary == true && !isFam;
+      });
+    }
+    if (primaryIdx == -1 && unique.isNotEmpty) {
+      primaryIdx = 0;
     }
 
-    // Ensure primary profile is first
-    int primaryIdx = raw.indexWhere((p) {
-      final r = (p.relation ?? '').trim().toLowerCase();
-      final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
-      return p.isPrimary == true && !isFam;
-    });
     if (primaryIdx > 0) {
-      final primary = raw.removeAt(primaryIdx);
-      raw.insert(0, primary);
+      final primary = unique.removeAt(primaryIdx);
+      unique.insert(0, primary);
     }
 
-    return raw;
+    // Ensure ONLY index 0 is marked isPrimary == true, all others are strictly isPrimary == false
+    final List<ProfileEntity> sanitized = [];
+    for (int i = 0; i < unique.length; i++) {
+      final p = unique[i];
+      final bool isRootPrimary = (i == 0);
+      final rawRel = (p.relation ?? '').trim();
+      final bool hasFamilyRel = rawRel.isNotEmpty &&
+          rawRel.toLowerCase() != 'self' &&
+          rawRel.toLowerCase() != 'primary' &&
+          rawRel.toLowerCase() != 'admin';
+
+      sanitized.add(ProfileEntity(
+        id: p.id,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        name: p.name,
+        phoneNumber: p.phoneNumber,
+        relation: isRootPrimary ? 'Self' : (hasFamilyRel ? rawRel : 'Dependent'),
+        isPrimary: isRootPrimary,
+        gender: p.gender,
+        dob: p.dob,
+        accountType: isRootPrimary ? 'Independent' : 'Dependent',
+        imagePath: p.imagePath,
+      ));
+    }
+
+    return sanitized;
   }
 
 
@@ -548,13 +576,15 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                 }
                                 if (mounted) {
                                   setState(() {});
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('$fullName has been added to My Family!'),
-                                      backgroundColor: const Color(0xFF10B981),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('$fullName has been added to My Family!'),
+                                        backgroundColor: const Color(0xFF10B981),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
                                 }
                               } catch (e) {
                                 setSheetState(() {
@@ -776,12 +806,13 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 final profile = familyProfiles[index];
                 final pId = (profile.id ?? '').trim();
 
+                final bool isPrimary = (profile.isPrimary == true);
                 final rawRel = (profile.relation ?? '').trim();
                 final bool isFam = rawRel.isNotEmpty &&
                     rawRel.toLowerCase() != 'self' &&
                     rawRel.toLowerCase() != 'primary' &&
                     rawRel.toLowerCase() != 'admin';
-                final String relation = isFam ? rawRel : ((profile.isPrimary == true) ? 'Self' : 'Dependent');
+                final String relation = isPrimary ? 'Primary' : (isFam ? rawRel : 'Dependent');
 
                 final pName = (profile.name?.isNotEmpty ?? false)
                     ? profile.name!
@@ -793,13 +824,15 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                     ? pName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
                     : (relation.isNotEmpty ? relation[0].toUpperCase() : 'M');
 
-                final isPrimary = relation == 'Self' || profile.isPrimary == true;
                 final badgeColor = isPrimary ? const Color(0xFF2563EB) : const Color(0xFF10B981);
 
-                final cachedImg = _memberImages[pId];
+                final cachedImg = _memberImages[pId] ?? profile.imagePath;
 
                 return InkWell(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.patientMyFamily),
+                  onTap: () async {
+                    await Navigator.pushNamed(context, AppRoutes.patientMyFamily);
+                    _loadMemberImages();
+                  },
                   borderRadius: BorderRadius.circular(16),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -827,42 +860,78 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                           child: ClipOval(
                             child: (cachedImg != null &&
                                     cachedImg.isNotEmpty &&
-                                    (cachedImg.startsWith('http') || File(cachedImg).existsSync())
-                                ? (cachedImg.startsWith('http')
-                                    ? Image.network(
-                                        cachedImg,
-                                        width: 38,
-                                        height: 38,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Center(
-                                          child: Text(
-                                            initials,
-                                            style: const TextStyle(
-                                              fontFamily: appPoppinFont,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                    (cachedImg.startsWith('http') || cachedImg.startsWith('data:image') || File(cachedImg).existsSync()))
+                                ? (cachedImg.startsWith('data:image')
+                                    ? () {
+                                        try {
+                                          final commaIdx = cachedImg.indexOf(',');
+                                          final base64Data = commaIdx != -1 ? cachedImg.substring(commaIdx + 1) : cachedImg;
+                                          return Image.memory(
+                                            base64Decode(base64Data),
+                                            width: 38,
+                                            height: 38,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Center(
+                                              child: Text(
+                                                initials,
+                                                style: const TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      )
-                                    : Image.file(
-                                        File(cachedImg),
-                                        width: 38,
-                                        height: 38,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Center(
-                                          child: Text(
-                                            initials,
-                                            style: const TextStyle(
-                                              fontFamily: appPoppinFont,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                          );
+                                        } catch (_) {
+                                          return Center(
+                                            child: Text(
+                                              initials,
+                                              style: const TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      ))
+                                          );
+                                        }
+                                      }()
+                                    : cachedImg.startsWith('http')
+                                        ? Image.network(
+                                            cachedImg,
+                                            width: 38,
+                                            height: 38,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Center(
+                                              child: Text(
+                                                initials,
+                                                style: const TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Image.file(
+                                            File(cachedImg),
+                                            width: 38,
+                                            height: 38,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Center(
+                                              child: Text(
+                                                initials,
+                                                style: const TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ))
                                 : Center(
                                     child: Text(
                                       initials,
@@ -873,7 +942,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                         color: Colors.white,
                                       ),
                                     ),
-                                  )),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 6),

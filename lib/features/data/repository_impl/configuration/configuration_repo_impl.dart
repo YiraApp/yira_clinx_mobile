@@ -31,13 +31,33 @@ class ConfigurationRepoImpl extends ConfigurationRepo {
             ? 'dev_${currentUser.data!.id}'
             : 'device_${DateTime.now().millisecondsSinceEpoch}';
       }
+      String queryUserId = currentUser?.data?.id ?? '';
+      if (queryUserId.isEmpty) {
+        final profiles = currentUser?.data?.profiles;
+        if (profiles != null && profiles.isNotEmpty) {
+          ProfileEntity? primaryProf;
+          for (final p in profiles) {
+            final r = (p.relation ?? '').trim().toLowerCase();
+            final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+            if (p.isPrimary == true && !isFam) {
+              primaryProf = p;
+              break;
+            }
+          }
+          primaryProf ??= profiles.first;
+          if (primaryProf.id != null && primaryProf.id!.trim().isNotEmpty) {
+            queryUserId = primaryProf.id!.trim();
+          }
+        }
+      }
+
       final Map<String, dynamic> requestBody = {
-        "userId": currentUser?.data?.id ?? '',
+        "userId": queryUserId,
         "deviceId": deviceId,
       };
       final Map<String, dynamic> headers = {
         HttpHeaders.contentTypeHeader: 'application/json',
-        'x-user-id': currentUser?.data?.id ?? '',
+        'x-user-id': queryUserId,
         'x-device-id': deviceId,
       };
       if (token.isNotEmpty) {

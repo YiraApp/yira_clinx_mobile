@@ -202,7 +202,7 @@ class ProfileModel extends ProfileEntity {
       dob: json['dob']?.toString(),
       accountType: json['accountType']?.toString() ??
           (json['isPrimary'] == true ? "Independent" : "Dependent"),
-      imagePath: (json['imagePath'] ?? json['ImagePath'] ?? json['photo'] ?? json['photoUrl'] ?? json['avatar'] ?? json['profilePicture'] ?? json['profilePhoto'])?.toString(),
+      imagePath: (json['imagePath'] ?? json['ImagePath'] ?? json['photo'] ?? json['photoUrl'] ?? json['avatar'] ?? json['profilePicture'] ?? json['profilePhoto'] ?? json['profileImageUrl'])?.toString(),
     );
   }
 

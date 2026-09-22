@@ -159,7 +159,7 @@ class ProviderProfileRepoImpl implements ProviderProfileRepo {
     final targetUserId = userId.isNotEmpty ? userId : currentUser?.data?.id ?? '';
 
     try {
-      final fileName = photoFile.path.split('/').last;
+      final fileName = photoFile.path.split(RegExp(r'[/\\]')).last;
       final formData = FormData.fromMap({
         "userId": targetUserId,
         "doctorId": targetUserId,
@@ -171,22 +171,28 @@ class ProviderProfileRepoImpl implements ProviderProfileRepo {
         ),
       });
 
-      final response = await _apiClient.client(ApiType.account).post(
+      final response = await _apiClient.client(ApiType.account, showSuccessSnack: false).post(
         URLs.providerProfileUploadPhotoUrl,
         data: formData,
         options: Options(
           headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-            'Content-Type': 'multipart/form-data',
+            if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+            'x-user-id': targetUserId,
           },
         ),
       );
 
       if (response.data != null && response.data['data'] != null) {
         final data = response.data['data'];
-        final photoUrl = data['photoUrl']?.toString() ?? data['imagePath']?.toString() ?? '';
-        return photoUrl;
+        final photoUrl = data['photoUrl']?.toString() ??
+            data['imagePath']?.toString() ??
+            data['profileImageUrl']?.toString() ??
+            '';
+        if (photoUrl.isNotEmpty) {
+          return photoUrl;
+        }
       }
+      throw Exception('Server did not return a valid photo URL');
     } catch (e, stack) {
       developer.log(
         "Upload provider photo error: $e",
@@ -194,8 +200,7 @@ class ProviderProfileRepoImpl implements ProviderProfileRepo {
         stackTrace: stack,
         name: "ProviderProfileRepoImpl",
       );
+      rethrow;
     }
-
-    return photoFile.path;
   }
 }

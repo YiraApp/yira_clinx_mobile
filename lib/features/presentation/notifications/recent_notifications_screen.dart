@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -16,9 +15,6 @@ import 'package:yiraclinics/features/use_cases/notifications/clear_all_notificat
 import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
-import 'package:yiraclinics/features/presentation/patient/documents/patient_documents_screen.dart';
-import 'package:yiraclinics/core/local/global_session.dart';
-
 class RecentNotificationsScreen extends StatefulWidget {
   const RecentNotificationsScreen({super.key});
 
@@ -29,6 +25,7 @@ class RecentNotificationsScreen extends StatefulWidget {
 class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   late final NotificationsBloc _bloc;
   bool _filterOnlyUnread = false;
+  final Set<String> _expandedNotificationIds = {};
 
   @override
   void initState() {
@@ -92,6 +89,18 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return Icons.local_offer_outlined;
       case 'HEALTH_TIPS':
         return Icons.favorite_outline_rounded;
+      case 'CONSENT_REQUEST':
+      case 'CONSENT_REQUIRED':
+      case 'CONSENT_RESPONSE':
+        return Icons.verified_user_rounded;
+      case 'CONSENT_APPROVED':
+        return Icons.check_circle_outline_rounded;
+      case 'CONSENT_REVOKED':
+        return Icons.remove_circle_outline_rounded;
+      case 'CONSENT_REJECTED':
+        return Icons.cancel_outlined;
+      case 'CONSENT_SENT':
+        return Icons.send_rounded;
       case 'SYSTEM_ALERT':
       case 'BROADCAST':
         return Icons.notifications_active_outlined;
@@ -120,6 +129,18 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return const Color(0xFFE11D48); // Rose
       case 'HEALTH_TIPS':
         return const Color(0xFF0284C7); // Cyan
+      case 'CONSENT_REQUEST':
+      case 'CONSENT_REQUIRED':
+        return const Color(0xFF0284C7); // Sky Blue
+      case 'CONSENT_RESPONSE':
+      case 'CONSENT_APPROVED':
+        return const Color(0xFF10B981); // Emerald Green
+      case 'CONSENT_REVOKED':
+        return const Color(0xFFEF4444); // Red
+      case 'CONSENT_REJECTED':
+        return const Color(0xFFEA580C); // Orange
+      case 'CONSENT_SENT':
+        return const Color(0xFF6366F1); // Indigo
       case 'SYSTEM_ALERT':
       case 'BROADCAST':
         return const Color(0xFFEA580C); // Orange
@@ -149,52 +170,21 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return 'Offer';
       case 'HEALTH_TIPS':
         return 'Wellness';
+      case 'CONSENT_REQUEST':
+      case 'CONSENT_REQUIRED':
+        return 'Consent Request';
+      case 'CONSENT_APPROVED':
+        return 'Access Granted';
+      case 'CONSENT_REVOKED':
+        return 'Access Revoked';
+      case 'CONSENT_REJECTED':
+        return 'Access Declined';
+      case 'CONSENT_SENT':
+        return 'Request Sent';
+      case 'CONSENT_RESPONSE':
+        return 'Consent Update';
       default:
         return 'Notification';
-    }
-  }
-
-  bool _isPatient() {
-    final currentUser = GlobalSession.instance.userNotifier.value;
-    final navId = currentUser?.data?.navigationId?.toString().trim();
-    final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
-    final roleId = (currentUser?.data?.latestRoleId ?? '').toUpperCase().trim();
-
-    final isDoctor = roleName.contains('doctor') ||
-        roleName.contains('provider') ||
-        roleName.contains('physician') ||
-        navId == '2';
-
-    if (isDoctor) return false;
-
-    return navId == '1' ||
-        roleName.contains('patient') ||
-        roleName == 'user' ||
-        roleName.contains('consumer') ||
-        roleName.contains('client') ||
-        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
-  }
-
-  String? _getActionChipLabel(String type) {
-    switch (type.toUpperCase()) {
-      case 'APPOINTMENT_BOOKED':
-      case 'APPOINTMENT_STATUS':
-      case 'APPOINTMENT_REMINDER_10MIN':
-        return 'View Appointment';
-      case 'PRESCRIPTION_ADDED':
-        return 'View Prescription';
-      case 'MEDICAL_RECORD_ADDED':
-        // For provider, do not show View Record button. Only and only patients show that view record.
-        if (!_isPatient()) {
-          return null;
-        }
-        return 'View Record';
-      case 'DOCTOR_SUGGESTION':
-        return 'View Suggestion';
-      case 'TELECONSULT_START':
-        return 'Join Consultation';
-      default:
-        return null;
     }
   }
 
@@ -203,56 +193,13 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
 
-    final typeUpper = notification.type.toUpperCase();
-    final isPatient = _isPatient();
-
-    // Check if it is a medical record notification or test result route
-    if (typeUpper == 'MEDICAL_RECORD_ADDED' ||
-        notification.route == '/userTestResultScreen' ||
-        notification.route == AppRoutes.userTestResultScreen ||
-        notification.route == '/patientDocuments' ||
-        notification.route == AppRoutes.patientDocuments) {
-      if (isPatient) {
-        // Patients navigate directly to Health Records
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PatientDocumentsScreen(),
-          ),
-        );
+    setState(() {
+      if (_expandedNotificationIds.contains(notification.id)) {
+        _expandedNotificationIds.remove(notification.id);
       } else {
-        // Providers do not navigate to Health Records/Test Results; show detail sheet
-        _showNotificationDetailSheet(notification);
+        _expandedNotificationIds.add(notification.id);
       }
-      return;
-    }
-
-    String? targetRoute = notification.route;
-    // Smart route resolution for missing or outdated routes
-    if (targetRoute == null || targetRoute.isEmpty || targetRoute == '/patientHome') {
-      if (typeUpper.contains('APPOINTMENT')) {
-        targetRoute = AppRoutes.appointmentDashboardScreen;
-      } else if (typeUpper == 'PRESCRIPTION_ADDED') {
-        targetRoute = AppRoutes.userPrescriptionManagement;
-      } else if (typeUpper == 'DOCTOR_SUGGESTION') {
-        targetRoute = AppRoutes.patientDoctorSuggestions;
-      }
-    }
-
-    if (targetRoute != null && targetRoute.isNotEmpty) {
-      try {
-        Navigator.pushNamed(
-          context,
-          targetRoute,
-          arguments: notification.referenceId,
-        );
-      } catch (e) {
-        debugPrint("Navigation from notification failed: $e");
-        _showNotificationDetailSheet(notification);
-      }
-    } else {
-      _showNotificationDetailSheet(notification);
-    }
+    });
   }
 
   void _showNotificationDetailSheet(AppNotificationEntity notification) {
@@ -526,10 +473,15 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       'Earlier': [],
     };
 
-    for (final item in list) {
-      if (item.createdAt.isAfter(todayStart)) {
+    // Guarantee that items are sorted strictly newest-first so new notifications are at the top
+    final sortedList = List<AppNotificationEntity>.from(list)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    for (final item in sortedList) {
+      final localDate = item.createdAt.toLocal();
+      if (!localDate.isBefore(todayStart)) {
         groups['Today']!.add(item);
-      } else if (item.createdAt.isAfter(yesterdayStart)) {
+      } else if (!localDate.isBefore(yesterdayStart)) {
         groups['Yesterday']!.add(item);
       } else {
         groups['Earlier']!.add(item);
@@ -983,7 +935,6 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final typeColor = _getColorForType(notification.type);
     final typeIcon = _getIconForType(notification.type);
     final relativeTime = _formatRelativeTime(notification.createdAt);
-    final actionLabel = _getActionChipLabel(notification.type);
 
     return Material(
       color: Colors.transparent,
@@ -1068,39 +1019,47 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     ),
                     const SizedBox(height: 4),
 
-                    // Body
-                    Text(
-                      notification.body,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: isTab ? 13 : 12.5,
-                        fontWeight: FontWeight.w400,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                        height: 1.35,
-                      ),
-                    ),
+                    // Body with Read more at last of text if longer
+                    Builder(
+                      builder: (context) {
+                        final bool isExpanded = _expandedNotificationIds.contains(notification.id);
+                        final String bodyText = notification.body.trim();
+                        final bool isLong = bodyText.length > 65;
 
-                    // Quick Action Link (if available)
-                    if (actionLabel != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            actionLabel,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: typeColor,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              bodyText,
+                              maxLines: isExpanded ? null : 2,
+                              overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 13 : 12.5,
+                                fontWeight: FontWeight.w400,
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                height: 1.35,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 3),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 10, color: typeColor),
-                        ],
-                      ),
-                    ],
+                            if (isLong) ...[
+                              const SizedBox(height: 3),
+                              GestureDetector(
+                                onTap: () => _handleNotificationTap(notification),
+                                child: Text(
+                                  isExpanded ? "Read less" : "Read more",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

@@ -73,8 +73,17 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
       if (response.data != null && response.data is Map<String, dynamic>) {
         final data = response.data['data'];
         if (data is List) {
+          final list = List<dynamic>.from(data);
+          list.sort((a, b) {
+            final idA = int.tryParse(a['Id']?.toString() ?? '0') ?? 0;
+            final idB = int.tryParse(b['Id']?.toString() ?? '0') ?? 0;
+            if (idB != idA) return idB.compareTo(idA);
+            final dtA = DateTime.tryParse(a['CreatedAt']?.toString() ?? '') ?? DateTime(1970);
+            final dtB = DateTime.tryParse(b['CreatedAt']?.toString() ?? '') ?? DateTime(1970);
+            return dtB.compareTo(dtA);
+          });
           setState(() {
-            _suggestions = data;
+            _suggestions = list;
           });
         }
       }

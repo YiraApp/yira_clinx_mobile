@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/core/services/network_services/network_listener/network_listener.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/custom_chart.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_metric_grid.dart';
@@ -213,51 +217,47 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   const SizedBox(width: 4),
                   Padding(
                     padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
-                    child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
-                      bloc: _dashboardBloc,
-                      builder: (context, state) {
-                        String? photoUrl;
-                        if (state is DoctorDashboardSuccessState) {
-                          photoUrl = state.dashboardEntity.data?.profile?.profileImageUrl ??
-                              state.dashboardEntity.data?.profile?.imagePath;
-                        }
-                        final double size = isTabletDevice ? 38 : 34;
+                    child: ValueListenableBuilder<LoginEntity?>(
+                      valueListenable: GlobalSession.instance.userNotifier,
+                      builder: (context, sessionUser, _) {
+                        return BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                          bloc: _dashboardBloc,
+                          builder: (context, state) {
+                            String? photoUrl = sessionUser?.data?.imagePath;
+                            if ((photoUrl == null || photoUrl.isEmpty) && state is DoctorDashboardSuccessState) {
+                              photoUrl = state.dashboardEntity.data?.profile?.profileImageUrl ??
+                                  state.dashboardEntity.data?.profile?.imagePath;
+                            }
+                            final double size = isTabletDevice ? 38 : 34;
 
-                        return GestureDetector(
-                          key: isTourActive ? ProviderTourController().profileKey : null,
-                          onTap: () {
-                            Navigator.pushNamed(context, AppRoutes.profile);
-                          },
-                          child: Container(
-                            width: size,
-                            height: size,
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: primaryColor.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: (photoUrl != null && photoUrl.trim().isNotEmpty)
-                                ? Image.network(
-                                    photoUrl.trim(),
-                                    width: size,
-                                    height: size,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (ctx, err, stack) => Icon(
-                                      Icons.person_rounded,
-                                      color: primaryColor,
-                                      size: isTabletDevice ? 20 : 18,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.person_rounded,
-                                    color: primaryColor,
-                                    size: isTabletDevice ? 20 : 18,
+                            return GestureDetector(
+                              key: isTourActive ? ProviderTourController().profileKey : null,
+                              onTap: () async {
+                                await Navigator.pushNamed(context, AppRoutes.profile);
+                                _dashboardBloc.add(const FetchDoctorDashboardData(isRefresh: true));
+                                _navigationDrawerBloc.add(const InitializeDrawerData());
+                              },
+                              child: Container(
+                                width: size,
+                                height: size,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: primaryColor.withValues(alpha: 0.4),
+                                    width: 1.5,
                                   ),
-                          ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: _buildDoctorAvatarImage(
+                                  photoUrl,
+                                  size,
+                                  primaryColor,
+                                  isTabletDevice,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -826,5 +826,50 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       tooltipSuffix: 'Patients',
       fontFamily: appPoppinFont,
     );
+  }
+
+  Widget _buildDoctorAvatarImage(String? photoUrl, double size, Color primaryColor, bool isTabletDevice) {
+    final defaultIcon = Icon(
+      Icons.person_rounded,
+      color: primaryColor,
+      size: isTabletDevice ? 20 : 18,
+    );
+
+    if (photoUrl == null || photoUrl.trim().isEmpty) {
+      return defaultIcon;
+    }
+
+    final trimmed = photoUrl.trim();
+    if (trimmed.startsWith('data:image')) {
+      try {
+        final commaIdx = trimmed.indexOf(',');
+        final b64 = commaIdx != -1 ? trimmed.substring(commaIdx + 1) : trimmed;
+        return Image.memory(
+          base64Decode(b64),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, stack) => defaultIcon,
+        );
+      } catch (_) {
+        return defaultIcon;
+      }
+    } else if (trimmed.startsWith('http')) {
+      return Image.network(
+        trimmed,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, stack) => defaultIcon,
+      );
+    } else {
+      return Image.file(
+        File(trimmed),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, stack) => defaultIcon,
+      );
+    }
   }
 }

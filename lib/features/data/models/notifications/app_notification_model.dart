@@ -17,9 +17,16 @@ class AppNotificationModel extends AppNotificationEntity {
   factory AppNotificationModel.fromJson(Map<String, dynamic> json) {
     DateTime parsedDate;
     try {
-      parsedDate = json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'].toString())
-          : DateTime.now();
+      if (json['createdAt'] != null) {
+        final raw = json['createdAt'].toString().trim();
+        if (!raw.endsWith('Z') && !raw.contains('+') && !RegExp(r'-\d\d:\d\d').hasMatch(raw)) {
+          parsedDate = DateTime.parse('${raw}Z').toLocal();
+        } else {
+          parsedDate = DateTime.parse(raw).toLocal();
+        }
+      } else {
+        parsedDate = DateTime.now();
+      }
     } catch (_) {
       parsedDate = DateTime.now();
     }

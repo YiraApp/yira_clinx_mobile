@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
@@ -105,6 +104,14 @@ class _PatientDoctorSuggestionsScreenState
         final data = response.data['data'];
         if (data is List) {
           _allSuggestions = List<dynamic>.from(data);
+          _allSuggestions.sort((a, b) {
+            final idA = int.tryParse(a['Id']?.toString() ?? '0') ?? 0;
+            final idB = int.tryParse(b['Id']?.toString() ?? '0') ?? 0;
+            if (idB != idA) return idB.compareTo(idA);
+            final dtA = DateTime.tryParse(a['CreatedAt']?.toString() ?? '') ?? DateTime(1970);
+            final dtB = DateTime.tryParse(b['CreatedAt']?.toString() ?? '') ?? DateTime(1970);
+            return dtB.compareTo(dtA);
+          });
           _applyFilters();
         }
       }
