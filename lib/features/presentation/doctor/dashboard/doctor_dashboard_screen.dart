@@ -470,8 +470,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                               else ...[
                                 ...((dashboard.todaysSchedule ?? []).take(2).map((appointment) {
                                   final bool isVideo =
-                                      appointment.statusTag?.toUpperCase() ==
-                                      'LIVE VIDEO';
+                                      appointment.statusTag?.toUpperCase() == 'LIVE VIDEO' ||
+                                      (appointment.consultationType ?? '').toLowerCase().contains('tele') ||
+                                      (appointment.consultationType ?? '').toLowerCase().contains('video') ||
+                                      (appointment.meetingUrl ?? '').isNotEmpty;
 
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 8.0),
@@ -521,6 +523,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                       },
                                       isTab: isTabletDevice,
                                       isTeleConsultation: isVideo,
+                                      appointmentDate: DateTime.now(),
                                       onJoinCall: () async {
                                         final meetingUrl = appointment.meetingUrl;
                                         if (meetingUrl != null && meetingUrl.isNotEmpty) {

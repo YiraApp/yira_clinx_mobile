@@ -265,7 +265,8 @@ class AppointmentCard extends StatelessWidget {
                               if (isTeleConsultation &&
                                   !appointment.statusRaw.toLowerCase().contains('completed') &&
                                   !appointment.statusRaw.toLowerCase().contains('cancelled') &&
-                                  !appointment.statusRaw.toLowerCase().contains('past'))
+                                  !appointment.statusRaw.toLowerCase().contains('past') &&
+                                  !Utils.isPreviousDay(appointment.date ?? appointment.time))
                                  Padding(
                                   padding: const EdgeInsets.only(right: 4.0),
                                   child: IconButton(

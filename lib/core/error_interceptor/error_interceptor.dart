@@ -51,6 +51,10 @@ class ErrorInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     int statusCode = err.response?.statusCode ?? 0;
 
+    final bool isTimeout = err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.sendTimeout ||
+        err.type == DioExceptionType.receiveTimeout;
+
     switch (err.type) {
       case DioExceptionType.connectionError:
         statusCode = socket_exception;
@@ -69,11 +73,20 @@ class ErrorInterceptor extends Interceptor {
     String? displayMessage;
     final responseData = err.response?.data;
     if (responseData is Map<String, dynamic>) {
-      displayMessage = responseData['message']?.toString();
+      displayMessage = responseData['message']?.toString() ??
+          responseData['error']?.toString();
     }
-    displayMessage ??= err.message;
+
+    // Do NOT leak raw Dio debug messages (e.g. "The request connection took longer than 0:00:30.000000...")
+    // into displayMessage. Only use clean user-friendly fallback if no server message is provided.
+    if (displayMessage == null && isTimeout) {
+      displayMessage = 'The connection timed out. Please check your network and try again.';
+    }
 
     final String path = err.requestOptions.path.toLowerCase();
+    final String method = err.requestOptions.method.toUpperCase();
+    final bool isReadOnly = method == 'GET';
+
     final bool isAuthEndpoint = path.contains('login') ||
         path.contains('register') ||
         path.contains('signup') ||
@@ -82,6 +95,14 @@ class ErrorInterceptor extends Interceptor {
         path.contains('forgot') ||
         path.contains('reset') ||
         path.contains('refresh');
+
+    final bool isBackgroundPath = path.contains('device-token') ||
+        path.contains('notification') ||
+        path.contains('fitness') ||
+        path.contains('sidebar') ||
+        path.contains('app-version') ||
+        path.contains('status') ||
+        path.contains('check');
 
     // Attempt transparent token refresh on 401 Unauthorized
     if (statusCode == HttpStatus.unauthorized && !isAuthEndpoint && !_isRefreshing) {
@@ -138,9 +159,14 @@ class ErrorInterceptor extends Interceptor {
         (displayMessage.toLowerCase().contains('inactive') ||
             displayMessage.toLowerCase().contains('contact admin'));
 
+    // Suppress error snackbars for:
+    // 1. Explicitly suppressed calls (extra['suppressErrorSnack'] == true)
+    // 2. Background polling / sync services (device-token, notifications, fitness, etc.)
+    // 3. Read-only (GET) requests that timed out or encountered network socket errors (repositories have cache fallbacks)
     final bool suppressErrorSnack =
         err.requestOptions.extra['suppressErrorSnack'] == true ||
-        err.requestOptions.path.toLowerCase().contains('device-token');
+        isBackgroundPath ||
+        (isReadOnly && (isTimeout || statusCode == socket_exception));
 
     final bool suppressSessionExpired =
         err.requestOptions.extra['suppressSessionExpired'] == true;

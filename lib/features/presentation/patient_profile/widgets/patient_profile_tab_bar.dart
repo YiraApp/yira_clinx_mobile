@@ -59,6 +59,7 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
       case 'medical records':
         return Icons.medical_services_outlined;
       case 'prescribe':
+      case 'prescription':
       case 'prescriptions':
         return Icons.medication_outlined;
       case 'notes':

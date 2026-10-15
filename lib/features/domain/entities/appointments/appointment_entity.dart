@@ -17,6 +17,8 @@ class Appointment {
   final String statusRaw;
   final String? patientStatus;
   final String? patientUserId;
+  final String? doctorId;
+  final int? slotId;
   final String? doctorName;
   final String? relation;
   final bool? isPrimary;
@@ -26,6 +28,7 @@ class Appointment {
   final String? organizationName;
   final String? reason;
   final String? meetingUrl;
+  final String? date;
 
   const Appointment({
     required this.id,
@@ -40,6 +43,8 @@ class Appointment {
     this.statusRaw = '',
     this.patientStatus,
     this.patientUserId,
+    this.doctorId,
+    this.slotId,
     this.doctorName = 'Doctor',
     this.relation = 'Self',
     this.isPrimary = true,
@@ -49,7 +54,10 @@ class Appointment {
     this.organizationName,
     this.reason,
     this.meetingUrl,
+    this.date,
   });
+
+  bool get isTeleConsultation => type == AppointmentType.videoCall;
 }
 
 

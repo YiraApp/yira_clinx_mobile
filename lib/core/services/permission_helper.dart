@@ -36,16 +36,19 @@ class PermissionHelper {
   static Future<bool> ensurePhotosPermission(BuildContext context) async {
     if (kIsWeb) return true;
 
-    Permission permission = Permission.photos;
     if (Platform.isAndroid) {
       try {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
-        if (androidInfo.version.sdkInt < 33) {
-          permission = Permission.storage;
+        // Android 13+ (API 33+) uses the system Photo Picker which requires no storage or media permissions
+        if (androidInfo.version.sdkInt >= 33) {
+          return true;
         }
-      } catch (_) {
-        permission = Permission.storage;
-      }
+      } catch (_) {}
+    }
+
+    Permission permission = Permission.photos;
+    if (Platform.isAndroid) {
+      permission = Permission.storage;
     }
 
     var status = await permission.status;
@@ -79,16 +82,19 @@ class PermissionHelper {
   static Future<bool> ensureDocumentPermission(BuildContext context) async {
     if (kIsWeb) return true;
 
-    Permission permission = Permission.photos;
     if (Platform.isAndroid) {
       try {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
-        if (androidInfo.version.sdkInt < 33) {
-          permission = Permission.storage;
+        // Android 13+ (API 33+) uses system file picker (Storage Access Framework) requiring no broad storage permissions
+        if (androidInfo.version.sdkInt >= 33) {
+          return true;
         }
-      } catch (_) {
-        permission = Permission.storage;
-      }
+      } catch (_) {}
+    }
+
+    Permission permission = Permission.photos;
+    if (Platform.isAndroid) {
+      permission = Permission.storage;
     }
 
     var status = await permission.status;

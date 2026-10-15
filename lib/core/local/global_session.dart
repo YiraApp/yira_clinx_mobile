@@ -19,6 +19,61 @@ class GlobalSession {
 
   String? rootPrimaryUserId;
 
+  void setRootPrimaryUserId(String? id) {
+    rootPrimaryUserId = id;
+    if (id != null && id.isNotEmpty) {
+      try {
+        _secureStorage.writeSecureValue<String>(SecureCacheKey.rootPrimaryUserId, id);
+      } catch (_) {}
+    }
+  }
+
+  bool get isCurrentProfilePrimary {
+    final current = userNotifier.value?.data;
+    if (current == null) return false;
+    final currentId = (current.id ?? '').trim().toLowerCase();
+    if (currentId.isEmpty) return false;
+
+    // 1. If rootPrimaryUserId is set and differs from current active user ID, it's not primary
+    final rootId = (rootPrimaryUserId ?? '').trim().toLowerCase();
+    if (rootId.isNotEmpty && currentId != rootId) {
+      return false;
+    }
+
+    // 2. Check the profiles list inside current session
+    final profiles = current.profiles ?? [];
+    if (profiles.isNotEmpty) {
+      ProfileEntity? match;
+      for (int i = 0; i < profiles.length; i++) {
+        final p = profiles[i];
+        if ((p.id ?? '').trim().toLowerCase() == currentId) {
+          match = p;
+          // If this matching profile is not at index 0, it is a dependent/child profile
+          if (i > 0) return false;
+          break;
+        }
+      }
+
+      if (match != null) {
+        final rel = (match.relation ?? '').trim().toLowerCase();
+        final bool isFamilyRelation = rel.isNotEmpty &&
+            rel != 'self' &&
+            rel != 'primary' &&
+            rel != 'admin';
+
+        if (match.isPrimary == false ||
+            match.accountType?.toLowerCase() == 'dependent' ||
+            isFamilyRelation) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  bool get isCurrentProfileChild => !isCurrentProfilePrimary;
+
   late SecureStorageService _secureStorage;
 
   PlatformInfoEntity? get cachedPlatformInfo => platformNotifier.value;
@@ -36,6 +91,17 @@ class GlobalSession {
       if (userJson != null) {
         final Map<String, dynamic> userMap = jsonDecode(userJson);
         userNotifier.value = LoginModel.fromJson(userMap);
+      }
+      final String? cachedRootId = await _secureStorage.readSecureValue<String>(SecureCacheKey.rootPrimaryUserId);
+      if (cachedRootId != null && cachedRootId.isNotEmpty) {
+        rootPrimaryUserId = cachedRootId;
+      } else if (userNotifier.value?.data != null) {
+        final profiles = userNotifier.value!.data!.profiles ?? [];
+        if (profiles.isNotEmpty && (profiles[0].id ?? '').isNotEmpty) {
+          setRootPrimaryUserId(profiles[0].id);
+        } else if ((userNotifier.value!.data!.id ?? '').isNotEmpty) {
+          setRootPrimaryUserId(userNotifier.value!.data!.id);
+        }
       }
     } catch (e) {
       debugPrint("CRITICAL (GlobalSession): Cache initialization failed: $e");
@@ -67,6 +133,15 @@ class GlobalSession {
   Future<void> update(LoginEntity data) async {
     userNotifier.value = data;
     try {
+      if ((rootPrimaryUserId ?? '').isEmpty) {
+        final profiles = data.data?.profiles ?? [];
+        if (profiles.isNotEmpty && (profiles[0].id ?? '').isNotEmpty) {
+          setRootPrimaryUserId(profiles[0].id);
+        } else if ((data.data?.id ?? '').isNotEmpty) {
+          setRootPrimaryUserId(data.data?.id);
+        }
+      }
+
       Map<String, dynamic> jsonMap;
       if (data is LoginModel) {
         jsonMap = data.toJson();
@@ -111,8 +186,10 @@ class GlobalSession {
 
   Future<void> clear() async {
     userNotifier.value = null;
+    rootPrimaryUserId = null;
     try {
       await _secureStorage.deleteSecureValue(SecureCacheKey.userData);
+      await _secureStorage.deleteSecureValue(SecureCacheKey.rootPrimaryUserId);
     } catch (e) {
       debugPrint("Error clearing secure storage cache: $e");
     }

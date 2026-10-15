@@ -25,19 +25,42 @@ class UpdateLatestOrgDetailsRepoImpl extends UpdateLatestOrgDetailsRepo {
       final currentUser = GlobalSession.instance.userNotifier.value;
       String token = currentUser?.data?.accessToken ?? '';
 
+      final platFormData = GlobalSession.instance.platformNotifier.value ??
+          GlobalSession.instance.cachedPlatformInfo;
+      final String effectiveUserId = (userId != null && userId.trim().isNotEmpty)
+          ? userId.trim()
+          : (currentUser?.data?.id ?? '').trim();
+      String deviceId = platFormData?.deviceId ?? '';
+      if (deviceId.isEmpty || deviceId == 'unknown_id') {
+        deviceId = (effectiveUserId.isNotEmpty)
+            ? 'dev_$effectiveUserId'
+            : 'device_${DateTime.now().millisecondsSinceEpoch}';
+      }
+
       final Map<String, dynamic> requestBody = {
-        "userId": userId ?? currentUser?.data?.id,
+        "userId": effectiveUserId,
+        "deviceId": deviceId,
         "latestRoleId": latestRoleId,
         "latestOrgId": latestOrgId,
         "latestHospitalId": latestHospitalId,
       };
+
+      final Map<String, dynamic> headers = {
+        HttpHeaders.contentTypeHeader: 'application/json',
+        'x-user-id': effectiveUserId,
+        'x-device-id': deviceId,
+      };
+      if (token.isNotEmpty) {
+        headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
+      }
+
       final response = await apiClient
           .account(showSuccessSnack: true)
           .post(
             URLs.updateLatestOrgDetails,
             data: requestBody,
             options: Options(
-              headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+              headers: headers,
             ),
           );
 

@@ -83,42 +83,123 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
           'Cancelled',
         ];
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Update Appointment Status",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isDark ? Colors.white : Colors.black87,
+        final primaryColor = Theme.of(context).primaryColor;
+        String? updatingStatus;
+
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final isUpdating = updatingStatus != null;
+            return PopScope(
+              canPop: !isUpdating,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Update Appointment Status",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        if (isUpdating)
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primaryColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...statuses.map((s) {
+                      final isCurrent = _currentStatus.toLowerCase() == s.toLowerCase();
+                      final isThisUpdating = updatingStatus == s;
+                      return ListTile(
+                        dense: true,
+                        enabled: !isUpdating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        title: Text(
+                          s,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontWeight: (isCurrent || isThisUpdating) ? FontWeight.bold : FontWeight.normal,
+                            color: (isCurrent || isThisUpdating)
+                                ? primaryColor
+                                : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                        trailing: isThisUpdating
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                ),
+                              )
+                            : isCurrent
+                                ? Icon(Icons.check_circle, color: primaryColor)
+                                : null,
+                        onTap: isUpdating
+                            ? null
+                            : () async {
+                                if (isCurrent) {
+                                  Navigator.pop(dialogContext);
+                                  return;
+                                }
+                                setDialogState(() {
+                                  updatingStatus = s;
+                                });
+                                await _updateStatus(s);
+                                if (dialogContext.mounted) {
+                                  Navigator.pop(dialogContext);
+                                }
+                              },
+                      );
+                    }),
+                    if (isUpdating) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Updating status to $updatingStatus...",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              ...statuses.map((s) {
-                final isCurrent = _currentStatus.toLowerCase() == s.toLowerCase();
-                return ListTile(
-                  title: Text(
-                    s,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                      color: isCurrent ? Theme.of(context).primaryColor : (isDark ? Colors.white70 : Colors.black87),
-                    ),
-                  ),
-                  trailing: isCurrent ? Icon(Icons.check_circle, color: Theme.of(context).primaryColor) : null,
-                  onTap: () {
-                    Navigator.pop(dialogContext);
-                    _updateStatus(s);
-                  },
-                );
-              }),
-            ],
-          ),
+            );
+          },
         );
       },
     );

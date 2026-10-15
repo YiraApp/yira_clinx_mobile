@@ -12,3 +12,10 @@ class NetworkStatusChangedEvent extends NetworkEvent {
   final NetworkStatus status;
   NetworkStatusChangedEvent(this.status);
 }
+
+class AppResumedNetworkCheckEvent extends NetworkEvent {}
+
+class RetryNetworkCheckEvent extends NetworkEvent {
+  final Completer<bool>? completer;
+  RetryNetworkCheckEvent({this.completer});
+}

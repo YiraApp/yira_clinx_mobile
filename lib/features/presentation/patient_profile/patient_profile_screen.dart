@@ -72,14 +72,14 @@ class _DoctorPatientProfileScreenState
             'Info',
             'Appointments',
             'Medical Record',
-            'Prescribe',
+            'Prescription',
             'Documents',
           ]
         : [
             'Info',
             'Appointments',
             'Medical Record',
-            'Prescribe',
+            'Prescription',
             'Notes',
             'Documents',
           ];
@@ -260,7 +260,7 @@ class _DoctorPatientProfileScreenState
             hospitalId: widget.hospitalId,
             orgId: widget.orgId,
             onPrescribeTap: () {
-              final idx = _tabs.indexOf('Prescribe');
+              final idx = _tabs.contains('Prescription') ? _tabs.indexOf('Prescription') : _tabs.indexOf('Prescribe');
               if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
             onNoteTap: () {
@@ -287,7 +287,7 @@ class _DoctorPatientProfileScreenState
             isTab: isTab,
             hasAccess: accessStatus?.hasAccess ?? true,
             onPrescribeTap: () {
-              final idx = _tabs.indexOf('Prescribe');
+              final idx = _tabs.contains('Prescription') ? _tabs.indexOf('Prescription') : _tabs.indexOf('Prescribe');
               if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
             onNoteTap: () {
@@ -309,8 +309,9 @@ class _DoctorPatientProfileScreenState
             orgId: widget.orgId,
           ),
         );
+      case 'Prescription':
       case 'Prescribe':
-        // Prescribe Tab (Direct access for doctor to write & manage prescriptions)
+        // Prescription Tab (Direct access for doctor to write & manage prescriptions)
         return BlocProvider<PrescriptionBloc>(
           create: (_) => sl<PrescriptionBloc>()
             ..add(LoadPrescriptionData(

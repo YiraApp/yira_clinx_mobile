@@ -10,7 +10,8 @@ enum SecureCacheKey {
   patientQueue(ClinxStorageKeys.patientQueue),
   medicalReportsConfig(ClinxStorageKeys.medicalReportsConfig),
   appVersionInfo(ClinxStorageKeys.appVersionInfo),
-  userData(ClinxStorageKeys.userData);
+  userData(ClinxStorageKeys.userData),
+  rootPrimaryUserId('root_primary_user_id');
 
   final String keyName;
   const SecureCacheKey(this.keyName);

@@ -56,4 +56,11 @@ class SyncFavoritesEvent extends DashboardEvent {
   List<Object?> get props => [];
 }
 
+class LoadMorePatientsEvent extends DashboardEvent {
+  const LoadMorePatientsEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
 

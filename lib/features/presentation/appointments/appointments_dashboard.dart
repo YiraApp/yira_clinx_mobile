@@ -14,7 +14,11 @@ import '../../../core/constants/constants.dart';
 import '../../../core/utils/utils.dart';
 import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
 import 'package:yiraclinics/core/tour/provider_tour_mock_data.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import '../../../di/dependency_injection.dart';
 import '../../domain/entities/appointments/appointment_entity.dart';
+import '../../domain/repositories/appointments/appointment_repo.dart';
+import '../patient/appointments/widgets/reschedule_appointment_sheet.dart';
 import 'appointment_bloc/appointment_bloc.dart';
 
 class AppointmentDashboardScreen extends StatefulWidget {
@@ -33,6 +37,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   String _selectedStatus = "All Status";
   bool _showFilters = true;
   bool _isBookingNavigating = false;
+  final Set<String> _updatingAppointmentIds = {};
 
   final List<String> _dateOptions = const [
     "Today",
@@ -137,115 +142,423 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   }
 
   void _showStatusChangeDialog(Appointment appointment) {
+    final statuses = [
+      'Scheduled',
+      'Confirmed',
+      'In Progress',
+      'Completed',
+      'Cancelled',
+    ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+
     showModalBottomSheet(
       context: context,
+      isDismissible: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? darkModeCardColor
-          : Colors.white,
+      backgroundColor: isDark ? darkModeCardColor : Colors.white,
       builder: (dialogContext) {
-        final statuses = [
-          'Scheduled',
-          'Confirmed',
-          'In Progress',
-          'Completed',
-          'Cancelled',
-        ];
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Update Status",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                appointment.patientName,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w400,
-                  fontSize: 14,
-                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...statuses.map((s) {
-                final isCurrent = appointment.statusRaw.toLowerCase() == s.toLowerCase();
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 4),
-                  decoration: BoxDecoration(
-                    color: isCurrent
-                        ? (isDark
-                            ? Theme.of(context).primaryColor.withOpacity(0.1)
-                            : Theme.of(context).primaryColor.withOpacity(0.06))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    child: ListTile(
-                      dense: true,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      title: Text(
-                        s,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                          fontSize: 15,
-                          color: isCurrent
-                              ? Theme.of(context).primaryColor
-                              : (isDark ? Colors.white70 : Colors.black87),
+        String? updatingStatus;
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final isUpdating = updatingStatus != null;
+            return PopScope(
+              canPop: !isUpdating,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Drag handle
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      trailing: isCurrent
-                          ? Icon(Icons.check_circle_rounded,
-                              color: Theme.of(context).primaryColor, size: 22)
-                          : null,
-                      onTap: () {
-                        Navigator.pop(dialogContext);
-                        context.read<AppointmentBloc>().add(
-                          UpdateAppointmentStatusEvent(
-                            appointmentId: appointment.id,
-                            status: s,
-                          ),
-                        );
-                      },
                     ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Update Status",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                appointment.patientName,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 14,
+                                  color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isUpdating)
+                          SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: primaryColor,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ...statuses.map((s) {
+                      final isCurrent = appointment.statusRaw.toLowerCase() == s.toLowerCase();
+                      final isThisUpdating = updatingStatus == s;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: isThisUpdating
+                              ? primaryColor.withValues(alpha: 0.12)
+                              : isCurrent
+                                  ? (isDark
+                                      ? primaryColor.withValues(alpha: 0.1)
+                                      : primaryColor.withValues(alpha: 0.06))
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: isThisUpdating
+                              ? Border.all(color: primaryColor.withValues(alpha: 0.5), width: 1.2)
+                              : null,
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          child: ListTile(
+                            dense: true,
+                            enabled: !isUpdating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            title: Text(
+                              s,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: (isCurrent || isThisUpdating) ? FontWeight.w600 : FontWeight.w400,
+                                fontSize: 15,
+                                color: (isCurrent || isThisUpdating)
+                                    ? primaryColor
+                                    : (isDark ? Colors.white70 : Colors.black87),
+                              ),
+                            ),
+                            trailing: isThisUpdating
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                                    ),
+                                  )
+                                : isCurrent
+                                    ? Icon(
+                                        Icons.check_circle_rounded,
+                                        color: primaryColor,
+                                        size: 22,
+                                      )
+                                    : null,
+                            onTap: isUpdating
+                                ? null
+                                : () async {
+                                    if (isCurrent) {
+                                      Navigator.pop(dialogContext);
+                                      return;
+                                    }
+                                    setDialogState(() {
+                                      updatingStatus = s;
+                                    });
+                                    setState(() {
+                                      _updatingAppointmentIds.add(appointment.id);
+                                    });
+
+                                    try {
+                                      final success = await sl<AppointmentRepo>().updateAppointmentStatus(
+                                        appointmentId: appointment.id,
+                                        status: s,
+                                      );
+
+                                      if (!dialogContext.mounted) return;
+                                      Navigator.pop(dialogContext);
+
+                                      if (success) {
+                                        if (mounted) {
+                                          _loadWithDateFilter();
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text("Appointment status updated to $s"),
+                                              backgroundColor: const Color(0xFF10B981),
+                                              duration: const Duration(seconds: 2),
+                                            ),
+                                          );
+                                        }
+                                      } else {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text("Failed to update status. Please try again."),
+                                              backgroundColor: Color(0xFFDC2626),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } catch (e) {
+                                      if (dialogContext.mounted) {
+                                        Navigator.pop(dialogContext);
+                                      }
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text("Error updating status: $e"),
+                                            backgroundColor: const Color(0xFFDC2626),
+                                          ),
+                                        );
+                                      }
+                                    } finally {
+                                      if (mounted) {
+                                        setState(() {
+                                          _updatingAppointmentIds.remove(appointment.id);
+                                        });
+                                      }
+                                    }
+                                  },
+                          ),
+                        ),
+                      );
+                    }),
+                    if (isUpdating) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 15,
+                              height: 15,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: primaryColor,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              "Updating status to $updatingStatus...",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  Future<void> _confirmAndCancelAppointment(Appointment appointment) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final patientName = appointment.patientName.isNotEmpty ? appointment.patientName : 'Patient';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isCancelling = false;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return PopScope(
+              canPop: !isCancelling,
+              child: AlertDialog(
+                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.cancel_outlined,
+                        color: Color(0xFFDC2626),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Cancel Appointment",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  "Are you sure you want to cancel the appointment for $patientName?",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 13.5,
+                    height: 1.45,
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  ),
+                ),
+                actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                actions: [
+                  TextButton(
+                    onPressed: isCancelling ? null : () => Navigator.of(ctx).pop(false),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    child: Text(
+                      "Keep Appointment",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: isCancelling
+                            ? (isDark ? Colors.white24 : Colors.grey.shade400)
+                            : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: isCancelling
+                        ? null
+                        : () async {
+                            setDialogState(() => isCancelling = true);
+                            try {
+                              final success = await sl<AppointmentRepo>().updateAppointmentStatus(
+                                appointmentId: appointment.id,
+                                status: 'Cancelled',
+                              );
+                              if (!ctx.mounted) return;
+                              if (success) {
+                                Navigator.of(ctx).pop(true);
+                              } else {
+                                setDialogState(() => isCancelling = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Unable to cancel appointment. Please try again."),
+                                      backgroundColor: Color(0xFFDC2626),
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setDialogState(() => isCancelling = false);
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to cancel appointment: $e"),
+                                    backgroundColor: const Color(0xFFDC2626),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.6),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: isCancelling
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Cancelling...",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            "Yes, Cancel",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (confirm == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Appointment marked as Cancelled."),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      _loadWithDateFilter();
+    }
   }
 
   String _getDateFilterSubtitle() {
@@ -993,7 +1306,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
             final bool isCompleted =
                 appointment.statusRaw.toLowerCase().contains('complete');
             final bool isVideo =
-                appointment.type == AppointmentType.videoCall;
+                appointment.type == AppointmentType.videoCall ||
+                appointment.isTeleConsultation;
             Color statusColor;
             Color statusTextColor;
             String statusLabel;
@@ -1054,7 +1368,10 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 statusColor: statusColor,
                 statusTextColor: statusTextColor,
                 patientStatus: appointment.patientStatus,
+                isUpdatingStatus: _updatingAppointmentIds.contains(appointment.id),
                 isTeleConsultation: isVideo,
+                appointmentDate: appointment.date ?? appointment.time,
+                canJoinCall: !Utils.isPreviousDay(appointment.date ?? appointment.time),
                 onJoinCall: () async {
                   final meetingUrl = appointment.meetingUrl?.trim();
                   final effectiveUrl = (meetingUrl != null && meetingUrl.isNotEmpty)
@@ -1074,6 +1391,32 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 onStatusTap: () {
                   _showStatusChangeDialog(appointment);
                 },
+                onRescheduleTap: (!statusLabel.toLowerCase().contains('complet') &&
+                        !statusLabel.toLowerCase().contains('cancel'))
+                    ? () {
+                        final currentUser = GlobalSession.instance.userNotifier.value;
+                        final docId = appointment.doctorId ?? currentUser?.data?.id ?? '';
+                        RescheduleAppointmentSheet.show(
+                          context,
+                          appointmentId: appointment.id,
+                          doctorId: docId,
+                          doctorName: appointment.doctorName ?? 'Doctor',
+                          hospitalId: appointment.hospitalId?.toString(),
+                          hospitalName: appointment.hospitalName,
+                          currentAppointmentDate: appointment.date ?? appointment.time,
+                          currentStartTime: appointment.time,
+                          isTeleConsultation: isVideo,
+                          patientName: displayName,
+                          onRescheduled: () {
+                            _loadWithDateFilter();
+                          },
+                        );
+                      }
+                    : null,
+                onCancelTap: (!statusLabel.toLowerCase().contains('complet') &&
+                        !statusLabel.toLowerCase().contains('cancel'))
+                    ? () => _confirmAndCancelAppointment(appointment)
+                    : null,
                 onTap: () async {
                   await Navigator.pushNamed(
                     context,

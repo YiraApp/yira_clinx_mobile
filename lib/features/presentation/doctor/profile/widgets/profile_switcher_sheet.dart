@@ -12,7 +12,7 @@ import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:yiraclinics/features/use_cases/config_use_case.dart';
+import 'package:yiraclinics/core/navigation_services/navigation_services.dart';
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
 
@@ -462,12 +462,8 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
         if (mounted) {
           Navigator.of(context, rootNavigator: true).pop();
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.userConfiguration,
-            (route) => false,
-          );
         }
+        NavigationService.navigateTo(AppRoutes.userConfiguration);
       } else {
         if (mounted) {
           setState(() {

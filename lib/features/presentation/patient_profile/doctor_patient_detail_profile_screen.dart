@@ -58,7 +58,7 @@ class _DoctorPatientDetailProfileScreenState
     'Info',
     'Appointments',
     'Medical Record',
-    'Prescribe',
+    'Prescription',
     'Notes',
     'Documents',
     'Suggestions',

@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
-import '../../di/dependency_injection.dart';
-import '../local/flutter_secure_storage.dart';
-import '../local/shared_preferences.dart';
+import '../services/auth_logout_service.dart';
 import 'app_info_state_template.dart';
 
 class SessionExpiredScreen extends StatelessWidget {
@@ -33,15 +30,7 @@ class SessionExpiredScreen extends StatelessWidget {
           "For your security, you've been signed out after a period of inactivity.",
       buttonText: 'Sign in again',
       onButtonPressed: () async {
-        try {
-          await sl<SecureStorageService>().clearAllSecureData();
-          await sl<SharedPrefsService>().clearAll();
-        } catch (_) {}
-        if (context.mounted) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.signIn, (route) => false);
-        }
+        await AuthLogoutService.performLogout(context: context);
       },
       buttonIcon: const Icon(Icons.logout),
     );

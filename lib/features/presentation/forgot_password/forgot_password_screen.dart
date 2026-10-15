@@ -811,7 +811,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   return 'Please enter your registered email';
                 }
                 final String trimmedValue = value.trim();
-                final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                final emailRegex = RegExp(r'^[\w.+%=\-]+@([\w-]+\.)+[\w-]{2,}$');
                 if (!emailRegex.hasMatch(trimmedValue)) {
                   return 'Please enter a valid email address';
                 }

@@ -550,4 +550,119 @@ class Utils {
     String uniqueName = timestamp.toString();
     return uniqueName;
   }
+
+  /// Checks if the given date represents a previous day (past date) relative to today.
+  /// Returns true if date is strictly before today (yesterday or older).
+  /// Returns false if date is today (throughout the day) or in the future.
+  static bool isPreviousDay(dynamic dateVal) {
+    if (dateVal == null) return false;
+    try {
+      DateTime? apptDate;
+      if (dateVal is DateTime) {
+        apptDate = dateVal;
+      } else if (dateVal is String) {
+        final s = dateVal.trim();
+        if (s.isEmpty) return false;
+
+        // Try direct ISO parse (e.g. 2026-10-13, 2026-10-13T10:00:00Z)
+        apptDate = DateTime.tryParse(s);
+
+        // Try flexible parsing for formats like "13 Oct 2026", "13-10-2026", "2026-10-13"
+        if (apptDate == null) {
+          const monthMap = {
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+            'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+            'january': 1, 'february': 2, 'march': 3, 'april': 4, 'june': 6,
+            'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12,
+          };
+          final clean = s.replaceAll(',', ' ').replaceAll('-', ' ').replaceAll('/', ' ');
+          final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+          if (parts.length >= 3) {
+            int? day, month, year;
+            for (final p in parts) {
+              final lower = p.toLowerCase();
+              if (monthMap.containsKey(lower)) {
+                month = monthMap[lower];
+              } else if (int.tryParse(p) != null) {
+                final val = int.parse(p);
+                if (val > 1900 && val < 2100) {
+                  year = val;
+                } else if (day == null && val >= 1 && val <= 31) {
+                  day = val;
+                } else if (month == null && val >= 1 && val <= 12) {
+                  month = val;
+                } else {
+                  year ??= val;
+                }
+              }
+            }
+            if (day != null && month != null && year != null) {
+              apptDate = DateTime(year, month, day);
+            }
+          }
+        }
+      }
+      if (apptDate == null) return false;
+
+      final now = DateTime.now();
+      final startOfToday = DateTime(now.year, now.month, now.day);
+      final startOfApptDay = DateTime(apptDate.year, apptDate.month, apptDate.day);
+
+      return startOfApptDay.isBefore(startOfToday);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Checks whether the Join Call option should be displayed and enabled for an appointment.
+  /// - Allowed throughout the whole appointment day (today) and future dates.
+  /// - Blocked for previous days (past dates: yesterday or older), or completed/cancelled appointments.
+  static bool canJoinCall({
+    dynamic appointment,
+    String? status,
+    dynamic date,
+    bool? isTeleConsultation,
+  }) {
+    if (appointment != null && appointment is Map) {
+      final isTele = isTeleConsultation ??
+          (appointment['isTeleConsultation'] == true ||
+              appointment['is_tele_consultation'] == true ||
+              appointment['isTeleconsultation'] == true ||
+              (appointment['appointmentType'] ?? '').toString().toLowerCase().contains('video') ||
+              (appointment['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
+              (appointment['appointment_type'] ?? '').toString().toLowerCase().contains('video') ||
+              (appointment['appointment_type'] ?? '').toString().toLowerCase().contains('tele') ||
+              (appointment['type'] ?? '').toString().toLowerCase().contains('video') ||
+              (appointment['type'] ?? '').toString().toLowerCase().contains('tele') ||
+              (appointment['meetingUrl'] ?? appointment['meeting_url'] ?? '').toString().trim().isNotEmpty);
+
+      if (!isTele) return false;
+
+      final stat = (status ?? appointment['status'] ?? appointment['statusLabel'] ?? '').toString().toLowerCase();
+      if (stat.contains('cancel') || stat.contains('complet') || stat.contains('reject') || stat.contains('past')) {
+        return false;
+      }
+
+      final dateVal = date ?? appointment['appointmentDate'] ?? appointment['rawDate'] ?? appointment['date'];
+      if (isPreviousDay(dateVal)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    final isTele = isTeleConsultation ?? true;
+    if (!isTele) return false;
+
+    final stat = (status ?? '').toLowerCase();
+    if (stat.contains('cancel') || stat.contains('complet') || stat.contains('reject') || stat.contains('past')) {
+      return false;
+    }
+
+    if (isPreviousDay(date)) {
+      return false;
+    }
+
+    return true;
+  }
 }

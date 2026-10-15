@@ -15,6 +15,7 @@ class PatientEntity extends Equatable {
   final int age;
   final int visits;
   final bool? isFavoriteRaw;
+  final DateTime? registeredDate;
 
   bool get isFavorite => isFavoriteRaw ?? false;
 
@@ -30,6 +31,7 @@ class PatientEntity extends Equatable {
     required this.age,
     this.allergy = "",
     bool? isFavorite,
+    this.registeredDate,
   }) : isFavoriteRaw = isFavorite ?? false;
 
   PatientEntity copyWith({
@@ -44,6 +46,7 @@ class PatientEntity extends Equatable {
     int? age,
     int? visits,
     bool? isFavorite,
+    DateTime? registeredDate,
   }) {
     return PatientEntity(
       id: id ?? this.id,
@@ -57,9 +60,10 @@ class PatientEntity extends Equatable {
       age: age ?? this.age,
       visits: visits ?? this.visits,
       isFavorite: isFavorite ?? this.isFavorite,
+      registeredDate: registeredDate ?? this.registeredDate,
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, name, status, condition, isFavorite];
+  List<Object?> get props => [id, userId, name, status, condition, isFavorite, registeredDate];
 }

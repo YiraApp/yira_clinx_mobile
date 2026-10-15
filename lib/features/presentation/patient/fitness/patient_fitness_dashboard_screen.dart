@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
+import '../../../../core/local/global_session.dart';
 import '../../../../core/services/fitness/fitness_sync_service.dart';
 import '../../../data/models/fitness/patient_fitness_model.dart';
 import '../../../../core/shimmer_widgets/patient_fitness_shimmer.dart';
@@ -43,14 +44,38 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   @override
   void initState() {
     super.initState();
+    GlobalSession.instance.userNotifier.addListener(_onProfileChanged);
+
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Fitness tracking is only available for primary accounts.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      });
+      return;
+    }
+
     FitnessSyncService.instance.todayFitnessNotifier.addListener(_onTodayNotifierChanged);
     _initialLoadAndAutoSync();
   }
 
   @override
   void dispose() {
+    GlobalSession.instance.userNotifier.removeListener(_onProfileChanged);
     FitnessSyncService.instance.todayFitnessNotifier.removeListener(_onTodayNotifierChanged);
     super.dispose();
+  }
+
+  void _onProfileChanged() {
+    if (!GlobalSession.instance.isCurrentProfilePrimary && mounted) {
+      Navigator.pop(context);
+    }
   }
 
   void _onTodayNotifierChanged() {
@@ -59,10 +84,11 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
 
   /// Initial load from cache/backend first, then automatically trigger native sensor sync
   Future<void> _initialLoadAndAutoSync() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) return;
     await _loadSummary(showSpinner: true);
 
     // Auto-sync silently with Health Connect / Apple Health in background
-    if (mounted) {
+    if (mounted && GlobalSession.instance.isCurrentProfilePrimary) {
       await FitnessSyncService.instance.syncNow(silent: true);
       if (mounted) {
         await _loadSummary(showSpinner: false);
@@ -90,6 +116,15 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   }
 
   Future<void> _handleManualSync() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitness tracking is only available for primary accounts.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     setState(() => _isManualSyncing = true);
     try {
       final syncResult = await FitnessSyncService.instance.syncNow(silent: false);

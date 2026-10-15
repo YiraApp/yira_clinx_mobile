@@ -16,6 +16,7 @@ import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
 import 'package:yiraclinics/core/tour/patient_tour_mock_data.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'patient_book_appointment_sheet.dart';
+import 'widgets/reschedule_appointment_sheet.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
@@ -380,6 +381,255 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     }
   }
 
+  void _openRescheduleSheet(Map<String, dynamic> apt) {
+    final docId = (apt['doctorId'] ?? apt['doctor_id'] ?? '').toString();
+    final docName = (apt['doctorName'] ?? apt['doctor_name'] ?? 'Doctor').toString();
+    final hospId = (apt['hospitalId'] ?? apt['hospital_id'] ?? '').toString();
+    final hospName = (apt['hospitalName'] ?? apt['hospital_name'] ?? '').toString();
+    final apptDate = apt['appointmentDate'] ?? apt['rawDate'] ?? apt['date'];
+    final isTele = apt['isTeleConsultation'] == true ||
+        apt['is_tele_consultation'] == true ||
+        apt['isTeleconsultation'] == true ||
+        (apt['appointmentType'] ?? '').toString().toLowerCase().contains('video') ||
+        (apt['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
+        (apt['meetingUrl'] ?? apt['meeting_url'] ?? '').toString().trim().isNotEmpty;
+    final patName = (apt['patientName'] ?? apt['patient_name'] ?? '').toString();
+
+    RescheduleAppointmentSheet.show(
+      context,
+      appointmentId: apt['id'],
+      doctorId: docId,
+      doctorName: docName,
+      hospitalId: hospId.isNotEmpty ? hospId : null,
+      hospitalName: hospName.isNotEmpty ? hospName : null,
+      currentAppointmentDate: apptDate,
+      currentStartTime: apt['startTime']?.toString(),
+      currentEndTime: apt['endTime']?.toString(),
+      isTeleConsultation: isTele,
+      patientName: patName,
+      onRescheduled: () => _loadAppointments(force: true),
+    );
+  }
+
+  Future<void> _confirmAndCancelAppointment(Map<String, dynamic> apt) async {
+    final appointmentId = apt['id'];
+    if (appointmentId == null) return;
+
+    final docName = (apt['doctorName'] ?? apt['doctor_name'] ?? 'Doctor').toString();
+    final timeStr = _formatAppointmentDateTime(apt);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isCancelling = false;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return PopScope(
+              canPop: !isCancelling,
+              child: AlertDialog(
+                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.cancel_outlined,
+                        color: Color(0xFFDC2626),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Cancel Appointment",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Are you sure you want to cancel your consultation with $docName?",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13.5,
+                        height: 1.45,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                    ),
+                    if (timeStr.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                timeStr,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                actions: [
+                  TextButton(
+                    onPressed: isCancelling ? null : () => Navigator.of(ctx).pop(false),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    child: Text(
+                      "Keep Appointment",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: isCancelling
+                            ? (isDark ? Colors.white24 : Colors.grey.shade400)
+                            : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: isCancelling
+                        ? null
+                        : () async {
+                            setDialogState(() => isCancelling = true);
+                            final currentUser = GlobalSession.instance.userNotifier.value;
+                            final token = currentUser?.data?.accessToken ?? '';
+                            try {
+                              final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+                                URLs.updateAppointmentStatusUrl,
+                                data: {
+                                  "appointmentId": appointmentId.toString(),
+                                  "status": "Cancelled",
+                                },
+                                options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+                              );
+
+                              if (!ctx.mounted) return;
+
+                              if (response.statusCode == 200 || response.statusCode == 201) {
+                                Navigator.of(ctx).pop(true);
+                              } else {
+                                setDialogState(() => isCancelling = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Unable to cancel appointment. Please try again."),
+                                      backgroundColor: Color(0xFFDC2626),
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setDialogState(() => isCancelling = false);
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to cancel appointment: $e"),
+                                    backgroundColor: const Color(0xFFDC2626),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.6),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: isCancelling
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Cancelling...",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            "Yes, Cancel",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (confirm == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Appointment has been cancelled successfully."),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      _loadAppointments(force: true);
+    }
+  }
+
 
 
   @override
@@ -403,17 +653,16 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
       if (status == 'completed') {
         completedList.add(a);
-      } else if (status == 'cancelled') {
-        // Excluded from active upcoming, can be shown in completed/history
-        completedList.add(a);
+      } else if (aptDate != null) {
+        final aptDay = DateTime(aptDate.year, aptDate.month, aptDate.day);
+        if (aptDay.isBefore(todayStart)) {
+          completedList.add(a);
+        } else {
+          upcomingList.add(a);
+        }
       } else {
-        if (aptDate != null) {
-          final aptDay = DateTime(aptDate.year, aptDate.month, aptDate.day);
-          if (aptDay.isBefore(todayStart)) {
-            completedList.add(a);
-          } else {
-            upcomingList.add(a);
-          }
+        if (status.contains('past') || status.contains('complet')) {
+          completedList.add(a);
         } else {
           upcomingList.add(a);
         }
@@ -763,6 +1012,8 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                       ? const Color(0xFFD97706)
                                       : const Color(0xFF2563EB)));
 
+                          final apptDate = apt['appointmentDate'] ?? apt['rawDate'] ?? apt['date'];
+
                           final card = DocAppointmentCard(
                             initials: initials,
                             name: docName,
@@ -777,6 +1028,8 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 : (isTele ? 'Video Consultation' : 'In-Clinic Visit'),
                             isTab: isTab,
                             isTeleConsultation: isTele,
+                            appointmentDate: apptDate,
+                            canJoinCall: !Utils.isPreviousDay(apptDate),
                             onJoinCall: isPaymentPending
                                 ? () => _handlePayNow(apt)
                                 : () {
@@ -806,6 +1059,12 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 if (mounted) _loadAppointments();
                               });
                             },
+                            onRescheduleTap: (!isCompleted && !isCancelled && _activeTab == 'upcoming')
+                                ? () => _openRescheduleSheet(apt)
+                                : null,
+                            onCancelTap: (!isCompleted && !isCancelled && _activeTab == 'upcoming')
+                                ? () => _confirmAndCancelAppointment(apt)
+                                : null,
                             onTap: () {
                               final currentUser = GlobalSession.instance.userNotifier.value;
                               Navigator.pushNamed(

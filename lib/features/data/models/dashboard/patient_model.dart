@@ -15,6 +15,7 @@ class PatientModel extends PatientEntity {
     required super.visits,
     super.allergy,
     super.isFavorite,
+    super.registeredDate,
   });
 
   // Convert JSON from API to Model
@@ -29,11 +30,25 @@ class PatientModel extends PatientEntity {
     }
 
     final bool fav = (json['isFavorite'] == true) || (json['is_favorite'] == true) || isFavorite;
+    final String rawName = (json['name'] ?? json['patientName'] ?? json['firstName'] ?? '').toString().trim();
+    final String fallbackPhone = (json['phoneNumber'] ?? json['phone'] ?? '').toString().trim();
+    final String patientName = rawName.isNotEmpty ? rawName : (fallbackPhone.isNotEmpty ? fallbackPhone : 'Patient');
+
+    DateTime? parsedRegDate;
+    final rawRegDate = json['registeredDate'] ??
+        json['registered_date'] ??
+        json['createdAt'] ??
+        json['created_at'] ??
+        json['rawDate'] ??
+        json['raw_date'];
+    if (rawRegDate != null && rawRegDate.toString().trim().isNotEmpty) {
+      parsedRegDate = DateTime.tryParse(rawRegDate.toString().trim())?.toLocal();
+    }
 
     return PatientModel(
       id: json['id'] ?? '',
       userId: json['userId'] ?? json['user_id'] ?? json['id'] ?? '',
-      name: json['name'] ?? '',
+      name: patientName,
       condition: json['condition'] ?? '',
       lastVisit: json['last_visit_date'] ?? json['last_visit'] ?? '',
       status: json['status_label'] ?? json['status'] ?? '',
@@ -42,6 +57,7 @@ class PatientModel extends PatientEntity {
       visits: json['total_visits'] ?? json['visits'] ?? 0,
       allergy: allergyStr,
       isFavorite: fav,
+      registeredDate: parsedRegDate,
     );
   }
 
@@ -59,6 +75,7 @@ class PatientModel extends PatientEntity {
       'visits': visits,
       'allergy': allergy,
       'isFavorite': isFavorite,
+      'registeredDate': registeredDate?.toIso8601String(),
     };
   }
 }

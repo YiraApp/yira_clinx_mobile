@@ -12,10 +12,7 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashb
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_patient_card_wrapper.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_patient_contact_row.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_patient_vital_tile.dart';
-import '../../../../core/common_input_fields/common_input_field_unlimited.dart';
 import '../../../../core/common_widgets/common_text.dart';
-import '../../../../core/common_widgets/custom_border_button.dart';
-import '../../../../core/common_widgets/custom_button.dart';
 import '../../../domain/entities/dashboard/dashboard_patient_details_entity.dart';
 import '../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
 
@@ -223,7 +220,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             DashBoardPatientActionHubItem(
                               isTab: isTab,
                               icon: Icons.science_outlined,
-                              label: "Prescribe",
+                              label: "Prescription",
                               iconColor: Colors.green,
                               onTap: () {
                                 Navigator.pushNamed(

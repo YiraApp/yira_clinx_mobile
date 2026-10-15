@@ -12,6 +12,8 @@ class ExceptionHandler {
   const ExceptionHandler._();
 
   static bool _isRedirecting = false;
+  static String? _lastShownMessage;
+  static DateTime? _lastShownTime;
 
   static void processException({
     required int statusCode,
@@ -53,13 +55,38 @@ class ExceptionHandler {
     if (!isShownSnack) return;
 
     final String finalMessage = _getErrorMessage(statusCode, message);
-    // final bool isError = statusCode != HttpStatus.ok;
+    if (finalMessage.trim().isEmpty) return;
+
+    // Prevent duplicate rapid-fire snackbar spam (within 3 seconds)
+    final now = DateTime.now();
+    if (_lastShownMessage == finalMessage &&
+        _lastShownTime != null &&
+        now.difference(_lastShownTime!) < const Duration(seconds: 3)) {
+      return;
+    }
+    _lastShownMessage = finalMessage;
+    _lastShownTime = now;
 
     Utils.showSnackBar(message: finalMessage, status: status);
   }
 
   static String _getErrorMessage(int statusCode, String? customMessage) {
     if (customMessage != null && customMessage.trim().isNotEmpty) {
+      final lower = customMessage.toLowerCase();
+      // Sanitize raw technical exceptions so internal debug strings never leak to users
+      if (lower.contains('0:00:30') ||
+          lower.contains('timed out') ||
+          lower.contains('timeout') ||
+          lower.contains('dioexception') ||
+          lower.contains('socketexception') ||
+          lower.contains('handshakeexception') ||
+          lower.contains('connection refused') ||
+          lower.contains('connection error') ||
+          lower.contains('failed host lookup') ||
+          lower.contains('os error') ||
+          lower.contains('took longer than')) {
+        return 'The connection has timed out. Please check your network and try again.';
+      }
       return customMessage;
     }
 

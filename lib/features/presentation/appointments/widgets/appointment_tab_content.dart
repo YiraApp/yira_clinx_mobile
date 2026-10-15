@@ -14,6 +14,8 @@ class AppointmentTabContent extends StatelessWidget {
   final int? tabIndex;
   final bool isTab;
   final void Function(Appointment appointment)? onCardTap;
+  final void Function(Appointment appointment)? onRescheduleTap;
+  final void Function(Appointment appointment)? onCancelTap;
 
   const AppointmentTabContent({
     super.key,
@@ -24,6 +26,8 @@ class AppointmentTabContent extends StatelessWidget {
     this.tabIndex,
     required this.isTab,
     this.onCardTap,
+    this.onRescheduleTap,
+    this.onCancelTap,
   });
 
   String _getInitials(String name) {
@@ -143,7 +147,7 @@ class AppointmentTabContent extends StatelessWidget {
 
               // Determine status color
               final bool isCompleted = appointment.statusRaw.toLowerCase().contains('complete');
-              final bool isVideo = appointment.type == AppointmentType.videoCall;
+              final bool isVideo = appointment.type == AppointmentType.videoCall || appointment.isTeleConsultation;
               Color statusColor;
               Color statusTextColor;
               String statusLabel;
@@ -194,6 +198,8 @@ class AppointmentTabContent extends StatelessWidget {
                   statusTextColor: statusTextColor,
                   patientStatus: appointment.patientStatus,
                   isTeleConsultation: isVideo,
+                  appointmentDate: appointment.date ?? appointment.time,
+                  canJoinCall: !Utils.isPreviousDay(appointment.date ?? appointment.time),
                   onJoinCall: () async {
                     final meetingUrl = appointment.meetingUrl;
                     if (meetingUrl != null && meetingUrl.isNotEmpty) {
@@ -216,6 +222,12 @@ class AppointmentTabContent extends StatelessWidget {
                   onTap: () {
                     onCardTap?.call(appointment);
                   },
+                  onRescheduleTap: onRescheduleTap != null
+                      ? () => onRescheduleTap!(appointment)
+                      : null,
+                  onCancelTap: onCancelTap != null
+                      ? () => onCancelTap!(appointment)
+                      : null,
                 ),
               );
             },

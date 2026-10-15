@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
+import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/server_down/server_down_screen.dart';
 import 'package:yiraclinics/core/session_expired/session_expired_scren.dart';
 import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
@@ -94,6 +97,34 @@ import '../../features/presentation/user_prescription/prescription_details_scree
 import '../../features/presentation/user_prescription/prescription_screen.dart';
 
 class AppRouter {
+  static bool _isUserLoggedIn() {
+    try {
+      if (!sl.isRegistered<SharedPrefsService>()) return false;
+      final isLoggedIn = sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false;
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      return isLoggedIn && currentUser != null && (currentUser.data?.id ?? '').isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Route _guardedRoute({
+    required RouteSettings settings,
+    required Widget Function(BuildContext) builder,
+  }) {
+    if (!_isUserLoggedIn()) {
+      debugPrint("[AppRouter] Blocked unauthenticated route: ${settings.name}. Redirecting to LoginScreen.");
+      return MaterialPageRoute(
+        settings: const RouteSettings(name: AppRoutes.signIn),
+        builder: (_) => BlocProvider.value(
+          value: sl<LoginBloc>(),
+          child: const LoginScreen(),
+        ),
+      );
+    }
+    return MaterialPageRoute(settings: settings, builder: builder);
+  }
+
   static Route onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
@@ -162,22 +193,22 @@ class AppRouter {
           ),
         );
       case AppRoutes.patientManagementScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => const DoctorMainShellScreen(initialIndex: 2),
         );
       case AppRoutes.favoritePatientsScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => const FavoritePatientsScreen(),
         );
       case AppRoutes.userPrescriptionManagement:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionManagementScreen(),
           ),
         );
       case AppRoutes.userPrescriptionDetailScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicationBloc>(),
             child: PrescriptionDetailScreen(prescriptionId: '1'),
@@ -198,14 +229,14 @@ class AppRouter {
           ),
         );
       case AppRoutes.notificationSettingsScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SettingsBloc>(),
             child: NotificationSettingsScreen(),
           ),
         );
       case AppRoutes.userTestResultScreen:
-        return MaterialPageRoute(
+        return _guardedRoute(
           settings: settings, 
           builder: (_) => const PatientDocumentsScreen(),
         );
@@ -239,7 +270,7 @@ class AppRouter {
           ),
         );
       case AppRoutes.appointmentDashboardScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => const DoctorMainShellScreen(initialIndex: 1),
         );
       case AppRoutes.selectRoleScreen:
@@ -258,7 +289,7 @@ class AppRouter {
           ),
         );
       case AppRoutes.doctorDashboard:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => const DoctorMainShellScreen(initialIndex: 0),
         );
       case AppRoutes.settingsScreen:
@@ -292,7 +323,7 @@ class AppRouter {
         );
       case AppRoutes.doctorPatientProfileScreen:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PatientProfileBloc>(),
             child: DoctorPatientProfileScreen(
@@ -308,7 +339,7 @@ class AppRouter {
         );
       case AppRoutes.doctorPatientDetailProfileScreen:
         final detailArgs = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
+        return _guardedRoute(
           settings: settings,
           builder: (_) => BlocProvider.value(
             value: sl<PatientProfileBloc>(),
@@ -322,7 +353,7 @@ class AppRouter {
           ),
         );
       case AppRoutes.addMedicalRecordScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalRecordBloc>(),
             child: CreateMedicalRecordScreen(),
@@ -330,14 +361,14 @@ class AppRouter {
         );
       case AppRoutes.medicalRecordDetailsScreen:
         final record = settings.arguments as MedicalRecordBriefEntity?;
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalRecordBloc>(),
             child: MedicalRecordDetailsScreen(record: record),
           ),
         );
       case AppRoutes.medicalHistoryScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<MedicalHistoryBloc>(),
             child: MedicalRecordsListScreen(),
@@ -345,35 +376,35 @@ class AppRouter {
         );
 
       case AppRoutes.doctorPatientAppointmentListScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<AppointmentBloc>(),
             child: PatientAppointmentList(),
           ),
         );
       case AppRoutes.uploadedRecordScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<UploadedBloc>(),
             child: UploadedRecordsScreen(),
           ),
         );
       case AppRoutes.uploadRecordScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<UploadedBloc>(),
             child: UploadDocumentsScreen(patientName: 'Ch. Raja Vardan'),
           ),
         );
       case AppRoutes.smartSlotSchedulerScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SlotBloc>(),
             child: SmartSchedulerScreen(),
           ),
         );
       case AppRoutes.singleSlotAppointmentDetails:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<SlotBloc>(),
             child: SlotDetailsDialog(
@@ -387,18 +418,18 @@ class AppRouter {
           ),
         );
       case AppRoutes.slotDashboard:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => const DoctorMainShellScreen(initialIndex: 3),
         );
       case AppRoutes.addPrescriptionScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: AddPrescriptionRecordScreen(),
           ),
         );
       case AppRoutes.prescriptionListScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionListScreen(),
@@ -406,7 +437,7 @@ class AppRouter {
         );
       case AppRoutes.prescriptionViewDetailsScreen:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PrescriptionBloc>(),
             child: PrescriptionViewDetailsScreen(
@@ -418,7 +449,7 @@ class AppRouter {
           ),
         );
       case AppRoutes.closeAccountScreen:
-        return MaterialPageRoute(settings: settings, 
+        return _guardedRoute(settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<CloseAccountBloc>(),
             child: CloseAccountScreen(),
@@ -430,7 +461,7 @@ class AppRouter {
                 ? settings.arguments as DashboardPatientDetails
                 : null;
 
-        return MaterialPageRoute(
+        return _guardedRoute(
           settings: settings, 
           builder: (_) => BlocProvider.value(
             value: sl<PatientDetailsBloc>(),
@@ -472,24 +503,24 @@ class AppRouter {
         return MaterialPageRoute(settings: settings, builder: (_) => LogoutScreen());
       case AppRoutes.patientConsentsScreen:
         final String? patientId = settings.arguments as String?;
-        return MaterialPageRoute(
+        return _guardedRoute(
           settings: settings,
           builder: (_) => PatientConsentApprovalScreen(patientId: patientId),
         );
       case AppRoutes.recentNotifications:
-        return MaterialPageRoute(
+        return _guardedRoute(
           settings: settings,
           builder: (_) => const RecentNotificationsScreen(),
         );
       //appointmentDetails
       case AppRoutes.patientDashboard:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 0));
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 0));
       case AppRoutes.patientAppointments:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 1));
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 1));
       case AppRoutes.patientDocuments:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
+        return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
       case AppRoutes.patientProfile:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
       case AppRoutes.uploadDocumentsViaLink:
         final token = settings.arguments as String?;
         return MaterialPageRoute(settings: settings, builder: (_) => DocumentUploadViaLinkScreen(token: token));
@@ -503,26 +534,71 @@ class AppRouter {
         final link = settings.arguments as String?;
         return MaterialPageRoute(settings: settings, builder: (_) => DigitalConsentSignScreen(link: link));
       case AppRoutes.patientMyDoctors:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
+      case AppRoutes.patientBookAppointment:
       case AppRoutes.patientSelectHospitalScreen:
-        final initialHospitals = settings.arguments as List<Map<String, dynamic>>?;
-        return MaterialPageRoute(settings: settings, builder: (_) => PatientSelectHospitalScreen(initialHospitals: initialHospitals));
+        final initialHospitals = settings.arguments is List<Map<String, dynamic>>
+            ? settings.arguments as List<Map<String, dynamic>>
+            : null;
+        return _guardedRoute(settings: settings, builder: (_) => PatientSelectHospitalScreen(initialHospitals: initialHospitals));
       case AppRoutes.patientHospitalDoctorsScreen:
         final hosp = (settings.arguments as Map<String, dynamic>?) ?? {};
-        return MaterialPageRoute(settings: settings, builder: (_) => PatientHospitalDoctorsScreen(hospital: hosp));
+        return _guardedRoute(settings: settings, builder: (_) => PatientHospitalDoctorsScreen(hospital: hosp));
       case AppRoutes.patientVitalsTracking:
         final initialMetric = settings.arguments is VitalMetricType
             ? settings.arguments as VitalMetricType
             : VitalMetricType.all;
-        return MaterialPageRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
+        return _guardedRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
       case AppRoutes.patientMyFamily:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
       case AppRoutes.patientDoctorSuggestions:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientDoctorSuggestionsScreen());
+        return _guardedRoute(settings: settings, builder: (_) => const PatientDoctorSuggestionsScreen());
       case AppRoutes.patientConnectFitness:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientConnectFitnessScreen());
+        if (!GlobalSession.instance.isCurrentProfilePrimary) {
+          return _guardedRoute(
+            settings: settings,
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: const Text('Fitness'),
+                leading: const BackButton(),
+              ),
+              body: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'Fitness tracking is only available for primary accounts.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return _guardedRoute(settings: settings, builder: (_) => const PatientConnectFitnessScreen());
       case AppRoutes.patientFitnessTracking:
-        return MaterialPageRoute(settings: settings, builder: (_) => const PatientFitnessDashboardScreen());
+        if (!GlobalSession.instance.isCurrentProfilePrimary) {
+          return _guardedRoute(
+            settings: settings,
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: const Text('Fitness'),
+                leading: const BackButton(),
+              ),
+              body: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'Fitness tracking is only available for primary accounts.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return _guardedRoute(settings: settings, builder: (_) => const PatientFitnessDashboardScreen());
       default:
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>

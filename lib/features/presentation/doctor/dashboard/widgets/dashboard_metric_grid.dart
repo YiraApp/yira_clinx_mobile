@@ -184,7 +184,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           isDark: isDark,
                           isTab: isTab,
                           title: "Favorites",
-                          value: "${favSet.length}",
+                          value: "${FavoritePatientsService().favoriteCount}",
                           subtext: "⭐ Saved",
                           icon: Icons.star_rounded,
                           accentColor: const Color(0xFFD97706), // Amber
@@ -263,7 +263,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                               isDark: isDark,
                               isTab: isTab,
                               title: "Favorites",
-                              value: "${favSet.length}",
+                              value: "${FavoritePatientsService().favoriteCount}",
                               subtext: "⭐ Saved",
                               icon: Icons.star_rounded,
                               accentColor: const Color(0xFFD97706), // Amber

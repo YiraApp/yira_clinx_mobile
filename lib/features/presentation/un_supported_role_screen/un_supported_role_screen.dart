@@ -4,10 +4,7 @@ import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import '../../../core/common_widgets/custom_button.dart';
-import '../../../core/constants/clinx_storage_keys.dart';
-import '../../../core/local/global_session.dart';
-import '../../../core/local/shared_preferences.dart';
-import '../../../di/dependency_injection.dart';
+import '../../../core/services/auth_logout_service.dart';
 import '../../domain/entities/login/login_entity.dart';
 
 class UnsupportedRoleScreen extends StatefulWidget {
@@ -29,32 +26,7 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
     });
 
     try {
-      await Future.wait([
-        GlobalSession.instance.clear(),
-        sl<SharedPrefsService>().setValue<bool>(
-          ClinxStorageKeys.isUserLoggedIn,
-          false,
-        ),
-      ]);
-
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.signIn,
-        (route) => false,
-      );
-    } catch (error) {
-      debugPrint(
-        "CRITICAL (UnsupportedRoleScreen): Native logout sequence crashed: $error",
-      );
-      await GlobalSession.instance.clear();
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.signIn,
-          (route) => false,
-        );
-      }
+      await AuthLogoutService.performLogout(context: context);
     } finally {
       if (mounted) {
         setState(() {

@@ -162,14 +162,37 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final profiles = _getFamilyProfiles();
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
+      final primaryImagePath = (currentUser?.data?.imagePath ?? '').trim();
+
       final Map<String, String> loaded = {};
       for (final p in profiles) {
         final pId = (p.id ?? '').trim();
         if (pId.isNotEmpty) {
+          final isPrimary = (p.id?.toLowerCase() == currentUserId) || (p.isPrimary == true);
+          final bool isRemoved = (prefs.getBool('patient_profile_removed_$pId') ?? false) ||
+              (prefs.getBool('patient_profile_removed_${pId.toLowerCase()}') ?? false) ||
+              (prefs.getBool('patient_profile_removed_${pId.toUpperCase()}') ?? false);
+          if (isRemoved) continue;
+
           final path = prefs.getString('patient_profile_network_image_$pId') ??
               prefs.getString('patient_profile_image_$pId') ??
               prefs.getString('profile_image_$pId') ??
               p.imagePath;
+
+          // Guard: If this is a dependent member, but their imagePath erroneously matches the primary user's image,
+          // ignore the corrupted bleed-through from GlobalSession unless explicitly saved for this dependent!
+          if (!isPrimary &&
+              path != null &&
+              path.trim().isNotEmpty &&
+              primaryImagePath.isNotEmpty &&
+              path.trim() == primaryImagePath &&
+              prefs.getString('patient_profile_network_image_$pId') == null &&
+              prefs.getString('patient_profile_image_$pId') == null) {
+            continue;
+          }
+
           if (path != null && path.isNotEmpty) {
             loaded[pId] = path;
           }
@@ -1373,7 +1396,15 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                       ? pName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
                       : (relation.isNotEmpty ? relation[0].toUpperCase() : 'M');
 
-                  final cachedImg = _memberImages[pId] ?? profile.imagePath;
+                  final currentUser = GlobalSession.instance.userNotifier.value;
+                  final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
+                  final bool isPrimaryMember = isPrimary || (profile.id?.toLowerCase() == currentUserId);
+                  final cachedImg = _memberImages[pId] ??
+                      (isPrimaryMember
+                          ? profile.imagePath
+                          : ((profile.imagePath != null && profile.imagePath != currentUser?.data?.imagePath)
+                              ? profile.imagePath
+                              : null));
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),

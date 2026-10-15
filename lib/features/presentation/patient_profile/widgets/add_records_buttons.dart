@@ -121,7 +121,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
                         delay: 0,
                         child: _buildChildOption(
                           context,
-                          label: "Prescribe",
+                          label: "Prescription",
                           icon: Icons.medication_outlined,
                           color: const Color(0xFFF97316),
                           onTap: widget.onPrescribeTapped,

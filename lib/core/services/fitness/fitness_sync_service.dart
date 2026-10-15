@@ -55,8 +55,29 @@ class FitnessSyncService {
 
   bool _isInitialized = false;
 
-  /// Initialize and load cached data
+  /// Reactively handles profile switches between primary and child/dependent profiles
+  void handleProfileSwitched() {
+    _isInitialized = false;
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      debugPrint('🛑 [FitnessSyncService] Active profile is child/dependent: resetting fitness states.');
+      isConnectedNotifier.value = false;
+      todayFitnessNotifier.value = null;
+    } else {
+      debugPrint('🚀 [FitnessSyncService] Active profile is primary: initializing fitness service.');
+      init();
+    }
+  }
+
+  /// Initialize and load cached data (Primary users only)
   Future<void> init() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      debugPrint('🛑 [FitnessSyncService] Skipping init: fitness is only enabled for primary users.');
+      isConnectedNotifier.value = false;
+      todayFitnessNotifier.value = null;
+      _isInitialized = false;
+      return;
+    }
+
     if (_isInitialized) return;
     _isInitialized = true;
 
@@ -70,6 +91,11 @@ class FitnessSyncService {
 
   /// Check whether fitness permissions are granted and connected
   Future<bool> checkIsConnected() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      isConnectedNotifier.value = false;
+      return false;
+    }
+
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final userId = currentUser?.data?.id ?? '';
@@ -116,6 +142,12 @@ class FitnessSyncService {
 
   /// Load cached fitness connection flag & today metrics from SharedPreferences
   Future<void> loadCachedStatus() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      isConnectedNotifier.value = false;
+      todayFitnessNotifier.value = null;
+      return;
+    }
+
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final userId = currentUser?.data?.id ?? '';
@@ -168,6 +200,14 @@ class FitnessSyncService {
 
   /// One-tap Connect Fitness flow
   Future<FitnessConnectResult> connectFitness() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      return const FitnessConnectResult(
+        status: FitnessConnectStatus.error,
+        title: 'Primary Account Only',
+        message: 'Fitness tracking is only available for primary account holders.',
+      );
+    }
+
     try {
       if (Platform.isAndroid) {
         try {
@@ -277,6 +317,7 @@ class FitnessSyncService {
             data: {'patientId': userId},
             options: Options(
               headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+              extra: {'suppressErrorSnack': true},
             ),
           );
         } catch (_) {}
@@ -288,6 +329,14 @@ class FitnessSyncService {
 
   /// Synchronize health data between device sensors and the backend MSSQL database
   Future<FitnessSyncResult> syncNow({bool silent = false, int days = 7}) async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      debugPrint('🛑 [FitnessSyncService] Skipping fitness sync: current profile is a child/dependent.');
+      return const FitnessSyncResult(
+        isSuccess: false,
+        message: 'Fitness sync is only available for primary users.',
+      );
+    }
+
     if (isSyncingNotifier.value) {
       return const FitnessSyncResult(
         isSuccess: true,
@@ -374,6 +423,7 @@ class FitnessSyncService {
             headers: {
               HttpHeaders.authorizationHeader: 'Bearer $token',
             },
+            extra: {'suppressErrorSnack': true},
           ),
         );
 
@@ -412,6 +462,10 @@ class FitnessSyncService {
 
   /// Retrieve summary and chart trends from backend database
   Future<PatientFitnessSummaryResponse?> fetchSummaryFromBackend({String period = 'week'}) async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      return null;
+    }
+
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
     final token = currentUser?.data?.accessToken ?? '';

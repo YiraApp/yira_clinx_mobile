@@ -5,6 +5,7 @@ class URLs {
   static const loginUrl = "/v1/api/auth/login";
   static const sendOtpUrl = "/v1/api/auth/sendotp";
   static const updateFcmTokenUrl = "/v1/api/auth/device-token";
+  static const logoutUrl = "/v1/api/auth/logout";
   static const refreshTokenUrl = "/v1/api/auth/refresh";
   static const getVersionAndTokenStatus = "/v1/api/auth/app-version/status";
 
@@ -24,6 +25,7 @@ class URLs {
   static const doctorDashBoardUrl = "/v1/api/auth/dashboard";
   static const appointmentDashboardUrl = "/v1/api/auth/appointment-dashboard";
   static const bookAppointmentUrl = "/v1/api/auth/book-appointment";
+  static const rescheduleAppointmentUrl = "/v1/api/auth/reschedule-appointment";
   static const updateAppointmentStatusUrl = "/v1/api/auth/update-appointment-status";
   static const doctorSlotsUrl = "/v1/api/auth/doctor-slots";
   static const doctorSlotsDeployUrl = "/v1/api/auth/doctor-slots/deploy";

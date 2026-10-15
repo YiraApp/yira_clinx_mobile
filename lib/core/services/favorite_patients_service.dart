@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -9,12 +10,56 @@ import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/dashboard/patient_entity.dart';
 import 'package:yiraclinics/features/data/models/dashboard/patient_model.dart';
 
+class FavoritePatientEntry {
+  final String primaryId;
+  final String alternateId;
+
+  FavoritePatientEntry({
+    required this.primaryId,
+    this.alternateId = '',
+  });
+
+  String get canonicalKey {
+    final p = primaryId.trim();
+    final a = alternateId.trim();
+    if (p.isNotEmpty) return p;
+    return a;
+  }
+
+  bool matches(String id) {
+    if (id.isEmpty) return false;
+    final clean = id.trim();
+    return (primaryId.isNotEmpty && clean == primaryId.trim()) ||
+        (alternateId.isNotEmpty && clean == alternateId.trim());
+  }
+
+  Map<String, dynamic> toJson() => {
+        'primaryId': primaryId,
+        'alternateId': alternateId,
+      };
+
+  factory FavoritePatientEntry.fromJson(Map<String, dynamic> json) => FavoritePatientEntry(
+        primaryId: json['primaryId']?.toString().trim() ?? '',
+        alternateId: json['alternateId']?.toString().trim() ?? '',
+      );
+}
+
 class FavoritePatientsService {
   static final FavoritePatientsService _instance = FavoritePatientsService._internal();
   factory FavoritePatientsService() => _instance;
   FavoritePatientsService._internal();
 
+  /// Holds the set of canonical patient keys (exactly 1 per unique favorite patient)
   final ValueNotifier<Set<String>> favoriteIdsNotifier = ValueNotifier<Set<String>>({});
+
+  /// In-memory list of unique favorite patient entries
+  List<FavoritePatientEntry> _entries = [];
+
+  /// Fast lookup set containing both primary and alternate IDs of all favorited patients
+  final Set<String> _lookupIds = <String>{};
+
+  /// Returns the count of unique favorite patients
+  int get favoriteCount => _entries.length;
 
   String _resolveDoctorId([String? doctorId]) {
     if (doctorId != null && doctorId.trim().isNotEmpty) return doctorId.trim();
@@ -29,21 +74,113 @@ class FavoritePatientsService {
     return 'doctor_fav_patients_$docId';
   }
 
+  void _rebuildLookupAndNotify() {
+    _lookupIds.clear();
+    final Set<String> canonicalSet = <String>{};
+    for (final entry in _entries) {
+      if (entry.primaryId.trim().isNotEmpty) {
+        _lookupIds.add(entry.primaryId.trim());
+      }
+      if (entry.alternateId.trim().isNotEmpty) {
+        _lookupIds.add(entry.alternateId.trim());
+      }
+      final cKey = entry.canonicalKey;
+      if (cKey.isNotEmpty) {
+        canonicalSet.add(cKey);
+      }
+    }
+    favoriteIdsNotifier.value = canonicalSet;
+  }
+
+  bool _hasOldFormatStrings(List<String> list) {
+    return list.any((s) => !s.trim().startsWith('{'));
+  }
+
+  List<FavoritePatientEntry> _parseStoredFavorites(List<String> rawList) {
+    final List<FavoritePatientEntry> parsed = [];
+    final List<String> oldPlainStrings = [];
+
+    for (final item in rawList) {
+      final str = item.trim();
+      if (str.isEmpty) continue;
+      if (str.startsWith('{') && str.endsWith('}')) {
+        try {
+          final decoded = jsonDecode(str);
+          if (decoded is Map<String, dynamic>) {
+            parsed.add(FavoritePatientEntry.fromJson(decoded));
+            continue;
+          }
+        } catch (_) {}
+      }
+      oldPlainStrings.add(str);
+    }
+
+    if (oldPlainStrings.isNotEmpty) {
+      // Migrate old format where both userId and id were stored as plain strings
+      bool isUuid(String s) => s.contains('-') || s.length > 20;
+      final uuids = oldPlainStrings.where(isUuid).toList();
+      final nonUuids = oldPlainStrings.where((s) => !isUuid(s)).toList();
+
+      if (uuids.isNotEmpty && nonUuids.isNotEmpty) {
+        final count = uuids.length >= nonUuids.length ? uuids.length : nonUuids.length;
+        for (int i = 0; i < count; i++) {
+          final u = i < uuids.length ? uuids[i] : '';
+          final nu = i < nonUuids.length ? nonUuids[i] : '';
+          final pKey = u.isNotEmpty ? u : nu;
+          final aKey = (nu.isNotEmpty && nu != pKey) ? nu : '';
+          if (pKey.isNotEmpty) {
+            parsed.add(FavoritePatientEntry(primaryId: pKey, alternateId: aKey));
+          }
+        }
+      } else {
+        // Only one type existed, each is one entry
+        for (final s in oldPlainStrings) {
+          parsed.add(FavoritePatientEntry(primaryId: s));
+        }
+      }
+    }
+
+    // Deduplicate parsed list by canonicalKey
+    final seen = <String>{};
+    final List<FavoritePatientEntry> unique = [];
+    for (final e in parsed) {
+      final k = e.canonicalKey;
+      if (k.isNotEmpty && !seen.contains(k)) {
+        seen.add(k);
+        unique.add(e);
+      }
+    }
+    return unique;
+  }
+
+  Future<void> _saveToStorage([String? doctorId]) async {
+    final prefs = sl<SharedPrefsService>();
+    final key = _getStorageKey(doctorId);
+    final rawList = _entries.map((e) => jsonEncode(e.toJson())).toList();
+    await prefs.setValue(key, rawList);
+  }
+
   /// Initialize and load favorites from local storage & sync with backend
   Future<Set<String>> loadFavorites([String? doctorId]) async {
     final prefs = sl<SharedPrefsService>();
     final key = _getStorageKey(doctorId);
-    final list = prefs.getStringList(key);
-    final set = list.map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
-    favoriteIdsNotifier.value = set;
+    final rawList = prefs.getStringList(key);
+
+    _entries = _parseStoredFavorites(rawList);
+    _rebuildLookupAndNotify();
+
+    // If we migrated from old format, re-save in new clean format immediately
+    if (rawList.isNotEmpty && _hasOldFormatStrings(rawList)) {
+      await _saveToStorage(doctorId);
+    }
 
     // Background sync with backend (await if local cache is empty so initial load populates)
-    if (set.isEmpty) {
+    if (_entries.isEmpty) {
       await _syncWithBackend(doctorId);
       return favoriteIdsNotifier.value;
     } else {
       _syncWithBackend(doctorId);
-      return set;
+      return favoriteIdsNotifier.value;
     }
   }
 
@@ -77,19 +214,32 @@ class FavoritePatientsService {
           favList = data;
         }
 
-        // Add both canonical userId and internal id per patient
-        final Set<String> updatedSet = <String>{};
-        for (final item in favList) {
-          final uid = item['userId']?.toString().trim() ?? '';
-          final id = item['id']?.toString().trim() ?? '';
-          if (uid.isNotEmpty) updatedSet.add(uid);
-          if (id.isNotEmpty) updatedSet.add(id);
-        }
+        if (favList.isNotEmpty) {
+          final List<FavoritePatientEntry> synced = [];
+          for (final item in favList) {
+            final uid = item['userId']?.toString().trim() ?? '';
+            final id = item['id']?.toString().trim() ?? '';
+            final pKey = uid.isNotEmpty ? uid : id;
+            final aKey = (id.isNotEmpty && id != pKey) ? id : '';
+            if (pKey.isNotEmpty) {
+              synced.add(FavoritePatientEntry(primaryId: pKey, alternateId: aKey));
+            }
+          }
 
-        favoriteIdsNotifier.value = updatedSet;
-        final prefs = sl<SharedPrefsService>();
-        final key = _getStorageKey(doctorId);
-        await prefs.setValue(key, updatedSet.toList());
+          final seen = <String>{};
+          final List<FavoritePatientEntry> uniqueSynced = [];
+          for (final e in synced) {
+            final k = e.canonicalKey;
+            if (k.isNotEmpty && !seen.contains(k)) {
+              seen.add(k);
+              uniqueSynced.add(e);
+            }
+          }
+
+          _entries = uniqueSynced;
+          _rebuildLookupAndNotify();
+          await _saveToStorage(doctorId);
+        }
       }
     } catch (_) {
       // Offline fallback: keep local cache
@@ -98,10 +248,39 @@ class FavoritePatientsService {
 
   /// Check if a patient is currently marked as favorite
   bool isFavorite(String patientId, [String? alternateId]) {
-    final set = favoriteIdsNotifier.value;
     final pId = patientId.trim();
-    final aId = alternateId?.trim();
-    return (pId.isNotEmpty && set.contains(pId)) || (aId != null && aId.isNotEmpty && set.contains(aId));
+    final aId = alternateId?.trim() ?? '';
+    if (pId.isEmpty && aId.isEmpty) return false;
+
+    if (pId.isNotEmpty && _lookupIds.contains(pId)) return true;
+    if (aId.isNotEmpty && _lookupIds.contains(aId)) return true;
+
+    for (final e in _entries) {
+      if ((pId.isNotEmpty && e.matches(pId)) ||
+          (aId.isNotEmpty && e.matches(aId))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Links primary and alternate IDs of a known patient into the favorite registry
+  void registerPatientPair(String primaryId, String alternateId) {
+    final pId = primaryId.trim();
+    final aId = alternateId.trim();
+    if (pId.isEmpty && aId.isEmpty) return;
+
+    for (int i = 0; i < _entries.length; i++) {
+      final e = _entries[i];
+      if (e.matches(pId) || e.matches(aId)) {
+        final newP = e.primaryId.isNotEmpty ? e.primaryId : pId;
+        final newA = e.alternateId.isNotEmpty ? e.alternateId : aId;
+        _entries[i] = FavoritePatientEntry(primaryId: newP, alternateId: newA);
+        if (newP.isNotEmpty) _lookupIds.add(newP);
+        if (newA.isNotEmpty) _lookupIds.add(newA);
+        break;
+      }
+    }
   }
 
   /// Toggle favorite status of a patient, persist locally, and sync to backend
@@ -112,41 +291,29 @@ class FavoritePatientsService {
   }) async {
     final String pId = patientId.trim();
     final String aId = alternateId?.trim() ?? '';
+    if (pId.isEmpty && aId.isEmpty) return false;
+
     final String primaryKey = pId.isNotEmpty ? pId : aId;
-    if (primaryKey.isEmpty) return false;
+    final String aliasKey = (aId.isNotEmpty && aId != primaryKey) ? aId : '';
 
-    final prefs = sl<SharedPrefsService>();
-    final key = _getStorageKey(doctorId);
-    final current = Set<String>.from(favoriteIdsNotifier.value);
-
-    // Check if either ID is in the set
-    final bool isCurrentlyFav = current.contains(pId) || (aId.isNotEmpty && current.contains(aId));
+    final bool isCurrentlyFav = isFavorite(pId, aId);
     bool isNowFav;
 
     if (isCurrentlyFav) {
-      if (pId.isNotEmpty) {
-        current.remove(pId);
-        await prefs.removeIdFromList(key, pId);
-      }
-      if (aId.isNotEmpty) {
-        current.remove(aId);
-        await prefs.removeIdFromList(key, aId);
-      }
+      _entries.removeWhere((e) =>
+          (pId.isNotEmpty && e.matches(pId)) ||
+          (aId.isNotEmpty && e.matches(aId)));
       isNowFav = false;
     } else {
-      if (pId.isNotEmpty) {
-        current.add(pId);
-        await prefs.addIdToList(key, pId);
-      }
-      if (aId.isNotEmpty && aId != pId) {
-        current.add(aId);
-        await prefs.addIdToList(key, aId);
-      }
+      _entries.removeWhere((e) =>
+          (pId.isNotEmpty && e.matches(pId)) ||
+          (aId.isNotEmpty && e.matches(aId)));
+      _entries.add(FavoritePatientEntry(primaryId: primaryKey, alternateId: aliasKey));
       isNowFav = true;
     }
 
-    favoriteIdsNotifier.value = current;
-    await prefs.setValue(key, current.toList());
+    _rebuildLookupAndNotify();
+    await _saveToStorage(doctorId);
 
     // Sync to backend asynchronously
     _sendToggleToBackend(primaryKey, isNowFav, doctorId);
@@ -184,7 +351,7 @@ class FavoritePatientsService {
     final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
     final String token = currentUser?.data?.accessToken ?? '';
 
-    final favIds = await loadFavorites(docId);
+    await loadFavorites(docId);
 
     try {
       final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
@@ -212,8 +379,8 @@ class FavoritePatientsService {
 
         all = list.map((item) {
           final model = PatientModel.fromJson(item as Map<String, dynamic>);
-          final isFav = favIds.contains(model.userId.trim()) || favIds.contains(model.id.trim());
-          return model.copyWith(isFavorite: isFav);
+          final fav = isFavorite(model.userId, model.id);
+          return model.copyWith(isFavorite: fav);
         }).toList();
       }
 
@@ -221,8 +388,8 @@ class FavoritePatientsService {
       final seenIds = <String>{};
       final List<PatientEntity> uniqueFavs = [];
       for (final p in all) {
-        final isFav = favIds.contains(p.userId.trim()) || favIds.contains(p.id.trim()) || p.isFavorite;
-        if (isFav) {
+        final bool fav = isFavorite(p.userId, p.id) || p.isFavorite;
+        if (fav) {
           final uniqueKey = p.userId.isNotEmpty ? p.userId : p.id;
           if (uniqueKey.isNotEmpty && !seenIds.contains(uniqueKey)) {
             seenIds.add(uniqueKey);

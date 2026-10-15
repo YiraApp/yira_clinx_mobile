@@ -64,15 +64,26 @@ class PlatformInfoRepoImpl implements PlatformInfoRepo {
       };
     } else if (Platform.isAndroid) {
       final androidInfo = await deviceInfoPlugin.androidInfo;
+      final brand = androidInfo.brand;
+      final model = androidInfo.model;
+      final androidVersion = androidInfo.version.release;
+      final deviceDisplayName = '$brand $model (Android $androidVersion)'.trim();
+      final isPhysical = androidInfo.isPhysicalDevice;
+      debugPrint('[PlatformInfo] Connected Device: $deviceDisplayName | Physical: $isPhysical | Board: ${androidInfo.board}');
       return {
         'id': androidInfo.id.isNotEmpty ? androidInfo.id : 'unknown_android_id',
-        'platform': 'Android',
+        'platform': 'Android ($deviceDisplayName)',
       };
     } else if (Platform.isIOS) {
       final iosInfo = await deviceInfoPlugin.iosInfo;
+      final name = iosInfo.name;
+      final model = iosInfo.model;
+      final sysVersion = iosInfo.systemVersion;
+      final deviceDisplayName = '$name $model (iOS $sysVersion)'.trim();
+      debugPrint('[PlatformInfo] Connected Device: $deviceDisplayName | Physical: ${iosInfo.isPhysicalDevice}');
       return {
         'id': iosInfo.identifierForVendor ?? 'unknown_ios_id',
-        'platform': 'iOS',
+        'platform': 'iOS ($deviceDisplayName)',
       };
     } else if (Platform.isMacOS) {
       final macInfo = await deviceInfoPlugin.macOsInfo;

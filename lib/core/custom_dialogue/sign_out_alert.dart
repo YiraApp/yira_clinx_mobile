@@ -4,10 +4,7 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
-import '../../config/app_route/app_routes.dart';
-import '../../di/dependency_injection.dart';
-import '../local/flutter_secure_storage.dart';
-import '../local/shared_preferences.dart';
+import '../services/auth_logout_service.dart';
 
 class SignOutAlert {
   static Future<void> showSignCustomDialog(
@@ -166,19 +163,7 @@ class SignOutAlert {
                                           });
 
                                           try {
-                                            await sl<SecureStorageService>()
-                                                .clearAllSecureData();
-                                            await sl<SharedPrefsService>()
-                                                .clearAll();
-
-                                            if (context.mounted) {
-                                              Navigator.of(
-                                                context,
-                                              ).pushNamedAndRemoveUntil(
-                                                AppRoutes.signIn,
-                                                (route) => false,
-                                              );
-                                            }
+                                            await AuthLogoutService.performLogout(context: context);
                                           } catch (e) {
                                             setDialogState(() {
                                               isSignOut = false;

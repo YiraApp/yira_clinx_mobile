@@ -14,6 +14,8 @@ class AppointmentModel extends Appointment {
     super.statusRaw = '',
     super.patientStatus,
     super.patientUserId,
+    super.doctorId,
+    super.slotId,
     super.doctorName = 'Doctor',
     super.relation = 'Self',
     super.isPrimary = true,
@@ -23,14 +25,33 @@ class AppointmentModel extends Appointment {
     super.organizationName,
     super.reason,
     super.meetingUrl,
+    super.date,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
-    AppointmentType appType = AppointmentType.inClinic;
-    final typeStr = (json['type'] ?? json['appointmentType'] ?? '').toString().toLowerCase();
-    if (typeStr.contains('video') || typeStr.contains('tele')) {
-      appType = AppointmentType.videoCall;
-    }
+    final bool isTele = json['isTeleConsultation'] == true ||
+        json['IsTeleConsultation'] == true ||
+        json['is_tele_consultation'] == true ||
+        json['isTeleconsultation'] == true ||
+        json['isTeleConsultation'] == 1 ||
+        json['IsTeleConsultation'] == 1 ||
+        json['is_tele_consultation'] == 1 ||
+        json['isTeleConsultation']?.toString().toLowerCase() == 'true' ||
+        json['IsTeleConsultation']?.toString().toLowerCase() == 'true' ||
+        json['is_tele_consultation']?.toString().toLowerCase() == 'true' ||
+        (json['type'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['type'] ?? '').toString().toLowerCase().contains('tele') ||
+        (json['appointmentType'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['appointmentType'] ?? '').toString().toLowerCase().contains('tele') ||
+        (json['appointment_type'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['appointment_type'] ?? '').toString().toLowerCase().contains('tele') ||
+        (json['consultationType'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['consultationType'] ?? '').toString().toLowerCase().contains('tele') ||
+        (json['appointmentMode'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['appointment_mode'] ?? '').toString().toLowerCase().contains('video') ||
+        (json['meetingUrl'] ?? json['meeting_url'] ?? json['videoCallUrl'] ?? json['MeetingUrl'] ?? '').toString().trim().isNotEmpty;
+
+    final AppointmentType appType = isTele ? AppointmentType.videoCall : AppointmentType.inClinic;
 
     AppointmentStatus appStatus = AppointmentStatus.confirmed;
     final statusStr = (json['status'] ?? '').toString().toLowerCase();
@@ -70,6 +91,8 @@ class AppointmentModel extends Appointment {
       statusRaw: (json['status'] ?? 'Scheduled').toString(),
       patientStatus: patientStatusStr,
       patientUserId: json['patientUserId']?.toString(),
+      doctorId: (json['doctorId'] ?? json['DoctorId'] ?? json['doctor_id'])?.toString(),
+      slotId: json['slotId'] is int ? json['slotId'] : int.tryParse((json['slotId'] ?? json['SlotId'] ?? '').toString()),
       relation: (json['relation'] ?? 'Self').toString(),
       isPrimary: json['isPrimary'] == true || (json['relation'] ?? 'Self').toString().toLowerCase() == 'self',
       orgId: json['orgId'] is int ? json['orgId'] : int.tryParse((json['orgId'] ?? '').toString()),
@@ -78,6 +101,7 @@ class AppointmentModel extends Appointment {
       organizationName: (json['organizationName'] ?? json['orgName'] ?? '').toString(),
       reason: (json['reason'] ?? '').toString(),
       meetingUrl: (json['meetingUrl'] ?? json['meeting_url'] ?? json['videoCallUrl'] ?? json['MeetingUrl'])?.toString(),
+      date: (json['appointmentDate'] ?? json['date'] ?? json['appointment_date'] ?? json['rawDate'])?.toString(),
     );
   }
 }

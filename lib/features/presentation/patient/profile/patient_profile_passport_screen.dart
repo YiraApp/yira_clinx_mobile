@@ -14,12 +14,10 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/custom_dialogue.dart';
 import '../../../../core/custom_dialogue/sign_out_alert.dart';
-import '../../../../config/app_route/app_routes.dart';
-import '../../../../core/local/flutter_secure_storage.dart';
-import '../../../../core/local/shared_preferences.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/services/liked_hospitals_service.dart';
+import '../../../../core/services/auth_logout_service.dart';
 import '../../../../core/services/permission_helper.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/urls/urls.dart';
@@ -135,20 +133,27 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final current = GlobalSession.instance.userNotifier.value;
       if (current == null) return;
 
+      final currentUserId = (current.data?.id ?? '').trim().toLowerCase();
       final updatedProfiles = (current.data?.profiles ?? []).map((p) {
-        return ProfileModel(
-          id: p.id,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          name: p.name,
-          phoneNumber: p.phoneNumber,
-          relation: p.relation,
-          isPrimary: p.isPrimary,
-          gender: p.gender,
-          dob: p.dob,
-          accountType: p.accountType,
-          imagePath: newImagePath,
-        );
+        final pId = (p.id ?? '').trim().toLowerCase();
+        final bool isTarget = (pId.isNotEmpty && currentUserId.isNotEmpty && pId == currentUserId) ||
+            (currentUserId.isEmpty && p.isPrimary == true);
+        if (isTarget) {
+          return ProfileModel(
+            id: p.id,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            name: p.name,
+            phoneNumber: p.phoneNumber,
+            relation: p.relation,
+            isPrimary: p.isPrimary,
+            gender: p.gender,
+            dob: p.dob,
+            accountType: p.accountType,
+            imagePath: newImagePath,
+          );
+        }
+        return p is ProfileModel ? p : ProfileModel.fromEntity(p);
       }).toList();
 
       final updatedData = DataModel(
@@ -261,8 +266,10 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
           }
           if (userId.isNotEmpty) {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('patient_profile_network_image_$userId', photoUrl);
-            await prefs.remove('patient_profile_removed_$userId');
+            for (final k in [userId, userId.toLowerCase(), userId.toUpperCase()]) {
+              await prefs.setString('patient_profile_network_image_$k', photoUrl);
+              await prefs.remove('patient_profile_removed_$k');
+            }
           }
           await _updateSessionImagePath(photoUrl);
           if (mounted) {
@@ -487,20 +494,29 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
+                    final oldUrl = _networkProfileImageUrl ?? currentUser?.data?.imagePath;
                     setState(() {
                       _photoRemovedExplicitly = true;
                       _localProfileImage = null;
                       _networkProfileImageUrl = '';
                     });
 
+                    if (oldUrl != null && oldUrl.isNotEmpty) {
+                      try {
+                        await CachedNetworkImage.evictFromCache(oldUrl);
+                      } catch (_) {}
+                    }
                     PaintingBinding.instance.imageCache.clear();
                     PaintingBinding.instance.imageCache.clearLiveImages();
 
                     if (userId.isNotEmpty) {
                       final prefs = await SharedPreferences.getInstance();
-                      await prefs.remove('patient_profile_image_$userId');
-                      await prefs.remove('patient_profile_network_image_$userId');
-                      await prefs.setBool('patient_profile_removed_$userId', true);
+                      for (final k in [userId, userId.toLowerCase(), userId.toUpperCase()]) {
+                        await prefs.remove('patient_profile_image_$k');
+                        await prefs.remove('patient_profile_network_image_$k');
+                        await prefs.remove('profile_image_$k');
+                        await prefs.setBool('patient_profile_removed_$k', true);
+                      }
                     }
 
                     await _updateSessionImagePath('');
@@ -735,13 +751,8 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
                   }
-                  await sl<SecureStorageService>().clearAllSecureData();
-                  await sl<SharedPrefsService>().clearAll();
                   if (mounted && context.mounted) {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      AppRoutes.signIn,
-                      (route) => false,
-                    );
+                    await AuthLogoutService.performLogout(context: context);
                     Utils.showSnackBar(
                       message: 'Your account was deactivated. Contact administrator.',
                       status: false,
@@ -1414,20 +1425,27 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                                 : (currentUser?.data?.dob ?? activeProfile?.dob);
 
                             // Update GlobalSession locally
+                            final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
                             final updatedProfiles = (currentUser?.data?.profiles ?? []).map((p) {
-                              return ProfileModel(
-                                id: p.id,
-                                firstName: firstName,
-                                lastName: lastName,
-                                name: '$firstName $lastName'.trim(),
-                                phoneNumber: p.phoneNumber,
-                                relation: p.relation,
-                                isPrimary: p.isPrimary,
-                                gender: selectedGender.isNotEmpty ? selectedGender : p.gender,
-                                dob: resolvedDob ?? p.dob,
-                                accountType: p.accountType,
-                                imagePath: p.imagePath,
-                              );
+                              final pId = (p.id ?? '').trim().toLowerCase();
+                              final bool isTarget = (pId.isNotEmpty && currentUserId.isNotEmpty && pId == currentUserId) ||
+                                  (currentUserId.isEmpty && p.isPrimary == true);
+                              if (isTarget) {
+                                return ProfileModel(
+                                  id: p.id,
+                                  firstName: firstName,
+                                  lastName: lastName,
+                                  name: '$firstName $lastName'.trim(),
+                                  phoneNumber: p.phoneNumber,
+                                  relation: p.relation,
+                                  isPrimary: p.isPrimary,
+                                  gender: selectedGender.isNotEmpty ? selectedGender : p.gender,
+                                  dob: resolvedDob ?? p.dob,
+                                  accountType: p.accountType,
+                                  imagePath: p.imagePath,
+                                );
+                              }
+                              return p is ProfileModel ? p : ProfileModel.fromEntity(p);
                             }).toList();
 
                             final updatedData = DataModel(

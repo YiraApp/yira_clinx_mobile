@@ -22,6 +22,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<FilterPatients>(_onFilterPatients);
     on<ToggleFavoritePatientEvent>(_onToggleFavoritePatient);
     on<SyncFavoritesEvent>(_onSyncFavorites);
+    on<LoadMorePatientsEvent>(_onLoadMorePatients);
     on<ViewPatientDetailsEvent>((event, emit) async {
       emit(ViewPatientDetailsState(
         patientId: event.patientId,
@@ -29,9 +30,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         status: state.status,
         patients: state.patients,
         allPatients: state.allPatients,
+        filteredPatients: state.filteredPatients,
         selectedStatus: state.selectedStatus,
         selectedGender: state.selectedGender,
         errorMessage: state.errorMessage,
+        visibleCount: state.visibleCount,
+        hasMore: state.hasMore,
+        isLoadingMore: state.isLoadingMore,
+        searchQuery: state.searchQuery,
       ));
     });
   }
@@ -53,7 +59,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final favIds = await FavoritePatientsService().loadFavorites(doctorId);
+      await FavoritePatientsService().loadFavorites(doctorId);
 
       final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
         URLs.patientsListUrl,
@@ -80,14 +86,28 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
         patients = list.map((item) {
           final model = PatientModel.fromJson(item as Map<String, dynamic>);
-          final isFav = favIds.contains(model.userId) || favIds.contains(model.id);
+          final isFav = FavoritePatientsService().isFavorite(model.userId, model.id);
+          if (isFav) {
+            FavoritePatientsService().registerPatientPair(model.userId, model.id);
+          }
           return model.copyWith(isFavorite: isFav);
         }).toList();
+
+        // Sort newest registered patients first (matching Web's CreatedAt DESC)
+        patients.sort((a, b) {
+          final timeA = a.registeredDate?.millisecondsSinceEpoch ?? 0;
+          final timeB = b.registeredDate?.millisecondsSinceEpoch ?? 0;
+          if (timeB != timeA) {
+            return timeB.compareTo(timeA);
+          }
+          return b.id.compareTo(a.id);
+        });
       }
 
       emit(state.copyWith(
         status: DashboardStatus.success,
         allPatients: patients,
+        visibleCount: 20,
       ));
       _applyFilters(emit);
     } catch (e) {
@@ -133,6 +153,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   void _onSearchPatients(SearchPatients event, Emitter<DashboardState> emit) {
+    emit(state.copyWith(visibleCount: 20, searchQuery: event.query));
     _applyFilters(emit, query: event.query);
   }
 
@@ -148,13 +169,30 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(state.copyWith(
       selectedStatus: () => statusToSet,
       selectedGender: () => genderToSet,
+      visibleCount: 20,
     ));
 
     _applyFilters(emit);
   }
 
+  void _onLoadMorePatients(LoadMorePatientsEvent event, Emitter<DashboardState> emit) {
+    if (!state.hasMore || state.isLoadingMore) return;
+
+    final newCount = state.visibleCount + 20;
+    final newVisible = state.filteredPatients.take(newCount).toList();
+    final hasMore = newCount < state.filteredPatients.length;
+
+    emit(state.copyWith(
+      visibleCount: newCount,
+      patients: newVisible,
+      hasMore: hasMore,
+      isLoadingMore: false,
+    ));
+  }
+
   void _applyFilters(Emitter<DashboardState> emit, {String? query}) {
-    final searchQuery = (query ?? "").trim().toLowerCase();
+    final effectiveQuery = query ?? state.searchQuery;
+    final searchQuery = effectiveQuery.trim().toLowerCase();
 
     final filteredList = state.allPatients.where((patient) {
       // 1. Check Search Query
@@ -191,6 +229,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       return matchesSearch && matchesStatus && matchesGender;
     }).toList();
 
-    emit(state.copyWith(patients: filteredList));
+    final visibleSlice = filteredList.take(state.visibleCount).toList();
+    final hasMore = state.visibleCount < filteredList.length;
+
+    emit(state.copyWith(
+      filteredPatients: filteredList,
+      patients: visibleSlice,
+      hasMore: hasMore,
+      isLoadingMore: false,
+      searchQuery: effectiveQuery,
+    ));
   }
 }

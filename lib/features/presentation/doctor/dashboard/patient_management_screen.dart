@@ -21,6 +21,7 @@ class PatientManagementScreen extends StatefulWidget {
 
 class _PatientManagementScreenState extends State<PatientManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _selectedFilter = "All";
   late final DashboardBloc _dashboardBloc;
 
@@ -36,11 +37,26 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
   void initState() {
     super.initState();
     _dashboardBloc = DashboardBloc()..add(const GetDashboardData());
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (currentScroll >= maxScroll - 200) {
+      final state = _dashboardBloc.state;
+      if (state.hasMore && !state.isLoadingMore) {
+        _dashboardBloc.add(const LoadMorePatientsEvent());
+      }
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _dashboardBloc.close();
     super.dispose();
   }
@@ -68,7 +84,8 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   builder: (context, state) {
                     final displayPatients = isTourActive ? ProviderTourMockData.demoPatients : state.patients;
                     final totalCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.allPatients.length;
-                    final filteredCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.patients.length;
+                    final totalFilteredCount = isTourActive ? ProviderTourMockData.demoPatients.length : state.filteredPatients.length;
+                    final visibleCount = displayPatients.length;
 
                     return Column(
                       children: [
@@ -78,7 +95,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, filteredCount),
+                              _buildTopHeader(context, isDark, primaryColor, isTab, totalCount, totalFilteredCount, visibleCount),
                               _buildStatusFilterRow(context, isDark, primaryColor, isTab, state.selectedStatus),
                             ],
                           ),
@@ -100,6 +117,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                                     child: displayPatients.isEmpty
                                         ? _buildEmptyState(context, isDark, primaryColor, isTab)
                                         : ListView.separated(
+                                            controller: _scrollController,
                                             padding: const EdgeInsets.fromLTRB(
                                               screenHorizontalSpacePadding,
                                               8,
@@ -109,9 +127,16 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                                             physics: const AlwaysScrollableScrollPhysics(
                                               parent: BouncingScrollPhysics(),
                                             ),
-                                            itemCount: displayPatients.length,
+                                            itemCount: displayPatients.length + (state.hasMore && !isTourActive ? 1 : (displayPatients.isNotEmpty && !isTourActive ? 1 : 0)),
                                             separatorBuilder: (_, _) => const SizedBox(height: 10),
                                             itemBuilder: (context, index) {
+                                              if (index >= displayPatients.length) {
+                                                if (state.hasMore) {
+                                                  return _buildLoadMoreButton(context, isDark, primaryColor, isTab, state);
+                                                } else {
+                                                  return _buildAllLoadedFooter(context, isDark, totalFilteredCount);
+                                                }
+                                              }
                                               final patient = displayPatients[index];
                                               return PatientCard(
                                                 key: ValueKey(patient.id),
@@ -172,7 +197,8 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
     Color primaryColor,
     bool isTab,
     int totalCount,
-    int filteredCount,
+    int totalFilteredCount,
+    int visibleCount,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -208,7 +234,9 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      "$filteredCount${filteredCount != totalCount ? ' of $totalCount' : ''}",
+                      totalFilteredCount == visibleCount
+                          ? "$visibleCount"
+                          : "$visibleCount of $totalFilteredCount",
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 12 : 11,
@@ -245,6 +273,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
               controller: _searchController,
               onChanged: (val) {
                 context.read<DashboardBloc>().add(SearchPatients(val));
+                setState(() {});
               },
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -279,6 +308,94 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton(
+    BuildContext context,
+    bool isDark,
+    Color primaryColor,
+    bool isTab,
+    DashboardState state,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: InkWell(
+          onTap: state.isLoadingMore
+              ? null
+              : () {
+                  context.read<DashboardBloc>().add(const LoadMorePatientsEvent());
+                },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (state.isLoadingMore)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                    ),
+                  )
+                else
+                  Icon(Icons.expand_more_rounded, size: 18, color: primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  state.isLoadingMore
+                      ? "Loading patients..."
+                      : "Load More (${state.patients.length} of ${state.filteredPatients.length})",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: isTab ? 13 : 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAllLoadedFooter(
+    BuildContext context,
+    bool isDark,
+    int count,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Center(
+        child: Text(
+          "All $count patients loaded",
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+          ),
+        ),
       ),
     );
   }

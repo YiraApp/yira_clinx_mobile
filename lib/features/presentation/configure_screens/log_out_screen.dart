@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import '../../../../core/common_widgets/common_text.dart';
 import '../../../core/colors/colors.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../core/common_widgets/custom_button.dart';
-import '../../../core/local/flutter_secure_storage.dart';
-import '../../../core/local/shared_preferences.dart';
-import '../../../core/utils/utils.dart';
-import '../../../di/dependency_injection.dart';
+import '../../../core/services/auth_logout_service.dart';
 
 class LogoutScreen extends StatelessWidget {
   const LogoutScreen({super.key});
@@ -153,20 +149,8 @@ class LogoutScreen extends StatelessWidget {
                 height: 50,
                 width: double.infinity,
                 text: "Log Out",
-                onPressed: ()async {
-                  try {
-                    await sl<SecureStorageService>().clearAllSecureData();
-                  await sl<SharedPrefsService>().clearAll();
-
-                  if (context.mounted) {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                  AppRoutes.signIn,
-                  (route) => false,
-                  );
-                  }
-                  } catch (e) {
-                    Utils.printText('Secure storage not cleared', tag: 'AUTH_SERVICE');
-                  }
+                onPressed: () async {
+                  await AuthLogoutService.performLogout(context: context);
                 },
               ),
               const SizedBox(height: 8),

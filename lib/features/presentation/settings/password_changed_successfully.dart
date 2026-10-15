@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 
+import 'package:yiraclinics/core/services/auth_logout_service.dart';
 import 'change_password_bloc/change_password_bloc.dart';
 
 class PasswordChangeSuccessScreen extends StatefulWidget {
@@ -44,8 +45,6 @@ class _PasswordChangeSuccessScreenState extends State<PasswordChangeSuccessScree
     final screenHeight = mediaQuery.size.height;
     final isTablet = screenWidth > 600;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final baseBgColor = isDark ? Colors.black : const Color(0xFFF9FAFC); // Fallback for legacy passwordChangeBg
     final titleColor = isDark ? Colors.white : const Color(0xFF080414);
 
     return PopScope(
@@ -56,7 +55,7 @@ class _PasswordChangeSuccessScreenState extends State<PasswordChangeSuccessScree
       child: BlocListener<ChangePasswordBloc, ChangePasswordState>(
         listener: (context, state) {
           if (state is PostChangeLogoutSuccess) {
-
+            AuthLogoutService.performLogout(context: context);
           }
         },
         child: Scaffold(

@@ -1236,7 +1236,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             isPrimary: isPrimary,
             parentUserId: map['parentUserId']?.toString(),
           );
-        }).where((p) => p.name.trim().isNotEmpty && p.name != 'Patient').toList();
+        }).where((p) => p.name.trim().isNotEmpty && (p.name != 'Patient' || p.phone.isNotEmpty)).toList();
 
         if (mounted) {
           setState(() {

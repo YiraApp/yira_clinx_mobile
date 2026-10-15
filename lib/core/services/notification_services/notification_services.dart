@@ -143,6 +143,13 @@ class NotificationService {
   void _listenToActiveStateNotifications() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint("[NotificationService] Foreground notification received: ${message.data}");
+      final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
+          (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      if (!isLoggedIn || currentUser == null || (currentUser.data?.id ?? '').isEmpty) {
+        debugPrint("[NotificationService] Dropping foreground notification: user is signed out.");
+        return;
+      }
       NotificationBadgeService.instance.increment();
       final RemoteNotification? notification = message.notification;
       final String title = notification?.title ?? message.data['title'] ?? projectTitle;
@@ -245,6 +252,17 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint("[NotificationService] showNotification error: $e");
+    }
+  }
+
+  /// Cancels all active notifications displayed by the app and clears the badge count
+  Future<void> cancelAllNotifications() async {
+    try {
+      await _localNotifications.cancelAll();
+      NotificationBadgeService.instance.clear();
+      debugPrint("[NotificationService] All notifications cancelled and badge reset.");
+    } catch (e) {
+      debugPrint("[NotificationService] cancelAllNotifications error: $e");
     }
   }
 

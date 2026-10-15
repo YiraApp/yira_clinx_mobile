@@ -28,6 +28,7 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         },
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          extra: {'suppressErrorSnack': true},
         ),
       );
 

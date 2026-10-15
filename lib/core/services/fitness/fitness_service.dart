@@ -36,11 +36,7 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
-        HealthDataType.BASAL_ENERGY_BURNED,
-        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
-        HealthDataType.RESTING_HEART_RATE,
-        HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.SLEEP_DEEP,
         HealthDataType.SLEEP_REM,
@@ -54,11 +50,7 @@ class FitnessService {
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.TOTAL_CALORIES_BURNED,
-        HealthDataType.BASAL_ENERGY_BURNED,
-        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
-        HealthDataType.RESTING_HEART_RATE,
-        HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.SLEEP_SESSION,
         HealthDataType.SLEEP_DEEP,
@@ -76,9 +68,7 @@ class FitnessService {
       return [
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
-        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
-        HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.BLOOD_OXYGEN,
       ];
@@ -87,9 +77,7 @@ class FitnessService {
         HealthDataType.STEPS,
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.TOTAL_CALORIES_BURNED,
-        HealthDataType.WORKOUT,
         HealthDataType.HEART_RATE,
-        HealthDataType.DISTANCE_DELTA,
         HealthDataType.SLEEP_ASLEEP,
         HealthDataType.BLOOD_OXYGEN,
       ];
@@ -151,8 +139,6 @@ class FitnessService {
           HealthDataType.HEART_RATE,
           HealthDataType.ACTIVE_ENERGY_BURNED,
           HealthDataType.TOTAL_CALORIES_BURNED,
-          HealthDataType.WORKOUT,
-          HealthDataType.DISTANCE_DELTA,
           HealthDataType.SLEEP_ASLEEP,
           HealthDataType.BLOOD_OXYGEN,
           HealthDataType.WEIGHT,
@@ -319,6 +305,11 @@ class FitnessService {
 
       if (totalCalories == 0 && totalSteps > 0) {
         totalCalories = totalSteps * 0.04;
+      }
+
+      if (totalDistance == 0 && totalSteps > 0) {
+        // Average stride length of 0.762 meters (2.5 feet)
+        totalDistance = totalSteps * 0.762;
       }
 
       if (hrValues.isNotEmpty) {
@@ -552,6 +543,11 @@ class FitnessService {
 
       if (dayCalories == 0 && steps > 0) {
         dayCalories = steps * 0.04;
+      }
+
+      if (distance == 0 && steps > 0) {
+        // Average stride length of 0.762 meters (2.5 feet)
+        distance = steps * 0.762;
       }
 
       double avgHr = 0.0;

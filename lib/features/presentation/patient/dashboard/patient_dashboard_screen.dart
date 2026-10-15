@@ -11,9 +11,13 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../di/dependency_injection.dart';
+import 'package:dio/dio.dart';
+import '../../../../core/api/api_client.dart';
+import '../../../../core/urls/urls.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
+import '../appointments/widgets/reschedule_appointment_sheet.dart';
 import '../doctors/widgets/scan_doctor_qr_sheet.dart';
 import '../../../../core/services/notification_services/notification_services.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
@@ -45,10 +49,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadCachedProfileImage();
     NotificationService.instance.syncFcmTokenWithBackend();
     NotificationBadgeService.instance.syncUnreadCount();
-    FitnessSyncService.instance.init();
+    if (GlobalSession.instance.isCurrentProfilePrimary) {
+      FitnessSyncService.instance.init();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PatientTourController().startDashboardTour(context: context);
       OfferPopupAdDialog.showIfAvailable(context);
@@ -58,22 +65,48 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    GlobalSession.instance.userNotifier.removeListener(_onSessionUpdated);
     super.dispose();
+  }
+
+  void _onSessionUpdated() {
+    FitnessSyncService.instance.handleProfileSwitched();
+    _loadCachedProfileImage();
+    if (mounted) setState(() {});
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      FitnessSyncService.instance.syncNow(silent: true);
+      if (GlobalSession.instance.isCurrentProfilePrimary) {
+        FitnessSyncService.instance.syncNow(silent: true);
+      }
+      _loadCachedProfileImage();
     }
   }
 
   Future<void> _loadCachedProfileImage() async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final userId = currentUser?.data?.id ?? '';
-      if (userId.isEmpty) return;
+      final userId = (currentUser?.data?.id ?? '').trim();
+      if (userId.isEmpty) {
+        if (mounted) setState(() => _profileImagePath = null);
+        return;
+      }
       final prefs = await SharedPreferences.getInstance();
+
+      final bool wasRemoved = (prefs.getBool('patient_profile_removed_$userId') ?? false) ||
+          (prefs.getBool('patient_profile_removed_${userId.toLowerCase()}') ?? false) ||
+          (prefs.getBool('patient_profile_removed_${userId.toUpperCase()}') ?? false);
+
+      if (wasRemoved) {
+        if (mounted) {
+          setState(() {
+            _profileImagePath = null;
+          });
+        }
+        return;
+      }
 
       final localPath = prefs.getString('patient_profile_image_$userId') ??
           prefs.getString('patient_profile_image_${userId.toLowerCase()}') ??
@@ -82,17 +115,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       String? matchingProfileImg;
       if (currentUser?.data?.profiles != null) {
         for (final p in currentUser!.data!.profiles!) {
-          if (p.id == userId && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
+          if (p.id?.toLowerCase() == userId.toLowerCase() &&
+              p.imagePath != null &&
+              p.imagePath!.trim().isNotEmpty) {
             matchingProfileImg = p.imagePath!.trim();
             break;
           }
         }
       }
 
+      final sessionImg = currentUser?.data?.imagePath?.trim();
       final networkUrl = prefs.getString('patient_profile_network_image_$userId') ??
           prefs.getString('patient_profile_network_image_${userId.toLowerCase()}') ??
           prefs.getString('patient_profile_network_image_${userId.toUpperCase()}') ??
-          currentUser?.data?.imagePath ??
+          (sessionImg != null && sessionImg.isNotEmpty ? sessionImg : null) ??
           matchingProfileImg;
 
       if (mounted) {
@@ -101,6 +137,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             _profileImagePath = localPath;
           } else if (networkUrl != null && networkUrl.isNotEmpty) {
             _profileImagePath = networkUrl;
+          } else {
+            _profileImagePath = null;
           }
         });
       }
@@ -108,17 +146,25 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   }
 
   String? _resolvePatientAvatarPath(LoginEntity? user) {
-    final raw = user?.data?.imagePath;
-    if (raw != null && raw.trim().isNotEmpty) return raw.trim();
-    final activeId = user?.data?.id;
+    final activeId = (user?.data?.id ?? '').trim();
+    if (activeId.isEmpty) return null;
+
+    final sessionImg = user?.data?.imagePath?.trim();
+    if (sessionImg != null && sessionImg.isNotEmpty) {
+      return sessionImg;
+    }
+
     final profiles = user?.data?.profiles;
-    if (profiles != null && profiles.isNotEmpty && activeId != null) {
+    if (profiles != null && profiles.isNotEmpty) {
       for (final p in profiles) {
-        if (p.id == activeId && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
+        if (p.id?.toLowerCase() == activeId.toLowerCase() &&
+            p.imagePath != null &&
+            p.imagePath!.trim().isNotEmpty) {
           return p.imagePath!.trim();
         }
       }
     }
+
     if (_profileImagePath != null && _profileImagePath!.trim().isNotEmpty) {
       return _profileImagePath!.trim();
     }
@@ -494,7 +540,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
               onRefresh: () async {
                 _loadCachedProfileImage();
                 _offerCarouselKey.currentState?.refresh();
-                FitnessSyncService.instance.syncNow(silent: true);
+                if (GlobalSession.instance.isCurrentProfilePrimary) {
+                  FitnessSyncService.instance.syncNow(silent: true);
+                }
                 context.read<PatientOverViewBloc>().add(
                       LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
                     );
@@ -611,26 +659,27 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   ),
                                 ),
 
-                                // 4. My Fitness (Quick Action)
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'My Fitness',
-                                  imagePath: 'assets/images/dashboard_icons/my_fitness_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () async {
-                                    bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
-                                    if (!isConnected) {
-                                      isConnected = await FitnessSyncService.instance.checkIsConnected();
-                                    }
-                                    if (!context.mounted) return;
-                                    if (isConnected) {
-                                      Navigator.pushNamed(context, AppRoutes.patientFitnessTracking);
-                                    } else {
-                                      Navigator.pushNamed(context, AppRoutes.patientConnectFitness);
-                                    }
-                                  },
-                                ),
+                                // 4. My Fitness (Quick Action - Primary Account Only)
+                                if (GlobalSession.instance.isCurrentProfilePrimary)
+                                  _buildServiceCard(
+                                    context: context,
+                                    title: 'My Fitness',
+                                    imagePath: 'assets/images/dashboard_icons/my_fitness_thick.png',
+                                    isDark: isDark,
+                                    isTab: isTab,
+                                    onTap: () async {
+                                      bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
+                                      if (!isConnected) {
+                                        isConnected = await FitnessSyncService.instance.checkIsConnected();
+                                      }
+                                      if (!context.mounted) return;
+                                      if (isConnected) {
+                                        Navigator.pushNamed(context, AppRoutes.patientFitnessTracking);
+                                      } else {
+                                        Navigator.pushNamed(context, AppRoutes.patientConnectFitness);
+                                      }
+                                    },
+                                  ),
 
                                 // 5. Doctor Suggestions
                                 _buildServiceCard(
@@ -858,6 +907,232 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     return t;
   }
 
+  Future<void> _confirmAndCancelAppointment({
+    required PatientAppointmentEntity apt,
+    required String docName,
+    required String timeStr,
+    required String userId,
+    required String orgId,
+    required String hospitalId,
+  }) async {
+    final appointmentId = apt.id;
+    if (appointmentId.isEmpty) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isCancelling = false;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return PopScope(
+              canPop: !isCancelling,
+              child: AlertDialog(
+                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.cancel_outlined,
+                        color: Color(0xFFDC2626),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Cancel Appointment",
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Are you sure you want to cancel your consultation with $docName?",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 13.5,
+                        height: 1.45,
+                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      ),
+                    ),
+                    if (timeStr.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                timeStr,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                actions: [
+                  TextButton(
+                    onPressed: isCancelling ? null : () => Navigator.of(ctx).pop(false),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    child: Text(
+                      "Keep Appointment",
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: isCancelling
+                            ? (isDark ? Colors.white24 : Colors.grey.shade400)
+                            : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: isCancelling
+                        ? null
+                        : () async {
+                            setDialogState(() => isCancelling = true);
+                            final currentUser = GlobalSession.instance.userNotifier.value;
+                            final token = currentUser?.data?.accessToken ?? '';
+                            try {
+                              final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
+                                URLs.updateAppointmentStatusUrl,
+                                data: {
+                                  "appointmentId": appointmentId,
+                                  "status": "Cancelled",
+                                },
+                                options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+                              );
+
+                              if (!ctx.mounted) return;
+
+                              if (response.statusCode == 200 || response.statusCode == 201) {
+                                Navigator.of(ctx).pop(true);
+                              } else {
+                                setDialogState(() => isCancelling = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Unable to cancel appointment. Please try again."),
+                                      backgroundColor: Color(0xFFDC2626),
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setDialogState(() => isCancelling = false);
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to cancel appointment: $e"),
+                                    backgroundColor: const Color(0xFFDC2626),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.6),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: isCancelling
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Cancelling...",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            "Yes, Cancel",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (confirm == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Appointment has been cancelled successfully."),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      context.read<PatientOverViewBloc>().add(
+        LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+      );
+    }
+  }
+
   static const _monthAbbr = [
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
@@ -880,6 +1155,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         ? apt.condition
         : (apt.reason.isNotEmpty ? apt.reason : 'General Consultation');
     final isTele = apt.isTeleConsultation;
+
+    final bool canReschedule = !apt.status.toLowerCase().contains('complet') &&
+        !apt.status.toLowerCase().contains('cancel');
+    final bool canCancel = !apt.status.toLowerCase().contains('complet') &&
+        !apt.status.toLowerCase().contains('cancel');
+    final bool hasOptions = canReschedule || canCancel;
 
     // Parse date & time
     final parsedDt = _parseAppointmentDateTime(apt);
@@ -1130,6 +1411,119 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 ],
                               ),
                             ),
+                            if (hasOptions) ...[
+                              const SizedBox(width: 4),
+                              PopupMenuButton<String>(
+                                icon: Icon(
+                                  Icons.more_vert_rounded,
+                                  size: 20,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Options',
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                elevation: 6,
+                                onSelected: (val) {
+                                  if (val == 'reschedule') {
+                                    RescheduleAppointmentSheet.show(
+                                      context,
+                                      appointmentId: apt.id,
+                                      doctorId: apt.doctorId,
+                                      doctorName: docName,
+                                      hospitalId: hospitalId,
+                                      hospitalName: hospitalName,
+                                      currentAppointmentDate: apt.rawDate ?? apt.appointmentDate,
+                                      currentStartTime: apt.startTime,
+                                      currentEndTime: apt.endTime,
+                                      isTeleConsultation: isTele,
+                                      patientName: patientName,
+                                      onRescheduled: () {
+                                        context.read<PatientOverViewBloc>().add(
+                                          LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+                                        );
+                                      },
+                                    );
+                                  } else if (val == 'cancel') {
+                                    _confirmAndCancelAppointment(
+                                      apt: apt,
+                                      docName: docName,
+                                      timeStr: timeStr,
+                                      userId: userId,
+                                      orgId: orgId,
+                                      hospitalId: hospitalId,
+                                    );
+                                  }
+                                },
+                                itemBuilder: (ctx) => [
+                                  if (canReschedule)
+                                    PopupMenuItem<String>(
+                                      value: 'reschedule',
+                                      height: 42,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(
+                                              Icons.edit_calendar_rounded,
+                                              size: 15,
+                                              color: Color(0xFFD97706),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'Reschedule',
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (canCancel)
+                                    PopupMenuItem<String>(
+                                      value: 'cancel',
+                                      height: 42,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(
+                                              Icons.cancel_outlined,
+                                              size: 15,
+                                              color: Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            'Cancel Appointment',
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 3),
@@ -1195,94 +1589,156 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
 
               const SizedBox(height: 10),
 
-              // Bottom CTA Row (Single crisp full-width button)
-              if (isTele)
-                SizedBox(
-                  width: double.infinity,
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (apt.meetingUrl.isNotEmpty) {
-                        Utils.launchMeetingURL(
-                          apt.meetingUrl,
-                          displayName: patientName,
-                          onLaunchFailure: (err) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(err)),
-                              );
-                            }
-                          },
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No meeting link available yet.')),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    icon: const Icon(Icons.videocam_rounded, size: 15),
-                    label: const Text(
-                      'Join Video Consultation',
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SizedBox(
-                  width: double.infinity,
-                  height: 34,
-                  child: Material(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                    child: InkWell(
-                      onTap: () => _navigateToAppointmentDetails(
-                        context,
-                        apt,
-                        patientName,
-                        userId,
-                        orgId,
-                        hospitalId,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'View Appointment Details',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              // Bottom CTA Row (Allowed whole day for active appointments; blocked for previous day)
+              Builder(
+                builder: (context) {
+                  final bool canJoinCall = isTele &&
+                      !apt.status.toLowerCase().contains('complet') &&
+                      !apt.status.toLowerCase().contains('cancel') &&
+                      !apt.status.toLowerCase().contains('past') &&
+                      !Utils.isPreviousDay(apt.rawDate ?? apt.appointmentDate);
+
+                  if (canJoinCall) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: SizedBox(
+                            height: 36,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                if (apt.meetingUrl.isNotEmpty) {
+                                  Utils.launchMeetingURL(
+                                    apt.meetingUrl,
+                                    displayName: patientName,
+                                    onLaunchFailure: (err) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(err)),
+                                        );
+                                      }
+                                    },
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('No meeting link available yet.')),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.videocam_rounded, size: 15),
+                              label: const Text(
+                                'Join Call',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 13,
-                              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 36,
+                            child: Material(
+                              color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
+                              child: InkWell(
+                                onTap: () => _navigateToAppointmentDetails(
+                                  context,
+                                  apt,
+                                  patientName,
+                                  userId,
+                                  orgId,
+                                  hospitalId,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Details',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: 13,
+                                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: Material(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: () => _navigateToAppointmentDetails(
+                          context,
+                          apt,
+                          patientName,
+                          userId,
+                          orgId,
+                          hospitalId,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'View Details',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 13,
+                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
+              ),
             ],
           ),
         ),

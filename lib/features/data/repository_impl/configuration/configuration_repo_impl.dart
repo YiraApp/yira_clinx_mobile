@@ -77,11 +77,24 @@ class ConfigurationRepoImpl extends ConfigurationRepo {
         return LoginModel.fromJson(response.data as Map<String, dynamic>);
       }
     } catch (error, stackTrace) {
-      if (error is DioException && error.response?.statusCode == HttpStatus.unauthorized) {
-        // Token is unauthorized (e.g. environment switch QA -> DEV).
-        // Clear the stale session so app transitions cleanly to Login.
-        await GlobalSession.instance.clear();
-        await sl<SharedPrefsService>().remove(ClinxStorageKeys.isUserLoggedIn);
+      if (error is DioException) {
+        final statusCode = error.response?.statusCode;
+        final resData = error.response?.data;
+        final isSessionInvalid = statusCode == HttpStatus.unauthorized ||
+            statusCode == HttpStatus.notFound ||
+            (statusCode == HttpStatus.badRequest &&
+                resData is Map &&
+                (resData['message'] == 'User not found' ||
+                    resData['code'] == 'GET_USER_DATA_FAILED' ||
+                    resData['code'] == 'USER_NOT_FOUND'));
+
+        if (isSessionInvalid) {
+          // Token is unauthorized or user does not exist in the current backend environment
+          // (e.g. environment switch DEV/QA -> LOCAL).
+          // Clear the stale session so app transitions cleanly to Login.
+          await GlobalSession.instance.clear();
+          await sl<SharedPrefsService>().remove(ClinxStorageKeys.isUserLoggedIn);
+        }
       }
       developer.log(
         "getUserData failed gracefully inside repository layer",

@@ -241,8 +241,12 @@ class PatientAppointmentCard extends StatelessWidget {
               ),
             ),
 
-            // Video Teleconsultation Button (If video and active)
-            if (isTeleconsultation && status.toLowerCase() != 'completed' && status.toLowerCase() != 'cancelled') ...[
+            // Video Teleconsultation Button (Allowed whole day for active appointments; blocked for previous day)
+            if (isTeleconsultation &&
+                status.toLowerCase() != 'completed' &&
+                status.toLowerCase() != 'cancelled' &&
+                !status.toLowerCase().contains('past') &&
+                !Utils.isPreviousDay(date)) ...[
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,

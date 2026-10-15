@@ -23,13 +23,37 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    GlobalSession.instance.userNotifier.addListener(_onProfileChanged);
+
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Fitness tracking is only available for primary accounts.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      });
+      return;
+    }
+
     _checkExistingPermission();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    GlobalSession.instance.userNotifier.removeListener(_onProfileChanged);
     super.dispose();
+  }
+
+  void _onProfileChanged() {
+    if (!GlobalSession.instance.isCurrentProfilePrimary && mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -40,6 +64,8 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
   }
 
   Future<void> _checkExistingPermission() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) return;
+
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
     final prefs = await SharedPreferences.getInstance();
@@ -70,6 +96,16 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
   }
 
   Future<void> _handleConnect() async {
+    if (!GlobalSession.instance.isCurrentProfilePrimary) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitness tracking is only available for primary accounts.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isConnecting = true);
 
     // Clear explicit disconnect flag upon user initiating connection
@@ -385,8 +421,8 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
                     _buildFeatureCard(
                       icon: Icons.directions_run_rounded,
                       iconColor: const Color(0xFF3B82F6),
-                      title: 'Steps & Daily Distance',
-                      subtitle: 'Pedometer tracking, walking/running mileage, and active movement towards your targets.',
+                      title: 'Daily Steps & Activity',
+                      subtitle: 'Pedometer tracking, daily movement goals, and active routines towards your targets.',
                       tag: 'Past 30 Days',
                       isDark: isDark,
                     ),
@@ -800,7 +836,9 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Your health records are encrypted and confidential. Yira Clinics only reads metrics with your explicit permission and never shares or alters your Apple Health records.',
+              Platform.isIOS
+                  ? 'Your health records are encrypted and confidential. Yira Health only reads metrics with your explicit permission and never shares or alters your Apple Health records.'
+                  : 'Your health records are encrypted and confidential. Yira Health only reads metrics with your explicit permission via Health Connect and never shares or alters your health data.',
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: 11,

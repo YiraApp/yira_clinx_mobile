@@ -614,7 +614,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     return _emailErrorText;
                                   }
                                   if (val != null && val.trim().isNotEmpty) {
-                                    final emailRegex = RegExp(r'^[\w\.-]+@[\w-]+\.\w{2,4}$');
+                                    final emailRegex = RegExp(r'^[\w.+%=\-]+@([\w-]+\.)+[\w-]{2,}$');
                                     if (!emailRegex.hasMatch(val.trim())) {
                                       return 'Please enter a valid email address';
                                     }

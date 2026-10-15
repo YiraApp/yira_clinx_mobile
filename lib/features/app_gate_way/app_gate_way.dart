@@ -14,6 +14,8 @@ import 'package:yiraclinics/core/services/network_services/network_bloc/network_
 import 'package:yiraclinics/core/widgets/internet_guard.dart';
 import 'package:yiraclinics/core/widgets/notificatio_wrapper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/local/shared_preferences.dart';
+import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
@@ -70,6 +72,19 @@ class AppGateway extends StatelessWidget {
                   child: NotificationListenerWrapper(
                     onNotificationPayload: (payloadString) {
                       try {
+                        final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
+                            (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
+                        final currentUser = GlobalSession.instance.userNotifier.value;
+                        final bool hasValidUser = currentUser != null && (currentUser.data?.id ?? '').isNotEmpty;
+
+                        if (!isLoggedIn || !hasValidUser) {
+                          debugPrint("[AppGateway] Notification tapped but user is signed out. Redirecting strictly to signIn.");
+                          NavigationService.navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                            AppRoutes.signIn,
+                            (route) => false,
+                          );
+                          return;
+                        }
                         final Map<String, dynamic> payload = jsonDecode(payloadString);
                         final String? targetRoute = payload['route'];
                         final String? itemId = payload['id'];
@@ -100,6 +115,15 @@ class AppGateway extends StatelessWidget {
                             targetRoute == AppRoutes.prescriptionListScreen) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
                             AppRoutes.prescriptionListScreen,
+                          );
+                          return;
+                        }
+
+                        if (targetRoute == '/patientBookAppointment' ||
+                            targetRoute == 'patientBookAppointment' ||
+                            targetRoute == AppRoutes.patientBookAppointment) {
+                          NavigationService.navigatorKey.currentState?.pushNamed(
+                            AppRoutes.patientBookAppointment,
                           );
                           return;
                         }
@@ -183,6 +207,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
     AppRoutes.patientMyDoctors: 'lib/features/presentation/patient/doctors/patient_my_doctors_screen.dart',
     AppRoutes.patientVitalsTracking: 'lib/features/presentation/patient/vitals/patient_vitals_tracking_screen.dart',
     AppRoutes.patientMyFamily: 'lib/features/presentation/patient/family/patient_my_family_screen.dart',
+    AppRoutes.patientBookAppointment: 'lib/features/presentation/patient/appointments/patient_select_hospital_screen.dart',
     AppRoutes.patientSelectHospitalScreen: 'lib/features/presentation/patient/appointments/patient_select_hospital_screen.dart',
     AppRoutes.patientHospitalDoctorsScreen: 'lib/features/presentation/patient/appointments/patient_hospital_doctors_screen.dart',
     AppRoutes.patientDoctorSuggestions: 'lib/features/presentation/patient/suggestions/patient_doctor_suggestions_screen.dart',
