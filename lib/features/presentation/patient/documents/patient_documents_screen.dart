@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -10,12 +9,15 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
-import '../../../../core/services/permission_helper.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../di/dependency_injection.dart';
+import '../../../domain/entities/medical_report/medical_report_analysis.dart';
 import '../../../domain/entities/uploaded_record/uploaded_record_entity.dart';
 import '../../upload_documnets/uploaded_bloc/uploaded_bloc.dart';
+import '../diet/diet_ui.dart';
+import 'report_insights_screen.dart';
+import 'report_upload_sheet.dart';
 
 class PatientDocumentsScreen extends StatefulWidget {
   const PatientDocumentsScreen({super.key});
@@ -33,6 +35,9 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
   String _sortBy = 'newest';
   final Set<String> _expandedDocIds = <String>{};
   final Set<String> _downloadingDocIds = <String>{};
+
+  /// Analyses seen in this session, so reopening insights is instant.
+  final Map<String, MedicalReportAnalysis> _analyses = {};
 
   static const Color _primaryBlue = Color(0xFF2563EB);
 
@@ -204,482 +209,79 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     }
   }
 
-  Future<void> _openUploadDocumentDialog(
-    BuildContext blocContext,
-    String userId,
-    String orgId,
-    String hospitalId,
-  ) async {
-    final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
-    if (!hasPermission || !mounted) return;
+  // ─── UPLOAD + AI ANALYSIS ─────────────────────────────────────────────────
+  Future<void> _openReportUpload(BuildContext blocContext) async {
+    final result = await ReportUploadSheet.show(context);
+    if (result == null || !mounted) return;
 
-    final titleController = TextEditingController();
-    final notesController = TextEditingController();
-    String? selectedFilePath;
-    String? selectedFileName;
-    int? selectedFileSize;
-    String selectedCategory = 'Lab Report';
-    bool isUploading = false;
-    String? uploadError;
+    final analysis = result.analysis;
+    final record = UploadedRecord(
+      id: result.documentId.isNotEmpty ? result.documentId : DateTime.now().millisecondsSinceEpoch.toString(),
+      fileName: result.fileName,
+      category: result.category,
+      uploadDate: DateTime.now(),
+      fileSizeKB: 0,
+      fileUrl: result.fileUrl,
+      fileType: result.fileName.toLowerCase().endsWith('.pdf') ? 'PDF' : 'JPG',
+      isPatientUploaded: true,
+      aiStatus: analysis?.status.name,
+    );
+    if (!blocContext.mounted) return;
+    blocContext.read<UploadedBloc>().add(AddUploadedRecord(record));
+    _refresh(blocContext);
 
-    final categories = const [
-      'Lab Report',
-      'Prescription',
-      'Scan / Imaging',
-      'Discharge Summary',
-      'Insurance Card',
-      'Other',
-    ];
+    if (analysis != null) {
+      _analyses[record.id] = analysis;
+      _openInsights(blocContext, record);
+    } else if (result.analysisError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Report saved. ${result.analysisError!.message}'),
+          behavior: SnackBarBehavior.floating,
+          action: result.documentId.isEmpty
+              ? null
+              : SnackBarAction(label: 'Retry', onPressed: () => _openInsights(blocContext, record)),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${result.fileName}" uploaded'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-          final isDark = theme.brightness == Brightness.dark;
-          final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+  void _refresh(BuildContext blocContext) {
+    final user = GlobalSession.instance.userNotifier.value?.data;
+    blocContext.read<UploadedBloc>().add(FetchUploadedRecords(
+          patientId: user?.id ?? '',
+          orgId: user?.latestOrgId?.toString() ?? '1',
+          hospitalId: user?.latestHospitalId?.toString() ?? '1',
+          limit: 20,
+          page: 1,
+        ));
+  }
 
-          return Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            padding: EdgeInsets.only(
-              top: 20,
-              left: 20,
-              right: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.upload_file_rounded, color: isDark ? Colors.white : const Color(0xFF0F172A), size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Upload Medical Document',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                            ),
-                            Text(
-                              'Add your lab reports, scan files, or prescriptions',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11.5,
-                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+  /// PDFs and photos can be read by the AI; Word files and others can't.
+  bool _canAnalyze(UploadedRecord doc) {
+    final type = '${doc.fileType ?? ''} ${doc.fileName}'.toLowerCase();
+    if (RegExp(r'docx?|xlsx?|txt').hasMatch(type)) return false;
+    return (doc.fileUrl ?? '').trim().isNotEmpty && int.tryParse(doc.id) != null;
+  }
 
-                  if (uploadError != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              uploadError!,
-                              style: const TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 12,
-                                color: Colors.red,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // File Picker Container
-                  InkWell(
-                    onTap: () async {
-                      final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
-                      if (!hasPermission) return;
-
-                      try {
-                        final result = await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
-                        );
-
-                        if (result != null && result.files.isNotEmpty) {
-                          final file = result.files.first;
-                          setModalState(() {
-                            selectedFilePath = file.path;
-                            selectedFileName = file.name;
-                            selectedFileSize = file.size;
-                            uploadError = null;
-                            if (titleController.text.trim().isEmpty) {
-                              final nameWithoutExt = file.name.contains('.')
-                                  ? file.name.substring(0, file.name.lastIndexOf('.'))
-                                  : file.name;
-                              titleController.text = nameWithoutExt;
-                            }
-                          });
-                        }
-                      } catch (e) {
-                        setModalState(() {
-                          uploadError = 'Could not select file: $e';
-                        });
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: selectedFilePath != null
-                              ? _primaryBlue
-                              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                          width: selectedFilePath != null ? 1.5 : 1,
-                        ),
-                      ),
-                      child: selectedFilePath != null
-                          ? Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.check_circle_rounded, color: _primaryBlue, size: 22),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        selectedFileName ?? 'File Selected',
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          color: textColor,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (selectedFileSize != null)
-                                        Text(
-                                          selectedFileSize! >= 1024 * 1024
-                                              ? '${(selectedFileSize! / (1024 * 1024)).toStringAsFixed(1)} MB'
-                                              : '${(selectedFileSize! / 1024).toStringAsFixed(0)} KB',
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: 11,
-                                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    setModalState(() {
-                                      selectedFilePath = null;
-                                      selectedFileName = null;
-                                      selectedFileSize = null;
-                                    });
-                                  },
-                                  child: const Text('Change', style: TextStyle(fontSize: 12, color: _primaryBlue)),
-                                ),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                Icon(Icons.cloud_upload_outlined, size: 36, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Tap to choose document / report file',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Supports PDF, JPG, PNG, DOC (up to 10 MB)',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11,
-                                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Document Name Input
-                  Text(
-                    'Document Title',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. Blood Test Report, MRI Scan, Prescription',
-                      hintStyle: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: isDark ? Colors.white38 : Colors.grey[400],
-                      ),
-                      filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Description / Notes Input
-                  Text(
-                    'Clinical Description / Notes (Optional)',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: notesController,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      hintText: 'Add remarks, test findings, doctor remarks, or reason...',
-                      hintStyle: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: isDark ? Colors.white38 : Colors.grey[400],
-                      ),
-                      filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Category Selector
-                  Text(
-                    'Category',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: categories.map((cat) {
-                      final isSelected = selectedCategory == cat;
-                      return ChoiceChip(
-                        label: Text(cat),
-                        selected: isSelected,
-                        onSelected: (val) {
-                          if (val) setModalState(() => selectedCategory = cat);
-                        },
-                        labelStyle: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected
-                              ? Colors.white
-                              : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                        ),
-                        selectedColor: _primaryBlue,
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: isSelected
-                                ? _primaryBlue
-                                : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                          ),
-                        ),
-                        showCheckmark: false,
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isUploading
-                          ? null
-                          : () async {
-                              if (selectedFilePath == null) {
-                                setModalState(() => uploadError = 'Please select a file to upload.');
-                                return;
-                              }
-                              final finalTitle = titleController.text.trim().isNotEmpty
-                                  ? titleController.text.trim()
-                                  : (selectedFileName ?? 'Document');
-                              final finalNotes = notesController.text.trim();
-
-                              setModalState(() {
-                                isUploading = true;
-                                uploadError = null;
-                              });
-
-                              try {
-                                final repo = blocContext.read<UploadedBloc>().repository;
-                                final uploaded = await repo.uploadDocument(
-                                  filePath: selectedFilePath!,
-                                  fileName: finalTitle,
-                                  category: selectedCategory,
-                                  description: finalNotes.isNotEmpty ? finalNotes : null,
-                                  patientId: userId,
-                                  orgId: orgId,
-                                  hospitalId: hospitalId,
-                                );
-
-                                if (uploaded != null && blocContext.mounted) {
-                                  blocContext.read<UploadedBloc>().add(AddUploadedRecord(uploaded));
-                                }
-
-                                if (sheetCtx.mounted) Navigator.pop(sheetCtx);
-
-                                if (mounted) {
-                                  ScaffoldMessenger.of(this.context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: [
-                                          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
-                                          const SizedBox(width: 8),
-                                          Text('"$finalTitle" uploaded successfully!'),
-                                        ],
-                                      ),
-                                      backgroundColor: const Color(0xFF0F172A),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                setModalState(() {
-                                  isUploading = false;
-                                  uploadError = 'Failed to upload document: $e';
-                                });
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: isUploading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.cloud_upload_rounded, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Upload Medical Document',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+  void _openInsights(BuildContext blocContext, UploadedRecord doc) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ReportInsightsScreen(
+        documentId: doc.id,
+        documentTitle: doc.fileName,
+        initialAnalysis: _analyses[doc.id] ?? MedicalReportAnalysis.tryParse(doc.aiAnalysisJson),
+        onViewDocument: () => _openFullPageDocument(context, doc),
+        onAnalyzed: (analysis) {
+          _analyses[doc.id] = analysis;
+          if (!blocContext.mounted) return;
+          blocContext.read<UploadedBloc>().add(UpdateUploadedRecord(doc.copyWith(aiStatus: analysis.status.name)));
         },
       ),
-    );
+    ));
   }
 
   @override
@@ -784,13 +386,13 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                     ),
                     child: const Icon(Icons.upload_file_rounded, size: 18, color: _primaryBlue),
                   ),
-                  onPressed: () => _openUploadDocumentDialog(blocContext, userId, orgId, hospitalId),
+                  onPressed: () => _openReportUpload(blocContext),
                 ),
                 const SizedBox(width: 8),
               ],
             ),
             floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _openUploadDocumentDialog(blocContext, userId, orgId, hospitalId),
+              onPressed: () => _openReportUpload(blocContext),
               backgroundColor: _primaryBlue,
               foregroundColor: Colors.white,
               elevation: 3,
@@ -995,7 +597,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                           ),
                                           const SizedBox(height: 20),
                                           ElevatedButton.icon(
-                                            onPressed: () => _openUploadDocumentDialog(blocContext, userId, orgId, hospitalId),
+                                            onPressed: () => _openReportUpload(blocContext),
                                             icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                                             label: const Text(
                                               "Upload First Document",
@@ -1292,6 +894,8 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       onSelected: (action) {
                         if (action == 'view') {
                           _openFullPageDocument(context, doc);
+                        } else if (action == 'insights') {
+                          _openInsights(blocContext, doc);
                         } else if (action == 'download') {
                           _downloadDocument(doc);
                         } else if (action == 'delete') {
@@ -1324,6 +928,25 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                             ],
                           ),
                         ),
+                        if (_canAnalyze(doc))
+                          PopupMenuItem<String>(
+                            value: 'insights',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_awesome_rounded, size: 18, color: DietUi.violet),
+                                const SizedBox(width: 10),
+                                Text(
+                                  doc.aiStatus == null ? 'Analyse with AI' : 'AI insights',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         PopupMenuItem<String>(
                           value: 'download',
                           child: Row(
@@ -1448,8 +1071,58 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   ],
                 ),
               ],
+
+              if (_canAnalyze(doc)) ...[
+                const SizedBox(height: 10),
+                _buildAiRow(blocContext, doc, isDark),
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// The AI verdict for a report, or an invitation to analyse it.
+  Widget _buildAiRow(BuildContext blocContext, UploadedRecord doc, bool isDark) {
+    final status = doc.aiStatus == null ? null : reportStatusFrom(doc.aiStatus);
+    final ({Color color, IconData icon, String label}) style = switch (status) {
+      null => (color: DietUi.violet, icon: Icons.auto_awesome_rounded, label: 'Analyse with Yira AI'),
+      ReportStatus.normal => (color: DietUi.green, icon: Icons.verified_rounded, label: 'All clear'),
+      ReportStatus.attention => (color: DietUi.amber, icon: Icons.error_outline_rounded, label: 'Needs attention'),
+      ReportStatus.critical => (color: DietUi.red, icon: Icons.warning_amber_rounded, label: 'Critical - see a doctor'),
+      ReportStatus.unknown => (color: DietUi.slate, icon: Icons.help_outline_rounded, label: 'No health insights'),
+    };
+
+    return InkWell(
+      onTap: () => _openInsights(blocContext, doc),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: style.color.withValues(alpha: isDark ? 0.14 : 0.07),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: style.color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(style.icon, size: 16, color: style.color),
+            const SizedBox(width: 8),
+            if (status != null) ...[
+              Text('AI', style: DietUi.text(10.5, FontWeight.w700, DietUi.muted(isDark), spacing: 0.4)),
+              const SizedBox(width: 6),
+            ],
+            Expanded(
+              child: Text(
+                style.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: DietUi.text(12, FontWeight.w700, style.color),
+              ),
+            ),
+            Text(status == null ? 'Get insights' : 'View insights', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
+            const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
+          ],
         ),
       ),
     );

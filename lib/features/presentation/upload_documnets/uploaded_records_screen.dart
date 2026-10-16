@@ -5,7 +5,9 @@ import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/features/domain/entities/medical_report/medical_report_analysis.dart';
 import 'package:yiraclinics/features/domain/entities/uploaded_record/uploaded_record_entity.dart';
+import 'package:yiraclinics/features/presentation/patient/documents/report_insights_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/widgets/uploaded_record_card.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
@@ -116,6 +118,20 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
     );
   }
 
+  void _openInsights(BuildContext context, UploadedRecord record) {
+    final analysis = MedicalReportAnalysis.tryParse(record.aiAnalysisJson);
+    if (analysis == null) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ReportInsightsScreen(
+        documentId: record.id,
+        documentTitle: record.fileName,
+        initialAnalysis: analysis,
+        onViewDocument: () => _viewDocument(context, record),
+        forPatient: false,
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -133,7 +149,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
             builder: (_) => FractionallySizedBox(
               heightFactor: 0.9,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 child: BlocProvider<UploadedBloc>.value(
                   value: context.read<UploadedBloc>(),
                   child: Scaffold(
@@ -373,6 +389,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
               record: record,
               isTab: isTab,
               onView: () => _viewDocument(context, record),
+              onAiInsights: () => _openInsights(context, record),
               onDelete: widget.allowAdd
                   ? () {
                       context.read<UploadedBloc>().add(DeleteUploadedRecordItem(record.id));

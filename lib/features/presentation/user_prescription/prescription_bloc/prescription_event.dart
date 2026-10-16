@@ -31,3 +31,10 @@ class AddManualPrescription extends MedicationEvent {
   @override
   List<Object?> get props => [payload];
 }
+
+class DeletePrescription extends MedicationEvent {
+  final String prescriptionId;
+  const DeletePrescription(this.prescriptionId);
+  @override
+  List<Object?> get props => [prescriptionId];
+}

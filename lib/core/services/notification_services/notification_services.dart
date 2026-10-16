@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show DartPluginRegistrant;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,13 +15,18 @@ import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
+import 'package:yiraclinics/core/services/medication_popup_service.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/use_cases/update_fcm_token_use_case.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  DartPluginRegistrant.ensureInitialized();
   await Firebase.initializeApp();
   debugPrint("[NotificationService] Background message received: ${message.messageId}");
+  // Android: a medicine reminder can also open the floating popup over other
+  // apps, if the patient switched it on. The system shows the notification.
+  await MedicationPopupService.handlePush(message.data);
 }
 
 class NotificationService {
@@ -159,6 +165,8 @@ class NotificationService {
       if (sl.isRegistered<SharedPrefsService>()) {
         sl<SharedPrefsService>().remove(_kLastConsumedLaunchPayloadKey);
       }
+      // The floating popup replaces the heads-up banner for medicine reminders.
+      if (await MedicationPopupService.handlePush(message.data)) return;
       final RemoteNotification? notification = message.notification;
       final String title = notification?.title ?? message.data['title'] ?? projectTitle;
       final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';

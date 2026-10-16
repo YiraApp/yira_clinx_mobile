@@ -68,7 +68,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
     final String? selection = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (BuildContext context) {
         return SafeArea(

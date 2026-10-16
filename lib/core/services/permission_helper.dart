@@ -4,9 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
-import 'package:yiraclinics/core/common_widgets/common_text.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 
 class PermissionHelper {
@@ -161,106 +159,22 @@ class PermissionHelper {
     required String title,
     required String message,
   }) async {
-    if (Platform.isIOS) {
-      await showCupertinoDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) => CupertinoAlertDialog(
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(message),
-          ),
-          actions: <CupertinoDialogAction>[
-            CupertinoDialogAction(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            CupertinoDialogAction(
-              isDefaultAction: true,
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                await openAppSettings();
-              },
-              child: const Text('Settings'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      final theme = Theme.of(context);
-      final isDarkMode = theme.brightness == Brightness.dark;
-
-      await showDialog(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            backgroundColor: theme.dialogTheme.backgroundColor ?? theme.colorScheme.surface,
-            title: CommonText(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: theme.textTheme.titleMedium?.color,
-                fontFamily: appPoppinFont,
-              ),
-            ),
-            content: CommonText(
-              message,
-              maxLines: null,
-              softWrap: true,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                fontFamily: appPoppinFont,
-                height: 1.4,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: CommonText(
-                  'Cancel',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
-                    fontFamily: appPoppinFont,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(dialogContext).pop();
-                  await openAppSettings();
-                },
-                child: const CommonText(
-                  'Open Settings',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: appPoppinFont,
-                  ),
-                ),
-              ),
-            ],
-          );
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AppDialog(
+        title: title,
+        message: message,
+        tone: AppDialogTone.warning,
+        icon: Icons.lock_outline_rounded,
+        primaryLabel: 'Open Settings',
+        onPrimary: () async {
+          Navigator.of(dialogContext).pop();
+          await openAppSettings();
         },
-      );
-    }
+        secondaryLabel: 'Cancel',
+        onSecondary: () => Navigator.of(dialogContext).pop(),
+      ),
+    );
   }
 }

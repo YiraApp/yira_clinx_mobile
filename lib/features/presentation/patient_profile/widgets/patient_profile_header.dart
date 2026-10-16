@@ -72,7 +72,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (dialogContext) {
         final statuses = [

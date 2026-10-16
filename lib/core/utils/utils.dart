@@ -10,8 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../common_size_helpers/common_size_helpers.dart';
-import '../common_widgets/common_text.dart';
 import '../constants/constants.dart';
+import '../custom_dialogue/app_dialog.dart';
 import '../global_scaffold_key/global_scaffold_key.dart';
 
 class Utils {
@@ -310,38 +310,21 @@ class Utils {
   }
 
   static Future<void> showAlertDialog(context, String title, String reason) =>
-      showCupertinoDialog<void>(
+      showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (BuildContext context) => CupertinoTheme(
-          data: CupertinoThemeData(brightness: Brightness.light),
-          child: CupertinoAlertDialog(
-            title: Text(
-              title,
-              style: TextStyle(
-                fontSize: displayWidth(context) * 0.038,
-                color: Colors.black,
-              ),
-            ),
-            content: Text(
-              reason,
-              style: TextStyle(
-                fontSize: displayWidth(context) * 0.03,
-                color: Colors.black,
-              ),
-            ),
-            actions: <CupertinoDialogAction>[
-              CupertinoDialogAction(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              CupertinoDialogAction(
-                isDefaultAction: true,
-                onPressed: () => openAppSettings(),
-                child: const Text('Settings'),
-              ),
-            ],
-          ),
+        builder: (BuildContext dialogContext) => AppDialog(
+          title: title,
+          message: reason,
+          tone: AppDialogTone.warning,
+          icon: Icons.lock_outline_rounded,
+          primaryLabel: 'Open Settings',
+          onPrimary: () {
+            Navigator.of(dialogContext).pop();
+            openAppSettings();
+          },
+          secondaryLabel: 'Cancel',
+          onSecondary: () => Navigator.of(dialogContext).pop(),
         ),
       );
   static void showSnackBar({
@@ -397,82 +380,24 @@ class Utils {
     String image,
     double padding,
   ) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
     return showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          icon: Container(
-            height: displayHeight(context) * 0.08,
-            width: displayHeight(context) * 0.08,
-            padding: EdgeInsets.all(padding),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDarkMode ? Colors.transparent : Colors.grey.shade100,
-            ),
-            child: Center(child: Image.asset(image, fit: BoxFit.contain)),
-          ),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          backgroundColor: theme.dialogBackgroundColor,
-          title: Column(
-            children: [
-              CommonText(
-                title,
-                style: TextStyle(
-                  fontSize: displayWidth(context) * 0.038,
-                  fontWeight: FontWeight.w500,
-                  color: theme.textTheme.titleMedium?.color,
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-          content: CommonText(
-            maxLines: null,
-            softWrap: true,
-            reason,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: displayWidth(context) * 0.034,
-              fontWeight: FontWeight.w400,
-              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-            ),
-          ),
-          contentPadding: const EdgeInsets.only(left: 10, right: 10),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: CommonText(
-                'Later',
-                style: TextStyle(
-                  fontSize: displayWidth(context) * 0.034,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                await openAppSettings();
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              child: CommonText(
-                'Go to settings',
-                style: TextStyle(
-                  fontSize: displayWidth(context) * 0.034,
-                  fontWeight: FontWeight.w600,
-                  color: buttonPrimaryColor,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (BuildContext dialogContext) => AppDialog(
+        title: title,
+        message: reason,
+        accentColor: buttonPrimaryColor,
+        badge: Padding(
+          padding: EdgeInsets.all(padding + 10),
+          child: Image.asset(image, fit: BoxFit.contain),
+        ),
+        primaryLabel: 'Go to Settings',
+        onPrimary: () async {
+          await openAppSettings();
+          if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+        },
+        secondaryLabel: 'Later',
+        onSecondary: () => Navigator.of(dialogContext).pop(),
+      ),
     );
   }
 

@@ -129,7 +129,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
     return AlertDialog(
       backgroundColor: isDark ? theme.scaffoldBackgroundColor : Colors.white,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       titlePadding: const EdgeInsets.only(top: 20, left: 20, right: 16, bottom: 0),
       contentPadding: const EdgeInsets.only(top: 14, left: 20, right: 20, bottom: 20),

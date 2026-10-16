@@ -16,6 +16,13 @@ class UploadedRecord {
   final bool isPatientUploaded;
   final bool isDeletable;
 
+  /// AI verdict for the report: normal, attention, critical or unknown; null
+  /// when it hasn't been analysed.
+  final String? aiStatus;
+
+  /// The stored AI analysis (JSON text), so insights open without waiting.
+  final String? aiAnalysisJson;
+
   const UploadedRecord({
     required this.id,
     required this.fileName,
@@ -33,6 +40,8 @@ class UploadedRecord {
     this.isAppointmentDoc = false,
     this.isPatientUploaded = false,
     this.isDeletable = true,
+    this.aiStatus,
+    this.aiAnalysisJson,
   });
 
   UploadedRecord copyWith({
@@ -52,6 +61,8 @@ class UploadedRecord {
     bool? isAppointmentDoc,
     bool? isPatientUploaded,
     bool? isDeletable,
+    String? aiStatus,
+    String? aiAnalysisJson,
   }) {
     return UploadedRecord(
       id: id ?? this.id,
@@ -70,6 +81,8 @@ class UploadedRecord {
       isAppointmentDoc: isAppointmentDoc ?? this.isAppointmentDoc,
       isPatientUploaded: isPatientUploaded ?? this.isPatientUploaded,
       isDeletable: isDeletable ?? this.isDeletable,
+      aiStatus: aiStatus ?? this.aiStatus,
+      aiAnalysisJson: aiAnalysisJson ?? this.aiAnalysisJson,
     );
   }
 }

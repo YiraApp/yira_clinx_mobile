@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:io';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -181,30 +182,23 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   void _handleDisconnect() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Disconnect Fitness?'),
-        content: Text(
-          Platform.isIOS
-              ? 'Are you sure you want to unlink Apple Health? You can reconnect anytime.'
-              : 'Are you sure you want to unlink Health Connect? You can reconnect anytime.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await FitnessSyncService.instance.disconnectFitness();
-              if (mounted) {
-                Navigator.pushReplacementNamed(context, AppRoutes.patientConnectFitness);
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
-            child: const Text('Disconnect'),
-          ),
-        ],
+      builder: (ctx) => AppDialog(
+        title: 'Disconnect Fitness?',
+        message: Platform.isIOS
+            ? 'Are you sure you want to unlink Apple Health? You can reconnect anytime.'
+            : 'Are you sure you want to unlink Health Connect? You can reconnect anytime.',
+        tone: AppDialogTone.danger,
+        icon: Icons.link_off_rounded,
+        primaryLabel: 'Disconnect',
+        onPrimary: () async {
+          Navigator.pop(ctx);
+          await FitnessSyncService.instance.disconnectFitness();
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, AppRoutes.patientConnectFitness);
+          }
+        },
+        secondaryLabel: 'Cancel',
+        onSecondary: () => Navigator.pop(ctx),
       ),
     );
   }

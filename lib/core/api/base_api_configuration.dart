@@ -5,11 +5,12 @@ class EnvironmentService {
   static Environment _currentEnv = Environment.local;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
-  // Local backend server URL for local development (matches local backend on port 5000)
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables 100% stable connection over USB, bypassing Wi-Fi AP isolation & firewall
-  // - Or use Wi-Fi LAN IP (192.168.0.7) if running purely over wireless network
-  static const String localHostIp = "192.168.0.7";
-  static const String localPort = "5000";
+  // - Or use Wi-Fi LAN IP (192.168.0.7) if running purely over wireless network. Override with --dart-define=BACKEND_IP=<ip>.
+  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.7");
+  static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
+  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
   static String? _customBaseUrl;
 
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
@@ -59,8 +60,9 @@ class EnvironmentService {
     if (_customBaseUrl != null && _customBaseUrl!.trim().isNotEmpty) {
       return _customBaseUrl!.trim();
     }
-    if (!kIsWeb && Platform.isAndroid) {
-      return "http://127.0.0.1:$localPort";
+    const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
+    if (envUrl.isNotEmpty) {
+      return envUrl.trim();
     }
     return "http://$localHostIp:$localPort";
   }

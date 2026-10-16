@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/features/domain/entities/medication/medication_entity.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 
@@ -22,6 +23,35 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
     on<FilterByStatus>(_onFilterByStatus);
     on<LoadPrescriptionDetails>(_onLoadPrescriptionDetails);
     on<AddManualPrescription>(_onAddManualPrescription);
+    on<DeletePrescription>(_onDeletePrescription);
+  }
+
+  Future<void> _onDeletePrescription(DeletePrescription event, Emitter<MedicationState> emit) async {
+    await deletePrescription(event.prescriptionId);
+  }
+
+  Future<bool> deletePrescription(String prescriptionId) async {
+    try {
+      final currentUser = GlobalSession.instance.userNotifier.value;
+      final token = currentUser?.data?.accessToken ?? '';
+
+      final response = await _apiClient.account(showSuccessSnack: true).delete(
+        '${URLs.prescriptionsUrl}/$prescriptionId',
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        await MedicationReminderService.instance.deletePrescriptionReminders(prescriptionId);
+        add(LoadMedicationData());
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[MedicationBloc] deletePrescription error: $e');
+      return false;
+    }
   }
 
   Future<void> _onAddManualPrescription(AddManualPrescription event, Emitter<MedicationState> emit) async {
@@ -174,6 +204,13 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
 
                 final pdfUrl = (p['PdfUrl'] ?? p['pdfUrl'] ?? '').toString();
 
+                final bool isSelf = (doc == null || doc is! Map || (p['DoctorId'] == null || p['DoctorId'].toString().trim().isEmpty)) ||
+                    (p['AppointmentId'] == null || p['AppointmentId'].toString().trim().isEmpty) ||
+                    p['isManual'] == true ||
+                    p['IsManual'] == true ||
+                    p['isPatientManual'] == true ||
+                    p['IsPatientManual'] == true;
+
                 realList.add({
                   "id": (p['Id'] ?? p['id'] ?? '').toString(),
                   "title": "Prescription for $condition",
@@ -189,6 +226,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                   "medications": medList,
                   "pdfUrl": pdfUrl,
                   "needRefill": medList.isNotEmpty,
+                  "isSelf": isSelf,
                 });
               }
             }

@@ -134,6 +134,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
                 isAppointmentDoc: apptId.isNotEmpty,
                 isPatientUploaded: isPatientUploaded,
                 isDeletable: true,
+                aiStatus: _text(json['AiStatus'] ?? json['aiStatus']),
+                aiAnalysisJson: _text(json['AiAnalysis'] ?? json['aiAnalysis']),
               );
             }).toList();
           }
@@ -149,6 +151,11 @@ class RecordsRepositoryImpl implements RecordsRepository {
     }
 
     return [];
+  }
+
+  static String? _text(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty || text == 'null' ? null : text;
   }
 
   @override

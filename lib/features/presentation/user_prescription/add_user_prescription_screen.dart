@@ -8,8 +8,10 @@ import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_analysis_result.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
+import 'package:yiraclinics/features/presentation/user_prescription/widgets/scan_prescription_sheet.dart';
 
 class _MedicationFormItem {
   final TextEditingController nameController = TextEditingController();
@@ -124,6 +126,146 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
     });
   }
 
+  Future<void> _scanAndAutoFill() async {
+    // Open scan sheet → picks image/PDF (supports up to 2 pages) → analyzes with Gemini
+    final scanResult = await ScanPrescriptionSheet.show(context);
+    if (scanResult == null || !mounted) return;
+
+    // Directly populate the form fields so the user can review and edit right on this screen
+    _applyAnalysisResult(scanResult.result, scanResult.scannedFile);
+  }
+
+  void _applyAnalysisResult(PrescriptionAnalysisResult result, File scannedFile) {
+    setState(() {
+      // Visit details
+      if (result.doctorName.isNotEmpty) {
+        _doctorNameController.text = result.doctorName;
+      }
+      if (result.hospitalName.isNotEmpty) {
+        _hospitalNameController.text = result.hospitalName;
+      }
+      if (result.diagnosis.isNotEmpty) {
+        _conditionController.text = result.diagnosis;
+      }
+      if (result.doctorNotes.isNotEmpty) {
+        _doctorNotesController.text = result.doctorNotes;
+      }
+
+      // Specialty
+      if (result.specialty.isNotEmpty) {
+        final match = _specialties.firstWhere(
+          (s) => s.toLowerCase() == result.specialty.toLowerCase(),
+          orElse: () => '',
+        );
+        if (match.isNotEmpty) {
+          _selectedSpecialty = match;
+        }
+      }
+
+      // Consultation date
+      if (result.consultationDate.isNotEmpty) {
+        try {
+          final parsed = DateTime.parse(result.consultationDate);
+          if (parsed.isBefore(DateTime.now().add(const Duration(days: 1)))) {
+            _consultationDate = parsed;
+          }
+        } catch (_) {}
+      }
+
+      // Medications — clear existing and populate from AI
+      if (result.medications.isNotEmpty) {
+        for (final m in _medications) {
+          m.dispose();
+        }
+        _medications.clear();
+
+        for (final med in result.medications) {
+          final item = _MedicationFormItem();
+          item.nameController.text = med.name;
+          item.notesController.text = med.notes;
+
+          // Map frequency
+          final freqMatch = _frequencyOptions.firstWhere(
+            (f) => f.contains(med.frequency),
+            orElse: () => _frequencyOptions.first,
+          );
+          item.frequency = freqMatch;
+          item.mealTiming = med.mealTiming;
+          item.isContinuous = med.isContinuous;
+          if (!med.isContinuous && med.durationDays > 0) {
+            item.durationDays = _durationOptions.contains(med.durationDays)
+                ? med.durationDays
+                : _durationOptions.reduce((a, b) =>
+                    (a - med.durationDays).abs() < (b - med.durationDays).abs() ? a : b);
+          }
+
+          _medications.add(item);
+        }
+      }
+
+      // Attach the scanned file
+      _attachedFile = scannedFile;
+      final ext = scannedFile.path.split('.').last.toLowerCase();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      _attachedFileName = 'Prescription_$timestamp.$ext';
+      try {
+        _attachedFileSize = scannedFile.lengthSync();
+      } catch (_) {
+        _attachedFileSize = null;
+      }
+    });
+
+    // Show success feedback
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Prescription Scanned & Filled!',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    '${result.medications.length} medication${result.medications.length == 1 ? '' : 's'} added. Review or edit below.',
+                    style: TextStyle(
+                      fontFamily: appPoppinFont,
+                      fontSize: 11.5,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0F766E),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   // --- Attachment Options Bottom Sheet ---
   void _showAttachmentSourceSheet() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -132,7 +274,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E2430) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -500,6 +642,73 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
               fontFamily: appPoppinFont,
               fontSize: 12.5,
               color: isDark ? Colors.white60 : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ── AI SCAN BUTTON ──
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: _scanAndAutoFill,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(isDark ? 0.2 : 0.08),
+                    primaryColor.withOpacity(isDark ? 0.08 : 0.03),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: primaryColor.withOpacity(isDark ? 0.3 : 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.auto_awesome_rounded, size: 20, color: primaryColor),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Scan Prescription with AI",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Auto-fill form from photo or PDF",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11.5,
+                            color: isDark ? Colors.white38 : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: primaryColor.withOpacity(0.5),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
