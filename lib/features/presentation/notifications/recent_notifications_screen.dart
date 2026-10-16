@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -373,92 +374,27 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   }
 
   void _showClearAllConfirmationDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.delete_sweep_rounded,
-                  color: Color(0xFFEF4444),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "Clear Notifications",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            "Are you sure you want to clear all notifications? This will permanently remove them from your notification center.",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 13.5,
-              height: 1.4,
-              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+      builder: (dialogContext) => AppDialog(
+        title: "Clear Notifications",
+        message: "Are you sure you want to clear all notifications? This will permanently remove them from your notification center.",
+        tone: AppDialogTone.danger,
+        icon: Icons.delete_sweep_rounded,
+        primaryLabel: "Clear All",
+        onPrimary: () {
+          Navigator.pop(dialogContext);
+          _bloc.add(ClearAllNotificationsEvent());
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("All notifications cleared"),
+              duration: Duration(seconds: 2),
             ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pop(dialogContext);
-                _bloc.add(ClearAllNotificationsEvent());
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("All notifications cleared"),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              child: const Text(
-                "Clear All",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+          );
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogContext),
+      ),
     );
   }
 

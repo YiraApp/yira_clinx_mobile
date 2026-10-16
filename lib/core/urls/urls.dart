@@ -105,4 +105,18 @@ class URLs {
   /*Patient Medication Reminders*/
   static const patientMedicationRemindersUrl = "/v1/api/auth/patient/medication-reminders";
   static const patientMedicationRemindersSyncUrl = "/v1/api/auth/patient/medication-reminders/sync";
+
+  /*Patient Diet Plan*/
+  static const patientDietActivePlanUrl = "/v1/api/diet/active-plan";
+  static const patientDietTodayUrl = "/v1/api/diet/today";
+  static const patientDietPlanDetailsUrl = "/v1/api/diet/plan";
+  static const patientDietUpdateMyPlanUrl = "/v1/api/diet/my-plan";
+  static const patientDietMyPlansUrl = "/v1/api/diet/my-plans";
+  static const doctorDietPatientPlansUrl = "/v1/api/diet/patients"; // + /:patientId/plans
+  static const doctorDietPlanUrl = "/v1/api/diet/doctor/plans"; // + /:id, /:id/status
+  static const doctorDietTemplatesUrl = "/v1/api/diet/templates";
+  static const doctorDietAssignUrl = "/v1/api/diet/assign";
+  static const doctorDietFoodsUrl = "/v1/api/diet/foods";
+  static const doctorDietFoodRecommendationsUrl = "/v1/api/diet/foods/recommendations";
 }
+

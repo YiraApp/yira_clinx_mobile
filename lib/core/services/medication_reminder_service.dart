@@ -44,6 +44,8 @@ class MedicationReminderService {
   Future<List<MedicationReminder>> loadReminders() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      // The floating popup runs separately and may have marked a dose taken.
+      await prefs.reload();
       final raw = prefs.getString(_storageKey);
       if (raw != null && raw.isNotEmpty) {
         final List list = json.decode(raw);
@@ -203,6 +205,37 @@ class MedicationReminderService {
     }
   }
 
+  /// Marks a dose as taken (never un-marks it). Reads and writes storage
+  /// directly, so the floating popup can call it while the app is closed;
+  /// the app picks the change up the next time it loads reminders.
+  Future<bool> markDoseTaken(String reminderId, String timeKey, {String? date}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final raw = prefs.getString(_storageKey);
+      if (raw == null || raw.isEmpty) return false;
+      final list = (json.decode(raw) as List)
+          .map((item) => MedicationReminder.fromMap(Map<String, dynamic>.from(item)))
+          .toList();
+      final index = list.indexWhere((r) => r.id == reminderId);
+      if (index < 0) return false;
+
+      final now = DateTime.now();
+      final day = (date != null && date.isNotEmpty)
+          ? date
+          : "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final doses = Map<String, bool>.from(list[index].takenDoses)..["${day}_$timeKey"] = true;
+      list[index] = list[index].copyWith(takenDoses: doses);
+
+      await _persistList(list);
+      remindersNotifier.value = list;
+      return true;
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Error marking dose taken: $e");
+      return false;
+    }
+  }
+
   Future<void> deleteReminder(String reminderId) async {
     try {
       final currentList = List<MedicationReminder>.from(remindersNotifier.value);
@@ -314,6 +347,15 @@ class MedicationReminderService {
     final reminder = getReminderForMedicine(prescriptionId, medicineName);
     if (reminder != null) {
       await deleteReminder(reminder.id);
+    }
+  }
+
+  Future<void> deletePrescriptionReminders(String prescriptionId) async {
+    final related = remindersNotifier.value
+        .where((r) => r.prescriptionId == prescriptionId)
+        .toList();
+    for (final r in related) {
+      await deleteReminder(r.id);
     }
   }
 

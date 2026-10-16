@@ -52,6 +52,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
     elevatedButtonTheme: _buttonTheme(),
+    textButtonTheme: _textButtonTheme(),
     chipTheme: _chipTheme(Colors.grey.shade300),
     inputDecorationTheme: _inputTheme(lightBackGroundColor, Colors.grey.shade200),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -59,11 +60,15 @@ class AppTheme {
       selectedItemColor: primaryTeal,
       unselectedItemColor: Colors.grey,
     ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    dialogTheme: _dialogTheme(
+      background: Colors.white,
+      title: const Color(0xFF0F172A),
+      body: const Color(0xFF475569),
     ),
+    bottomSheetTheme: _bottomSheetTheme(Colors.white, const Color(0xFFCBD5E1)),
+    popupMenuTheme: _popupMenuTheme(Colors.white, const Color(0xFF0F172A)),
+    datePickerTheme: _datePickerTheme(Colors.white),
+    timePickerTheme: _timePickerTheme(Colors.white),
     cardTheme: CardThemeData(
       color: Colors.white,
       surfaceTintColor: Colors.transparent,
@@ -111,6 +116,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
     elevatedButtonTheme: _buttonTheme(),
+    textButtonTheme: _textButtonTheme(),
     chipTheme: _chipTheme(Colors.white10),
     inputDecorationTheme: _inputTheme(darkSurface, Colors.transparent),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -118,11 +124,14 @@ class AppTheme {
       selectedItemColor: primaryTeal,
       unselectedItemColor: Colors.white54,
     ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: darkModeCardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    dialogTheme: _dialogTheme(
+      background: darkModeCardColor,
+      title: Colors.white,
+      body: const Color(0xFFCBD5E1),
     ),
+    bottomSheetTheme: _bottomSheetTheme(darkModeCardColor, const Color(0xFF475569)),
+    datePickerTheme: _datePickerTheme(darkModeCardColor),
+    timePickerTheme: _timePickerTheme(darkModeCardColor),
     cardTheme: CardThemeData(
       color: darkModeCardColor,
       surfaceTintColor: Colors.transparent,
@@ -133,12 +142,79 @@ class AppTheme {
       color: Colors.white10,
       thickness: 0.8,
     ),
-    popupMenuTheme: PopupMenuThemeData(
-      color: darkModeCardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
+    popupMenuTheme: _popupMenuTheme(darkModeCardColor, Colors.white),
   );
+
+  // --- Popups: dialogs, bottom sheets, menus and pickers share one look ---
+
+  static const double _popupRadius = 24;
+
+  static DialogThemeData _dialogTheme({
+    required Color background,
+    required Color title,
+    required Color body,
+  }) =>
+      DialogThemeData(
+        backgroundColor: background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_popupRadius)),
+        titleTextStyle: TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+          color: title,
+        ),
+        contentTextStyle: TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: body,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      );
+
+  static BottomSheetThemeData _bottomSheetTheme(Color background, Color handle) => BottomSheetThemeData(
+        backgroundColor: background,
+        modalBackgroundColor: background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        modalElevation: 0,
+        dragHandleColor: handle,
+        clipBehavior: Clip.antiAlias,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(_popupRadius)),
+        ),
+      );
+
+  static PopupMenuThemeData _popupMenuTheme(Color background, Color text) => PopupMenuThemeData(
+        color: background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: text),
+      );
+
+  static DatePickerThemeData _datePickerTheme(Color background) => DatePickerThemeData(
+        backgroundColor: background,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_popupRadius)),
+      );
+
+  static TimePickerThemeData _timePickerTheme(Color background) => TimePickerThemeData(
+        backgroundColor: background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_popupRadius)),
+      );
+
+  /// Dialog actions are mostly plain TextButtons; give them the app font.
+  static TextButtonThemeData _textButtonTheme() => TextButtonThemeData(
+        style: TextButton.styleFrom(
+          textStyle: const TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+      );
 
   static ElevatedButtonThemeData _buttonTheme() => ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(

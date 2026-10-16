@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <g transform="translate(0 -12)" stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+    <!-- greens rising out of the bowl -->
+    <path d="M48 124 C40 96 62 70 92 80 C100 58 134 54 146 78 C166 62 200 72 200 100 C220 104 222 122 212 126 Z" fill="#7BC943"/>
+    <path d="M92 80 C96 96 104 108 118 120" fill="none"/>
+    <path d="M146 78 C146 94 140 108 132 120" fill="none"/>
+    <!-- carrot and tomato slices -->
+    <circle cx="86" cy="104" r="17" fill="#FF9F1C"/>
+    <circle cx="86" cy="104" r="6" fill="#FFD166" stroke-width="6"/>
+    <circle cx="166" cy="98" r="21" fill="#F0324B"/>
+    <path d="M166 84 V112 M153 91 L179 105 M153 105 L179 91" fill="none" stroke-width="5"/>
+    <!-- bowl -->
+    <path d="M34 128 H222 C222 182 182 214 128 214 C74 214 34 182 34 128 Z" fill="#2EC4D6"/>
+    <path d="M58 150 C66 174 88 190 112 194" fill="none" stroke="#FFFFFF" stroke-width="8" opacity="0.85"/>
+    <rect x="26" y="116" width="204" height="22" rx="11" fill="#1FA2B5"/>
+    <rect x="98" y="212" width="60" height="16" rx="6" fill="#1FA2B5"/>
+  </g>
+</svg>

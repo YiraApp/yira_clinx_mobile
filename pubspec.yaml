@@ -61,6 +61,7 @@ dependencies:
   flutter_speed_dial: ^7.0.0
   syncfusion_flutter_charts: ^33.2.12
   syncfusion_flutter_pdfviewer: ^33.2.12
+  syncfusion_flutter_pdf: ^33.2.15
   flutter_secure_storage: ^10.3.1
   connectivity_plus: ^7.1.1
   flutter_local_notifications: ^22.0.1
@@ -78,6 +79,7 @@ dependencies:
   razorpay_flutter: ^1.4.6
   timezone: ^0.11.1
   flutter_timezone: ^5.1.0
+  flutter_overlay_window: ^1.0.0
 dependency_overrides:
 
 dev_dependencies:
@@ -136,37 +138,15 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   fonts:
-    - family: Segoe
-      fonts:
-        - asset: assets/fonts/segoe/segoe_ui.ttf
-        - asset: assets/fonts/segoe/segoe_ui_italic.ttf
-          style: italic
-        - asset: assets/fonts/segoe/segoe_ui_bold.ttf
-          weight: 700
-        - asset: assets/fonts/segoe/segoe_bold_italic.ttf
-          weight: 700
-          style: italic
-
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/roboto/Roboto-Regular.ttf
-        - asset: assets/fonts/roboto/Roboto-Bold.ttf
-        - asset: assets/fonts/roboto/Roboto-Medium.ttf
-        - asset: assets/fonts/roboto/Roboto-Black.ttf
-          weight: 700
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Poppins-Medium.ttf
-        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 500
         - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 700
-    - family: Inter
-      fonts:
-        - asset: assets/fonts/inter/Inter-Regular.ttf
-        - asset: assets/fonts/inter/Inter-Bold.ttf
-        - asset: assets/fonts/inter/Inter-Medium.ttf
-        - asset: assets/fonts/inter/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
 
   #

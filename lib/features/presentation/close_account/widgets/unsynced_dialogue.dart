@@ -19,7 +19,7 @@ class UnSyncedDataDialog extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(fieldBorderRadius)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(20.0),

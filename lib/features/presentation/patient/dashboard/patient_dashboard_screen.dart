@@ -660,6 +660,24 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                     if (mounted) setState(() {});
                                   },
                                 ),
+
+                                // 7. Diet Plan
+                                _buildServiceCard(
+                                  context: context,
+                                  title: 'Diet\nPlan',
+                                  customIcon: SvgPicture.asset(
+                                    'assets/images/dashboard_icons/diet_plan_thick.svg',
+                                    width: isTab ? 74 : 64,
+                                    height: isTab ? 74 : 64,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  isDark: isDark,
+                                  isTab: isTab,
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.patientDietPlan,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1514,7 +1532,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   Widget _buildServiceCard({
     required BuildContext context,
     required String title,
-    required String imagePath,
+    String? imagePath,
+    Widget? customIcon,
     required bool isDark,
     required bool isTab,
     required VoidCallback onTap,
@@ -1528,12 +1547,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
           SizedBox(
             width: isTab ? 74 : 64,
             height: isTab ? 74 : 64,
-            child: Image.asset(
-              imagePath,
-              width: isTab ? 74 : 64,
-              height: isTab ? 74 : 64,
-              fit: BoxFit.contain,
-            ),
+            child: customIcon ??
+                Image.asset(
+                  imagePath ?? '',
+                  width: isTab ? 74 : 64,
+                  height: isTab ? 74 : 64,
+                  fit: BoxFit.contain,
+                ),
           ),
           const SizedBox(height: 8),
           Text(

@@ -67,6 +67,9 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
       case 'documents':
       case 'records':
         return Icons.folder_open_rounded;
+      case 'diet':
+      case 'diet plan':
+        return Icons.restaurant_menu_rounded;
       case 'suggestions':
       case 'suggestion':
       case 'doctor suggestions':

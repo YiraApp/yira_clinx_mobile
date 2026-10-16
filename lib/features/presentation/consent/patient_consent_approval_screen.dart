@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -91,80 +92,38 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF059669).withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.verified_user_rounded, color: Color(0xFF059669), size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                "Grant Record Access",
-                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 17),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Are you sure you want to authorize $doctorName to access your medical records?",
-              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, height: 1.4),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF059669).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.timer_outlined, size: 18, color: Color(0xFF059669)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Access Duration: $duration\nScope: Vitals, Prescriptions, Lab Records",
-                      style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF059669)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
-            child: const Text("Cancel", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
+      builder: (dialogCtx) => AppDialog(
+        title: "Grant Record Access",
+        message: "Are you sure you want to authorize $doctorName to access your medical records?",
+        tone: AppDialogTone.success,
+        icon: Icons.verified_user_rounded,
+        content: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF059669).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.2)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF059669),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _respondToConsent(item.id, "APPROVE", patientId);
-            },
-            child: const Text("Grant Access", style: TextStyle(fontFamily: appPoppinFont, color: Colors.white, fontWeight: FontWeight.bold)),
+          child: Row(
+            children: [
+              const Icon(Icons.timer_outlined, size: 18, color: Color(0xFF059669)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  "Access Duration: $duration\nScope: Vitals, Prescriptions, Lab Records",
+                  style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF059669)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+        primaryLabel: "Grant Access",
+        onPrimary: () {
+          Navigator.pop(dialogCtx);
+          _respondToConsent(item.id, "APPROVE", patientId);
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogCtx),
       ),
     );
   }
@@ -179,53 +138,18 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.block_rounded, color: Colors.redAccent, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                "Deny Access Request",
-                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 17),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          "Are you sure you want to decline $doctorName's request to view your medical history? The doctor will not be able to view past records.",
-          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, height: 1.4),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
-            child: const Text("Cancel", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _respondToConsent(item.id, "REJECT", patientId);
-            },
-            child: const Text("Deny Request", style: TextStyle(fontFamily: appPoppinFont, color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
+      builder: (dialogCtx) => AppDialog(
+        title: "Deny Access Request",
+        message: "Are you sure you want to decline $doctorName's request to view your medical history? The doctor will not be able to view past records.",
+        tone: AppDialogTone.danger,
+        icon: Icons.block_rounded,
+        primaryLabel: "Deny Request",
+        onPrimary: () {
+          Navigator.pop(dialogCtx);
+          _respondToConsent(item.id, "REJECT", patientId);
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogCtx),
       ),
     );
   }
@@ -240,53 +164,18 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : Colors.white,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.lock_reset_rounded, color: Colors.redAccent, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                "Revoke Record Access",
-                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 17),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          "Are you sure you want to revoke medical record access for $doctorName? They will immediately lose access to your past medical history.",
-          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, height: 1.4),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
-            child: const Text("Cancel", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _respondToConsent(item.id, "REVOKE", patientId);
-            },
-            child: const Text("Revoke Access", style: TextStyle(fontFamily: appPoppinFont, color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ],
+      builder: (dialogCtx) => AppDialog(
+        title: "Revoke Record Access",
+        message: "Are you sure you want to revoke medical record access for $doctorName? They will immediately lose access to your past medical history.",
+        tone: AppDialogTone.danger,
+        icon: Icons.lock_reset_rounded,
+        primaryLabel: "Revoke Access",
+        onPrimary: () {
+          Navigator.pop(dialogCtx);
+          _respondToConsent(item.id, "REVOKE", patientId);
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogCtx),
       ),
     );
   }

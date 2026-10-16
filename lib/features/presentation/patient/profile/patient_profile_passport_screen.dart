@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -389,7 +390,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.1),
@@ -616,53 +617,22 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   }
 
   void _showDeleteAccountConfirmation(BuildContext context, Color primaryColor) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isDeleting = false;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 22),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Delete Account',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
+        builder: (ctx, setDialogState) => AppDialog(
+          title: 'Delete Account',
+          message: 'Are you sure you want to delete your account? This action will:',
+          tone: AppDialogTone.danger,
+          icon: Icons.warning_amber_rounded,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Are you sure you want to delete your account? This action will:',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13.5,
-                  color: isDark ? Colors.white70 : Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 12),
               _deleteInfoRow(Icons.person_off_rounded, 'Deactivate your account', isDark),
               const SizedBox(height: 6),
               _deleteInfoRow(Icons.family_restroom_rounded, 'Deactivate all linked dependents', isDark),
@@ -670,6 +640,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               _deleteInfoRow(Icons.block_rounded, 'Revoke all active sessions', isDark),
               const SizedBox(height: 14),
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.red.withValues(alpha: 0.08),
@@ -682,86 +653,66 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     fontFamily: appPoppinFont,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.red.shade700,
+                    color: isDark ? Colors.red.shade300 : Colors.red.shade700,
                   ),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: isDeleting ? null : () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white60 : Colors.grey[600],
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-              onPressed: isDeleting ? null : () async {
-                setDialogState(() => isDeleting = true);
-                try {
-                  final currentUser = GlobalSession.instance.userNotifier.value;
-                  final userId = currentUser?.data?.id ?? '';
-                  final token = currentUser?.data?.accessToken ?? '';
+          primaryLabel: 'Delete Account',
+          isPrimaryLoading: isDeleting,
+          onPrimary: () async {
+            setDialogState(() => isDeleting = true);
+            try {
+              final currentUser = GlobalSession.instance.userNotifier.value;
+              final userId = currentUser?.data?.id ?? '';
+              final token = currentUser?.data?.accessToken ?? '';
 
-                  String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.accountDeactivateUrl}";
-                  if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-                    targetUrl = "http://$targetUrl";
-                  }
+              String targetUrl = "${EnvironmentService.config.accountBaseUrl}${URLs.accountDeactivateUrl}";
+              if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+                targetUrl = "http://$targetUrl";
+              }
 
-                  final dio = Dio(BaseOptions(
-                    connectTimeout: const Duration(seconds: 15),
-                    receiveTimeout: const Duration(seconds: 15),
-                  ));
-                  await dio.post(
-                    targetUrl,
-                    data: {'userId': userId},
-                    options: Options(headers: {
-                      HttpHeaders.authorizationHeader: 'Bearer $token',
-                      'Content-Type': 'application/json',
-                    }),
-                  );
+              final dio = Dio(BaseOptions(
+                connectTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 15),
+              ));
+              await dio.post(
+                targetUrl,
+                data: {'userId': userId},
+                options: Options(headers: {
+                  HttpHeaders.authorizationHeader: 'Bearer $token',
+                  'Content-Type': 'application/json',
+                }),
+              );
 
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                  }
-                  await sl<SecureStorageService>().clearAllSecureData();
-                  await sl<SharedPrefsService>().clearAll();
-                  if (mounted && context.mounted) {
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      AppRoutes.signIn,
-                      (route) => false,
-                    );
-                    Utils.showSnackBar(
-                      message: 'Your account was deactivated. Contact administrator.',
-                      status: false,
-                    );
-                  }
-                } catch (e) {
-                  setDialogState(() => isDeleting = false);
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                  }
-                  if (mounted && context.mounted) {
-                    _showErrorSnackBar(context, 'Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}');
-                  }
-                }
-              },
-              child: isDeleting
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Delete Account', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13)),
-            ),
-          ],
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+              }
+              await sl<SecureStorageService>().clearAllSecureData();
+              await sl<SharedPrefsService>().clearAll();
+              if (mounted && context.mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.signIn,
+                  (route) => false,
+                );
+                Utils.showSnackBar(
+                  message: 'Your account was deactivated. Contact administrator.',
+                  status: false,
+                );
+              }
+            } catch (e) {
+              setDialogState(() => isDeleting = false);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+              }
+              if (mounted && context.mounted) {
+                _showErrorSnackBar(context, 'Failed to delete account: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}');
+              }
+            }
+          },
+          secondaryLabel: 'Cancel',
+          onSecondary: () => Navigator.pop(ctx),
         ),
       ),
     );
@@ -1602,7 +1553,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               ),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.25),
