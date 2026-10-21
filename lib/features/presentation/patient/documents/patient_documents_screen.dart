@@ -530,6 +530,71 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                     ),
                   ),
 
+                  if (_selectedCategory == 'Insurance Card')
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _primaryBlue.withValues(alpha: isDark ? 0.15 : 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _primaryBlue.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.beach_access_rounded, color: _primaryBlue, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Global Insurance Policies',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                                Text(
+                                  'Manage policy numbers, validity & claims',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pushNamed(context, AppRoutes.patientPolicies),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'View',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: _primaryBlue,
+                                  ),
+                                ),
+                                SizedBox(width: 2),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: _primaryBlue),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // 3. Documents List with YouTube-style Pagination & Shimmer
                   Expanded(
                     child: RefreshIndicator(

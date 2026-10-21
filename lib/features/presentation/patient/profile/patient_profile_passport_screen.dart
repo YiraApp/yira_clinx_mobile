@@ -2080,7 +2080,59 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     ),
                     const SizedBox(height: 16),
 
-                    // 4. Spotlight Product Tour Tile
+                    // 4. Policies & Insurance Card Tile (Global Policies)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.35 : 0.2),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: isDark ? 0.08 : 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.beach_access_rounded, color: Color(0xFF2563EB), size: 20),
+                        ),
+                        title: Text(
+                          "Policies & Insurance",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Manage global health & medical insurance policies",
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11.5,
+                            color: isDark ? Colors.white60 : Colors.grey.shade600,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF2563EB)),
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.patientPolicies);
+                        },
+                      ),
+                    ),
+
+                    // 5. Spotlight Product Tour Tile
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
