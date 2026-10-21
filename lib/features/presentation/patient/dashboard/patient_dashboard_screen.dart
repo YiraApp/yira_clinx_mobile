@@ -754,6 +754,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                     AppRoutes.patientDietPlan,
                                   ),
                                 ),
+
+                                // 8. Insurance Policies
+                                _buildServiceCard(
+                                  context: context,
+                                  title: 'Insurance\nPolicies',
+                                  customIcon: _buildInsuranceDashboardIcon(isTab: isTab),
+                                  isDark: isDark,
+                                  isTab: isTab,
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.patientPolicies,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -2011,6 +2024,68 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     );
   }
 
+  Widget _buildInsuranceDashboardIcon({required bool isTab}) {
+    final double size = isTab ? 74 : 64;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(isTab ? 22 : 18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.45),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Subtle inner radial/circular highlight
+          Container(
+            width: size * 0.72,
+            height: size * 0.72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.18),
+            ),
+          ),
+          Icon(
+            Icons.beach_access_rounded,
+            color: Colors.white,
+            size: isTab ? 38 : 32,
+          ),
+          Positioned(
+            top: isTab ? 10 : 8,
+            right: isTab ? 10 : 8,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildServiceCard({
     required BuildContext context,

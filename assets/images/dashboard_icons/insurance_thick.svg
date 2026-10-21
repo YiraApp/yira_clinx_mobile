@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Outer Shield Background -->
+    <path d="M128 32 C178 32 208 50 208 86 C208 154 168 206 128 226 C88 206 48 154 48 86 C48 50 78 32 128 32 Z" fill="url(#shieldGrad)" />
+    <!-- Umbrella Canopy Left -->
+    <path d="M82 136 C82 98 128 92 128 92 C128 92 104 120 82 136 Z" fill="#FBBF24" />
+    <!-- Umbrella Canopy Center -->
+    <path d="M104 136 C114 116 128 92 128 92 C128 92 142 116 152 136 Z" fill="#F87171" />
+    <!-- Umbrella Canopy Right -->
+    <path d="M174 136 C174 98 128 92 128 92 C128 92 152 120 174 136 Z" fill="#34D399" />
+    <!-- Umbrella Base Arcs -->
+    <path d="M82 136 Q93 130 104 136 Q116 130 128 136 Q140 130 152 136 Q163 130 174 136" fill="none" />
+    <!-- Umbrella Top Tip -->
+    <line x1="128" y1="92" x2="128" y2="82" stroke-width="8" />
+    <!-- Umbrella Shaft & Handle -->
+    <path d="M128 136 V162 C128 172 118 176 112 170" fill="none" stroke-width="8" />
+    <!-- Small Plus / Cross -->
+    <rect x="170" y="60" width="28" height="10" rx="3" fill="#FFFFFF" />
+    <rect x="179" y="51" width="10" height="28" rx="3" fill="#FFFFFF" />
+  </g>
+</svg>
