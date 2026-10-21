@@ -3,11 +3,13 @@ class EnvironmentService {
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   // Local backend server URL for local development (matches local backend on port 5000)
-  // - 192.168.0.12:5000 (this Mac's Wi-Fi address) lets physical devices on the same Wi-Fi and
+  // - 192.168.1.159:5000 (this Mac's Wi-Fi address) lets physical devices on the same Wi-Fi and
   //   emulators/simulators reach it. Override per run with --dart-define=BACKEND_IP=<ip>.
-  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.12");
+  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.1.159");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
   static String? _customBaseUrl;
+  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
 
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
 
