@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/patient_insurance_service.dart';
@@ -375,18 +376,30 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
           Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
 
-          // Body Meta Fields
+          // Body Meta Fields + Small Image Preview by default
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMetaRow('Policy Holder', ': ${policy.policyHolder.isNotEmpty ? policy.policyHolder : '-'}', isDark),
-                const SizedBox(height: 6),
-                _buildMetaRow('Policy Name', ': ${policy.policyName.isNotEmpty ? policy.policyName : '-'}', isDark),
-                const SizedBox(height: 6),
-                _buildMetaRow('Policy No', ': ${policy.policyNumber.isNotEmpty ? policy.policyNumber : '-'}', isDark),
-                const SizedBox(height: 6),
-                _buildMetaRow('Validity', ': ${policy.validityText}', isDark),
+                Expanded(
+                  child: Column(
+                    children: [
+                      _buildMetaRow('Policy Holder', ': ${policy.policyHolder.isNotEmpty ? policy.policyHolder : '-'}', isDark),
+                      const SizedBox(height: 6),
+                      _buildMetaRow('Policy Name', ': ${policy.policyName.isNotEmpty ? policy.policyName : '-'}', isDark),
+                      const SizedBox(height: 6),
+                      _buildMetaRow('Policy No', ': ${policy.policyNumber.isNotEmpty ? policy.policyNumber : '-'}', isDark),
+                      const SizedBox(height: 6),
+                      _buildMetaRow('Validity', ': ${policy.validityText}', isDark),
+                    ],
+                  ),
+                ),
+                if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
+                    (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)) ...[
+                  const SizedBox(width: 12),
+                  _buildDocumentThumbnail(policy: policy, isDark: isDark),
+                ],
               ],
             ),
           ),
@@ -478,6 +491,114 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentThumbnail({
+    required PatientInsurancePolicyModel policy,
+    required bool isDark,
+  }) {
+    final filePath = policy.localFilePath;
+    final fileUrl = policy.documentUrl;
+    final hasLocal = filePath != null && filePath.isNotEmpty && File(filePath).existsSync();
+    final hasRemote = fileUrl != null && fileUrl.isNotEmpty;
+
+    if (!hasLocal && !hasRemote) return const SizedBox.shrink();
+
+    final fileName = hasLocal
+        ? filePath.split(RegExp(r'[/\\]')).last
+        : fileUrl!.split('/').last;
+    final isPdf = fileName.toLowerCase().endsWith('.pdf');
+
+    return InkWell(
+      onTap: () => _openDocument(policy),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 62,
+        height: 72,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (isPdf)
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 28),
+                  const SizedBox(height: 3),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'PDF',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else if (hasLocal)
+              Image.file(
+                File(filePath),
+                width: 62,
+                height: 72,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+              )
+            else
+              CachedNetworkImage(
+                imageUrl: fileUrl!,
+                width: 62,
+                height: 72,
+                fit: BoxFit.cover,
+                placeholder: (ctx, url) => const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB)),
+                  ),
+                ),
+                errorWidget: (ctx, url, err) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+              ),
+
+            // Zoom badge
+            Positioned(
+              bottom: 3,
+              right: 3,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.zoom_in_rounded, size: 10, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

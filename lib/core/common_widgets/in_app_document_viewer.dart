@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -310,12 +310,31 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     setState(() => _isDownloading = true);
 
     try {
-      final dir = await getApplicationDocumentsDirectory();
+      Directory? targetDir;
+      if (Platform.isAndroid) {
+        if (_isImage) {
+          final picturesDir = Directory('/storage/emulated/0/Pictures');
+          if (picturesDir.existsSync()) {
+            targetDir = picturesDir;
+          }
+        }
+        if (targetDir == null) {
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (downloadDir.existsSync()) {
+            targetDir = downloadDir;
+          }
+        }
+        try {
+          targetDir ??= await getDownloadsDirectory();
+        } catch (_) {}
+      }
+      targetDir ??= await getApplicationDocumentsDirectory();
+
       String cleanTitle = widget.title.replaceAll(RegExp(r'[^\w\.\-]'), '_');
       if (!cleanTitle.contains('.')) {
         cleanTitle += _isPdf ? '.pdf' : (_isImage ? '.jpg' : '.pdf');
       }
-      final savePath = '${dir.path}/$cleanTitle';
+      final savePath = '${targetDir.path}/$cleanTitle';
 
       if (_documentBytes != null && _documentBytes!.isNotEmpty) {
         await File(savePath).writeAsBytes(_documentBytes!);
@@ -345,14 +364,25 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
         await File(widget.filePath!).copy(savePath);
       }
 
+      if (_isImage && Platform.isAndroid) {
+        try {
+          const channel = MethodChannel('com.paccore.yiralife/native_intent');
+          await channel.invokeMethod('scanMedia', {'path': savePath});
+        } catch (_) {}
+      }
+
       if (mounted) {
+        final successMsg = _isImage && Platform.isAndroid
+            ? 'Saved "$cleanTitle" to Gallery!'
+            : 'Downloaded "$cleanTitle" successfully!';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text('Downloaded "$cleanTitle" successfully!')),
+                Expanded(child: Text(successMsg)),
               ],
             ),
             backgroundColor: const Color(0xFF10B981),
@@ -612,7 +642,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           child: Image.memory(
             _documentBytes!,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _buildDocumentFallback(isDark),
+            errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
           ),
         ),
       );
@@ -627,7 +657,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           child: Image.file(
             File(widget.filePath!),
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _buildDocumentFallback(isDark),
+            errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
           ),
         ),
       );

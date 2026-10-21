@@ -15,6 +15,14 @@ class MainActivity: FlutterFragmentActivity() {
             if (call.method == "clearLaunchIntent") {
                 intent = Intent(Intent.ACTION_MAIN)
                 result.success(true)
+            } else if (call.method == "scanMedia") {
+                val path = call.argument<String>("path")
+                if (path != null) {
+                    android.media.MediaScannerConnection.scanFile(this, arrayOf(path), null) { _, _ -> }
+                    result.success(true)
+                } else {
+                    result.error("INVALID_PATH", "Path is null", null)
+                }
             } else {
                 result.notImplemented()
             }

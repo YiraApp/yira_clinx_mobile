@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
@@ -543,55 +544,107 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       child: fileName != null
           ? Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 18),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    fileName,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // View Document Button
+                // Small Image Thumbnail shown directly by default
                 InkWell(
                   onTap: _viewSelectedDocument,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
-                      borderRadius: BorderRadius.circular(6),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                        width: 1.1,
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Icon(Icons.visibility_outlined, size: 13, color: Colors.white),
-                        SizedBox(width: 4),
-                        Text(
-                          'View',
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                        if (fileName.toLowerCase().endsWith('.pdf'))
+                          const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
+                              Text(
+                                'PDF',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (_selectedFile != null && _selectedFile!.existsSync())
+                          Image.file(
+                            _selectedFile!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, stack) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                          )
+                        else if (_existingDocumentUrl != null && _existingDocumentUrl!.isNotEmpty)
+                          CachedNetworkImage(
+                            imageUrl: _existingDocumentUrl!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorWidget: (ctx, url, err) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                          )
+                        else
+                          const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 22),
+
+                        // Subtle zoom badge
+                        Positioned(
+                          bottom: 1,
+                          right: 1,
+                          child: Container(
+                            padding: const EdgeInsets.all(1.5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.zoom_in_rounded, size: 8, color: Colors.white),
                           ),
                         ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        fileName,
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      InkWell(
+                        onTap: _pickFile,
+                        child: const Text(
+                          'Change file',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -605,7 +658,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                   },
                   borderRadius: BorderRadius.circular(6),
                   child: Container(
-                    padding: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
