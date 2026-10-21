@@ -75,9 +75,11 @@ class EnvironmentService {
           healthCampBaseUrl: _localHostUrl,
         );
       case Environment.dev:
-        return const EnvironmentConfig(
-          accountBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
-          healthCampBaseUrl: "https://clinicx-api-dev.azurewebsites.net",
+        const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
+        final devUrl = _customBaseUrl ?? (envUrl.isNotEmpty ? envUrl.trim() : "https://clinicx-api-dev.azurewebsites.net");
+        return EnvironmentConfig(
+          accountBaseUrl: devUrl,
+          healthCampBaseUrl: devUrl,
         );
       case Environment.qa:
         return const EnvironmentConfig(
