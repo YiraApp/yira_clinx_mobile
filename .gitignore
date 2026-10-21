@@ -12,6 +12,11 @@
 migrate_working_dir/
 .env
 
+# Environment files
+.env
+.env.*
+!.env.example
+
 # IntelliJ related
 *.iml
 *.ipr

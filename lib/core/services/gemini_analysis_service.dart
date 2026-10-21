@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:yiraclinics/core/api/base_api_configuration.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_analysis_result.dart';
 
 /// Service that sends prescription images/PDFs to Google's Gemini AI
@@ -11,8 +12,8 @@ import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_
 class GeminiAnalysisService {
   GeminiAnalysisService._();
 
-  static const String _apiKey = 'AIzaSyCiaq6HIzpKZEN0Qg4Wm3HxcQ0lWz2nxzM';
-  static const String _model = 'gemini-2.5-flash';
+  static String get _apiKey => EnvironmentService.geminiApiKey;
+  static String get _model => EnvironmentService.geminiModel;
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
@@ -62,6 +63,12 @@ IMPORTANT RULES:
   ///
   /// Throws [GeminiAnalysisException] on any failure.
   static Future<PrescriptionAnalysisResult> analyze(File file) async {
+    if (_apiKey.trim().isEmpty) {
+      throw const GeminiAnalysisException(
+        'Gemini API key is not configured in the environment. Please configure GEMINI_API_KEY.',
+        code: GeminiErrorCode.apiError,
+      );
+    }
     try {
       final String mimeType = _getMimeType(file.path);
       final Uint8List bytes;
