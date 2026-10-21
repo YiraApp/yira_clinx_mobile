@@ -12,8 +12,6 @@ class EnvironmentService {
   static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
   static String? _customBaseUrl;
-  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
 
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
 
