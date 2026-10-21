@@ -225,6 +225,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
       fileType: result.fileName.toLowerCase().endsWith('.pdf') ? 'PDF' : 'JPG',
       isPatientUploaded: true,
       aiStatus: analysis?.status.name,
+      aiJobStatus: result.analysisPending ? 'processing' : null,
     );
     if (!blocContext.mounted) return;
     blocContext.read<UploadedBloc>().add(AddUploadedRecord(record));
@@ -233,6 +234,8 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     if (analysis != null) {
       _analyses[record.id] = analysis;
       _openInsights(blocContext, record);
+    } else if (result.analysisPending) {
+      _showAnalysisPendingDialog(result.pendingMessage);
     } else if (result.analysisError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -268,7 +271,31 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     return (doc.fileUrl ?? '').trim().isNotEmpty && int.tryParse(doc.id) != null;
   }
 
+  /// The report is being read in the background; a push arrives when it's done.
+  void _showAnalysisPendingDialog(String? message) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.hourglass_top_rounded, color: DietUi.blue, size: 32),
+        title: const Text('Report uploaded'),
+        content: Text(message ?? "We're analysing your report. This usually takes 2-3 minutes. We'll notify you when it's ready."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('OK')),
+        ],
+      ),
+    );
+  }
+
   void _openInsights(BuildContext blocContext, UploadedRecord doc) {
+    if (doc.isAiAnalysing && _analyses[doc.id] == null && (doc.aiAnalysisJson ?? '').isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Still analysing this report. We'll notify you when it's ready."),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => ReportInsightsScreen(
         documentId: doc.id,
@@ -936,7 +963,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                 const Icon(Icons.auto_awesome_rounded, size: 18, color: DietUi.violet),
                                 const SizedBox(width: 10),
                                 Text(
-                                  doc.aiStatus == null ? 'Analyse with AI' : 'AI insights',
+                                  doc.aiStatus != null ? 'AI insights' : doc.isAiAnalysing ? 'Analysing…' : 'Analyse with AI',
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: 13,
@@ -1086,7 +1113,10 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
   /// The AI verdict for a report, or an invitation to analyse it.
   Widget _buildAiRow(BuildContext blocContext, UploadedRecord doc, bool isDark) {
     final status = doc.aiStatus == null ? null : reportStatusFrom(doc.aiStatus);
-    final ({Color color, IconData icon, String label}) style = switch (status) {
+    final analysing = status == null && doc.isAiAnalysing;
+    final ({Color color, IconData icon, String label}) style = analysing
+        ? (color: DietUi.blue, icon: Icons.hourglass_top_rounded, label: 'Analysing your report…')
+        : switch (status) {
       null => (color: DietUi.violet, icon: Icons.auto_awesome_rounded, label: 'Analyse with Yira AI'),
       ReportStatus.normal => (color: DietUi.green, icon: Icons.verified_rounded, label: 'All clear'),
       ReportStatus.attention => (color: DietUi.amber, icon: Icons.error_outline_rounded, label: 'Needs attention'),
@@ -1120,7 +1150,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                 style: DietUi.text(12, FontWeight.w700, style.color),
               ),
             ),
-            Text(status == null ? 'Get insights' : 'View insights', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
+            Text(analysing ? "We'll notify you" : status == null ? 'Get insights' : 'View insights', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
             const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
           ],
         ),

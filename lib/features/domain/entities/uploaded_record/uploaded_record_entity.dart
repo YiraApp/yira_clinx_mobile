@@ -23,6 +23,12 @@ class UploadedRecord {
   /// The stored AI analysis (JSON text), so insights open without waiting.
   final String? aiAnalysisJson;
 
+  /// Background analysis state: processing, fallback, done or failed; null
+  /// when the report was read during upload or never analysed.
+  final String? aiJobStatus;
+
+  bool get isAiAnalysing => aiJobStatus == 'processing' || aiJobStatus == 'fallback';
+
   const UploadedRecord({
     required this.id,
     required this.fileName,
@@ -42,6 +48,7 @@ class UploadedRecord {
     this.isDeletable = true,
     this.aiStatus,
     this.aiAnalysisJson,
+    this.aiJobStatus,
   });
 
   UploadedRecord copyWith({
@@ -63,6 +70,7 @@ class UploadedRecord {
     bool? isDeletable,
     String? aiStatus,
     String? aiAnalysisJson,
+    String? aiJobStatus,
   }) {
     return UploadedRecord(
       id: id ?? this.id,
@@ -83,6 +91,7 @@ class UploadedRecord {
       isDeletable: isDeletable ?? this.isDeletable,
       aiStatus: aiStatus ?? this.aiStatus,
       aiAnalysisJson: aiAnalysisJson ?? this.aiAnalysisJson,
+      aiJobStatus: aiJobStatus ?? this.aiJobStatus,
     );
   }
 }
