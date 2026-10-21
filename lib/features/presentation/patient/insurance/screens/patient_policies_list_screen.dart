@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/patient_insurance_service.dart';
 import 'package:yiraclinics/features/data/models/insurance/patient_insurance_policy_model.dart';
@@ -65,6 +67,41 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
         );
       }
     }
+  }
+
+  void _openDocument(PatientInsurancePolicyModel policy) {
+    final filePath = policy.localFilePath;
+    final fileUrl = policy.documentUrl;
+
+    if ((filePath == null || filePath.trim().isEmpty) &&
+        (fileUrl == null || fileUrl.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No document file attached to this policy.')),
+      );
+      return;
+    }
+
+    final fileName = (filePath != null && filePath.isNotEmpty)
+        ? filePath.split(RegExp(r'[/\\]')).last
+        : (fileUrl != null && fileUrl.isNotEmpty)
+            ? fileUrl.split('/').last
+            : 'Policy Document';
+
+    final isPdf = fileName.toLowerCase().endsWith('.pdf');
+    final fileType = isPdf ? 'PDF' : 'IMAGE';
+
+    final hasValidLocalFile = filePath != null &&
+        filePath.isNotEmpty &&
+        File(filePath).existsSync();
+
+    InAppDocumentViewer.show(
+      context,
+      title: policy.policyName.isNotEmpty ? policy.policyName : 'Policy Document',
+      category: 'Insurance Policy',
+      filePath: hasValidLocalFile ? filePath : null,
+      fileUrl: hasValidLocalFile ? null : fileUrl,
+      fileType: fileType,
+    );
   }
 
   @override
@@ -304,6 +341,17 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   ),
                 ),
 
+                // View Document Button (if document attached)
+                if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
+                    (policy.documentUrl != null && policy.documentUrl!.isNotEmpty))
+                  IconButton(
+                    tooltip: 'View Document',
+                    icon: const Icon(Icons.visibility_outlined, size: 20, color: Color(0xFF2563EB)),
+                    onPressed: () => _openDocument(policy),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+
                 // Edit Button
                 IconButton(
                   tooltip: 'Edit Policy',
@@ -349,7 +397,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
             Padding(
               padding: const EdgeInsets.all(14),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
@@ -377,6 +425,37 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
+                        (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => _openDocument(policy),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.visibility_outlined, size: 13, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'View',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

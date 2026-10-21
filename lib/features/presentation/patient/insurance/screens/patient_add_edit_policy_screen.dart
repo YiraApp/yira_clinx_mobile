@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/patient_insurance_service.dart';
@@ -155,6 +156,30 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
     }
   }
 
+  void _viewSelectedDocument() {
+    final path = _selectedFile?.path;
+    final url = _existingDocumentUrl;
+    if (path == null && url == null) return;
+
+    final fileName = path != null
+        ? path.split(RegExp(r'[/\\]')).last
+        : (url != null ? url.split('/').last : 'Policy Document');
+    final isPdf = fileName.toLowerCase().endsWith('.pdf');
+
+    final hasValidLocalFile = path != null && path.isNotEmpty && File(path).existsSync();
+
+    InAppDocumentViewer.show(
+      context,
+      title: _nameController.text.trim().isNotEmpty
+          ? _nameController.text.trim()
+          : 'Policy Document',
+      category: 'Insurance Policy',
+      filePath: hasValidLocalFile ? path : null,
+      fileUrl: hasValidLocalFile ? null : url,
+      fileType: isPdf ? 'PDF' : 'IMAGE',
+    );
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -298,9 +323,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                 borderColor: inputBorder,
                 validator: (val) => val == null || val.trim().isEmpty ? 'Insurer name is required' : null,
               ),
-              const SizedBox(height: 6),
-              _buildQuickProviderSuggestions(),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
               // 4. Policy Number
               _buildFieldLabel('Policy Number', labelColor),
@@ -455,40 +478,6 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
     );
   }
 
-  Widget _buildQuickProviderSuggestions() {
-    final suggestions = ['ICICI Lombard', 'Star Health', 'HDFC ERGO', 'Care Health', 'Niva Bupa'];
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
-      children: suggestions.map((s) {
-        return InkWell(
-          onTap: () {
-            setState(() {
-              _issuedByController.text = s;
-            });
-          },
-          borderRadius: BorderRadius.circular(6),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              s,
-              style: const TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2563EB),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildDatePickerBox({
     required String text,
     required bool isSelected,
@@ -540,87 +529,158 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             ? _existingDocumentUrl!.split('/').last
             : null);
 
-    return InkWell(
-      onTap: _pickFile,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? const Color(0xFF475569) : const Color(0xFF94A3B8),
-            width: 1.2,
-            style: BorderStyle.solid,
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+          width: 1.1,
         ),
-        child: fileName != null
-            ? Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 20),
+      ),
+      child: fileName != null
+          ? Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      fileName,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18, color: Colors.red),
-                    onPressed: () {
-                      setState(() {
-                        _selectedFile = null;
-                        _existingDocumentUrl = null;
-                      });
-                    },
-                  ),
-                ],
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 28,
-                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Choose File',
+                  child: const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    fileName,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontSize: 13.5,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'PDF, JPG, PNG up to 10MB',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 6),
+                // View Document Button
+                InkWell(
+                  onTap: _viewSelectedDocument,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.visibility_outlined, size: 13, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'View',
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(width: 6),
+                // Remove / Clear File Button
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedFile = null;
+                      _existingDocumentUrl = null;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.close_rounded, size: 16, color: Colors.red),
+                  ),
+                ),
+              ],
+            )
+          : InkWell(
+              onTap: _pickFile,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.cloud_upload_outlined,
+                        size: 20,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Choose File',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          Text(
+                            'PDF, JPG, PNG up to 10MB',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 10.5,
+                              color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+                      ),
+                      child: const Text(
+                        'Browse',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2563EB),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-      ),
+            ),
     );
   }
 }
