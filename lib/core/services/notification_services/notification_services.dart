@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
@@ -71,6 +72,9 @@ class NotificationService {
       await _localNotifications.initialize(
         settings: initSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (sl.isRegistered<SharedPrefsService>()) {
+            sl<SharedPrefsService>().remove(_kLastConsumedLaunchPayloadKey);
+          }
           if (response.payload != null) onPayloadReceived(response.payload!);
         },
       );
@@ -127,8 +131,9 @@ class NotificationService {
           await file.delete();
         } catch (_) {}
       }
+      final safeUrl = url.trim().replaceAll(' ', '%20');
       final response = await Dio().get(
-        url,
+        safeUrl,
         options: Options(responseType: ResponseType.bytes),
       );
       await file.writeAsBytes(response.data);
@@ -151,6 +156,9 @@ class NotificationService {
         return;
       }
       NotificationBadgeService.instance.increment();
+      if (sl.isRegistered<SharedPrefsService>()) {
+        sl<SharedPrefsService>().remove(_kLastConsumedLaunchPayloadKey);
+      }
       final RemoteNotification? notification = message.notification;
       final String title = notification?.title ?? message.data['title'] ?? projectTitle;
       final String body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
@@ -266,22 +274,155 @@ class NotificationService {
     }
   }
 
+  static const MethodChannel _intentChannel = MethodChannel('com.paccore.yiralife/native_intent');
+  static const String _kLastConsumedLaunchPayloadKey = 'notification_last_consumed_launch_payload';
+
+  static Future<void> clearNativeLaunchIntent() async {
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        await _intentChannel.invokeMethod('clearLaunchIntent');
+        debugPrint("[NotificationService] Native launch intent cleared.");
+      }
+    } catch (e) {
+      debugPrint("[NotificationService] clearNativeLaunchIntent error: $e");
+    }
+  }
+
   void _listenToBackgroundInteractions(Function(String) onPayloadReceived) {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint("[NotificationService] Notification opened from background: ${message.data}");
+      if (sl.isRegistered<SharedPrefsService>()) {
+        sl<SharedPrefsService>().remove(_kLastConsumedLaunchPayloadKey);
+      }
       if (message.data.isNotEmpty) {
         onPayloadReceived(jsonEncode(message.data));
       }
     });
   }
 
-  void _checkSuspendedOrTerminatedStateBoot(Function(String) onPayloadReceived) async {
+  static bool _hasHandledInitialLaunch = false;
+
+  bool _isExternalWebPayload(String payloadString) {
     try {
+      final trimmed = payloadString.trim();
+      if (trimmed.isEmpty) return false;
+
+      if (trimmed.startsWith('http://') ||
+          trimmed.startsWith('https://') ||
+          trimmed.startsWith('www.')) {
+        return true;
+      }
+
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is Map<String, dynamic>) {
+          final redirectionType = (decoded['redirectionType'] ??
+                  decoded['redirection_type'] ??
+                  decoded['targetType'] ??
+                  decoded['action'] ??
+                  decoded['type'] ??
+                  '')
+              .toString()
+              .trim()
+              .toLowerCase();
+
+          final bool isBrowserType = redirectionType == 'browser' ||
+              redirectionType == 'web' ||
+              redirectionType == 'external' ||
+              redirectionType == 'url' ||
+              redirectionType == 'open_url' ||
+              redirectionType == 'website' ||
+              redirectionType == 'external_link' ||
+              redirectionType.contains('external website') ||
+              redirectionType.contains('external web link');
+
+          final url = (decoded['url'] ??
+                  decoded['redirectionUrl'] ??
+                  decoded['redirection_url'] ??
+                  decoded['externalUrl'] ??
+                  decoded['external_url'] ??
+                  decoded['webUrl'] ??
+                  decoded['web_url'] ??
+                  decoded['link'] ??
+                  decoded['website'] ??
+                  decoded['targetUrl'] ??
+                  '')
+              .toString()
+              .trim();
+
+          if (isBrowserType ||
+              url.startsWith('http://') ||
+              url.startsWith('https://') ||
+              url.startsWith('www.')) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("[NotificationService] _isExternalWebPayload error: $e");
+    }
+    return false;
+  }
+
+  void _checkSuspendedOrTerminatedStateBoot(Function(String) onPayloadReceived) async {
+    if (_hasHandledInitialLaunch) {
+      debugPrint("[NotificationService] Initial launch notification already consumed in-memory. Skipping re-trigger on hot restart / refresh.");
+      return;
+    }
+
+    try {
+      final prefs = sl.isRegistered<SharedPrefsService>() ? sl<SharedPrefsService>() : null;
+      final String? lastConsumedPayload = prefs?.getValue<String>(_kLastConsumedLaunchPayloadKey);
+
       RemoteMessage? initialMessage = await _fcm.getInitialMessage();
       if (initialMessage != null && initialMessage.data.isNotEmpty) {
+        final payloadStr = jsonEncode(initialMessage.data);
+        if (lastConsumedPayload == payloadStr) {
+          debugPrint("[NotificationService] Terminated push message already consumed previously ($payloadStr). Skipping re-trigger on hot restart / refresh.");
+          clearNativeLaunchIntent();
+          return;
+        }
+
+        _hasHandledInitialLaunch = true;
+        await prefs?.setValue<String>(_kLastConsumedLaunchPayloadKey, payloadStr);
+        clearNativeLaunchIntent();
+
+        if (_isExternalWebPayload(payloadStr)) {
+          debugPrint("[NotificationService] External web URL detected in terminated push launch. Suppressing automatic external browser launch so user stays on Dashboard.");
+          return;
+        }
+
         debugPrint("[NotificationService] App launched from terminated push: ${initialMessage.data}");
         Future.delayed(const Duration(milliseconds: 600), () {
-          onPayloadReceived(jsonEncode(initialMessage.data));
+          onPayloadReceived(payloadStr);
+        });
+        return;
+      }
+
+      final launchDetails = await _localNotifications.getNotificationAppLaunchDetails();
+      if (launchDetails != null &&
+          launchDetails.didNotificationLaunchApp &&
+          launchDetails.notificationResponse?.payload != null &&
+          launchDetails.notificationResponse!.payload!.isNotEmpty) {
+        final payload = launchDetails.notificationResponse!.payload!;
+        if (lastConsumedPayload == payload) {
+          debugPrint("[NotificationService] Stale launch notification payload already consumed previously ($payload). Skipping re-trigger on hot restart / refresh.");
+          clearNativeLaunchIntent();
+          return;
+        }
+
+        _hasHandledInitialLaunch = true;
+        await prefs?.setValue<String>(_kLastConsumedLaunchPayloadKey, payload);
+        clearNativeLaunchIntent();
+
+        if (_isExternalWebPayload(payload)) {
+          debugPrint("[NotificationService] External web URL detected in launch details. Suppressing automatic external browser launch so user stays on Dashboard.");
+          return;
+        }
+
+        debugPrint("[NotificationService] App launched from local notification tap: $payload");
+        Future.delayed(const Duration(milliseconds: 800), () {
+          onPayloadReceived(payload);
         });
       }
     } catch (e) {

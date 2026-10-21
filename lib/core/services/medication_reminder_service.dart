@@ -28,12 +28,19 @@ class MedicationReminderService {
   MedicationReminderService._privateConstructor();
   static final MedicationReminderService instance = MedicationReminderService._privateConstructor();
 
-  static const String _storageKey = 'saved_medication_reminders_v1';
+  static String get _storageKey {
+    final userId = GlobalSession.instance.userNotifier.value?.data?.id?.trim();
+    if (userId != null && userId.isNotEmpty) {
+      return 'saved_medication_reminders_v1_$userId';
+    }
+    return 'saved_medication_reminders_v1_guest';
+  }
+
   final ValueNotifier<List<MedicationReminder>> remindersNotifier = ValueNotifier<List<MedicationReminder>>([]);
   bool _isInitialized = false;
 
-  Future<void> init() async {
-    if (_isInitialized) return;
+  Future<void> init({bool force = false}) async {
+    if (_isInitialized && !force) return;
     await loadReminders();
     _isInitialized = true;
 
@@ -41,10 +48,23 @@ class MedicationReminderService {
     fetchRemoteReminders();
   }
 
+  /// Clears in-memory reminders and de-initializes service on logout
+  Future<void> clear() async {
+    try {
+      remindersNotifier.value = [];
+      _isInitialized = false;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('saved_medication_reminders_v1');
+    } catch (e) {
+      debugPrint("[MedicationReminderService] Error clearing reminders: $e");
+    }
+  }
+
   Future<List<MedicationReminder>> loadReminders() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_storageKey);
+      final key = _storageKey;
+      final raw = prefs.getString(key);
       if (raw != null && raw.isNotEmpty) {
         final List list = json.decode(raw);
         final loaded = list.map((item) => MedicationReminder.fromMap(Map<String, dynamic>.from(item))).toList();
@@ -93,11 +113,9 @@ class MedicationReminderService {
             }
           }
 
-          if (remoteList.isNotEmpty) {
-            remindersNotifier.value = remoteList;
-            await _persistList(remoteList);
-            debugPrint("[MedicationReminderService] Successfully synced ${remoteList.length} reminders from backend");
-          }
+          remindersNotifier.value = remoteList;
+          await _persistList(remoteList);
+          debugPrint("[MedicationReminderService] Successfully synced ${remoteList.length} reminders from backend");
         }
       }
     } catch (e) {

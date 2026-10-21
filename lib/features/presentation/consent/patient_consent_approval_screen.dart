@@ -7,7 +7,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/consent/patient_access_consent_entity.dart';
-import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
+import 'package:yiraclinics/core/tour/patient_tour_keys.dart';
 import 'bloc/patient_access_consent_bloc.dart';
 import 'bloc/patient_access_consent_event.dart';
 import 'bloc/patient_access_consent_state.dart';
@@ -35,10 +35,12 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
   // Button-level loading indicator tracker
   int? _processingConsentId;
   String? _processingAction;
+  final GlobalKey _consentsListKey = GlobalKey(debugLabel: 'patient_tour_consents_list');
 
   @override
   void initState() {
     super.initState();
+    PatientTourKeys.consentsListKey = _consentsListKey;
     final targetPatientId = widget.patientId ??
         GlobalSession.instance.userNotifier.value?.data?.id ??
         '';
@@ -440,7 +442,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
 
                   // Consent Cards List
                   Expanded(
-                    key: PatientTourController().consentsListKey,
+                    key: _consentsListKey,
                     child: RefreshIndicator(
                       onRefresh: () async {
                         _consentBloc.add(LoadPatientConsentsEvent(patientId: currentPatientId));

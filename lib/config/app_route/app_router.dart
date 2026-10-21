@@ -536,6 +536,11 @@ class AppRouter {
       case AppRoutes.patientMyDoctors:
         return _guardedRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
       case AppRoutes.patientBookAppointment:
+      case 'patientBookAppointment':
+      case '/PatientBookAppointment':
+      case 'PatientBookAppointment':
+      case '/bookAppointment':
+      case 'bookAppointment':
       case AppRoutes.patientSelectHospitalScreen:
         final initialHospitals = settings.arguments is List<Map<String, dynamic>>
             ? settings.arguments as List<Map<String, dynamic>>
@@ -600,9 +605,42 @@ class AppRouter {
         }
         return _guardedRoute(settings: settings, builder: (_) => const PatientFitnessDashboardScreen());
       default:
+        final lower = (settings.name ?? '').toLowerCase().replaceAll('/', '').replaceAll('_', '').trim();
+        if (lower == 'patientbookappointment' || lower == 'bookappointment' || lower == 'patientselecthospitalscreen') {
+          final initialHospitals = settings.arguments is List<Map<String, dynamic>>
+              ? settings.arguments as List<Map<String, dynamic>>
+              : null;
+          return _guardedRoute(settings: settings, builder: (_) => PatientSelectHospitalScreen(initialHospitals: initialHospitals));
+        }
+        if (lower == 'patientdashboard' || lower == 'dashboard') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 0));
+        }
+        if (lower == 'patientappointments' || lower == 'appointments') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 1));
+        }
+        if (lower == 'patientdocuments' || lower == 'documents' || lower == 'medicalrecords') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
+        }
+        if (lower == 'patientprofile' || lower == 'profile') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
+        }
+        if (lower == 'patientvitalstracking' || lower == 'vitalstracking' || lower == 'vitals') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientVitalsTrackingScreen());
+        }
+        if (lower == 'patientmydoctors' || lower == 'mydoctors') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMyDoctorsScreen());
+        }
+        if (lower == 'patientmyfamily' || lower == 'myfamily') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
+        }
+        if (lower == 'patientdoctorsuggestions' || lower == 'doctorsuggestions') {
+          return _guardedRoute(settings: settings, builder: (_) => const PatientDoctorSuggestionsScreen());
+        }
+
+        debugPrint("[AppRouter] No route defined for: ${settings.name}");
         return MaterialPageRoute(settings: settings, 
           builder: (_) =>
-              const Scaffold(body: Center(child: Text('No route defined'))),
+              Scaffold(body: Center(child: Text('No route defined for: ${settings.name}'))),
         );
     }
   }

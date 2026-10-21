@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,10 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/navigation_services/navigation_services.dart';
 import 'package:yiraclinics/core/services/favorite_patients_service.dart';
+import 'package:yiraclinics/core/services/fitness/fitness_sync_service.dart';
+import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
+import 'package:yiraclinics/core/services/medication_reminder_service.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_badge_service.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
@@ -34,16 +39,34 @@ class AuthLogoutService {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String? refreshToken = currentUser?.data?.refreshToken;
       final String? accessToken = currentUser?.data?.accessToken;
-      final String? userId = currentUser?.data?.id;
+      String? userId = currentUser?.data?.id;
+      if (userId == null || userId.isEmpty) {
+        userId = GlobalSession.instance.rootPrimaryUserId;
+      }
 
       // 1. Retrieve current FCM token and device ID for targeted server deactivation
       String currentFcmToken = '';
       try {
         currentFcmToken = await FcmTokenHelper.getProductionFcmToken();
+        if (currentFcmToken.isEmpty) {
+          currentFcmToken = (await FirebaseMessaging.instance.getToken()) ?? '';
+        }
       } catch (_) {}
 
       final platFormData = GlobalSession.instance.platformNotifier.value;
       String deviceId = platFormData?.deviceId ?? '';
+      if (deviceId.isEmpty || deviceId == 'unknown_id') {
+        try {
+          final deviceInfoPlugin = DeviceInfoPlugin();
+          if (Platform.isAndroid) {
+            final androidInfo = await deviceInfoPlugin.androidInfo;
+            deviceId = androidInfo.id;
+          } else if (Platform.isIOS) {
+            final iosInfo = await deviceInfoPlugin.iosInfo;
+            deviceId = iosInfo.identifierForVendor ?? '';
+          }
+        } catch (_) {}
+      }
       if (deviceId.isEmpty || deviceId == 'unknown_id') {
         deviceId = (userId != null && userId.isNotEmpty) ? 'dev_$userId' : '';
       }
@@ -71,8 +94,11 @@ class AuthLogoutService {
             'fcmToken': currentFcmToken,
             'deviceId': deviceId,
             'one': true,
+            'logoutAll': true,
           },
           options: Options(
+            sendTimeout: const Duration(seconds: 8),
+            receiveTimeout: const Duration(seconds: 8),
             extra: {
               'showSuccessSnack': false,
               'suppressErrorSnack': true,
@@ -99,10 +125,14 @@ class AuthLogoutService {
         await NotificationService.instance.cancelAllNotifications();
       } catch (_) {}
 
-      // 5. Clear in-memory session states
+      // 5. Clear in-memory session and user-specific singletons
       await GlobalSession.instance.clear();
       GlobalMenuSession.instance.clear();
       FavoritePatientsService().favoriteIdsNotifier.value = {};
+      LikedHospitalsService.instance.clear();
+      FitnessSyncService.instance.reset();
+      NotificationBadgeService.instance.clear();
+      await MedicationReminderService.instance.clear();
 
       // 6. Clear local storage
       try {
@@ -124,6 +154,14 @@ class AuthLogoutService {
     } catch (e) {
       debugPrint("[AuthLogoutService] Exception during logout sequence: $e");
       await GlobalSession.instance.clear();
+      GlobalMenuSession.instance.clear();
+      FavoritePatientsService().favoriteIdsNotifier.value = {};
+      LikedHospitalsService.instance.clear();
+      FitnessSyncService.instance.reset();
+      NotificationBadgeService.instance.clear();
+      try {
+        await MedicationReminderService.instance.clear();
+      } catch (_) {}
       try {
         await sl<SecureStorageService>().clearAllSecureData();
         await sl<SharedPrefsService>().clearAll();

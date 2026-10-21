@@ -55,6 +55,14 @@ class FitnessSyncService {
 
   bool _isInitialized = false;
 
+  /// Completely resets fitness connection states on user logout
+  void reset() {
+    _isInitialized = false;
+    isConnectedNotifier.value = false;
+    isSyncingNotifier.value = false;
+    todayFitnessNotifier.value = null;
+  }
+
   /// Reactively handles profile switches between primary and child/dependent profiles
   void handleProfileSwitched() {
     _isInitialized = false;

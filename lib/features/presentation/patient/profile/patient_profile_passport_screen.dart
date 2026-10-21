@@ -29,6 +29,7 @@ import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
+import '../../../../core/tour/patient_tour_keys.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -47,6 +48,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   String? _cachedEmergencyName;
   String? _cachedEmergencyRelation;
   String? _cachedEmergencyPhone;
+  final GlobalKey _passportProfileCardKey = GlobalKey(debugLabel: 'patient_tour_passport_card');
 
   static String _cleanValue(String? val, [String fallback = '-']) {
     if (val == null) return fallback;
@@ -62,6 +64,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   @override
   void initState() {
     super.initState();
+    PatientTourKeys.passportProfileCardKey = _passportProfileCardKey;
     _loadProfilePhoto();
     _loadCachedEmergencyContact();
   }
@@ -2556,7 +2559,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     String? bloodGroup,
   }) {
     return Container(
-      key: PatientTourController().passportProfileCardKey,
+      key: _passportProfileCardKey,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),

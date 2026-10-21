@@ -13,6 +13,7 @@ import 'package:yiraclinics/core/utils/utils.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/doc_appointment_card.dart';
 import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
+import 'package:yiraclinics/core/tour/patient_tour_keys.dart';
 import 'package:yiraclinics/core/tour/patient_tour_mock_data.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'patient_book_appointment_sheet.dart';
@@ -53,9 +54,14 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     "Cancelled",
   ];
 
+  final GlobalKey _apptsFilterKey = GlobalKey(debugLabel: 'patient_tour_appts_filter');
+  final GlobalKey _apptsListKey = GlobalKey(debugLabel: 'patient_tour_appts_list');
+
   @override
   void initState() {
     super.initState();
+    PatientTourKeys.apptsFilterKey = _apptsFilterKey;
+    PatientTourKeys.apptsListKey = _apptsListKey;
     _loadAppointments();
   }
 
@@ -866,7 +872,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
                         // ─── 3. SEARCH & STATUS FILTER ───────────────────────
                         Container(
-                          key: PatientTourController().apptsFilterKey,
+                          key: _apptsFilterKey,
                           padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding),
                           child: Row(
                             children: [
@@ -959,7 +965,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: Container(
-                        key: PatientTourController().apptsListKey,
+                        key: _apptsListKey,
                         child: _buildEmptyState(isDark),
                       ),
                     )
@@ -1086,7 +1092,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
                           if (index == 0) {
                             return KeyedSubtree(
-                              key: PatientTourController().apptsListKey,
+                              key: _apptsListKey,
                               child: card,
                             );
                           }

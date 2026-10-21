@@ -18,12 +18,18 @@ import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/utils/utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
 
 class AppGateway extends StatelessWidget {
   const AppGateway({super.key});
+
+  static final DateTime _appGatewayBootTime = DateTime.now();
+  static String? _lastHandledNotificationPayload;
+  static DateTime? _lastHandledNotificationTime;
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +76,167 @@ class AppGateway extends StatelessWidget {
                     FocusManager.instance.primaryFocus?.unfocus();
                   },
                   child: NotificationListenerWrapper(
-                    onNotificationPayload: (payloadString) {
+                    onNotificationPayload: (payloadString) async {
                       try {
+                        debugPrint("[AppGateway] Notification payload received: $payloadString");
+                        final trimmed = payloadString.trim();
+                        if (trimmed.isEmpty) return;
+
+                        final prefs = sl.isRegistered<SharedPrefsService>() ? sl<SharedPrefsService>() : null;
+                        final lastTimeMs = prefs?.getValue<int>('last_handled_notification_timestamp') ?? 0;
+                        final lastPayload = prefs?.getValue<String>('last_handled_notification_payload') ?? '';
+                        final nowMs = DateTime.now().millisecondsSinceEpoch;
+
+                        if ((_lastHandledNotificationPayload == trimmed &&
+                             _lastHandledNotificationTime != null &&
+                             DateTime.now().difference(_lastHandledNotificationTime!) < const Duration(seconds: 30)) ||
+                            (lastPayload == trimmed && (nowMs - lastTimeMs) < 30000)) {
+                          debugPrint("[AppGateway] Skipping duplicate notification payload within 30s window.");
+                          return;
+                        }
+                        _lastHandledNotificationPayload = trimmed;
+                        _lastHandledNotificationTime = DateTime.now();
+                        await prefs?.setValue<int>('last_handled_notification_timestamp', nowMs);
+                        await prefs?.setValue<String>('last_handled_notification_payload', trimmed);
+
+                        Map<String, dynamic> payload = {};
+                        String? directUrl;
+
+                        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                          try {
+                            final decoded = jsonDecode(trimmed);
+                            if (decoded is Map<String, dynamic>) {
+                              payload = decoded;
+                            }
+                          } catch (e) {
+                            debugPrint("[AppGateway] Payload JSON decode error: $e");
+                          }
+                        } else if (trimmed.startsWith('http://') ||
+                                   trimmed.startsWith('https://') ||
+                                   trimmed.startsWith('www.')) {
+                          directUrl = trimmed;
+                        }
+
+                        // Check for External Website URL configuration
+                        String? externalUrl = directUrl;
+                        final redirectionType = (payload['redirectionType'] ??
+                                payload['redirection_type'] ??
+                                payload['targetType'] ??
+                                payload['action'] ??
+                                payload['type'] ??
+                                '')
+                            .toString()
+                            .trim()
+                            .toLowerCase();
+
+                        final bool isBrowserType = redirectionType == 'browser' ||
+                            redirectionType == 'web' ||
+                            redirectionType == 'external' ||
+                            redirectionType == 'url' ||
+                            redirectionType == 'open_url' ||
+                            redirectionType == 'website' ||
+                            redirectionType == 'external_link' ||
+                            redirectionType.contains('external website') ||
+                            redirectionType.contains('external web link');
+
+                        if (externalUrl == null || externalUrl.isEmpty) {
+                          final possibleUrlKeys = [
+                            'url',
+                            'redirectionUrl',
+                            'redirection_url',
+                            'externalUrl',
+                            'external_url',
+                            'webUrl',
+                            'web_url',
+                            'link',
+                            'website',
+                            'targetUrl',
+                          ];
+
+                          for (final key in possibleUrlKeys) {
+                            final val = payload[key]?.toString().trim();
+                            if (val != null && val.isNotEmpty) {
+                              externalUrl = val;
+                              break;
+                            }
+                          }
+
+                          final routeCandidate = payload['route']?.toString().trim();
+                          if (externalUrl == null || externalUrl.isEmpty) {
+                            if (routeCandidate != null &&
+                                (routeCandidate.startsWith('http://') ||
+                                 routeCandidate.startsWith('https://') ||
+                                 routeCandidate.startsWith('www.'))) {
+                              externalUrl = routeCandidate;
+                            } else if (isBrowserType &&
+                                       routeCandidate != null &&
+                                       !routeCandidate.startsWith('/') &&
+                                       routeCandidate.contains('.')) {
+                              externalUrl = routeCandidate;
+                            }
+                          }
+                        }
+
+                        // If an external URL is configured:
+                        if (externalUrl != null && externalUrl.trim().isNotEmpty) {
+                          // Never automatically dump the user into Chrome or external browser during app boot / startup
+                          if (DateTime.now().difference(_appGatewayBootTime) < const Duration(seconds: 10)) {
+                            debugPrint("[AppGateway] Suppressing external website redirect during app boot. Staying on Dashboard.");
+                            return;
+                          }
+
+                          debugPrint("[AppGateway] External website URL detected: $externalUrl. Launching in-app viewer...");
+                          String formattedUrl = externalUrl.trim();
+                          if (!formattedUrl.startsWith('http://') &&
+                              !formattedUrl.startsWith('https://') &&
+                              !formattedUrl.contains('://')) {
+                            formattedUrl = 'https://$formattedUrl';
+                          }
+
+                          final Uri? targetUri = Uri.tryParse(formattedUrl);
+                          if (targetUri != null) {
+                            bool opened = false;
+                            try {
+                              opened = await launchUrl(
+                                targetUri,
+                                mode: LaunchMode.inAppBrowserView,
+                              );
+                            } catch (e) {
+                              debugPrint("[AppGateway] launchUrl inAppBrowserView error: $e");
+                            }
+
+                            if (!opened) {
+                              try {
+                                opened = await launchUrl(
+                                  targetUri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } catch (e) {
+                                debugPrint("[AppGateway] launchUrl externalApplication error: $e");
+                              }
+                            }
+
+                            if (!opened) {
+                              try {
+                                opened = await launchUrl(
+                                  targetUri,
+                                  mode: LaunchMode.platformDefault,
+                                );
+                              } catch (e) {
+                                debugPrint("[AppGateway] launchUrl platformDefault error: $e");
+                              }
+                            }
+
+                            if (!opened) {
+                              await Utils.launchURL(formattedUrl);
+                            }
+                          } else {
+                            await Utils.launchURL(formattedUrl);
+                          }
+                          return; // User requested external link; do NOT navigate to internal app routes
+                        }
+
+                        // In-app navigation: verify user session
                         final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
                             (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
                         final currentUser = GlobalSession.instance.userNotifier.value;
@@ -85,10 +250,10 @@ class AppGateway extends StatelessWidget {
                           );
                           return;
                         }
-                        final Map<String, dynamic> payload = jsonDecode(payloadString);
-                        final String? targetRoute = payload['route'];
-                        final String? itemId = payload['id'];
-                        final String? type = payload['type'];
+
+                        final String? targetRoute = payload['route']?.toString().trim();
+                        final String? itemId = payload['id']?.toString().trim();
+                        final String? type = payload['type']?.toString().trim();
 
                         final typeUpper = (type ?? '').toUpperCase();
                         if (typeUpper == 'MEDICAL_RECORD_ADDED' ||
@@ -96,9 +261,8 @@ class AppGateway extends StatelessWidget {
                             targetRoute == AppRoutes.userTestResultScreen ||
                             targetRoute == '/patientDocuments' ||
                             targetRoute == AppRoutes.patientDocuments) {
-                          final currentUser = GlobalSession.instance.userNotifier.value;
-                          final navId = currentUser?.data?.navigationId?.toString().trim();
-                          final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+                          final navId = currentUser.data?.navigationId?.toString().trim();
+                          final roleName = (currentUser.data?.latestUserRole ?? '').toLowerCase().trim();
                           final isDoctor = roleName.contains('doctor') || roleName.contains('provider') || navId == '2';
                           final isPatient = !isDoctor && (navId == '1' || roleName.contains('patient') || roleName == 'user');
 
@@ -119,8 +283,10 @@ class AppGateway extends StatelessWidget {
                           return;
                         }
 
-                        if (targetRoute == '/patientBookAppointment' ||
-                            targetRoute == 'patientBookAppointment' ||
+                        final cleanRoute = (targetRoute ?? '').toLowerCase().replaceAll('/', '').replaceAll('_', '').trim();
+                        if (cleanRoute == 'patientbookappointment' ||
+                            cleanRoute == 'bookappointment' ||
+                            cleanRoute == 'patientselecthospitalscreen' ||
                             targetRoute == AppRoutes.patientBookAppointment) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
                             AppRoutes.patientBookAppointment,
@@ -128,7 +294,7 @@ class AppGateway extends StatelessWidget {
                           return;
                         }
 
-                        if (targetRoute != null) {
+                        if (targetRoute != null && targetRoute.isNotEmpty && targetRoute.startsWith('/')) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
                             targetRoute,
                             arguments: itemId,

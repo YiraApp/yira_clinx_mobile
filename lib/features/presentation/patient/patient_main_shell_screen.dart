@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/tour/patient_tour_controller.dart';
+import 'package:yiraclinics/core/tour/patient_tour_keys.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../di/dependency_injection.dart';
 import '../appointments/appointment_bloc/appointment_bloc.dart';
@@ -22,11 +23,18 @@ class PatientMainShellScreen extends StatefulWidget {
 class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   late int _currentIndex;
   final GlobalKey<PatientAppointmentsScreenState> _appointmentsKey = GlobalKey<PatientAppointmentsScreenState>();
+  final GlobalKey _dashboardNavKey = GlobalKey(debugLabel: 'patient_tour_nav_dashboard');
+  final GlobalKey _apptsNavKey = GlobalKey(debugLabel: 'patient_tour_nav_appts');
+  final GlobalKey _consentsNavKey = GlobalKey(debugLabel: 'patient_tour_nav_consents');
+  final GlobalKey _profileNavKey = GlobalKey(debugLabel: 'patient_tour_nav_profile');
 
   @override
   void initState() {
     super.initState();
-    PatientTourController().refreshKeys();
+    PatientTourKeys.dashboardNavKey = _dashboardNavKey;
+    PatientTourKeys.apptsNavKey = _apptsNavKey;
+    PatientTourKeys.consentsNavKey = _consentsNavKey;
+    PatientTourKeys.profileNavKey = _profileNavKey;
     _currentIndex = widget.initialIndex;
     PatientTourController().registerTabSwitcher((index) {
       if (mounted) {
@@ -59,13 +67,13 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   GlobalKey? _getTourKey(int index) {
     switch (index) {
       case 0:
-        return PatientTourController().dashboardNavKey;
+        return _dashboardNavKey;
       case 1:
-        return PatientTourController().apptsNavKey;
+        return _apptsNavKey;
       case 2:
-        return PatientTourController().consentsNavKey;
+        return _consentsNavKey;
       case 3:
-        return PatientTourController().profileNavKey;
+        return _profileNavKey;
       default:
         return null;
     }

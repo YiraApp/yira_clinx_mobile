@@ -15,6 +15,8 @@ import 'package:yiraclinics/features/use_cases/notifications/clear_all_notificat
 import 'package:yiraclinics/features/use_cases/notifications/delete_notification_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/get_notifications_use_case.dart';
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yiraclinics/core/utils/utils.dart';
 class RecentNotificationsScreen extends StatefulWidget {
   const RecentNotificationsScreen({super.key});
 
@@ -202,6 +204,24 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     });
   }
 
+  bool _isValidImageUrl(String? url) {
+    if (url == null) return false;
+    final clean = url.trim().toLowerCase();
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) return false;
+    if (clean.contains('.blob.core.windows.net') ||
+        clean.contains('/banners/') ||
+        clean.contains('/uploadedfiles/') ||
+        clean.contains('push-notifications') ||
+        clean.endsWith('.png') ||
+        clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif')) {
+      return true;
+    }
+    return false;
+  }
+
   void _showNotificationDetailSheet(AppNotificationEntity notification) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -308,6 +328,53 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                 ),
               ),
+              Builder(
+                builder: (context) {
+                  if (!_isValidImageUrl(notification.imageUrl)) {
+                    return const SizedBox.shrink();
+                  }
+                  final safeUrl = notification.imageUrl!.trim().replaceAll(' ', '%20');
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: 16.0 / 9.0,
+                          child: CachedNetworkImage(
+                            imageUrl: safeUrl,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                            placeholder: (context, url) => Container(
+                              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 26,
+                                  height: 26,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) {
+                              debugPrint("[RecentNotifications] Detail sheet image error for $url: $error");
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -342,26 +409,62 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(sheetContext);
-                      },
-                      child: const Text(
-                        "Done",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                  Builder(
+                    builder: (context) {
+                      final rawRoute = notification.route?.trim();
+                      final bool hasExternalUrl = rawRoute != null &&
+                          (rawRoute.startsWith('http://') ||
+                           rawRoute.startsWith('https://') ||
+                           rawRoute.startsWith('www.'));
+
+                      if (hasExternalUrl) {
+                        return Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primaryColor,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              Utils.launchURL(rawRoute);
+                            },
+                            icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Colors.white),
+                            label: const Text(
+                              "Open Link",
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+                          },
+                          child: const Text(
+                            "Done",
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -816,55 +919,62 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   }) {
     final groupKeys = groupedMap.keys.toList();
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: groupKeys.length,
-      itemBuilder: (context, groupIndex) {
-        final groupTitle = groupKeys[groupIndex];
-        final items = groupedMap[groupTitle]!;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 4, top: 8, bottom: 8),
-              child: Row(
-                children: [
-                  Text(
-                    groupTitle.toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ...items.map((item) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _buildDismissibleNotificationTile(
-                  context: context,
-                  notification: item,
-                  isDark: isDark,
-                  isTab: isTab,
-                  primaryColor: primaryColor,
-                ),
-              );
-            }),
-          ],
-        );
+    return RefreshIndicator(
+      color: primaryColor,
+      onRefresh: () async {
+        _bloc.add(const FetchNotificationsEvent());
       },
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        itemCount: groupKeys.length,
+        itemBuilder: (context, groupIndex) {
+          final groupTitle = groupKeys[groupIndex];
+          final items = groupedMap[groupTitle]!;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, top: 8, bottom: 8),
+                child: Row(
+                  children: [
+                    Text(
+                      groupTitle.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...items.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _buildDismissibleNotificationTile(
+                    context: context,
+                    notification: item,
+                    isDark: isDark,
+                    isTab: isTab,
+                    primaryColor: primaryColor,
+                  ),
+                );
+              }),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -994,14 +1104,13 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                         Expanded(
                           child: Text(
                             notification.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 14.5 : 13.5,
                               fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF0F172A),
                               letterSpacing: -0.2,
+                              height: 1.3,
                             ),
                           ),
                         ),
@@ -1022,40 +1131,108 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     // Body with Read more at last of text if longer
                     Builder(
                       builder: (context) {
-                        final bool isExpanded = _expandedNotificationIds.contains(notification.id);
                         final String bodyText = notification.body.trim();
-                        final bool isLong = bodyText.length > 65;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               bodyText,
-                              maxLines: isExpanded ? null : 2,
-                              overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 12.5,
                                 fontWeight: FontWeight.w400,
                                 color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
-                                height: 1.35,
+                                height: 1.4,
                               ),
                             ),
-                            if (isLong) ...[
-                              const SizedBox(height: 3),
-                              GestureDetector(
-                                onTap: () => _handleNotificationTap(notification),
-                                child: Text(
-                                  isExpanded ? "Read less" : "Read more",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: primaryColor,
+                            Builder(
+                              builder: (context) {
+                                if (!_isValidImageUrl(notification.imageUrl)) {
+                                  return const SizedBox.shrink();
+                                }
+                                final safeUrl = notification.imageUrl!.trim().replaceAll(' ', '%20');
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                      child: AspectRatio(
+                                        aspectRatio: 16.0 / 9.0,
+                                        child: CachedNetworkImage(
+                                          imageUrl: safeUrl,
+                                          fit: BoxFit.cover,
+                                          alignment: Alignment.center,
+                                          placeholder: (context, url) => Container(
+                                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                                            child: const Center(
+                                              child: SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(strokeWidth: 2),
+                                              ),
+                                            ),
+                                          ),
+                                          errorWidget: (context, url, error) {
+                                            debugPrint("[RecentNotifications] Tile image load error: $error (URL: $url)");
+                                            return const SizedBox.shrink();
+                                          },
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ],
+                                );
+                              },
+                            ),
+                            Builder(
+                              builder: (context) {
+                                final rawRoute = notification.route?.trim();
+                                final bool hasExternalUrl = rawRoute != null &&
+                                    (rawRoute.startsWith('http://') ||
+                                     rawRoute.startsWith('https://') ||
+                                     rawRoute.startsWith('www.'));
+                                if (!hasExternalUrl) return const SizedBox.shrink();
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: GestureDetector(
+                                    onTap: () => Utils.launchURL(rawRoute),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.open_in_new_rounded, size: 12, color: primaryColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            "Open Website",
+                                            style: TextStyle(
+                                              fontFamily: appPoppinFont,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ],
                         );
                       },

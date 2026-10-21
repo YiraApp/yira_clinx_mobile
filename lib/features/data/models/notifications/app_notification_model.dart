@@ -10,6 +10,7 @@ class AppNotificationModel extends AppNotificationEntity {
     required super.type,
     super.referenceId,
     super.route,
+    super.imageUrl,
     required super.isRead,
     required super.createdAt,
   });
@@ -40,6 +41,7 @@ class AppNotificationModel extends AppNotificationEntity {
       type: json['type']?.toString() ?? 'SYSTEM',
       referenceId: json['referenceId']?.toString(),
       route: json['route']?.toString(),
+      imageUrl: json['imageUrl']?.toString() ?? json['image']?.toString(),
       isRead: json['isRead'] == true || json['isRead'] == 1,
       createdAt: parsedDate,
     );
@@ -55,6 +57,7 @@ class AppNotificationModel extends AppNotificationEntity {
       'type': type,
       'referenceId': referenceId,
       'route': route,
+      'imageUrl': imageUrl,
       'isRead': isRead,
       'createdAt': createdAt.toIso8601String(),
     };

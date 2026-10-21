@@ -9,6 +9,7 @@ class AppNotificationEntity extends Equatable {
   final String type;
   final String? referenceId;
   final String? route;
+  final String? imageUrl;
   final bool isRead;
   final DateTime createdAt;
 
@@ -21,6 +22,7 @@ class AppNotificationEntity extends Equatable {
     required this.type,
     this.referenceId,
     this.route,
+    this.imageUrl,
     required this.isRead,
     required this.createdAt,
   });
@@ -34,6 +36,7 @@ class AppNotificationEntity extends Equatable {
     String? type,
     String? referenceId,
     String? route,
+    String? imageUrl,
     bool? isRead,
     DateTime? createdAt,
   }) {
@@ -46,6 +49,7 @@ class AppNotificationEntity extends Equatable {
       type: type ?? this.type,
       referenceId: referenceId ?? this.referenceId,
       route: route ?? this.route,
+      imageUrl: imageUrl ?? this.imageUrl,
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -61,6 +65,7 @@ class AppNotificationEntity extends Equatable {
         type,
         referenceId,
         route,
+        imageUrl,
         isRead,
         createdAt,
       ];

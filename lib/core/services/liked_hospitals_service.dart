@@ -20,6 +20,11 @@ class LikedHospitalsService {
   final ValueNotifier<List<Map<String, dynamic>>> linkedHospitalsNotifier =
       ValueNotifier<List<Map<String, dynamic>>>([]);
 
+  /// Clears in-memory linked hospitals on user logout
+  void clear() {
+    linkedHospitalsNotifier.value = [];
+  }
+
   /// Retrieves all hospitals that are explicitly liked, linked, or registered to this patient.
   /// Deduplicates across:
   /// 1. Patient's Linked Doctors (`patient_linked_doctors_$patientId`)

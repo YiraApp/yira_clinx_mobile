@@ -21,6 +21,7 @@ import '../appointments/widgets/reschedule_appointment_sheet.dart';
 import '../doctors/widgets/scan_doctor_qr_sheet.dart';
 import '../../../../core/services/notification_services/notification_services.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
+import '../../../../core/tour/patient_tour_keys.dart';
 import '../../../../core/tour/patient_tour_mock_data.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
@@ -44,11 +45,29 @@ class PatientDashboardScreen extends StatefulWidget {
 class _PatientDashboardScreenState extends State<PatientDashboardScreen> with WidgetsBindingObserver {
   String? _profileImagePath;
   final GlobalKey<OfferBannerCarouselState> _offerCarouselKey = GlobalKey<OfferBannerCarouselState>();
+  final GlobalKey _headerProfileKey = GlobalKey(debugLabel: 'patient_tour_header_profile');
+  final GlobalKey _quickServicesKey = GlobalKey(debugLabel: 'patient_tour_quick_services');
+  final GlobalKey _upcomingAppointmentsKey = GlobalKey(debugLabel: 'patient_tour_upcoming_appts');
+
+  PatientOverViewBloc? _overviewBloc;
+  String? _currentLoadedUserId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    PatientTourKeys.headerProfileKey = _headerProfileKey;
+    PatientTourKeys.quickServicesKey = _quickServicesKey;
+    PatientTourKeys.upcomingAppointmentsKey = _upcomingAppointmentsKey;
+
+    _overviewBloc = sl<PatientOverViewBloc>();
+    final currentUser = GlobalSession.instance.userNotifier.value?.data;
+    final userId = currentUser?.id ?? '';
+    _currentLoadedUserId = userId;
+    final orgId = currentUser?.latestOrgId?.toString() ?? '1';
+    final hospitalId = currentUser?.latestHospitalId?.toString() ?? '1';
+    _overviewBloc!.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+
     GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadCachedProfileImage();
     NotificationService.instance.syncFcmTokenWithBackend();
@@ -66,12 +85,21 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     GlobalSession.instance.userNotifier.removeListener(_onSessionUpdated);
+    _overviewBloc?.close();
     super.dispose();
   }
 
   void _onSessionUpdated() {
     FitnessSyncService.instance.handleProfileSwitched();
     _loadCachedProfileImage();
+    final current = GlobalSession.instance.userNotifier.value?.data;
+    final newId = current?.id ?? '';
+    if (newId.isNotEmpty && newId != _currentLoadedUserId) {
+      _currentLoadedUserId = newId;
+      final orgId = current?.latestOrgId?.toString() ?? '1';
+      final hospitalId = current?.latestHospitalId?.toString() ?? '1';
+      _overviewBloc?.add(LoadPatientData(newId, orgId: orgId, hospitalId: hospitalId));
+    }
     if (mounted) setState(() {});
   }
 
@@ -357,9 +385,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         final lastName = currentUser?.data?.lastName ?? '';
         final patientName = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : 'Patient';
 
-        return BlocProvider<PatientOverViewBloc>(
-          key: ValueKey(userId),
-          create: (_) => sl<PatientOverViewBloc>()..add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
+        return BlocProvider<PatientOverViewBloc>.value(
+          value: _overviewBloc!,
           child: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
         builder: (context, state) {
           PatientOverViewEntity? overViewEntity;
@@ -445,7 +472,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                   titleSpacing: screenHorizontalSpacePadding,
                   centerTitle: false,
                   title: Container(
-                    key: PatientTourController().headerProfileKey,
+                    key: _headerProfileKey,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -543,9 +570,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 if (GlobalSession.instance.isCurrentProfilePrimary) {
                   FitnessSyncService.instance.syncNow(silent: true);
                 }
-                context.read<PatientOverViewBloc>().add(
-                      LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
-                    );
+                _overviewBloc?.add(
+                  LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+                );
                 await Future.delayed(const Duration(milliseconds: 600));
               },
               child: SingleChildScrollView(
@@ -565,7 +592,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
 
                     // Quick Services Section (Single Unified Master Card)
                     Container(
-                      key: PatientTourController().quickServicesKey,
+                      key: _quickServicesKey,
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(22),
@@ -719,7 +746,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
 
                     // 3. Upcoming Appointments Section
                     Container(
-                      key: PatientTourController().upcomingAppointmentsKey,
+                      key: _upcomingAppointmentsKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

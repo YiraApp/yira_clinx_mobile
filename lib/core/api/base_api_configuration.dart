@@ -7,8 +7,8 @@ class EnvironmentService {
 
   // Local backend server URL for local development (matches local backend on port 5000)
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables 100% stable connection over USB, bypassing Wi-Fi AP isolation & firewall
-  // - Or use Wi-Fi LAN IP (192.168.0.6) if running purely over wireless network
-  static const String localHostIp = "192.168.0.6";
+  // - Or use Wi-Fi LAN IP (192.168.0.7) if running purely over wireless network
+  static const String localHostIp = "192.168.0.7";
   static const String localPort = "5000";
   static String? _customBaseUrl;
 
@@ -16,8 +16,8 @@ class EnvironmentService {
 
   /// Probes available local channels:
   /// 1. 127.0.0.1:5000 (direct USB tunnel via `adb reverse tcp:5000 tcp:5000` - immune to Wi-Fi AP isolation)
-  /// 2. 192.168.0.6:5000 (Current Wi-Fi LAN)
-  /// 3. Fallback candidates (192.168.0.4, 10.0.2.2)
+  /// 2. 192.168.0.7:5000 (Current Wi-Fi LAN)
+  /// 3. Fallback candidates (192.168.0.6, 192.168.0.4, 10.0.2.2)
   static Future<void> autoDetectLocalHost({bool force = true}) async {
     if (_currentEnv != Environment.local) return;
     if (!force && _customBaseUrl != null && _customBaseUrl!.isNotEmpty) return;
@@ -26,6 +26,7 @@ class EnvironmentService {
     final candidates = [
       '127.0.0.1',
       localHostIp,
+      '192.168.0.6',
       '192.168.0.4',
       '10.0.2.2',
     ];
@@ -46,13 +47,20 @@ class EnvironmentService {
       } catch (_) {}
     }
 
-    _customBaseUrl = "http://$localHostIp:$localPort";
-    debugPrint('[Environment] ⚠️ Using default local URL: $_customBaseUrl');
+    if (!kIsWeb && Platform.isAndroid) {
+      _customBaseUrl = "http://127.0.0.1:$localPort";
+    } else {
+      _customBaseUrl = "http://$localHostIp:$localPort";
+    }
+    debugPrint('[Environment] ⚠️ Using local URL: $_customBaseUrl');
   }
 
   static String get _localHostUrl {
     if (_customBaseUrl != null && _customBaseUrl!.trim().isNotEmpty) {
       return _customBaseUrl!.trim();
+    }
+    if (!kIsWeb && Platform.isAndroid) {
+      return "http://127.0.0.1:$localPort";
     }
     return "http://$localHostIp:$localPort";
   }
