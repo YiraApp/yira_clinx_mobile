@@ -304,12 +304,23 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       final linkedStorageKey = userId.isNotEmpty ? 'patient_linked_doctors_$userId' : 'patient_linked_doctors';
       try {
         final prefs = await SharedPreferences.getInstance();
-        final localStr = prefs.getString(linkedStorageKey);
+        String? localStr = prefs.getString(linkedStorageKey);
+        if (localStr == null || localStr.isEmpty) {
+          final profiles = currentUser?.data?.profiles;
+          final primaryId = (profiles != null && profiles.isNotEmpty
+              ? (profiles.where((p) => p.isPrimary == true).firstOrNull?.id ?? profiles.first.id)
+              : currentUser?.data?.id)?.toString().trim();
+          if (primaryId != null && primaryId.isNotEmpty && primaryId != userId) {
+            localStr = prefs.getString('patient_linked_doctors_$primaryId');
+          }
+          localStr ??= prefs.getString('patient_linked_doctors');
+        }
+
         if (localStr != null) {
           final List<dynamic> localList = jsonDecode(localStr);
           for (final item in localList) {
             final map = Map<String, dynamic>.from(item);
-            final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
+            final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? '').toString().trim();
             if (docId.isNotEmpty && !doctors.any((d) => (d['doctorId'] ?? d['id'])?.toString().trim() == docId)) {
               doctors.add(map);
             }

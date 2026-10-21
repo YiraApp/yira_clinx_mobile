@@ -51,6 +51,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
     try {
       final list = await LikedHospitalsService.instance.getLinkedDoctorsForHospital(
         hospitalId: hospId,
+        patientId: widget.targetProfile?.id,
       );
       if (mounted) {
         setState(() {

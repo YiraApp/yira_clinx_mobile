@@ -366,14 +366,22 @@ class LikedHospitalsService {
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final resolvedPatientId = (patientId ?? currentUser?.data?.id ?? '').toString().trim();
-    final hospIdStr = hospitalId.toString().trim();
+    final rawHospId = (hospitalId ?? '').toString().trim();
+    final hospIdStr = (rawHospId.isEmpty || rawHospId == '0' || rawHospId == '1') ? '19' : rawHospId;
 
     final List<Map<String, dynamic>> matchedDoctors = [];
     final Set<String> seenDocIds = {};
 
     void addDoctor(Map<String, dynamic> doc) {
-      final docId = (doc['doctorId'] ?? doc['id'] ?? '').toString().trim();
-      final docName = (doc['name'] ?? '').toString().trim();
+      final docId = (doc['doctorId'] ?? doc['id'] ?? doc['userId'] ?? doc['providerId'] ?? '').toString().trim();
+      final firstName = (doc['firstName'] ?? '').toString().trim();
+      final lastName = (doc['lastName'] ?? '').toString().trim();
+      final nameField = (doc['name'] ?? doc['displayName'] ?? '').toString().trim();
+      final docName = nameField.isNotEmpty
+          ? nameField
+          : (firstName.isNotEmpty || lastName.isNotEmpty
+              ? 'Dr. $firstName $lastName'.trim()
+              : '');
       if (docId.isEmpty && docName.isEmpty) return;
 
       final lowerName = docName.toLowerCase();
@@ -388,17 +396,23 @@ class LikedHospitalsService {
         return;
       }
 
+      final normalizedDoc = Map<String, dynamic>.from(doc);
+      normalizedDoc['doctorId'] ??= docId;
+      normalizedDoc['id'] ??= docId;
+      normalizedDoc['name'] = docName;
+      normalizedDoc['hospitalId'] ??= hospIdStr;
+
       final key = docId.isNotEmpty ? docId : lowerName;
       if (!seenDocIds.contains(key)) {
         seenDocIds.add(key);
-        matchedDoctors.add(doc);
+        matchedDoctors.add(normalizedDoc);
       }
     }
 
     // 1. If initial doctor matches this hospital, add it first
     if (initialDoctor != null) {
       final initHospId = (initialDoctor['hospitalId'] ?? '').toString().trim();
-      if (initHospId.isEmpty || initHospId == hospIdStr) {
+      if (initHospId.isEmpty || initHospId == hospIdStr || hospIdStr == '19') {
         addDoctor(initialDoctor);
       }
     }
@@ -430,26 +444,62 @@ class LikedHospitalsService {
       debugPrint('[LikedHospitalsService] Error fetching doctors from backend for hospital $hospIdStr: $e');
     }
 
-    // 3. Load from patient_linked_doctors_$patientId
-    if (resolvedPatientId.isNotEmpty) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final linkedDocsKey = 'patient_linked_doctors_$resolvedPatientId';
-        final localDocsStr = prefs.getString(linkedDocsKey);
-        if (localDocsStr != null && localDocsStr.isNotEmpty) {
-          final List<dynamic> localDocs = jsonDecode(localDocsStr);
-          for (final item in localDocs) {
-            if (item is Map<String, dynamic>) {
-              final docHospId = (item['hospitalId'] ?? '').toString().trim();
-              if (docHospId.isEmpty || docHospId == hospIdStr) {
-                addDoctor(item);
-              }
+    // 3. Load from patient_linked_doctors_$patientId and fallback to primary account / shared family doctors
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? localDocsStr;
+      if (resolvedPatientId.isNotEmpty) {
+        localDocsStr = prefs.getString('patient_linked_doctors_$resolvedPatientId');
+      }
+      if (localDocsStr == null || localDocsStr.isEmpty) {
+        final profiles = currentUser?.data?.profiles;
+        final primaryId = (profiles != null && profiles.isNotEmpty
+            ? (profiles.where((p) => p.isPrimary == true).firstOrNull?.id ?? profiles.first.id)
+            : currentUser?.data?.id)?.toString().trim();
+        if (primaryId != null && primaryId.isNotEmpty && primaryId != resolvedPatientId) {
+          localDocsStr = prefs.getString('patient_linked_doctors_$primaryId');
+        }
+        localDocsStr ??= prefs.getString('patient_linked_doctors');
+      }
+
+      if (localDocsStr != null && localDocsStr.isNotEmpty) {
+        final List<dynamic> localDocs = jsonDecode(localDocsStr);
+        for (final item in localDocs) {
+          if (item is Map<String, dynamic>) {
+            final docHospId = (item['hospitalId'] ?? '').toString().trim();
+            if (docHospId.isEmpty || docHospId == hospIdStr || docHospId == '19' || hospIdStr == '19') {
+              addDoctor(item);
             }
           }
         }
-      } catch (e) {
-        debugPrint('[LikedHospitalsService] Error loading linked doctors: $e');
       }
+    } catch (e) {
+      debugPrint('[LikedHospitalsService] Error loading linked doctors: $e');
+    }
+
+    // 4. If querying a non-default hospital produced 0 doctors, fetch from default hospital (19 - Yira Hospitals)
+    if (matchedDoctors.isEmpty && hospIdStr != '19' && token.isNotEmpty) {
+      try {
+        final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
+          URLs.hospitalDoctorsUrl,
+          queryParameters: {'hospitalId': '19'},
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        );
+        if (res.data != null) {
+          final rawData = res.data['data'];
+          List<dynamic> list = [];
+          if (rawData is List) {
+            list = rawData;
+          } else if (rawData is Map && rawData['data'] is List) {
+            list = rawData['data'] as List;
+          }
+          for (final item in list) {
+            if (item is Map<String, dynamic>) {
+              addDoctor(item);
+            }
+          }
+        }
+      } catch (_) {}
     }
 
     return matchedDoctors;

@@ -63,13 +63,24 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       unlinkedIds = (prefs.getStringList(unlinkedStorageKey) ?? []).toSet();
 
       // 1. Load explicitly linked / scanned doctors from local storage
-      final localStr = prefs.getString(linkedStorageKey);
+      String? localStr = prefs.getString(linkedStorageKey);
+      if (localStr == null || localStr.isEmpty) {
+        final profiles = currentUser?.data?.profiles;
+        final primaryId = (profiles != null && profiles.isNotEmpty
+            ? (profiles.where((p) => p.isPrimary == true).firstOrNull?.id ?? profiles.first.id)
+            : currentUser?.data?.id)?.toString().trim();
+        if (primaryId != null && primaryId.isNotEmpty && primaryId != patientId) {
+          localStr = prefs.getString('patient_linked_doctors_$primaryId');
+        }
+        localStr ??= prefs.getString('patient_linked_doctors');
+      }
+
       if (localStr != null) {
         final List<dynamic> localList = jsonDecode(localStr);
         for (final item in localList) {
           final map = Map<String, dynamic>.from(item);
-          final name = (map['name'] ?? '').toString().trim();
-          final docId = (map['doctorId'] ?? map['id'] ?? '').toString().trim();
+          final name = (map['name'] ?? map['displayName'] ?? '').toString().trim();
+          final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? '').toString().trim();
 
           if (_isTestDoctor(name)) continue;
           if (docId.isNotEmpty && unlinkedIds.contains(docId)) continue;
@@ -85,12 +96,14 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
       // 2. Fetch doctors from hospital backend if available
       final token = currentUser?.data?.accessToken ?? '';
-      final hospId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
-      if (token.isNotEmpty) {
+      final curHosp = currentUser?.data?.latestHospitalId;
+      final hospId = (curHosp != null && curHosp > 1) ? curHosp.toString() : '19';
+
+      Future<void> fetchHospitalDoctors(String targetHospId) async {
         try {
           final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
             URLs.hospitalDoctorsUrl,
-            queryParameters: {'hospitalId': hospId},
+            queryParameters: {'hospitalId': targetHospId},
             options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
           );
 
@@ -99,12 +112,23 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
             for (final item in apiList) {
               if (item is Map<String, dynamic>) {
                 final map = Map<String, dynamic>.from(item);
-                final name = (map['name'] ?? map['displayName'] ?? '').toString().trim();
-                final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? '').toString().trim();
+                final firstName = (map['firstName'] ?? '').toString().trim();
+                final lastName = (map['lastName'] ?? '').toString().trim();
+                final nameField = (map['name'] ?? map['displayName'] ?? '').toString().trim();
+                final name = nameField.isNotEmpty
+                    ? nameField
+                    : (firstName.isNotEmpty || lastName.isNotEmpty
+                        ? 'Dr. $firstName $lastName'.trim()
+                        : '');
+                final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? map['providerId'] ?? '').toString().trim();
 
                 if (_isTestDoctor(name)) continue;
                 if (docId.isNotEmpty && unlinkedIds.contains(docId)) continue;
                 if (name.isNotEmpty && unlinkedIds.contains(name.toLowerCase())) continue;
+
+                map['name'] = name;
+                map['doctorId'] ??= docId;
+                map['id'] ??= docId;
 
                 if (!fetchedDoctors.any((d) =>
                     (docId.isNotEmpty && (d['doctorId'] == docId || d['id'] == docId)) ||
@@ -115,6 +139,13 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
             }
           }
         } catch (_) {}
+      }
+
+      if (token.isNotEmpty) {
+        await fetchHospitalDoctors(hospId);
+        if (fetchedDoctors.isEmpty && hospId != '19') {
+          await fetchHospitalDoctors('19');
+        }
       }
     } catch (_) {}
 
@@ -262,7 +293,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
             width: size,
             height: size,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildInitialsFallback(initials, size, isDark),
+            errorBuilder: (context, error, stackTrace) => _buildInitialsFallback(initials, size, isDark),
           );
         } catch (_) {
           avatarContent = _buildInitialsFallback(initials, size, isDark);
@@ -278,7 +309,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildInitialsFallback(initials, size, isDark),
+          errorBuilder: (context, error, stackTrace) => _buildInitialsFallback(initials, size, isDark),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return _buildInitialsFallback(initials, size, isDark);

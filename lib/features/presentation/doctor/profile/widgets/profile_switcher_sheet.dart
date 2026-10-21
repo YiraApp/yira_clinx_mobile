@@ -128,6 +128,11 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           ? '4FC67429-28AE-4106-93EF-436228282ED0'
           : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
 
+      final effectiveHospitalId = (currentUser?.data?.latestHospitalId != null && currentUser!.data!.latestHospitalId! > 1)
+          ? currentUser.data!.latestHospitalId!
+          : 19;
+      final effectiveOrgId = currentUser?.data?.latestOrgId ?? 1;
+
       // 1. Add Family Profiles (Primary + Dependents)
       if (profiles.isNotEmpty) {
         int primaryIndex = profiles.indexWhere((p) {
@@ -152,9 +157,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           items.add(_FlatWorkspaceItem(
             roleId: primaryRoleId,
             roleName: 'Primary',
-            orgId: currentUser?.data?.latestOrgId ?? 1,
+            orgId: effectiveOrgId,
             orgName: 'Family Profile',
-            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+            hospitalId: effectiveHospitalId,
             hospitalName: pPrimaryName,
             location: null,
             profileUserId: primaryProf.id ?? primaryUserId,
@@ -174,9 +179,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           items.add(_FlatWorkspaceItem(
             roleId: primaryRoleId,
             roleName: 'Primary',
-            orgId: currentUser?.data?.latestOrgId ?? 1,
+            orgId: effectiveOrgId,
             orgName: 'Family Profile',
-            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+            hospitalId: effectiveHospitalId,
             hospitalName: fallbackPrimaryName,
             location: null,
             profileUserId: primaryUserId,
@@ -217,9 +222,9 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           items.add(_FlatWorkspaceItem(
             roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
             roleName: 'Family Member',
-            orgId: 1,
+            orgId: effectiveOrgId,
             orgName: 'Family Profile',
-            hospitalId: 1,
+            hospitalId: effectiveHospitalId,
             hospitalName: pName,
             location: null,
             profileUserId: pUserId,
