@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "isMedicalDocument": true,
+  "documentType": "Lab Report",
+  "title": "Haematology, Diabetes, Kidney, Electrolytes, Lipid & Thyroid Panel",
+  "reportDate": "2026-10-12",
+  "labName": "SRI SAI DIAGNOSTICS, HYDERABAD",
+  "referringDoctor": "Dr. Asha Rao",
+  "patientName": "Test Patient",
+  "patientAge": "46 Y",
+  "patientGender": "Male",
+  "readability": "good",
+  "readabilityNote": "",
+  "overallStatus": "critical",
+  "headline": "Several of your test results are outside the normal range, including high blood sugar, high cholesterol, and low haemoglobin, with critically high potassium.",
+  "summary": "This report shows several important findings that need attention. Your blood sugar levels (Fasting Blood Sugar and HbA1c) are high, indicating diabetes. Your haemoglobin is low, suggesting anaemia. Your cholesterol levels are elevated, and your potassium level is critically high, which requires immediate medical attention.",
+  "keyFindings": [
+    "Your potassium level is critically high, which can be dangerous for your heart.",
+    "Your blood sugar levels are high, indicating diabetes.",
+    "Your haemoglobin is low, suggesting you may have anaemia.",
+    "Your total cholesterol and LDL (bad) cholesterol are high, which can increase heart disease risk.",
+    "Your HDL (good) cholesterol is low, also increasing heart disease risk."
+  ],
+  "criticalAlerts": [
+    {
+      "title": "Critically High Potassium",
+      "detail": "Your serum potassium level is 6.6 mmol/L, which is dangerously high. High potassium can cause serious heart problems, including irregular heartbeats and even cardiac arrest.",
+      "action": "You should seek emergency medical attention immediately. Go to the nearest hospital or emergency room."
+    }
+  ],
+  "sections": [
+    {
+      "name": "HAEMATOLOGY & DIABETES PANEL",
+      "tests": [
+        {
+          "name": "Haemoglobin (Hb)",
+          "value": "10.2",
+          "unit": "g/dL",
+          "referenceRange": "13.0 - 17.0",
+          "flag": "low",
+          "meaning": "Your haemoglobin is low, which means you may have anaemia. This can cause tiredness and weakness."
+        },
+        {
+          "name": "Total WBC Count",
+          "value": "7800",
+          "unit": "cells/cumm",
+          "referenceRange": "4000 - 11000",
+          "flag": "normal",
+          "meaning": "Your white blood cell count is normal, indicating your body's immune system is functioning as expected."
+        },
+        {
+          "name": "Platelet Count",
+          "value": "2.4",
+          "unit": "lakh/cumm",
+          "referenceRange": "1.5 - 4.5",
+          "flag": "normal",
+          "meaning": "Your platelet count is normal, which is important for blood clotting."
+        },
+        {
+          "name": "Fasting Blood Sugar",
+          "value": "168",
+          "unit": "mg/dL",
+          "referenceRange": "70 - 100",
+          "flag": "high",
+          "meaning": "Your fasting blood sugar is high, which indicates you have diabetes."
+        },
+        {
+          "name": "HbA1c",
+          "value": "8.1",
+          "unit": "%",
+          "referenceRange": "< 5.7",
+          "flag": "high",
+          "meaning": "Your HbA1c is high, which shows your average blood sugar over the past 2-3 months has been elevated, confirming diabetes."
+        }
+      ]
+    },
+    {
+      "name": "KIDNEY, ELECTROLYTES, LIPID & THYROID",
+      "tests": [
+        {
+          "name": "Serum Creatinine",
+          "value": "1.0",
+          "unit": "mg/dL",
+          "referenceRange": "0.7 - 1.3",
+          "flag": "normal",
+          "meaning": "Your creatinine level is normal, suggesting your kidneys are functioning well."
+        },
+        {
+          "name": "Serum Potassium",
+          "value": "6.6",
+          "unit": "mmol/L",
+          "referenceRange": "3.5 - 5.1",
+          "flag": "critical_high",
+          "meaning": "Your potassium level is critically high and needs immediate medical attention as it can affect your heart."
+        },
+        {
+          "name": "Total Cholesterol",
+          "value": "238",
+          "unit": "mg/dL",
+          "referenceRange": "< 200",
+          "flag": "high",
+          "meaning": "Your total cholesterol is high, which increases your risk of heart disease."
+        },
+        {
+          "name": "LDL Cholesterol",
+          "value": "162",
+          "unit": "mg/dL",
+          "referenceRange": "< 100",
+          "flag": "high",
+          "meaning": "Your LDL (bad) cholesterol is high, which is a major risk factor for heart disease."
+        },
+        {
+          "name": "HDL Cholesterol",
+          "value": "38",
+          "unit": "mg/dL",
+          "referenceRange": "> 40",
+          "flag": "low",
+          "meaning": "Your HDL (good) cholesterol is low, which means you have less protective cholesterol, increasing your heart disease risk."
+        },
+        {
+          "name": "TSH",
+          "value": "2.1",
+          "unit": "ulU/mL",
+          "referenceRange": "0.4 - 4.0",
+          "flag": "normal",
+          "meaning": "Your TSH level is normal, indicating your thyroid gland is functioning properly."
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total": 11,
+    "normal": 4,
+    "outOfRange": 6,
+    "critical": 1
+  },
+  "impression": "",
+  "possibleConditions": [
+    {
+      "name": "Hyperkalemia (High Potassium)",
+      "likelihood": "likely",
+      "explanation": "Your serum potassium level is critically high (6.6 mmol/L), which is a serious condition."
+    },
+    {
+      "name": "Diabetes Mellitus",
+      "likelihood": "likely",
+      "explanation": "Your fasting blood sugar (168 mg/dL) and HbA1c (8.1%) are both significantly elevated, indicating diabetes."
+    },
+    {
+      "name": "Anaemia",
+      "likelihood": "possible",
+      "explanation": "Your haemoglobin level is low (10.2 g/dL), which suggests you may have anaemia."
+    },
+    {
+      "name": "Dyslipidemia (High Cholesterol)",
+      "likelihood": "likely",
+      "explanation": "Your total cholesterol (238 mg/dL) and LDL cholesterol (162 mg/dL) are high, and HDL cholesterol (38 mg/dL) is low."
+    }
+  ],
+  "doctorConsultation": {
+    "needed": true,
+    "urgency": "emergency",
+    "specialty": "General Physician / Emergency Doctor",
+    "timeframe": "Today",
+    "reason": "Your critically high potassium level requires immediate medical attention to prevent serious heart complications. You also need to discuss your diabetes and high cholesterol with a doctor soon."
+  },
+  "recommendations": [
+    {
+      "category": "general",
+      "text": "Seek emergency medical care immediately for your critically high potassium level."
+    },
+    {
+      "category": "diet",
+      "text": "Once stable, discuss with your doctor or a dietitian about a low-potassium diet, a diet for diabetes management, and a heart-healthy diet to manage cholesterol."
+    },
+    {
+      "category": "lifestyle",
+      "text": "Engage in regular physical activity as advised by your doctor to help manage blood sugar and cholesterol."
+    },
+    {
+      "category": "monitoring",
+      "text": "Regularly monitor your blood sugar levels as instructed by your doctor."
+    }
+  ],
+  "followUpTests": [
+    "Electrolytes (especially Potassium) immediately and then regularly as advised by doctor",
+    "Lipid Profile in 3-6 months",
+    "HbA1c in 3 months",
+    "Complete Blood Count (CBC) in 1-2 months"
+  ],
+  "questionsForDoctor": [
+    "What is causing my potassium to be so high, and what are the immediate steps to lower it?",
+    "What is the best treatment plan for my diabetes and high cholesterol?",
+    "What dietary changes should I make to manage my potassium, blood sugar, and cholesterol?",
+    "What are the next steps to investigate and treat my low haemoglobin?",
+    "Are there any medications I need to start taking for these conditions?"
+  ],
+  "confidence": 98,
+  "pagesAnalyzed": 2,
+  "analyzedAt": "2026-10-15T20:23:54.746Z",
+  "model": "gemini-2.5-flash",
+  "disclaimer": "This summary was generated by AI to help you understand your report. It is not a diagnosis. Always confirm results and treatment with a qualified doctor."
+}

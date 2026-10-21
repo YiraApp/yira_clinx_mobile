@@ -211,7 +211,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                     'hospitalId': hospitalId,
                                     'orgId': orgId,
                                     'patientName': patientName,
-                                    'initialTabIndex': 1,
+                                    'initialTabName': 'Appointments',
                                   },
                                 );
                               },
@@ -232,7 +232,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                     'hospitalId': hospitalId,
                                     'orgId': orgId,
                                     'patientName': patientName,
-                                    'initialTabIndex': 2,
+                                    'initialTabName': 'Prescribe',
                                   },
                                 );
                               },
@@ -252,7 +252,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                     'hospitalId': hospitalId,
                                     'orgId': orgId,
                                     'patientName': patientName,
-                                    'initialTabIndex': 3,
+                                    'initialTabName': 'Medical Record',
                                   },
                                 );
                               },
@@ -272,7 +272,27 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                     'hospitalId': hospitalId,
                                     'orgId': orgId,
                                     'patientName': patientName,
-                                    'initialTabIndex': 4,
+                                    'initialTabName': 'Documents',
+                                  },
+                                );
+                              },
+                            ),
+                            DashBoardPatientActionHubItem(
+                              isTab: isTab,
+                              icon: Icons.restaurant_menu_rounded,
+                              label: "Diet",
+                              iconColor: const Color(0xFF10B981),
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.doctorPatientProfileScreen,
+                                  arguments: {
+                                    'patientId': patientId,
+                                    'appointmentId': appointmentId,
+                                    'hospitalId': hospitalId,
+                                    'orgId': orgId,
+                                    'patientName': patientName,
+                                    'initialTabName': 'Diet',
                                   },
                                 );
                               },

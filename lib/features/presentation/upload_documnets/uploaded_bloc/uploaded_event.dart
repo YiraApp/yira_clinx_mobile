@@ -42,6 +42,12 @@ class AddUploadedRecord extends UploadedBlocEvent {
   AddUploadedRecord(this.record);
 }
 
+/// Replaces a record already in the list (same id), e.g. after AI analysis.
+class UpdateUploadedRecord extends UploadedBlocEvent {
+  final UploadedRecord record;
+  UpdateUploadedRecord(this.record);
+}
+
 class FilterCategoryChanged extends UploadedBlocEvent {
   final String category;
   FilterCategoryChanged(this.category);

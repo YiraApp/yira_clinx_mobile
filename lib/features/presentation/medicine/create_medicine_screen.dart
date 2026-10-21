@@ -611,7 +611,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         return Container(
           decoration: BoxDecoration(
             color: isDark ? darkModeCardColor : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.only(top: 10, bottom: 20),
           child: Column(

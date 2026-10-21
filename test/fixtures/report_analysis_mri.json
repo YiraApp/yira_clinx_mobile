@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "isMedicalDocument": true,
+  "documentType": "Imaging Report",
+  "title": "MRI Left Knee Joint and MRI Left Shoulder",
+  "reportDate": "2025-05-05",
+  "labName": "BHIMAVARAM HOSPITALS",
+  "referringDoctor": "Dr.K UDAY MADHAV",
+  "patientName": "Test Patient",
+  "patientAge": "23 yrs.",
+  "patientGender": "Male",
+  "readability": "good",
+  "readabilityNote": "",
+  "overallStatus": "attention",
+  "headline": "The MRI reports show a likely partial tear in your left knee and a tear in your left shoulder, along with some fluid and cysts.",
+  "summary": "The MRI of your left knee indicates a likely partial tear in the anterior cruciate ligament (ACL) and a likely Grade II meniscal injury in the medial meniscus. There is also a very minimal amount of fluid in the pre-patellar bursa. The MRI of your left shoulder shows a tear in the superior labrum and subchondral cysts near the humerus. Other parts of both joints appear normal.",
+  "keyFindings": [
+    "Likely partial tear (Grade II) of the anterior cruciate ligament (ACL) in the left knee.",
+    "Likely Grade II meniscal injury in the posterior horn of the medial meniscus of the left knee.",
+    "Very minimal free fluid in the pre-patellar bursa of the left knee.",
+    "Superior labrum antero-posterior tear in the left shoulder.",
+    "Subchondral cysts adjacent to the greater tubercle of the humerus in the left shoulder."
+  ],
+  "criticalAlerts": [],
+  "sections": [
+    {
+      "name": "MRI LEFT KNEE JOINT - Findings",
+      "tests": [
+        {
+          "name": "Anterior Cruciate Ligament (ACL)",
+          "value": "PDFS hyperintensities with partial intrasubstance discontinuity noted at tibial attachemnt, mid substance and femoral attachemnt",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "abnormal",
+          "meaning": "This indicates a likely partial tear (Grade II) in your anterior cruciate ligament, which is important for knee stability."
+        },
+        {
+          "name": "Medial Meniscus",
+          "value": "Linear PDFS hyperintensities noted posterior horn",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "abnormal",
+          "meaning": "This suggests a likely Grade II injury to the medial meniscus, which acts as a shock absorber in your knee."
+        },
+        {
+          "name": "Pre-patellar Bursa Fluid",
+          "value": "very minimal free fluid noted",
+          "unit": "",
+          "referenceRange": "No fluid",
+          "flag": "abnormal",
+          "meaning": "There is a small amount of fluid in the bursa in front of your kneecap, which can sometimes indicate irritation."
+        },
+        {
+          "name": "Right Knee Joint Bony Components",
+          "value": "normal in alignment",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The bones of your right knee joint are correctly aligned."
+        },
+        {
+          "name": "Tibial and Femoral Condyles Marrow Signal",
+          "value": "normal marrow signal intensities",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The bone marrow in your knee joint appears healthy."
+        },
+        {
+          "name": "Bony Contusions",
+          "value": "No evidence",
+          "unit": "",
+          "referenceRange": "No evidence",
+          "flag": "normal",
+          "meaning": "There are no signs of bone bruises."
+        },
+        {
+          "name": "Articular Cartilage",
+          "value": "normal in contour",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The cartilage covering your joint surfaces is normal."
+        },
+        {
+          "name": "Medial Meniscus (MR-morphology and signal intensity)",
+          "value": "normal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The medial meniscus appears normal in its shape and signal."
+        },
+        {
+          "name": "Posterior Cruciate Ligament",
+          "value": "normal in structure and signal intensity",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The posterior cruciate ligament, another important knee ligament, is normal."
+        },
+        {
+          "name": "Medial and Lateral Collateral Ligaments",
+          "value": "normal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The collateral ligaments on the sides of your knee are normal."
+        },
+        {
+          "name": "Patellar Tendon and Quadriceps Tendons",
+          "value": "normal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The tendons around your kneecap and thigh muscles are normal."
+        },
+        {
+          "name": "Peri Articular Muscles",
+          "value": "normal in bulk and signal intensity",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The muscles around the joint are normal in size and appearance."
+        }
+      ]
+    },
+    {
+      "name": "MRI LEFT SHOULDER - Findings",
+      "tests": [
+        {
+          "name": "Superior Labrum",
+          "value": "antero-posterior tear noted extending from 12 to 3 'O' clock position",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "abnormal",
+          "meaning": "There is a tear in the superior labrum, a rim of cartilage around your shoulder socket, which can affect shoulder stability."
+        },
+        {
+          "name": "Subchondral Cysts",
+          "value": "noted adjacent to greater tubercle of humerus",
+          "unit": "",
+          "referenceRange": "None",
+          "flag": "abnormal",
+          "meaning": "Cysts are present near the top of your arm bone, which can sometimes be associated with joint wear or injury."
+        },
+        {
+          "name": "Left Shoulder Joint Bony Components",
+          "value": "normal in alignment & marrow signal intensities",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The bones of your left shoulder joint are correctly aligned and the bone marrow appears healthy."
+        },
+        {
+          "name": "Gleno-humeral and Acromio-clavicular Joints",
+          "value": "normal in joint space and articular contours",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The main shoulder joints and their cartilage surfaces are normal."
+        },
+        {
+          "name": "Glenoid Labrum",
+          "value": "normal in morphology & signal intensity",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The glenoid labrum, another cartilage rim, appears normal in shape and signal."
+        },
+        {
+          "name": "Rotator Cuff Muscles & Tendinous Portions",
+          "value": "normal in bulk & signal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "Your rotator cuff muscles and their tendons are normal in size and appearance."
+        },
+        {
+          "name": "Joint/Bursal Effusion",
+          "value": "No evidence of significant",
+          "unit": "",
+          "referenceRange": "No evidence",
+          "flag": "normal",
+          "meaning": "There is no significant fluid buildup in the joint or surrounding bursae."
+        },
+        {
+          "name": "Peri-articular Muscles & Intermuscular Fat Planes",
+          "value": "normal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The muscles around the joint and the fat layers between them are normal."
+        },
+        {
+          "name": "Bone/Soft Tissue Contusion",
+          "value": "No obvious",
+          "unit": "",
+          "referenceRange": "No obvious",
+          "flag": "normal",
+          "meaning": "There are no obvious bone or soft tissue bruises."
+        },
+        {
+          "name": "Neuro-vascular Structures",
+          "value": "normal",
+          "unit": "",
+          "referenceRange": "Normal",
+          "flag": "normal",
+          "meaning": "The nerves and blood vessels in the area appear normal."
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total": 22,
+    "normal": 17,
+    "outOfRange": 5,
+    "critical": 0
+  },
+  "impression": "The MRI of the left knee shows a likely partial tear (Grade II) of the anterior cruciate ligament and a likely Grade II meniscal injury of the medial meniscus, with minimal fluid in the pre-patellar bursa. The MRI of the left shoulder shows a tear in the superior labrum and subchondral cysts near the humerus. Further clinical evaluation is recommended.",
+  "possibleConditions": [
+    {
+      "name": "ACL Partial Tear (Left Knee)",
+      "likelihood": "likely",
+      "explanation": "The report indicates PDFS hyperintensities with discontinuity in the ACL, strongly suggesting a partial tear."
+    },
+    {
+      "name": "Medial Meniscus Injury (Left Knee)",
+      "likelihood": "likely",
+      "explanation": "Linear PDFS hyperintensities in the posterior horn of the medial meniscus are consistent with a Grade II meniscal injury."
+    },
+    {
+      "name": "Pre-patellar Bursitis (Left Knee)",
+      "likelihood": "possible",
+      "explanation": "Minimal free fluid in the pre-patellar bursa can indicate inflammation of the bursa."
+    },
+    {
+      "name": "Superior Labrum Tear (Left Shoulder)",
+      "likelihood": "likely",
+      "explanation": "The report explicitly states a superior labrum antero-posterior tear."
+    },
+    {
+      "name": "Subchondral Cysts (Left Shoulder)",
+      "likelihood": "likely",
+      "explanation": "The report notes the presence of subchondral cysts adjacent to the greater tubercle of the humerus."
+    }
+  ],
+  "doctorConsultation": {
+    "needed": true,
+    "urgency": "soon",
+    "specialty": "Orthopedic Surgeon",
+    "timeframe": "Within 1-2 weeks",
+    "reason": "You have significant findings in both your left knee and left shoulder that require evaluation by an orthopedic specialist to discuss treatment options and management."
+  },
+  "recommendations": [
+    {
+      "category": "general",
+      "text": "Avoid activities that put stress on your left knee and left shoulder to prevent further injury."
+    },
+    {
+      "category": "general",
+      "text": "Follow any specific instructions given by your doctor regarding rest or activity modification."
+    },
+    {
+      "category": "general",
+      "text": "Consider physiotherapy as recommended by your doctor to strengthen the muscles around your knee and shoulder and improve joint stability."
+    }
+  ],
+  "followUpTests": [],
+  "questionsForDoctor": [
+    "What are the best treatment options for the partial ACL tear and meniscal injury in my left knee?",
+    "What are the treatment options for the superior labrum tear and subchondral cysts in my left shoulder?",
+    "Will I need surgery for either my knee or shoulder?",
+    "What kind of physical therapy or exercises should I do to help with recovery?",
+    "What activities should I avoid to prevent further injury to my knee and shoulder?"
+  ],
+  "confidence": 95,
+  "pagesAnalyzed": 4,
+  "analyzedAt": "2026-10-15T20:26:41.714Z",
+  "model": "gemini-2.5-flash",
+  "disclaimer": "This summary was generated by AI to help you understand your report. It is not a diagnosis. Always confirm results and treatment with a qualified doctor."
+}

@@ -18,7 +18,10 @@ class ErrorInterceptor extends Interceptor {
     if (data is! Map<String, dynamic>) {
       return handler.next(response);
     }
-    final bool isSuccess = data['status'] ?? true;
+    // Only a true/false `status` is a success flag; some APIs send a text
+    // status (e.g. "active"), which must not be read as a failure or crash.
+    final dynamic rawStatus = data['status'];
+    final bool isSuccess = rawStatus is bool ? rawStatus : true;
     final String? serverMessage = data['message']?.toString();
 
     if (!isSuccess) {

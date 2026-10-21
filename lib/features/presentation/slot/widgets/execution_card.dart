@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/slot/widgets/section_card_wrapper.dart';
@@ -146,18 +147,11 @@ class ExecutionCard extends StatelessWidget {
                 onDateSelected: (DateTime chosen) {
                   final difference = dataState.endDate.difference(chosen).inDays;
                   if (difference > 7) {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Invalid Date Range'),
-                        content: const Text('The date range cannot be greater than 7 days.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
+                    AppDialog.alert(
+                      context,
+                      title: 'Invalid Date Range',
+                      message: 'The date range cannot be greater than 7 days.',
+                      tone: AppDialogTone.warning,
                     );
                     return;
                   }
@@ -195,18 +189,11 @@ class ExecutionCard extends StatelessWidget {
                   final difference = chosen.difference(dataState.startDate).inDays;
 
                   if (difference > 7) {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Invalid Date Range'),
-                        content: const Text('The date range cannot be greater than 7 days.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
+                    AppDialog.alert(
+                      context,
+                      title: 'Invalid Date Range',
+                      message: 'The date range cannot be greater than 7 days.',
+                      tone: AppDialogTone.warning,
                     );
                     return;
                   }

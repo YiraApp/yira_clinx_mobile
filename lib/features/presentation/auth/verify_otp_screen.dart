@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -898,80 +899,21 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
   void _showAccountDeletedDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.person_off_rounded, color: Colors.red, size: 22),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  "Account Deleted",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            message.isNotEmpty
-                ? message
-                : "User account is deleted. Please contact administrator or sign up for new user registration.",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 13,
-              color: isDark ? Colors.white70 : Colors.black87,
-              height: 1.45,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                "Close",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamedAndRemoveUntil(context, AppRoutes.signup, (route) => false);
-              },
-              child: const Text(
-                "Sign Up",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => AppDialog(
+        title: "Account Deleted",
+        message: message.isNotEmpty
+            ? message
+            : "User account is deleted. Please contact administrator or sign up for new user registration.",
+        tone: AppDialogTone.danger,
+        icon: Icons.person_off_rounded,
+        primaryLabel: "Sign Up",
+        onPrimary: () {
+          Navigator.pop(ctx);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.signup, (route) => false);
+        },
+        secondaryLabel: "Close",
+        onSecondary: () => Navigator.pop(ctx),
+      ),
     );
   }
 }

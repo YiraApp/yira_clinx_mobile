@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -221,82 +222,24 @@ class _SignupScreenState extends State<SignupScreen> {
   void _showAlreadyRegisteredDialog(String message) {
     showDialog(
       context: context,
-      builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.info_outline_rounded, color: Colors.amber, size: 22),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  "Account Exists",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            message,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 13,
-              color: isDark ? Colors.white70 : Colors.black87,
-              height: 1.45,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                context.read<LoginBloc>().add(const NavSignIn());
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.signIn,
-                  (route) => false,
-                );
-              },
-              child: const Text(
-                "Sign In",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (ctx) => AppDialog(
+        title: "Account Exists",
+        message: message,
+        tone: AppDialogTone.warning,
+        icon: Icons.info_outline_rounded,
+        primaryLabel: "Sign In",
+        onPrimary: () {
+          Navigator.pop(ctx);
+          context.read<LoginBloc>().add(const NavSignIn());
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.signIn,
+            (route) => false,
+          );
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(ctx),
+      ),
     );
   }
 

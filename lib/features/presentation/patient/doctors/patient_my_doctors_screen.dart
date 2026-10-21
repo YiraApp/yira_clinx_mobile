@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -194,40 +195,18 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final name = (doctor['name'] ?? 'Doctor').toString();
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.person_remove_rounded, color: Colors.redAccent, size: 22),
-            SizedBox(width: 10),
-            Text(
-              'Remove Doctor',
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to remove $name from My Doctors?',
-          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _unlinkDoctor(doctor);
-            },
-            child: const Text('Remove', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
-        ],
+      builder: (dialogCtx) => AppDialog(
+        title: 'Remove Doctor',
+        message: 'Are you sure you want to remove $name from My Doctors?',
+        tone: AppDialogTone.danger,
+        icon: Icons.person_remove_rounded,
+        primaryLabel: 'Remove',
+        onPrimary: () {
+          Navigator.pop(dialogCtx);
+          _unlinkDoctor(doctor);
+        },
+        secondaryLabel: 'Cancel',
+        onSecondary: () => Navigator.pop(dialogCtx),
       ),
     );
   }

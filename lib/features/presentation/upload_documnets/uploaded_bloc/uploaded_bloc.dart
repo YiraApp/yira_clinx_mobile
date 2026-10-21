@@ -14,6 +14,7 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
     on<FetchUploadedRecords>(_onFetchUploadedRecords);
     on<LoadMoreUploadedRecords>(_onLoadMoreUploadedRecords);
     on<AddUploadedRecord>(_onAddUploadedRecord);
+    on<UpdateUploadedRecord>(_onUpdateUploadedRecord);
     on<FilterCategoryChanged>(_onFilterCategoryChanged);
     on<SearchQueryChanged>(_onSearchQueryChanged);
     on<DeleteUploadedRecordItem>(_onDeleteUploadedRecordItem);
@@ -92,6 +93,16 @@ class UploadedBloc extends Bloc<UploadedBlocEvent, UploadedBlocState> {
     final updatedAll = List<UploadedRecord>.from(state.allRecords)..insert(0, event.record);
     emit(state.copyWith(
       status: UploadedStatus.success,
+      allRecords: updatedAll,
+      filteredRecords: _filterData(updatedAll, state.selectedCategory, state.searchQuery),
+    ));
+  }
+
+  void _onUpdateUploadedRecord(UpdateUploadedRecord event, Emitter<UploadedBlocState> emit) {
+    final updatedAll = [
+      for (final r in state.allRecords) r.id == event.record.id ? event.record : r,
+    ];
+    emit(state.copyWith(
       allRecords: updatedAll,
       filteredRecords: _filterData(updatedAll, state.selectedCategory, state.searchQuery),
     ));

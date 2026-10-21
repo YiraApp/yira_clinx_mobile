@@ -26,18 +26,60 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
     return time24;
   }
 
-  Future<List<dynamic>> _fetchSlotsFromApi(String targetDate, bool isSingleDay) async {
-    try {
-      // targetDate is already in yyyy-MM-dd format from the bloc
-      final String dateStr = isSingleDay ? targetDate : DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String? _lastDateStr;
+  String? _lastDoctorId;
+  int? _lastHospitalId;
+  DateTime? _lastFetchTime;
+  Map<String, dynamic>? _cachedRawData;
+  Future<Map<String, dynamic>?>? _inFlightRequest;
 
+  Future<Map<String, dynamic>?> _fetchDoctorSlotsRawData(String targetDate, bool isSingleDay) async {
+    final String dateStr = isSingleDay ? targetDate : DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
+        ? currentUser.data!.id!.trim()
+        : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
+            ? currentUser.data!.navigationId!.trim()
+            : '1';
+    final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+
+    // Check if an identical request is already running concurrently
+    if (_inFlightRequest != null &&
+        _lastDateStr == dateStr &&
+        _lastDoctorId == doctorId &&
+        _lastHospitalId == hospitalId) {
+      return await _inFlightRequest!;
+    }
+
+    // Check short-term cache (valid for 3 seconds to avoid duplicate fan-out calls)
+    if (_cachedRawData != null &&
+        _lastDateStr == dateStr &&
+        _lastDoctorId == doctorId &&
+        _lastHospitalId == hospitalId &&
+        _lastFetchTime != null &&
+        DateTime.now().difference(_lastFetchTime!).inMilliseconds < 3000) {
+      return _cachedRawData;
+    }
+
+    _lastDateStr = dateStr;
+    _lastDoctorId = doctorId;
+    _lastHospitalId = hospitalId;
+
+    _inFlightRequest = _executeFetchDoctorSlots(dateStr, doctorId, hospitalId);
+    try {
+      final res = await _inFlightRequest!;
+      _cachedRawData = res;
+      _lastFetchTime = DateTime.now();
+      return res;
+    } finally {
+      _inFlightRequest = null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _executeFetchDoctorSlots(String dateStr, String doctorId, int hospitalId) async {
+    try {
       final currentUser = GlobalSession.instance.userNotifier.value;
-      final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
-          ? currentUser.data!.id!.trim()
-          : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
-              ? currentUser.data!.navigationId!.trim()
-              : '1';
-      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
       final String token = currentUser?.data?.accessToken ?? '';
 
       debugPrint("SlotRepo: Fetching slots for doctor=$doctorId, hospital=$hospitalId, date=$dateStr");
@@ -57,14 +99,24 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
       if (response.data != null && response.data is Map<String, dynamic>) {
         final rawData = response.data as Map<String, dynamic>;
         final slotData = rawData['data'];
-        if (slotData != null && slotData['slots'] is List) {
-          final slots = slotData['slots'] as List;
-          debugPrint("SlotRepo: Received ${slots.length} slots from API");
-          return slots;
+        if (slotData != null && slotData is Map<String, dynamic>) {
+          if (slotData['slots'] is List) {
+            final slots = slotData['slots'] as List;
+            debugPrint("SlotRepo: Received ${slots.length} slots from API");
+          }
+          return slotData;
         }
       }
     } catch (e) {
-      debugPrint("SlotRepo: _fetchSlotsFromApi Error: $e");
+      debugPrint("SlotRepo: _fetchDoctorSlotsRawData Error: $e");
+    }
+    return null;
+  }
+
+  Future<List<dynamic>> _fetchSlotsFromApi(String targetDate, bool isSingleDay) async {
+    final slotData = await _fetchDoctorSlotsRawData(targetDate, isSingleDay);
+    if (slotData != null && slotData['slots'] is List) {
+      return slotData['slots'] as List;
     }
     return [];
   }
@@ -194,46 +246,21 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
     required bool isSingleDay,
   }) async {
     try {
-      final String dateStr = isSingleDay ? targetDate : DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final String doctorId = (currentUser?.data?.id != null && currentUser!.data!.id!.trim().isNotEmpty)
-          ? currentUser.data!.id!.trim()
-          : (currentUser?.data?.navigationId != null && currentUser!.data!.navigationId!.trim().isNotEmpty)
-              ? currentUser.data!.navigationId!.trim()
-              : '1';
-      final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
-      final String token = currentUser?.data?.accessToken ?? '';
-
-      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.doctorSlotsUrl,
-        data: {
-          "doctorId": doctorId,
-          "hospitalId": hospitalId,
-          "date": dateStr,
-        },
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
-
-      if (response.data != null && response.data is Map<String, dynamic>) {
-        final rawData = response.data as Map<String, dynamic>;
-        final slotData = rawData['data'];
-        if (slotData != null && slotData['breaks'] is List) {
-          final breaksList = slotData['breaks'] as List;
-          final List<BreakTimeEntity> result = [];
-          for (final b in breaksList) {
-            if (b is Map<String, dynamic>) {
-              result.add(BreakTimeEntity(
-                id: (b['id'] ?? 'break_${result.length + 1}').toString(),
-                fromTime: _formatTime((b['fromTime'] ?? b['startTime'] ?? '').toString()),
-                toTime: _formatTime((b['toTime'] ?? b['endTime'] ?? '').toString()),
-                label: (b['label'] ?? 'Break ${result.length + 1}').toString(),
-              ));
-            }
+      final slotData = await _fetchDoctorSlotsRawData(targetDate, isSingleDay);
+      if (slotData != null && slotData['breaks'] is List) {
+        final breaksList = slotData['breaks'] as List;
+        final List<BreakTimeEntity> result = [];
+        for (final b in breaksList) {
+          if (b is Map<String, dynamic>) {
+            result.add(BreakTimeEntity(
+              id: (b['id'] ?? 'break_${result.length + 1}').toString(),
+              fromTime: _formatTime((b['fromTime'] ?? b['startTime'] ?? '').toString()),
+              toTime: _formatTime((b['toTime'] ?? b['endTime'] ?? '').toString()),
+              label: (b['label'] ?? 'Break ${result.length + 1}').toString(),
+            ));
           }
-          if (result.isNotEmpty) return result;
         }
+        if (result.isNotEmpty) return result;
       }
     } catch (e) {
       debugPrint("SlotRepo: fetchBreakTimes error: $e");

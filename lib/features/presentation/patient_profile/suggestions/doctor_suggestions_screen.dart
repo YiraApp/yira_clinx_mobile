@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -96,34 +97,13 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
   }
 
   Future<void> _deleteSuggestion(int id) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          "Delete Suggestion",
-          style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          "Are you sure you want to delete this suggestion? This action cannot be undone.",
-          style: TextStyle(fontFamily: appPoppinFont, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel", style: TextStyle(fontFamily: appPoppinFont)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Delete", style: TextStyle(fontFamily: appPoppinFont)),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: "Delete Suggestion",
+      message: "Are you sure you want to delete this suggestion? This action cannot be undone.",
+      confirmLabel: "Delete",
+      tone: AppDialogTone.danger,
+      icon: Icons.delete_outline_rounded,
     );
 
     if (confirmed != true) return;

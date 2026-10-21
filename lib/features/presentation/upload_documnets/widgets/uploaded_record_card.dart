@@ -5,13 +5,18 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
+import 'package:yiraclinics/features/domain/entities/medical_report/medical_report_analysis.dart';
 import 'package:yiraclinics/features/domain/entities/uploaded_record/uploaded_record_entity.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 
 class UploadedRecordCard extends StatefulWidget {
   final UploadedRecord record;
   final VoidCallback? onDelete;
   final VoidCallback? onView;
   final VoidCallback? onDownload;
+
+  /// Opens the AI insights; the row only shows once the report is analysed.
+  final VoidCallback? onAiInsights;
   final bool isTab;
 
   const UploadedRecordCard({
@@ -20,6 +25,7 @@ class UploadedRecordCard extends StatefulWidget {
     this.onDelete,
     this.onView,
     this.onDownload,
+    this.onAiInsights,
     required this.isTab,
   });
 
@@ -494,8 +500,46 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                     ),
                 ],
               ),
+              if (widget.onAiInsights != null && widget.record.aiStatus != null) ...[
+                const SizedBox(height: 10),
+                _aiRow(isDark),
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _aiRow(bool isDark) {
+    final ({Color color, IconData icon, String label}) style = switch (reportStatusFrom(widget.record.aiStatus)) {
+      ReportStatus.normal => (color: DietUi.green, icon: Icons.verified_rounded, label: 'All clear'),
+      ReportStatus.attention => (color: DietUi.amber, icon: Icons.error_outline_rounded, label: 'Needs attention'),
+      ReportStatus.critical => (color: DietUi.red, icon: Icons.warning_amber_rounded, label: 'Critical findings'),
+      ReportStatus.unknown => (color: DietUi.slate, icon: Icons.help_outline_rounded, label: 'No health insights'),
+    };
+    return InkWell(
+      onTap: widget.onAiInsights,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: style.color.withValues(alpha: isDark ? 0.14 : 0.07),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: style.color.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            Icon(style.icon, size: 16, color: style.color),
+            const SizedBox(width: 8),
+            Text('AI', style: DietUi.text(10.5, FontWeight.w700, DietUi.muted(isDark), spacing: 0.4)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(style.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(12, FontWeight.w700, style.color)),
+            ),
+            Text('View insights', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
+            const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
+          ],
         ),
       ),
     );

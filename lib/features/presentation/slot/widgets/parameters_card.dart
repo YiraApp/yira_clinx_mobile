@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -656,6 +657,7 @@ class ParametersCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 46),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -735,68 +737,32 @@ class ParametersCard extends StatelessWidget {
                     if (overlappingSlots.isNotEmpty) {
                       showDialog(
                         context: context,
-                        builder: (confirmContext) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: const Row(
-                            children: [
-                              Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: CommonText(
-                                  'Remove Overlapping Slots?',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
+                        builder: (confirmContext) => AppDialog(
+                          title: 'Remove Overlapping Slots?',
+                          message:
+                              '${overlappingSlots.length} timeslot(s) falling within ${formatTime(fromTime)} - ${formatTime(toTime)} will be removed.\n\nRemaining slots will be automatically reallocated around this break. Do you want to proceed?',
+                          tone: AppDialogTone.warning,
+                          icon: Icons.auto_fix_high_rounded,
+                          primaryLabel: 'Remove & Re-align',
+                          onPrimary: () {
+                            Navigator.pop(confirmContext);
+                            slotBloc.add(
+                              AddBreakTimeEvent(
+                                fromTime: formatTime(fromTime),
+                                toTime: formatTime(toTime),
                               ),
-                            ],
-                          ),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CommonText(
-                                '${overlappingSlots.length} timeslot(s) falling within ${formatTime(fromTime)} - ${formatTime(toTime)} will be removed.',
-                                style: const TextStyle(fontSize: 13, height: 1.4),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
+                                backgroundColor: const Color(0xFF10B981),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              const SizedBox(height: 10),
-                              const CommonText(
-                                'Remaining slots will be automatically reallocated around this break. Do you want to proceed?',
-                                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-                              ),
-                            ],
-                          ),
-                          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(confirmContext),
-                              child: const CommonText('Cancel', style: TextStyle(color: Colors.grey)),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.primaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              onPressed: () {
-                                Navigator.pop(confirmContext);
-                                slotBloc.add(
-                                  AddBreakTimeEvent(
-                                    fromTime: formatTime(fromTime),
-                                    toTime: formatTime(toTime),
-                                  ),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                                    backgroundColor: const Color(0xFF10B981),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                );
-                              },
-                              child: const CommonText('OK, Remove & Re-align', style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ],
+                            );
+                          },
+                          secondaryLabel: 'Cancel',
+                          onSecondary: () => Navigator.pop(confirmContext),
                         ),
                       );
                     } else {
@@ -822,39 +788,11 @@ class ParametersCard extends StatelessWidget {
   }
 
   void _showWarningDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (alertContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
-            const SizedBox(width: 10),
-            Expanded(
-              child: CommonText(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: CommonText(
-          message,
-          style: const TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () => Navigator.pop(alertContext),
-            child: const CommonText('OK', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    AppDialog.alert(
+      context,
+      title: title,
+      message: message,
+      tone: AppDialogTone.warning,
     );
   }
 
@@ -973,67 +911,32 @@ class ParametersCard extends StatelessWidget {
     if (overlappingSlots.isNotEmpty) {
       showDialog(
         context: context,
-        builder: (confirmContext) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
-              SizedBox(width: 10),
-              Expanded(
-                child: CommonText(
-                  'Remove Overlapping Slots?',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+        builder: (confirmContext) => AppDialog(
+          title: 'Remove Overlapping Slots?',
+          message:
+              'Break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).\n\nOverlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
+          tone: AppDialogTone.warning,
+          icon: Icons.auto_fix_high_rounded,
+          primaryLabel: 'Remove & Re-align',
+          onPrimary: () {
+            Navigator.pop(confirmContext);
+            context.read<SlotBloc>().add(
+              AddBreakTimeEvent(
+                fromTime: from,
+                toTime: to,
               ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CommonText(
-                'Break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).',
-                style: const TextStyle(fontSize: 13, height: 1.4),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const SizedBox(height: 10),
-              const CommonText(
-                'Overlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
-                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(confirmContext),
-              child: const CommonText('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pop(confirmContext);
-                context.read<SlotBloc>().add(
-                  AddBreakTimeEvent(
-                    fromTime: from,
-                    toTime: to,
-                  ),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Break added! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                    backgroundColor: const Color(0xFF10B981),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              },
-              child: const CommonText('OK, Remove & Re-align', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+            );
+          },
+          secondaryLabel: 'Cancel',
+          onSecondary: () => Navigator.pop(confirmContext),
         ),
       );
       return;
@@ -1111,68 +1014,33 @@ class ParametersCard extends StatelessWidget {
     if (overlappingSlots.isNotEmpty) {
       showDialog(
         context: context,
-        builder: (confirmContext) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.auto_fix_high_rounded, color: Colors.orangeAccent, size: 26),
-              SizedBox(width: 10),
-              Expanded(
-                child: CommonText(
-                  'Remove Overlapping Slots?',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+        builder: (confirmContext) => AppDialog(
+          title: 'Remove Overlapping Slots?',
+          message:
+              'Updated break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).\n\nOverlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
+          tone: AppDialogTone.warning,
+          icon: Icons.auto_fix_high_rounded,
+          primaryLabel: 'Remove & Re-align',
+          onPrimary: () {
+            Navigator.pop(confirmContext);
+            context.read<SlotBloc>().add(
+              UpdateBreakTimeEvent(
+                breakId: b.id,
+                fromTime: from,
+                toTime: to,
               ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CommonText(
-                'Updated break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).',
-                style: const TextStyle(fontSize: 13, height: 1.4),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Break updated! ${overlappingSlots.length} slot(s) removed & reallocated.'),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const SizedBox(height: 10),
-              const CommonText(
-                'Overlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
-                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(confirmContext),
-              child: const CommonText('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                Navigator.pop(confirmContext);
-                context.read<SlotBloc>().add(
-                  UpdateBreakTimeEvent(
-                    breakId: b.id,
-                    fromTime: from,
-                    toTime: to,
-                  ),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Break updated! ${overlappingSlots.length} slot(s) removed & reallocated.'),
-                    backgroundColor: const Color(0xFF10B981),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              },
-              child: const CommonText('OK, Remove & Re-align', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+            );
+          },
+          secondaryLabel: 'Cancel',
+          onSecondary: () => Navigator.pop(confirmContext),
         ),
       );
       return;

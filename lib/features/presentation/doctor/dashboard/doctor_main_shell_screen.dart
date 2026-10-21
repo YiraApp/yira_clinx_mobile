@@ -38,6 +38,11 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
         _onTabTapped(index);
       }
     });
+    sl<NavigationDrawerBloc>().add(const InitializeDrawerData());
+    sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+    sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+    sl<DashboardBloc>().add(const GetDashboardData());
+    sl<SlotBloc>().add(InitializeSlotsEvent());
   }
 
   void _onTabTapped(int index) {
@@ -64,19 +69,19 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<NavigationDrawerBloc>.value(
-          value: sl<NavigationDrawerBloc>()..add(const InitializeDrawerData()),
+          value: sl<NavigationDrawerBloc>(),
         ),
         BlocProvider<DoctorDashboardBloc>.value(
-          value: sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData()),
+          value: sl<DoctorDashboardBloc>(),
         ),
         BlocProvider<AppointmentBloc>.value(
-          value: sl<AppointmentBloc>()..add(LoadAppointmentsEvent()),
+          value: sl<AppointmentBloc>(),
         ),
         BlocProvider<DashboardBloc>.value(
-          value: sl<DashboardBloc>()..add(const GetDashboardData()),
+          value: sl<DashboardBloc>(),
         ),
         BlocProvider<SlotBloc>.value(
-          value: sl<SlotBloc>()..add(InitializeSlotsEvent()),
+          value: sl<SlotBloc>(),
         ),
       ],
       child: BlocListener<NavigationDrawerBloc, NavigationDrawerState>(

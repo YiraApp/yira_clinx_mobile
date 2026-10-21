@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
@@ -454,38 +455,12 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
   }
 
   void _showPastTimeAlert(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (alertContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 28),
-            SizedBox(width: 10),
-            Expanded(
-              child: CommonText(
-                'Past Time Selected',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: const CommonText(
+    AppDialog.alert(
+      context,
+      title: 'Past Time Selected',
+      message:
           'Cannot generate slots for past time. The selected date or working shift has already passed. Please select a future date or time range.',
-          style: TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () => Navigator.pop(alertContext),
-            child: const CommonText('OK', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      tone: AppDialogTone.warning,
     );
   }
 
@@ -716,6 +691,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 46),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
@@ -993,47 +969,12 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
   }
 
   void _showOverlapAlertDialog(BuildContext context, {required String title, required String message}) {
-    showDialog(
-      context: context,
-      builder: (alertContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orangeAccent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 22),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: CommonText(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: CommonText(
-          message,
-          style: const TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
-            ),
-            onPressed: () => Navigator.pop(alertContext),
-            child: const CommonText('OK, I will adjust', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    AppDialog.alert(
+      context,
+      title: title,
+      message: message,
+      tone: AppDialogTone.warning,
+      buttonLabel: 'OK, I will adjust',
     );
   }
 }

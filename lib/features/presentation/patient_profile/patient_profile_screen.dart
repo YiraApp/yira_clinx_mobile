@@ -13,6 +13,8 @@ import 'package:yiraclinics/features/presentation/patient_profile/patient_over_v
 import 'package:yiraclinics/features/presentation/patient_profile/patient_profile_bloc/patient_profile_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_header.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_access_gate.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_scope.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
@@ -22,6 +24,7 @@ import '../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'over_view/over_view_screen.dart';
+import '../doctor/diet/doctor_patient_diet_tab.dart';
 
 class DoctorPatientProfileScreen extends StatefulWidget {
   final String? patientId;
@@ -31,6 +34,8 @@ class DoctorPatientProfileScreen extends StatefulWidget {
   final String? patientName;
   final String? initialStatus;
   final int initialTabIndex;
+  /// Opens this tab by name (e.g. 'Diet'); wins over [initialTabIndex].
+  final String? initialTabName;
 
   const DoctorPatientProfileScreen({
     super.key,
@@ -41,6 +46,7 @@ class DoctorPatientProfileScreen extends StatefulWidget {
     this.patientName,
     this.initialStatus,
     this.initialTabIndex = 0,
+    this.initialTabName,
   });
 
   @override
@@ -64,6 +70,44 @@ class _DoctorPatientProfileScreenState
 
   late final List<String> _tabs;
 
+  /// Record tabs the doctor switched to "Full history".
+  final Set<String> _fullHistoryTabs = {};
+
+  /// A record tab for a doctor: this visit's records, or the patient's full
+  /// history across hospitals once the patient has given consent. Patients
+  /// looking at their own profile just see their records.
+  Widget _scoped(
+    String tabName,
+    PatientProfileEntity patient,
+    DoctorAccessStatusLoaded? accessStatus, {
+    required String recordType,
+    required Widget Function(bool fullHistory) build,
+  }) {
+    if (_isPatient()) return build(false);
+    final hasAccess = accessStatus?.hasAccess ?? false;
+    return PatientRecordScopeTab(
+      showHistory: _fullHistoryTabs.contains(tabName),
+      onChanged: (full) => setState(() => full ? _fullHistoryTabs.add(tabName) : _fullHistoryTabs.remove(tabName)),
+      visitLabel: widget.appointmentId != null ? 'This visit' : 'This hospital',
+      hasAccess: hasAccess,
+      accessStatus: accessStatus,
+      visit: () => build(false),
+      history: () => hasAccess
+          ? build(true)
+          : PatientRecordAccessGate(
+              key: ValueKey('${tabName}ConsentGate'),
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              appointmentId: widget.appointmentId,
+              hospitalId: int.tryParse(widget.hospitalId ?? ''),
+              orgId: widget.orgId,
+              consentBloc: _consentBloc,
+              accessStatus: accessStatus,
+              recordType: recordType,
+            ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,12 +123,14 @@ class _DoctorPatientProfileScreenState
             'Info',
             'Appointments',
             'Medical Record',
-            'Prescription',
+            'Prescribe',
+            'Diet',
             'Notes',
             'Documents',
           ];
 
-    final safeInitialTab = widget.initialTabIndex.clamp(0, _tabs.length - 1);
+    final namedTab = widget.initialTabName == null ? -1 : _tabs.indexOf(widget.initialTabName!);
+    final safeInitialTab = namedTab != -1 ? namedTab : widget.initialTabIndex.clamp(0, _tabs.length - 1);
     _pageController = PageController(initialPage: safeInitialTab);
 
     final currentDoctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
@@ -297,56 +343,97 @@ class _DoctorPatientProfileScreenState
           ),
         );
       case 'Medical Record':
-        // Medical Record Tab (Direct access for doctor consultations)
-        return BlocProvider<MedicalHistoryBloc>(
-          create: (_) => sl<MedicalHistoryBloc>(),
-          child: MedicalRecordsListScreen(
-            key: const ValueKey('MedicalRecordsTabFrame'),
-            patient: patient,
-            patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
-            hospitalId: widget.hospitalId,
-            orgId: widget.orgId,
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Medical Records & Clinical Findings',
+          build: (full) => BlocProvider<MedicalHistoryBloc>(
+            key: ValueKey('MedicalRecordsTabFrame$full'),
+            create: (_) => sl<MedicalHistoryBloc>(),
+            child: MedicalRecordsListScreen(
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              appointmentId: full ? null : widget.appointmentId,
+              hospitalId: full ? null : widget.hospitalId,
+              orgId: full ? null : widget.orgId,
+              allowAdd: !full,
+            ),
           ),
         );
       case 'Prescription':
       case 'Prescribe':
-        // Prescription Tab (Direct access for doctor to write & manage prescriptions)
-        return BlocProvider<PrescriptionBloc>(
-          create: (_) => sl<PrescriptionBloc>()
-            ..add(LoadPrescriptionData(
-              patientId: widget.patientId ?? patient.id,
-              appointmentId: widget.appointmentId,
-              hospitalId: widget.hospitalId,
-              orgId: widget.orgId,
-            )),
-          child: PrescriptionListScreen(
-            key: const ValueKey('PrescriptionTabFrame'),
-            patient: patient,
-            appointmentId: widget.appointmentId,
-            hospitalId: widget.hospitalId,
-            orgId: widget.orgId,
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Prescriptions & Medication History',
+          build: (full) => BlocProvider<PrescriptionBloc>(
+            key: ValueKey('PrescriptionTabFrame$full'),
+            create: (_) => sl<PrescriptionBloc>()
+              ..add(LoadPrescriptionData(
+                patientId: widget.patientId ?? patient.id,
+                appointmentId: full ? null : widget.appointmentId,
+                hospitalId: full ? null : widget.hospitalId,
+                orgId: full ? null : widget.orgId,
+              )),
+            child: PrescriptionListScreen(
+              patient: patient,
+              appointmentId: full ? null : widget.appointmentId,
+              hospitalId: full ? null : widget.hospitalId,
+              orgId: full ? null : widget.orgId,
+              allowAdd: !full,
+            ),
           ),
         );
       case 'Notes':
-        // Notes Tab (Direct access for doctor to record clinical notes)
-        return ClinicalNotesScreen(
-          key: const ValueKey('NotesTabFrame'),
-          patientId: widget.patientId ?? patient.id,
-          appointmentId: widget.appointmentId,
-          hospitalId: widget.hospitalId,
-          orgId: widget.orgId,
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Clinical Consultation Notes',
+          build: (full) => ClinicalNotesScreen(
+            key: ValueKey('NotesTabFrame$full'),
+            patientId: widget.patientId ?? patient.id,
+            appointmentId: full ? null : widget.appointmentId,
+            hospitalId: full ? null : widget.hospitalId,
+            orgId: full ? null : widget.orgId,
+            allowAdd: !full,
+          ),
         );
       case 'Documents':
-        // Documents Tab (Direct access for doctor to view & upload lab reports and docs)
-        return BlocProvider<UploadedBloc>(
-          create: (_) => sl<UploadedBloc>(),
-          child: UploadedRecordsScreen(
-            key: const ValueKey('DocumentsTabFrame'),
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Documents & Clinical Reports',
+          build: (full) => BlocProvider<UploadedBloc>(
+            key: ValueKey('DocumentsTabFrame$full'),
+            create: (_) => sl<UploadedBloc>(),
+            child: UploadedRecordsScreen(
+              patientId: widget.patientId ?? patient.id,
+              appointmentId: full ? null : widget.appointmentId,
+              hospitalId: full ? null : widget.hospitalId,
+              orgId: full ? null : widget.orgId,
+              allowAdd: !full,
+            ),
+          ),
+        );
+      case 'Diet':
+        // Diet Tab (Plans prescribed to this patient, and prescribing a new one)
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Diet Plans',
+          build: (full) => DoctorPatientDietTab(
+            key: ValueKey('DietTabFrame$full'),
             patientId: widget.patientId ?? patient.id,
-            appointmentId: widget.appointmentId,
-            hospitalId: widget.hospitalId,
+            patientName: widget.patientName ?? patient.name,
             orgId: widget.orgId,
+            hospitalId: widget.hospitalId,
+            appointmentId: widget.appointmentId,
+            fullHistory: full,
           ),
         );
       default:

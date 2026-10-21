@@ -199,7 +199,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? darkModeCardColor : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Column(

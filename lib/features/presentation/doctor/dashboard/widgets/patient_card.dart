@@ -138,60 +138,42 @@ class PatientCard extends StatelessWidget {
 
             // Row 2: Meta items (Visits + Last Visit + Allergy) + Right Chevron Action
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Visits
-                _buildMetaChip(
-                  icon: Icons.history_rounded,
-                  label: "${patient.visits} ${patient.visits == 1 ? 'visit' : 'visits'}",
-                  isDark: isDark,
-                  isTab: isTab,
-                ),
-                const SizedBox(width: 6),
-
-                // Last visit
-                if (patient.lastVisit.isNotEmpty) ...[
-                  _buildMetaChip(
-                    icon: Icons.calendar_today_outlined,
-                    label: patient.lastVisit,
-                    isDark: isDark,
-                    isTab: isTab,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-
-                // Allergy alert (if present)
-                if (patient.allergy.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.15 : 0.08),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      // Visits
+                      _buildMetaChip(
+                        icon: Icons.history_rounded,
+                        label: "${patient.visits} ${patient.visits == 1 ? 'visit' : 'visits'}",
+                        isDark: isDark,
+                        isTab: isTab,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.warning_amber_rounded, size: 11, color: Color(0xFFEF4444)),
-                        const SizedBox(width: 3),
-                        Text(
-                          patient.allergy,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 11 : 10,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFFEF4444),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
 
-                const Spacer(),
+                      // Last visit
+                      if (patient.lastVisit.isNotEmpty)
+                        _buildMetaChip(
+                          icon: Icons.calendar_today_outlined,
+                          label: patient.lastVisit,
+                          isDark: isDark,
+                          isTab: isTab,
+                        ),
+
+                      // Allergy alert (if present)
+                      if (patient.allergy.isNotEmpty)
+                        _buildAllergyChip(
+                          allergy: patient.allergy,
+                          isDark: isDark,
+                          isTab: isTab,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
 
                 // Action Chevron Indicator
                 Container(
@@ -206,8 +188,8 @@ class PatientCard extends StatelessWidget {
                     color: isDark ? Colors.white54 : const Color(0xFF64748B),
                   ),
                 ),
-                ],
-              ),
+              ],
+            ),
             ],
           ),
         ),
@@ -268,6 +250,7 @@ class PatientCard extends StatelessWidget {
     required bool isTab,
   }) {
     return Container(
+      constraints: BoxConstraints(maxWidth: isTab ? 220 : 160),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
@@ -282,13 +265,55 @@ class PatientCard extends StatelessWidget {
             color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
           ),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab ? 11.5 : 10.5,
-              fontWeight: FontWeight.w500,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: isTab ? 11.5 : 10.5,
+                fontWeight: FontWeight.w500,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllergyChip({
+    required String allergy,
+    required bool isDark,
+    required bool isTab,
+  }) {
+    return Container(
+      constraints: BoxConstraints(maxWidth: isTab ? 260 : 180),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEF4444).withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.warning_amber_rounded, size: 11, color: Color(0xFFEF4444)),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              allergy,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                fontSize: isTab ? 11 : 10,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFEF4444),
+              ),
             ),
           ),
         ],

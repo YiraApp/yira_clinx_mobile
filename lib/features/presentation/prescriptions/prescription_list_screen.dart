@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
@@ -57,7 +58,7 @@ class PrescriptionListScreen extends StatelessWidget {
               builder: (_) => FractionallySizedBox(
                 heightFactor: 0.9,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   child: AddPrescriptionRecordScreen(
                     patient: patient,
                     patientId: effectivePatientId,
@@ -258,107 +259,22 @@ class PrescriptionListScreen extends StatelessWidget {
   }
 
   void _confirmDeletePrescription(BuildContext context, List<MedicationItem> meds) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: 8,
-        backgroundColor: isDark ? darkModeCardColor : Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.delete_forever_rounded,
-                  color: Colors.redAccent,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 18),
-              CommonText(
-                "Delete Prescription?",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 10),
-              CommonText(
-                "Are you sure you want to delete this prescription? This action is permanent and cannot be undone.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () => Navigator.pop(dialogContext),
-                      child: CommonText(
-                        "Cancel",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(dialogContext);
-                        for (final med in meds) {
-                          context.read<PrescriptionBloc>().add(RemoveMedication(med.id));
-                        }
-                      },
-                      child: CommonText(
-                        "Delete",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogContext) => AppDialog(
+        title: "Delete Prescription?",
+        message: "Are you sure you want to delete this prescription? This action is permanent and cannot be undone.",
+        tone: AppDialogTone.danger,
+        icon: Icons.delete_forever_rounded,
+        primaryLabel: "Delete",
+        onPrimary: () {
+          Navigator.pop(dialogContext);
+          for (final med in meds) {
+            context.read<PrescriptionBloc>().add(RemoveMedication(med.id));
+          }
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogContext),
       ),
     );
   }

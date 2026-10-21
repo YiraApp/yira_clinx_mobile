@@ -1,11 +1,12 @@
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/convert_tablet_sheet.dart';
 import '../../../di/dependency_injection.dart';
@@ -17,17 +18,22 @@ class PrescriptionDetailScreen extends StatelessWidget {
   final String prescriptionId;
   final Map<String, dynamic>? initialData;
 
+  /// For tests: a ready bloc, so nothing is loaded from the API.
+  @visibleForTesting
+  final MedicationBloc? bloc;
+
   const PrescriptionDetailScreen({
     super.key,
     required this.prescriptionId,
     this.initialData,
+    this.bloc,
   });
 
   String _formatDate(String raw) {
     if (raw.trim().isEmpty) return 'Recent Appointment';
     try {
       final dt = DateTime.parse(raw.trim());
-      return DateFormat('dd MMM yyyy').format(dt);
+      return DateFormat('d MMM yyyy').format(dt);
     } catch (_) {
       return raw.trim();
     }
@@ -77,446 +83,332 @@ class PrescriptionDetailScreen extends StatelessWidget {
     return text;
   }
 
+  static const Color _green = Color(0xFF10B981);
+  static const Color _violet = Color(0xFF8B5CF6);
+
+  bool _hasPdf(Map<String, dynamic>? data) {
+    final url = data?['pdfUrl']?.toString().trim() ?? '';
+    return url.isNotEmpty && url.toLowerCase() != 'null';
+  }
+
+  void _openPdf(BuildContext context, Map<String, dynamic> data) {
+    final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+    final url = data['pdfUrl'].toString().trim();
+    InAppDocumentViewer.show(
+      context,
+      title: '${_cleanDoctorName((data['doctor'] ?? 'Doctor').toString())} - Prescription',
+      category: 'Prescription',
+      fileUrl: url.startsWith('http') ? url : '$baseUrl$url',
+      hospitalName: 'Prescription Document',
+      isAppointmentDoc: true,
+    );
+  }
+
+  /// "After Food" and similar, when the instructions mention it.
+  String _mealTag(String instructions) {
+    final lower = instructions.toLowerCase();
+    if (lower.contains('after food') || lower.contains('after meal')) return 'After Food';
+    if (lower.contains('before food') || lower.contains('before meal')) return 'Before Food';
+    if (lower.contains('with food') || lower.contains('with meal')) return 'With Food';
+    if (lower.contains('empty stomach')) return 'Empty Stomach';
+    if (lower.contains('bedtime') || lower.contains('at night')) return 'At Bedtime';
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final scaffold = BlocBuilder<MedicationBloc, MedicationState>(
+      builder: (context, state) {
+        final data = state.selectedPrescriptionDetail ?? initialData;
+        final subtitle = data == null
+            ? null
+            : [
+                _cleanDoctorName((data['doctor'] ?? '').toString()),
+                _formatDate((data['date'] ?? '').toString()),
+              ].join(' · ');
+
+        return Scaffold(
+          backgroundColor: DietUi.background(isDark),
+          appBar: DietUi.appBar(
+            context,
+            isDark,
+            title: 'Prescription',
+            subtitle: subtitle,
+            actions: [
+              if (_hasPdf(data))
+                DietUi.actionIcon(
+                  Icons.picture_as_pdf_rounded,
+                  isDark,
+                  () => _openPdf(context, data!),
+                  tooltip: 'View prescription PDF',
+                ),
+              if (data != null && data['isSelf'] == true)
+                DietUi.actionIcon(
+                  Icons.delete_outline_rounded,
+                  isDark,
+                  () => _confirmDeletePrescription(context, data),
+                  tooltip: 'Remove prescription',
+                ),
+            ],
+          ),
+          body: _buildBody(context, state, data, isDark),
+        );
+      },
+    );
+
+    if (bloc != null) return BlocProvider.value(value: bloc!, child: scaffold);
     return BlocProvider(
       create: (context) => sl<MedicationBloc>()..add(LoadPrescriptionDetails(prescriptionId)),
-      child: Scaffold(
-        backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            "Prescription Details",
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-          actions: [
-            BlocBuilder<MedicationBloc, MedicationState>(
-              builder: (context, state) {
-                final data = state.selectedPrescriptionDetail ?? initialData;
-                final customPdf = data?['pdfUrl']?.toString();
-                final bool hasPdf = customPdf != null &&
-                    customPdf.trim().isNotEmpty &&
-                    customPdf.trim().toLowerCase() != 'null';
-                if (!hasPdf) {
-                  return const SizedBox.shrink();
-                }
-                final docName = _cleanDoctorName(data?['doctor'] ?? 'Doctor');
-                return IconButton(
-                  tooltip: "View Full Prescription PDF",
-                  icon: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF059669)),
-                  onPressed: () {
-                    final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
-                    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                    final effectivePdfUrl = customPdf.startsWith('http') ? customPdf : '$baseUrl$customPdf';
+      child: scaffold,
+    );
+  }
 
-                    InAppDocumentViewer.show(
-                      context,
-                      title: '$docName - Prescription',
-                      category: 'Prescription',
-                      fileUrl: effectivePdfUrl,
-                      hospitalName: 'Prescription Document',
-                      isAppointmentDoc: true,
-                    );
-                  },
-                );
-              },
+  Widget _buildBody(BuildContext context, MedicationState state, Map<String, dynamic>? data, bool isDark) {
+    if (data == null && (state.status == MedicationStatus.loading || state.status == MedicationStatus.initial)) {
+      Widget block(double h) => Container(
+            height: h,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: DietUi.card(isDark),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: DietUi.line(isDark)),
             ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: BlocBuilder<MedicationBloc, MedicationState>(
-          builder: (context, state) {
-            final data = state.selectedPrescriptionDetail ?? initialData;
+          );
+      return ListView(padding: const EdgeInsets.all(16), children: [block(200), block(160), block(160)]);
+    }
 
-            if (data == null && (state.status == MedicationStatus.loading || state.status == MedicationStatus.initial)) {
-              return const Center(child: CircularProgressIndicator.adaptive());
-            }
-
-            if (data == null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.description_outlined,
-                      size: 54,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Prescription details not found",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : Colors.grey.shade700,
-                      ),
-                    ),
-                  ],
+    if (data == null) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: DietUi.cardDecoration(isDark),
+            child: Column(
+              children: [
+                DietUi.iconBadge(Icons.description_outlined, DietUi.slate, isDark, size: 60, iconSize: 28),
+                const SizedBox(height: 14),
+                Text('Prescription not found', style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark))),
+                const SizedBox(height: 6),
+                Text(
+                  'It may have been removed. Go back and pull down to refresh your prescriptions.',
+                  textAlign: TextAlign.center,
+                  style: DietUi.text(12.5, FontWeight.w400, DietUi.muted(isDark), height: 1.45),
                 ),
-              );
-            }
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
-            final List medications = data['medications'] as List? ?? [];
+    final medications = (data['medications'] as List? ?? []).map((m) => Map<String, dynamic>.from(m as Map)).toList();
+    final notes = (data['notes'] ?? '').toString().trim();
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Unified Prescription Overview Card ──
-                  _buildPrescriptionOverviewCard(context, data, isDark),
+    return ValueListenableBuilder<List<MedicationReminder>>(
+      valueListenable: MedicationReminderService.instance.remindersNotifier,
+      builder: (context, _, _) {
+        final withReminder = medications
+            .where((m) => MedicationReminderService.instance.isMedicineConverted(prescriptionId, (m['name'] ?? '').toString()))
+            .length;
 
-                  const SizedBox(height: 18),
-
-                  // ── Prescribed Medicines (Exclusively shown here with 3D Pill Icon) ──
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/dashboard_icons/pill_prescriptions_thick.png',
-                        width: 26,
-                        height: 26,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.medication_rounded,
-                          color: primaryColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Prescribed Medicines (${medications.length})",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  if (medications.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E2430) : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "No medications listed for this prescription.",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...medications.map((med) => _buildMedicationCard(
-                          context,
-                          Map<String, dynamic>.from(med),
-                          isDark,
-                          doctorName: _cleanDoctorName((data['doctor'] ?? '').toString()),
-                          doctorPhoto: (data['doctorPhoto'] ?? '').toString(),
-                          condition: (data['condition'] ?? '').toString(),
-                        )),
-
-                  const SizedBox(height: 14),
-
-                  // ── Doctor Notes & Advice ──
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.speaker_notes_outlined,
-                        color: primaryColor,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Physician Advice & Notes",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  _buildNotesBox(context, (data['notes'] ?? 'Follow-up as advised. Take medicines as prescribed.').toString(), isDark),
-
-                  // ── Full Prescription PDF Button ──
-                  if (data['pdfUrl'] != null &&
-                      data['pdfUrl'].toString().trim().isNotEmpty &&
-                      data['pdfUrl'].toString().trim().toLowerCase() != 'null') ...[
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF059669),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                        label: const Text(
-                          "View Full Prescription (PDF)",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                        onPressed: () {
-                          final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
-                          final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                          final pUrl = data['pdfUrl'].toString().trim();
-                          final effectivePdfUrl = pUrl.startsWith('http') ? pUrl : '$baseUrl$pUrl';
-
-                          InAppDocumentViewer.show(
-                            context,
-                            title: 'Digital Prescription',
-                            category: 'Prescription',
-                            fileUrl: effectivePdfUrl,
-                            hospitalName: 'Yira Super Speciality Hospitals',
-                            isAppointmentDoc: true,
-                          );
-                        },
-                      ),
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
+            _buildOverviewCard(data, medications.length, withReminder, isDark),
+            const SizedBox(height: 20),
+            DietUi.sectionLabel(
+              'MEDICINES · ${medications.length}',
+              isDark,
+              trailing: medications.isEmpty
+                  ? null
+                  : Text(
+                      '$withReminder with reminders',
+                      style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
                     ),
-                  ],
+            ),
+            if (medications.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: DietUi.cardDecoration(isDark),
+                child: Text(
+                  'No medicines are listed on this prescription.',
+                  style: DietUi.text(12.5, FontWeight.w500, DietUi.muted(isDark)),
+                ),
+              )
+            else
+              for (final med in medications)
+                _buildMedicationCard(
+                  context,
+                  med,
+                  isDark,
+                  doctorName: _cleanDoctorName((data['doctor'] ?? '').toString()),
+                  doctorPhoto: (data['doctorPhoto'] ?? '').toString(),
+                  condition: (data['condition'] ?? '').toString(),
+                ),
+            if (notes.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _buildNotesCard(notes, isDark),
+            ],
+            if (_hasPdf(data)) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => _openPdf(context, data),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF059669),
+                    side: const BorderSide(color: Color(0xFF059669)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                  label: Text('View full prescription (PDF)', style: DietUi.text(13, FontWeight.w600, const Color(0xFF059669))),
+                ),
+              ),
+            ],
+            if (data['isSelf'] == true) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmDeletePrescription(context, data),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  label: Text('Remove this prescription', style: DietUi.text(13, FontWeight.w600, const Color(0xFFEF4444))),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
 
-                  const SizedBox(height: 30),
-                ],
+  void _confirmDeletePrescription(BuildContext context, Map<String, dynamic> data) {
+    final title = (data['title'] ?? data['condition'] ?? 'Prescription').toString();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AppDialog(
+        title: "Remove Prescription?",
+        message: "Are you sure you want to remove \"$title\"? This will permanently delete the prescription and any reminders created from it.",
+        tone: AppDialogTone.danger,
+        icon: Icons.delete_forever_rounded,
+        primaryLabel: "Remove",
+        onPrimary: () async {
+          Navigator.pop(dialogContext);
+          final activeBloc = bloc ?? context.read<MedicationBloc>();
+          final success = await activeBloc.deletePrescription(prescriptionId);
+          if (context.mounted && success) {
+            Navigator.pop(context, true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Prescription removed successfully'),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Color(0xFF0F766E),
               ),
             );
-          },
-        ),
+          }
+        },
+        secondaryLabel: "Cancel",
+        onSecondary: () => Navigator.pop(dialogContext),
       ),
     );
   }
 
-  Widget _buildPrescriptionOverviewCard(BuildContext context, Map<String, dynamic> data, bool isDark) {
-    final String rawDoc = (data['doctor'] ?? 'Consulting Doctor').toString();
-    final String rawSpecialty = (data['specialty'] ?? 'General Medicine').toString();
-    final String date = (data['date'] ?? 'Recent').toString();
-    final String pharmacy = (data['pharmacy'] ?? 'Yira Clinx E-Pharmacy').toString();
-    final String condition = (data['condition'] ?? 'General Consultation').toString();
+  Widget _buildOverviewCard(Map<String, dynamic> data, int medicineCount, int withReminder, bool isDark) {
+    final rawDoc = (data['doctor'] ?? 'Consulting Doctor').toString();
+    final docName = _cleanDoctorName(rawDoc);
+    final specialty = _cleanSpecialty((data['specialty'] ?? '').toString(), rawDoc);
+    final condition = (data['condition'] ?? 'General Consultation').toString();
+    final date = _formatDate((data['date'] ?? '').toString());
 
-    final String docName = _cleanDoctorName(rawDoc);
-    final String specialty = _cleanSpecialty(rawSpecialty, rawDoc);
+    Widget tile(IconData icon, Color color, String label, String value) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: DietUi.sunken(isDark),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: DietUi.line(isDark)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 5),
+                  Text(label, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: DietUi.text(13, FontWeight.w700, DietUi.strong(isDark), height: 1.3),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: DietUi.cardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Doctor Profile row with Digital Rx badge
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DoctorAvatarWidget(
-                photoUrl: (data['doctorPhoto'] ?? '').toString(),
-                doctorName: docName,
-                size: 46,
-              ),
+              DoctorAvatarWidget(photoUrl: (data['doctorPhoto'] ?? '').toString(), doctorName: docName, size: 50),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      docName,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      specialty,
-                      style: const TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 12,
-                        color: primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text(docName, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark))),
+                    Text(specialty, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(12, FontWeight.w500, primaryColor)),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    width: 0.8,
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified_rounded, size: 12, color: primaryColor),
-                    SizedBox(width: 4),
-                    Text(
-                      "Digital Rx",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              if (data['isSelf'] == true)
+                DietUi.pill('Self Added', const Color(0xFF6366F1), isDark, icon: Icons.person_rounded)
+              else
+                DietUi.pill('Digital Rx', primaryColor, isDark, icon: Icons.verified_rounded),
             ],
           ),
-
-          const SizedBox(height: 12),
-          Divider(color: isDark ? Colors.white10 : const Color(0xFFF1F5F9), height: 1),
-          const SizedBox(height: 10),
-
-          // Metadata Grid: Diagnosis & Appointment Taken
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
+          const SizedBox(height: 14),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.healing_rounded, size: 14, color: primaryColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Diagnosis: ",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        condition,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.event_available_rounded, size: 14, color: isDark ? Colors.white54 : const Color(0xFF0EA5E9)),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Appointment Taken: ",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        _formatDate(date),
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                tile(Icons.healing_rounded, primaryColor, 'Diagnosis', condition),
+                const SizedBox(width: 10),
+                tile(Icons.event_available_rounded, const Color(0xFF0EA5E9), 'Prescribed on', date),
               ],
             ),
           ),
-
-          const SizedBox(height: 8),
-
-          // Pharmacy & Facility info
+          const SizedBox(height: 12),
           Row(
             children: [
-              Icon(
-                Icons.local_pharmacy_outlined,
-                size: 13,
-                color: isDark ? Colors.white38 : Colors.grey.shade500,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                "Pharmacy: ",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11,
-                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                ),
-              ),
-              Text(
-                pharmacy,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+              Icon(Icons.medication_outlined, size: 15, color: DietUi.hint(isDark)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '$medicineCount medicine${medicineCount == 1 ? '' : 's'} · $withReminder reminder${withReminder == 1 ? '' : 's'} on',
+                  style: DietUi.text(12, FontWeight.w500, DietUi.muted(isDark)),
                 ),
               ),
             ],
@@ -534,413 +426,164 @@ class PrescriptionDetailScreen extends StatelessWidget {
     String? doctorPhoto,
     String? condition,
   }) {
-    final String name = (med['name'] ?? 'Medication').toString();
-    final String rawDosage = (med['dosage'] ?? '').toString();
-    final String freq = (med['frequency'] ?? '').toString();
-    final String instructions = (med['instructions'] ?? 'Take as directed by doctor').toString();
-    final String scheduleText = _cleanSchedule(rawDosage, freq);
-
-    // Extract meal timing if mentioned
-    String mealTag = '';
-    final lowerInst = instructions.toLowerCase();
-    if (lowerInst.contains('after food') || lowerInst.contains('after meal')) {
-      mealTag = 'After Food';
-    } else if (lowerInst.contains('before food') || lowerInst.contains('before meal')) {
-      mealTag = 'Before Food';
-    } else if (lowerInst.contains('with food') || lowerInst.contains('with meal')) {
-      mealTag = 'With Food';
-    } else if (lowerInst.contains('empty stomach')) {
-      mealTag = 'Empty Stomach';
-    } else if (lowerInst.contains('bedtime') || lowerInst.contains('at night')) {
-      mealTag = 'At Bedtime';
-    }
-
-    final bool showCustomInstructions = instructions.isNotEmpty &&
+    final name = (med['name'] ?? 'Medication').toString();
+    final freq = (med['frequency'] ?? '').toString();
+    final instructions = (med['instructions'] ?? 'Take as directed by doctor').toString();
+    final duration = (med['duration'] ?? '').toString().trim();
+    final scheduleText = _cleanSchedule((med['dosage'] ?? '').toString(), freq);
+    final mealTag = _mealTag(instructions);
+    final showInstructions = instructions.isNotEmpty &&
         instructions.toLowerCase() != 'take as directed by doctor' &&
-        (mealTag.isEmpty || instructions.toLowerCase().trim() != mealTag.toLowerCase());
+        instructions.toLowerCase().trim() != mealTag.toLowerCase();
+
+    final reminder = MedicationReminderService.instance.getReminderForMedicine(prescriptionId, name);
+    final isOn = MedicationReminderService.instance.isMedicineConverted(prescriptionId, name);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF2A3447) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : const Color(0xFF64748B).withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: DietUi.cardDecoration(isDark, borderColor: isOn ? _green.withValues(alpha: 0.4) : null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Medicine Header: 3D Pill Icon + Name & Status ──
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.16 : 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.18),
-                    width: 1,
-                  ),
-                ),
-                child: Image.asset(
-                  'assets/images/dashboard_icons/pill_prescriptions_thick.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.medication_rounded,
-                    color: primaryColor,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      "Prescribed Medication",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                    DietUi.iconBadge(Icons.medication_rounded, primaryColor, isDark, size: 42),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25)),
+                          if (duration.isNotEmpty)
+                            Text('For $duration', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Administration Schedule & Timing Badges ──
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
-                    const Icon(Icons.access_time_filled_rounded, size: 12, color: primaryColor),
-                    const SizedBox(width: 4.5),
-                    Text(
-                      scheduleText,
-                      style: const TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
+                    DietUi.pill(scheduleText, primaryColor, isDark, icon: Icons.access_time_filled_rounded),
+                    if (mealTag.isNotEmpty) DietUi.pill(mealTag, _violet, isDark, icon: Icons.restaurant_rounded),
                   ],
                 ),
-              ),
-              if (mealTag.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.2 : 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
-                      width: 0.8,
+                if (showInstructions) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: DietUi.sunken(isDark),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: DietUi.line(isDark)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 1),
+                          child: Icon(Icons.info_outline_rounded, size: 15, color: _green),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(instructions, style: DietUi.text(12, FontWeight.w400, DietUi.body(isDark), height: 1.4)),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.restaurant_rounded, size: 12, color: Color(0xFF8B5CF6)),
-                      const SizedBox(width: 4.5),
-                      Text(
-                        mealTag,
-                        style: const TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF8B5CF6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+                ],
+              ],
+            ),
           ),
 
-          if (showCustomInstructions) ...[
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF151C28) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? Colors.white10 : const Color(0xFFEEF2F6),
-                  width: 0.8,
-                ),
-              ),
+          // Reminder for this medicine
+          Divider(height: 1, color: DietUi.line(isDark)),
+          if (isOn)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF10B981)),
-                  ),
+                  const Icon(Icons.notifications_active_rounded, size: 17, color: _green),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      instructions,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
-                        height: 1.35,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Daily reminder on', style: DietUi.text(12.5, FontWeight.w700, _green)),
+                        if (reminder != null && reminder.times.isNotEmpty)
+                          Text(
+                            reminder.times.join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
+                          ),
+                      ],
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () => _confirmStopReminder(context, reminder, name),
+                    style: TextButton.styleFrom(foregroundColor: DietUi.red, visualDensity: VisualDensity.compact),
+                    child: Text('Turn off', style: DietUi.text(12, FontWeight.w700, DietUi.red)),
                   ),
                 ],
               ),
-            ),
-          ],
-
-          if (doctorName != null && doctorName.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDark ? Colors.white10 : const Color(0xFFEDF2F7),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                children: [
-                  DoctorAvatarWidget(
-                    photoUrl: doctorPhoto,
-                    doctorName: doctorName,
-                    size: 20,
-                    borderRadius: 6,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Prescribed by $doctorName",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF334155),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // ── Convert to Medication reminder button / status badge ──
-          ValueListenableBuilder<List<MedicationReminder>>(
-            valueListenable: MedicationReminderService.instance.remindersNotifier,
-            builder: (context, reminders, _) {
-              final isConverted = MedicationReminderService.instance.isMedicineConverted(prescriptionId, name);
-              final activeReminder = MedicationReminderService.instance.getReminderForMedicine(prescriptionId, name);
-
-              if (isConverted) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.16 : 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                      width: 0.9,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      const Icon(Icons.alarm_on_rounded, size: 16, color: Color(0xFF10B981)),
-                      const SizedBox(width: 6),
-                      const Expanded(
-                        child: Text(
-                          "Daily Alarm Active",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF10B981),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => _confirmStopReminder(context, activeReminder, name),
-                        borderRadius: BorderRadius.circular(7),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent.withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(7),
-                            border: Border.all(
-                              color: Colors.redAccent.withValues(alpha: 0.4),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.alarm_off_rounded, size: 13, color: Colors.redAccent),
-                              SizedBox(width: 4),
-                              Text(
-                                "Stop Alarm",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return SizedBox(
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SizedBox(
                 width: double.infinity,
-                height: 40,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    ConvertTabletSheet.show(
-                      context,
-                      medicineName: name,
-                      dosage: scheduleText,
-                      initialInstructions: instructions,
-                      prescriptionId: prescriptionId,
-                      doctorName: doctorName,
-                      doctorPhoto: doctorPhoto,
-                      condition: condition,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
+                height: 42,
+                child: OutlinedButton.icon(
+                  onPressed: () => ConvertTabletSheet.show(
+                    context,
+                    medicineName: name,
+                    dosage: scheduleText,
+                    initialInstructions: instructions,
+                    prescriptionId: prescriptionId,
+                    doctorName: doctorName,
+                    doctorPhoto: doctorPhoto,
+                    condition: condition,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  icon: const Icon(Icons.add_alarm_rounded, size: 16),
-                  label: const Text(
-                    "Set Daily Medication Alarm",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  icon: const Icon(Icons.add_alert_rounded, size: 17),
+                  label: Text('Set daily reminder', style: DietUi.text(12.5, FontWeight.w600, primaryColor)),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildNotesBox(BuildContext context, String notes, bool isDark) {
+  Widget _buildNotesCard(String notes, bool isDark) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E2430) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-        ),
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: DietUi.cardDecoration(isDark),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.notes_rounded, size: 16, color: primaryColor),
-              const SizedBox(width: 6),
-              Text(
-                "Doctor's Advice & Instructions",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
+              DietUi.iconBadge(Icons.speaker_notes_outlined, primaryColor, isDark, size: 32, iconSize: 17),
+              const SizedBox(width: 10),
+              Text("Doctor's advice", style: DietUi.text(14, FontWeight.w700, DietUi.strong(isDark))),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            notes,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 12.5,
-              height: 1.5,
-              color: isDark ? Colors.white70 : const Color(0xFF334155),
-            ),
-          ),
+          const SizedBox(height: 10),
+          Text(notes, style: DietUi.text(12.5, FontWeight.w400, DietUi.body(isDark), height: 1.5)),
         ],
       ),
     );
@@ -950,60 +593,30 @@ class PrescriptionDetailScreen extends StatelessWidget {
     HapticFeedback.selectionClick();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.alarm_off_rounded, color: Colors.redAccent, size: 22),
-            SizedBox(width: 8),
-            Text(
-              "Stop Alarm?",
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-        content: Text(
-          "Are you sure you want to stop the daily medication alarm for $medicineName?",
-          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              "Keep Active",
-              style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              if (reminder != null) {
-                await MedicationReminderService.instance.deleteReminder(reminder.id);
-              } else {
-                await MedicationReminderService.instance.deleteMedicineReminder(prescriptionId, medicineName);
-              }
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Alarm reminder stopped for $medicineName"),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: const Color(0xFF334155),
-                  ),
-                );
-              }
-            },
-            child: const Text(
-              "Stop Alarm",
-              style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
+      builder: (ctx) => AppDialog(
+        title: 'Turn off reminder?',
+        message: 'You will no longer get daily reminders for $medicineName.',
+        tone: AppDialogTone.danger,
+        icon: Icons.notifications_off_rounded,
+        primaryLabel: 'Turn off',
+        onPrimary: () async {
+          Navigator.pop(ctx);
+          if (reminder != null) {
+            await MedicationReminderService.instance.deleteReminder(reminder.id);
+          } else {
+            await MedicationReminderService.instance.deleteMedicineReminder(prescriptionId, medicineName);
+          }
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Reminder turned off for $medicineName'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        secondaryLabel: 'Keep',
+        onSecondary: () => Navigator.pop(ctx),
       ),
     );
   }

@@ -4218,7 +4218,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+                  top: Radius.circular(24),
                 ),
               ),
               padding: const EdgeInsets.only(top: 12, bottom: 24),

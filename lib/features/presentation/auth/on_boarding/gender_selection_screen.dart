@@ -235,7 +235,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: isDark ? theme.scaffoldBackgroundColor : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.only(top: 14, bottom: 24),
             child: Column(

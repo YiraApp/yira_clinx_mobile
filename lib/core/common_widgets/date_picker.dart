@@ -16,7 +16,7 @@ import '../common_size_helpers/common_size_helpers.dart';
 
   await showModalBottomSheet(
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(30.0)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     context: context,
     isDismissible: true,
