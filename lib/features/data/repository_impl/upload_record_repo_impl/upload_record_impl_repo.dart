@@ -136,6 +136,7 @@ class RecordsRepositoryImpl implements RecordsRepository {
                 isDeletable: true,
                 aiStatus: _text(json['AiStatus'] ?? json['aiStatus']),
                 aiAnalysisJson: _text(json['AiAnalysis'] ?? json['aiAnalysis']),
+                aiJobStatus: _text(json['AiJobStatus'] ?? json['aiJobStatus']),
               );
             }).toList();
           }

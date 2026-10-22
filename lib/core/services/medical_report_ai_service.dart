@@ -23,6 +23,7 @@ class ReportAiException implements Exception {
 
 /// The result of uploading a report: the saved document and, when it worked,
 /// what the AI found. The upload can succeed even if the analysis fails.
+/// When [analysisPending], the server is still reading it and will send a push.
 class ReportUploadResult {
   final String documentId;
   final String fileName;
@@ -31,6 +32,8 @@ class ReportUploadResult {
   final int pageCount;
   final MedicalReportAnalysis? analysis;
   final ReportAiException? analysisError;
+  final bool analysisPending;
+  final String? pendingMessage;
 
   const ReportUploadResult({
     required this.documentId,
@@ -40,6 +43,8 @@ class ReportUploadResult {
     required this.pageCount,
     this.analysis,
     this.analysisError,
+    this.analysisPending = false,
+    this.pendingMessage,
   });
 }
 
@@ -155,6 +160,8 @@ class MedicalReportAiService {
       analysisError: rawError is Map
           ? ReportAiException((rawError['message'] ?? 'AI analysis failed.').toString(), code: (rawError['code'] ?? 'AI_ERROR').toString())
           : null,
+      analysisPending: data['analysisPending'] == true,
+      pendingMessage: data['pendingMessage']?.toString(),
     );
   }
 

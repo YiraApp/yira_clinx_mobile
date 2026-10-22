@@ -55,6 +55,11 @@
 	<string>Yira Health needs permission to log health metrics to Apple Health if requested.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Yira Health needs access to the local network to communicate with the local server.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+		<string>_dartVmService._tcp</string>
+	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Yira Health needs access to your location to help you find nearby clinics, hospitals, and doctors.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

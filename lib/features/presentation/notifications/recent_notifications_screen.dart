@@ -82,6 +82,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       case 'PRESCRIPTION_ADDED':
         return Icons.medication_rounded;
       case 'MEDICAL_RECORD_ADDED':
+      case 'REPORT_ANALYSIS_READY':
+      case 'REPORT_ANALYSIS_FAILED':
         return Icons.description_outlined;
       case 'DOCTOR_SUGGESTION':
         return Icons.lightbulb_outline_rounded;
@@ -122,6 +124,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       case 'PRESCRIPTION_ADDED':
         return const Color(0xFF059669); // Emerald Green
       case 'MEDICAL_RECORD_ADDED':
+      case 'REPORT_ANALYSIS_READY':
+      case 'REPORT_ANALYSIS_FAILED':
         return const Color(0xFF0D9488); // Teal
       case 'DOCTOR_SUGGESTION':
         return const Color(0xFF6366F1); // Indigo
@@ -163,6 +167,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       case 'PRESCRIPTION_ADDED':
         return 'Prescription';
       case 'MEDICAL_RECORD_ADDED':
+      case 'REPORT_ANALYSIS_READY':
+      case 'REPORT_ANALYSIS_FAILED':
         return 'Health Record';
       case 'DOCTOR_SUGGESTION':
         return 'Doctor Tip';
