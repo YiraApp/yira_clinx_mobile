@@ -72,13 +72,19 @@ class PatientInsuranceService {
                   .where((p) => !p.isDeleted)
                   .toList();
 
-              // Merge remote with local items
+              // Merge remote with local items without overriding same-provider policies
               final Map<String, PatientInsurancePolicyModel> map = {};
               for (final p in loaded) {
-                map['${p.policyNumber}_${p.insuranceProvider}'] = p;
+                final key = (p.id != null && p.id.toString().isNotEmpty)
+                    ? p.id.toString()
+                    : '${p.policyNumber}_${p.insuranceProvider}_${p.policyName}_${p.createdAt?.millisecondsSinceEpoch ?? loaded.indexOf(p)}';
+                map[key] = p;
               }
               for (final r in remoteList) {
-                map['${r.policyNumber}_${r.insuranceProvider}'] = r;
+                final key = (r.id != null && r.id.toString().isNotEmpty)
+                    ? r.id.toString()
+                    : '${r.policyNumber}_${r.insuranceProvider}_${r.policyName}_${r.createdAt?.millisecondsSinceEpoch ?? remoteList.indexOf(r)}';
+                map[key] = r;
               }
               loaded = map.values.toList();
               await _saveToStorage(effectiveUserId, loaded);
@@ -131,8 +137,11 @@ class PatientInsuranceService {
     await _saveToStorage(effectiveUserId, currentList);
     policiesNotifier.value = currentList;
 
-    // Sync with backend API in background if possible
-    _syncWithBackend(policyToSave);
+    // Sync with backend API and ensure smooth visual feedback on submit button
+    await Future.wait([
+      _syncWithBackend(policyToSave),
+      Future.delayed(const Duration(milliseconds: 650)),
+    ]);
 
     return policyToSave;
   }
@@ -144,12 +153,15 @@ class PatientInsuranceService {
 
     final index = currentList.indexWhere((p) => p.id.toString() == policyId.toString());
     if (index >= 0) {
+      // Await backend deletion with minimum duration so the loading spinner inside button is clearly visible
+      await Future.wait([
+        _deleteFromBackend(policyId, effectiveUserId),
+        Future.delayed(const Duration(milliseconds: 650)),
+      ]);
+
       currentList.removeAt(index);
       await _saveToStorage(effectiveUserId, currentList);
       policiesNotifier.value = currentList;
-
-      // Backend sync
-      _deleteFromBackend(policyId, effectiveUserId);
       return true;
     }
     return false;
@@ -192,7 +204,7 @@ class PatientInsuranceService {
     );
   }
 
-  void _syncWithBackend(PatientInsurancePolicyModel policy) async {
+  Future<void> _syncWithBackend(PatientInsurancePolicyModel policy) async {
     try {
       final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
       if (token.isEmpty) return;
@@ -207,7 +219,7 @@ class PatientInsuranceService {
     }
   }
 
-  void _deleteFromBackend(dynamic policyId, String userId) async {
+  Future<void> _deleteFromBackend(dynamic policyId, String userId) async {
     try {
       final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
       if (token.isEmpty) return;

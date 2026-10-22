@@ -8,6 +8,8 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
 import 'package:yiraclinics/core/api/base_api_configuration.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../local/global_session.dart';
 
 class InAppDocumentViewer extends StatefulWidget {
@@ -74,7 +76,6 @@ class InAppDocumentViewer extends StatefulWidget {
 class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
   final TransformationController _transformationController = TransformationController();
   final PdfViewerController _pdfController = PdfViewerController();
-  double _currentScale = 1.0;
   bool _showInfo = false;
   bool _pdfLoadFailed = false;
 
@@ -111,7 +112,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       if (normalized.startsWith('/')) {
         normalized = '$baseUrl$normalized';
       } else {
-        normalized = 'https://$normalized';
+        normalized = '$baseUrl/$normalized';
       }
     }
     // If an older database record has localhost or a local IP with port 5000, rewrite to current backend base URL
@@ -273,27 +274,6 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     }
   }
 
-  void _zoomIn() {
-    setState(() {
-      _currentScale = (_currentScale * 1.3).clamp(1.0, 5.0);
-      _transformationController.value = Matrix4.diagonal3Values(_currentScale, _currentScale, 1.0);
-    });
-  }
-
-  void _zoomOut() {
-    setState(() {
-      _currentScale = (_currentScale / 1.3).clamp(1.0, 5.0);
-      _transformationController.value = Matrix4.diagonal3Values(_currentScale, _currentScale, 1.0);
-    });
-  }
-
-  void _resetZoom() {
-    setState(() {
-      _currentScale = 1.0;
-      _transformationController.value = Matrix4.identity();
-    });
-  }
-
   Future<void> _downloadDocument() async {
     if (_isDownloading) return;
 
@@ -307,37 +287,152 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       return;
     }
 
+    String cleanTitle = widget.title.replaceAll(RegExp(r'[^\w\.\-]'), '_');
+    if (!cleanTitle.contains('.')) {
+      cleanTitle += _isPdf ? '.pdf' : (_isImage ? '.jpg' : '.pdf');
+    }
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Explicit Permission & Confirmation Dialog
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _primaryBlue.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.file_download_outlined, color: _primaryBlue, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Download Permission',
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Allow Yira to save "$cleanTitle" to your device storage under "Downloads/Yira"?',
+          style: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: 13,
+            color: isDark ? Colors.white70 : const Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: appPoppinFont,
+                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text(
+              'Allow & Save',
+              style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed != true) return;
+
+    // Request Android System Permission
+    if (Platform.isAndroid) {
+      try {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt < 33) {
+          await Permission.storage.request();
+        } else {
+          await Permission.photos.request();
+        }
+      } catch (e) {
+        debugPrint('[Download] Permission request error: $e');
+      }
+    }
+
     setState(() => _isDownloading = true);
 
     try {
       Directory? targetDir;
       if (Platform.isAndroid) {
-        if (_isImage) {
-          final picturesDir = Directory('/storage/emulated/0/Pictures');
-          if (picturesDir.existsSync()) {
-            targetDir = picturesDir;
-          }
+        final yiraDir = Directory('/storage/emulated/0/Download/Yira');
+        if (!yiraDir.existsSync()) {
+          try {
+            yiraDir.createSync(recursive: true);
+          } catch (_) {}
         }
-        if (targetDir == null) {
-          final downloadDir = Directory('/storage/emulated/0/Download');
-          if (downloadDir.existsSync()) {
-            targetDir = downloadDir;
-          }
+        if (yiraDir.existsSync()) {
+          targetDir = yiraDir;
+        } else {
+          try {
+            final sysDownload = await getDownloadsDirectory();
+            if (sysDownload != null) {
+              final subYira = Directory('${sysDownload.path}/Yira');
+              if (!subYira.existsSync()) subYira.createSync(recursive: true);
+              targetDir = subYira;
+            }
+          } catch (_) {}
         }
-        try {
-          targetDir ??= await getDownloadsDirectory();
-        } catch (_) {}
       }
       targetDir ??= await getApplicationDocumentsDirectory();
 
-      String cleanTitle = widget.title.replaceAll(RegExp(r'[^\w\.\-]'), '_');
-      if (!cleanTitle.contains('.')) {
-        cleanTitle += _isPdf ? '.pdf' : (_isImage ? '.jpg' : '.pdf');
+      String baseName = cleanTitle;
+      String extension = '';
+      final lastDot = cleanTitle.lastIndexOf('.');
+      if (lastDot != -1) {
+        baseName = cleanTitle.substring(0, lastDot);
+        extension = cleanTitle.substring(lastDot);
+      } else {
+        extension = _isPdf ? '.pdf' : (_isImage ? '.jpg' : '.pdf');
       }
-      final savePath = '${targetDir.path}/$cleanTitle';
+
+      String uniqueFileName = '$baseName$extension';
+      String savePath = '${targetDir.path}/$uniqueFileName';
+      int counter = 1;
+
+      // Ensure files with the same name are NEVER overridden - appends (1), (2), etc.
+      while (File(savePath).existsSync()) {
+        uniqueFileName = '$baseName ($counter)$extension';
+        savePath = '${targetDir.path}/$uniqueFileName';
+        counter++;
+      }
+      final destFile = File(savePath);
 
       if (_documentBytes != null && _documentBytes!.isNotEmpty) {
-        await File(savePath).writeAsBytes(_documentBytes!);
+        await destFile.writeAsBytes(_documentBytes!, flush: true);
+      } else if (_hasLocalFile) {
+        final src = File(widget.filePath!);
+        if (src.path != destFile.path) {
+          await src.copy(savePath);
+        }
       } else if (_hasRemoteUrl) {
         final token = GlobalSession.instance.userNotifier.value?.data?.accessToken;
         final dio = Dio();
@@ -360,11 +455,9 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           savePath,
           options: Options(responseType: ResponseType.bytes),
         );
-      } else if (_hasLocalFile) {
-        await File(widget.filePath!).copy(savePath);
       }
 
-      if (_isImage && Platform.isAndroid) {
+      if (Platform.isAndroid) {
         try {
           const channel = MethodChannel('com.paccore.yiralife/native_intent');
           await channel.invokeMethod('scanMedia', {'path': savePath});
@@ -372,26 +465,35 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       }
 
       if (mounted) {
-        final successMsg = _isImage && Platform.isAndroid
-            ? 'Saved "$cleanTitle" to Gallery!'
-            : 'Downloaded "$cleanTitle" successfully!';
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
-                Expanded(child: Text(successMsg)),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Saved to Downloads/Yira!',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      Text(
+                        uniqueFileName,
+                        style: const TextStyle(fontSize: 11.5, color: Colors.white70),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'Open',
-              textColor: Colors.white,
-              onPressed: () => Utils.launchURL('file://$savePath'),
-            ),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -524,13 +626,10 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
             // Collapsible Document Info Sheet
             if (_showInfo) _buildInfoBanner(isDark),
 
-            // Main Document Content Viewer Area
+            // Main Document Content Viewer Area (Full Screen without bottom bar)
             Expanded(
               child: _buildContentViewer(isDark),
             ),
-
-            // Bottom Controls Bar (Responsive & Non-overflowing)
-            _buildBottomControls(isDark),
           ],
         ),
       ),
@@ -632,56 +731,61 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     );
   }
 
+  TapDownDetails? _doubleTapDetails;
+
+  void _handleDoubleTap() {
+    if (_transformationController.value != Matrix4.identity()) {
+      _transformationController.value = Matrix4.identity();
+    } else {
+      final position = _doubleTapDetails?.localPosition ?? const Offset(200, 200);
+      _transformationController.value = Matrix4.diagonal3Values(2.5, 2.5, 1.0)
+        ..setEntry(0, 3, -position.dx * 1.5)
+        ..setEntry(1, 3, -position.dy * 1.5);
+    }
+  }
+
   Widget _buildImageViewer(bool isDark) {
+    Widget imageContent;
+
     if (_documentBytes != null && _documentBytes!.isNotEmpty) {
-      return InteractiveViewer(
-        transformationController: _transformationController,
-        minScale: 1.0,
-        maxScale: 5.0,
-        child: Center(
-          child: Image.memory(
-            _documentBytes!,
-            fit: BoxFit.contain,
-            errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
-          ),
-        ),
+      imageContent = Image.memory(
+        _documentBytes!,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
       );
+    } else if (_hasLocalFile) {
+      imageContent = Image.file(
+        File(widget.filePath!),
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
+      );
+    } else if (_hasRemoteUrl) {
+      imageContent = CachedNetworkImage(
+        imageUrl: _effectiveUrl,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(color: _primaryBlue),
+        ),
+        errorWidget: (context, url, error) => _buildDocumentFallback(isDark),
+      );
+    } else {
+      return _buildDocumentFallback(isDark);
     }
 
-    if (_hasLocalFile) {
-      return InteractiveViewer(
+    return GestureDetector(
+      onDoubleTapDown: (details) => _doubleTapDetails = details,
+      onDoubleTap: _handleDoubleTap,
+      child: InteractiveViewer(
         transformationController: _transformationController,
+        clipBehavior: Clip.none,
         minScale: 1.0,
-        maxScale: 5.0,
-        child: Center(
-          child: Image.file(
-            File(widget.filePath!),
-            fit: BoxFit.contain,
-            errorBuilder: (ctx, err, stack) => _buildDocumentFallback(isDark),
-          ),
-        ),
-      );
-    }
-
-    if (_hasRemoteUrl) {
-      return InteractiveViewer(
-        transformationController: _transformationController,
-        minScale: 1.0,
-        maxScale: 5.0,
-        child: Center(
-          child: CachedNetworkImage(
-            imageUrl: _effectiveUrl,
-            fit: BoxFit.contain,
-            placeholder: (context, url) => const Center(
-              child: CircularProgressIndicator(color: _primaryBlue),
-            ),
-            errorWidget: (context, url, error) => _buildDocumentFallback(isDark),
-          ),
-        ),
-      );
-    }
-
-    return _buildDocumentFallback(isDark);
+        maxScale: 6.0,
+        child: Center(child: imageContent),
+      ),
+    );
   }
 
   Widget _buildPdfViewer(bool isDark) {
@@ -840,130 +944,6 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomControls(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (_isImage) ...[
-            IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              tooltip: 'Zoom Out',
-              icon: const Icon(Icons.zoom_out_rounded, size: 20),
-              onPressed: _zoomOut,
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              tooltip: 'Reset Zoom',
-              icon: const Icon(Icons.restart_alt_rounded, size: 20),
-              onPressed: _resetZoom,
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              tooltip: 'Zoom In',
-              icon: const Icon(Icons.zoom_in_rounded, size: 20),
-              onPressed: _zoomIn,
-            ),
-            const Spacer(),
-          ] else if (_isPdf && !_pdfLoadFailed) ...[
-            IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              tooltip: 'Previous Page',
-              icon: const Icon(Icons.arrow_back_rounded, size: 20),
-              onPressed: () => _pdfController.previousPage(),
-            ),
-            const SizedBox(width: 4),
-            IconButton(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              tooltip: 'Next Page',
-              icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-              onPressed: () => _pdfController.nextPage(),
-            ),
-            const Spacer(),
-          ] else ...[
-            const Icon(Icons.cloud_done_rounded, size: 15, color: Color(0xFF10B981)),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                'Cloud Doc',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-          OutlinedButton.icon(
-            onPressed: _downloadDocument,
-            icon: _isDownloading
-                ? const SizedBox(
-                    width: 12,
-                    height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: _primaryBlue),
-                  )
-                : const Icon(Icons.file_download_outlined, size: 14),
-            label: const Text(
-              'Download',
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _primaryBlue,
-              side: const BorderSide(color: _primaryBlue, width: 1),
-              minimumSize: const Size(0, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-          const SizedBox(width: 6),
-          ElevatedButton.icon(
-            onPressed: _openFile,
-            icon: const Icon(Icons.open_in_new_rounded, size: 14),
-            label: Text(
-              _isImage ? 'Original' : 'Browser',
-              style: const TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryBlue,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ],
       ),
     );
   }

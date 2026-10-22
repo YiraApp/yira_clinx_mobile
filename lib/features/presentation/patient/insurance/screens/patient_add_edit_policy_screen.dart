@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:yiraclinics/core/api/base_api_configuration.dart';
 import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
@@ -157,14 +159,37 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
     }
   }
 
+  String _resolveDocumentUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return '';
+    String normalized = url.trim();
+    final rawBaseUrl = EnvironmentService.config.accountBaseUrl.trim();
+    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://') && !normalized.contains('://')) {
+      if (normalized.startsWith('/')) {
+        normalized = '$baseUrl$normalized';
+      } else {
+        normalized = '$baseUrl/$normalized';
+      }
+    }
+    if (baseUrl.startsWith('http') &&
+        (normalized.contains('localhost:5000') ||
+         normalized.contains('127.0.0.1:5000') ||
+         RegExp(r'192\.168\.\d+\.\d+(:\d+)?').hasMatch(normalized))) {
+      normalized = normalized.replaceAll(RegExp(r'https?://[^/]+'), baseUrl);
+    }
+    return normalized;
+  }
+
   void _viewSelectedDocument() {
     final path = _selectedFile?.path;
     final url = _existingDocumentUrl;
-    if (path == null && url == null) return;
+    final resolvedUrl = _resolveDocumentUrl(url);
+    if ((path == null || path.isEmpty) && resolvedUrl.isEmpty) return;
 
     final fileName = path != null
         ? path.split(RegExp(r'[/\\]')).last
-        : (url != null ? url.split('/').last : 'Policy Document');
+        : (resolvedUrl.isNotEmpty ? resolvedUrl.split('/').last.split('?').first : 'Policy Document');
     final isPdf = fileName.toLowerCase().endsWith('.pdf');
 
     final hasValidLocalFile = path != null && path.isNotEmpty && File(path).existsSync();
@@ -176,7 +201,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
           : 'Policy Document',
       category: 'Insurance Policy',
       filePath: hasValidLocalFile ? path : null,
-      fileUrl: hasValidLocalFile ? null : url,
+      fileUrl: hasValidLocalFile ? null : resolvedUrl,
       fileType: isPdf ? 'PDF' : 'IMAGE',
     );
   }
@@ -208,6 +233,24 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       final startStr = _startDate != null ? formatter.format(_startDate!) : null;
       final endStr = _endDate != null ? formatter.format(_endDate!) : null;
 
+      String? persistentFilePath = widget.policy?.localFilePath;
+      if (_selectedFile != null && _selectedFile!.existsSync()) {
+        try {
+          final appDocDir = await getApplicationDocumentsDirectory();
+          final policyDir = Directory('${appDocDir.path}/patient_policies');
+          if (!policyDir.existsSync()) {
+            policyDir.createSync(recursive: true);
+          }
+          final originalName = _selectedFile!.path.split(RegExp(r'[/\\]')).last;
+          final uniqueName = '${DateTime.now().millisecondsSinceEpoch}_$originalName';
+          final savedCopy = await _selectedFile!.copy('${policyDir.path}/$uniqueName');
+          persistentFilePath = savedCopy.path;
+        } catch (e) {
+          debugPrint('[Policy] Error copying persistent file: $e');
+          persistentFilePath = _selectedFile?.path;
+        }
+      }
+
       final updatedModel = PatientInsurancePolicyModel(
         id: widget.policy?.id,
         userId: userId,
@@ -218,7 +261,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
         startDate: startStr,
         endDate: endStr,
         documentUrl: _existingDocumentUrl,
-        localFilePath: _selectedFile?.path,
+        localFilePath: persistentFilePath,
         status: true,
         isDeleted: false,
       );
@@ -259,16 +302,18 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
 
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return PopScope(
+      canPop: !_isSaving,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            onPressed: _isSaving ? null : () => Navigator.pop(context),
+          ),
         title: Text(
           widget.policy == null ? 'Add Policy' : 'Edit Policy',
           style: TextStyle(
@@ -386,7 +431,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
               _buildFileAttachmentBox(isDark),
               const SizedBox(height: 32),
 
-              // 7. Submit Button
+              // 7. Submit Button with visible loading spinner and state
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -395,20 +440,40 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: primaryBlue.withValues(alpha: 0.65),
                     elevation: 1,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                      ? const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Saving...',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ],
                         )
-                      : const Text(
-                          'Submit',
-                          style: TextStyle(
+                      : Text(
+                          widget.policy == null ? 'Submit' : 'Save Changes',
+                          style: const TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -422,8 +487,9 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildFieldLabel(String label, Color color, {bool isRequired = false}) {
     return Text(
@@ -549,68 +615,53 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                   onTap: _viewSelectedDocument,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    width: 48,
-                    height: 48,
+                    width: 50,
+                    height: 50,
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(8),
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: const Color(0xFF2563EB).withValues(alpha: 0.35),
                         width: 1.1,
                       ),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (fileName.toLowerCase().endsWith('.pdf'))
-                          const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
-                              Text(
-                                'PDF',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.redAccent,
+                    child: Center(
+                      child: fileName.toLowerCase().endsWith('.pdf')
+                          ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
+                                Text(
+                                  'PDF',
+                                  style: TextStyle(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.redAccent,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )
-                        else if (_selectedFile != null && _selectedFile!.existsSync())
-                          Image.file(
-                            _selectedFile!,
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, stack) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
-                          )
-                        else if (_existingDocumentUrl != null && _existingDocumentUrl!.isNotEmpty)
-                          CachedNetworkImage(
-                            imageUrl: _existingDocumentUrl!,
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorWidget: (ctx, url, err) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
-                          )
-                        else
-                          const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 22),
-
-                        // Subtle zoom badge
-                        Positioned(
-                          bottom: 1,
-                          right: 1,
-                          child: Container(
-                            padding: const EdgeInsets.all(1.5),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.zoom_in_rounded, size: 8, color: Colors.white),
-                          ),
-                        ),
-                      ],
+                              ],
+                            )
+                          : (_selectedFile != null && _selectedFile!.existsSync())
+                              ? Image.file(
+                                  _selectedFile!,
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.high,
+                                  errorBuilder: (ctx, err, stack) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                )
+                              : (_existingDocumentUrl != null && _existingDocumentUrl!.isNotEmpty)
+                                  ? CachedNetworkImage(
+                                      imageUrl: _resolveDocumentUrl(_existingDocumentUrl),
+                                      width: 44,
+                                      height: 44,
+                                      fit: BoxFit.contain,
+                                      filterQuality: FilterQuality.high,
+                                      errorWidget: (ctx, url, err) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                    )
+                                  : const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 22),
                     ),
                   ),
                 ),

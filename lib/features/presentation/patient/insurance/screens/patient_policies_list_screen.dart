@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:yiraclinics/core/api/base_api_configuration.dart';
 import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/patient_insurance_service.dart';
@@ -53,54 +54,78 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
   }
 
   void _onDeletePolicy(PatientInsurancePolicyModel policy) async {
-    final confirmed = await DeletePolicyConfirmationDialog.show(context);
+    bool deleteSuccess = false;
+    final confirmed = await DeletePolicyConfirmationDialog.show(
+      context,
+      onConfirmAsync: () async {
+        deleteSuccess = await PatientInsuranceService.instance.deletePolicy(policy.id);
+      },
+    );
+
     if (confirmed == true && mounted) {
-      final success = await PatientInsuranceService.instance.deletePolicy(policy.id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: success ? const Color(0xFF10B981) : Colors.red,
-            content: Text(
-              success ? 'Policy deleted successfully.' : 'Failed to delete policy.',
-              style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-            ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: deleteSuccess ? const Color(0xFF10B981) : Colors.red,
+          content: Text(
+            deleteSuccess ? 'Policy deleted successfully.' : 'Failed to delete policy.',
+            style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
           ),
-        );
+        ),
+      );
+    }
+  }
+
+  String _resolveDocumentUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return '';
+    String normalized = url.trim();
+    final rawBaseUrl = EnvironmentService.config.accountBaseUrl.trim();
+    final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://') && !normalized.contains('://')) {
+      if (normalized.startsWith('/')) {
+        normalized = '$baseUrl$normalized';
+      } else {
+        normalized = '$baseUrl/$normalized';
       }
     }
+    if (baseUrl.startsWith('http') &&
+        (normalized.contains('localhost:5000') ||
+         normalized.contains('127.0.0.1:5000') ||
+         RegExp(r'192\.168\.\d+\.\d+(:\d+)?').hasMatch(normalized))) {
+      normalized = normalized.replaceAll(RegExp(r'https?://[^/]+'), baseUrl);
+    }
+    return normalized;
   }
 
   void _openDocument(PatientInsurancePolicyModel policy) {
     final filePath = policy.localFilePath;
     final fileUrl = policy.documentUrl;
+    final resolvedUrl = _resolveDocumentUrl(fileUrl);
 
-    if ((filePath == null || filePath.trim().isEmpty) &&
-        (fileUrl == null || fileUrl.trim().isEmpty)) {
+    final hasValidLocalFile = filePath != null &&
+        filePath.isNotEmpty &&
+        File(filePath).existsSync();
+
+    if (!hasValidLocalFile && resolvedUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No document file attached to this policy.')),
       );
       return;
     }
 
-    final fileName = (filePath != null && filePath.isNotEmpty)
+    final fileName = hasValidLocalFile
         ? filePath.split(RegExp(r'[/\\]')).last
-        : (fileUrl != null && fileUrl.isNotEmpty)
-            ? fileUrl.split('/').last
-            : 'Policy Document';
+        : resolvedUrl.split('/').last.split('?').first;
 
     final isPdf = fileName.toLowerCase().endsWith('.pdf');
     final fileType = isPdf ? 'PDF' : 'IMAGE';
-
-    final hasValidLocalFile = filePath != null &&
-        filePath.isNotEmpty &&
-        File(filePath).existsSync();
 
     InAppDocumentViewer.show(
       context,
       title: policy.policyName.isNotEmpty ? policy.policyName : 'Policy Document',
       category: 'Insurance Policy',
       filePath: hasValidLocalFile ? filePath : null,
-      fileUrl: hasValidLocalFile ? null : fileUrl,
+      fileUrl: hasValidLocalFile ? null : resolvedUrl,
       fileType: fileType,
     );
   }
@@ -342,17 +367,6 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   ),
                 ),
 
-                // View Document Button (if document attached)
-                if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
-                    (policy.documentUrl != null && policy.documentUrl!.isNotEmpty))
-                  IconButton(
-                    tooltip: 'View Document',
-                    icon: const Icon(Icons.visibility_outlined, size: 20, color: Color(0xFF2563EB)),
-                    onPressed: () => _openDocument(policy),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  ),
-
                 // Edit Button
                 IconButton(
                   tooltip: 'Edit Policy',
@@ -376,102 +390,112 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
           Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
 
-          // Body Meta Fields + Small Image Preview by default
+          // Body Meta Fields (Full Width & Clean)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      _buildMetaRow('Policy Holder', ': ${policy.policyHolder.isNotEmpty ? policy.policyHolder : '-'}', isDark),
-                      const SizedBox(height: 6),
-                      _buildMetaRow('Policy Name', ': ${policy.policyName.isNotEmpty ? policy.policyName : '-'}', isDark),
-                      const SizedBox(height: 6),
-                      _buildMetaRow('Policy No', ': ${policy.policyNumber.isNotEmpty ? policy.policyNumber : '-'}', isDark),
-                      const SizedBox(height: 6),
-                      _buildMetaRow('Validity', ': ${policy.validityText}', isDark),
-                    ],
-                  ),
-                ),
-                if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
-                    (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)) ...[
-                  const SizedBox(width: 12),
-                  _buildDocumentThumbnail(policy: policy, isDark: isDark),
-                ],
+                _buildMetaRow('Policy Holder', ': ${policy.policyHolder.isNotEmpty ? policy.policyHolder : '-'}', isDark),
+                const SizedBox(height: 6),
+                _buildMetaRow('Policy Name', ': ${policy.policyName.isNotEmpty ? policy.policyName : '-'}', isDark),
+                const SizedBox(height: 6),
+                _buildMetaRow('Policy No', ': ${policy.policyNumber.isNotEmpty ? policy.policyNumber : '-'}', isDark),
+                const SizedBox(height: 6),
+                _buildMetaRow('Validity', ': ${policy.validityText}', isDark),
               ],
             ),
           ),
 
-          // Expandable section for document or extra details
+          // Expandable section for document preview (revealed when arrow is clicked)
           if (isExpanded) ...[
             Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
             Padding(
               padding: const EdgeInsets.all(14),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.attachment_rounded, size: 18, color: Color(0xFF2563EB)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        (policy.localFilePath != null && policy.localFilePath!.isNotEmpty)
-                            ? policy.localFilePath!.split(RegExp(r'[/\\]')).last
-                            : (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)
-                                ? 'Document Attached'
-                                : 'No document attached',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          color: isDark ? Colors.white70 : const Color(0xFF475569),
+              child: ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
+                      (policy.documentUrl != null && policy.documentUrl!.isNotEmpty))
+                  ? Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      child: Row(
+                        children: [
+                          // Small image thumbnail - tap to view full screen
+                          _buildDocumentThumbnail(policy: policy, isDark: isDark),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _openDocument(policy),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    (policy.localFilePath != null && policy.localFilePath!.isNotEmpty)
+                                        ? policy.localFilePath!.split(RegExp(r'[/\\]')).last
+                                        : (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)
+                                            ? policy.documentUrl!.split('/').last
+                                            : 'Insurance Document',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.touch_app_outlined, size: 13, color: Color(0xFF2563EB)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Tap to view full screen',
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: 11,
+                                          color: const Color(0xFF2563EB),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.description_outlined,
+                              size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                          const SizedBox(width: 8),
+                          Text(
+                            'No document attached',
+                            style: TextStyle(
+                              fontFamily: appPoppinFont,
+                              fontSize: 12,
+                              color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    if ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
-                        (policy.documentUrl != null && policy.documentUrl!.isNotEmpty)) ...[
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => _openDocument(policy),
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.visibility_outlined, size: 13, color: Colors.white),
-                              SizedBox(width: 4),
-                              Text(
-                                'View',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
             ),
           ],
 
@@ -502,24 +526,25 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
     final filePath = policy.localFilePath;
     final fileUrl = policy.documentUrl;
     final hasLocal = filePath != null && filePath.isNotEmpty && File(filePath).existsSync();
-    final hasRemote = fileUrl != null && fileUrl.isNotEmpty;
+    final resolvedUrl = _resolveDocumentUrl(fileUrl);
+    final hasRemote = resolvedUrl.isNotEmpty;
 
     if (!hasLocal && !hasRemote) return const SizedBox.shrink();
 
     final fileName = hasLocal
         ? filePath.split(RegExp(r'[/\\]')).last
-        : fileUrl!.split('/').last;
+        : resolvedUrl.split('/').last.split('?').first;
     final isPdf = fileName.toLowerCase().endsWith('.pdf');
 
     return InkWell(
       onTap: () => _openDocument(policy),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 62,
-        height: 72,
+        width: 68,
+        height: 68,
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: const Color(0xFF2563EB).withValues(alpha: 0.25),
             width: 1.2,
@@ -561,42 +586,36 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 ],
               )
             else if (hasLocal)
-              Image.file(
-                File(filePath),
-                width: 62,
-                height: 72,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+              Padding(
+                padding: const EdgeInsets.all(3),
+                child: Image.file(
+                  File(filePath),
+                  width: 68,
+                  height: 68,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+                ),
               )
             else
-              CachedNetworkImage(
-                imageUrl: fileUrl!,
-                width: 62,
-                height: 72,
-                fit: BoxFit.cover,
-                placeholder: (ctx, url) => const Center(
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB)),
+              Padding(
+                padding: const EdgeInsets.all(3),
+                child: CachedNetworkImage(
+                  imageUrl: resolvedUrl,
+                  width: 68,
+                  height: 68,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  placeholder: (ctx, url) => const Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB)),
+                    ),
                   ),
+                  errorWidget: (ctx, url, err) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
                 ),
-                errorWidget: (ctx, url, err) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
               ),
-
-            // Zoom badge
-            Positioned(
-              bottom: 3,
-              right: 3,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.zoom_in_rounded, size: 10, color: Colors.white),
-              ),
-            ),
           ],
         ),
       ),

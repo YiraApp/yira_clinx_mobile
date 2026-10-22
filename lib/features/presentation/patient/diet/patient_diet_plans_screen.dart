@@ -206,7 +206,9 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
         title: 'My Diet Plans',
         subtitle: 'Prescribed & self-made plans',
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _isLoading
+          ? null
+          : FloatingActionButton.extended(
         onPressed: _createPlan,
         backgroundColor: DietUi.blue,
         foregroundColor: Colors.white,
@@ -251,42 +253,8 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
             _buildMessageCard(
               isDark,
               icon: Icons.restaurant_menu_rounded,
-              title: 'No diet plans yet',
-              message: 'When your doctor prescribes a diet plan, it will appear here. You can also make your own.',
-              action: Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(color: DietUi.blue.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _createPlan,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.add_rounded, size: 18, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text('Create my own plan', style: DietUi.text(13.5, FontWeight.w700, Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              title: 'No diet plan yet',
+              message: 'When your doctor prescribes a diet plan, it will appear here.',
             )
           else ...[
             if (active != null) ...[

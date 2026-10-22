@@ -6,8 +6,8 @@ class EnvironmentService {
   static void setEnvironment(Environment env) => _currentEnv = env;
 
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables 100% stable connection over USB, bypassing Wi-Fi AP isolation & firewall
-  // - Or use Wi-Fi LAN IP (192.168.0.3) if running purely over wireless network. Override with --dart-define=BACKEND_IP=<ip>.
-  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.3");
+  // - Or use Wi-Fi LAN IP (192.168.0.7) if running purely over wireless network. Override with --dart-define=BACKEND_IP=<ip>.
+  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.7");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
   static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
@@ -17,8 +17,8 @@ class EnvironmentService {
 
   /// Probes available local channels:
   /// 1. 127.0.0.1:5000 (direct USB tunnel via `adb reverse tcp:5000 tcp:5000` - immune to Wi-Fi AP isolation)
-  /// 2. 192.168.0.3:5000 (Current Wi-Fi LAN)
-  /// 3. Fallback candidates (192.168.0.7, 192.168.0.6, 192.168.0.4, 10.0.2.2)
+  /// 2. 192.168.0.7:5000 (Current Wi-Fi LAN)
+  /// 3. Fallback candidates (192.168.0.3, 192.168.0.6, 192.168.0.4, 10.0.2.2)
   static Future<void> autoDetectLocalHost({bool force = true}) async {
     if (_currentEnv != Environment.local) return;
     if (!force && _customBaseUrl != null && _customBaseUrl!.isNotEmpty) return;
@@ -27,8 +27,8 @@ class EnvironmentService {
     final candidates = [
       '127.0.0.1',
       localHostIp,
-      '192.168.0.3',
       '192.168.0.7',
+      '192.168.0.3',
       '192.168.0.6',
       '192.168.0.4',
       '10.0.2.2',
