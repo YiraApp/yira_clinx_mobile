@@ -10,7 +10,7 @@ class EnvironmentService {
   static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.7");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
   static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-2.5-flash');
+  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
   static String? _customBaseUrl;
 
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
