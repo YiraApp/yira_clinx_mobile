@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/prescription_history_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
@@ -15,8 +16,6 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_scope.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_access_gate.dart';
-import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
-import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_records_screen.dart';
 import 'suggestions/add_suggestion_sheet.dart';
@@ -160,9 +159,11 @@ class _DoctorPatientDetailProfileScreenState
 
                   final bool hasAccess = accessStatus?.hasAccess ?? false;
 
+                  // Only where suggestions belong; elsewhere it covered the end of each list.
+                  final showSuggestionFab = const {'Info', 'Suggestions'}.contains(_tabs[currentTab.clamp(0, _tabs.length - 1)]);
                   return Scaffold(
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    floatingActionButton: Column(
+                    floatingActionButton: !showSuggestionFab ? null : Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -315,6 +316,15 @@ class _DoctorPatientDetailProfileScreenState
             onScheduleTap: () {
               _openTab(context, 'Appointments');
             },
+            // Past records right on the Info tab, as on the appointment page.
+            onOpenRecordTab: (tab) => _openTab(context, tab),
+            onRequestAccess: () => RequestAccessDurationModal.show(
+              context: context,
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              hospitalId: int.tryParse(widget.hospitalId ?? ''),
+              consentBloc: _consentBloc,
+            ),
           ),
         );
       case 'Appointments':
@@ -374,16 +384,12 @@ class _DoctorPatientDetailProfileScreenState
             recordType: "Prescriptions & Medication History",
           );
         }
-        return _fullHistory(accessStatus, BlocProvider<PrescriptionBloc>(
-          create: (_) => sl<PrescriptionBloc>()
-            ..add(LoadPrescriptionData(
-              patientId: widget.patientId ?? patient.id,
-            )),
-          child: PrescriptionListScreen(
-            key: const ValueKey('PatientDetailPrescriptionTabFrame'),
-            patient: patient,
-            allowAdd: false,
-          ),
+        // Every prescription with its real date; the per-visit screen showed only
+        // the latest one, labelled "Today".
+        return _fullHistory(accessStatus, PrescriptionHistoryTab(
+          key: const ValueKey('PatientDetailPrescriptionTabFrame'),
+          patientId: widget.patientId ?? patient.id,
+          hospitalId: widget.hospitalId,
         ));
       case 'Notes':
         // Notes Tab (Gated by patient consent, read-only tracking)

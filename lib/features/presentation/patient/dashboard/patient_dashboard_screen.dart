@@ -55,6 +55,68 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   PatientOverViewBloc? _overviewBloc;
   String? _currentLoadedUserId;
 
+  /// Family members' appointments, shown on the main account's home (each
+  /// card says who it is for). Empty on a family member's own profile.
+  List<PatientAppointmentEntity> _familyAppointments = const [];
+
+  Future<void> _loadFamilyAppointments() async {
+    final data = GlobalSession.instance.userNotifier.value?.data;
+    final me = (data?.id ?? '').toLowerCase();
+    final profiles = data?.profiles ?? const [];
+    final onMainProfile = profiles.length > 1 &&
+        profiles.any((p) => (p.id ?? '').toLowerCase() == me && p.isPrimary == true);
+    if (!onMainProfile || GlobalSession.instance.isSignedInAsFamilyMember) {
+      if (_familyAppointments.isNotEmpty && mounted) setState(() => _familyAppointments = const []);
+      return;
+    }
+    try {
+      // Asked per person so this works on servers that return only one person's list.
+      final list = <Map>[];
+      final seenIds = <String>{};
+      for (final id in [data?.id, ...GlobalSession.instance.familyProfileIdsOnMainAccount]) {
+        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+              URLs.patientAppointmentsUrl,
+              data: {'userId': id},
+              options: Options(
+                headers: {HttpHeaders.authorizationHeader: 'Bearer ${data?.accessToken ?? ''}'},
+                extra: const {'suppressErrorSnack': true},
+              ),
+            );
+        final rows = res.data is Map && res.data['data'] is List ? res.data['data'] as List : const [];
+        for (final a in rows.whereType<Map>()) {
+          if (seenIds.add('${a['id']}')) list.add(a);
+        }
+      }
+      final family = <PatientAppointmentEntity>[
+        for (final a in list)
+          if ((a['patientUserId'] ?? '').toString().toLowerCase() != me)
+            PatientAppointmentEntity(
+              id: '${a['id'] ?? ''}',
+              appointmentNumber: '${a['id'] ?? ''}',
+              appointmentDate: '${a['appointmentDate'] ?? ''}',
+              rawDate: a['appointmentDate'],
+              startTime: '${a['startTime'] ?? ''}',
+              endTime: '${a['endTime'] ?? ''}',
+              reason: '${a['reason'] ?? ''}',
+              status: '${a['status'] ?? 'Confirmed'}',
+              appointmentType: '${a['appointmentType'] ?? 'In-Clinic'}',
+              isTeleConsultation: a['isTeleConsultation'] == true,
+              meetingUrl: '${a['meetingUrl'] ?? ''}',
+              hospitalName: '${a['hospitalName'] ?? ''}',
+              doctorId: '${a['doctorId'] ?? ''}',
+              doctorName: '${a['doctorName'] ?? ''}',
+              patientName: '${a['patientName'] ?? ''}',
+              patientUserId: '${a['patientUserId'] ?? ''}',
+              relation: '${a['relation'] ?? ''}',
+              isPrimary: a['isPrimary'] == true,
+            ),
+      ];
+      if (mounted) setState(() => _familyAppointments = family);
+    } catch (_) {
+      // The family list is extra; the profile's own appointments still show.
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +132,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final orgId = currentUser?.latestOrgId?.toString() ?? '1';
     final hospitalId = currentUser?.latestHospitalId?.toString() ?? '1';
     _overviewBloc!.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+    _loadFamilyAppointments();
 
     GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadCachedProfileImage();
@@ -119,6 +182,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       final orgId = current?.latestOrgId?.toString() ?? '1';
       final hospitalId = current?.latestHospitalId?.toString() ?? '1';
       _overviewBloc?.add(LoadPatientData(newId, orgId: orgId, hospitalId: hospitalId));
+      _loadFamilyAppointments();
     }
     if (mounted) setState(() {});
   }
@@ -396,6 +460,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 }
               }
 
+              // Add family members' appointments (main account only).
+              final ownIds = allAppointments.map((a) => a.id).toSet();
+              allAppointments.addAll(_familyAppointments.where((a) => !ownIds.contains(a.id)));
+
               final now = DateTime.now();
               final todayStart = DateTime(now.year, now.month, now.day);
 
@@ -476,6 +544,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         _offerCarouselKey.currentState?.refresh();
                         FitnessSyncService.instance.syncNow(silent: true);
                         _overviewBloc?.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+                        _loadFamilyAppointments();
                         await Future.delayed(const Duration(milliseconds: 600));
                       },
                       child: SingleChildScrollView(
@@ -545,9 +614,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                             MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
                                           ),
                                         ),
-                                        // Every profile, family members included
-                                        _DashboardService(
-                                          title: 'My\nFitness',
+                                          // Family members sharing the main number have no fitness of their own
+                                          if (GlobalSession.instance.currentProfileHasOwnNumber)
+                                          _DashboardService(
+                                            title: 'My\nFitness',
                                           asset: 'assets/images/dashboard_icons/my_fitness.svg',
                                           onTap: () async {
                                             bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
@@ -569,7 +639,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                           onTap: () => Navigator.pushNamed(context, AppRoutes.patientDietPlan),
                                         ),
                                         // Managed from the primary account
-                                        if (!GlobalSession.instance.isSignedInAsFamilyMember)
+                                        if (!GlobalSession.instance.isSignedInAsFamilyMember && GlobalSession.instance.isCurrentProfilePrimary)
                                           _DashboardService(
                                             title: 'My\nFamily',
                                             asset: 'assets/images/dashboard_icons/my_family.svg',

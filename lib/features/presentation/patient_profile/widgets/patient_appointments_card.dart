@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/display_format.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
@@ -1122,7 +1123,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                             border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                           ),
                           child: Text(
-                            appt.status.toUpperCase(),
+                            humanizeStatus(appt.status).toUpperCase(),
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
@@ -1171,7 +1172,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                             _buildInfoTile(
                               label: "Slot Timing",
                               value: appt.startTime.isNotEmpty
-                                  ? (appt.endTime.isNotEmpty ? "${appt.startTime} - ${appt.endTime}" : appt.startTime)
+                                  ? (appt.endTime.isNotEmpty ? "${formatClockTime(appt.startTime)} - ${formatClockTime(appt.endTime)}" : formatClockTime(appt.startTime))
                                   : "Unscheduled",
                               icon: Icons.schedule_outlined,
                               isDark: isDark,
@@ -2240,7 +2241,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              appt.status.toUpperCase(),
+                              humanizeStatus(appt.status).toUpperCase(),
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: 9.5,
@@ -2268,7 +2269,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 3.5),
                         Text(
-                          appt.startTime,
+                          formatClockTime(appt.startTime),
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,

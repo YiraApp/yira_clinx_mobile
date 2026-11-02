@@ -312,6 +312,10 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                       final String createdAt = _formatDate(item['CreatedAt']);
                       final String? filePath = item['FilePath'];
                       final String? fileName = item['FileName'];
+                      // Only the doctor who wrote it may delete it (the server enforces this too).
+                      final String authorId = (item['DoctorId'] ?? item['Doctor']?['Id'] ?? '').toString().toLowerCase();
+                      final String meId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').toLowerCase();
+                      final bool canDelete = authorId.isNotEmpty && authorId == meId;
 
                       // Doctor Info
                       final doctor = item['Doctor'];
@@ -394,7 +398,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                     ],
                                   ),
                                 ),
-                                if (id > 0)
+                                if (id > 0 && canDelete)
                                   IconButton(
                                     icon: Icon(
                                       Icons.delete_outline_rounded,

@@ -67,9 +67,18 @@ class PatientContactCard extends StatelessWidget {
 
   Widget _buildEmergencyBanner(BuildContext context,bool isTab) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bannerBg = isDark ? Colors.red.withOpacity(0.08) : Colors.red.withOpacity(0.1);
-    final bannerBorder = isDark ? Colors.red.withOpacity(0.4) : Colors.red.withOpacity(0.01);
-    final iconBg = isDark ? Colors.red.withOpacity(0.06) : Colors.red.withOpacity(0.1);
+    final name = (patient.emergencyContact?.name ?? '').trim();
+    final phone = (patient.emergencyContact?.phone ?? '').trim();
+    final relation = (patient.emergencyContact?.relationship ?? '').trim();
+    // No contact on file: a quiet grey note, not a red alert with a stray "•".
+    final hasContact = name.isNotEmpty || phone.isNotEmpty;
+    final Color tone = hasContact ? Colors.red : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B));
+    final bannerBg = hasContact ? (isDark ? Colors.red.withOpacity(0.08) : Colors.red.withOpacity(0.1)) : (isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF8FAFC));
+    final bannerBorder = hasContact ? (isDark ? Colors.red.withOpacity(0.4) : Colors.red.withOpacity(0.01)) : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
+    final iconBg = hasContact ? (isDark ? Colors.red.withOpacity(0.06) : Colors.red.withOpacity(0.1)) : (isDark ? Colors.white10 : const Color(0xFFF1F5F9));
+    final detail = hasContact
+        ? [name, if (relation.isNotEmpty) '($relation)', if (phone.isNotEmpty) '• $phone'].where((e) => e.isNotEmpty).join(' ')
+        : 'Not added by the patient';
 
     return Container(
       width: double.infinity,
@@ -85,7 +94,7 @@ class PatientContactCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: const Icon(Icons.error_outline_rounded, color: Colors.red, size: 14),
+            child: Icon(hasContact ? Icons.phone_in_talk_rounded : Icons.person_off_outlined, color: tone, size: 14),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -99,17 +108,17 @@ class PatientContactCard extends StatelessWidget {
                     fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.024,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.6,
-                    color: Colors.red,
+                    color: tone,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${patient.emergencyContact?.name ?? ''} • ${patient.emergencyContact?.phone ?? ''}',
+                  detail,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize:isTab?  displayWidth(context) * 0.02:  displayWidth(context) * 0.032,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red,
+                    fontWeight: hasContact ? FontWeight.w600 : FontWeight.w500,
+                    color: tone,
                   ),
                 ),
               ],

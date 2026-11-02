@@ -7,6 +7,7 @@ import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../patient_over_view_bloc/patient_over_view_bloc.dart';
 import '../widgets/patient_appointments_card.dart';
+import '../../../../core/utils/display_format.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
   final PatientProfileEntity patient;
@@ -75,8 +76,8 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
   List<PatientAppointmentEntity> _filterAppointments(List<PatientAppointmentEntity> baseList) {
     if (_activeFilter == 'All') return baseList;
-    final target = _activeFilter.trim().toLowerCase();
-    return baseList.where((a) => a.status.trim().toLowerCase() == target).toList();
+    final target = statusKey(_activeFilter);
+    return baseList.where((a) => statusKey(a.status) == target).toList();
   }
 
   @override
@@ -180,9 +181,11 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
           // Build dynamic filter chip data
           final Map<String, int> statusCounts = {};
+          final Map<String, String> statusLabels = {};
           for (final a in baseAppointments) {
-            final key = a.status.toUpperCase();
+            final key = statusKey(a.status);
             statusCounts[key] = (statusCounts[key] ?? 0) + 1;
+            statusLabels.putIfAbsent(key, () => humanizeStatus(a.status));
           }
 
           return RefreshIndicator.adaptive(
@@ -246,11 +249,11 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                             onTap: () => setState(() => _activeFilter = 'All'),
                           ),
                           ...statusCounts.entries.map((entry) {
-                            final statusLabel = _capitalizeStatus(entry.key);
+                            final statusLabel = statusLabels[entry.key] ?? entry.key;
                             return _buildFilterChip(
                               label: statusLabel,
                               count: entry.value,
-                              isActive: _activeFilter.toUpperCase() == entry.key,
+                              isActive: statusKey(_activeFilter) == entry.key,
                               primaryColor: primaryColor,
                               isDark: isDark,
                               onTap: () => setState(() => _activeFilter = statusLabel),
@@ -331,12 +334,6 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         },
       ),
     );
-  }
-
-  String _capitalizeStatus(String status) {
-    if (status.isEmpty) return status;
-    final words = status.split(RegExp(r'[_ ]'));
-    return words.map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}').join(' ');
   }
 
   Widget _buildFilterChip({

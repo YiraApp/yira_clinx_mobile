@@ -108,7 +108,7 @@ class MedicalRecordCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       CommonText(
-                        "$formattedDate | $doctorName",
+                        doctorName.trim().isEmpty ? formattedDate : "$formattedDate | $doctorName",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           color: Colors.grey.shade600,
@@ -145,12 +145,14 @@ class MedicalRecordCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDynamicRow(context, "Chief Complaint", chiefComplaint, isTab),
-                const SizedBox(height: 12),
-                _buildDynamicRow(context, "Diagnosis", diagnosis, isTab),
-                if (vitalsSummary.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _buildDynamicRow(context, "Vitals", vitalsSummary, isTab),
+                // Only rows that have something to say; a vitals check has no complaint or diagnosis.
+                for (final row in [
+                  ("Chief Complaint", chiefComplaint),
+                  ("Diagnosis", diagnosis),
+                  ("Vitals", vitalsSummary),
+                ].where((r) => r.$2.trim().isNotEmpty).toList().asMap().entries) ...[
+                  if (row.key > 0) const SizedBox(height: 12),
+                  _buildDynamicRow(context, row.value.$1, row.value.$2, isTab),
                 ],
               ],
             ),

@@ -35,6 +35,7 @@ import 'package:yiraclinics/core/widgets/profile_visuals.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:flutter/services.dart';
 import '../share/share_profile_screen.dart';
+import 'widgets/family_profiles_strip.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
   const PatientProfilePassportScreen({super.key});
@@ -70,8 +71,21 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
   void initState() {
     super.initState();
     PatientTourKeys.passportProfileCardKey = _passportProfileCardKey;
+    GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadProfilePhoto();
     _loadCachedEmergencyContact();
+  }
+
+  void _onSessionUpdated() {
+    _loadProfilePhoto();
+    _loadCachedEmergencyContact();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    GlobalSession.instance.userNotifier.removeListener(_onSessionUpdated);
+    super.dispose();
   }
 
   Future<void> _loadCachedEmergencyContact() async {
@@ -115,9 +129,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final savedPath = prefs.getString('patient_profile_image_$userId');
       final savedNetworkUrl = prefs.getString('patient_profile_network_image_$userId');
 
-      final activeProfile = currentUser?.data?.profiles?.isNotEmpty == true
-          ? currentUser!.data!.profiles!.first
-          : null;
+      final activeProfile = _openProfile(currentUser);
       final sessionImage = (currentUser?.data?.imagePath?.isNotEmpty == true)
           ? currentUser!.data!.imagePath
           : activeProfile?.imagePath;
@@ -134,6 +146,31 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         });
       }
     } catch (_) {}
+  }
+
+  /// The profile that is open now. Avoid falling back to the primary account
+  /// when viewing a family member's profile.
+  ProfileEntity? _openProfile(LoginEntity? user) {
+    final profiles = user?.data?.profiles ?? const <ProfileEntity>[];
+    final id = (user?.data?.id ?? '').trim().toLowerCase();
+    if (id.isNotEmpty) {
+      for (final p in profiles) {
+        if ((p.id ?? '').trim().toLowerCase() == id) return p;
+      }
+    }
+    final name = (user?.data?.firstName ?? '').trim().toLowerCase();
+    if (name.isNotEmpty) {
+      for (final p in profiles) {
+        if ((p.firstName ?? '').trim().toLowerCase() == name ||
+            (p.name ?? '').trim().toLowerCase().startsWith(name)) {
+          return p;
+        }
+      }
+    }
+    if (GlobalSession.instance.isCurrentProfilePrimary && profiles.isNotEmpty) {
+      return profiles.first;
+    }
+    return null;
   }
 
   Future<void> _updateSessionImagePath(String newImagePath) async {
@@ -824,8 +861,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final profiles = currentUser?.data?.profiles ?? [];
-    final activeProfile = profiles.isNotEmpty ? profiles.first : null;
+    final activeProfile = _openProfile(currentUser);
     final nameController = TextEditingController(text: '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim());
 
     final existingPhone = (currentUser?.data?.phoneNumber ?? '').trim();
@@ -1922,8 +1958,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               final emergency = contact?.emergencyContact;
 
               // Determine active member
-              final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
-              final activeProfile = profiles.isNotEmpty ? profiles.first : null;
+              final activeProfile = _openProfile(currentUser);
 
               final firstName = currentUser?.data?.firstName ?? '';
               final lastName = currentUser?.data?.lastName ?? '';
@@ -1941,8 +1976,8 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
 
               final String relation = hasFamilyRelation
                   ? rawRel
-                  : ((activeProfile?.isPrimary == true) ? 'Primary' : 'Dependent');
-              final bool isPrimary = (relation == 'Primary');
+                  : ((activeProfile?.isPrimary == true && GlobalSession.instance.isCurrentProfilePrimary) ? 'Primary' : 'Dependent');
+              final bool isPrimary = (activeProfile?.isPrimary == true) && !hasFamilyRelation && GlobalSession.instance.isCurrentProfilePrimary;
               final mrn = userId.isNotEmpty
                   ? 'MRN-${userId.length > 5 ? userId.substring(0, 5).toUpperCase() : userId}'
                   : 'MRN-90214';
@@ -2010,6 +2045,10 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       ),
                     ),
                     const SizedBox(height: 14),
+
+                    // Every profile on the account, one tap to switch
+                    FamilyProfilesStrip(isDark: isDark),
+                    if (!GlobalSession.instance.isSignedInAsFamilyMember) const SizedBox(height: 14),
 
                     // More: vitals, sharing and doctor suggestions (everything else is on Home)
                     _buildMoreLinks(

@@ -32,12 +32,27 @@ class PastPrescription {
       : date = _date(j['date']),
         doctor = _text(j['doctor']),
         hospital = _text(j['hospital']),
-        diagnoses = (j['diagnoses'] is List ? j['diagnoses'] as List : const []).map((e) => '$e').where((e) => e.trim().isNotEmpty).toList(),
+        // Stored text sometimes carries stray separators (",viral pyrexia").
+        diagnoses = (j['diagnoses'] is List ? j['diagnoses'] as List : const [])
+            .map((e) => '$e'.replaceAll(RegExp(r'^[\s,;]+|[\s,;]+$'), ''))
+            .where((e) => e.isNotEmpty)
+            .toList(),
         medicines = _list(j['medications']).map((m) => _text(m['name'])).whereType<String>().toList(),
+        medicineDetails = _list(j['medications'])
+            .where((m) => _text(m['name']) != null)
+            .map((m) => (
+                  _text(m['name'])!,
+                  [_text(m['dosage']), _text(m['frequency']), _text(m['duration']), _text(m['route'])].whereType<String>().join(' • '),
+                ))
+            .toList(),
+        notes = _text(j['notes']),
         pdfUrl = _text(j['pdfUrl']);
   final DateTime? date;
-  final String? doctor, hospital, pdfUrl;
+  final String? doctor, hospital, pdfUrl, notes;
   final List<String> diagnoses, medicines;
+
+  /// Each medicine with its dose, timing and duration, for the history list.
+  final List<(String, String)> medicineDetails;
 }
 
 class PastRecord {

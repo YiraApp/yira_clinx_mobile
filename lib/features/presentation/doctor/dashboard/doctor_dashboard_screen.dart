@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:yiraclinics/core/widgets/active_profile_chip.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
@@ -42,6 +42,9 @@ class DoctorDashboardScreen extends StatefulWidget {
 
 class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   late final DoctorDashboardBloc _dashboardBloc;
+
+  /// False when the shell provides the bloc, so tab-switch refreshes reach this screen.
+  late final bool _ownsDashboardBloc;
   late final NavigationDrawerBloc _navigationDrawerBloc;
 
   @override
@@ -52,7 +55,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     }
     _navigationDrawerBloc = sl<NavigationDrawerBloc>()
       ..add(const InitializeDrawerData());
-    _dashboardBloc = sl<DoctorDashboardBloc>()..add(FetchDoctorDashboardData());
+    DoctorDashboardBloc? shared;
+    try {
+      shared = context.read<DoctorDashboardBloc>();
+    } catch (_) {}
+    _ownsDashboardBloc = shared == null;
+    _dashboardBloc = (shared ?? sl<DoctorDashboardBloc>())..add(FetchDoctorDashboardData());
     _fetchUnreadNotificationsCount();
     NotificationService.instance.syncFcmTokenWithBackend();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,6 +78,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   @override
   void dispose() {
+    if (_ownsDashboardBloc) _dashboardBloc.close();
     super.dispose();
   }
 
@@ -108,14 +117,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
     final primaryColor = Theme.of(context).primaryColor;
     final chartHeight = _calculateResponsiveChartHeight(context);
-    final width = displayWidth(context);
     final isTabletDevice = isTablet(context);
-    final adaptiveTextColor = isDark ? Colors.white : const Color(0xFF1E293B);
 
     return MultiBlocProvider(
       providers: [
         BlocProvider<NavigationDrawerBloc>.value(value: _navigationDrawerBloc),
-        BlocProvider<DoctorDashboardBloc>(create: (context) => _dashboardBloc),
+        BlocProvider<DoctorDashboardBloc>.value(value: _dashboardBloc),
       ],
       child: NetworkListener(
         onOnline: () {
@@ -137,83 +144,50 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 automaticallyImplyLeading: false,
                 titleSpacing: screenHorizontalSpacePadding,
                 centerTitle: false,
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SvgPicture.asset(
-                        appLogo,
-                        width: isTabletDevice ? 32 : 28,
-                        height: isTabletDevice ? 32 : 28,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
-                        bloc: _dashboardBloc,
-                        builder: (context, state) {
-                          if (state is! DoctorDashboardSuccessState && !isTourActive) {
-                            return BaseShimmer(
-                              child: Container(
-                                width: isTabletDevice ? 160 : 130,
-                                height: isTabletDevice ? 20 : 16,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                            );
-                          }
-
-                          final hName = isTourActive
-                              ? ProviderTourMockData.demoDoctorDashboard.data?.hospitalName
-                              : (state is DoctorDashboardSuccessState
-                                  ? state.dashboardEntity.data?.hospitalName
-                                  : null);
-                          final hospitalTitle = (hName != null && hName.trim().isNotEmpty)
-                              ? hName.trim()
-                              : 'Healthcare Facility';
-
-                          return GestureDetector(
-                            key: isTourActive ? ProviderTourController().headerKey : null,
-                            onTap: () => ProfileSwitcherSheet.show(context),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    hospitalTitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTabletDevice ? width * 0.022 : 18.0,
-                                      fontWeight: FontWeight.w700,
-                                      color: adaptiveTextColor,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 20,
-                                  color: adaptiveTextColor.withValues(alpha: 0.7),
-                                ),
-                              ],
+                // Same switcher pill as the patient home: workspace, role, switch icon.
+                title: Align(
+                  alignment: Alignment.centerLeft,
+                  child: BlocBuilder<DoctorDashboardBloc, DoctorDashboardState>(
+                    bloc: _dashboardBloc,
+                    builder: (context, state) {
+                      if (state is! DoctorDashboardSuccessState && !isTourActive) {
+                        return BaseShimmer(
+                          child: Container(
+                            width: isTabletDevice ? 200 : 170,
+                            height: isTabletDevice ? 46 : 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                          ),
+                        );
+                      }
+
+                      final hName = isTourActive
+                          ? ProviderTourMockData.demoDoctorDashboard.data?.hospitalName
+                          : (state is DoctorDashboardSuccessState ? state.dashboardEntity.data?.hospitalName : null);
+                      final hospitalTitle = (hName != null && hName.trim().isNotEmpty) ? hName.trim() : 'Healthcare Facility';
+                      final rawRole = (GlobalSession.instance.userNotifier.value?.data?.latestUserRole ?? '').trim();
+                      final role = rawRole.isEmpty || rawRole.toLowerCase() == 'provider'
+                          ? 'Doctor'
+                          : '${rawRole[0].toUpperCase()}${rawRole.substring(1)}';
+
+                      return KeyedSubtree(
+                        key: isTourActive ? ProviderTourController().headerKey : null,
+                        child: ActiveProfileChip.workspace(
+                          name: hospitalTitle,
+                          role: role,
+                          color: primaryColor,
+                          isTab: isTabletDevice,
+                          onTap: () => ProfileSwitcherSheet.show(context),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 actions: [
-                  NotificationBadgeIcon(
-                    iconColor: adaptiveTextColor,
-                    size: isTabletDevice ? 24 : 22,
-                  ),
+                  // Same bell as the patient home.
+                  NotificationBadgeIcon(showCapsule: true, size: isTabletDevice ? 22 : 20),
                   const SizedBox(width: 4),
                   Padding(
                     padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
@@ -624,14 +598,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             isTab: isTabletDevice,
                             fontFamily: appPoppinFont,
                             chartContent:
-                                dashboard
-                                        .weeklyAppointments
-                                        ?.dailyData
-                                        ?.isEmpty ??
-                                    false
+                                // A week of zeros is empty too, not a blank chart.
+                                (dashboard.weeklyAppointments?.yValues ?? const []).every((v) => (v ?? 0) <= 0)
                                 ? _buildInlineChartEmptyState(
                                     context,
-                                    'No tracking data logged this week.',
+                                    'No appointments this week.',
                                   )
                                 : _buildWeeklyChartBarList(
                                     context,
@@ -651,14 +622,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                             isTab: isTabletDevice,
                             fontFamily: appPoppinFont,
                             chartContent:
-                                dashboard
-                                        .monthlyPatients
-                                        ?.monthlyData
-                                        ?.isEmpty ??
-                                    false
+                                (dashboard.monthlyPatients?.yValues ?? const []).every((v) => (v ?? 0) <= 0)
                                 ? _buildInlineChartEmptyState(
                                     context,
-                                    'No tracking data logged this year.',
+                                    'No patients seen this year yet.',
                                   )
                                 : _buildMonthlyChartBarList(
                                     context,
@@ -763,16 +730,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     List<String?> labels,
     List<double?> values,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final List<Color> beautifulWeeklyPalette = [
-      primaryColor,
-      isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488),
-      isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
-      isDark ? const Color(0xFF6EE7B7) : const Color(0xFF34D399),
-      isDark ? const Color(0xFF059669) : const Color(0xFF14532D),
-      isDark ? const Color(0xFF14B8A6) : const Color(0xFF0F766E),
-      isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A),
-    ];
+    final List<Color> beautifulWeeklyPalette = [primaryColor];
     double highestValue = 0.0;
     for (final v in values) {
       if (v != null && v > highestValue) {

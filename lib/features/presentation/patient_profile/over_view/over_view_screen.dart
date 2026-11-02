@@ -153,7 +153,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                         onRequestAccess: widget.onRequestAccess!,
                       ),
 
-                    const SizedBox(height: 24),
+                    // Room for the floating "Add Suggestion" button on doctors' screens.
+                    const SizedBox(height: 88),
                   ],
                 ),
               ),

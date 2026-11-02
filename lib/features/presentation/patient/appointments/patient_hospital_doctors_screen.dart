@@ -292,8 +292,8 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
     final res = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: sl<AppointmentBloc>(),
+        builder: (_) => BlocProvider<AppointmentBloc>(
+          create: (_) => sl<AppointmentBloc>(),
           child: AddNewAppointmentScreen(
             initialPatientName: widget.patientName ??
                 widget.targetProfile?.name ??

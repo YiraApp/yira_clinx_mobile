@@ -62,7 +62,12 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     super.initState();
     PatientTourKeys.apptsFilterKey = _apptsFilterKey;
     PatientTourKeys.apptsListKey = _apptsListKey;
+    GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadAppointments();
+  }
+
+  void _onSessionUpdated() {
+    _loadAppointments(force: true);
   }
 
   void reload({bool isPullToRefresh = false, bool force = true}) {
@@ -79,6 +84,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
   @override
   void dispose() {
+    GlobalSession.instance.userNotifier.removeListener(_onSessionUpdated);
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -105,7 +111,6 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final token = currentUser?.data?.accessToken ?? '';
     final userId = currentUser?.data?.id ?? '';
-    final phone = currentUser?.data?.phoneNumber ?? '';
 
     List<Map<String, dynamic>> loadedList = [];
 
@@ -114,19 +119,47 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
       final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
         URLs.patientAppointmentsUrl,
         data: {
+          // By profile only: family members share a phone, so a number here
+          // would bring back the main account's appointments on their profiles.
           "userId": userId,
-          "patientPhone": phone,
+          "onlySelf": true,
         },
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
       );
 
       if (res.data != null && res.data['data'] is List) {
         final list = res.data['data'] as List;
+        final activeId = userId.trim().toLowerCase();
         for (final a in list) {
-          loadedList.add(Map<String, dynamic>.from(a));
+          final item = Map<String, dynamic>.from(a);
+          final pId = (item['patientUserId'] ?? item['userId'] ?? '').toString().trim().toLowerCase();
+          if (activeId.isEmpty || pId.isEmpty || pId == activeId) {
+            loadedList.add(item);
+          }
         }
       }
     } catch (_) {}
+
+    // The main account also sees its family's appointments. Asked per person so
+    // this works on servers that return only one person's list.
+    final seenIds = {for (final a in loadedList) '${a['id']}'};
+    for (final familyId in GlobalSession.instance.familyProfileIdsOnMainAccount) {
+      try {
+        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientAppointmentsUrl,
+          data: {"userId": familyId},
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            extra: const {'suppressErrorSnack': true},
+          ),
+        );
+        if (res.data != null && res.data['data'] is List) {
+          for (final a in res.data['data'] as List) {
+            if (seenIds.add('${a['id']}')) loadedList.add(Map<String, dynamic>.from(a));
+          }
+        }
+      } catch (_) {}
+    }
 
     // 2. Fallback to patient overview if patient-appointments returned empty
     if (loadedList.isEmpty && userId.isNotEmpty) {
@@ -144,7 +177,12 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         if (res.data != null && res.data['data'] != null) {
           final data = res.data['data'];
           if (data['appointments'] is List) {
+            final activeId = userId.trim().toLowerCase();
             for (final a in (data['appointments'] as List)) {
+              final pId = (a['patient_user_id'] ?? a['userId'] ?? userId).toString().trim().toLowerCase();
+              if (activeId.isNotEmpty && pId.isNotEmpty && pId != activeId) {
+                continue;
+              }
               loadedList.add({
                 'id': a['id'],
                 'appointmentDate': a['raw_date'] ?? a['appointment_date'],
@@ -657,7 +695,13 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
       final status = (a['status'] ?? '').toString().toLowerCase().trim();
       final aptDate = _parseAppointmentDateTime(a);
 
-      if (status == 'completed') {
+      // Finished or called off: never "upcoming", whatever the date.
+      if (status == 'completed' ||
+          status.contains('cancel') ||
+          status.contains('reject') ||
+          status.contains('no show') ||
+          status.contains('noshow') ||
+          status.contains('missed')) {
         completedList.add(a);
       } else if (aptDate != null) {
         final aptDay = DateTime(aptDate.year, aptDate.month, aptDate.day);
@@ -853,9 +897,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildTabStatCard(
-                                  title: "Completed",
+                                  // Holds cancelled and missed bookings too, not only completed ones.
+                                  title: "Past",
                                   count: "${effectiveCompleted.length}",
-                                  subtitle: "Past Consultations",
+                                  subtitle: "Visits & cancellations",
                                   icon: Icons.check_circle_outline_rounded,
                                   iconColor: const Color(0xFF059669),
                                   isActive: _activeTab == "completed",
@@ -1354,7 +1399,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
             Text(
               _activeTab == "upcoming"
                   ? "No upcoming appointments"
-                  : "No completed consultations",
+                  : "No past appointments",
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.bold,

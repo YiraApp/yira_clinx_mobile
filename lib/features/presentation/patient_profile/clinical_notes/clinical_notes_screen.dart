@@ -376,7 +376,8 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     String formattedDate = 'Recent Visit';
     if (createdAtRaw.isNotEmpty) {
       try {
-        final parsed = DateTime.parse(createdAtRaw);
+        // Server times are UTC; show them in the phone's time zone.
+        final parsed = DateTime.parse(createdAtRaw).toLocal();
         formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(parsed);
       } catch (_) {
         formattedDate = createdAtRaw;

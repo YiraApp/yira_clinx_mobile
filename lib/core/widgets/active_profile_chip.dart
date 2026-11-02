@@ -4,8 +4,8 @@ import '../constants/constants.dart';
 import 'phosphor_icons.dart';
 import 'profile_visuals.dart';
 
-/// Header pill showing whose profile is open, with a switch affordance.
-/// Tapping it opens the Switch Profile sheet.
+/// Header pill showing whose profile (or, for doctors, which workspace) is
+/// open, with a switch affordance. Tapping it opens the Switch Profile sheet.
 class ActiveProfileChip extends StatelessWidget {
   final String name;
   final String? imagePath;
@@ -19,6 +19,15 @@ class ActiveProfileChip extends StatelessWidget {
   final VoidCallback onTap;
   final bool isTab;
 
+  /// Replaces the relation line, e.g. "Doctor" for a workspace.
+  final String? subtitle;
+
+  /// Colour of the avatar and first word of the subtitle; defaults to the relation colour.
+  final Color? accent;
+
+  /// Grey text after the subtitle, e.g. "Switch workspace".
+  final String? note;
+
   const ActiveProfileChip({
     super.key,
     required this.name,
@@ -28,20 +37,39 @@ class ActiveProfileChip extends StatelessWidget {
     required this.profileCount,
     required this.onTap,
     this.isTab = false,
+    this.subtitle,
+    this.accent,
+    this.note,
   });
+
+  /// A doctor's current workspace: the hospital, with their role underneath.
+  const ActiveProfileChip.workspace({
+    super.key,
+    required this.name,
+    this.imagePath,
+    required String role,
+    required Color color,
+    required this.onTap,
+    this.isTab = false,
+  })  : relation = 'Self',
+        isPrimary = true,
+        profileCount = 0,
+        subtitle = role,
+        accent = color,
+        note = 'Switch workspace';
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final rel = relation.trim();
     final isSelf = isPrimary || rel.isEmpty || rel.toLowerCase() == 'self';
-    final accent = profileRelationColor(rel, isPrimary: isSelf);
+    final accent = this.accent ?? profileRelationColor(rel, isPrimary: isSelf);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final subtitle = isSelf ? 'You' : "${rel[0].toUpperCase()}${rel.substring(1)}'s profile";
+    final subtitle = this.subtitle ?? (isSelf ? 'You' : "${rel[0].toUpperCase()}${rel.substring(1)}'s profile");
 
     return Semantics(
       button: true,
-      label: 'Viewing $name. Switch profile',
+      label: this.subtitle == null ? 'Viewing $name. Switch profile' : '$name, $subtitle. Switch workspace',
       child: Material(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         shape: StadiumBorder(side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
@@ -81,7 +109,7 @@ class ActiveProfileChip extends StatelessWidget {
                               text: subtitle,
                               style: TextStyle(color: accent, fontWeight: FontWeight.w600),
                             ),
-                            if (profileCount > 1) TextSpan(text: '  ·  $profileCount profiles'),
+                            if (profileCount > 1) TextSpan(text: '  ·  $profileCount profiles') else if (note != null) TextSpan(text: '  ·  $note'),
                           ],
                         ),
                         maxLines: 1,

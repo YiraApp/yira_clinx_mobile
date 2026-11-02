@@ -28,6 +28,12 @@ class DoctorMainShellScreen extends StatefulWidget {
 class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
   late int _currentIndex;
 
+  // These two blocs are registered as factories, so every sl<...>() call makes a
+  // new, empty one. Keep one of each for the shell's lifetime; asking again on
+  // each rebuild left the Appointments tab on a bloc that never loaded.
+  final AppointmentBloc _appointmentBloc = sl<AppointmentBloc>();
+  final DoctorDashboardBloc _doctorDashboardBloc = sl<DoctorDashboardBloc>();
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +45,17 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
       }
     });
     sl<NavigationDrawerBloc>().add(const InitializeDrawerData());
-    sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
-    sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+    _doctorDashboardBloc.add(FetchDoctorDashboardData());
+    _appointmentBloc.add(LoadAppointmentsEvent());
     sl<DashboardBloc>().add(const GetDashboardData());
     sl<SlotBloc>().add(InitializeSlotsEvent());
+  }
+
+  @override
+  void dispose() {
+    _appointmentBloc.close();
+    _doctorDashboardBloc.close();
+    super.dispose();
   }
 
   void _onTabTapped(int index) {
@@ -53,9 +66,9 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
       if (index == 2) {
         sl<DashboardBloc>().add(const GetDashboardData());
       } else if (index == 1) {
-        sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+        _appointmentBloc.add(LoadAppointmentsEvent());
       } else if (index == 0) {
-        sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+        _doctorDashboardBloc.add(FetchDoctorDashboardData());
       } else if (index == 3) {
         sl<SlotBloc>().add(InitializeSlotsEvent(resetToToday: true));
       }
@@ -72,10 +85,10 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
           value: sl<NavigationDrawerBloc>(),
         ),
         BlocProvider<DoctorDashboardBloc>.value(
-          value: sl<DoctorDashboardBloc>(),
+          value: _doctorDashboardBloc,
         ),
         BlocProvider<AppointmentBloc>.value(
-          value: sl<AppointmentBloc>(),
+          value: _appointmentBloc,
         ),
         BlocProvider<DashboardBloc>.value(
           value: sl<DashboardBloc>(),

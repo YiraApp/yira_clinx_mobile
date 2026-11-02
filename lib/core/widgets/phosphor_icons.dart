@@ -43,15 +43,12 @@ class PhosphorIconsBold {
   static const IconData deviceRotate = IconData(0xedf2, fontFamily: 'PhosphorBold');
   static const IconData dotsThreeVertical = IconData(0xe208, fontFamily: 'PhosphorBold');
   static const IconData downloadSimple = IconData(0xe20c, fontFamily: 'PhosphorBold');
-  static const IconData drop = IconData(0xe210, fontFamily: 'PhosphorBold');
   static const IconData fileDashed = IconData(0xe704, fontFamily: 'PhosphorBold');
   static const IconData filePdf = IconData(0xe702, fontFamily: 'PhosphorBold');
   static const IconData fileText = IconData(0xe23a, fontFamily: 'PhosphorBold');
   static const IconData forkKnife = IconData(0xe262, fontFamily: 'PhosphorBold');
   static const IconData gauge = IconData(0xe628, fontFamily: 'PhosphorBold');
   static const IconData globe = IconData(0xe288, fontFamily: 'PhosphorBold');
-  static const IconData heart = IconData(0xe2a8, fontFamily: 'PhosphorBold');
-  static const IconData heartbeat = IconData(0xe2ac, fontFamily: 'PhosphorBold');
   static const IconData hospital = IconData(0xe844, fontFamily: 'PhosphorBold');
   static const IconData image = IconData(0xe2ca, fontFamily: 'PhosphorBold');
   static const IconData images = IconData(0xe836, fontFamily: 'PhosphorBold');
@@ -82,7 +79,6 @@ class PhosphorIconsBold {
   static const IconData stack = IconData(0xe466, fontFamily: 'PhosphorBold');
   static const IconData stethoscope = IconData(0xe7ea, fontFamily: 'PhosphorBold');
   static const IconData storefront = IconData(0xe470, fontFamily: 'PhosphorBold');
-  static const IconData thermometerSimple = IconData(0xe5cc, fontFamily: 'PhosphorBold');
   static const IconData trash = IconData(0xe4a6, fontFamily: 'PhosphorBold');
   static const IconData trendDown = IconData(0xe4ac, fontFamily: 'PhosphorBold');
   static const IconData trendUp = IconData(0xe4ae, fontFamily: 'PhosphorBold');

@@ -400,10 +400,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         ),
                         DoctorProfileFieldItem(
                           label: "Medical Council Reg. No.",
-                          value: profile.registrationNumber ?? "REG-ACTIVE",
+                          // Nothing checks this number against the medical council yet, so no
+                          // "Verified" badge, and no made-up value when it's missing.
+                          value: (profile.registrationNumber ?? '').trim().isEmpty ? "Not added" : profile.registrationNumber!,
                           icon: Icons.verified_user_outlined,
-                          isVerified: true,
-                          isCopyable: true,
+                          isVerified: false,
+                          isCopyable: (profile.registrationNumber ?? '').trim().isNotEmpty,
                         ),
                         DoctorProfileFieldItem(
                           label: "Clinical Experience",

@@ -257,8 +257,8 @@ class AppRouter {
         }
         return MaterialPageRoute(
           settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<AppointmentBloc>(),
+          builder: (_) => BlocProvider<AppointmentBloc>(
+            create: (_) => sl<AppointmentBloc>(),
             child: AddNewAppointmentScreen(
               initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
               initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
@@ -381,8 +381,8 @@ class AppRouter {
 
       case AppRoutes.doctorPatientAppointmentListScreen:
         return _guardedRoute(settings: settings, 
-          builder: (_) => BlocProvider.value(
-            value: sl<AppointmentBloc>(),
+          builder: (_) => BlocProvider<AppointmentBloc>(
+            create: (_) => sl<AppointmentBloc>(),
             child: PatientAppointmentList(),
           ),
         );

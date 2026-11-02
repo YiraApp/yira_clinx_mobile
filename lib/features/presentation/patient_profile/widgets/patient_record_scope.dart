@@ -10,10 +10,17 @@ class ConsentHistoryBanner extends StatelessWidget {
 
   const ConsentHistoryBanner({super.key, required this.accessStatus});
 
+  /// Access that comes from having treated the patient, not from a consent.
+  static bool isTreatingDoctor(DoctorAccessStatusLoaded? status) =>
+      (status?.durationLabel ?? '').toLowerCase().contains('treating');
+
   static String? expiryText(DoctorAccessStatusLoaded? status) {
-    final expires = status?.expiresAt ?? status?.consent?.expiresAt;
-    if (status?.consent?.durationMinutes == 0) return 'no end date';
-    if (expires == null) return null;
+    if (status == null || isTreatingDoctor(status)) return null;
+    if (status.consent?.durationMinutes == 0) return 'no end date';
+    // Only the expiry of the consent that grants access now; an older,
+    // lapsed consent's date would wrongly read as "shared until <past>".
+    final expires = status.expiresAt;
+    if (expires == null || expires.isBefore(DateTime.now())) return null;
     final local = expires.toLocal();
     final now = DateTime.now();
     final sameDay = local.year == now.year && local.month == now.month && local.day == now.day;
@@ -38,7 +45,9 @@ class ConsentHistoryBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Full history from all hospitals · shared by the patient${until == null ? '' : ' $until'}',
+              isTreatingDoctor(accessStatus)
+                  ? 'Full history from all hospitals · you have treated this patient'
+                  : 'Full history from all hospitals · shared by the patient${until == null ? '' : ' $until'}',
               style: DietUi.text(11.5, FontWeight.w500, DietUi.body(isDark), height: 1.35),
             ),
           ),

@@ -26,6 +26,24 @@ class ProfileSwitcherSheet extends StatefulWidget {
     );
   }
 
+  /// Switches straight to one of the account's family profiles, as tapping it
+  /// in the sheet would. Shows a message if the switch fails.
+  static Future<void> switchToFamilyProfile(BuildContext context, String profileUserId) async {
+    final user = GlobalSession.instance.userNotifier.value;
+    final profiles = user?.data?.profiles ?? [];
+    final primaryUserId = (profiles.isNotEmpty && (profiles.first.id ?? '').isNotEmpty) ? profiles.first.id! : (user?.data?.id ?? '');
+    final items = _buildFamilyItems(user, primaryUserId, (_, image) => image);
+    final target = items.where((i) => (i.profileUserId ?? '').toLowerCase() == profileUserId.toLowerCase()).firstOrNull;
+    if (target == null) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final error = await _performSwitch(target);
+    if (error == null) {
+      NavigationService.navigateTo(AppRoutes.userConfiguration);
+    } else {
+      messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+    }
+  }
+
   @override
   State<ProfileSwitcherSheet> createState() => _ProfileSwitcherSheetState();
 }
@@ -94,166 +112,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       final List<_FlatWorkspaceItem> items = [];
 
-      final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
-          ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
-          : 'Primary Account';
-
-      final bool primaryHasPatientRole = allRoles.any((r) {
-        final rName = (r.roleName ?? '').toLowerCase();
-        final rId = (r.roleId ?? '').toUpperCase();
-        return rId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
-               rName.contains('patient') ||
-               rName.contains('user');
-      });
-
-      RoleEntity? providerRoleEntity;
-      for (final r in allRoles) {
-        final rName = (r.roleName ?? '').toLowerCase();
-        final rId = (r.roleId ?? '').toUpperCase();
-        if (rId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
-            rName.contains('provider') ||
-            rName.contains('doctor') ||
-            rName.contains('physician')) {
-          providerRoleEntity = r;
-          break;
-        }
-      }
-      final bool primaryHasProviderRole = providerRoleEntity != null &&
-          providerRoleEntity.roleId != null &&
-          providerRoleEntity.roleId!.isNotEmpty;
-
-      final String primaryRoleId = primaryHasPatientRole
-          ? '4FC67429-28AE-4106-93EF-436228282ED0'
-          : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
-
-      // 1. Add Family Profiles (Primary + Dependents)
-      if (profiles.isNotEmpty) {
-        int primaryIndex = profiles.indexWhere((p) {
-          final r = (p.relation ?? '').trim().toLowerCase();
-          final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
-          return p.isPrimary == true && !isFam;
-        });
-
-        if (primaryIndex != -1) {
-          final primaryProf = profiles[primaryIndex];
-          final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
-              ? primaryProf.name!
-              : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
-                  ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
-                  : fallbackPrimaryName;
-
-          final String? primaryImage = resolveProfileImage(
-            primaryProf.id ?? primaryUserId,
-            primaryProf.imagePath ?? currentUser?.data?.imagePath,
-          );
-
-          items.add(_FlatWorkspaceItem(
-            roleId: primaryRoleId,
-            roleName: 'Primary',
-            orgId: currentUser?.data?.latestOrgId ?? 1,
-            orgName: 'Family Profile',
-            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
-            hospitalName: pPrimaryName,
-            location: null,
-            profileUserId: primaryProf.id ?? primaryUserId,
-            firstName: primaryProf.firstName,
-            lastName: primaryProf.lastName,
-            gender: primaryProf.gender,
-            dob: primaryProf.dob,
-            phoneNumber: primaryProf.phoneNumber,
-            relation: 'Self',
-            imagePath: primaryImage,
-          ));
-        } else {
-          final String? primaryImage = resolveProfileImage(
-            primaryUserId,
-            currentUser?.data?.imagePath,
-          );
-          items.add(_FlatWorkspaceItem(
-            roleId: primaryRoleId,
-            roleName: 'Primary',
-            orgId: currentUser?.data?.latestOrgId ?? 1,
-            orgName: 'Family Profile',
-            hospitalId: currentUser?.data?.latestHospitalId ?? 1,
-            hospitalName: fallbackPrimaryName,
-            location: null,
-            profileUserId: primaryUserId,
-            firstName: currentUser?.data?.firstName,
-            lastName: currentUser?.data?.lastName,
-            gender: currentUser?.data?.gender,
-            dob: currentUser?.data?.dob,
-            phoneNumber: currentUser?.data?.phoneNumber,
-            relation: 'Self',
-            imagePath: primaryImage,
-          ));
-        }
-
-        // 2. All other family members retain their exact fixed relations
-        for (int i = 0; i < profiles.length; i++) {
-          if (primaryIndex != -1 && i == primaryIndex) continue;
-
-          final p = profiles[i];
-          final rawRel = (p.relation ?? '').trim();
-          final bool hasFamilyRelation = rawRel.isNotEmpty &&
-              rawRel.toLowerCase() != 'self' &&
-              rawRel.toLowerCase() != 'primary' &&
-              rawRel.toLowerCase() != 'admin';
-
-          final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
-          final String pName = (p.name?.isNotEmpty ?? false)
-              ? p.name!
-              : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
-                  ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
-                  : pRel;
-
-          final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
-          final String? depImage = resolveProfileImage(
-            pUserId,
-            p.imagePath,
-          );
-
-          items.add(_FlatWorkspaceItem(
-            roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
-            roleName: 'Family Member',
-            orgId: 1,
-            orgName: 'Family Profile',
-            hospitalId: 1,
-            hospitalName: pName,
-            location: null,
-            profileUserId: pUserId,
-            firstName: p.firstName,
-            lastName: p.lastName,
-            gender: p.gender,
-            dob: p.dob,
-            phoneNumber: p.phoneNumber,
-            relation: pRel,
-            imagePath: depImage,
-          ));
-        }
-      } else {
-        final String? fallbackImage = resolveProfileImage(
-          primaryUserId,
-          currentUser?.data?.imagePath,
-        );
-
-        items.add(_FlatWorkspaceItem(
-          roleId: primaryRoleId,
-          roleName: 'Primary',
-          orgId: currentUser?.data?.latestOrgId ?? 1,
-          orgName: 'Family Profile',
-          hospitalId: currentUser?.data?.latestHospitalId ?? 1,
-          hospitalName: fallbackPrimaryName,
-          location: null,
-          profileUserId: primaryUserId,
-          firstName: currentUser?.data?.firstName,
-          lastName: currentUser?.data?.lastName,
-          gender: currentUser?.data?.gender,
-          dob: currentUser?.data?.dob,
-          phoneNumber: currentUser?.data?.phoneNumber,
-          relation: 'Self',
-          imagePath: fallbackImage,
-        ));
-      }
+      items.addAll(_buildFamilyItems(currentUser, primaryUserId, resolveProfileImage));
 
       // 2. Add Provider / Staff Workspaces for each facility
       for (final role in roles) {
@@ -386,109 +245,21 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       _switchingKey = key;
     });
 
-    try {
-      final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
-      final params = UpdateLatestOrgDetailsModelParams(
-        userId: item.profileUserId,
-        latestRoleId: item.roleId,
-        latestOrgId: item.orgId,
-        latestHospitalId: item.hospitalId,
+    final error = await _performSwitch(item);
+    if (error == null) {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      NavigationService.navigateTo(AppRoutes.userConfiguration);
+    } else if (mounted) {
+      setState(() {
+        _switchingKey = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-
-      final response = await updateUseCase(params);
-
-      if (response != null && response.status == true && response.data != null) {
-        final currentSession = GlobalSession.instance.userNotifier.value;
-        final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
-        final bool isPatientRole = effectiveRoleId.toUpperCase() ==
-                "4FC67429-28AE-4106-93EF-436228282ED0" ||
-            item.roleName.toLowerCase().contains("patient") ||
-            item.roleName.toLowerCase().contains("user") ||
-            (item.relation != null &&
-             item.relation!.toLowerCase() != 'doctor' &&
-             item.relation!.toLowerCase() != 'provider' &&
-             effectiveRoleId.toUpperCase() != "FE80173F-9DB3-4703-84A8-5C23E7CC493C");
-        final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
-        final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
-
-        if (currentSession?.data != null) {
-          final oldData = currentSession!.data!;
-          final targetUserId = (item.profileUserId != null && item.profileUserId!.isNotEmpty)
-              ? item.profileUserId!
-              : oldData.id;
-
-          final updatedData = DataEntity(
-            id: targetUserId,
-            accessToken: oldData.accessToken,
-            refreshToken: oldData.refreshToken,
-            accessTokenExpiry: oldData.accessTokenExpiry,
-            refreshTokenExpiry: oldData.refreshTokenExpiry,
-            isMobileVerified: oldData.isMobileVerified,
-            isEmailVerified: oldData.isEmailVerified,
-            roleCount: oldData.roleCount,
-            hospitalCount: oldData.hospitalCount,
-            organizationCount: oldData.organizationCount,
-            roles: oldData.roles,
-            firstName: item.firstName ?? oldData.firstName,
-            lastName: item.lastName ?? oldData.lastName,
-            email: oldData.email,
-            phoneNumber: item.phoneNumber ?? oldData.phoneNumber,
-            countryCode: oldData.countryCode,
-            gender: item.gender ?? oldData.gender,
-            dob: item.dob ?? oldData.dob,
-            height: oldData.height,
-            weight: oldData.weight,
-            heightUnit: oldData.heightUnit,
-            weightUnit: oldData.weightUnit,
-            latestRoleId: effectiveRoleId,
-            latestOrgId: response.data?.latestOrgId ?? item.orgId,
-            latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
-            latestUserRole: latestUserRole,
-            navigationId: navigationId,
-            profiles: oldData.profiles,
-            imagePath: item.imagePath ?? oldData.imagePath,
-          );
-
-          await GlobalSession.instance.update(
-            LoginEntity(
-              status: true,
-              message: "Session updated",
-              data: updatedData,
-            ),
-          );
-        }
-
-        if (mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-        NavigationService.navigateTo(AppRoutes.userConfiguration);
-      } else {
-        if (mounted) {
-          setState(() {
-            _switchingKey = null;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response?.message ?? "Failed to switch workspace"),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _switchingKey = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error switching workspace: $e"),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     }
   }
 
@@ -1066,6 +837,270 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
     );
   }
 
+}
+
+
+/// The account's family profiles (primary first, then dependents) as switch
+/// targets. Shared by the sheet and the profile row on My Profile.
+List<_FlatWorkspaceItem> _buildFamilyItems(
+  LoginEntity? currentUser,
+  String primaryUserId,
+  String? Function(String? id, String? serverImage) resolveProfileImage,
+) {
+  final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
+  final List<RoleEntity> allRoles = currentUser?.data?.roles ?? [];
+  final List<_FlatWorkspaceItem> items = [];
+
+  final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
+      ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
+      : 'Primary Account';
+
+  final bool primaryHasPatientRole = allRoles.any((r) {
+    final rName = (r.roleName ?? '').toLowerCase();
+    final rId = (r.roleId ?? '').toUpperCase();
+    return rId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+           rName.contains('patient') ||
+           rName.contains('user');
+  });
+
+  RoleEntity? providerRoleEntity;
+  for (final r in allRoles) {
+    final rName = (r.roleName ?? '').toLowerCase();
+    final rId = (r.roleId ?? '').toUpperCase();
+    if (rId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
+        rName.contains('provider') ||
+        rName.contains('doctor') ||
+        rName.contains('physician')) {
+      providerRoleEntity = r;
+      break;
+    }
+  }
+  final bool primaryHasProviderRole = providerRoleEntity != null &&
+      providerRoleEntity.roleId != null &&
+      providerRoleEntity.roleId!.isNotEmpty;
+
+  final String primaryRoleId = primaryHasPatientRole
+      ? '4FC67429-28AE-4106-93EF-436228282ED0'
+      : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
+
+  // 1. Add Family Profiles (Primary + Dependents)
+  if (profiles.isNotEmpty) {
+    int primaryIndex = profiles.indexWhere((p) {
+      final r = (p.relation ?? '').trim().toLowerCase();
+      final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+      return p.isPrimary == true && !isFam;
+    });
+
+    if (primaryIndex != -1) {
+      final primaryProf = profiles[primaryIndex];
+      final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
+          ? primaryProf.name!
+          : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
+              ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
+              : fallbackPrimaryName;
+
+      final String? primaryImage = resolveProfileImage(
+        primaryProf.id ?? primaryUserId,
+        primaryProf.imagePath ?? currentUser?.data?.imagePath,
+      );
+
+      items.add(_FlatWorkspaceItem(
+        roleId: primaryRoleId,
+        roleName: 'Primary',
+        orgId: currentUser?.data?.latestOrgId ?? 1,
+        orgName: 'Family Profile',
+        hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+        hospitalName: pPrimaryName,
+        location: null,
+        profileUserId: primaryProf.id ?? primaryUserId,
+        firstName: primaryProf.firstName,
+        lastName: primaryProf.lastName,
+        gender: primaryProf.gender,
+        dob: primaryProf.dob,
+        phoneNumber: primaryProf.phoneNumber,
+        relation: 'Self',
+        imagePath: primaryImage,
+      ));
+    } else {
+      final String? primaryImage = resolveProfileImage(
+        primaryUserId,
+        currentUser?.data?.imagePath,
+      );
+      items.add(_FlatWorkspaceItem(
+        roleId: primaryRoleId,
+        roleName: 'Primary',
+        orgId: currentUser?.data?.latestOrgId ?? 1,
+        orgName: 'Family Profile',
+        hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+        hospitalName: fallbackPrimaryName,
+        location: null,
+        profileUserId: primaryUserId,
+        firstName: currentUser?.data?.firstName,
+        lastName: currentUser?.data?.lastName,
+        gender: currentUser?.data?.gender,
+        dob: currentUser?.data?.dob,
+        phoneNumber: currentUser?.data?.phoneNumber,
+        relation: 'Self',
+        imagePath: primaryImage,
+      ));
+    }
+
+    // 2. All other family members retain their exact fixed relations
+    for (int i = 0; i < profiles.length; i++) {
+      if (primaryIndex != -1 && i == primaryIndex) continue;
+
+      final p = profiles[i];
+      final rawRel = (p.relation ?? '').trim();
+      final bool hasFamilyRelation = rawRel.isNotEmpty &&
+          rawRel.toLowerCase() != 'self' &&
+          rawRel.toLowerCase() != 'primary' &&
+          rawRel.toLowerCase() != 'admin';
+
+      final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
+      final String pName = (p.name?.isNotEmpty ?? false)
+          ? p.name!
+          : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
+              ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
+              : pRel;
+
+      final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
+      final String? depImage = resolveProfileImage(
+        pUserId,
+        p.imagePath,
+      );
+
+      items.add(_FlatWorkspaceItem(
+        roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
+        roleName: 'Family Member',
+        orgId: 1,
+        orgName: 'Family Profile',
+        hospitalId: 1,
+        hospitalName: pName,
+        location: null,
+        profileUserId: pUserId,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        gender: p.gender,
+        dob: p.dob,
+        phoneNumber: p.phoneNumber,
+        relation: pRel,
+        imagePath: depImage,
+      ));
+    }
+  } else {
+    final String? fallbackImage = resolveProfileImage(
+      primaryUserId,
+      currentUser?.data?.imagePath,
+    );
+
+    items.add(_FlatWorkspaceItem(
+      roleId: primaryRoleId,
+      roleName: 'Primary',
+      orgId: currentUser?.data?.latestOrgId ?? 1,
+      orgName: 'Family Profile',
+      hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+      hospitalName: fallbackPrimaryName,
+      location: null,
+      profileUserId: primaryUserId,
+      firstName: currentUser?.data?.firstName,
+      lastName: currentUser?.data?.lastName,
+      gender: currentUser?.data?.gender,
+      dob: currentUser?.data?.dob,
+      phoneNumber: currentUser?.data?.phoneNumber,
+      relation: 'Self',
+      imagePath: fallbackImage,
+    ));
+  }
+
+  return items;
+}
+
+/// Switches the session to [item] on the server and locally. Returns null on
+/// success, or a message to show.
+Future<String?> _performSwitch(_FlatWorkspaceItem item) async {
+  try {
+    final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
+    final params = UpdateLatestOrgDetailsModelParams(
+      userId: item.profileUserId,
+      latestRoleId: item.roleId,
+      latestOrgId: item.orgId,
+      latestHospitalId: item.hospitalId,
+    );
+
+    final response = await updateUseCase(params);
+
+    if (response != null && response.status == true && response.data != null) {
+      final currentSession = GlobalSession.instance.userNotifier.value;
+      final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
+      final bool isPatientRole = effectiveRoleId.toUpperCase() ==
+              "4FC67429-28AE-4106-93EF-436228282ED0" ||
+          item.roleName.toLowerCase().contains("patient") ||
+          item.roleName.toLowerCase().contains("user") ||
+          (item.relation != null &&
+           item.relation!.toLowerCase() != 'doctor' &&
+           item.relation!.toLowerCase() != 'provider' &&
+           effectiveRoleId.toUpperCase() != "FE80173F-9DB3-4703-84A8-5C23E7CC493C");
+      final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
+      final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
+
+      if (currentSession?.data != null) {
+        final oldData = currentSession!.data!;
+        final targetUserId = (item.profileUserId != null && item.profileUserId!.isNotEmpty)
+            ? item.profileUserId!
+            : oldData.id;
+
+        // Switching to another person: take only their details, never fill
+        // gaps from the previous profile (that showed the wrong photo and age).
+        final bool samePerson = (targetUserId ?? '').toLowerCase() == (oldData.id ?? '').toLowerCase();
+        final updatedData = DataEntity(
+          id: targetUserId,
+          accessToken: oldData.accessToken,
+          refreshToken: oldData.refreshToken,
+          accessTokenExpiry: oldData.accessTokenExpiry,
+          refreshTokenExpiry: oldData.refreshTokenExpiry,
+          isMobileVerified: oldData.isMobileVerified,
+          isEmailVerified: oldData.isEmailVerified,
+          roleCount: oldData.roleCount,
+          hospitalCount: oldData.hospitalCount,
+          organizationCount: oldData.organizationCount,
+          roles: oldData.roles,
+          // hospitalName holds the profile's display name for family items.
+          firstName: samePerson ? (item.firstName ?? oldData.firstName) : (item.firstName ?? item.hospitalName),
+          lastName: samePerson ? (item.lastName ?? oldData.lastName) : item.lastName,
+          email: oldData.email,
+          phoneNumber: item.phoneNumber ?? oldData.phoneNumber,
+          countryCode: oldData.countryCode,
+          gender: samePerson ? (item.gender ?? oldData.gender) : item.gender,
+          dob: samePerson ? (item.dob ?? oldData.dob) : item.dob,
+          height: oldData.height,
+          weight: oldData.weight,
+          heightUnit: oldData.heightUnit,
+          weightUnit: oldData.weightUnit,
+          latestRoleId: effectiveRoleId,
+          latestOrgId: response.data?.latestOrgId ?? item.orgId,
+          latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
+          latestUserRole: latestUserRole,
+          navigationId: navigationId,
+          profiles: oldData.profiles,
+          // A different person keeps only their own photo (none if they have none);
+          // falling back to the old one showed the previous profile's picture.
+          imagePath: samePerson ? (item.imagePath ?? oldData.imagePath) : item.imagePath,
+        );
+
+        await GlobalSession.instance.update(
+          LoginEntity(
+            status: true,
+            message: "Session updated",
+            data: updatedData,
+          ),
+        );
+      }
+      return null;
+    }
+    return response?.message ?? "Failed to switch profile";
+  } catch (e) {
+    return "Couldn't switch profile: $e";
+  }
 }
 
 class _FlatWorkspaceItem {

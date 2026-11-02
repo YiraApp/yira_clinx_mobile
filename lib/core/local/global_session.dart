@@ -74,6 +74,34 @@ class GlobalSession {
 
   bool get isCurrentProfileChild => !isCurrentProfilePrimary;
 
+  /// Family members' user ids, listed only for the main account. A family
+  /// member's own profile has none: they see only what is theirs.
+  List<String> get familyProfileIdsOnMainAccount {
+    if (!isCurrentProfilePrimary || isSignedInAsFamilyMember) return const [];
+    final data = userNotifier.value?.data;
+    final me = (data?.id ?? '').trim().toLowerCase();
+    return [
+      for (final p in data?.profiles ?? const <ProfileEntity>[])
+        if ((p.id ?? '').trim().isNotEmpty && p.id!.trim().toLowerCase() != me) p.id!.trim(),
+    ];
+  }
+
+  /// Fitness data is tied to one person's phone, so a family member who shares
+  /// the main account's number has no fitness of their own.
+  bool get currentProfileHasOwnNumber {
+    if (isCurrentProfilePrimary) return true;
+    final data = userNotifier.value?.data;
+    String last10(String? phone) {
+      final digits = (phone ?? '').replaceAll(RegExp(r'\D'), '');
+      return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+    }
+
+    final own = last10(data?.phoneNumber);
+    if (own.length != 10) return false;
+    final main = (data?.profiles ?? const <ProfileEntity>[]).where((p) => p.isPrimary == true);
+    return main.isEmpty || last10(main.first.phoneNumber) != own;
+  }
+
   /// True when a family member signed in with their own phone or email (as
   /// opposed to the primary account switching to their profile). The server
   /// then lists only their own profile, and family management is hidden.
