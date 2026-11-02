@@ -9,6 +9,7 @@ import '../../../../core/constants/constants.dart';
 import '../../../../core/shimmer_widgets/over_view_shimmer_card.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../widgets/record_tab_ui.dart';
 
 class OverviewScreen extends StatefulWidget {
   final PatientProfileEntity patient;
@@ -78,38 +79,13 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
           if (state is LoadPatientDataFailureState) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.error_outline_rounded,
-                        size: 48, color: Colors.red.shade300),
-                    const SizedBox(height: 12),
-                    Text(
-                      state.error,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        color: Colors.red.shade400,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _loadPatientData,
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text("Retry"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RecordEmptyState(icon: Icons.error_outline_rounded, title: state.error),
+                  const SizedBox(height: 16),
+                  RecordPrimaryButton(label: 'Retry', icon: Icons.refresh, compact: true, onPressed: _loadPatientData),
+                ],
               ),
             );
           }
@@ -118,7 +94,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             final fetchedData = state.patientOverViewEntity.data;
 
             if (fetchedData == null) {
-              return const Center(child: Text("No data details found."));
+              return const RecordEmptyState(icon: Icons.folder_open_outlined, title: 'No data details found.');
             }
 
             return RefreshIndicator.adaptive(

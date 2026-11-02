@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../../../core/constants/constants.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 
 class InfoRowItem extends StatelessWidget {
   final String label;
@@ -21,23 +20,9 @@ class InfoRowItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.grey[500] : Colors.grey[400],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.w500,
-            color: valueColor ?? (isDark ? Colors.white : Colors.black87),
-          ),
-        ),
+        Text(label, style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
+        const SizedBox(height: 2),
+        Text(value, style: DietUi.text(13, FontWeight.w500, valueColor ?? DietUi.body(isDark), height: 1.35)),
       ],
     );
   }

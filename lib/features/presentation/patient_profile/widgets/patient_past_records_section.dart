@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
 
-import '../../../../core/constants/constants.dart';
-import '../../../../core/widgets/phosphor_icons.dart';
 import '../../../data/data_sources/patient_history/past_records_remote_data_source.dart';
+import '../../patient/diet/diet_ui.dart';
+import 'record_tab_ui.dart';
 
 /// The patient's earlier visits, prescriptions, records, documents and
 /// latest readings, shown on the doctor's appointment page.
@@ -64,7 +63,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
           ));
         }
         if (snap.hasError) {
-          return _card(isDark, child: _message(isDark, PhosphorIconsBold.warningCircle, 'Couldn\'t load past records.',
+          return _card(isDark, child: _message(isDark, Icons.error_outline_rounded, 'Couldn\'t load past records.',
               action: TextButton(onPressed: _retry, child: const Text('Retry'))));
         }
         final result = snap.data!;
@@ -74,35 +73,22 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
     );
   }
 
-  Widget _card(bool isDark, {required Widget child}) => Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: fieldSpace),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? darkModeCardColor : Colors.white,
-          borderRadius: BorderRadius.circular(fieldBorderRadius),
-          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+  Widget _card(bool isDark, {required Widget child}) => Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: SizedBox(
+          width: double.infinity,
+          child: RecordCard(child: child),
         ),
-        child: child,
       );
 
-  Color _muted(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-  Color _fg(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _muted(bool isDark) => DietUi.muted(isDark);
+  Color _fg(bool isDark) => RecordUi.ink(isDark);
 
-  Widget _header(bool isDark, {required String scope, required Color scopeColor}) => Row(
+  Widget _header({required String scope, required Color scopeColor}) => Row(
         children: [
-          Icon(PhosphorIconsBold.clockCounterClockwise, size: 18, color: _muted(isDark)),
+          const Expanded(child: RecordSectionTitle(icon: Icons.history_rounded, title: 'Past records')),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text('Past records',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: _fg(isDark))),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(color: scopeColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-            child: Text(scope,
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: scopeColor)),
-          ),
+          RecordPill(scope, color: scopeColor),
         ],
       );
 
@@ -110,7 +96,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
         children: [
           Icon(icon, size: 18, color: _muted(isDark)),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: _muted(isDark)))),
+          Expanded(child: Text(text, style: DietUi.text(12.5, FontWeight.w400, _muted(isDark)))),
           ?action,
         ],
       );
@@ -122,21 +108,17 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _header(isDark, scope: 'Locked', scopeColor: const Color(0xFFF59E0B)),
+          _header(scope: 'Locked', scopeColor: const Color(0xFFD97706)),
           const SizedBox(height: 10),
           Text(
             pending
                 ? 'You\'ve asked for access. Past records from other hospitals appear here once the patient approves.'
                 : 'Records from this patient\'s other hospitals need their approval. Ask once and they show up here.',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, height: 1.45, color: _muted(isDark)),
+            style: DietUi.text(12.5, FontWeight.w400, _muted(isDark), height: 1.45),
           ),
           if (!pending) ...[
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: widget.onRequestAccess,
-              icon: const Icon(PhosphorIconsBold.lockKeyOpen, size: 16),
-              label: const Text('Ask for access'),
-            ),
+            RecordSecondaryButton(label: 'Ask for access', icon: Icons.lock_open_outlined, onPressed: widget.onRequestAccess),
           ],
         ],
       ),
@@ -152,25 +134,23 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(
-            isDark,
             scope: r.allHospitals ? 'All hospitals' : 'This hospital',
-            scopeColor: r.allHospitals ? const Color(0xFF10B981) : const Color(0xFF3B82F6),
+            scopeColor: r.allHospitals ? const Color(0xFF059669) : DietUi.blue,
           ),
           if (!r.allHospitals) ...[
             const SizedBox(height: 6),
             GestureDetector(
               onTap: widget.onRequestAccess,
               child: Text('Ask the patient to see records from other hospitals',
-                  style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).primaryColor)),
+                  style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
             ),
           ],
           const SizedBox(height: 12),
           if (r.isEmpty && fitness == null)
-            _message(isDark, PhosphorIconsBold.fileDashed, 'No earlier visits or records yet.')
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: RecordEmptyState(icon: Icons.history_rounded, title: 'No earlier visits or records yet.'),
+            )
           else ...[
             _counts(isDark, r),
             if (r.vitals.isNotEmpty) ...[
@@ -185,8 +165,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Earlier visits', tab: 'Appointments'),
               for (final v in r.visits.take(3))
                 _row(isDark,
-                    icon: PhosphorIconsDuotone.calendarCheck,
-                    color: const Color(0xFF6366F1),
+                    icon: Icons.event_available_outlined,
                     title: v.reason ?? v.type ?? 'Consultation',
                     subtitle: [v.doctor, v.hospital].whereType<String>().join(' · '),
                     trailing: v.date == null ? null : fmt.format(v.date!)),
@@ -195,8 +174,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Diagnoses & records', tab: 'Medical Record'),
               for (final m in r.records.take(3))
                 _row(isDark,
-                    icon: PhosphorIconsDuotone.stethoscope,
-                    color: const Color(0xFF0D9488),
+                    icon: Icons.medical_services_outlined,
                     title: m.diagnosis ?? m.complaint ?? m.type ?? 'Medical record',
                     subtitle: [m.doctor, m.hospital].whereType<String>().join(' · '),
                     trailing: m.date == null ? null : fmt.format(m.date!)),
@@ -205,8 +183,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Prescriptions', tab: 'Prescribe'),
               for (final p in r.prescriptions.take(3))
                 _row(isDark,
-                    icon: PhosphorIconsDuotone.prescription,
-                    color: const Color(0xFFDB2777),
+                    icon: Icons.medication_outlined,
                     title: p.medicines.isEmpty ? (p.diagnoses.isEmpty ? 'Prescription' : p.diagnoses.join(', ')) : p.medicines.take(3).join(', ') + (p.medicines.length > 3 ? ' +${p.medicines.length - 3}' : ''),
                     subtitle: [if (p.diagnoses.isNotEmpty && p.medicines.isNotEmpty) p.diagnoses.join(', '), p.doctor, p.hospital].whereType<String>().join(' · '),
                     trailing: p.date == null ? null : fmt.format(p.date!),
@@ -216,8 +193,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Documents', tab: 'Documents'),
               for (final d in r.documents.take(3))
                 _row(isDark,
-                    icon: PhosphorIconsDuotone.fileText,
-                    color: const Color(0xFF7C3AED),
+                    icon: Icons.description_outlined,
                     title: d.name,
                     subtitle: [d.category, d.hospital].whereType<String>().join(' · '),
                     trailing: d.date == null ? null : fmt.format(d.date!),
@@ -246,14 +222,14 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF8FAFC),
+                color: RecordUi.soft(isDark),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
-                  Text('$n', style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: _fg(isDark))),
+                  Text('$n', style: DietUi.text(17, FontWeight.w600, _fg(isDark))),
                   FittedBox(
-                    child: Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: _muted(isDark))),
+                    child: Text(label, style: DietUi.text(10.5, FontWeight.w400, _muted(isDark))),
                   ),
                 ],
               ),
@@ -276,23 +252,19 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
         child: Row(
           children: [
             Expanded(
-              child: Text(text.toUpperCase(),
-                  style: TextStyle(
-                      fontFamily: appPoppinFont, fontSize: 10.5, letterSpacing: 0.6, fontWeight: FontWeight.w700, color: _muted(isDark))),
+              child: Text(text, style: DietUi.text(12.5, FontWeight.w600, _fg(isDark))),
             ),
             if (tab != null)
               GestureDetector(
                 onTap: () => widget.onOpenTab(tab),
-                child: Text('View all',
-                    style: TextStyle(
-                        fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w600, color: Theme.of(context).primaryColor)),
+                child: Text('View all', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
               ),
           ],
         ),
       );
 
   Widget _row(bool isDark,
-      {required IconData icon, required Color color, required String title, String subtitle = '', String? trailing, String? url}) {
+      {required IconData icon, required String title, String subtitle = '', String? trailing, String? url}) {
     final canOpen = url != null && url.startsWith('http');
     return InkWell(
       borderRadius: BorderRadius.circular(10),
@@ -305,8 +277,8 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
             Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(9)),
-              child: Icon(icon, size: 17, color: color),
+              decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, size: 17, color: _muted(isDark)),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -316,22 +288,22 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
                   Text(title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: _fg(isDark))),
+                      style: DietUi.text(13, FontWeight.w500, _fg(isDark))),
                   if (subtitle.isNotEmpty)
                     Text(subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: _muted(isDark))),
+                        style: DietUi.text(11.5, FontWeight.w400, _muted(isDark))),
                 ],
               ),
             ),
             if (trailing != null) ...[
               const SizedBox(width: 8),
-              Text(trailing, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: _muted(isDark))),
+              Text(trailing, style: DietUi.text(11, FontWeight.w400, _muted(isDark))),
             ],
             if (canOpen) ...[
               const SizedBox(width: 4),
-              Icon(PhosphorIconsBold.arrowSquareOut, size: 14, color: _muted(isDark)),
+              Icon(Icons.open_in_new_rounded, size: 14, color: _muted(isDark)),
             ],
           ],
         ),
@@ -349,31 +321,23 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
   };
 
   Widget _vitalChip(bool isDark, LatestVital v) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(10)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_vitalNames[v.key] ?? v.key, style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, color: _muted(isDark))),
-            Text('${v.value} ${v.unit}'.trim(),
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: _fg(isDark))),
-            if (v.date != null)
-              Text(DateFormat('d MMM').format(v.date!), style: TextStyle(fontFamily: appPoppinFont, fontSize: 9.5, color: _muted(isDark))),
+            Text(_vitalNames[v.key] ?? v.key, style: DietUi.text(10.5, FontWeight.w500, _muted(isDark))),
+            const SizedBox(height: 1),
+            Text('${v.value} ${v.unit}'.trim(), style: DietUi.text(13.5, FontWeight.w600, _fg(isDark))),
+            if (v.date != null) Text(DateFormat('d MMM').format(v.date!), style: DietUi.text(10, FontWeight.w400, _muted(isDark))),
           ],
         ),
       );
 
   Widget _pill(bool isDark, String text) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w600, color: _fg(isDark))),
+        decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(8)),
+        child: Text(text, style: DietUi.text(11.5, FontWeight.w500, DietUi.body(isDark))),
       );
 }

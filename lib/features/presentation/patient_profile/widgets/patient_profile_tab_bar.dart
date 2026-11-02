@@ -110,20 +110,20 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
         physics: const BouncingScrollPhysics(),
         itemBuilder: (context, idx) {
           final isActive = widget.selectedIndex == idx;
-          final activeBgColor = Colors.white.withValues(alpha: 0.2);
-          final activeTextColor = Colors.white;
-          final inactiveTextColor = Colors.white.withValues(alpha: 0.7);
+          const activeBgColor = Colors.white;
+          final activeTextColor = Theme.of(context).primaryColor;
+          final inactiveTextColor = Colors.white.withValues(alpha: 0.85);
 
           return GestureDetector(
             onTap: () => widget.onTabSelected(idx),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              margin: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
               decoration: BoxDecoration(
                 color: isActive ? activeBgColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(fieldBorderRadius),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Center(
                 child: Row(

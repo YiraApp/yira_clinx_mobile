@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/domain/entities/medical_report/medical_report_analysis.dart';
 import 'package:yiraclinics/features/domain/entities/uploaded_record/uploaded_record_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/documents/report_insights_screen.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/widgets/uploaded_record_card.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
@@ -190,7 +191,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                     'Upload Document',
                     style: TextStyle(
                       fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
@@ -269,16 +270,15 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                           labelStyle: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                             color: isSelected
-                                ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                ? primaryColor
+                                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
-                          selectedColor: primaryColor,
-                          backgroundColor:
-                              isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          selectedColor: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(8),
                             side: BorderSide(
                               color: isSelected
                                   ? primaryColor
@@ -325,50 +325,13 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 20.0),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.folder_open_rounded,
-                      size: 34,
-                      color: primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.searchQuery.isNotEmpty
-                        ? 'No Matching Documents'
-                        : 'No Documents Uploaded',
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    state.searchQuery.isNotEmpty
-                        ? 'Try clearing your search or category filter.'
-                        : 'Tap the button below to upload lab reports, scan files, or prescriptions.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
+            padding: const EdgeInsets.symmetric(vertical: 60),
+            child: RecordEmptyState(
+              icon: Icons.folder_open_outlined,
+              title: state.searchQuery.isNotEmpty ? 'No Matching Documents' : 'No Documents Uploaded',
+              message: state.searchQuery.isNotEmpty
+                  ? 'Try clearing your search or category filter.'
+                  : 'Tap the button below to upload lab reports, scan files, or prescriptions.',
             ),
           ),
         ),

@@ -6,7 +6,9 @@ import '../../../../core/shimmer_widgets/patient_appointments_shimmer.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../../patient/diet/diet_ui.dart';
 import '../widgets/patient_appointments_card.dart';
+import '../widgets/record_tab_ui.dart';
 import '../../../../core/utils/display_format.dart';
 
 class PatientAppointmentsScreen extends StatefulWidget {
@@ -84,7 +86,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = theme.primaryColor;
+    const primaryColor = DietUi.blue;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -100,74 +102,13 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
           if (state is LoadPatientDataFailureState) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.red.shade400.withValues(alpha: 0.15),
-                            Colors.red.shade600.withValues(alpha: 0.08),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.wifi_off_rounded,
-                        size: 32,
-                        color: Colors.red.shade400,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Unable to Load",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      state.error,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 13,
-                        height: 1.4,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      height: 42,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          elevation: 0,
-                        ),
-                        onPressed: _loadAppointments,
-                        icon: const Icon(Icons.refresh_rounded, size: 18),
-                        label: const Text(
-                          'Retry',
-                          style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RecordEmptyState(icon: Icons.wifi_off_rounded, title: "Unable to Load", message: state.error),
+                  const SizedBox(height: 16),
+                  RecordPrimaryButton(label: 'Retry', icon: Icons.refresh_rounded, compact: true, onPressed: _loadAppointments),
+                ],
               ),
             );
           }
@@ -204,15 +145,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.amber.withValues(alpha: 0.15)
-                            : const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? Colors.amber.withValues(alpha: 0.35) : const Color(0xFFFDE68A),
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
                           const Icon(Icons.shield_outlined, size: 18, color: Color(0xFFD97706)),
@@ -220,12 +153,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           Expanded(
                             child: Text(
                               "Showing treated appointments only. Patient consent is required to view complete appointment history.",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309),
-                              ),
+                              style: DietUi.text(11.5, FontWeight.w500, DietUi.body(isDark), height: 1.35),
                             ),
                           ),
                         ],
@@ -280,42 +208,14 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
                   // ── Empty State when no treated appointments ──
                   if (filteredAppointments.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.event_busy_rounded,
-                              size: 48,
-                              color: isDark ? Colors.white30 : Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              !widget.hasAccess
-                                  ? "No Treated Appointments Found"
-                                  : "No Appointments Found",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              !widget.hasAccess
-                                  ? "No treated records available for this patient. Patient consent is required to access full appointment history."
-                                  : "There are no appointments registered for this patient.",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 12.5,
-                                color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 48),
+                      child: RecordEmptyState(
+                        icon: Icons.event_busy_outlined,
+                        title: !widget.hasAccess ? "No Treated Appointments Found" : "No Appointments Found",
+                        message: !widget.hasAccess
+                            ? "No treated records available for this patient. Patient consent is required to access full appointment history."
+                            : "There are no appointments registered for this patient.",
                       ),
                     )
                   else

@@ -1,11 +1,6 @@
-
-
-
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/colors/colors.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
-import '../../../../core/constants/constants.dart';
+import 'record_tab_ui.dart';
 
 class PatientInfoCard extends StatelessWidget {
   final String title;
@@ -17,49 +12,27 @@ class PatientInfoCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.titleIcon,
-    required this.child, required this.isTab,
+    required this.child,
+    required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: fieldSpace),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(
-          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: .start,
-        children: [
-          Row(
+    // The screen's column centres its children; keep the card full width.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: RecordCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                titleIcon,
-                size: 16,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontWeight: FontWeight.w500,
-                  fontSize:isTab? displayWidth(context)*0.02: displayWidth(context)*0.035,
-                ),
-              ),
+              RecordSectionTitle(icon: titleIcon, title: title),
+              const SizedBox(height: 14),
+              child,
             ],
           ),
-          const SizedBox(height: 10),
-          child,
-        ],
+        ),
       ),
     );
   }

@@ -7,13 +7,12 @@ import 'package:yiraclinics/features/presentation/prescriptions/add_prescription
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
-import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 
 class PrescriptionListScreen extends StatelessWidget {
   final PatientProfileEntity? patient;
@@ -120,15 +119,9 @@ class PrescriptionListScreen extends StatelessWidget {
             bodyWidget = PrescriptionListShimmer(itemCount: 4, isTab: isTab);
           } else {
             if (validMeds.isEmpty) {
-              bodyWidget = Center(
-                child: CommonText(
-                  'No prescriptions records found.',
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
-                    color: Colors.grey,
-                  ),
-                ),
+              bodyWidget = const RecordEmptyState(
+                icon: Icons.medication_outlined,
+                title: 'No prescriptions yet',
               );
             } else {
               bodyWidget = ListView(

@@ -1,5 +1,7 @@
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
+
+import '../patient_profile/widgets/record_tab_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -167,21 +169,17 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
 
     if (state is MedicalHistoryLoaded) {
       if (state.records.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.assignment_outlined, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
-              const CommonText("No medical records history found."),
-            ],
-          ),
+        return const RecordEmptyState(
+          icon: Icons.assignment_outlined,
+          title: 'No medical records yet',
+          message: 'Records added at a visit will appear here.',
         );
       }
       return ListView.builder(
         padding: const EdgeInsets.only(
           left: screenHorizontalSpacePadding,
           right: screenHorizontalSpacePadding,
+          top: 8,
           bottom: 80,
         ),
         itemCount: state.records.length,
@@ -193,7 +191,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
               isTab: isTab,
               title: item.title,
               formattedDate: DateFormat(
-                'MMMM dd, yyyy',
+                'd MMM yyyy',
               ).format(item.recordDate),
               doctorName: item.doctorName,
               status: item.status,

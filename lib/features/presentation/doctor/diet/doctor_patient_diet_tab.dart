@@ -8,6 +8,7 @@ import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.da
 import 'package:yiraclinics/features/presentation/doctor/diet/diet_food_image.dart';
 import 'package:yiraclinics/features/presentation/doctor/diet/doctor_prescribe_diet_sheet.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 
 /// The Diet tab of a patient's record: the plans prescribed to them in this
 /// organization, and the way to prescribe a new one.
@@ -176,16 +177,15 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
             )
           else if (_error != null)
             _buildMessage(
-              isDark,
               Icons.cloud_off_rounded,
               _error!,
               action: TextButton(onPressed: _load, child: const Text('Try again')),
             )
           else if (_plans.isEmpty)
             _buildMessage(
-              isDark,
-              Icons.restaurant_menu_rounded,
-              'No diet plan has been prescribed to this patient yet. Tap Prescribe to create one.',
+              Icons.restaurant_menu_outlined,
+              'No diet plan yet',
+              message: 'No diet plan has been prescribed to this patient yet. Tap Prescribe to create one.',
             )
           else ...[
             DietUi.sectionLabel('PRESCRIBED PLANS · ${_plans.length}', isDark),
@@ -206,55 +206,22 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: DietUi.cardDecoration(isDark),
-      child: Row(
-        children: [
-          DietUi.iconBadge(Icons.restaurant_menu_rounded, DietUi.green, isDark, size: 42),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Diet plan', style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark))),
-                const SizedBox(height: 2),
-                Text(
-                  _isLoading
-                      ? 'Loading plans…'
-                      : active != null
-                          ? 'Following: ${active.planName}'
-                          : 'No active plan for ${widget.patientName ?? 'this patient'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            onPressed: _prescribe,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DietUi.blue,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: Text('Prescribe', style: DietUi.text(12.5, FontWeight.w700, Colors.white)),
-          ),
-        ],
+    return RecordCard(
+      child: RecordCardHeader(
+        icon: Icons.restaurant_menu_outlined,
+        title: 'Diet plan',
+        subtitle: _isLoading
+            ? 'Loading plans…'
+            : active != null
+                ? 'Following: ${active.planName}'
+                : 'No active plan for ${widget.patientName ?? 'this patient'}',
+        trailing: RecordPrimaryButton(label: 'Prescribe', icon: Icons.add_rounded, compact: true, onPressed: _prescribe),
       ),
     );
   }
 
   Widget _buildPlanCard(TodayDietPlanInfo plan, bool isDark) {
     final status = _status(plan);
-    final isActive = plan.status == 'active' && !_ended(plan);
     final thisAppointment =
         widget.appointmentId != null && plan.appointmentId != null && '${plan.appointmentId}' == widget.appointmentId;
     final facts = [
@@ -264,148 +231,54 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
     ].join(' · ');
     final canEdit = _canEdit(plan);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: DietUi.cardDecoration(isDark, borderColor: isActive ? DietUi.green.withValues(alpha: 0.45) : null),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _openPlan(plan),
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: RecordCard(
+        onTap: () => _openPlan(plan),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RecordCardHeader(
+              icon: Icons.restaurant_menu_outlined,
+              title: plan.planName,
+              subtitle: plan.condition?.trim(),
+              trailing: RecordPill(status.label, color: status.color),
+            ),
+            if (thisAppointment) ...[
+              const SizedBox(height: 10),
+              const RecordPill('Prescribed in this appointment', color: DietUi.blue),
+            ],
+            const SizedBox(height: 10),
+            _infoLine(Icons.event_outlined, _dates(plan)),
+            _infoLine(Icons.local_fire_department_outlined, facts),
+            _infoLine(Icons.person_outline_rounded, plan.prescribedByLabelForDoctor),
+            const SizedBox(height: 4),
+            Row(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            plan.planName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.3),
-                          ),
-                          if ((plan.condition ?? '').trim().isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                plan.condition!.trim(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    DietUi.pill(status.label, status.color, isDark),
-                  ],
-                ),
-                if (thisAppointment) ...[
-                  const SizedBox(height: 8),
-                  DietUi.pill('Prescribed in this appointment', DietUi.blue, isDark, icon: Icons.event_available_rounded),
-                ],
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: DietUi.sunken(isDark),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: DietUi.line(isDark)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _infoLine(Icons.event_rounded, _dates(plan), isDark),
-                      _infoLine(Icons.local_fire_department_outlined, facts, isDark),
-                      _infoLine(Icons.person_outline_rounded, plan.prescribedByLabelForDoctor, isDark),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _openPlan(plan),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: DietUi.strong(isDark),
-                          side: BorderSide(color: DietUi.line(isDark)),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.visibility_outlined, size: 16),
-                        label: Text('View diet', style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark))),
-                      ),
-                    ),
-                    if (canEdit) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _editPlan(plan),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: DietUi.blue,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: const Icon(Icons.edit_rounded, size: 16),
-                          label: Text('Edit plan', style: DietUi.text(12.5, FontWeight.w700, Colors.white)),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                if (canEdit) RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit plan', onTap: () => _editPlan(plan)),
+                const Expanded(child: RecordCardLink(label: 'View diet')),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _infoLine(IconData icon, String text, bool isDark) {
+  Widget _infoLine(IconData icon, String text) {
     if (text.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: DietUi.hint(isDark)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DietUi.text(11.5, FontWeight.w500, DietUi.body(isDark)),
-            ),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.only(bottom: 5),
+      child: RecordMeta(icon: icon, text: text),
     );
   }
 
-  Widget _buildMessage(bool isDark, IconData icon, String message, {Widget? action}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-      decoration: DietUi.cardDecoration(isDark),
+  Widget _buildMessage(IconData icon, String title, {String? message, Widget? action}) {
+    return RecordCard(
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          DietUi.iconBadge(icon, DietUi.slate, isDark, size: 52, iconSize: 26),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: DietUi.text(12.5, FontWeight.w500, DietUi.muted(isDark), height: 1.4),
-          ),
+          RecordEmptyState(icon: icon, title: title, message: message),
           ?action,
         ],
       ),
@@ -579,17 +452,21 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                  ? Center(child: Text(_error!, style: ts(13, FontWeight.w500, muted)))
+                  ? RecordEmptyState(icon: Icons.cloud_off_rounded, title: _error!)
                   : ListView(
                       controller: controller,
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                       children: [
                         Text(
                           '$dayKcal kcal planned${plan.totalDays > 1 ? ' on Day $_day' : ' per day'}',
-                          style: ts(12.5, FontWeight.w600, const Color(0xFF2563EB)),
+                          style: ts(12.5, FontWeight.w600, muted),
                         ),
                         const SizedBox(height: 10),
-                        if (bySlot.isEmpty) Text('No meals on this day.', style: ts(13, FontWeight.w500, muted)),
+                        if (bySlot.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 24),
+                            child: RecordEmptyState(icon: Icons.no_meals_outlined, title: 'No meals on this day.'),
+                          ),
                         for (final entry in bySlot.entries) ...[
                           Padding(
                             padding: const EdgeInsets.only(top: 6, bottom: 6),
@@ -648,17 +525,10 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: RecordPrimaryButton(
+                      label: 'Edit Plan',
+                      icon: Icons.edit_outlined,
                       onPressed: () => Navigator.pop(context, 'edit'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.edit_rounded, size: 17),
-                      label: Text('Edit Plan', style: ts(13, FontWeight.w700, Colors.white)),
                     ),
                   ),
                 ),
