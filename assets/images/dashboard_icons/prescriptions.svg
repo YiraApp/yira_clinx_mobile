@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+    <!-- medicine bottle -->
+    <rect x="34" y="58" width="104" height="30" rx="8" fill="#3A86FF"/>
+    <path d="M42 88 H130 V196 C130 208 122 216 110 216 H62 C50 216 42 208 42 196 Z" fill="#FF9F1C"/>
+    <rect x="54" y="118" width="64" height="58" rx="8" fill="#FFFFFF"/>
+    <path d="M70 134 V160 M70 134 H82 C90 134 94 139 94 145 C94 151 90 156 82 156 H70 M82 156 L98 172 M98 156 L84 172" fill="none" stroke-width="6"/>
+    <!-- capsule -->
+    <g transform="rotate(-40 182 150)">
+      <path d="M182 100 C200 100 212 112 212 130 V150 H152 V130 C152 112 164 100 182 100 Z" fill="#F0324B"/>
+      <path d="M152 150 H212 V170 C212 188 200 200 182 200 C164 200 152 188 152 170 Z" fill="#FFFFFF"/>
+      <path d="M166 120 V138" fill="none" stroke="#FFFFFF" stroke-width="7" opacity="0.9"/>
+    </g>
+    <!-- tablet -->
+    <circle cx="196" cy="214" r="22" fill="#FFD166"/>
+    <path d="M182 214 H210" fill="none" stroke-width="6"/>
+  </g>
+</svg>

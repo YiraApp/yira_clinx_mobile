@@ -1057,14 +1057,17 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                       );
                                     }
                                   },
-                            onPrescriptionTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                AppRoutes.userPrescriptionManagement,
-                              ).then((_) {
-                                if (mounted) _loadAppointments();
-                              });
-                            },
+                            // Only a finished visit can have a prescription to look at.
+                            onPrescriptionTap: isCompleted
+                                ? () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.userPrescriptionManagement,
+                                    ).then((_) {
+                                      if (mounted) _loadAppointments();
+                                    });
+                                  }
+                                : null,
                             onRescheduleTap: (!isCompleted && !isCancelled && _activeTab == 'upcoming')
                                 ? () => _openRescheduleSheet(apt)
                                 : null,

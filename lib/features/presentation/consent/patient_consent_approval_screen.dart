@@ -198,7 +198,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         appBar: CommonAppBar(
-          titleText: "Medical Record Consents",
+          titleText: "Requests from doctors",
           showBackButton: widget.showBackButton,
           actions: [
             IconButton(

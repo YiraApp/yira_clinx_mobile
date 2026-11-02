@@ -64,7 +64,7 @@ class PatientTourController {
         PatientTourStep(
           id: 'step_quick_services',
           title: 'Quick Services & Medical Records',
-          description: 'Instant access to Book Appointments, Medical Records, Vitals, Doctors, and Family Profiles.',
+          description: 'Instant access to appointments, prescriptions, health records, fitness, diet and family profiles.',
           targetKey: quickServicesKey,
           icon: Icons.grid_view_rounded,
           position: TourCardPosition.top,
@@ -97,34 +97,21 @@ class PatientTourController {
           tabIndex: 1,
         ),
 
-        // Step 7: Bottom Navigation - Approvals Tab
+        // Step 7: Bottom Navigation - Profile Tab
         PatientTourStep(
-          id: 'step_nav_consents',
-          title: '3. Approvals & Consents',
-          description: 'Grant or revoke doctor access to your digital health records securely with full consent tracking.',
-          targetKey: consentsNavKey,
-          icon: Icons.verified_user_rounded,
+          id: 'step_nav_profile',
+          title: '3. Profile & sharing',
+          description: 'Your medical profile, and Share my profile: give a doctor access or send a secure web link.',
+          targetKey: profileNavKey,
+          icon: Icons.person_rounded,
           position: TourCardPosition.top,
           targetPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           borderRadius: 14,
           tabIndex: 2,
         ),
 
-        // Step 8: Bottom Navigation - Health Passport Tab
-        PatientTourStep(
-          id: 'step_nav_profile',
-          title: '4. Health Passport',
-          description: 'Access your complete medical profile, diagnostic reports, and digital health history.',
-          targetKey: profileNavKey,
-          icon: Icons.person_rounded,
-          position: TourCardPosition.top,
-          targetPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          borderRadius: 14,
-          tabIndex: 3,
-        ),
-
         // ─── 2. APPOINTMENTS TAB (Index 1) ──────────────────────────
-        // Step 9: Appointment Status Filter Chips
+        // Step 8: Appointment Status Filter Chips
         PatientTourStep(
           id: 'step_appts_filters',
           title: 'Filter Consultations',
@@ -135,7 +122,7 @@ class PatientTourController {
           tabIndex: 1,
         ),
 
-        // Step 10: Appointment Card Actions
+        // Step 9: Appointment Card Actions
         PatientTourStep(
           id: 'step_appts_card',
           title: 'Consultation Details & Actions',
@@ -146,20 +133,8 @@ class PatientTourController {
           tabIndex: 1,
         ),
 
-        // ─── 3. APPROVALS TAB (Index 2) ─────────────────────────────
-        // Step 11: Doctor Record Access Approvals
-        PatientTourStep(
-          id: 'step_consents_list',
-          title: 'Active Doctor Consents',
-          description: 'Review pending consent requests from hospitals and doctors. Approve with 1 tap or revoke anytime.',
-          targetKey: consentsListKey,
-          icon: Icons.admin_panel_settings_rounded,
-          position: TourCardPosition.auto,
-          tabIndex: 2,
-        ),
-
-        // ─── 4. HEALTH PASSPORT TAB (Index 3) ───────────────────────
-        // Step 12: Health Passport Card
+        // ─── 3. PROFILE TAB (Index 2) ───────────────────────────────
+        // Step 10: Health Passport Card
         PatientTourStep(
           id: 'step_passport_card',
           title: 'Your Digital Health Identity',
@@ -167,7 +142,7 @@ class PatientTourController {
           targetKey: passportProfileCardKey,
           icon: Icons.health_and_safety_rounded,
           position: TourCardPosition.bottom,
-          tabIndex: 3,
+          tabIndex: 2,
         ),
       ];
 

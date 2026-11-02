@@ -7,6 +7,7 @@ import 'package:yiraclinics/core/common_widgets/common_text.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/models/select_role_model.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
+import 'package:yiraclinics/core/widgets/profile_visuals.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
@@ -474,22 +475,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     return fallback;
   }
 
-  String _getInitials(String name) {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
-        .toList();
-
-    if (parts.isEmpty) return 'U';
-    if (parts.length == 1) {
-      return parts[0].length > 1
-          ? parts[0].substring(0, 2).toUpperCase()
-          : parts[0].toUpperCase();
-    }
-    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-  }
-
   Color _getRelationColor(String relation, bool isPrimary) {
     if (isPrimary || relation.toLowerCase() == 'primary' || relation.toLowerCase() == 'self') {
       return const Color(0xFF0284C7); // Primary Sky Blue
@@ -723,233 +708,268 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
   // ── Step 0: Profiles List ──
   Widget _buildProfileListSliver(bool isTab, bool isDark, Color primaryColor) {
+    final ProfileEntity? primary = _profiles.isNotEmpty ? _profiles.first : null;
+    final List<ProfileEntity> family =
+        _profiles.length > 1 ? _profiles.sublist(1) : const [];
+    final String? primaryPhone = primary?.phoneNumber?.trim();
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(
         horizontal: screenHorizontalSpacePadding,
       ),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final profile = _profiles[index];
-            final String rawRelation = (profile.relation ?? '').trim();
-            final bool hasFamilyRelation = rawRelation.isNotEmpty &&
-                rawRelation.toLowerCase() != 'self' &&
-                rawRelation.toLowerCase() != 'primary' &&
-                rawRelation.toLowerCase() != 'admin';
+        delegate: SliverChildListDelegate([
+          if (primary != null) ...[
+            ProfileSectionLabel(title: 'Your profile', isDark: isDark),
+            _buildProfileCard(
+              primary,
+              position: 0,
+              isPrimaryCard: true,
+              primaryPhone: primaryPhone,
+              isTab: isTab,
+              isDark: isDark,
+              primaryColor: primaryColor,
+            ),
+          ],
+          if (family.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ProfileSectionLabel(title: 'Family members', isDark: isDark, count: family.length),
+            for (var i = 0; i < family.length; i++)
+              _buildProfileCard(
+                family[i],
+                position: i + 1,
+                isPrimaryCard: false,
+                primaryPhone: primaryPhone,
+                isTab: isTab,
+                isDark: isDark,
+                primaryColor: primaryColor,
+              ),
+          ],
+        ]),
+      ),
+    );
+  }
 
-            final bool isPrimaryUser = (index == 0);
+  Widget _buildProfileCard(
+    ProfileEntity profile, {
+    required int position,
+    required bool isPrimaryCard,
+    required String? primaryPhone,
+    required bool isTab,
+    required bool isDark,
+    required Color primaryColor,
+  }) {
+    final String rawRelation = (profile.relation ?? '').trim();
+    final bool hasFamilyRelation = rawRelation.isNotEmpty &&
+        rawRelation.toLowerCase() != 'self' &&
+        rawRelation.toLowerCase() != 'primary' &&
+        rawRelation.toLowerCase() != 'admin';
+    final String displayRelation =
+        isPrimaryCard ? 'Primary' : (hasFamilyRelation ? rawRelation : 'Dependent');
+    final Color relColor = _getRelationColor(displayRelation, isPrimaryCard);
+    final String displayName = profile.name?.isNotEmpty ?? false
+        ? profile.name!
+        : (isPrimaryCard ? 'Primary Account' : displayRelation);
+    final String gender = (profile.gender ?? '').trim();
+    final String? age = profileAgeLabel(profile.dob);
+    final String phone = (profile.phoneNumber ?? '').trim();
+    // Family members usually share the primary number; only show a phone that differs.
+    final bool showPhone = phone.isNotEmpty && (isPrimaryCard || phone != primaryPhone);
+    final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final IconData genderIcon = gender.toLowerCase().startsWith('f')
+        ? Icons.female_rounded
+        : gender.toLowerCase().startsWith('m')
+            ? Icons.male_rounded
+            : Icons.person_outline_rounded;
 
-            final String displayRelation;
-            final bool isPrimaryBadge;
-            if (isPrimaryUser) {
-              displayRelation = 'Primary';
-              isPrimaryBadge = true;
-            } else if (hasFamilyRelation) {
-              displayRelation = rawRelation;
-              isPrimaryBadge = false;
-            } else {
-              displayRelation = 'Dependent';
-              isPrimaryBadge = false;
-            }
+    final bool isThisProfileSwitching =
+        _switchingKey != null && _selectedProfile?.id == profile.id;
+    final bool isOtherSwitching = _switchingKey != null && !isThisProfileSwitching;
 
-            final Color relColor = _getRelationColor(displayRelation, isPrimaryBadge);
-            final String displayName = profile.name?.isNotEmpty ?? false
-                ? profile.name!
-                : (isPrimaryBadge ? "Primary Account" : displayRelation);
-            final String initials = _getInitials(displayName);
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final Color borderColor = isPrimaryCard
+        ? primaryColor.withValues(alpha: isDark ? 0.55 : 0.35)
+        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
 
-            final String subtitle = [
-              if (profile.gender != null && profile.gender!.isNotEmpty) profile.gender!,
-              if (profile.dob != null && profile.dob!.isNotEmpty) profile.dob!,
-              if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty)
-                profile.phoneNumber!,
-            ].join(' • ');
+    void onTap() {
+      if (_switchingKey != null) return;
+      _selectedProfile = profile;
 
-            final bool isDep = !isPrimaryBadge;
-            final bool isThisProfileSwitching =
-                _switchingKey != null && _selectedProfile?.id == profile.id;
+      if (!isPrimaryCard) {
+        // A family member only has the patient role, so sign straight in.
+        _switchWorkspace(_FlatWorkspaceItem(
+          roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
+          roleName: "User",
+          orgId: 1,
+          orgName: "",
+          hospitalId: 19,
+          hospitalName: "Yira Hospitals",
+        ));
+        return;
+      }
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Material(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: BorderSide(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    width: 1.2,
+      setState(() {
+        _currentStep = 1;
+        _fadeController.reset();
+        _fadeController.forward();
+      });
+      _loadAllRolesAndWorkspaces();
+    }
+
+    final card = AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: isOtherSwitching ? 0.5 : 1,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          // Opaque tint: a see-through fill would let the shadow show through.
+          gradient: isPrimaryCard
+              ? LinearGradient(
+                  colors: [
+                    Color.alphaBlend(
+                      primaryColor.withValues(alpha: isDark ? 0.22 : 0.07),
+                      cardColor,
+                    ),
+                    cardColor,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isPrimaryCard ? null : cardColor,
+          border: Border.all(color: borderColor, width: isPrimaryCard ? 1.3 : 1),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: (isPrimaryCard ? primaryColor : Colors.black)
+                        .withValues(alpha: isPrimaryCard ? 0.08 : 0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-                elevation: isDark ? 0 : 2,
-                shadowColor: Colors.black.withValues(alpha: 0.04),
-                child: InkWell(
-                  onTap: () {
-                    if (_switchingKey != null) return;
-                    _selectedProfile = profile;
-
-                    if (isDep) {
-                      // Dependent only has Patient role -> Direct login!
-                      _switchWorkspace(_FlatWorkspaceItem(
-                        roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-                        roleName: "User",
-                        orgId: 1,
-                        orgName: "",
-                        hospitalId: 19,
-                        hospitalName: "Yira Hospitals",
-                      ));
-                      return;
-                    }
-
-                    setState(() {
-                      _currentStep = 1;
-                      _fadeController.reset();
-                      _fadeController.forward();
-                    });
-                    _loadAllRolesAndWorkspaces();
-                  },
-                  borderRadius: BorderRadius.circular(18),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Row(
+                ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: isPrimaryCard ? 16 : 13,
+              ),
+              child: Row(
+                children: [
+                  ProfileAvatar(
+                    name: displayName,
+                    imagePath: profile.imagePath,
+                    color: relColor,
+                    size: isPrimaryCard ? (isTab ? 54 : 50) : (isTab ? 48 : 44),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar with Initials
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                relColor.withValues(alpha: 0.85),
-                                relColor,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: relColor.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              initials,
-                              style: const TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: isPrimaryCard
+                                      ? (isTab ? 17 : 15.5)
+                                      : (isTab ? 16 : 14.5),
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: relColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                displayRelation,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: relColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 14),
-
-                        // Name and Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        if (gender.isNotEmpty || age != null || showPhone) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
                             children: [
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      displayName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: isTab ? 16 : 14.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: relColor.withValues(alpha: isDark ? 0.25 : 0.12),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: relColor.withValues(alpha: 0.4),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      displayRelation,
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: relColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (subtitle.isNotEmpty) ...[
-                                const SizedBox(height: 3),
-                                Text(
-                                  subtitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab ? 12.5 : 11.5,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
+                              if (gender.isNotEmpty) ProfileInfoItem(icon: genderIcon, text: gender, color: infoColor, isTab: isTab),
+                              if (age != null) ProfileInfoItem(icon: Icons.cake_outlined, text: age, color: infoColor, isTab: isTab),
+                              if (showPhone) ProfileInfoItem(icon: Icons.phone_outlined, text: phone, color: infoColor, isTab: isTab),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Chevron or Loading spinner
-                        isThisProfileSwitching
-                            ? SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor:
-                                      AlwaysStoppedAnimation(primaryColor),
-                                ),
-                              )
-                            : Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? const Color(0xFF0F172A)
-                                      : const Color(0xFFF1F5F9),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 13,
-                                  color: isDark
-                                      ? Colors.white54
-                                      : Colors.grey.shade600,
-                                ),
-                              ),
+                        ],
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  isThisProfileSwitching
+                      ? SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation(primaryColor),
+                          ),
+                        )
+                      : Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isPrimaryCard
+                                ? primaryColor
+                                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 13,
+                            color: isPrimaryCard
+                                ? Colors.white
+                                : (isDark ? Colors.white54 : Colors.grey.shade600),
+                          ),
+                        ),
+                ],
               ),
-            );
-          },
-          childCount: _profiles.length,
+            ),
+          ),
         ),
+      ),
+    );
+
+    // Cards slide in one after another.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: Duration(milliseconds: 320 + position * 70),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) => Opacity(
+          opacity: value,
+          child: Transform.translate(offset: Offset(0, (1 - value) * 14), child: child),
+        ),
+        child: card,
       ),
     );
   }
@@ -1018,155 +1038,235 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     final activeRoleId = currentUser?.data?.latestRoleId;
     final activeHospitalId = currentUser?.data?.latestHospitalId;
 
+    bool isPatientItem(_FlatWorkspaceItem item) =>
+        item.roleName == 'User' ||
+        item.roleId.toUpperCase() == "4FC67429-28AE-4106-93EF-436228282ED0";
+    final personal = _flatItems.where(isPatientItem).toList();
+    final workspaces = _flatItems.where((i) => !isPatientItem(i)).toList();
+
+    var position = 0;
+    Widget card(_FlatWorkspaceItem item) => _buildWorkspaceCard(
+          item,
+          position: position++,
+          isPatient: isPatientItem(item),
+          isActive: item.roleId == activeRoleId && item.hospitalId == activeHospitalId,
+          isTab: isTab,
+          isDark: isDark,
+          primaryColor: primaryColor,
+        );
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(
         horizontal: screenHorizontalSpacePadding,
       ),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final item = _flatItems[index];
-            final String key = "${item.roleId}_${item.orgId}_${item.hospitalId}";
-            final bool isSwitching = (_switchingKey == key);
-            final bool isActive = (item.roleId == activeRoleId) &&
-                (item.hospitalId == activeHospitalId);
-            final Color roleColor = _getRoleColor(item.roleName, primaryColor);
+        delegate: SliverChildListDelegate([
+          if (personal.isNotEmpty) ...[
+            ProfileSectionLabel(title: 'Personal', isDark: isDark),
+            for (final item in personal) card(item),
+          ],
+          if (workspaces.isNotEmpty) ...[
+            if (personal.isNotEmpty) const SizedBox(height: 10),
+            ProfileSectionLabel(title: 'Workspaces', isDark: isDark, count: workspaces.length),
+            for (final item in workspaces) card(item),
+          ],
+        ]),
+      ),
+    );
+  }
 
-            final bool isPatient = item.roleName == 'User' ||
-                item.roleId.toUpperCase() == "4FC67429-28AE-4106-93EF-436228282ED0";
+  Widget _buildWorkspaceCard(
+    _FlatWorkspaceItem item, {
+    required int position,
+    required bool isPatient,
+    required bool isActive,
+    required bool isTab,
+    required bool isDark,
+    required Color primaryColor,
+  }) {
+    final String key = "${item.roleId}_${item.orgId}_${item.hospitalId}";
+    final bool isSwitching = _switchingKey == key;
+    final bool isOtherSwitching = _switchingKey != null && !isSwitching;
+    final Color roleColor = _getRoleColor(item.roleName, primaryColor);
+    final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
-            // Format: "Yira Hospital (Provider)" or "User"
-            final String displayTitle = isPatient
-                ? "User"
-                : "${item.hospitalName} (${item.roleName})";
+    final String title = isPatient ? 'My Health' : item.hospitalName;
+    final String chip = isPatient ? 'Patient' : item.roleName;
+    final String? location =
+        (item.location != null && item.location!.trim().isNotEmpty) ? item.location!.trim() : null;
 
-            final String subtitle = isPatient
-                ? "Unified Global Patient"
-                : [
-                    if (item.orgName.isNotEmpty) item.orgName,
-                    if (item.location != null && item.location!.isNotEmpty)
-                      item.location!,
-                  ].join(' • ');
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Material(
-                color: isActive
-                    ? roleColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: BorderSide(
-                    color: isActive
-                        ? roleColor
-                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                    width: isActive ? 1.6 : 1.2,
+    final cardWidget = AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: isOtherSwitching ? 0.5 : 1,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: isActive
+              ? Color.alphaBlend(roleColor.withValues(alpha: isDark ? 0.2 : 0.07), cardColor)
+              : cardColor,
+          border: Border.all(
+            color: isActive
+                ? roleColor.withValues(alpha: 0.6)
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            width: isActive ? 1.4 : 1,
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-                elevation: isDark ? 0 : 2,
-                shadowColor: Colors.black.withValues(alpha: 0.04),
-                child: InkWell(
-                  onTap: isSwitching ? null : () => _switchWorkspace(item),
-                  borderRadius: BorderRadius.circular(18),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Row(
-                      children: [
-                        // Role / Facility Icon
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? roleColor
-                                : roleColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            _getRoleIcon(item.roleName),
-                            size: 20,
-                            color: isActive ? Colors.white : roleColor,
-                          ),
+                ],
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: _switchingKey != null ? null : () => _switchWorkspace(item),
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: isTab ? 52 : 48,
+                    height: isTab ? 52 : 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [roleColor.withValues(alpha: 0.8), roleColor],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: roleColor.withValues(alpha: 0.28),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
                         ),
-                        const SizedBox(width: 14),
-
-                        // Title & Organization info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                displayTitle,
+                      ],
+                    ),
+                    child: Icon(
+                      isPatient ? Icons.favorite_rounded : _getRoleIcon(item.roleName),
+                      size: isTab ? 24 : 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                title,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
-                                  fontSize: isTab ? 15.5 : 14,
-                                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                                  fontSize: isTab ? 16 : 14.5,
+                                  fontWeight: FontWeight.w600,
                                   color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 ),
                               ),
-                              if (subtitle.isNotEmpty) ...[
-                                const SizedBox(height: 3),
-                                Text(
-                                  subtitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab ? 12.5 : 11.5,
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : const Color(0xFF64748B),
-                                  ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: roleColor.withValues(alpha: isDark ? 0.25 : 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                chip,
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: roleColor,
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Action Indicator
-                        if (isSwitching)
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: roleColor,
-                            ),
-                          )
-                        else if (isActive)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                            decoration: BoxDecoration(
-                              color: roleColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              "ACTIVE",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
                               ),
                             ),
-                          )
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        if (isPatient)
+                          ProfileInfoItem(icon: Icons.folder_shared_outlined, text: 'Your health records & appointments', color: infoColor, isTab: isTab)
                         else
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            size: 22,
-                            color: isDark ? Colors.white38 : Colors.grey.shade400,
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
+                            children: [
+                              if (item.orgName.isNotEmpty)
+                                ProfileInfoItem(icon: Icons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
+                              if (location != null)
+                                ProfileInfoItem(icon: Icons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
+                            ],
                           ),
                       ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  if (isSwitching)
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: roleColor),
+                    )
+                  else if (isActive)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: roleColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'Active',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 13,
+                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                      ),
+                    ),
+                ],
               ),
-            );
-          },
-          childCount: _flatItems.length,
+            ),
+          ),
         ),
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: Duration(milliseconds: 320 + position * 70),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) => Opacity(
+          opacity: value,
+          child: Transform.translate(offset: Offset(0, (1 - value) * 14), child: child),
+        ),
+        child: cardWidget,
       ),
     );
   }

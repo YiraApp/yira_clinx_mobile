@@ -40,6 +40,8 @@ import 'package:yiraclinics/features/presentation/patient/suggestions/patient_do
 import 'package:yiraclinics/features/presentation/patient/fitness/patient_connect_fitness_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/fitness/patient_fitness_dashboard_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plans_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/wallet/patient_billing_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/wallet/patient_policies_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
@@ -522,7 +524,7 @@ class AppRouter {
       case AppRoutes.patientDocuments:
         return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
       case AppRoutes.patientProfile:
-        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
       case AppRoutes.uploadDocumentsViaLink:
         final token = settings.arguments as String?;
         return MaterialPageRoute(settings: settings, builder: (_) => DocumentUploadViaLinkScreen(token: token));
@@ -557,57 +559,37 @@ class AppRouter {
             : VitalMetricType.all;
         return _guardedRoute(settings: settings, builder: (_) => PatientVitalsTrackingScreen(initialMetric: initialMetric));
       case AppRoutes.patientMyFamily:
+        if (GlobalSession.instance.isSignedInAsFamilyMember) {
+          return _guardedRoute(
+            settings: settings,
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: const Text('My Family'), leading: const BackButton()),
+              body: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Text(
+                    'Family members are managed from the main account holder\'s profile.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
         return _guardedRoute(settings: settings, builder: (_) => const PatientMyFamilyScreen());
       case AppRoutes.patientDoctorSuggestions:
         return _guardedRoute(settings: settings, builder: (_) => const PatientDoctorSuggestionsScreen());
       case AppRoutes.patientConnectFitness:
-        if (!GlobalSession.instance.isCurrentProfilePrimary) {
-          return _guardedRoute(
-            settings: settings,
-            builder: (_) => Scaffold(
-              appBar: AppBar(
-                title: const Text('Fitness'),
-                leading: const BackButton(),
-              ),
-              body: const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    'Fitness tracking is only available for primary accounts.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
         return _guardedRoute(settings: settings, builder: (_) => const PatientConnectFitnessScreen());
       case AppRoutes.patientFitnessTracking:
-        if (!GlobalSession.instance.isCurrentProfilePrimary) {
-          return _guardedRoute(
-            settings: settings,
-            builder: (_) => Scaffold(
-              appBar: AppBar(
-                title: const Text('Fitness'),
-                leading: const BackButton(),
-              ),
-              body: const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    'Fitness tracking is only available for primary accounts.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
         return _guardedRoute(settings: settings, builder: (_) => const PatientFitnessDashboardScreen());
       case AppRoutes.patientDietPlan:
         return _guardedRoute(settings: settings, builder: (_) => const PatientDietPlansScreen());
+      case AppRoutes.patientBilling:
+        return _guardedRoute(settings: settings, builder: (_) => const PatientBillingScreen());
+      case AppRoutes.patientPolicies:
+        return _guardedRoute(settings: settings, builder: (_) => const PatientPoliciesScreen());
       default:
         final lower = (settings.name ?? '').toLowerCase().replaceAll('/', '').replaceAll('_', '').trim();
         if (lower == 'patientbookappointment' || lower == 'bookappointment' || lower == 'patientselecthospitalscreen') {
@@ -626,7 +608,7 @@ class AppRouter {
           return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
         }
         if (lower == 'patientprofile' || lower == 'profile') {
-          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
         }
         if (lower == 'patientvitalstracking' || lower == 'vitalstracking' || lower == 'vitals') {
           return _guardedRoute(settings: settings, builder: (_) => const PatientVitalsTrackingScreen());

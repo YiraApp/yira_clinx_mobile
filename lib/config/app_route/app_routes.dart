@@ -76,4 +76,6 @@ class AppRoutes {
   static const String patientConnectFitness = '/patientConnectFitness';
   static const String patientFitnessTracking = '/patientFitnessTracking';
   static const String patientDietPlan = '/patientDietPlan';
+  static const String patientBilling = '/patientBilling';
+  static const String patientPolicies = '/patientPolicies';
 }

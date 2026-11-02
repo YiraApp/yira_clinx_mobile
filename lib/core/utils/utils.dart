@@ -414,6 +414,7 @@ class Utils {
         return isPermissionGranted;
       } else if (await permission.request().isPermanentlyDenied) {
         isPermissionGranted = false;
+        if (!context.mounted) return isPermissionGranted;
         if (Platform.isAndroid) {
           androidDialogue(
             context,

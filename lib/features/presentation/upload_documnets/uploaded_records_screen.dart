@@ -16,6 +16,10 @@ import '../../../core/common_widgets/in_app_document_viewer.dart';
 class UploadedRecordsScreen extends StatefulWidget {
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
 
@@ -23,6 +27,7 @@ class UploadedRecordsScreen extends StatefulWidget {
     super.key,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -67,7 +72,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
   void _fetchInitialRecords() {
     context.read<UploadedBloc>().add(FetchUploadedRecords(
           patientId: widget.patientId,
-          appointmentId: widget.appointmentId,
+          appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
           limit: 15,
@@ -84,7 +89,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
       if (state.hasMore && !state.isLoadingMore && state.status == UploadedStatus.success) {
         context.read<UploadedBloc>().add(LoadMoreUploadedRecords(
               patientId: widget.patientId,
-              appointmentId: widget.appointmentId,
+              appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
               hospitalId: widget.hospitalId,
               orgId: widget.orgId,
               limit: 15,

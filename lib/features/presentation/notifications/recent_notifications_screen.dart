@@ -18,6 +18,8 @@ import 'package:yiraclinics/features/use_cases/notifications/get_notifications_u
 import 'package:yiraclinics/features/use_cases/notifications/mark_notification_read_use_case.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
+import 'package:yiraclinics/core/services/notification_services/notification_target.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 class RecentNotificationsScreen extends StatefulWidget {
   const RecentNotificationsScreen({super.key});
 
@@ -29,6 +31,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   late final NotificationsBloc _bloc;
   bool _filterOnlyUnread = false;
   final Set<String> _expandedNotificationIds = {};
+
+  /// Kind filter under All / Unread; null shows every kind.
+  String? _category;
+  static const _categoryOrder = ['Appointments', 'Medicines', 'Records', 'Access', 'Offers', 'Updates'];
 
   @override
   void initState() {
@@ -71,47 +77,65 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     }
   }
 
-  IconData _getIconForType(String type) {
-    switch (type.toUpperCase()) {
-      case 'APPOINTMENT_BOOKED':
-        return Icons.event_available_rounded;
-      case 'APPOINTMENT_STATUS':
-        return Icons.calendar_month_rounded;
-      case 'APPOINTMENT_REMINDER_10MIN':
-        return Icons.alarm_rounded;
+  IconData _getIconForType(String type, [String title = '']) {
+    final t = type.toUpperCase();
+    if (t.startsWith('APPOINTMENT') || t.startsWith('WHATSAPP_APPOINTMENT')) {
+      if (title.toLowerCase().contains('cancel')) return PhosphorIconsDuotone.calendarX;
+      if (t == 'APPOINTMENT_REMINDER_10MIN') return PhosphorIconsDuotone.alarm;
+      return PhosphorIconsDuotone.calendarCheck;
+    }
+    switch (t) {
       case 'PRESCRIPTION_ADDED':
-        return Icons.medication_rounded;
+        return PhosphorIconsDuotone.prescription;
+      case 'MEDICATION_REMINDER':
+        return PhosphorIconsDuotone.pill;
       case 'MEDICAL_RECORD_ADDED':
       case 'REPORT_ANALYSIS_READY':
       case 'REPORT_ANALYSIS_FAILED':
-        return Icons.description_outlined;
+      case 'SUMMARY_BUNDLE':
+      case 'WHATSAPP_SINGLE_DOCUMENT':
+        return PhosphorIconsDuotone.fileText;
       case 'DOCTOR_SUGGESTION':
-        return Icons.lightbulb_outline_rounded;
+        return PhosphorIconsDuotone.chatCircleText;
+      case 'DIET_PLAN':
+        return PhosphorIconsDuotone.bowlFood;
       case 'TELECONSULT_START':
-        return Icons.video_camera_front_rounded;
+        return PhosphorIconsDuotone.videoCamera;
       case 'PROMOTIONS':
       case 'OFFER_PROMOTION':
-        return Icons.local_offer_outlined;
+        return PhosphorIconsDuotone.tag;
       case 'HEALTH_TIPS':
-        return Icons.favorite_outline_rounded;
+        return PhosphorIconsDuotone.lightbulb;
       case 'CONSENT_REQUEST':
       case 'CONSENT_REQUIRED':
       case 'CONSENT_RESPONSE':
-        return Icons.verified_user_rounded;
-      case 'CONSENT_APPROVED':
-        return Icons.check_circle_outline_rounded;
-      case 'CONSENT_REVOKED':
-        return Icons.remove_circle_outline_rounded;
-      case 'CONSENT_REJECTED':
-        return Icons.cancel_outlined;
       case 'CONSENT_SENT':
-        return Icons.send_rounded;
-      case 'SYSTEM_ALERT':
-      case 'BROADCAST':
-        return Icons.notifications_active_outlined;
+        return PhosphorIconsDuotone.shieldCheck;
+      case 'CONSENT_APPROVED':
+        return PhosphorIconsDuotone.checkCircle;
+      case 'CONSENT_REVOKED':
+      case 'CONSENT_REJECTED':
+        return PhosphorIconsDuotone.xCircle;
       default:
-        return Icons.notifications_none_rounded;
+        // Reminders and tips often arrive as general alerts; read the title.
+        final lower = title.toLowerCase();
+        if (lower.contains('medicine') || lower.contains('dose') || lower.contains('tab ')) return PhosphorIconsDuotone.pill;
+        if (lower.contains('tip')) return PhosphorIconsDuotone.lightbulb;
+        return PhosphorIconsDuotone.bell;
     }
+  }
+
+  /// The filter group a notification belongs to.
+  String _categoryOf(AppNotificationEntity n) {
+    final t = n.type.toUpperCase();
+    if (t.startsWith('APPOINTMENT') || t.startsWith('WHATSAPP_APPOINTMENT') || t == 'TELECONSULT_START') return 'Appointments';
+    if (t == 'PRESCRIPTION_ADDED' || t == 'MEDICATION_REMINDER' || _getIconForType(n.type, n.title) == PhosphorIconsDuotone.pill) {
+      return 'Medicines';
+    }
+    if (t.contains('RECORD') || t.contains('REPORT') || t == 'SUMMARY_BUNDLE' || t == 'WHATSAPP_SINGLE_DOCUMENT') return 'Records';
+    if (t.startsWith('CONSENT')) return 'Access';
+    if (t.contains('OFFER') || t == 'PROMOTIONS') return 'Offers';
+    return 'Updates';
   }
 
   Color _getColorForType(String type) {
@@ -129,6 +153,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return const Color(0xFF0D9488); // Teal
       case 'DOCTOR_SUGGESTION':
         return const Color(0xFF6366F1); // Indigo
+      case 'MEDICATION_REMINDER':
+        return const Color(0xFFDB2777); // Pink
+      case 'DIET_PLAN':
+        return const Color(0xFF059669); // Green
       case 'TELECONSULT_START':
         return const Color(0xFF7C3AED); // Violet
       case 'PROMOTIONS':
@@ -197,15 +225,23 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     }
   }
 
-  void _handleNotificationTap(AppNotificationEntity notification) {
+  /// Opens the screen the notification is about. Notifications that are just a
+  /// message expand to show all of their text instead.
+  Future<void> _handleNotificationTap(AppNotificationEntity notification) async {
     if (!notification.isRead) {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
-
+    final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
+    if (target?.url != null) {
+      await Utils.launchURL(target!.url!);
+      return;
+    }
+    if (target != null) {
+      await Navigator.pushNamed(context, target.route, arguments: target.arguments);
+      return;
+    }
     setState(() {
-      if (_expandedNotificationIds.contains(notification.id)) {
-        _expandedNotificationIds.remove(notification.id);
-      } else {
+      if (!_expandedNotificationIds.remove(notification.id)) {
         _expandedNotificationIds.add(notification.id);
       }
     });
@@ -233,7 +269,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final typeColor = _getColorForType(notification.type);
-    final typeIcon = _getIconForType(notification.type);
+    final typeIcon = _getIconForType(notification.type, notification.title);
 
     showModalBottomSheet(
       context: context,
@@ -276,7 +312,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       color: typeColor.withValues(alpha: isDark ? 0.25 : 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(typeIcon, color: typeColor, size: 24),
+                    child: PhosphorIcon(typeIcon, color: typeColor, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -450,6 +486,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                         );
                       }
 
+                      final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
                       return Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -460,9 +497,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           ),
                           onPressed: () {
                             Navigator.pop(sheetContext);
+                            if (target != null) _handleNotificationTap(notification);
                           },
-                          child: const Text(
-                            "Done",
+                          child: Text(
+                            target?.actionLabel ?? "Done",
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontWeight: FontWeight.w600,
@@ -708,9 +746,12 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
 
             if (state is NotificationsLoadedState) {
               final allNotifications = state.notifications;
-              final displayList = _filterOnlyUnread
-                  ? allNotifications.where((n) => !n.isRead).toList()
-                  : allNotifications;
+              final categories = <String>{for (final n in allNotifications) _categoryOf(n)}.toList()
+                ..sort((a, b) => _categoryOrder.indexOf(a).compareTo(_categoryOrder.indexOf(b)));
+              final displayList = allNotifications
+                  .where((n) => !_filterOnlyUnread || !n.isRead)
+                  .where((n) => _category == null || _categoryOf(n) == _category)
+                  .toList();
 
               return RefreshIndicator(
                 color: primaryColor,
@@ -735,7 +776,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                         children: [
                           _buildFilterChip(
                             label: "All",
-                            count: allNotifications.length,
+                            count: state.total,
                             isSelected: !_filterOnlyUnread,
                             primaryColor: primaryColor,
                             isDark: isDark,
@@ -763,13 +804,46 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                         ],
                       ),
                     ),
+                    if (categories.length > 1)
+                      SizedBox(
+                        height: 44,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                          children: [
+                            for (final cat in [null, ...categories])
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(cat ?? 'Everything'),
+                                  selected: _category == cat,
+                                  showCheckmark: false,
+                                  visualDensity: VisualDensity.compact,
+                                  onSelected: (_) => setState(() => _category = cat),
+                                  labelStyle: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 11.5,
+                                    fontWeight: _category == cat ? FontWeight.w600 : FontWeight.w500,
+                                    color: _category == cat ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                  ),
+                                  selectedColor: primaryColor.withValues(alpha: isDark ? 0.25 : 0.1),
+                                  backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  side: BorderSide(color: _category == cat ? primaryColor : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
 
                     // List of Grouped Notifications
                     Expanded(
                       child: displayList.isEmpty
-                          ? _buildEmptyState(isDark, isFiltered: _filterOnlyUnread)
+                          ? _buildEmptyState(isDark, isFiltered: _filterOnlyUnread || _category != null)
                           : _buildGroupedListView(
                               groupedMap: _groupNotifications(displayList),
+                              loadingMore: state.isLoadingMore,
+                              hasMore: state.hasMore,
                               isDark: isDark,
                               isTab: isTab,
                               primaryColor: primaryColor,
@@ -855,6 +929,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
 
   Widget _buildGroupedListView({
     required Map<String, List<AppNotificationEntity>> groupedMap,
+    bool loadingMore = false,
+    bool hasMore = false,
     required bool isDark,
     required bool isTab,
     required Color primaryColor,
@@ -866,11 +942,29 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
       onRefresh: () async {
         _bloc.add(const FetchNotificationsEvent());
       },
-      child: ListView.builder(
+      child: NotificationListener<ScrollNotification>(
+        // Fetch the next page before the reader reaches the end.
+        onNotification: (n) {
+          if (hasMore && !loadingMore && n.metrics.extentAfter < 500) {
+            _bloc.add(const LoadMoreNotificationsEvent());
+          }
+          return false;
+        },
+        child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: groupKeys.length,
+        itemCount: groupKeys.length + (hasMore ? 1 : 0),
         itemBuilder: (context, groupIndex) {
+          if (groupIndex == groupKeys.length) {
+            // The spinner came into view (for example on a short filtered list): fetch more.
+            if (!loadingMore) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => _bloc.add(const LoadMoreNotificationsEvent()));
+            }
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.2))),
+            );
+          }
           final groupTitle = groupKeys[groupIndex];
           final items = groupedMap[groupTitle]!;
 
@@ -916,6 +1010,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }
@@ -985,8 +1080,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     required Color primaryColor,
   }) {
     final typeColor = _getColorForType(notification.type);
-    final typeIcon = _getIconForType(notification.type);
+    final typeIcon = _getIconForType(notification.type, notification.title);
     final relativeTime = _formatRelativeTime(notification.createdAt);
+    final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
+    final expanded = _expandedNotificationIds.contains(notification.id);
 
     return Material(
       color: Colors.transparent,
@@ -997,16 +1094,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark
-                ? (notification.isRead ? const Color(0xFF1E293B) : const Color(0xFF1E2C44))
-                : (notification.isRead ? Colors.white : const Color(0xFFF0F7FF)),
+            // White cards; unread ones only get a bold title and a blue dot.
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark
-                  ? (notification.isRead ? const Color(0xFF334155) : primaryColor.withValues(alpha: 0.35))
-                  : (notification.isRead ? const Color(0xFFE2E8F0) : primaryColor.withValues(alpha: 0.25)),
-              width: notification.isRead ? 1 : 1.3,
-            ),
+            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.025),
@@ -1026,7 +1117,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   color: typeColor.withValues(alpha: isDark ? 0.22 : 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
+                child: PhosphorIcon(
                   typeIcon,
                   size: isTab ? 22 : 20,
                   color: typeColor,
@@ -1080,6 +1171,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           children: [
                             Text(
                               bodyText,
+                              maxLines: expanded || target != null ? null : 3,
+                              overflow: expanded || target != null ? null : TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 12.5,
@@ -1088,6 +1181,21 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                 height: 1.4,
                               ),
                             ),
+                            if (target != null && target.url == null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      target.actionLabel,
+                                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    PhosphorIcon(PhosphorIconsBold.caretRight, size: 12, color: primaryColor),
+                                  ],
+                                ),
+                              ),
                             Builder(
                               builder: (context) {
                                 if (!_isValidImageUrl(notification.imageUrl)) {

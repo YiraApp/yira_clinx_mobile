@@ -45,6 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _cachedFcmToken = '';
 
+  // 0 = Mobile Login, 1 = Email Login
+  int _selectedTab = 0;
+
   @override
   void initState() {
     super.initState();
@@ -294,6 +297,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         child: TabBar(
+                                          onTap: (index) {
+                                            if (index != _selectedTab) {
+                                              setState(() => _selectedTab = index);
+                                            }
+                                          },
                                           overlayColor: WidgetStateProperty.all(
                                             Colors.transparent,
                                           ),
@@ -338,26 +346,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                       SizedBox(
                                         height: isTabletDevice ? 40 : 30,
                                       ),
-                                      SizedBox(
-                                        height: isTabletDevice
-                                            ? screenHeight * 0.28
-                                            : screenHeight * 0.45,
-                                        child: TabBarView(
-                                          physics:
-                                          const NeverScrollableScrollPhysics(),
+                                      // The selected form keeps the usual spacing but can grow
+                                      // past it, so field errors and larger text never push
+                                      // Sign In out of view (small phones, tablets in landscape).
+                                      ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          minHeight: isTabletDevice
+                                              ? screenHeight * 0.28
+                                              : screenHeight * 0.45,
+                                        ),
+                                        child: IndexedStack(
+                                          index: _selectedTab,
                                           children: [
-                                            _buildMobileForm(
-                                              context,
-                                              isDarkMode,
-                                              isTabletDevice,
-                                              referenceWidth,
-                                              state,
+                                            ExcludeFocus(
+                                              excluding: _selectedTab != 0,
+                                              child: _buildMobileForm(
+                                                context,
+                                                isDarkMode,
+                                                isTabletDevice,
+                                                referenceWidth,
+                                                state,
+                                              ),
                                             ),
-                                            _buildEmailForm(
-                                              context,
-                                              isTabletDevice,
-                                              referenceWidth,
-                                              state,
+                                            ExcludeFocus(
+                                              excluding: _selectedTab != 1,
+                                              child: _buildEmailForm(
+                                                context,
+                                                isTabletDevice,
+                                                referenceWidth,
+                                                state,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -631,6 +649,7 @@ class _LoginScreenState extends State<LoginScreen> {
               hintText: "Enter Password",
               controller: passwordController,
               focusNode: passwordFocus,
+              obscureText: true,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter your password';

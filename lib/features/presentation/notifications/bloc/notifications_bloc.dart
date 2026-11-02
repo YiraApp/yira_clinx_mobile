@@ -21,6 +21,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     required this.deleteNotificationUseCase,
   }) : super(NotificationsInitialState()) {
     on<FetchNotificationsEvent>(_onFetchNotifications);
+    on<LoadMoreNotificationsEvent>(_onLoadMoreNotifications);
     on<MarkNotificationAsReadEvent>(_onMarkNotificationAsRead);
     on<MarkAllNotificationsAsReadEvent>(_onMarkAllNotificationsAsRead);
     on<ClearAllNotificationsEvent>(_onClearAllNotifications);
@@ -48,6 +49,34 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         emit(const NotificationsErrorState("Unable to load notifications"));
       }
     }
+  }
+
+  Future<void> _onLoadMoreNotifications(
+    LoadMoreNotificationsEvent event,
+    Emitter<NotificationsState> emit,
+  ) async {
+    final current = state;
+    if (current is! NotificationsLoadedState || current.isLoadingMore || !current.hasMore) return;
+    emit(current.copyWith(isLoadingMore: true));
+
+    final payload = await getNotificationsUseCase.call(page: current.page + 1);
+    final latest = state;
+    if (latest is! NotificationsLoadedState) return;
+    if (payload == null) {
+      emit(latest.copyWith(isLoadingMore: false));
+      return;
+    }
+    // Skip anything already shown, in case new notifications shifted the pages.
+    final seen = latest.notifications.map((n) => n.id).toSet();
+    final added = payload.notifications.where((n) => !seen.contains(n.id)).toList();
+    emit(latest.copyWith(
+      notifications: [...latest.notifications, ...added],
+      unreadCount: payload.unreadCount,
+      // An empty page means the server has nothing more, whatever its total says.
+      total: added.isEmpty ? latest.notifications.length : payload.total,
+      page: current.page + 1,
+      isLoadingMore: false,
+    ));
   }
 
   Future<void> _onMarkNotificationAsRead(
@@ -127,7 +156,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       final updatedList = currentState.notifications.where((n) => n.id != event.notificationId).toList();
 
       final newUnread = wasUnread
-          ? (currentState.unreadCount - 1).clamp(0, updatedList.length)
+          ? (currentState.unreadCount - 1).clamp(0, currentState.total)
           : currentState.unreadCount;
 
       if (wasUnread) {

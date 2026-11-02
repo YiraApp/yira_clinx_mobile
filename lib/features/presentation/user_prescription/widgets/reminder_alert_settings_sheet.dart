@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:yiraclinics/core/services/medication_popup_service.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// Lets the patient choose how medicine reminders appear: a normal
 /// notification, or (Android only) a floating popup over other apps.
@@ -112,7 +113,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
     final shown = await MedicationPopupService.showTest();
     if (!mounted) return;
     if (shown) {
-      _message('A sample popup is showing. Tap outside it or press Later to close.');
+      _message('A sample popup is showing. Tap outside it or press Not now to close.');
     } else {
       _message("Couldn't show the popup. Check that \"Display over other apps\" is allowed.", color: DietUi.red);
     }
@@ -147,7 +148,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                     const SizedBox(height: 14),
                     Row(
                       children: [
-                        DietUi.iconBadge(Icons.notifications_active_rounded, _blue, isDark, size: 40),
+                        DietUi.iconBadge(PhosphorIconsDuotone.bellRinging, _blue, isDark, size: 40),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -168,7 +169,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                       DietUi.notice(
                         'Notifications are off for Yira Health, so reminders cannot reach you.',
                         DietUi.amber,
-                        Icons.notifications_off_rounded,
+                        PhosphorIconsBold.bellSlash,
                         isDark,
                         action: TextButton(
                           onPressed: openAppSettings,
@@ -181,7 +182,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                       _option(
                         isDark,
                         style: MedicationAlertStyle.notification,
-                        icon: Icons.notifications_rounded,
+                        icon: PhosphorIconsDuotone.bell,
                         title: 'Notification',
                         subtitle: 'A standard notification in your notification bar.',
                       ),
@@ -189,7 +190,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                       _option(
                         isDark,
                         style: MedicationAlertStyle.floatingPopup,
-                        icon: Icons.picture_in_picture_alt_rounded,
+                        icon: PhosphorIconsDuotone.pictureInpicture,
                         title: 'Floating popup',
                         subtitle: "A card pops up over any app you're using, so you don't miss a dose.",
                         badge: _overlayAllowed ? null : 'Needs permission',
@@ -208,7 +209,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                               side: BorderSide(color: _blue.withValues(alpha: 0.5)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
+                            icon: const PhosphorIcon(PhosphorIconsBold.playCircle, size: 18),
                             label: Text('Show a test popup', style: DietUi.text(13, FontWeight.w600, _blue)),
                           ),
                         ),
@@ -217,7 +218,7 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
                       DietUi.notice(
                         'On iPhone, reminders appear as notification banners. Floating popups over other apps are only available on Android.',
                         _blue,
-                        Icons.info_outline_rounded,
+                        PhosphorIconsBold.info,
                         isDark,
                       ),
                   ],
@@ -269,8 +270,8 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
             const SizedBox(width: 8),
             _busy && style == MedicationAlertStyle.floatingPopup
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Icon(
-                    selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                : PhosphorIcon(
+                    selected ? PhosphorIconsFill.radioButton : PhosphorIconsBold.circle,
                     color: selected ? _blue : DietUi.hint(isDark),
                   ),
           ],
@@ -289,8 +290,8 @@ class _ReminderAlertSettingsSheetState extends State<ReminderAlertSettingsSheet>
       ),
       child: Row(
         children: [
-          Icon(
-            _overlayAllowed ? Icons.check_circle_rounded : Icons.layers_outlined,
+          PhosphorIcon(
+            _overlayAllowed ? PhosphorIconsFill.checkCircle : PhosphorIconsBold.stack,
             size: 18,
             color: _overlayAllowed ? _green : DietUi.muted(isDark),
           ),

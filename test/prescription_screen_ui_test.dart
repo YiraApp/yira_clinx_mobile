@@ -52,6 +52,9 @@ Future<void> _loadFonts() async {
     poppins.addFont(rootBundle.load('assets/fonts/Poppins-$w.ttf'));
   }
   await poppins.load();
+  for (final style in ['Bold', 'Fill', 'Duotone']) {
+    await (FontLoader('Phosphor$style')..addFont(rootBundle.load('assets/fonts/phosphor/Phosphor-$style.ttf'))).load();
+  }
   final root = Platform.environment['FLUTTER_ROOT'];
   final icons = root == null ? null : File('$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
   if (icons != null && icons.existsSync()) {
@@ -130,7 +133,7 @@ void main() {
         expect(find.text('Prescriptions'), findsWidgets);
         if (tab == 0) {
           expect(find.text('Dolo 650'), findsOneWidget);
-          expect(find.text('+2 more'), findsOneWidget);
+          expect(find.text('+ 2 more medicines'), findsOneWidget);
         } else {
           expect(find.text("Today's schedule"), findsOneWidget);
         }
@@ -208,7 +211,7 @@ void main() {
         ),
       ));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('Mark as Taken'), findsOneWidget);
+      expect(find.text('Mark as taken'), findsOneWidget);
       if (_shotsDir != null) {
         await expectLater(find.byType(MaterialApp), matchesGoldenFile(Uri.file('$_shotsDir/popup_$tag.png')));
       }

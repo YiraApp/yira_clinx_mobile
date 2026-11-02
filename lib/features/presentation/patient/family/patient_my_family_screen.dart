@@ -11,6 +11,8 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
+import 'package:yiraclinics/core/widgets/profile_visuals.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/features/data/models/login/login_model.dart';
@@ -29,7 +31,13 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   final Map<String, String> _memberImages = {};
   final ImagePicker _picker = ImagePicker();
   String _searchQuery = '';
-  bool _isRefetching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   static const Color _primaryBlue = Color(0xFF2563EB);
   bool _isRefreshing = false;
@@ -295,6 +303,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         });
 
         // Upload photo to backend database
+        bool uploaded = false;
         try {
           final currentUser = GlobalSession.instance.userNotifier.value;
           final token = currentUser?.data?.accessToken ?? '';
@@ -328,6 +337,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 data['profileImageUrl']?.toString() ??
                 '';
             if (photoUrl.isNotEmpty) {
+              uploaded = true;
               await prefs.setString('patient_profile_network_image_$profileId', photoUrl);
               if (mounted) {
                 setState(() {
@@ -406,11 +416,13 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile photo updated successfully!'),
-              backgroundColor: _primaryBlue,
+            SnackBar(
+              content: Text(uploaded
+                  ? 'Photo updated'
+                  : 'Photo saved on this phone only. It could not be uploaded, so it will not show on other devices.'),
+              backgroundColor: uploaded ? _primaryBlue : const Color(0xFFD97706),
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 1),
+              duration: Duration(seconds: uploaded ? 2 : 4),
             ),
           );
         }
@@ -457,7 +469,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Profile Photo: $name',
+              'Change photo · $name',
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: 16,
@@ -620,7 +632,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Add Family Member',
+                                      'Add family member',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 16,
@@ -629,7 +641,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'Connect dependents to manage their medical care',
+                                      'Book visits and keep their records in your account',
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 11,
@@ -717,7 +729,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
 
                             // Relationship
                             Text(
-                              'Relationship to Primary Account *',
+                              'Relationship to you *',
                               style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: textColor),
                             ),
                             const SizedBox(height: 6),
@@ -805,7 +817,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Date of Birth',
+                                        'Date of Birth *',
                                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: textColor),
                                       ),
                                       const SizedBox(height: 6),
@@ -861,74 +873,20 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                             ),
                             const SizedBox(height: 14),
 
-                            // Primary Mobile Number (Autofilled & Blocked)
+                            // Dependents live under the account holder's number.
                             Row(
                               children: [
-                                Text(
-                                  'Primary Mobile Number',
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: textColor),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                  decoration: BoxDecoration(
-                                    color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.lock_rounded, size: 10, color: _primaryBlue),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        'Autofilled & Blocked',
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: _primaryBlue,
-                                        ),
-                                      ),
-                                    ],
+                                PhosphorIcon(PhosphorIconsBold.phone, size: 14, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    primaryMobileNumber.isNotEmpty
+                                        ? 'They will be linked to your number $primaryMobileNumber.'
+                                        : 'They will be linked to your account.',
+                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
                                   ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 6),
-                            TextField(
-                              controller: phoneCtrl,
-                              readOnly: true,
-                              enabled: false,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
-                              ),
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                                suffixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                                filled: true,
-                                fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                disabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Dependents are automatically linked under your primary registered mobile number.',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                              ),
                             ),
                             const SizedBox(height: 22),
 
@@ -940,9 +898,17 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 onPressed: isSaving
                                     ? null
                                     : () async {
-                                        final fullName = nameCtrl.text.trim();
-                                        if (fullName.isEmpty) {
-                                          setSheetState(() => formError = 'Please enter member name');
+                                        final fullName = nameCtrl.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+                                        if (fullName.length < 2) {
+                                          setSheetState(() => formError = 'Please enter their full name');
+                                          return;
+                                        }
+                                        if (!RegExp(r"^[A-Za-z][A-Za-z .'-]*$").hasMatch(fullName)) {
+                                          setSheetState(() => formError = 'Use letters only in the name');
+                                          return;
+                                        }
+                                        if (selectedDob == null) {
+                                          setSheetState(() => formError = 'Please add their date of birth so doctors see the right age');
                                           return;
                                         }
 
@@ -972,6 +938,8 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                               validParentGuid = oldData.id;
                                             }
 
+                                            String? serverError;
+                                            String? serverId;
                                             try {
                                               final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
                                                 URLs.addDependentPatientUrl,
@@ -992,12 +960,32 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                                 final rawData = res.data as Map<String, dynamic>;
                                                 final data = rawData['data'];
                                                 if (data is Map<String, dynamic>) {
-                                                  newDepUserId = (data['id'] ?? data['userId'] ?? newDepUserId).toString();
+                                                  final id = (data['id'] ?? data['userId'] ?? '').toString().trim();
+                                                  if (id.isNotEmpty) serverId = id;
+                                                }
+                                                if (serverId == null && rawData['message'] != null) {
+                                                  serverError = rawData['message'].toString();
                                                 }
                                               }
+                                            } on DioException catch (apiErr) {
+                                              final body = apiErr.response?.data;
+                                              serverError = (body is Map && body['message'] != null)
+                                                  ? body['message'].toString()
+                                                  : 'Could not reach the server. Check your connection and try again.';
                                             } catch (apiErr) {
-                                              debugPrint('API add-dependent notice: $apiErr');
+                                              serverError = 'Could not add this member. Please try again.';
                                             }
+
+                                            // Without a saved record there is nothing to book for, so
+                                            // never add a member that exists only on this phone.
+                                            if (serverId == null) {
+                                              setSheetState(() {
+                                                isSaving = false;
+                                                formError = serverError ?? 'Could not add this member. Please try again.';
+                                              });
+                                              return;
+                                            }
+                                            newDepUserId = serverId;
 
                                             final newProfile = ProfileEntity(
                                               id: newDepUserId,
@@ -1041,6 +1029,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                               latestHospitalId: oldData.latestHospitalId,
                                               latestRoleId: oldData.latestRoleId,
                                               navigationId: oldData.navigationId,
+                                              imagePath: oldData.imagePath,
                                               profiles: List<ProfileEntity>.from(updatedProfiles),
                                             );
 
@@ -1090,7 +1079,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                           Icon(Icons.person_add_alt_1_rounded, size: 18),
                                           SizedBox(width: 8),
                                           Text(
-                                            'Save Family Member',
+                                            'Add member',
                                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.bold),
                                           ),
                                         ],
@@ -1227,418 +1216,310 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     );
   }
 
+  /// The backend allows six family members besides the account holder.
+  static const int _maxFamilyMembers = 6;
+
+  String _profileName(ProfileEntity p, String fallback) {
+    if ((p.name ?? '').trim().isNotEmpty) return p.name!.trim();
+    final full = '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim();
+    return full.isNotEmpty ? full : fallback;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isTab = isTablet(context);
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     final familyProfiles = _getFamilyProfiles();
+    final int dependents = familyProfiles.isEmpty ? 0 : familyProfiles.length - 1;
+    final bool canAdd = dependents < _maxFamilyMembers;
+    final String primaryPhone = (GlobalSession.instance.userNotifier.value?.data?.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
 
-    final filteredProfiles = familyProfiles.where((p) {
-      final name = (p.name ?? '${p.firstName ?? ''} ${p.lastName ?? ''}').toLowerCase();
-      final relation = (p.relation ?? '').toLowerCase();
-      final q = _searchQuery.toLowerCase().trim();
-      if (q.isNotEmpty) {
-        return name.contains(q) || relation.contains(q);
-      }
-      return true;
-    }).toList();
+    final q = _searchQuery.toLowerCase().trim();
+    final filteredProfiles = q.isEmpty
+        ? familyProfiles
+        : familyProfiles.where((p) {
+            final name = _profileName(p, '').toLowerCase();
+            final relation = (p.relation ?? '').toLowerCase();
+            return name.contains(q) || relation.contains(q);
+          }).toList();
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4F6FA),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
+        scrolledUnderElevation: 0,
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-            size: 20,
-          ),
+          icon: PhosphorIcon(PhosphorIconsBold.caretLeft, color: textColor, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'My Family & Dependents',
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? 19 : 17.5,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh Family',
-            icon: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: _isRefreshing
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: _primaryBlue),
-                    )
-                  : const Icon(Icons.refresh_rounded, color: _primaryBlue, size: 18),
-            ),
-            onPressed: _isRefreshing ? null : _refreshFamilyData,
-          ),
-          IconButton(
-            tooltip: 'Add Family Member',
-            icon: Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.person_add_alt_1_rounded, color: _primaryBlue, size: 18),
-            ),
-            onPressed: () => _showAddMemberSheet(context, isDark),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddMemberSheet(context, isDark),
-        backgroundColor: _primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
-        label: const Text(
-          'Add Member',
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+          'My Family',
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 19 : 17, fontWeight: FontWeight.w700, color: textColor),
         ),
       ),
-      body: SafeArea(
-        child: Column(
+      floatingActionButton: canAdd
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddMemberSheet(context, isDark),
+              backgroundColor: _primaryBlue,
+              foregroundColor: Colors.white,
+              elevation: 3,
+              icon: const PhosphorIcon(PhosphorIconsBold.userPlus, size: 18, color: Colors.white),
+              label: const Text('Add member', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: 13.5)),
+            )
+          : null,
+      body: RefreshIndicator(
+        onRefresh: _refreshFamilyData,
+        color: _primaryBlue,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          padding: EdgeInsets.fromLTRB(isTab ? 28 : 16, 14, isTab ? 28 : 16, 96),
           children: [
-            // 1. Search Bar (if more than 2 members)
-            if (familyProfiles.length > 2)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 4),
-                child: TextField(
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: textColor),
-                  decoration: InputDecoration(
-                    hintText: 'Search family members by name or relation...',
-                    hintStyle: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12.5,
-                      color: isDark ? Colors.white38 : Colors.grey[400],
-                    ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            onPressed: () => setState(() => _searchQuery = ''),
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                    ),
-                  ),
-                ),
+            // Summary
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF4F46E5)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(18),
               ),
-
-            if (_isRefetching)
-              const LinearProgressIndicator(
-                minHeight: 2.5,
-                backgroundColor: Colors.transparent,
-                valueColor: AlwaysStoppedAnimation<Color>(_primaryBlue),
-              ),
-
-            // 2. Members List
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshFamilyData,
-                color: _primaryBlue,
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: screenHorizontalSpacePadding,
-                    vertical: 8,
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
+                    alignment: Alignment.center,
+                    child: const PhosphorIcon(PhosphorIconsDuotone.usersThree, size: 26, color: Colors.white, duotoneSecondaryOpacity: 0.35),
                   ),
-                  itemCount: filteredProfiles.length,
-                  itemBuilder: (context, index) {
-                  final profile = filteredProfiles[index];
-                  final pId = (profile.id ?? '').trim();
-                  final bool isPrimary = (profile.isPrimary == true);
-                  final rawRel = (profile.relation ?? '').trim();
-                  final bool isFam = rawRel.isNotEmpty &&
-                      rawRel.toLowerCase() != 'self' &&
-                      rawRel.toLowerCase() != 'primary' &&
-                      rawRel.toLowerCase() != 'admin';
-                  final String relation = isPrimary ? 'Primary User' : (isFam ? rawRel : 'Dependent');
-
-                  final pName = (profile.name?.isNotEmpty ?? false)
-                      ? profile.name!
-                      : '${profile.firstName ?? ''} ${profile.lastName ?? ''}'.trim().isNotEmpty
-                          ? '${profile.firstName ?? ''} ${profile.lastName ?? ''}'.trim()
-                          : relation;
-
-                  final initials = pName.isNotEmpty
-                      ? pName.split(' ').map((p) => p.isNotEmpty ? p[0] : '').take(2).join().toUpperCase()
-                      : (relation.isNotEmpty ? relation[0].toUpperCase() : 'M');
-
-                  final currentUser = GlobalSession.instance.userNotifier.value;
-                  final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
-                  final bool isPrimaryMember = isPrimary || (profile.id?.toLowerCase() == currentUserId);
-                  final cachedImg = _memberImages[pId] ??
-                      (isPrimaryMember
-                          ? profile.imagePath
-                          : ((profile.imagePath != null && profile.imagePath != currentUser?.data?.imagePath)
-                              ? profile.imagePath
-                              : null));
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: EdgeInsets.all(isTab ? 16 : 14),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.25)
-                              : const Color(0xFF64748B).withValues(alpha: 0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Row 1: Avatar + Name/Relation + 3-Dots Menu
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Member Avatar
-                            _buildAvatar(
-                              imagePath: cachedImg,
-                              initials: initials,
-                              onTap: () => _showImagePickerSheet(context, pId, pName),
-                              isDark: isDark,
-                              isTab: isTab,
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Member Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          pName,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: isTab ? 15 : 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Member Badge (Exactly ONE tag per member)
-                                  if (isPrimary)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                                          width: 0.8,
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.verified_user_rounded, size: 10, color: Color(0xFF10B981)),
-                                          SizedBox(width: 3.5),
-                                          Text(
-                                            'Primary User',
-                                            style: TextStyle(
-                                              fontFamily: appPoppinFont,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF10B981),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        relation,
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                        ),
-                                      ),
-                                    ),
-                                  if (profile.phoneNumber != null && profile.phoneNumber!.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Icon(Icons.phone_outlined, size: 11, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          profile.phoneNumber!,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: 11,
-                                            color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-
-                            // 3-Dots Popup Menu
-                            PopupMenuButton<String>(
-                              icon: Icon(
-                                Icons.more_vert_rounded,
-                                size: 20,
-                                color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                              ),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: 'Options',
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                              elevation: 6,
-                              onSelected: (val) {
-                                if (val == 'photo') {
-                                  _showImagePickerSheet(context, pId, pName);
-                                } else if (val == 'book') {
-                                  PatientBookAppointmentSheet.show(
-                                    context,
-                                    targetProfile: profile,
-                                    patientName: pName,
-                                    patientPhone: profile.phoneNumber,
-                                  );
-                                }
-                              },
-                              itemBuilder: (_) => [
-                                PopupMenuItem<String>(
-                                  value: 'photo',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.camera_alt_outlined, size: 16, color: _primaryBlue),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        'Update Photo',
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'book',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryBlue),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        'Book Appointment',
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        Text(
+                          dependents == 0 ? 'Just you so far' : '$dependents family ${dependents == 1 ? 'member' : 'members'}',
+                          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                         ),
-
-                        // Action Button: Full-width Book Appointment
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 38,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primaryBlue,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: () => PatientBookAppointmentSheet.show(
-                              context,
-                              targetProfile: profile,
-                              patientName: pName,
-                              patientPhone: profile.phoneNumber,
-                            ),
-                            icon: const Icon(Icons.calendar_month_rounded, size: 15),
-                            label: const Text(
-                              'Book Appointment',
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                        const SizedBox(height: 2),
+                        Text(
+                          canAdd
+                              ? 'Book visits and keep health records for everyone in one place. You can add ${_maxFamilyMembers - dependents} more.'
+                              : 'You have added the maximum of $_maxFamilyMembers family members.',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, height: 1.4, color: Colors.white.withValues(alpha: 0.85)),
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
-          ),
+            if (_isRefreshing && familyProfiles.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: Center(child: CircularProgressIndicator(color: _primaryBlue)),
+              ),
+            if (familyProfiles.length > 5) ...[
+              const SizedBox(height: 14),
+              TextField(
+                controller: _searchController,
+                onChanged: (val) => setState(() => _searchQuery = val),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: textColor),
+                decoration: InputDecoration(
+                  hintText: 'Search by name or relation',
+                  hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: PhosphorIcon(PhosphorIconsBold.magnifyingGlass, size: 18, color: Color(0xFF64748B)),
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const PhosphorIcon(PhosphorIconsBold.x, size: 16),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            for (int i = 0; i < filteredProfiles.length; i++) ...[
+              if (i == 0 && filteredProfiles[0].isPrimary == true) ...[
+                _sectionLabel('YOU', muted),
+              ] else if (i == 0 || (i == 1 && filteredProfiles[0].isPrimary == true)) ...[
+                const SizedBox(height: 8),
+                _sectionLabel('FAMILY MEMBERS', muted),
+              ],
+              _buildMemberCard(filteredProfiles[i], isDark, isTab, primaryPhone),
+              const SizedBox(height: 10),
+            ],
+            if (dependents == 0 && !_isRefreshing) ...[
+              const SizedBox(height: 8),
+              _buildEmptyFamily(isDark, isTab),
+            ],
+            if (q.isNotEmpty && filteredProfiles.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 30),
+                child: Center(child: Text('No one matches "$_searchQuery"', style: TextStyle(fontFamily: appPoppinFont, color: muted))),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 8),
+      child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: color)),
+    );
+  }
+
+  Widget _buildEmptyFamily(bool isDark, bool isTab) {
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+      ),
+      child: Column(
+        children: [
+          const PhosphorIcon(PhosphorIconsDuotone.usersThree, size: 40, color: _primaryBlue),
+          const SizedBox(height: 10),
+          Text('Add your family', style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+          const SizedBox(height: 4),
+          Text(
+            'Add parents, children or a spouse to book appointments and track their health from your account.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, height: 1.4, color: muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberCard(ProfileEntity profile, bool isDark, bool isTab, String primaryPhone) {
+    final pId = (profile.id ?? '').trim();
+    final bool isPrimary = profile.isPrimary == true;
+    final rawRel = (profile.relation ?? '').trim();
+    final String relation = isPrimary ? 'You' : (rawRel.isNotEmpty ? rawRel : 'Family member');
+    final pName = _profileName(profile, relation);
+    final initials = profileInitials(pName);
+    final gender = (profile.gender ?? '').trim();
+    final age = profileAgeLabel(profile.dob);
+    final phone = (profile.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
+    final relColor = profileRelationColor(rawRel, isPrimary: isPrimary);
+
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
+    final bool isPrimaryMember = isPrimary || (profile.id?.toLowerCase() == currentUserId);
+    final img = _memberImages[pId] ??
+        (isPrimaryMember
+            ? profile.imagePath
+            : ((profile.imagePath != null && profile.imagePath != currentUser?.data?.imagePath) ? profile.imagePath : null));
+
+    final meta = <String>[
+      if (!isPrimary) relation,
+      if (gender.isNotEmpty && gender.toLowerCase() != 'other') gender,
+      if (age != null) age,
+    ];
+    // Dependents usually share the account number; only show a number of their own.
+    final bool showPhone = phone.isNotEmpty && (isPrimary || phone != primaryPhone);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+
+    return Container(
+      padding: EdgeInsets.all(isTab ? 16 : 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isPrimary ? _primaryBlue.withValues(alpha: 0.35) : (isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.035), blurRadius: 12, offset: const Offset(0, 3))],
+      ),
+      child: Row(
+        children: [
+          Semantics(
+            label: 'Change photo of $pName',
+            button: true,
+            child: _buildAvatar(
+              imagePath: img,
+              initials: initials,
+              onTap: () => _showImagePickerSheet(context, pId, pName),
+              isDark: isDark,
+              isTab: isTab,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        pName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 15.5 : 14.5, fontWeight: FontWeight.w700, color: textColor),
+                      ),
+                    ),
+                    if (isPrimary) ...[
+                      const SizedBox(width: 6),
+                      ProfileTag(label: 'You', color: relColor, isDark: isDark),
+                    ],
+                  ],
+                ),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(meta.join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted)),
+                ],
+                if (showPhone) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      PhosphorIcon(PhosphorIconsBold.phone, size: 12, color: muted),
+                      const SizedBox(width: 4),
+                      Text(profile.phoneNumber!.trim(), style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonalIcon(
+            onPressed: () => PatientBookAppointmentSheet.show(
+              context,
+              targetProfile: profile,
+              patientName: pName,
+              patientPhone: profile.phoneNumber,
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: _primaryBlue.withValues(alpha: isDark ? 0.22 : 0.1),
+              foregroundColor: _primaryBlue,
+              minimumSize: const Size(0, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: const PhosphorIcon(PhosphorIconsBold.calendarPlus, size: 16, color: _primaryBlue),
+            label: const Text('Book', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }

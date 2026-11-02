@@ -158,8 +158,18 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                 final diags = p['Diagnoses'] ?? p['diagnoses'];
                 String condition = 'General Consultation';
                 if (diags is List && diags.isNotEmpty) {
-                  final first = diags.first;
-                  condition = (first is Map ? (first['Diagnosis'] ?? first['name'] ?? first['diagnosis']) : first.toString()) ?? 'General Consultation';
+                  // Every diagnosis, cleaned of stray separators (",viral pyrexia" -> "viral pyrexia").
+                  final names = <String>[];
+                  for (final d in diags) {
+                    final raw = (d is Map ? (d['Diagnosis'] ?? d['name'] ?? d['diagnosis']) : d)?.toString() ?? '';
+                    for (final part in raw.split(RegExp(r'[,;]'))) {
+                      final clean = part.trim();
+                      if (clean.isNotEmpty && !names.any((n) => n.toLowerCase() == clean.toLowerCase())) {
+                        names.add(clean);
+                      }
+                    }
+                  }
+                  if (names.isNotEmpty) condition = names.join(', ');
                 }
 
                 final medsRaw = p['Medications'] ?? p['medications'] ?? [];

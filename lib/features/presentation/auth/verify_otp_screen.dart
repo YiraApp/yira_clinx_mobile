@@ -34,10 +34,13 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
   bool _isSubmitting = false;
   bool _isVerified = false;
   late AnimationController _shakeController;
+  // The session the current code belongs to. A resend issues a new one.
+  late String _sessionId;
 
   @override
   void initState() {
     super.initState();
+    _sessionId = widget.sendOtpEntity.data?.sessionId ?? '';
     _loadDeviceToken();
     _shakeController = AnimationController(
       vsync: this,
@@ -96,7 +99,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
           OnTapMobileSignInEvent(
             mobileNumber: widget.sendOtpEntity.data?.contact ?? '',
             otp: otpController.text,
-            sessionId: widget.sendOtpEntity.data?.sessionId ?? '',
+            sessionId: _sessionId,
             countryCode: activeCountryCode,
             fcmToken: _cachedFcmToken,
           ),
@@ -205,6 +208,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                       }
                     } else if (state is ReSendOtpSuccessState) {
                       _clearError();
+                      final newSessionId = state.sendOtpEntity.data?.sessionId;
+                      if (newSessionId != null && newSessionId.isNotEmpty) {
+                        _sessionId = newSessionId;
+                      }
+                      otpController.clear();
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -876,6 +884,12 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
     }
     if (lower.contains('too many') || lower.contains('rate limit')) {
       return 'Too many attempts. Please wait and try again.';
+    }
+    if (lower.contains('maximum verification attempts')) {
+      return 'Too many attempts. Please request a new OTP.';
+    }
+    if (lower.contains('already been used') || lower.contains('invalidated')) {
+      return 'This OTP is no longer valid. Please request a new one.';
     }
     if (lower.contains('network') ||
         lower.contains('timeout') ||

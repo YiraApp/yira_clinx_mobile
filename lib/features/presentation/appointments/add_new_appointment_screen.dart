@@ -16,6 +16,8 @@ import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
 import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/widgets/entity_logo.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/presentation/appointments/appointment_bloc/appointment_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient/doctors/widgets/scan_doctor_qr_sheet.dart';
@@ -258,6 +260,26 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   String _selectedDoctor = "Dr. Doctor";
   String _selectedGender = "Male";
   bool _isTeleConsultation = false;
+
+  // Patient booking: the doctor summary card can be swapped for the pickers,
+  // and an empty "today" moves to tomorrow once unless the patient picked it.
+  bool _showDoctorPicker = false;
+  bool _dateChosenByUser = false;
+  bool _autoAdvancedDate = false;
+
+  bool get _isPatientUser {
+    final data = GlobalSession.instance.userNotifier.value?.data;
+    final role = (data?.latestUserRole ?? '').toLowerCase();
+    return data?.navigationId == "1" || role.contains("patient") || role == "user";
+  }
+
+  /// "09:15 - 09:30" → "9:15 AM".
+  String _slotLabel12h(String slot) {
+    final parsed = DoctorSlotItem.parseSlotDateTime(_selectedDate, slot);
+    return parsed == null ? slot : DateFormat('h:mm a').format(parsed);
+  }
+
+  static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
   bool _isLoadingSlots = false;
   List<DoctorSlotItem> _allDoctorSlots = [];
 
@@ -1148,6 +1170,23 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         }
       }
 
+      // A slower response for a date the user has already left is ignored.
+      if (mounted && !_sameDay(date, _selectedDate)) return;
+
+      final bool moveToTomorrow = _isPatientUser &&
+          !_dateChosenByUser &&
+          !_autoAdvancedDate &&
+          _sameDay(date, DateTime.now()) &&
+          !fetched.any((s) => s.isSelectableForDate(date));
+      if (moveToTomorrow) {
+        _autoAdvancedDate = true;
+        final next = DateTime(date.year, date.month, date.day + 1);
+        if (mounted) setState(() => _selectedDate = next);
+        // After this call's finally block has run.
+        Future.microtask(() => _fetchDoctorSlots(next));
+        return;
+      }
+
       if (mounted) {
         setState(() {
           _allDoctorSlots = fetched;
@@ -1403,6 +1442,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     super.initState();
     if (widget.initialDate != null) {
       _selectedDate = widget.initialDate!;
+      _dateChosenByUser = true;
     }
     if (widget.initialSlot != null && widget.initialSlot!.trim().isNotEmpty) {
       _selectedSlot = widget.initialSlot!.trim();
@@ -1580,7 +1620,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         phoneNumber: digitsPhone,
         patientEmail: _selectedPatient?.email,
         gender: _selectedPatient?.gender.isNotEmpty == true ? _selectedPatient!.gender : _selectedGender,
-        dob: _selectedPatient?.dob.isNotEmpty == true ? _selectedPatient!.dob : DateFormat('yyyy-MM-dd').format(_selectedDate),
+        dob: _selectedPatient?.dob.isNotEmpty == true ? _selectedPatient!.dob : null,
         appointmentDate: DateFormat('yyyy-MM-dd').format(_selectedDate),
         startTime: formattedTime,
         reason: reason,
@@ -1872,8 +1912,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       LikedHospitalsService.instance.saveLikedHospital(_selectedHospital!);
     }
 
-    // Trigger immediate local notification to alert patient instantly
-    try {
+    // Patients already get the server's "Appointment Confirmed" push, so a
+    // local one would show the same message twice. Staff keep the local one.
+    if (!_isPatientUser) try {
       final rawDocName = (_selectedDoctorMap?['name'] ?? _selectedDoctor ?? 'Doctor').toString().trim();
       final cleanDocName = rawDocName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim();
       final formattedDocName = cleanDocName.isNotEmpty ? 'Dr. $cleanDocName' : 'your doctor';
@@ -1965,6 +2006,15 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     ),
                     child: Column(
                       children: [
+                        if (_isPatientUser && (_selectedDoctorMap?['name'] ?? '').toString().trim().isNotEmpty) ...[
+                          _buildSummaryRow(
+                            "Doctor",
+                            _selectedDoctorMap!['name'].toString().trim(),
+                            Icons.medical_services_outlined,
+                            isDark,
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                         _buildSummaryRow(
                           "Patient",
                           state.patientName ?? _patientSearchController.text,
@@ -1974,7 +2024,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           "Schedule",
-                          "${DateFormat('dd MMM yyyy').format(_selectedDate)} • $_selectedSlot",
+                          "${DateFormat(_isPatientUser ? 'EEE, d MMM' : 'dd MMM yyyy').format(_selectedDate)} • ${_isPatientUser ? _slotLabel12h(_selectedSlot) : _selectedSlot}",
                           Icons.event_available_rounded,
                           isDark,
                         ),
@@ -2107,6 +2157,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     _discountController.dispose();
     _treatmentPlanSearchController.dispose();
     _treatmentPlanScrollCtrl.dispose();
+    _dateStripCtrl.dispose();
     super.dispose();
   }
 
@@ -2181,6 +2232,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             (currentUser?.data?.latestUserRole ?? '').toLowerCase().contains("patient") ||
             (currentUser?.data?.latestUserRole ?? '').toLowerCase() == "user";
 
+        if (isPatient) return _buildPatientBookingScaffold(context, state);
 
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
@@ -2189,7 +2241,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
             title: Text(
-              "New Appointment",
+              isPatient ? "Book appointment" : "New Appointment",
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w700,
@@ -2243,8 +2295,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionHeader(1, "Patient Details", isDark),
-                          if (_selectedPatient != null)
+                          _buildSectionHeader(1, isPatient ? "Who is this for?" : "Patient Details", isDark),
+                          if (_selectedPatient != null && !isPatient)
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -2303,6 +2355,19 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
                       if (_selectedPatient != null && !_isChangingPatient) ...[
                         _buildSelectedPatientCard(isDark, isTab),
+                      ] else if (isPatient) ...[
+                        _buildMatchingAccountsList(isDark, isTab),
+                        if (_selectedPatient != null)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => setState(() => _isChangingPatient = false),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600, color: primaryColor),
+                              ),
+                            ),
+                          ),
                       ] else ...[
                         // Two Distinct, Uncombined Options: Search by Mobile Number vs Search by Patient Name
                         _buildPatientSearchModeTabs(isDark),
@@ -2473,7 +2538,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       const SizedBox(height: 18),
 
                       // 2. Schedule & Available Slot
-                      _buildSectionHeader(2, "Date & Available Slot", isDark),
+                      _buildSectionHeader(2, isPatient ? "Pick a date & time" : "Date & Available Slot", isDark),
                       const SizedBox(height: 14),
 
                       _buildInputLabel("Consultation Date *", isDark, isTab),
@@ -2540,7 +2605,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
                       if (_isLoadingSlots)
                         _buildSlotsShimmer(isDark, isTab)
-                      else if (_allDoctorSlots.isEmpty)
+                      else if (_allDoctorSlots.isEmpty && !isPatient)
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -2579,7 +2644,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       const SizedBox(height: 18),
 
                       // 3. Consultation Details
-                      _buildSectionHeader(3, "Consultation Details", isDark),
+                      _buildSectionHeader(3, isPatient ? "About your visit" : "Consultation Details", isDark),
                       const SizedBox(height: 14),
 
                       _buildInputLabel("Visit Type *", isDark, isTab),
@@ -2615,7 +2680,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 ),
                               ),
                               child: Text(
-                                type,
+                                (isPatient && type == "Tele-Consult") ? "Video consult" : type,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: 12,
@@ -2631,7 +2696,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      _buildInputLabel("Reason / Chief Complaint *", isDark, isTab),
+                      _buildInputLabel(isPatient ? "Reason for visit *" : "Reason / Chief Complaint *", isDark, isTab),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _reasonController,
@@ -2651,7 +2716,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           color: isDark ? Colors.white : Colors.black87,
                         ),
                         decoration: _inputDecoration(
-                          hintText: "Enter primary complaint or purpose of visit...",
+                          hintText: isPatient ? "Describe your symptoms or reason for the visit" : "Enter primary complaint or purpose of visit...",
                           prefixIcon: Icons.edit_note_rounded,
                           isDark: isDark,
                           errorText: _reasonError,
@@ -2659,7 +2724,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Teleconsultation row
+                      // Teleconsultation row (patients use the "Video consult" visit type)
+                      if (!isPatient)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -2723,13 +2789,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       const SizedBox(height: 18),
 
                       // Billing & Payment
-                      _buildSectionHeader(isPatient ? 4 : 5, "Billing & Payment", isDark),
+                      _buildSectionHeader(isPatient ? 4 : 5, isPatient ? "Payment" : "Billing & Payment", isDark),
                       const SizedBox(height: 14),
 
+                      if (isPatient)
+                        _buildPatientPaymentSummary(isDark)
+                      else ...[
                       // Consultation fee row
                       Builder(
                         builder: (context) {
-                          final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+                          final isPatient = _isPatientUser;
                           if (isPatient) {
                             return Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2833,7 +2902,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         },
                       ),
 
-                      if (GlobalSession.instance.userNotifier.value?.data?.navigationId != "1") ...[
+                      if (!_isPatientUser) ...[
                         const SizedBox(height: 12),
                         _buildInputLabel("Discount Amount (₹)", isDark, isTab),
                         const SizedBox(height: 6),
@@ -2915,7 +2984,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       // Compact Bill Summary
                       Builder(
                         builder: (context) {
-                          final isPatient = GlobalSession.instance.userNotifier.value?.data?.navigationId == "1";
+                          final isPatient = _isPatientUser;
                           final double discount = !isPatient ? (double.tryParse(_discountController.text.trim()) ?? 0.0) : 0.0;
                           final double consultationFeeAmt = (isPatient || _includeConsultationFee) ? _consultationFee : 0.0;
 
@@ -3045,6 +3114,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           );
                         },
                       ),
+                      ],
                     ],
                   ),
                 ),
@@ -3113,7 +3183,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                               ? (_consultationFee > 0
                                                   ? "Pay ₹${_consultationFee.toStringAsFixed(0)} & Confirm"
                                                   : "Confirm Tele-Consult")
-                                              : "Confirm & Book Appointment",
+                                              : (isPatient ? "Confirm booking" : "Confirm & Book Appointment"),
                                           style: const TextStyle(
                                             fontFamily: appPoppinFont,
                                             fontSize: 15,
@@ -3196,6 +3266,839 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   }
 
   // ── Doctor Info Header (Clean Row or Liked/Linked Hospital & Doctor Selectors for Patient) ──
+  // ───────────────────────────────────────────────────────────────────────
+  // PATIENT BOOKING LAYOUT
+  // Follows the pattern of consumer booking apps: doctor on top, visit type,
+  // a day strip, open times grouped by part of day, who it is for, reason,
+  // and a sticky bar with the chosen time, fee and the Book button.
+  // ───────────────────────────────────────────────────────────────────────
+
+  static const int _dateStripDays = 60;
+  static const double _dateItemWidth = 62;
+  static const double _dateItemGap = 8;
+  final ScrollController _dateStripCtrl = ScrollController();
+  DateTime? _dateStripScrolledTo;
+
+  static const List<String> _patientReasonChips = [
+    "Fever",
+    "Cold & cough",
+    "Follow-up",
+    "General check-up",
+    "Body pain",
+    "Skin problem",
+  ];
+
+  Color _pText(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _pMuted(bool isDark) => isDark ? Colors.white60 : const Color(0xFF64748B);
+  Color _pCard(bool isDark) => isDark ? const Color(0xFF1E293B) : Colors.white;
+  Color _pLine(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0);
+
+  Widget _pSectionTitle(String title, bool isDark, {Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, left: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: _pText(isDark)),
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientBookingScaffold(BuildContext context, AppointmentState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTab = isTablet(context);
+    final bool isSubmitting = state is BookAppointmentLoadingState;
+    final double hPad = isTab ? 32 : 16;
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4F6FA),
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: _pCard(isDark),
+        foregroundColor: _pText(isDark),
+        centerTitle: true,
+        title: Text(
+          "Book appointment",
+          style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: isTab ? 19 : 17),
+        ),
+        leading: IconButton(
+          icon: const PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: _isLoadingInitial
+          ? _buildFullAppointmentShimmer(isDark, isTab)
+          : ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 24),
+              children: [
+                _buildDoctorHeader(isDark, isTab),
+                if (_selectedDoctorMap != null) ...[
+                  const SizedBox(height: 22),
+                  _pSectionTitle("Consultation type", isDark),
+                  _buildVisitModeToggle(isDark),
+                  if (!_isTeleConsultation) ...[
+                    const SizedBox(height: 10),
+                    _buildVisitPurposeChips(isDark),
+                  ],
+                  const SizedBox(height: 22),
+                  _pSectionTitle(
+                    "Select date",
+                    isDark,
+                    trailing: TextButton.icon(
+                      onPressed: () => _showDatePicker(context, _selectedDate, isDark),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: const Size(0, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const PhosphorIcon(PhosphorIconsBold.calendarBlank, size: 15, color: primaryColor),
+                      label: Text(
+                        DateFormat('MMMM yyyy').format(_selectedDate),
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: primaryColor),
+                      ),
+                    ),
+                  ),
+                  _buildDateStrip(isDark),
+                  const SizedBox(height: 22),
+                  _pSectionTitle(
+                    "Available time",
+                    isDark,
+                    trailing: _isLoadingSlots
+                        ? null
+                        : Text(
+                            () {
+                              final n = _allDoctorSlots.where((s) => s.isSelectableForDate(_selectedDate)).length;
+                              return n == 1 ? "1 slot" : "$n slots";
+                            }(),
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: _pMuted(isDark)),
+                          ),
+                  ),
+                  if (_isLoadingSlots) _buildSlotsShimmer(isDark, isTab) else _buildPatientSlots(isDark, isTab),
+                  if (_slotError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 2),
+                      child: Text(
+                        _slotError!,
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                      ),
+                    ),
+                  const SizedBox(height: 22),
+                  _pSectionTitle("Booking for", isDark),
+                  _buildBookingForCard(isDark, isTab),
+                  const SizedBox(height: 22),
+                  _pSectionTitle("Reason for visit", isDark),
+                  _buildPatientReasonField(isDark),
+                  const SizedBox(height: 22),
+                  _pSectionTitle("Payment", isDark),
+                  _buildPatientPaymentSummary(isDark),
+                ],
+              ],
+            ),
+      bottomNavigationBar: (_isLoadingInitial || _selectedDoctorMap == null)
+          ? null
+          : _buildPatientBookingBar(context, isDark, isSubmitting),
+    );
+  }
+
+  Widget _buildVisitModeToggle(bool isDark) {
+    final String feeText = _consultationFee > 0 ? "₹${_consultationFee.toStringAsFixed(0)}" : "Free";
+    Widget option({required bool selected, required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+      return Expanded(
+        child: Material(
+          color: selected ? primaryColor.withValues(alpha: isDark ? 0.18 : 0.06) : _pCard(isDark),
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: selected ? primaryColor : _pLine(isDark), width: selected ? 1.6 : 1),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: selected ? primaryColor : primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: PhosphorIcon(icon, size: 18, color: selected ? Colors.white : primaryColor),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: _pText(isDark))),
+                        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w500, color: _pMuted(isDark))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        option(
+          selected: !_isTeleConsultation,
+          icon: PhosphorIconsBold.hospital,
+          title: "Clinic visit",
+          subtitle: feeText,
+          onTap: () => setState(() {
+            _isTeleConsultation = false;
+            if (_selectedVisitType == "Tele-Consult") _selectedVisitType = "Consultation";
+          }),
+        ),
+        const SizedBox(width: 10),
+        option(
+          selected: _isTeleConsultation,
+          icon: PhosphorIconsBold.videoCamera,
+          title: "Video consult",
+          subtitle: feeText,
+          onTap: () => setState(() {
+            _isTeleConsultation = true;
+            _selectedVisitType = "Tele-Consult";
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVisitPurposeChips(bool isDark) {
+    const purposes = {"Consultation": "New consultation", "Follow-up": "Follow-up", "Check-up": "Check-up"};
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: purposes.entries.map((e) {
+        final selected = _selectedVisitType == e.key;
+        return ChoiceChip(
+          label: Text(e.value),
+          selected: selected,
+          showCheckmark: false,
+          onSelected: (_) => setState(() => _selectedVisitType = e.key),
+          labelStyle: TextStyle(
+            fontFamily: appPoppinFont,
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? primaryColor : _pMuted(isDark),
+          ),
+          backgroundColor: _pCard(isDark),
+          selectedColor: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
+          side: BorderSide(color: selected ? primaryColor : _pLine(isDark)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          visualDensity: VisualDensity.compact,
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildDateStrip(bool isDark) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedIndex = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day).difference(today).inDays;
+
+    // Keep the chosen day in view, e.g. after picking from the calendar.
+    if (_dateStripScrolledTo == null || !_sameDay(_dateStripScrolledTo!, _selectedDate)) {
+      _dateStripScrolledTo = _selectedDate;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_dateStripCtrl.hasClients || selectedIndex < 0) return;
+        final target = (selectedIndex * (_dateItemWidth + _dateItemGap) - 24)
+            .clamp(0.0, _dateStripCtrl.position.maxScrollExtent)
+            .toDouble();
+        _dateStripCtrl.animateTo(target, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+      });
+    }
+
+    return SizedBox(
+      height: 78,
+      child: ListView.separated(
+        controller: _dateStripCtrl,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _dateStripDays,
+        separatorBuilder: (_, _) => const SizedBox(width: _dateItemGap),
+        itemBuilder: (context, i) {
+          final day = today.add(Duration(days: i));
+          final selected = _sameDay(day, _selectedDate);
+          final top = i == 0 ? "Today" : (i == 1 ? "Tmrw" : DateFormat('EEE').format(day));
+          return InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              if (selected) return;
+              setState(() {
+                _selectedDate = day;
+                _dateChosenByUser = true;
+                _slotError = null;
+              });
+              _fetchDoctorSlots(day);
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: _dateItemWidth,
+              decoration: BoxDecoration(
+                color: selected ? primaryColor : _pCard(isDark),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: selected ? primaryColor : _pLine(isDark)),
+                boxShadow: selected
+                    ? [BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    top,
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w600, color: selected ? Colors.white70 : _pMuted(isDark)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('d').format(day),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w800, color: selected ? Colors.white : _pText(isDark), height: 1.15),
+                  ),
+                  Text(
+                    DateFormat('MMM').format(day),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w500, color: selected ? Colors.white70 : _pMuted(isDark)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPatientSlots(bool isDark, bool isTab) {
+    final open = _allDoctorSlots.where((s) => s.isSelectableForDate(_selectedDate)).toList();
+    if (open.isEmpty) return _buildNoSlotsNotice(isDark);
+
+    final groups = <({String label, IconData icon, Color color, List<DoctorSlotItem> slots})>[
+      (label: "Morning", icon: PhosphorIconsFill.sunHorizon, color: const Color(0xFFF59E0B), slots: open.where((s) => s.startHour < 12).toList()),
+      (label: "Afternoon", icon: PhosphorIconsFill.sun, color: const Color(0xFFF97316), slots: open.where((s) => s.startHour >= 12 && s.startHour < 17).toList()),
+      (label: "Evening", icon: PhosphorIconsFill.moonStars, color: const Color(0xFF6366F1), slots: open.where((s) => s.startHour >= 17).toList()),
+    ].where((g) => g.slots.isNotEmpty).toList();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+      decoration: BoxDecoration(
+        color: _pCard(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _pLine(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final g in groups) ...[
+            Row(
+              children: [
+                PhosphorIcon(g.icon, size: 16, color: g.color),
+                const SizedBox(width: 6),
+                Text(g.label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: _pText(isDark))),
+                const SizedBox(width: 6),
+                Text("· ${g.slots.length} ${g.slots.length == 1 ? 'slot' : 'slots'}", style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: _pMuted(isDark))),
+              ],
+            ),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: isTab ? 5 : 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: isTab ? 2.8 : 2.5,
+              children: [for (final slot in g.slots) _buildPatientSlotChip(slot, isDark)],
+            ),
+            const SizedBox(height: 14),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientSlotChip(DoctorSlotItem slot, bool isDark) {
+    final selected = _selectedSlot == slot.label;
+    final parsed = DoctorSlotItem.parseSlotDateTime(_selectedDate, slot.startTime);
+    final label = parsed != null ? DateFormat('h:mm a').format(parsed) : slot.startTime;
+    return Material(
+      color: selected ? primaryColor : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() {
+          _selectedSlot = slot.label;
+          _slotError = null;
+        }),
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? primaryColor : _pLine(isDark)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              color: selected ? Colors.white : _pText(isDark),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBookingForCard(bool isDark, bool isTab) {
+    final patient = _selectedPatient;
+    final showList = patient == null || _isChangingPatient;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _pCard(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _pLine(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (patient != null && !_isChangingPatient)
+            Row(
+              children: [
+                EntityLogo(imageUrl: null, name: patient.name, size: 44, radius: 22, isLogo: false),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        patient.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 14.5, fontWeight: FontWeight.w700, color: _pText(isDark)),
+                      ),
+                      Text(
+                        [
+                          (patient.isPrimary || patient.relation.toLowerCase() == 'self') ? "You" : patient.relation,
+                          if (patient.gender.isNotEmpty) patient.gender,
+                          if (patient.displayAge.isNotEmpty && patient.displayAge != '0 Yrs') patient.displayAge.replaceAll('Yrs', 'yrs'),
+                        ].join(' · '),
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: _pMuted(isDark)),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () => setState(() => _isChangingPatient = true),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: BorderSide(color: primaryColor.withValues(alpha: 0.35)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    minimumSize: const Size(0, 34),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text("Change", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          if (showList) ...[
+            _buildMatchingAccountsList(isDark, isTab),
+            if (patient != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => setState(() => _isChangingPatient = false),
+                  child: const Text("Cancel", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600, color: primaryColor)),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientReasonField(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _reasonController,
+          maxLines: 2,
+          minLines: 2,
+          textCapitalization: TextCapitalization.sentences,
+          inputFormatters: [LengthLimitingTextInputFormatter(250)],
+          onChanged: (_) {
+            if (_reasonError != null) setState(() => _reasonError = null);
+          },
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: _pText(isDark)),
+          decoration: InputDecoration(
+            hintText: "Describe your symptoms or reason for the visit",
+            hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+            filled: true,
+            fillColor: _pCard(isDark),
+            errorText: _reasonError,
+            contentPadding: const EdgeInsets.all(14),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: _pLine(isDark))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: primaryColor, width: 1.4)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFDC2626))),
+            focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.4)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _patientReasonChips.map((r) {
+            final selected = _reasonController.text.trim() == r;
+            return ActionChip(
+              label: Text(r),
+              onPressed: () => setState(() {
+                _reasonController.text = r;
+                _reasonError = null;
+              }),
+              labelStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w600, color: selected ? primaryColor : _pMuted(isDark)),
+              backgroundColor: selected ? primaryColor.withValues(alpha: 0.08) : _pCard(isDark),
+              side: BorderSide(color: selected ? primaryColor : _pLine(isDark)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              visualDensity: VisualDensity.compact,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPatientBookingBar(BuildContext context, bool isDark, bool isSubmitting) {
+    final bool hasSlot = _selectedSlot.trim().isNotEmpty &&
+        _allDoctorSlots.any((s) => s.label == _selectedSlot && s.isSelectableForDate(_selectedDate));
+    final double fee = _consultationFee;
+    final String when = hasSlot
+        ? "${DateFormat('EEE, d MMM').format(_selectedDate)} · ${_slotLabel12h(_selectedSlot)}"
+        : "Pick a time";
+    final String feeLine = fee <= 0
+        ? "Free consultation"
+        : "₹${fee.toStringAsFixed(0)} · ${_isTeleConsultation ? 'Pay online' : 'Pay at clinic'}";
+    final String cta = (_isTeleConsultation && fee > 0) ? "Pay & book" : "Book now";
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _pCard(isDark),
+        border: Border(top: BorderSide(color: _pLine(isDark))),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06), blurRadius: 16, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      when,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: hasSlot ? _pText(isDark) : _pMuted(isDark)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      feeLine,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w500, color: fee <= 0 ? const Color(0xFF059669) : _pMuted(isDark)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: (isSubmitting || !hasSlot) ? null : () => _validateAndSubmit(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: primaryColor.withValues(alpha: 0.35),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    // The app theme makes buttons full width; this one sits in a row.
+                    minimumSize: const Size(120, 48),
+                    padding: const EdgeInsets.symmetric(horizontal: 26),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                      : Text(cta, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Shown to patients when the chosen date has no open slots.
+  Widget _buildNoSlotsNotice(bool isDark) {
+    final bool isToday = _sameDay(_selectedDate, DateTime.now());
+    final DateTime next = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day + 1);
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _pCard(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _pLine(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const PhosphorIcon(PhosphorIconsDuotone.calendarX, size: 22, color: Color(0xFFD97706)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isToday ? "No more slots today" : "No open slots on ${DateFormat('EEE, d MMM').format(_selectedDate)}",
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Try another day, or pick a date from the calendar above.",
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _selectedDate = next;
+                _dateChosenByUser = true;
+              });
+              _fetchDoctorSlots(next);
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primaryColor,
+              side: BorderSide(color: primaryColor.withValues(alpha: 0.4)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              minimumSize: const Size(0, 40),
+            ),
+            icon: const PhosphorIcon(PhosphorIconsBold.arrowRight, size: 14, color: primaryColor),
+            label: Text(
+              "Check ${DateFormat('EEE, d MMM').format(next)}",
+              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// What a patient pays and where. One line instead of a staff bill.
+  Widget _buildPatientPaymentSummary(bool isDark) {
+    final double fee = _consultationFee;
+    final bool online = _isTeleConsultation;
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final String note = fee <= 0
+        ? "No payment needed for this visit."
+        : (online ? "Pay online to confirm your video consultation." : "Pay at the clinic when you arrive.");
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _pCard(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _pLine(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Consultation fee",
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                ),
+              ),
+              Text(
+                fee > 0 ? "₹${fee.toStringAsFixed(0)}" : "Free",
+                style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: fee > 0 ? (isDark ? Colors.white : const Color(0xFF0F172A)) : const Color(0xFF059669),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              PhosphorIcon(online ? PhosphorIconsBold.creditCard : PhosphorIconsBold.storefront, size: 15, color: muted),
+              const SizedBox(width: 8),
+              Expanded(child: Text(note, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The doctor and hospital a patient is booking with. Registration and
+  /// personal contact numbers are not shown to patients.
+  Widget _buildPatientDoctorCard(Map<String, dynamic> doc, bool isDark, bool isTab) {
+    final docName = (doc['name'] ?? doc['displayName'] ?? 'Doctor').toString().trim();
+    final specialty = (doc['specialty'] ?? doc['Specialty'] ?? '').toString().trim();
+    final qualification = (doc['qualification'] ?? doc['Qualification'] ?? '').toString().trim();
+    final imagePath = (doc['imagePath'] ?? doc['ImagePath'] ?? doc['profileImage'] ?? '').toString().trim();
+    final hosp = _selectedHospital;
+    final hospitalName = (hosp?['name'] ?? doc['hospitalName'] ?? '').toString().trim();
+    final address = (hosp?['address'] ?? '').toString().trim();
+    final hospitalPlace = address.isNotEmpty ? address : (hosp?['city'] ?? '').toString().trim();
+    final hospitalLogo = (hosp?['logo'] ?? hosp?['logoUrl'] ?? hosp?['imageUrl'])?.toString();
+    final bool canChange = _filteredDoctors.length > 1 || _hospitals.length > 1;
+    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isTab ? 16 : 14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04), blurRadius: 14, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EntityLogo(imageUrl: imagePath, name: docName, size: isTab ? 60 : 56, radius: 16, isLogo: false),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // The badge follows the last word, even when the name wraps.
+                    Text.rich(
+                      TextSpan(
+                        text: docName,
+                        children: const [
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 4),
+                              child: PhosphorIcon(PhosphorIconsFill.sealCheck, size: 15, color: Color(0xFF2563EB)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 16 : 15, fontWeight: FontWeight.w700, color: strong, height: 1.25),
+                    ),
+                    if (specialty.isNotEmpty)
+                      Text(
+                        specialty,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
+                      ),
+                    if (qualification.isNotEmpty)
+                      Text(
+                        qualification,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
+                      ),
+                  ],
+                ),
+              ),
+              if (canChange)
+                TextButton(
+                  onPressed: () => setState(() => _showDoctorPicker = true),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    "Change",
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700, color: primaryColor),
+                  ),
+                ),
+            ],
+          ),
+          if (hospitalName.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                EntityLogo(imageUrl: hospitalLogo, name: hospitalName, size: 34, radius: 9),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hospitalName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: strong),
+                      ),
+                      if (hospitalPlace.isNotEmpty)
+                        Text(
+                          hospitalPlace,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildDoctorHeader(bool isDark, bool isTab) {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final bool isPatient = currentUser?.data?.navigationId == "1" ||
@@ -3281,38 +4184,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         );
       }
 
+      if (_selectedDoctorMap != null && !_showDoctorPicker && !_isLoadingDoctors) {
+        return _buildPatientDoctorCard(_selectedDoctorMap!, isDark, isTab);
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildInputLabel("Hospital / Facility *", isDark, isTab),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF0284C7)),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Liked / Linked Only",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0284C7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          _buildInputLabel("Hospital / Clinic", isDark, isTab),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -3334,7 +4213,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     value: h,
                     child: Row(
                       children: [
-                        const Icon(Icons.local_hospital_rounded, color: primaryColor, size: 18),
+                        EntityLogo(
+                          imageUrl: (h['logo'] ?? h['logoUrl'] ?? h['imageUrl'])?.toString(),
+                          name: (h['name'] ?? 'Hospital').toString(),
+                          size: 26,
+                          radius: 7,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -3364,7 +4248,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          _buildInputLabel("Select Doctor *", isDark, isTab),
+          _buildInputLabel("Doctor", isDark, isTab),
           const SizedBox(height: 6),
           if (_isLoadingDoctors) ...[
             _buildDoctorDropdownShimmer(isDark),
@@ -3436,10 +4320,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       value: doc,
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundColor: primaryColor.withValues(alpha: 0.12),
-                            child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
+                          EntityLogo(
+                            imageUrl: (doc['imagePath'] ?? doc['profileImage'])?.toString(),
+                            name: (doc['name'] ?? 'Doctor').toString(),
+                            size: 26,
+                            radius: 13,
+                            isLogo: false,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -3463,6 +4349,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     if (val != null) {
                       setState(() {
                         _selectedDoctorMap = val;
+                        _showDoctorPicker = false;
                         _selectedDoctor = val['name'] ?? 'Doctor';
                         _consultationFee = (double.tryParse(val['consultationFee']?.toString() ?? '') ?? 0.0);
                       });
@@ -3472,10 +4359,17 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 ),
               ),
             ),
-            if (_selectedDoctorMap != null) ...[
-              const SizedBox(height: 12),
-              _buildDoctorInfoCard(_selectedDoctorMap!, isDark, isTab),
-            ],
+            if (_selectedDoctorMap != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => setState(() => _showDoctorPicker = false),
+                  child: const Text(
+                    "Done",
+                    style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, color: primaryColor),
+                  ),
+                ),
+              ),
           ],
         ],
       );
@@ -3894,9 +4788,15 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   // ── Grouped Slots View ──
   Widget _buildGroupedSlotsView(bool isDark, bool isTab) {
-    final morningSlots = _allDoctorSlots.where((s) => s.startHour < 12).toList();
-    final afternoonSlots = _allDoctorSlots.where((s) => s.startHour >= 12 && s.startHour < 17).toList();
-    final eveningSlots = _allDoctorSlots.where((s) => s.startHour >= 17).toList();
+    final bool patientView = _isPatientUser;
+    final List<DoctorSlotItem> source =
+        patientView ? _allDoctorSlots.where((s) => !s.isPastForDate(_selectedDate)).toList() : _allDoctorSlots;
+    if (patientView && !source.any((s) => s.isSelectableForDate(_selectedDate))) {
+      return _buildNoSlotsNotice(isDark);
+    }
+    final morningSlots = source.where((s) => s.startHour < 12).toList();
+    final afternoonSlots = source.where((s) => s.startHour >= 12 && s.startHour < 17).toList();
+    final eveningSlots = source.where((s) => s.startHour >= 17).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3989,7 +4889,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     final bool isSelectable = slot.isSelectableForDate(_selectedDate);
     final bool isPast = slot.isPastForDate(_selectedDate);
     final bool isSelected = _selectedSlot == slot.label && isSelectable;
-    final String displayTime = slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime;
+    String displayTime = slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime;
+    if (_isPatientUser) {
+      final parsed = DoctorSlotItem.parseSlotDateTime(_selectedDate, slot.startTime);
+      if (parsed != null) displayTime = DateFormat('h:mm a').format(parsed);
+    }
 
     if (!isSelectable) {
       final bool isBooked = slot.isBooked;
@@ -4276,6 +5180,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       onTap: () {
                         setState(() {
                           _selectedDate = tempSelectedDate;
+                          _dateChosenByUser = true;
                         });
                         _fetchDoctorSlots(_selectedDate);
                         Navigator.pop(context);
@@ -4988,7 +5893,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             children: [
               Expanded(
                 child: Text(
-                  "Matching Accounts (${_matchingAccountsList.length})",
+                  _isPatientUser ? "Your family profiles (${_matchingAccountsList.length})" : "Matching Accounts (${_matchingAccountsList.length})",
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
@@ -5030,7 +5935,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            "Select an account to schedule for, or choose a relation below for their child / family member:",
+            _isPatientUser
+                ? "Choose who the appointment is for, or add a family member below."
+                : "Select an account to schedule for, or choose a relation below for their child / family member:",
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: 11.5,

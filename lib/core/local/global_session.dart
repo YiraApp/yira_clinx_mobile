@@ -74,6 +74,14 @@ class GlobalSession {
 
   bool get isCurrentProfileChild => !isCurrentProfilePrimary;
 
+  /// True when a family member signed in with their own phone or email (as
+  /// opposed to the primary account switching to their profile). The server
+  /// then lists only their own profile, and family management is hidden.
+  bool get isSignedInAsFamilyMember {
+    final profiles = userNotifier.value?.data?.profiles ?? [];
+    return profiles.length == 1 && (profiles.first.accountType ?? '').toLowerCase() == 'dependent';
+  }
+
   late SecureStorageService _secureStorage;
 
   PlatformInfoEntity? get cachedPlatformInfo => platformNotifier.value;

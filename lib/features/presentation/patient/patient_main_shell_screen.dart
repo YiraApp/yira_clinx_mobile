@@ -6,7 +6,6 @@ import 'package:yiraclinics/core/tour/patient_tour_keys.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../di/dependency_injection.dart';
 import '../appointments/appointment_bloc/appointment_bloc.dart';
-import '../consent/patient_consent_approval_screen.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'dashboard/patient_dashboard_screen.dart';
 import 'profile/patient_profile_passport_screen.dart';
@@ -25,7 +24,6 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   final GlobalKey<PatientAppointmentsScreenState> _appointmentsKey = GlobalKey<PatientAppointmentsScreenState>();
   final GlobalKey _dashboardNavKey = GlobalKey(debugLabel: 'patient_tour_nav_dashboard');
   final GlobalKey _apptsNavKey = GlobalKey(debugLabel: 'patient_tour_nav_appts');
-  final GlobalKey _consentsNavKey = GlobalKey(debugLabel: 'patient_tour_nav_consents');
   final GlobalKey _profileNavKey = GlobalKey(debugLabel: 'patient_tour_nav_profile');
 
   @override
@@ -33,10 +31,10 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     super.initState();
     PatientTourKeys.dashboardNavKey = _dashboardNavKey;
     PatientTourKeys.apptsNavKey = _apptsNavKey;
-    PatientTourKeys.consentsNavKey = _consentsNavKey;
     PatientTourKeys.profileNavKey = _profileNavKey;
-    _currentIndex = widget.initialIndex;
+    _currentIndex = _clampTab(widget.initialIndex);
     PatientTourController().registerTabSwitcher((index) {
+      index = _clampTab(index);
       if (mounted) {
         if (index == 1) {
           _appointmentsKey.currentState?.reload();
@@ -54,7 +52,12 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     super.dispose();
   }
 
+  /// Dashboard, Appointments, Profile. Sharing moved from a tab into Profile.
+  static const int _tabCount = 3;
+  static int _clampTab(int index) => index.clamp(0, _tabCount - 1);
+
   void _onTabSelected(int index) {
+    index = _clampTab(index);
     HapticFeedback.selectionClick();
     if (index == 1) {
       _appointmentsKey.currentState?.reload();
@@ -71,8 +74,6 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
       case 1:
         return _apptsNavKey;
       case 2:
-        return _consentsNavKey;
-      case 3:
         return _profileNavKey;
       default:
         return null;
@@ -85,20 +86,18 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     final primaryColor = Theme.of(context).primaryColor;
 
     final List<Widget> pages = [
-      PatientDashboardScreen(onNavigateTab: _onTabSelected),
+      PatientDashboardScreen(onNavigateTab: _onTabSelected, isActive: _currentIndex == 0),
       PatientAppointmentsScreen(
         key: _appointmentsKey,
         onNavigateTab: _onTabSelected,
         isActive: _currentIndex == 1,
       ),
-      const PatientConsentApprovalScreen(showBackButton: false),
       const PatientProfilePassportScreen(),
     ];
 
     final navItems = [
       {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
       {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
-      {'label': 'Consents', 'icon': Icons.verified_user_rounded, 'outlined': Icons.verified_user_outlined},
       {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
     ];
 

@@ -882,7 +882,10 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     final planned = items.fold<int>(0, (sum, m) => sum + m.effectiveCalories);
     final eatenItems = items.where((m) => _logFor(m)?.isEaten == true).toList();
     final eaten = eatenItems.fold<int>(0, (sum, m) => sum + m.effectiveCalories);
-    final goal = (plan.targetCalories ?? 0) > 0 ? plan.targetCalories! : planned;
+    // The doctor's daily goal can differ from what today's meals add up to;
+    // the card names both so the numbers do not look contradictory.
+    final bool hasGoal = (plan.targetCalories ?? 0) > 0;
+    final goal = hasGoal ? plan.targetCalories! : planned;
     final progress = goal > 0 ? (eaten / goal).clamp(0.0, 1.0) : 0.0;
     final remaining = (goal - eaten) < 0 ? 0 : goal - eaten;
     final unknown = items.where((m) => m.caloriesUnknown).length;
@@ -925,7 +928,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       children: [
                         Text('$eaten', style: DietUi.text(22, FontWeight.w700, DietUi.strong(isDark))),
                         const SizedBox(width: 4),
-                        Text('/ $goal kcal', style: DietUi.text(12, FontWeight.w600, DietUi.hint(isDark))),
+                        Text(hasGoal ? '/ $goal kcal goal' : '/ $goal kcal', style: DietUi.text(12, FontWeight.w600, DietUi.hint(isDark))),
                       ],
                     ),
                   ],
@@ -955,8 +958,8 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              stat('Planned', '$planned kcal'),
-              stat('Remaining', '$remaining kcal'),
+              stat('In meals', '$planned kcal'),
+              stat(hasGoal ? 'Left of goal' : 'Left to eat', '$remaining kcal'),
               stat(plan.totalDays > 1 ? 'Rotation' : 'Menu', plan.totalDays > 1 && day != null ? 'Day $day of ${plan.totalDays}' : 'Daily'),
             ],
           ),
@@ -1155,14 +1158,30 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // A round check, like food trackers use, instead of an on/off switch.
               Opacity(
                 opacity: blocked == null ? 1 : 0.45,
-                child: Transform.scale(
-                  scale: 0.85,
-                  child: Switch.adaptive(
-                    value: eaten,
-                    activeTrackColor: DietUi.blue,
-                    onChanged: busy ? null : (v) => _setEaten(meal, v),
+                child: Semantics(
+                  button: true,
+                  checked: eaten,
+                  label: eaten ? 'Eaten. Tap to undo' : 'Mark ${meal.foodName} as eaten',
+                  child: InkResponse(
+                    onTap: busy ? null : () => _setEaten(meal, !eaten),
+                    radius: 26,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 34,
+                      height: 34,
+                      margin: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: eaten ? DietUi.green : Colors.transparent,
+                        border: Border.all(color: eaten ? DietUi.green : DietUi.line(isDark), width: 2),
+                      ),
+                      child: busy
+                          ? const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator(strokeWidth: 2))
+                          : Icon(Icons.check_rounded, size: 20, color: eaten ? Colors.white : DietUi.hint(isDark)),
+                    ),
                   ),
                 ),
               ),

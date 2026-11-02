@@ -77,10 +77,33 @@ class MedicationPopupService {
   /// The dose the popup shows; written before the popup opens.
   static const String payloadKey = 'med_popup_payload_v1';
 
+  /// The real screen size, saved by the app. The overlay engine cannot read
+  /// it, and needs it to keep the card above the bottom edge.
+  static const String screenMetricsKey = 'med_popup_screen_v1';
+
   static const String pushType = 'MEDICATION_REMINDER';
 
   /// Floating popups are an Android-only feature.
   static bool get isSupported => !kIsWeb && Platform.isAndroid;
+
+  /// Saves the screen height and system bar sizes, in physical pixels. Does
+  /// nothing where no screen is attached, such as a background isolate.
+  static Future<void> cacheScreenMetrics() async {
+    if (!isSupported) return;
+    try {
+      final views = PlatformDispatcher.instance.views;
+      if (views.isEmpty) return;
+      final view = views.first;
+      final double displayHeight = view.display.size.height;
+      final double height = displayHeight > 0 ? displayHeight : view.physicalSize.height;
+      if (height <= 0) return;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        screenMetricsKey,
+        jsonEncode({'height': height, 'top': view.padding.top, 'bottom': view.padding.bottom}),
+      );
+    } catch (_) {}
+  }
 
   static Future<MedicationAlertStyle> getStyle() async {
     if (!isSupported) return MedicationAlertStyle.notification;
@@ -136,6 +159,7 @@ class MedicationPopupService {
   static Future<bool> show(MedicationPopupData popup) async {
     if (!isSupported) return false;
     try {
+      await cacheScreenMetrics();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(payloadKey, jsonEncode(popup.toJson()));
 
@@ -148,15 +172,22 @@ class MedicationPopupService {
       // Full-screen transparent window; the card sits at the bottom and a tap
       // anywhere else closes it, so the app behind is never stuck covered.
       await FlutterOverlayWindow.showOverlay(
-        height: WindowSize.matchParent,
+        // fullCover also spans the status and navigation bars. The explicit
+        // start position avoids the plugin's default offset, which shifts the
+        // window up by the status bar height (converted twice) and leaves the
+        // bottom of the screen uncovered.
+        height: WindowSize.fullCover,
         width: WindowSize.matchParent,
         alignment: OverlayAlignment.center,
+        startPosition: const OverlayPosition(0, 0),
         flag: OverlayFlag.defaultFlag,
         visibility: NotificationVisibility.visibilityPublic,
         overlayTitle: 'Medicine reminder',
         overlayContent: [popup.medicineName, if (popup.time.isNotEmpty) popup.time].join(' · '),
         enableDrag: false,
       );
+      // A reused overlay engine gets no resume event, so hand it the dose too.
+      await FlutterOverlayWindow.shareData(jsonEncode(popup.toJson()));
       return true;
     } catch (e) {
       debugPrint('[MedicationPopup] Could not show the popup: $e');

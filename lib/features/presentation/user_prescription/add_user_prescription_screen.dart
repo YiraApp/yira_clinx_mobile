@@ -12,6 +12,7 @@ import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/scan_prescription_sheet.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 class _MedicationFormItem {
   final TextEditingController nameController = TextEditingController();
@@ -227,7 +228,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+              child: const PhosphorIcon(PhosphorIconsFill.sparkle, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -303,7 +304,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                 ),
                 const SizedBox(height: 12),
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined, color: primaryColor),
+                  leading: const PhosphorIcon(PhosphorIconsBold.camera, color: primaryColor),
                   title: const Text("Take Photo with Camera"),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -311,7 +312,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: primaryColor),
+                  leading: const PhosphorIcon(PhosphorIconsBold.images, color: primaryColor),
                   title: const Text("Choose from Gallery"),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -319,7 +320,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.picture_as_pdf_outlined, color: primaryColor),
+                  leading: const PhosphorIcon(PhosphorIconsBold.filePdf, color: primaryColor),
                   title: const Text("Upload PDF Document"),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -536,7 +537,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
           const SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                PhosphorIcon(PhosphorIconsFill.checkCircle, color: Colors.white, size: 20),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -580,8 +581,8 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
+          icon: PhosphorIcon(
+            PhosphorIconsBold.caretLeft,
             size: 19,
             color: isDark ? Colors.white : const Color(0xFF0F172A),
           ),
@@ -674,7 +675,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                       color: primaryColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.auto_awesome_rounded, size: 20, color: primaryColor),
+                    child: const PhosphorIcon(PhosphorIconsDuotone.sparkle, size: 20, color: primaryColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -702,8 +703,8 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
+                  PhosphorIcon(
+                    PhosphorIconsBold.caretRight,
                     size: 14,
                     color: primaryColor.withOpacity(0.5),
                   ),
@@ -798,7 +799,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 16, color: primaryColor),
+                      const PhosphorIcon(PhosphorIconsBold.calendarBlank, size: 16, color: primaryColor),
                       const SizedBox(width: 10),
                       Text(
                         DateFormat('dd MMM yyyy').format(_consultationDate),
@@ -895,7 +896,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
               const Spacer(),
               TextButton.icon(
                 onPressed: _addMedication,
-                icon: const Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                icon: const PhosphorIcon(PhosphorIconsBold.plus, size: 16, color: primaryColor),
                 label: const Text(
                   "Add Medicine",
                   style: TextStyle(
@@ -938,10 +939,10 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
+                      PhosphorIcon(
                         _attachedFileName?.endsWith('.pdf') == true
-                            ? Icons.picture_as_pdf_outlined
-                            : Icons.image_outlined,
+                            ? PhosphorIconsBold.filePdf
+                            : PhosphorIconsBold.image,
                         size: 20,
                         color: primaryColor,
                       ),
@@ -960,7 +961,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
+                        icon: const PhosphorIcon(PhosphorIconsBold.x, size: 18),
                         onPressed: () {
                           setState(() {
                             _attachedFile = null;
@@ -992,7 +993,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.cloud_upload_outlined, size: 20, color: primaryColor),
+                          const PhosphorIcon(PhosphorIconsBold.cloudArrowUp, size: 20, color: primaryColor),
                           const SizedBox(width: 8),
                           Text(
                             "Attach prescription photo or PDF",
@@ -1085,7 +1086,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
               const Spacer(),
               if (_medications.length > 1)
                 IconButton(
-                  icon: Icon(Icons.delete_outline_rounded, size: 18, color: isDark ? Colors.white38 : Colors.grey.shade500),
+                  icon: PhosphorIcon(PhosphorIconsBold.trash, size: 18, color: isDark ? Colors.white38 : Colors.grey.shade500),
                   onPressed: () => _removeMedication(index),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

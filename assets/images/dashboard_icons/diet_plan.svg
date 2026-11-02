@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+    <!-- fork -->
+    <path d="M12 34 V82 C14 96 22 104 31 104 C40 104 48 96 48 82 V34" fill="#C9D6EA"/>
+    <path d="M26 34 V70 M36 34 V70" fill="none" stroke-width="7"/>
+    <rect x="23" y="100" width="16" height="122" rx="8" fill="#C9D6EA"/>
+    <!-- knife -->
+    <path d="M220 30 C240 46 244 92 238 124 H220 Z" fill="#C9D6EA"/>
+    <rect x="219" y="120" width="19" height="102" rx="8" fill="#C9D6EA"/>
+    <!-- plate -->
+    <circle cx="131" cy="128" r="80" fill="#FFFFFF"/>
+    <circle cx="131" cy="128" r="66" fill="#EEF3FA" stroke-width="6"/>
+    <!-- balanced meal: veg, grains, protein, fruit -->
+    <g stroke-width="6">
+      <path d="M131 128 L131 70 A58 58 0 0 1 189 128 Z" fill="#7BC943"/>
+      <path d="M131 128 L189 128 A58 58 0 0 1 131 186 Z" fill="#FFD166"/>
+      <path d="M131 128 L131 186 A58 58 0 0 1 73 128 Z" fill="#F0324B"/>
+      <path d="M131 128 L73 128 A58 58 0 0 1 131 70 Z" fill="#FF9F1C"/>
+    </g>
+    <!-- leaf and grain details -->
+    <path d="M146 114 C146 98 158 90 172 92 C172 108 162 116 146 114 Z" fill="#4FA02A" stroke-width="5"/>
+    <g stroke="none" fill="#E0A82E">
+      <circle cx="154" cy="144" r="5"/><circle cx="168" cy="154" r="5"/><circle cx="150" cy="163" r="5"/>
+    </g>
+    <path d="M92 108 C98 96 110 88 120 88" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.9"/>
+  </g>
+</svg>

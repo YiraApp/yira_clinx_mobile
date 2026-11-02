@@ -7,6 +7,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/services/medication_popup_service.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// The floating medicine reminder shown over other apps (Android). It runs in
 /// its own Flutter engine, started from `overlayMain` in main.dart.
@@ -44,6 +45,7 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
   static const Color _line = Color(0xFFE2E8F0);
 
   MedicationPopupData? _data;
+  _ScreenMetrics? _screen;
   bool _saving = false;
   bool _taken = false;
   StreamSubscription<dynamic>? _messages;
@@ -61,6 +63,8 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
           try {
             _show(MedicationPopupData.fromJson(Map<String, dynamic>.from(jsonDecode(event))));
           } catch (_) {}
+          // Also picks up a changed screen size, for example after rotation.
+          _loadFromStorage();
         }
       });
     }
@@ -83,6 +87,15 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
+      final rawScreen = prefs.getString(MedicationPopupService.screenMetricsKey);
+      if (rawScreen != null && rawScreen.isNotEmpty && mounted) {
+        final m = Map<String, dynamic>.from(jsonDecode(rawScreen));
+        setState(() => _screen = _ScreenMetrics(
+              height: (m['height'] as num?)?.toDouble() ?? 0,
+              top: (m['top'] as num?)?.toDouble() ?? 0,
+              bottom: (m['bottom'] as num?)?.toDouble() ?? 0,
+            ));
+      }
       final raw = prefs.getString(MedicationPopupService.payloadKey);
       if (raw == null || raw.isEmpty) return;
       _show(MedicationPopupData.fromJson(Map<String, dynamic>.from(jsonDecode(raw))));
@@ -103,6 +116,14 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
       await widget.onClose!();
     } else {
       await FlutterOverlayWindow.closeOverlay();
+    }
+    // The overlay engine is reused for the next popup, so it must not open
+    // again in the "taken" state of this one.
+    if (mounted) {
+      setState(() {
+        _taken = false;
+        _saving = false;
+      });
     }
   }
 
@@ -125,188 +146,308 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
   TextStyle _ts(double size, FontWeight weight, Color color, {double? height}) =>
       TextStyle(fontFamily: 'Poppins', fontSize: size, fontWeight: weight, color: color, height: height, decoration: TextDecoration.none);
 
+  /// The overlay window spans the screen plus the status and navigation bar
+  /// heights and is centred on the screen, so half of that extra height hangs
+  /// below the bottom edge. Returns how far the card must sit from the
+  /// window's bottom, in logical pixels, to clear that and the navigation bar.
+  double _cardBottomGap(BuildContext context) {
+    final view = View.of(context);
+    final double dpr = view.devicePixelRatio;
+    final screen = _screen;
+    double extra;
+    double navBar;
+    if (screen != null && screen.height > 0) {
+      extra = view.physicalSize.height - screen.height;
+      navBar = screen.bottom;
+    } else {
+      // No saved size: estimate the bars from the top inset and a 48dp nav bar.
+      navBar = 48 * dpr;
+      extra = view.padding.top + navBar;
+    }
+    final double hidden = extra > 0 ? extra / 2 : 0;
+    return (hidden + navBar) / dpr + 16;
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = _data;
+    final double bottomGap = _cardBottomGap(context);
     return Material(
       color: Colors.transparent,
       child: Stack(
         children: [
-          // Tapping anywhere outside the card closes it.
-          Positioned.fill(child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: _close)),
+          // A light scrim keeps the reminder in focus; tapping it closes the popup.
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _saving ? null : _close,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: data == null ? 0 : 1),
+                duration: const Duration(milliseconds: 250),
+                builder: (context, v, _) => ColoredBox(color: Colors.black.withValues(alpha: 0.32 * v)),
+              ),
+            ),
+          ),
           if (data != null)
             Align(
               alignment: Alignment.bottomCenter,
               child: SafeArea(
                 top: false,
+                bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                  child: _buildCard(data),
+                  padding: EdgeInsets.fromLTRB(12, 0, 12, bottomGap),
+                  // Slides up into place.
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey('${data.reminderId}_${data.time}_${data.medicineName}'),
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, v, child) => Opacity(
+                      opacity: v,
+                      child: Transform.translate(offset: Offset(0, (1 - v) * 40), child: child),
+                    ),
+                    child: _buildCard(data),
+                  ),
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PhosphorIcon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13, FontWeight.w600, _strong)),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildCard(MedicationPopupData data) {
-    final details = [
-      if (data.dosage.isNotEmpty) data.dosage,
-      if (data.mealRelation.isNotEmpty) data.mealRelation,
-    ].join(' · ');
+    // The sample from Reminder settings has no reminder behind it.
+    final bool isPreview = data.reminderId.isEmpty;
+    final String time = data.time.isEmpty ? 'Now' : data.time;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 480),
-      padding: const EdgeInsets.fromLTRB(18, 14, 14, 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 30, offset: const Offset(0, 10)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 32, offset: const Offset(0, 12)),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Brand and close
-          Row(
-            children: [
-              SvgPicture.asset('assets/images/ic_splash_logo.svg', width: 26, height: 26),
-              const SizedBox(width: 8),
-              Expanded(child: Text('Yira Health', style: _ts(16, FontWeight.w700, _blue))),
-              InkWell(
-                onTap: _close,
-                customBorder: const CircleBorder(),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-                  child: const Icon(Icons.close_rounded, size: 18, color: _strong),
+          // Brand strip
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+            color: const Color(0xFFF8FAFC),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: SvgPicture.asset('assets/images/svgs/ic_apps_logo.svg', width: 26, height: 26),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Medicine
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Yira Health', style: _ts(13.5, FontWeight.w700, _strong)),
+                      Text('Medicine reminder', style: _ts(11, FontWeight.w500, _muted)),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Icon(Icons.medication_rounded, color: Colors.white, size: 30),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                if (isPreview)
+                  Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text('Preview', style: _ts(10.5, FontWeight.w700, const Color(0xFFB45309))),
+                  ),
+                Semantics(
+                  button: true,
+                  label: 'Close',
+                  child: InkWell(
+                    onTap: _saving ? null : _close,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(color: Color(0xFFEFF2F6), shape: BoxShape.circle),
+                      child: const PhosphorIcon(PhosphorIconsBold.x, size: 18, color: _strong),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(height: 1, color: _line),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Medicine
+                Row(
                   children: [
-                    Text('Time for your medicine', style: _ts(12, FontWeight.w500, _muted)),
-                    const SizedBox(height: 2),
-                    Text(
-                      data.medicineName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: _ts(18, FontWeight.w700, _strong, height: 1.25),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                      ),
+                      // A capsule with a clock badge: "medicine, now".
+                      child: SvgPicture.asset('assets/images/svgs/ic_medicine_reminder.svg'),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Time to take your medicine', style: _ts(12, FontWeight.w500, _muted)),
+                          const SizedBox(height: 2),
+                          Text(
+                            data.medicineName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: _ts(19, FontWeight.w700, _strong, height: 1.25),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-          // Time and how to take it
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _line),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.access_time_rounded, size: 18, color: _blue),
-                const SizedBox(width: 8),
-                Text(data.time.isEmpty ? 'Now' : data.time, style: _ts(14, FontWeight.w700, _strong)),
-                if (details.isNotEmpty) ...[
-                  Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 12), color: _line),
-                  Expanded(
-                    child: Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13, FontWeight.w500, _muted)),
-                  ),
-                ] else
-                  const Spacer(),
+                // When and how
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip(PhosphorIconsBold.clock, time, _blue),
+                    if (data.dosage.isNotEmpty) _chip(PhosphorIconsBold.pill, data.dosage, const Color(0xFF7C3AED)),
+                    if (data.mealRelation.isNotEmpty) _chip(PhosphorIconsBold.forkKnife, data.mealRelation, const Color(0xFFEA580C)),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Actions
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _taken
+                      ? Container(
+                          key: const ValueKey('taken'),
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: _green.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _green.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const PhosphorIcon(PhosphorIconsFill.checkCircle, color: _green, size: 20),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  isPreview ? 'Looks good! Real reminders work the same way.' : 'Dose marked as taken. Well done!',
+                                  textAlign: TextAlign.center,
+                                  style: _ts(13.5, FontWeight.w700, const Color(0xFF047857)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Row(
+                          key: const ValueKey('actions'),
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 52,
+                                child: OutlinedButton(
+                                  onPressed: _saving ? null : _close,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    foregroundColor: _strong,
+                                    side: const BorderSide(color: _line, width: 1.5),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text('Not now', maxLines: 1, style: _ts(15, FontWeight.w600, _strong)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: SizedBox(
+                                height: 52,
+                                child: ElevatedButton.icon(
+                                  onPressed: _saving ? null : _markTaken,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    backgroundColor: _green,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: _green.withValues(alpha: 0.6),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  ),
+                                  icon: _saving
+                                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                      : const PhosphorIcon(PhosphorIconsBold.check, size: 20),
+                                  label: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text('Mark as taken', maxLines: 1, style: _ts(15, FontWeight.w600, Colors.white)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Actions
-          if (_taken)
-            Container(
-              width: double.infinity,
-              height: 52,
-              decoration: BoxDecoration(color: _green.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.check_circle_rounded, color: _green, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Dose logged. Well done!', style: _ts(14, FontWeight.w700, _green)),
-                ],
-              ),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: _saving ? null : _close,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _blue,
-                        side: const BorderSide(color: _blue, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: Text('Later', style: _ts(15, FontWeight.w600, _blue)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _saving ? null : _markTaken,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _blue,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: _blue.withValues(alpha: 0.6),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: _saving
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text('Mark as Taken', style: _ts(15, FontWeight.w600, Colors.white)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
     );
   }
+}
+
+/// Screen height and system bar sizes saved by the app, in physical pixels.
+class _ScreenMetrics {
+  final double height;
+  final double top;
+  final double bottom;
+
+  const _ScreenMetrics({required this.height, required this.top, required this.bottom});
 }

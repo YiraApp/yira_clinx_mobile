@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   plugin_platform_interface: ^2.1.3
   dio: ^5.9.0
+  bloc: ^9.2.1
+  meta: ^1.18.0
   flutter_bloc: ^9.1.1
   flutter_svg: ^2.2.4
   path_provider: ^2.1.5
@@ -80,6 +82,7 @@ dependencies:
   timezone: ^0.11.1
   flutter_timezone: ^5.1.0
   flutter_overlay_window: ^1.0.0
+  share_plus: ^12.0.2
 dependency_overrides:
 
 dev_dependencies:
@@ -148,6 +151,16 @@ flutter:
           weight: 600
         - asset: assets/fonts/Poppins-Bold.ttf
           weight: 700
+    # Phosphor icons (MIT), used through lib/core/widgets/phosphor_icons.dart.
+    - family: PhosphorBold
+      fonts:
+        - asset: assets/fonts/phosphor/Phosphor-Bold.ttf
+    - family: PhosphorFill
+      fonts:
+        - asset: assets/fonts/phosphor/Phosphor-Fill.ttf
+    - family: PhosphorDuotone
+      fonts:
+        - asset: assets/fonts/phosphor/Phosphor-Duotone.ttf
 
   #
   # For details regarding fonts from package dependencies,

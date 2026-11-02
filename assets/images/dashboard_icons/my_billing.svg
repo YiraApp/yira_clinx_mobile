@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
+    <!-- receipt with a torn bottom edge -->
+    <path d="M44 28 H172 V212 L156 200 L140 212 L124 200 L108 212 L92 200 L76 212 L60 200 L44 212 Z" fill="#FFFFFF"/>
+    <rect x="44" y="28" width="128" height="34" fill="#3A86FF"/>
+    <path d="M66 86 H150 M66 110 H130 M66 134 H150 M66 158 H118" fill="none" stroke="#9AA9BF" stroke-width="8"/>
+    <!-- rupee coin -->
+    <circle cx="176" cy="172" r="52" fill="#FFD166"/>
+    <circle cx="176" cy="172" r="38" fill="none" stroke="#E0A82E" stroke-width="6"/>
+    <path d="M157 148 H195 M157 162 H195 M163 148 H170 C182 148 186 156 186 162 C186 170 180 176 170 176 H162 L190 198" fill="none" stroke="#111111" stroke-width="8"/>
+  </g>
+</svg>

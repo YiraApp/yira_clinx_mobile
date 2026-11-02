@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// What a dialog is about. Sets its accent colour and default icon.
 enum AppDialogTone { info, success, warning, danger }
@@ -178,7 +179,7 @@ class AppDialog extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: badge ?? Icon(icon ?? _defaultIcon, color: accent, size: 30),
+                child: badge ?? PhosphorIcon(icon ?? _defaultIcon, color: accent, size: 30),
               ),
               const SizedBox(height: 16),
               Text(

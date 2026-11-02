@@ -16,6 +16,10 @@ import '../../../../core/common_widgets/custom_button.dart';
 class ClinicalNotesScreen extends StatefulWidget {
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -24,6 +28,7 @@ class ClinicalNotesScreen extends StatefulWidget {
     super.key,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -65,7 +70,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
       final String token = currentUser?.data?.accessToken ?? '';
 
       final queryParams = <String, dynamic>{};
-      if (widget.appointmentId != null && widget.appointmentId!.trim().isNotEmpty) {
+      if (!widget.listWholeHospital && widget.appointmentId != null && widget.appointmentId!.trim().isNotEmpty) {
         queryParams['appointmentId'] = widget.appointmentId!.trim();
       }
       if (widget.hospitalId != null && widget.hospitalId!.trim().isNotEmpty) {

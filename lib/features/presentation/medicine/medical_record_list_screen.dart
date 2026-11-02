@@ -21,6 +21,10 @@ class MedicalRecordsListScreen extends StatefulWidget {
   final PatientProfileEntity? patient;
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -30,6 +34,7 @@ class MedicalRecordsListScreen extends StatefulWidget {
     this.patient,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -46,7 +51,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
     super.initState();
     context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
           patientId: widget.patientId ?? widget.patient?.id,
-          appointmentId: widget.appointmentId,
+          appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         ));
@@ -55,7 +60,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
   void _refreshRecords() {
     context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
           patientId: widget.patientId ?? widget.patient?.id,
-          appointmentId: widget.appointmentId,
+          appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         ));

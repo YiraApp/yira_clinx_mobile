@@ -8,12 +8,16 @@ class LoadPatientData extends PatientOverViewEvent {
   final String? orgId;
   final String? hospitalId;
 
+  /// Refresh in the background: keep showing the current data, no loader.
+  final bool silent;
+
   LoadPatientData(
     this.patientId, {
     this.orgId,
     this.hospitalId,
+    this.silent = false,
   });
 
   @override
-  List<Object?> get props => [patientId, orgId, hospitalId];
+  List<Object?> get props => [patientId, orgId, hospitalId, silent];
 }

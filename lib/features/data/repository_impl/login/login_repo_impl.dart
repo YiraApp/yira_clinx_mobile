@@ -80,7 +80,7 @@ class LoginRepositoryImpl implements LoginRepository {
         URLs.loginUrl,
         data: requestBody,
       );
-      debugPrint('login response --$response');
+      debugPrint('login response status: ${response.statusCode}');
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;
@@ -137,7 +137,7 @@ class LoginRepositoryImpl implements LoginRepository {
         URLs.registrationUrl,
         data: requestBody,
       );
-      debugPrint('register response --$response');
+      debugPrint('register response status: ${response.statusCode}');
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         return null;

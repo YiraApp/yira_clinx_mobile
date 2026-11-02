@@ -13,7 +13,8 @@ class PatientOverViewBloc
   PatientOverViewBloc({required this.patientOverViewUseCase})
       : super(PatientOverViewInitial()) {
     on<LoadPatientData>((event, emit) async {
-      emit(LoadingPatientViewDetails());
+      final bool keepCurrent = event.silent && state is LoadPatientDataState;
+      if (!keepCurrent) emit(LoadingPatientViewDetails());
       try {
         final data = await patientOverViewUseCase.call(
           event.patientId,
@@ -22,6 +23,8 @@ class PatientOverViewBloc
         );
 
         if (data == null || !(data.status ?? false)) {
+          // A failed background refresh keeps the data already shown.
+          if (keepCurrent) return;
           final failureMessage =
               data?.message ?? "Failed to fetch patient overview details.";
           emit(LoadPatientDataFailureState(failureMessage));
@@ -32,6 +35,7 @@ class PatientOverViewBloc
         debugPrint(
           "CRITICAL: Telemetry evaluation failed: $versionError\n$stackTrace",
         );
+        if (keepCurrent) return;
         emit(
           LoadPatientDataFailureState(
             "Failed to fetch patient overview details.",

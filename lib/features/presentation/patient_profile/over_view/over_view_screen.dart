@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_contact_card.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_medical_card.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_past_records_section.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_summary_card.dart';
 
 import '../../../../core/constants/constants.dart';
@@ -20,6 +21,12 @@ class OverviewScreen extends StatefulWidget {
   final VoidCallback onScheduleTap;
   final bool isTab;
 
+  /// For doctors: opens a record tab at full history, from the past-records section.
+  final void Function(String tab)? onOpenRecordTab;
+
+  /// For doctors: takes them to ask the patient for access to other hospitals' records.
+  final VoidCallback? onRequestAccess;
+
   const OverviewScreen({
     super.key,
     required this.patient,
@@ -31,6 +38,8 @@ class OverviewScreen extends StatefulWidget {
     required this.onNoteTap,
     required this.onScheduleTap,
     required this.isTab,
+    this.onOpenRecordTab,
+    this.onRequestAccess,
   });
 
   @override
@@ -133,6 +142,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     // 3. Clinical Summary (if present)
                     if (fetchedData.summary != null && fetchedData.summary!.isNotEmpty)
                       PatientSummaryCard(summary: fetchedData.summary!, isTab: widget.isTab),
+
+                    // 4. Past records, for doctors: shown here directly when they have access.
+                    if (widget.onOpenRecordTab != null && widget.onRequestAccess != null)
+                      PatientPastRecordsSection(
+                        patientId: widget.patientId ?? widget.patient.id,
+                        appointmentId: widget.appointmentId,
+                        hospitalId: widget.hospitalId,
+                        onOpenTab: widget.onOpenRecordTab!,
+                        onRequestAccess: widget.onRequestAccess!,
+                      ),
 
                     const SizedBox(height: 24),
                   ],

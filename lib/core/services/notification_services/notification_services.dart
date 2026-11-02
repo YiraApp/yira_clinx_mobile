@@ -62,7 +62,7 @@ class NotificationService {
       );
 
       const AndroidInitializationSettings androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@drawable/ic_stat_notification');
 
       const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
@@ -219,7 +219,8 @@ class NotificationService {
               priority: Priority.high,
               playSound: true,
               enableVibration: true,
-              icon: '@mipmap/ic_launcher',
+              icon: '@drawable/ic_stat_notification',
+              color: const Color(0xFF2563EB),
               styleInformation: bigPictureStyleInformation,
             ),
             iOS: DarwinNotificationDetails(
@@ -256,7 +257,8 @@ class NotificationService {
             priority: Priority.high,
             playSound: true,
             enableVibration: true,
-            icon: '@mipmap/ic_launcher',
+            icon: '@drawable/ic_stat_notification',
+              color: const Color(0xFF2563EB),
           ),
           iOS: const DarwinNotificationDetails(
             presentAlert: true,

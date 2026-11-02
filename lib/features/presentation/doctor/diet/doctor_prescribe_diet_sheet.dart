@@ -1712,6 +1712,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         _sortSlotsByTime();
       });
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$slotName time set to $formatted'),

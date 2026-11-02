@@ -6,6 +6,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/core/widgets/doctor_avatar_widget.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 class ConvertTabletSheet extends StatefulWidget {
   final String medicineName;
@@ -190,7 +191,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const PhosphorIcon(PhosphorIconsFill.checkCircle, color: Colors.white, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -250,21 +251,17 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(
-                  'assets/images/dashboard_icons/pill_prescriptions_thick.png',
-                  width: 38,
-                  height: 38,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.medication_rounded,
-                      color: primaryColor,
-                      size: 22,
-                    ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const PhosphorIcon(
+                    PhosphorIconsDuotone.pill,
+                    color: primaryColor,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -322,7 +319,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 22),
+                  icon: const PhosphorIcon(PhosphorIconsBold.x, size: 22),
                   color: isDark ? Colors.white60 : Colors.grey.shade600,
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -376,8 +373,8 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.all_inclusive_rounded,
+                          PhosphorIcon(
+                            PhosphorIconsBold.infinity,
                             size: 16,
                             color: _isContinuous ? Colors.white : primaryColor,
                           ),
@@ -428,8 +425,8 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.edit_calendar_rounded,
+                          PhosphorIcon(
+                            PhosphorIconsBold.calendarPlus,
                             size: 16,
                             color: (_isCustomDays && !_isContinuous) ? Colors.white : primaryColor,
                           ),
@@ -461,6 +458,8 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
               children: _quickDays.map((days) {
                 final isSelected = !_isContinuous && !_isCustomDays && _durationDays == days;
                 return ChoiceChip(
+                  // The blue fill marks the selection; the default tick crowds the label.
+                  showCheckmark: false,
                   label: Text("$days days"),
                   selected: isSelected,
                   selectedColor: primaryColor,
@@ -508,7 +507,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline_rounded, size: 20),
+                      icon: const PhosphorIcon(PhosphorIconsBold.minusCircle, size: 20),
                       onPressed: () {
                         if (_durationDays > 1) {
                           setState(() {
@@ -542,7 +541,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                      icon: const PhosphorIcon(PhosphorIconsBold.plusCircle, size: 20),
                       onPressed: () {
                         setState(() {
                           _durationDays++;
@@ -603,7 +602,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  icon: const Icon(Icons.add_alarm_rounded, size: 15, color: primaryColor),
+                  icon: const PhosphorIcon(PhosphorIconsBold.alarm, size: 15, color: primaryColor),
                   label: const Text(
                     "Add Time",
                     style: TextStyle(
@@ -651,7 +650,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.access_time_rounded, size: 13, color: primaryColor),
+                        const PhosphorIcon(PhosphorIconsBold.clock, size: 13, color: primaryColor),
                         const SizedBox(width: 5),
                         Text(
                           timeStr,
@@ -667,7 +666,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                           onTap: () => _removeTime(timeStr),
                           child: const Padding(
                             padding: EdgeInsets.all(2),
-                            child: Icon(Icons.close_rounded, size: 14, color: Colors.grey),
+                            child: PhosphorIcon(PhosphorIconsBold.x, size: 14, color: Colors.grey),
                           ),
                         ),
                       ],
@@ -695,6 +694,8 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
+                    // The blue fill marks the selection; the default tick crowds the label.
+                    showCheckmark: false,
                     label: Text(opt),
                     selected: isSelected,
                     selectedColor: primaryColor,

@@ -19,6 +19,10 @@ class PrescriptionListScreen extends StatelessWidget {
   final PatientProfileEntity? patient;
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -28,6 +32,7 @@ class PrescriptionListScreen extends StatelessWidget {
     this.patient,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -73,7 +78,7 @@ class PrescriptionListScreen extends StatelessWidget {
               if (context.mounted) {
                 context.read<PrescriptionBloc>().add(LoadPrescriptionData(
                   patientId: effectivePatientId,
-                  appointmentId: appointmentId,
+                  appointmentId: listWholeHospital ? null : appointmentId,
                   hospitalId: hospitalId,
                   orgId: orgId,
                 ));
@@ -151,7 +156,7 @@ class PrescriptionListScreen extends StatelessWidget {
                               if (context.mounted) {
                                 context.read<PrescriptionBloc>().add(LoadPrescriptionData(
                                   patientId: effectivePatientId,
-                                  appointmentId: appointmentId,
+                                  appointmentId: listWholeHospital ? null : appointmentId,
                                   hospitalId: hospitalId,
                                   orgId: orgId,
                                 ));
