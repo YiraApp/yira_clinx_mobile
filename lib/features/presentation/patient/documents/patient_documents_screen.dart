@@ -76,13 +76,10 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
         if (state.hasMore && !state.isLoadingMore && state.status == UploadedStatus.success) {
           final currentUser = GlobalSession.instance.userNotifier.value;
           final userId = currentUser?.data?.id ?? '';
-          final orgId = currentUser?.data?.latestOrgId?.toString() ?? '1';
-          final hospitalId = currentUser?.data?.latestHospitalId?.toString() ?? '1';
 
+          // Every hospital: these are the patient's own records.
           bloc.add(LoadMoreUploadedRecords(
             patientId: userId,
-            orgId: orgId,
-            hospitalId: hospitalId,
             limit: 15,
           ));
         }
@@ -257,8 +254,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     final user = GlobalSession.instance.userNotifier.value?.data;
     blocContext.read<UploadedBloc>().add(FetchUploadedRecords(
           patientId: user?.id ?? '',
-          orgId: user?.latestOrgId?.toString() ?? '1',
-          hospitalId: user?.latestHospitalId?.toString() ?? '1',
           limit: 20,
           page: 1,
         ));
@@ -326,8 +321,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
       create: (_) => sl<UploadedBloc>()
         ..add(FetchUploadedRecords(
           patientId: userId,
-          orgId: orgId,
-          hospitalId: hospitalId,
           limit: 20,
           page: 1,
         )),

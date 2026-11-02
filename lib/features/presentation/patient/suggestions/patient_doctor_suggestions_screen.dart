@@ -78,10 +78,9 @@ class _PatientDoctorSuggestionsScreenState
     try {
       final String token = currentUser?.data?.accessToken ?? '';
       final queryParams = <String, dynamic>{};
-      final effectiveHospitalId = widget.hospitalId ??
-          currentUser?.data?.latestHospitalId?.toString();
-      final effectiveOrgId = widget.orgId ??
-          currentUser?.data?.latestOrgId?.toString();
+      // Only narrowed when opened for one hospital; a patient's list covers all of them.
+      final effectiveHospitalId = widget.hospitalId;
+      final effectiveOrgId = widget.orgId;
 
       if (effectiveHospitalId != null &&
           effectiveHospitalId.trim().isNotEmpty) {
