@@ -63,7 +63,7 @@ class TimeSlotCard extends StatelessWidget {
     if (isBlocked || (isPast && !isBooked)) {
       final bool isPastNotBlocked = isPast && !isBlocked;
       final cardBg = isPastNotBlocked
-          ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))
+          ? (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9))
           : (isDark ? const Color(0xFF2A1818) : const Color(0xFFFFF5F5));
       final borderColor = isPastNotBlocked
           ? (isDark ? Colors.white12 : const Color(0xFFCBD5E1))

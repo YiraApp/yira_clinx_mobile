@@ -61,7 +61,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
             child: Container(
               padding: EdgeInsets.all(isTab ? 28 : 20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
                 boxShadow: [
@@ -116,7 +116,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                           decoration: InputDecoration(
                             hintText: 'e.g. Blood Test Report / MRI Scan',
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                            fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
                         ),
@@ -128,7 +128,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                           value: _selectedCategory,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                            fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           ),
                           items: ['Lab Report', 'Imaging / X-Ray', 'Previous Prescription', 'Insurance Card']

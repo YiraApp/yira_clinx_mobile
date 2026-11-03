@@ -240,7 +240,7 @@ class OfferBannerCarouselState extends State<OfferBannerCarousel> {
           child: BaseShimmer(
             child: Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -352,11 +352,11 @@ class _BannerCardState extends State<_BannerCard> {
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: isDark
-                    ? const Color(0xFF334155).withValues(alpha: 0.7)
+                    ? const Color(0xFF3A3A3A).withValues(alpha: 0.7)
                     : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
@@ -391,7 +391,7 @@ class _BannerCardState extends State<_BannerCard> {
                       fit: BoxFit.cover,
                       alignment: Alignment.center,
                       placeholder: (context, url) => Container(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                         child: Center(
                           child: SizedBox(
                             width: 24,

@@ -382,7 +382,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   icon: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.sort_rounded, size: 18, color: isDark ? Colors.white70 : const Color(0xFF475569)),
@@ -453,15 +453,15 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                               )
                             : null,
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                         ),
                       ),
                     ),
@@ -533,13 +533,13 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                   : (isDark ? Colors.white70 : const Color(0xFF475569)),
                             ),
                             selectedColor: _primaryBlue,
-                            backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            backgroundColor: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                               side: BorderSide(
                                 color: isSelected
                                     ? _primaryBlue
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                    : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                               ),
                             ),
                             showCheckmark: false,
@@ -755,10 +755,10 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
         child: Container(
           padding: EdgeInsets.all(isTab ? 16 : 14),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               width: 1,
             ),
             boxShadow: [
@@ -909,7 +909,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       constraints: const BoxConstraints(),
                       tooltip: 'Options',
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       elevation: 6,
                       onSelected: (action) {
                         if (action == 'view') {
@@ -1027,11 +1027,11 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                          ? const Color(0xFF121212).withValues(alpha: 0.5)
                           : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                         width: 0.5,
                       ),
                     ),
@@ -1194,7 +1194,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
           child: Container(
             height: 100,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(16),
             ),
           ),

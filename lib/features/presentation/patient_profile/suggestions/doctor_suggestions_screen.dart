@@ -331,11 +331,11 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: isDark ? const Color(0xFF232323) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF334155)
+                                ? const Color(0xFF3A3A3A)
                                 : const Color(0xFFE2E8F0),
                           ),
                           boxShadow: [

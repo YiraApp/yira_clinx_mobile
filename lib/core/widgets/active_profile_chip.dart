@@ -71,8 +71,8 @@ class ActiveProfileChip extends StatelessWidget {
       button: true,
       label: this.subtitle == null ? 'Viewing $name. Switch profile' : '$name, $subtitle. Switch workspace',
       child: Material(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: StadiumBorder(side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+        color: isDark ? const Color(0xFF232323) : Colors.white,
+        shape: StadiumBorder(side: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0))),
         elevation: 0,
         child: InkWell(
           customBorder: const StadiumBorder(),
@@ -125,7 +125,7 @@ class ActiveProfileChip extends StatelessWidget {
                   height: 26,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                     shape: BoxShape.circle,
                   ),
                   child: PhosphorIcon(PhosphorIconsBold.caretUpDown, size: 14, color: muted),

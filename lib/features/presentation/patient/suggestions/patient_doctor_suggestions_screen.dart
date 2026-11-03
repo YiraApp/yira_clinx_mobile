@@ -317,7 +317,7 @@ class _PatientDoctorSuggestionsScreenState
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
@@ -425,12 +425,12 @@ class _PatientDoctorSuggestionsScreenState
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                      ? const Color(0xFF121212).withValues(alpha: 0.5)
                       : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isDark
-                        ? const Color(0xFF334155)
+                        ? const Color(0xFF3A3A3A)
                         : const Color(0xFFE2E8F0),
                   ),
                 ),
@@ -515,7 +515,7 @@ class _PatientDoctorSuggestionsScreenState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: BorderSide(
                           color: isDark
-                              ? const Color(0xFF334155)
+                              ? const Color(0xFF3A3A3A)
                               : const Color(0xFFCBD5E1),
                         ),
                         shape: RoundedRectangleBorder(
@@ -588,10 +588,10 @@ class _PatientDoctorSuggestionsScreenState
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         titleSpacing: 0,
         leading: IconButton(
           icon: Icon(
@@ -660,7 +660,7 @@ class _PatientDoctorSuggestionsScreenState
           children: [
             // Search Bar & Filter Section
             Container(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Column(
                 children: [
@@ -668,12 +668,12 @@ class _PatientDoctorSuggestionsScreenState
                   Container(
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF0F172A)
+                          ? const Color(0xFF121212)
                           : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF334155)
+                            ? const Color(0xFF3A3A3A)
                             : const Color(0xFFE2E8F0),
                       ),
                     ),
@@ -733,7 +733,7 @@ class _PatientDoctorSuggestionsScreenState
                         final color = isSelected
                             ? _primaryBlue
                             : (isDark
-                                ? const Color(0xFF334155)
+                                ? const Color(0xFF3A3A3A)
                                 : const Color(0xFFE2E8F0));
 
                         return InkWell(
@@ -752,7 +752,7 @@ class _PatientDoctorSuggestionsScreenState
                               color: isSelected
                                   ? _primaryBlue
                                   : (isDark
-                                      ? const Color(0xFF0F172A)
+                                      ? const Color(0xFF121212)
                                       : const Color(0xFFF8FAFC)),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
@@ -853,10 +853,10 @@ class _PatientDoctorSuggestionsScreenState
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -1066,7 +1066,7 @@ class _PatientDoctorSuggestionsScreenState
                 Divider(
                   height: 16,
                   color: isDark
-                      ? const Color(0xFF334155)
+                      ? const Color(0xFF3A3A3A)
                       : const Color(0xFFF1F5F9),
                 ),
                 Row(

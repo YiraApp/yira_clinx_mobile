@@ -107,7 +107,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
     final cover = policies.where((p) => p.state() != PolicyState.expired && p.sumInsured != null).fold<double>(0, (s, p) => s + p.sumInsured!);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF6F7F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF6F7F9),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,

@@ -1,13 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-    <!-- policy document behind -->
-    <path d="M30 52 C30 44 36 38 44 38 H124 L150 64 V196 C150 204 144 210 136 210 H44 C36 210 30 204 30 196 Z" fill="#FFFFFF"/>
-    <path d="M52 76 H112 M52 100 H124 M52 124 H100" fill="none" stroke="#9AA9BF" stroke-width="8"/>
-    <!-- shield -->
-    <path d="M168 76 L226 98 V146 C226 186 200 214 168 228 C136 214 110 186 110 146 V98 Z" fill="#3A86FF"/>
-    <path d="M168 96 L208 111 V146 C208 175 191 196 168 207 C145 196 128 175 128 146 V111 Z" fill="#7BB2FF" stroke="none"/>
-    <!-- heart -->
-    <path d="M168 186 C146 172 136 160 136 146 C136 134 145 126 155 126 C161 126 166 129 168 134 C170 129 175 126 181 126 C191 126 200 134 200 146 C200 160 190 172 168 186 Z" fill="#F0324B" stroke-width="7"/>
-    <path d="M150 146 H158 L163 136 L172 158 L178 146 H186" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+  <g stroke="currentColor" stroke-width="11" stroke-linejoin="round" stroke-linecap="round" fill="none">
+    <path d="M36 28 H128 L168 68 V222 H36 Z" fill="#FFFFFF"/>
+    <path d="M128 28 V68 H168 Z" fill="#BFE1F6"/>
+    <path d="M62 98 H128 M62 126 H108 M62 154 H96"/>
+    <path d="M170 108 L226 128 V168 C226 200 202 222 170 234 C138 222 114 200 114 168 V128 Z" fill="#BFE1F6"/>
+    <path d="M170 196 C150 182 140 172 140 160 C140 146 158 142 170 156 C182 142 200 146 200 160 C200 172 190 182 170 196 Z" fill="#FFFFFF"/>
   </g>
 </svg>

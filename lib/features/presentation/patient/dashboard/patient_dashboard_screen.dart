@@ -560,10 +560,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             Container(
                               key: _quickServicesKey,
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                color: isDark ? const Color(0xFF232323) : Colors.white,
                                 borderRadius: BorderRadius.circular(22),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                                   width: 1.1,
                                 ),
                                 boxShadow: [
@@ -871,7 +871,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             return PopScope(
               canPop: !isCancelling,
               child: AlertDialog(
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Row(
                   children: [
@@ -1127,10 +1127,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         apt.patientName.trim().toLowerCase() != 'patient' &&
         apt.patientName.trim().toLowerCase() != patientName.trim().toLowerCase();
 
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
     final borderColor = isToday
         ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.4 : 0.3)
-        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
+        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
@@ -1168,12 +1168,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     decoration: BoxDecoration(
                       color: isToday
                           ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4))
-                          : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                          : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isToday
                             ? const Color(0xFF10B981).withValues(alpha: 0.35)
-                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                         width: 1,
                       ),
                     ),
@@ -1188,7 +1188,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               ? const Color(0xFF10B981)
                               : (isTomorrow
                                     ? const Color(0xFF2563EB)
-                                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                                    : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0))),
                           alignment: Alignment.center,
                           child: Text(
                             monthHeader,
@@ -1328,7 +1328,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 constraints: const BoxConstraints(),
                                 tooltip: 'Options',
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                color: isDark ? const Color(0xFF232323) : Colors.white,
                                 elevation: 6,
                                 onSelected: (val) {
                                   if (val == 'reschedule') {
@@ -1637,9 +1637,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(width: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            border: Border.all(width: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
           ),
           child: BaseShimmer(
             child: Column(
@@ -1708,9 +1708,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       width: double.infinity,
       padding: EdgeInsets.all(isTab ? 22 : 18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: (isDark ? Colors.black : const Color(0xFF0F172A)).withValues(alpha: isDark ? 0.25 : 0.04),
@@ -1831,7 +1831,16 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SvgPicture.asset(service.asset, width: isTab ? 66 : (perRow == 3 ? 62 : 56), height: isTab ? 66 : (perRow == 3 ? 62 : 56)),
+                        SvgPicture(
+                          SvgAssetLoader(
+                            service.asset,
+                            // Icon colours follow the theme so they show on dark cards.
+                            theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
+                            colorMapper: isDark ? const _DarkIconColors() : null,
+                          ),
+                          width: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                          height: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           service.title,
@@ -1855,6 +1864,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         );
       },
     );
+  }
+}
+
+/// Swaps the icons' white and light blue fills for dark ones on dark cards.
+class _DarkIconColors extends ColorMapper {
+  const _DarkIconColors();
+
+  @override
+  Color substitute(String? id, String elementName, String attributeName, Color color) {
+    if (attributeName != 'fill') return color;
+    if (color.toARGB32() == 0xFFFFFFFF) return const Color(0xFF232323);
+    if (color.toARGB32() == 0xFFBFE1F6) return const Color(0xFF3F5566);
+    return color;
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/prescription_card.dart';
@@ -176,7 +177,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: DietUi.line(isDark)),
         ),
@@ -217,6 +218,9 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 1: DOCTOR PRESCRIPTIONS
   // ══════════════════════════════════════════════════════════════════════════
+  List<PrescribedLabTest> _labTestsOf(Map<String, dynamic> prescription) =>
+      (prescription['labTests'] as List? ?? const []).whereType<PrescribedLabTest>().toList();
+
   Widget _buildPrescriptionsTab(bool isDark) {
     return BlocConsumer<MedicationBloc, MedicationState>(
       listener: (context, state) {
@@ -243,7 +247,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 final meds = (p['medications'] as List? ?? [])
                     .map((m) => (m is Map ? (m['name'] ?? '') : '').toString().toLowerCase())
                     .join(' ');
-                return title.contains(q) || doc.contains(q) || condition.contains(q) || meds.contains(q);
+                final labs = _labTestsOf(p).map((t) => t.testName.toLowerCase()).join(' ');
+                return title.contains(q) || doc.contains(q) || condition.contains(q) || meds.contains(q) || labs.contains(q);
               }).toList();
 
         // Group by month, keeping the list's order (newest first).
@@ -309,6 +314,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                             status: item['status'] ?? 'Active',
                             pharmacy: item['pharmacy'] ?? 'Yira Clinx E-Pharmacy',
                             medications: List<Map<String, dynamic>>.from(item['medications'] ?? []),
+                            labTests: _labTestsOf(item),
                             pdfUrl: (item['pdfUrl'] ?? '').toString(),
                             isSelf: isSelf,
                             onDelete: isSelf

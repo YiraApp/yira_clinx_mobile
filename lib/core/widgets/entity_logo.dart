@@ -96,9 +96,9 @@ class EntityLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: isLogo ? Colors.white : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+        color: isLogo ? Colors.white : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius - 1),

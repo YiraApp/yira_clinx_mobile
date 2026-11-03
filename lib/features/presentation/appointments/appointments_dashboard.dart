@@ -405,7 +405,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
             return PopScope(
               canPop: !isCancelling,
               child: AlertDialog(
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Row(
                   children: [

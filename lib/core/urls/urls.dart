@@ -32,6 +32,7 @@ class URLs {
   static const doctorSlotBlockUrl = "/v1/api/auth/doctor-slots/block";
   static const hospitalDoctorsUrl = "/v1/api/auth/hospital-doctors";
   static const allHospitalsUrl = "/v1/api/auth/hospitals";
+  static String hospitalLabTestsUrl(String hospitalId) => "$allHospitalsUrl/$hospitalId/lab-tests";
   static const patientsListUrl = "/v1/api/auth/patients";
   static const favoritePatientsListUrl = "/v1/api/auth/favorite-patients/list";
   static const toggleFavoritePatientUrl = "/v1/api/auth/favorite-patients/toggle";

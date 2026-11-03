@@ -1074,7 +1074,7 @@ class PatientCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF232323) : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1083,7 +1083,7 @@ class PatientCardShimmer extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
@@ -1205,7 +1205,7 @@ class PrescriptionCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF232323) : Colors.white;
 
     return Container(
       width: double.infinity,
@@ -1214,7 +1214,7 @@ class PrescriptionCardShimmer extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
@@ -1319,7 +1319,7 @@ class PrescriptionCardShimmer extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1599,7 +1599,7 @@ class UploadedRecordCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF232323) : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1608,7 +1608,7 @@ class UploadedRecordCardShimmer extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 0.5,
         ),
       ),
@@ -2122,7 +2122,7 @@ class ProviderProfileShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF232323) : Colors.white;
 
     return ListView(
       physics: const NeverScrollableScrollPhysics(),

@@ -786,10 +786,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
         _switchingKey != null && _selectedProfile?.id == profile.id;
     final bool isOtherSwitching = _switchingKey != null && !isThisProfileSwitching;
 
-    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final Color cardColor = isDark ? const Color(0xFF232323) : Colors.white;
     final Color borderColor = isPrimaryCard
         ? primaryColor.withValues(alpha: isDark ? 0.55 : 0.35)
-        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
+        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0));
 
     void onTap() {
       if (_switchingKey != null) return;
@@ -939,7 +939,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                           decoration: BoxDecoration(
                             color: isPrimaryCard
                                 ? primaryColor
-                                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                                : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -1089,7 +1089,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     final bool isOtherSwitching = _switchingKey != null && !isSwitching;
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
     final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final Color cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final Color cardColor = isDark ? const Color(0xFF232323) : Colors.white;
 
     final String title = isPatient ? 'My Health' : item.hospitalName;
     final String chip = isPatient ? 'Patient' : item.roleName;
@@ -1108,7 +1108,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
           border: Border.all(
             color: isActive
                 ? roleColor.withValues(alpha: 0.6)
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             width: isActive ? 1.4 : 1,
           ),
           boxShadow: isDark
@@ -1239,7 +1239,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -1282,10 +1282,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(

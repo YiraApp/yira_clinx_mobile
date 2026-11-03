@@ -90,7 +90,7 @@ class PatientRecordScopeTab extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2F7),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFEEF2F7),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

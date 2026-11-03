@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
+import 'package:yiraclinics/features/data/models/prescriptions/lab_test_model.dart';
 import 'package:yiraclinics/features/domain/entities/medication/medication_entity.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 
@@ -234,6 +235,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                   "pharmacy": "Yira Clinx E-Pharmacy",
                   "notes": (p['Notes'] ?? p['notes'] ?? 'Follow-up as advised. Take medicines as prescribed.').toString(),
                   "medications": medList,
+                  "labTests": PrescribedLabTestModel.listFromJson(p['LabTests'] ?? p['labTests']),
                   "pdfUrl": pdfUrl,
                   "needRefill": medList.isNotEmpty,
                   "isSelf": isSelf,

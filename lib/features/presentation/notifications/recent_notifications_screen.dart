@@ -279,7 +279,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            color: isDark ? const Color(0xFF121212) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
@@ -384,10 +384,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                             width: 1,
                           ),
                         ),
@@ -398,7 +398,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                             fit: BoxFit.cover,
                             alignment: Alignment.center,
                             placeholder: (context, url) => Container(
-                              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                              color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
                               child: const Center(
                                 child: SizedBox(
                                   width: 26,
@@ -426,7 +426,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: BorderSide(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                         ),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -589,7 +589,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         appBar: AppBar(
           elevation: 0,
           scrolledUnderElevation: 0,
-          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
@@ -712,7 +712,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
@@ -764,10 +764,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                        color: isDark ? const Color(0xFF121212) : Colors.white,
                         border: Border(
                           bottom: BorderSide(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                             width: 1,
                           ),
                         ),
@@ -827,8 +827,8 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                     color: _category == cat ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                   ),
                                   selectedColor: primaryColor.withValues(alpha: isDark ? 0.25 : 0.1),
-                                  backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                                  side: BorderSide(color: _category == cat ? primaryColor : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                                  backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+                                  side: BorderSide(color: _category == cat ? primaryColor : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0))),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 ),
                               ),
@@ -877,12 +877,12 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor
-              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+              : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? primaryColor
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             width: 1,
           ),
         ),
@@ -906,7 +906,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.25)
-                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                    : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -989,7 +989,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     Expanded(
                       child: Container(
                         height: 1,
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
                       ),
                     ),
                   ],
@@ -1095,9 +1095,9 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             // White cards; unread ones only get a bold title and a blue dot.
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+            border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.025),
@@ -1209,10 +1209,10 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                                           width: 0.8,
                                         ),
                                       ),
@@ -1223,7 +1223,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                           fit: BoxFit.cover,
                                           alignment: Alignment.center,
                                           placeholder: (context, url) => Container(
-                                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                                            color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
                                             child: const Center(
                                               child: SizedBox(
                                                 width: 20,
@@ -1328,7 +1328,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
               child: Icon(

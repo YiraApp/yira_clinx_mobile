@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 
 /// Shared parts for the tabs of the doctor's patient screen, so Medical Record,
@@ -8,8 +9,9 @@ class RecordUi {
   RecordUi._();
 
   static Color ink(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
-  static Color line(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-  static Color soft(bool isDark) => isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
+  static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
+  static Color soft(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9);
+  static const Color urgent = Color(0xFFD97706);
 }
 
 /// A white card. Tapping anywhere runs [onTap].
@@ -372,6 +374,59 @@ class RecordMedicineLine extends StatelessWidget {
             ],
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// One ordered lab test, in the shape of [RecordMedicineLine], with an amber
+/// pill when it is urgent.
+class RecordLabTestLine extends StatelessWidget {
+  final PrescribedLabTest test;
+
+  const RecordLabTestLine({super.key, required this.test});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: RecordMedicineLine(name: test.testName, detail: test.detail)),
+        if (test.isUrgent) ...[
+          const SizedBox(width: 8),
+          const RecordPill(PrescribedLabTest.urgent, color: RecordUi.urgent),
+        ],
+      ],
+    );
+  }
+}
+
+/// A prescription's lab tests, cut off after [limit] with a count of the rest.
+class RecordLabTestLines extends StatelessWidget {
+  final List<PrescribedLabTest> tests;
+  final int? limit;
+
+  const RecordLabTestLines({super.key, required this.tests, this.limit});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shown = limit == null ? tests : tests.take(limit!).toList();
+    final more = tests.length - shown.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < shown.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          RecordLabTestLine(test: shown[i]),
+        ],
+        if (more > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            '+ $more more ${more == 1 ? 'test' : 'tests'}',
+            style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
+          ),
+        ],
       ],
     );
   }

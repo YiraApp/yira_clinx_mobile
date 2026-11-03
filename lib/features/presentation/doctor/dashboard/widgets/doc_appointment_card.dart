@@ -263,7 +263,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       elevation: 6,
                       onSelected: (val) {
                         if (val == 'reschedule') {
@@ -527,7 +527,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                               final isForFamily = widget.patientStatus!.startsWith('For:');
                               final badgeBg = isForFamily
                                   ? (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF))
-                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9));
+                                  : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9));
                               final badgeText = isForFamily
                                   ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
                                   : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));

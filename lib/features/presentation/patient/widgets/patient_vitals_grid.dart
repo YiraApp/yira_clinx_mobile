@@ -144,7 +144,7 @@ class PatientVitalsGrid extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200,

@@ -274,7 +274,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
@@ -340,7 +340,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       width: displayWidth(context),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         boxShadow: [
           BoxShadow(
             color: isDark
@@ -562,7 +562,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
             int toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Row(
                 children: [
@@ -777,7 +777,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFE2E8F0),
@@ -863,7 +863,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark ? Colors.amber.withValues(alpha: 0.2) : const Color(0xFFFDE68A),

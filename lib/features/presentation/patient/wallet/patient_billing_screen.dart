@@ -109,7 +109,7 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
     final primary = Theme.of(context).primaryColor;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF6F7F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF6F7F9),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,

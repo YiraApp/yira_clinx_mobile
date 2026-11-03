@@ -1302,7 +1302,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           builder: (_, scrollController) {
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
@@ -1370,7 +1370,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             color: isDark ? darkModeCardColor : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Column(
@@ -1764,7 +1764,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         width: 36,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -1818,7 +1818,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             ),
                           ),
                           backgroundColor: alreadyAdded
-                              ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))
+                              ? (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9))
                               : _primaryBlue.withOpacity(0.08),
                           onPressed: alreadyAdded
                               ? null
@@ -1850,7 +1850,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             decoration: InputDecoration(
                               hintText: 'e.g. Pre-Workout, Night Tea',
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -1872,9 +1872,9 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                              border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
                             ),
                             child: Row(
                               children: [
@@ -2177,7 +2177,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       width: 40,
                       height: 4.5,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -2266,10 +2266,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Row(
@@ -2313,10 +2313,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           return Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Row(
@@ -2730,10 +2730,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                   width: 1,
                 ),
               ),
@@ -2856,10 +2856,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: TabBar(
@@ -3021,10 +3021,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         // Search Bar
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               width: 1.1,
             ),
           ),
@@ -3086,12 +3086,12 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? _primaryBlue
-                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                          : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
                             ? _primaryBlue
-                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                         width: 1.1,
                       ),
                     ),
@@ -3172,7 +3172,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: _lineColor(isDark)),
       ),
@@ -3279,7 +3279,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -3491,7 +3491,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       pill(dietBadge.label, dietBadge.bg, dietBadge.text),
                       pill(
                         totalDays > 1 ? '$totalDays-day rotation' : 'Same menu daily',
-                        isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                         _mutedText(isDark),
                       ),
                     ],
@@ -3517,7 +3517,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: _lineColor(isDark)),
                     ),
@@ -3647,7 +3647,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
 
   Color _mutedText(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-  Color _lineColor(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  Color _lineColor(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
 
   Widget _buildBuilderTab(bool isDark) {
     return Column(
@@ -3754,10 +3754,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         decoration: BoxDecoration(
           color: isSelected
               ? _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1)
-              : (isDark ? const Color(0xFF1E293B) : Colors.white),
+              : (isDark ? const Color(0xFF232323) : Colors.white),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -4063,10 +4063,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             child: Row(
@@ -4326,7 +4326,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           border: Border.all(
                             color: isSelected
                                 ? _primaryBlue
-                                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                             width: isSelected ? 1.6 : 1.2,
                           ),
                           boxShadow: [
@@ -4385,7 +4385,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                             ? Colors.white.withValues(alpha: 0.22)
                                             : (itemCount > 0
                                                 ? _emeraldGreen.withValues(alpha: isDark ? 0.22 : 0.12)
-                                                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9))),
+                                                : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9))),
                                         borderRadius: BorderRadius.circular(5),
                                       ),
                                       child: Text(
@@ -4608,7 +4608,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: _lineColor(isDark)),
       ),
@@ -5183,7 +5183,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     style: OutlinedButton.styleFrom(
                       foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
                       side: BorderSide(
-                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                        color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -5283,18 +5283,18 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
             ),
             filled: true,
-            fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            fillColor: isDark ? const Color(0xFF232323) : Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -5357,7 +5357,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         color: isDark ? darkModeCardColor : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -5420,7 +5420,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                        border: Border.all(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -5473,17 +5473,17 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -5805,10 +5805,10 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
         color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
       ),
       filled: true,
-      fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      fillColor: isDark ? const Color(0xFF232323) : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      border: border(isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-      enabledBorder: border(isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+      border: border(isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
+      enabledBorder: border(isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
       focusedBorder: border(_accent, 1.5),
     );
   }
@@ -5829,7 +5829,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
           color: selected ? _accent.withValues(alpha: isDark ? 0.18 : 0.06) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? _accent : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            color: selected ? _accent : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -5905,7 +5905,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                      color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -6022,7 +6022,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                           onPressed: _saving ? null : () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
-                            side: BorderSide(color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                            side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: const Text(

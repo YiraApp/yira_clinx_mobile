@@ -162,7 +162,7 @@ class AppDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.transparent),
+        side: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : Colors.transparent),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400),
@@ -262,7 +262,7 @@ class AppDialog extends StatelessWidget {
         foregroundColor: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
         minimumSize: const Size(0, 48),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        side: BorderSide(color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+        side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       child: _label(secondaryLabel!, FontWeight.w600),

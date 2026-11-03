@@ -50,10 +50,10 @@ class DoctorProfileHeroHeader extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -123,7 +123,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                           ),
                           child: CircleAvatar(
                             radius: isTab ? 50 : 44,
-                            backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFEFF6FF),
+                            backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFEFF6FF),
                             child: isPhotoUploading
                                 ? SizedBox(
                                     width: 28,
@@ -195,7 +195,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                               color: primaryColor,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                color: isDark ? const Color(0xFF232323) : Colors.white,
                                 width: 2.5,
                               ),
                               boxShadow: [
@@ -366,7 +366,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                                 : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                               width: 1,
                             ),
                           ),
@@ -403,7 +403,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
           ),
 
           // 3-Pillars Clinical Highlights Bar
@@ -509,7 +509,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
   Widget _buildVerticalDivider(bool isDark) {
     return Container(
       width: 1,
-      color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
     );
   }
 }

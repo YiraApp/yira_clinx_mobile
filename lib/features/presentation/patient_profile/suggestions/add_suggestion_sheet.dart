@@ -240,7 +240,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
           bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         ),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Form(
@@ -358,7 +358,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                           ),
                           selectedColor: const Color(0xFF2563EB),
                           backgroundColor: isDark
-                              ? const Color(0xFF334155)
+                              ? const Color(0xFF3A3A3A)
                               : const Color(0xFFF1F5F9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -404,20 +404,20 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     ),
                     filled: true,
                     fillColor: isDark
-                        ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                        ? const Color(0xFF121212).withValues(alpha: 0.5)
                         : const Color(0xFFF8FAFC),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -463,20 +463,20 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     ),
                     filled: true,
                     fillColor: isDark
-                        ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                        ? const Color(0xFF121212).withValues(alpha: 0.5)
                         : const Color(0xFFF8FAFC),
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -510,11 +510,11 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                            ? const Color(0xFF121212).withValues(alpha: 0.5)
                             : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                           style: BorderStyle.solid,
                         ),
                       ),
@@ -609,7 +609,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           side: BorderSide(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                           ),
                         ),
                         onPressed: _isSubmitting

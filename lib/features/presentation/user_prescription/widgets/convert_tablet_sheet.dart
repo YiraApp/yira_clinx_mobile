@@ -225,7 +225,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
@@ -362,7 +362,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       decoration: BoxDecoration(
                         color: _isContinuous
                             ? primaryColor
-                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                            : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: _isContinuous
@@ -414,7 +414,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       decoration: BoxDecoration(
                         color: (_isCustomDays && !_isContinuous)
                             ? primaryColor
-                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                            : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: (_isCustomDays && !_isContinuous)
@@ -463,7 +463,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                   label: Text("$days days"),
                   selected: isSelected,
                   selectedColor: primaryColor,
-                  backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                  backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                   labelStyle: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 11.5,
@@ -699,7 +699,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                     label: Text(opt),
                     selected: isSelected,
                     selectedColor: primaryColor,
-                    backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                    backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                     labelStyle: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,

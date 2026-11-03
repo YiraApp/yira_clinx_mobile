@@ -592,7 +592,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
 
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-  Color _borderColor(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  Color _borderColor(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
 
   TextStyle _ts(double size, FontWeight weight, Color color) {
     return TextStyle(fontFamily: appPoppinFont, fontSize: size, fontWeight: weight, color: color);
@@ -623,7 +623,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
       suffixIcon: suffixIcon,
       isDense: true,
       filled: true,
-      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: border(_borderColor(isDark)),
       enabledBorder: border(_borderColor(isDark)),
@@ -696,7 +696,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+              color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -951,7 +951,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
     final fieldStyle = _ts(14, FontWeight.w600, _textPrimary(isDark));
     const decimal = TextInputType.numberWithOptions(decimal: true);
     final accent = isDark ? const Color(0xFF93C5FD) : _primaryBlue;
-    final cardColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final cardColor = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
 
     Widget section(String title, {Widget? trailing}) {
       return Padding(

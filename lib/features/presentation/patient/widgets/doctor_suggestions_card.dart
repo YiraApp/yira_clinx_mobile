@@ -153,7 +153,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SingleChildScrollView(
@@ -238,11 +238,11 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                      ? const Color(0xFF121212).withValues(alpha: 0.5)
                       : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Text(
@@ -357,7 +357,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
         height: MediaQuery.of(context).size.height * 0.8,
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -455,11 +455,11 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+                  ? const Color(0xFF121212).withValues(alpha: 0.5)
                   : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -599,10 +599,10 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
       width: double.infinity,
       padding: EdgeInsets.all(isTab ? 20 : 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [

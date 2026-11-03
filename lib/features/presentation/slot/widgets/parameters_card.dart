@@ -143,7 +143,7 @@ class ParametersCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
@@ -238,7 +238,7 @@ class ParametersCard extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
@@ -457,7 +457,7 @@ class ParametersCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -563,7 +563,7 @@ class ParametersCard extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                    color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isDark ? Colors.white24 : Colors.grey.shade300,
@@ -615,7 +615,7 @@ class ParametersCard extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                    color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isDark ? Colors.white24 : Colors.grey.shade300,

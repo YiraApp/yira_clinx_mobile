@@ -28,11 +28,11 @@ class WalletColors {
   final bool isDark;
   const WalletColors(this.isDark);
 
-  Color get card => isDark ? const Color(0xFF1E293B) : Colors.white;
-  Color get line => isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0);
+  Color get card => isDark ? const Color(0xFF232323) : Colors.white;
+  Color get line => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
   Color get ink => isDark ? Colors.white : const Color(0xFF0F172A);
   Color get muted => isDark ? Colors.white60 : const Color(0xFF64748B);
-  Color get faint => isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
+  Color get faint => isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9);
   static const paid = Color(0xFF059669);
   static const due = Color(0xFFD97706);
   static const danger = Color(0xFFDC2626);
@@ -225,7 +225,7 @@ class WalletSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     // A Material, not a coloured box, so list rows inside show their tap ripple.
     return Material(
-      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+      color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(

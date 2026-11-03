@@ -437,7 +437,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               width: 1.2,
             ),
           ),
@@ -602,15 +602,15 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                 )
                               : null,
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                         ),
                       ),
@@ -647,13 +647,13 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                       : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                 ),
                                 selectedColor: _primaryBlue,
-                                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                backgroundColor: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
                                     color: isSelected
                                         ? _primaryBlue
-                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                   ),
                                 ),
                                 showCheckmark: false,
@@ -713,10 +713,10 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     return Container(
       padding: EdgeInsets.all(isTab ? 16 : 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -808,7 +808,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                 constraints: const BoxConstraints(),
                 tooltip: 'Options',
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 elevation: 6,
                 onSelected: (val) {
                   if (val == 'book') {
@@ -1062,7 +1062,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           child: Container(
             height: 140,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(16),
             ),
           ),

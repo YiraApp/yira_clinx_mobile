@@ -661,7 +661,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       margin: const EdgeInsets.symmetric(vertical: 6.0),
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 22.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(18.0),
         border: Border.all(
           color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),

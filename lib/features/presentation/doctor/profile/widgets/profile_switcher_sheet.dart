@@ -332,7 +332,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       ),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -518,7 +518,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
             item.hospitalId.toString() == activeHospitalId.toString());
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
     final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final Color cardColor = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final Color cardColor = isDark ? const Color(0xFF121212) : Colors.white;
     final bool isOtherSwitching = _switchingKey != null && !isSwitching;
 
     final String relation = (item.relation ?? '').trim();
@@ -567,7 +567,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
             borderRadius: BorderRadius.circular(18),
             color: isActive ? Color.alphaBlend(accent.withValues(alpha: isDark ? 0.2 : 0.07), cardColor) : cardColor,
             border: Border.all(
-              color: isActive ? accent.withValues(alpha: 0.6) : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              color: isActive ? accent.withValues(alpha: 0.6) : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
               width: isActive ? 1.4 : 1,
             ),
             boxShadow: isDark
@@ -639,7 +639,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.arrow_forward_ios_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey.shade600),
@@ -735,10 +735,10 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(

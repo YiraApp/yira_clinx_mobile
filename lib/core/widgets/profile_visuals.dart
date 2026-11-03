@@ -237,7 +237,7 @@ class ProfileSectionLabel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('$count', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),

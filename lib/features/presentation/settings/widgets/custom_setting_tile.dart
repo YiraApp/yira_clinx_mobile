@@ -38,7 +38,7 @@ class CustomSettingTile extends StatelessWidget {
           leading: Container(
             padding: EdgeInsets.all(isTab? 10:width * 0.03),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(isTab? 4:width * 0.03),
             ),
             child: Icon(
@@ -71,7 +71,7 @@ class CustomSettingTile extends StatelessWidget {
           trailing: Icon(
             Icons.arrow_forward_ios_rounded,
             size:isTab? 20: width * 0.035,
-            color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+            color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
           ),
         ),
         if (showDivider)
@@ -80,7 +80,7 @@ class CustomSettingTile extends StatelessWidget {
             thickness: 1,
             indent: width * 0.05,
             endIndent: width * 0.05,
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
           ),
       ],
     );

@@ -5,6 +5,8 @@ import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/data/models/prescriptions/lab_test_model.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 
 DateTime? _date(dynamic v) => v == null ? null : DateTime.tryParse(v.toString())?.toLocal();
 String? _text(dynamic v) {
@@ -45,10 +47,12 @@ class PastPrescription {
                   [_text(m['dosage']), _text(m['frequency']), _text(m['duration']), _text(m['route'])].whereType<String>().join(' • '),
                 ))
             .toList(),
+        labTests = PrescribedLabTestModel.listFromJson(j['labTests'] ?? j['LabTests']),
         notes = _text(j['notes']),
         pdfUrl = _text(j['pdfUrl']);
   final DateTime? date;
   final String? doctor, hospital, pdfUrl, notes;
+  final List<PrescribedLabTest> labTests;
   final List<String> diagnoses, medicines;
 
   /// Each medicine with its dose, timing and duration, for the history list.

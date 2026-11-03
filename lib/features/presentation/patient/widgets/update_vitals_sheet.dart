@@ -219,7 +219,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
     return Container(
@@ -535,7 +535,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
             filled: true,
             fillColor: hasError
                 ? const Color(0xFFEF4444).withValues(alpha: 0.08)
-                : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+                : (isDark ? const Color(0xFF121212) : Colors.grey[100]),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

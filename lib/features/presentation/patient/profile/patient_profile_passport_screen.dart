@@ -28,6 +28,7 @@ import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../doctor/profile/widgets/doctor_profile_section_card.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import '../../patient_profile/patient_over_view_bloc/patient_over_view_bloc.dart';
+import '../../theme/theme_bloc/theme_bloc.dart';
 import '../../../../core/tour/patient_tour_controller.dart';
 import '../../../../core/tour/patient_tour_keys.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
@@ -440,7 +441,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       builder: (ctx) => Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -998,7 +999,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 maxHeight: MediaQuery.of(ctx).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
@@ -1085,7 +1086,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   style: TextStyle(fontFamily: appPoppinFont, color: textColor),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: 'Enter your full name',
@@ -1138,7 +1139,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   style: TextStyle(fontFamily: appPoppinFont, color: textColor),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: 'YYYY-MM-DD or DD-MM-YYYY',
@@ -1162,7 +1163,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    color: isDark ? const Color(0xFF121212) : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -1171,7 +1172,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       value: selectedGender.isEmpty ? null : selectedGender,
                       hint: Text('Select gender', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
                       icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                       items: genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                       onChanged: (v) {
@@ -1188,7 +1189,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                    color: isDark ? const Color(0xFF121212) : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -1197,7 +1198,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       value: selectedBloodGroup.isEmpty ? null : selectedBloodGroup,
                       hint: Text('Select blood group', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
                       icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                      dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                       items: bloodGroups.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                       onChanged: (v) {
@@ -1249,7 +1250,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     filled: true,
                     fillColor: isPhoneAvailable
                         ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
-                        : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+                        : (isDark ? const Color(0xFF121212) : Colors.grey[100]),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: isPhoneAvailable ? null : "Add your mobile number",
@@ -1301,7 +1302,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     filled: true,
                     fillColor: isEmailAvailable
                         ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
-                        : (isDark ? const Color(0xFF0F172A) : Colors.grey[100]),
+                        : (isDark ? const Color(0xFF121212) : Colors.grey[100]),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: isEmailAvailable ? null : "Add your email address",
@@ -1613,7 +1614,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 maxHeight: MediaQuery.of(ctx).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
                   BoxShadow(
@@ -1685,7 +1686,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         hintText: 'Enter contact name',
                         hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
@@ -1696,7 +1697,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        color: isDark ? const Color(0xFF121212) : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -1712,7 +1713,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             ),
                           ),
                           icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                           items: relationshipOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                           onChanged: (val) {
@@ -1734,7 +1735,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           hintText: 'Enter relationship (e.g. Uncle, Colleague, Neighbor)',
                           hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                          fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         ),
@@ -1751,7 +1752,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         hintText: 'e.g. +91 91234 56789',
                         hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                        fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
@@ -2193,6 +2194,24 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       ),
                     ]),
                     const SizedBox(height: 16),
+                    _buildSettingsGroup(isDark, 'APPEARANCE', [
+                      _SettingsItem(
+                        icon: Icons.dark_mode_outlined,
+                        color: primaryColor,
+                        title: 'Dark mode',
+                        subtitle: isDark ? 'On' : 'Off',
+                        onTap: () => _setDarkMode(!isDark),
+                        trailing: Switch.adaptive(
+                          value: isDark,
+                          onChanged: _setDarkMode,
+                          activeTrackColor: primaryColor,
+                          thumbColor: const WidgetStatePropertyAll(Colors.white),
+                          inactiveTrackColor: const Color(0xFFCBD5E1),
+                          trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 16),
                     _buildSettingsGroup(isDark, 'ACCOUNT', [
                       _SettingsItem(
                         icon: PhosphorIconsDuotone.trash,
@@ -2254,14 +2273,14 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
 
     final Color ink = isDark ? Colors.white : const Color(0xFF0F172A);
     final Color muted = isDark ? Colors.white60 : const Color(0xFF64748B);
-    final Color line = isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0);
+    final Color line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
 
     Widget pill(String text, {IconData? icon, VoidCallback? onTap}) => GestureDetector(
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -2324,7 +2343,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           child: Container(
                             padding: const EdgeInsets.all(5),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              color: isDark ? const Color(0xFF232323) : Colors.white,
                               shape: BoxShape.circle,
                               border: Border.all(color: line),
                             ),
@@ -2383,9 +2402,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
       ),
       child: Row(
         children: [
@@ -2393,7 +2412,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
             child: PhosphorIcon(PhosphorIconsBold.phoneCall, size: 19, color: isDark ? Colors.white70 : const Color(0xFF475569)),
           ),
           const SizedBox(width: 12),
@@ -2486,7 +2505,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
           ),
         );
 
-    Widget gap() => Container(width: 1, height: 40, color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0));
+    Widget gap() => Container(width: 1, height: 40, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0));
 
     String fmt(double v) => v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(1);
     return Row(
@@ -2517,9 +2536,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2571,6 +2590,10 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     );
   }
 
+  void _setDarkMode(bool on) {
+    context.read<ThemeBloc>().add(SetThemeEvent(on ? ThemeMode.dark : ThemeMode.light));
+  }
+
   Widget _buildSettingsGroup(bool isDark, String title, List<_SettingsItem> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2581,13 +2604,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
         ),
         Material(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           clipBehavior: Clip.antiAlias,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+              border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
             ),
             child: Column(
               children: [
@@ -2606,7 +2629,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             decoration: BoxDecoration(
                               color: items[i].danger
                                   ? items[i].color.withValues(alpha: isDark ? 0.2 : 0.08)
-                                  : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                                  : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
                               borderRadius: BorderRadius.circular(11),
                             ),
                             child: PhosphorIcon(items[i].icon,
@@ -2629,6 +2652,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               ],
                             ),
                           ),
+                          items[i].trailing ??
                           PhosphorIcon(PhosphorIconsBold.caretRight, size: 15, color: items[i].danger ? items[i].color : (isDark ? Colors.white38 : const Color(0xFF94A3B8))),
                         ],
                       ),
@@ -2740,6 +2764,7 @@ class _SettingsItem {
   final String? subtitle;
   final bool danger;
   final VoidCallback onTap;
+  final Widget? trailing;
 
-  const _SettingsItem({required this.icon, required this.color, required this.title, this.subtitle, this.danger = false, required this.onTap});
+  const _SettingsItem({required this.icon, required this.color, required this.title, this.subtitle, this.danger = false, required this.onTap, this.trailing});
 }

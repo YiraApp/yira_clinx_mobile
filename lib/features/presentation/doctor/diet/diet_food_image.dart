@@ -110,7 +110,7 @@ class DietFoodImage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: _foodTypeColor(foodType),
                 shape: BoxShape.circle,
-                border: Border.all(color: isDark ? const Color(0xFF1E293B) : Colors.white, width: 2),
+                border: Border.all(color: isDark ? const Color(0xFF232323) : Colors.white, width: 2),
               ),
             ),
           ),

@@ -109,10 +109,10 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           height: dialogHeight,
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              color: isDark ? const Color(0xFF121212) : Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                 width: 1.5,
               ),
               boxShadow: [
@@ -167,10 +167,10 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -262,10 +262,10 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
         vertical: isTab ? 16 : 14,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -324,7 +324,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Text(
@@ -399,7 +399,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
             ),
@@ -494,7 +494,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
@@ -644,7 +644,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
             ),
@@ -749,7 +749,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
             ),
@@ -850,7 +850,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),
@@ -954,7 +954,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -1125,10 +1125,10 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Column(
@@ -1212,7 +1212,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
@@ -1259,7 +1259,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isSelected ? color : (isDark ? const Color(0xFF1E293B) : Colors.white),
+        color: isSelected ? color : (isDark ? const Color(0xFF232323) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isSelected ? color : (isDark ? Colors.white10 : const Color(0xFFCBD5E1))),
       ),
@@ -1279,7 +1279,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: isSelected ? color.withValues(alpha: 0.15) : (isDark ? const Color(0xFF1E293B) : Colors.white),
+        color: isSelected ? color.withValues(alpha: 0.15) : (isDark ? const Color(0xFF232323) : Colors.white),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: isSelected ? color : (isDark ? Colors.white10 : const Color(0xFFCBD5E1))),
       ),
@@ -1299,7 +1299,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? primaryColor : (isDark ? const Color(0xFF334155) : Colors.white),
+        color: isSelected ? primaryColor : (isDark ? const Color(0xFF3A3A3A) : Colors.white),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: isSelected ? primaryColor : (isDark ? Colors.white10 : const Color(0xFFCBD5E1))),
       ),
@@ -1320,7 +1320,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color.withValues(alpha: 0.25)),
         ),

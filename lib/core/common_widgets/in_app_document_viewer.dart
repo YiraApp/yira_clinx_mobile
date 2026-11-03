@@ -403,9 +403,9 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -545,7 +545,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -818,7 +818,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         border: Border(
           top: BorderSide(
             color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),

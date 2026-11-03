@@ -120,7 +120,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               absorbing: isLoading,
               child: Scaffold(
                 backgroundColor: isDarkMode
-                    ? const Color(0xFF0F172A)
+                    ? const Color(0xFF121212)
                     : const Color(0xFFF8FAFC),
                 appBar: CommonAppBar(
                   actions: const [],
@@ -169,12 +169,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                   padding: EdgeInsets.all(isTabletDevice ? 28 : 20),
                                   decoration: BoxDecoration(
                                     color: isDarkMode
-                                        ? const Color(0xFF1E293B)
+                                        ? const Color(0xFF232323)
                                         : Colors.white,
                                     borderRadius: BorderRadius.circular(24),
                                     border: Border.all(
                                       color: isDarkMode
-                                          ? const Color(0xFF334155)
+                                          ? const Color(0xFF3A3A3A)
                                           : const Color(0xFFE2E8F0),
                                       width: 1,
                                     ),
@@ -289,10 +289,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+        color: isDarkMode ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Row(
@@ -309,7 +309,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 decoration: BoxDecoration(
                   color: isPassed
                       ? _successEmerald
-                      : (isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      : (isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -338,7 +338,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         ? _successEmerald
                         : (isCurrent
                             ? _primaryBlue
-                            : (isDarkMode ? const Color(0xFF475569) : const Color(0xFFCBD5E1))),
+                            : (isDarkMode ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1))),
                     width: 2,
                   ),
                 ),
@@ -510,10 +510,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             height: 48,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: TabBar(
@@ -533,7 +533,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontWeight: FontWeight.w500,
               ),
               indicator: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                color: isDarkMode ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -612,10 +612,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
           Container(
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             child: Row(
@@ -639,7 +639,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                   ),
                   dialogBackgroundColor:
-                      isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                      isDarkMode ? const Color(0xFF232323) : Colors.white,
                   dialogTextStyle: TextStyle(
                     fontFamily: appPoppinFont,
                     color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
@@ -653,7 +653,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     ),
                     filled: true,
                     fillColor: isDarkMode
-                        ? const Color(0xFF0F172A)
+                        ? const Color(0xFF121212)
                         : const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -664,7 +664,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 Container(
                   width: 1,
                   height: 28,
-                  color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  color: isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                 ),
                 Expanded(
                   child: TextFormField(
@@ -775,10 +775,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
           Container(
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             child: TextFormField(
@@ -975,18 +975,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fieldWidth: isTab ? 50 : 44,
                 borderWidth: 1.5,
                 inactiveColor: isDarkMode
-                    ? const Color(0xFF334155)
+                    ? const Color(0xFF3A3A3A)
                     : const Color(0xFFE2E8F0),
                 activeColor: _primaryBlue,
                 selectedColor: _primaryBlue,
                 inactiveFillColor: isDarkMode
-                    ? const Color(0xFF0F172A)
+                    ? const Color(0xFF121212)
                     : const Color(0xFFF8FAFC),
                 activeFillColor: isDarkMode
-                    ? const Color(0xFF0F172A)
+                    ? const Color(0xFF121212)
                     : const Color(0xFFF8FAFC),
                 selectedFillColor: isDarkMode
-                    ? const Color(0xFF1E293B)
+                    ? const Color(0xFF232323)
                     : Colors.white,
               ),
               enableActiveFill: true,
@@ -1042,7 +1042,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               : Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -1170,7 +1170,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),
               filled: true,
-              fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
@@ -1178,13 +1178,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -1218,7 +1218,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 margin: const EdgeInsets.only(top: 8, bottom: 4),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -1277,10 +1277,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
           Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
               ),
             ),
             child: TextFormField(
@@ -1411,7 +1411,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 decoration: BoxDecoration(
                   color: isFilled
                       ? barColor
-                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),

@@ -186,7 +186,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                       constraints: const BoxConstraints(),
                       tooltip: 'Options',
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       elevation: 6,
                       onSelected: (action) {
                         if (action == 'view' && widget.onView != null) {

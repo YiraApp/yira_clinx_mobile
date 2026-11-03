@@ -173,8 +173,8 @@ class _ProviderTourOverlayState extends State<ProviderTourOverlay>
                     size: const Size(20, 10),
                     painter: _ArrowPainter(
                       pointingUp: placeCardBelow,
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
+                      borderColor: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                     ),
                   ),
                 ),
@@ -212,10 +212,10 @@ class _ProviderTourOverlayState extends State<ProviderTourOverlay>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.2,
         ),
         boxShadow: [
@@ -395,7 +395,7 @@ class _ProviderTourOverlayState extends State<ProviderTourOverlay>
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                                color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                               ),
                             ),
                             child: Text(

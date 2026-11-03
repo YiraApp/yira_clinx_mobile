@@ -114,7 +114,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             border: Border(
               top: BorderSide(
                 color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200,

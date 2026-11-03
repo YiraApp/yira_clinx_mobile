@@ -99,10 +99,10 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
     }).toList();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         title: Text(
           "Choose a doctor",
@@ -144,10 +144,10 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                   // Search Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                         width: 1.1,
                       ),
                       boxShadow: [
@@ -244,9 +244,9 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
@@ -337,7 +337,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
         department.toLowerCase() != 'general';
 
     return Material(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF232323) : Colors.white,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -345,9 +345,9 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
         child: Ink(
           padding: EdgeInsets.all(isTab ? 18 : 14),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.035),
@@ -418,7 +418,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                 ],
               ),
               const SizedBox(height: 12),
-              Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+              Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -498,7 +498,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -553,8 +553,8 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
 
   Widget _buildDoctorsShimmer(bool isDark, bool isTab) {
     return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      baseColor: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: isTab ? 32 : 16, vertical: 16),
         child: Column(

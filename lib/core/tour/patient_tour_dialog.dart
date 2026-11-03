@@ -109,10 +109,10 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
           height: dialogHeight,
           child: Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              color: isDark ? const Color(0xFF121212) : Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                 width: 1.5,
               ),
               boxShadow: [
@@ -164,10 +164,10 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -259,10 +259,10 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
         vertical: isTab ? 16 : 14,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -320,7 +320,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                   ),
                 ),
                 child: Text(
@@ -474,7 +474,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),
@@ -506,7 +506,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),
@@ -567,7 +567,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),
@@ -608,7 +608,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
       demoWidget: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),

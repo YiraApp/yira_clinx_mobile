@@ -14,12 +14,12 @@ class DietUi {
   static const Color violet = Color(0xFF8B5CF6);
   static const Color slate = Color(0xFF64748B);
 
-  static Color background(bool isDark) => isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-  static Color card(bool isDark) => isDark ? const Color(0xFF1E293B) : Colors.white;
+  static Color background(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+  static Color card(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
 
   /// Panels set inside a card (stats, inputs).
-  static Color sunken(bool isDark) => isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-  static Color line(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  static Color sunken(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+  static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
   static Color strong(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
   static Color body(bool isDark) => isDark ? Colors.white70 : const Color(0xFF475569);
   static Color muted(bool isDark) => isDark ? Colors.white60 : const Color(0xFF64748B);
@@ -70,7 +70,7 @@ class DietUi {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
                 color: line(isDark),
@@ -170,7 +170,7 @@ class DietUi {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
                 color: line(isDark),

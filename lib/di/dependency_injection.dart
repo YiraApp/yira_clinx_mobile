@@ -94,6 +94,7 @@ import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.d
 import 'package:yiraclinics/features/use_cases/login_email_use_case.dart';
 import 'package:yiraclinics/features/use_cases/medical_history_use_case.dart';
 import 'package:yiraclinics/features/use_cases/patient_over_view_use_case.dart';
+import 'package:yiraclinics/features/use_cases/get_hospital_lab_tests_use_case.dart';
 import 'package:yiraclinics/features/use_cases/save_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 import 'package:yiraclinics/features/use_cases/login_mobile_use_case.dart';
@@ -324,6 +325,9 @@ Future<void> init() async {
     () => SavePrescriptionUseCase(sl<PrescriptionRepository>()),
   );
   sl.registerLazySingleton(
+    () => GetHospitalLabTestsUseCase(sl<PrescriptionRepository>()),
+  );
+  sl.registerLazySingleton(
     () => LoginMobileUseCase(repository: sl<LoginRepository>()),
   );
   sl.registerLazySingleton(
@@ -480,6 +484,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => PrescriptionBloc(
       savePrescriptionUseCase: sl<SavePrescriptionUseCase>(),
+      getHospitalLabTestsUseCase: sl<GetHospitalLabTestsUseCase>(),
     ),
   );
   sl.registerLazySingleton<ProviderProfileRepo>(

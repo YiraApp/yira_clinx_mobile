@@ -594,7 +594,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.amber.withValues(alpha: 0.3) : const Color(0xFFFDE68A),

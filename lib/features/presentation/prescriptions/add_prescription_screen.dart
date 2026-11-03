@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
+import 'package:yiraclinics/features/presentation/prescriptions/widgets/lab_test_picker_sheet.dart';
+import 'package:yiraclinics/features/presentation/prescriptions/widgets/lab_tests_section.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/widgets/prescribed_medication_card.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../di/dependency_injection.dart';
@@ -26,6 +31,33 @@ class AddPrescriptionRecordScreen extends StatefulWidget {
   @override
   State<AddPrescriptionRecordScreen> createState() =>
       _AddPrescriptionRecordScreenState();
+}
+
+/// Why this prescription cannot be issued yet, or null when it can. The screen
+/// opens with one empty medicine row, so with lab tests ordered an untouched row
+/// counts as no medicine rather than as an unfinished one.
+@visibleForTesting
+String? prescriptionValidationError(List<MedicationItem> medications, List<PrescribedLabTest> labTests) {
+  bool untouched(MedicationItem med) =>
+      [med.name, med.dosage, med.frequency, med.duration, med.route, med.instructions]
+          .every((field) => (field ?? '').trim().isEmpty);
+
+  if (labTests.isEmpty && medications.every(untouched)) {
+    return "Please add at least one medication or lab test.";
+  }
+
+  for (int i = 0; i < medications.length; i++) {
+    final med = medications[i];
+    if (labTests.isNotEmpty && untouched(med)) continue;
+
+    final label = medications.length > 1 ? ' for Medication #${i + 1}' : '';
+    if (med.name.trim().isEmpty) return "Medication name is required$label.";
+    if (med.dosage == null || med.dosage!.trim().isEmpty) return "Dosage is required$label.";
+    if (med.frequency == null || med.frequency!.trim().isEmpty) return "Frequency is required$label.";
+    if (med.duration == null || med.duration!.trim().isEmpty) return "Duration is required$label.";
+    if (med.route == null || med.route!.trim().isEmpty) return "Route is required$label.";
+  }
+  return null;
 }
 
 class _AddPrescriptionRecordScreenState
@@ -54,6 +86,14 @@ class _AddPrescriptionRecordScreenState
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  /// The hospital whose lab tests to offer: this visit's, or the doctor's latest.
+  String? get _labHospitalId {
+    final own = widget.hospitalId?.trim() ?? '';
+    if (own.isNotEmpty) return own;
+    final latest = GlobalSession.instance.userNotifier.value?.data?.latestHospitalId;
+    return latest != null && latest > 0 ? latest.toString() : null;
   }
 
   void _appendAdvice(String advice) {
@@ -127,11 +167,11 @@ class _AddPrescriptionRecordScreenState
 
           return Scaffold(
             backgroundColor:
-                isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
 
             // ── App Bar ──
             appBar: AppBar(
-              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
               elevation: 0,
               leading: IconButton(
                 icon: Icon(
@@ -164,10 +204,10 @@ class _AddPrescriptionRecordScreenState
                     : 12,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                   ),
                 ),
                 boxShadow: [
@@ -186,7 +226,7 @@ class _AddPrescriptionRecordScreenState
                       style: OutlinedButton.styleFrom(
                         foregroundColor: isDark ? Colors.white70 : const Color(0xFF475569),
                         side: BorderSide(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -216,38 +256,10 @@ class _AddPrescriptionRecordScreenState
                       onPressed: isSubmitting
                           ? null
                           : () {
-                              if (state.medications.isEmpty) {
-                                _showValidationError(context, "Please add at least one medication.");
+                              final problem = prescriptionValidationError(state.medications, state.labTests);
+                              if (problem != null) {
+                                _showValidationError(context, problem);
                                 return;
-                              }
-
-                              for (int i = 0; i < state.medications.length; i++) {
-                                final med = state.medications[i];
-                                final medNum = i + 1;
-                                final label = state.medications.length > 1
-                                    ? ' for Medication #$medNum'
-                                    : '';
-
-                                if (med.name.trim().isEmpty) {
-                                  _showValidationError(context, "Medication name is required$label.");
-                                  return;
-                                }
-                                if (med.dosage == null || med.dosage!.trim().isEmpty) {
-                                  _showValidationError(context, "Dosage is required$label.");
-                                  return;
-                                }
-                                if (med.frequency == null || med.frequency!.trim().isEmpty) {
-                                  _showValidationError(context, "Frequency is required$label.");
-                                  return;
-                                }
-                                if (med.duration == null || med.duration!.trim().isEmpty) {
-                                  _showValidationError(context, "Duration is required$label.");
-                                  return;
-                                }
-                                if (med.route == null || med.route!.trim().isEmpty) {
-                                  _showValidationError(context, "Route is required$label.");
-                                  return;
-                                }
                               }
 
                               context.read<PrescriptionBloc>().add(
@@ -457,15 +469,34 @@ class _AddPrescriptionRecordScreenState
 
                   const SizedBox(height: 18),
 
+                  // ── Lab Tests ──
+                  LabTestsSection(
+                    tests: state.labTests,
+                    onAdd: () => LabTestPickerSheet.show(
+                      context,
+                      bloc: context.read<PrescriptionBloc>(),
+                      hospitalId: _labHospitalId,
+                    ),
+                    onRemove: (test) => context.read<PrescriptionBloc>().add(RemoveLabTest(test.key)),
+                    onPriorityChanged: (test, priority) => context
+                        .read<PrescriptionBloc>()
+                        .add(UpdateLabTest(key: test.key, priority: priority)),
+                    onInstructionsChanged: (test, instructions) => context
+                        .read<PrescriptionBloc>()
+                        .add(UpdateLabTest(key: test.key, instructions: instructions)),
+                  ),
+
+                  const SizedBox(height: 18),
+
                   // ── Notes & Advice Section ──
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF334155)
+                            ? const Color(0xFF3A3A3A)
                             : const Color(0xFFE2E8F0),
                       ),
                       boxShadow: [
@@ -552,18 +583,18 @@ class _AddPrescriptionRecordScreenState
                               color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
                             ),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                             contentPadding: const EdgeInsets.all(12),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -598,10 +629,10 @@ class _AddPrescriptionRecordScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Row(

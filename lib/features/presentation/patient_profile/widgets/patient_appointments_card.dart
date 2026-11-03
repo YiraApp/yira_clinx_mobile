@@ -56,7 +56,7 @@ class PatientAppointmentsCard extends StatelessWidget {
           maxHeight: MediaQuery.of(ctx).size.height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -218,7 +218,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -312,7 +312,7 @@ class PatientAppointmentsCard extends StatelessWidget {
               maxWidth: MediaQuery.of(dialogCtx).size.width * 0.95,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              color: isDark ? const Color(0xFF121212) : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -329,7 +329,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -416,7 +416,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -452,7 +452,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -552,7 +552,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -624,7 +624,7 @@ class PatientAppointmentsCard extends StatelessWidget {
             maxHeight: MediaQuery.of(ctx).size.height * 0.92,
           ),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(

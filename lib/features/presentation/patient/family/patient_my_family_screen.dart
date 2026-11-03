@@ -449,7 +449,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -592,7 +592,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 maxHeight: MediaQuery.of(sheetCtx).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: SafeArea(
@@ -713,7 +713,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 hintText: 'e.g. John Doe',
                                 hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white38 : Colors.grey[400]),
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+                                fillColor: isDark ? const Color(0xFF121212).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -760,7 +760,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                   ),
                                   selectedColor: _primaryBlue,
-                                  backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                  backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                     side: BorderSide(color: isSelected ? _primaryBlue : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
@@ -787,7 +787,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12),
                                         decoration: BoxDecoration(
-                                          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+                                          color: isDark ? const Color(0xFF121212).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                                         ),
@@ -795,7 +795,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                           child: DropdownButton<String>(
                                             value: selectedGender,
                                             isExpanded: true,
-                                            dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                            dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                             items: genders
                                                 .map((g) => DropdownMenuItem(
                                                       value: g,
@@ -840,7 +840,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+                                            color: isDark ? const Color(0xFF121212).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
                                             borderRadius: BorderRadius.circular(12),
                                             border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                                           ),
@@ -1167,7 +1167,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
             ),
@@ -1186,7 +1186,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 color: _primaryBlue,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: isDark ? const Color(0xFF232323) : Colors.white,
                   width: 1.5,
                 ),
               ),
@@ -1248,11 +1248,11 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           }).toList();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4F6FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: PhosphorIcon(PhosphorIconsBold.caretLeft, color: textColor, size: 20),
@@ -1346,10 +1346,10 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                         )
                       : null,
                   filled: true,
-                  fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0))),
                 ),
               ),
             ],
@@ -1391,9 +1391,9 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
       ),
       child: Column(
         children: [
@@ -1444,9 +1444,9 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     return Container(
       padding: EdgeInsets.all(isTab ? 16 : 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isPrimary ? _primaryBlue.withValues(alpha: 0.35) : (isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0))),
+        border: Border.all(color: isPrimary ? _primaryBlue.withValues(alpha: 0.35) : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0))),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.035), blurRadius: 12, offset: const Offset(0, 3))],
       ),
       child: Row(

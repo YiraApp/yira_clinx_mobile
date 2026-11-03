@@ -32,11 +32,11 @@ class DashboardMetricsGrid extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           width: 1,
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -85,10 +85,10 @@ class DashboardMetricsGrid extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                    color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       width: 0.8,
                     ),
                   ),
@@ -124,7 +124,7 @@ class DashboardMetricsGrid extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
           ),
 
           // 4 Metric Pillars Content
@@ -236,7 +236,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
                 ),
                 IntrinsicHeight(
                   child: Row(
@@ -387,7 +387,7 @@ class DashboardMetricsGrid extends StatelessWidget {
   Widget _buildVerticalDivider(bool isDark) {
     return Container(
       width: 1,
-      color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
     );
   }
 }

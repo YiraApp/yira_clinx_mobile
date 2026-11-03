@@ -111,14 +111,14 @@ class PrescriptionListScreen extends StatelessWidget {
           final validMeds = state.medications
               .where((m) => m.name.trim().isNotEmpty)
               .toList();
-          final bool hasPrescription = validMeds.isNotEmpty;
+          final bool hasPrescription = validMeds.isNotEmpty || state.labTests.isNotEmpty;
 
           Widget bodyWidget;
 
           if (state.status == PrescriptionStatus.loading) {
             bodyWidget = PrescriptionListShimmer(itemCount: 4, isTab: isTab);
           } else {
-            if (validMeds.isEmpty) {
+            if (!hasPrescription) {
               bodyWidget = const RecordEmptyState(
                 icon: Icons.medication_outlined,
                 title: 'No prescriptions yet',
@@ -130,6 +130,7 @@ class PrescriptionListScreen extends StatelessWidget {
                 children: [
                   SinglePrescriptionCard(
                     medications: validMeds,
+                    labTests: state.labTests,
                     date: 'Today • Clinical Consultation',
                     onEdit: (isPatient || !allowAdd)
                         ? null
@@ -270,6 +271,7 @@ class PrescriptionListScreen extends StatelessWidget {
           for (final med in meds) {
             context.read<PrescriptionBloc>().add(RemoveMedication(med.id));
           }
+          context.read<PrescriptionBloc>().add(const SetLabTests([]));
         },
         secondaryLabel: "Cancel",
         onSecondary: () => Navigator.pop(dialogContext),

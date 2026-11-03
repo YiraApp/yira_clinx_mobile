@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/convert_tablet_sheet.dart';
 import '../../../di/dependency_injection.dart';
@@ -207,6 +209,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
     }
 
     final medications = (data['medications'] as List? ?? []).map((m) => Map<String, dynamic>.from(m as Map)).toList();
+    final labTests = (data['labTests'] as List? ?? const []).whereType<PrescribedLabTest>().toList();
     final notes = (data['notes'] ?? '').toString().trim();
 
     return ValueListenableBuilder<List<MedicationReminder>>(
@@ -220,19 +223,20 @@ class PrescriptionDetailScreen extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            _buildOverviewCard(data, medications.length, withReminder, isDark),
+            _buildOverviewCard(data, medications.length, withReminder, labTests.length, isDark),
             const SizedBox(height: 20),
-            DietUi.sectionLabel(
-              'MEDICINES · ${medications.length}',
-              isDark,
-              trailing: medications.isEmpty
-                  ? null
-                  : Text(
-                      '$withReminder with reminders',
-                      style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
-                    ),
-            ),
-            if (medications.isEmpty)
+            if (medications.isNotEmpty || labTests.isEmpty)
+              DietUi.sectionLabel(
+                'MEDICINES · ${medications.length}',
+                isDark,
+                trailing: medications.isEmpty
+                    ? null
+                    : Text(
+                        '$withReminder with reminders',
+                        style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
+                      ),
+              ),
+            if (medications.isEmpty && labTests.isEmpty)
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: DietUi.cardDecoration(isDark),
@@ -251,6 +255,15 @@ class PrescriptionDetailScreen extends StatelessWidget {
                   doctorPhoto: (data['doctorPhoto'] ?? '').toString(),
                   condition: (data['condition'] ?? '').toString(),
                 ),
+            if (labTests.isNotEmpty) ...[
+              if (medications.isNotEmpty) const SizedBox(height: 8),
+              DietUi.sectionLabel('LAB TESTS · ${labTests.length}', isDark),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: DietUi.cardDecoration(isDark),
+                child: RecordLabTestLines(tests: labTests),
+              ),
+            ],
             if (notes.isNotEmpty) ...[
               const SizedBox(height: 8),
               _buildNotesCard(notes, isDark),
@@ -326,7 +339,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOverviewCard(Map<String, dynamic> data, int medicineCount, int withReminder, bool isDark) {
+  Widget _buildOverviewCard(Map<String, dynamic> data, int medicineCount, int withReminder, int labTestCount, bool isDark) {
     final rawDoc = (data['doctor'] ?? 'Consulting Doctor').toString();
     final docName = _cleanDoctorName(rawDoc);
     final specialty = _cleanSpecialty((data['specialty'] ?? '').toString(), rawDoc);
@@ -412,7 +425,11 @@ class PrescriptionDetailScreen extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '$medicineCount medicine${medicineCount == 1 ? '' : 's'} · $withReminder reminder${withReminder == 1 ? '' : 's'} on',
+                  [
+                    if (medicineCount > 0 || labTestCount == 0)
+                      '$medicineCount medicine${medicineCount == 1 ? '' : 's'} · $withReminder reminder${withReminder == 1 ? '' : 's'} on',
+                    if (labTestCount > 0) '$labTestCount lab test${labTestCount == 1 ? '' : 's'}',
+                  ].join(' · '),
                   style: DietUi.text(12, FontWeight.w500, DietUi.muted(isDark)),
                 ),
               ),

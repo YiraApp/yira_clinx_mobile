@@ -1,21 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <g stroke="#111111" stroke-width="9" stroke-linejoin="round" stroke-linecap="round">
-    <!-- calendar -->
-    <rect x="30" y="50" width="176" height="166" rx="22" fill="#FFFFFF"/>
-    <path d="M30 72 C30 60 40 50 52 50 H184 C196 50 206 60 206 72 V98 H30 Z" fill="#3A86FF"/>
-    <rect x="66" y="30" width="16" height="40" rx="8" fill="#FFD166"/>
-    <rect x="154" y="30" width="16" height="40" rx="8" fill="#FFD166"/>
-    <!-- dates -->
-    <g stroke="none" fill="#C9D6EA">
-      <rect x="52" y="116" width="26" height="22" rx="6"/>
-      <rect x="92" y="116" width="26" height="22" rx="6"/>
-      <rect x="132" y="116" width="26" height="22" rx="6"/>
-      <rect x="52" y="154" width="26" height="22" rx="6"/>
-      <rect x="92" y="154" width="26" height="22" rx="6"/>
-    </g>
-    <rect x="132" y="154" width="26" height="22" rx="6" fill="#F0324B" stroke-width="6"/>
-    <!-- confirmed badge -->
-    <circle cx="190" cy="190" r="40" fill="#2DC26B"/>
-    <path d="M171 191 L185 205 L210 177" fill="none" stroke="#FFFFFF" stroke-width="11"/>
+  <g stroke="currentColor" stroke-width="11" stroke-linejoin="round" stroke-linecap="round" fill="none">
+    <rect x="30" y="52" width="176" height="164" rx="20" fill="#FFFFFF"/>
+    <path d="M30 104 V72 C30 61 39 52 50 52 H186 C197 52 206 61 206 72 V104 Z" fill="#BFE1F6"/>
+    <path d="M78 34 V70 M158 34 V70"/>
+    <path d="M66 136 H86 M108 136 H128 M150 136 H170 M66 172 H86 M108 172 H128"/>
+    <circle cx="186" cy="186" r="40" fill="#BFE1F6"/>
+    <path d="M167 187 L181 201 L206 173"/>
   </g>
 </svg>

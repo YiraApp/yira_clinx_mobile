@@ -395,7 +395,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
       maxChildSize: 0.95,
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(

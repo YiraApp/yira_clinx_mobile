@@ -83,6 +83,12 @@ class _PrescriptionHistoryTabState extends State<PrescriptionHistoryTab> {
                         RecordMedicineLine(name: name, detail: detail),
                       ],
                     ],
+                    if (p.labTests.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const RecordSectionTitle(icon: Icons.biotech_outlined, title: 'Lab Tests'),
+                      const SizedBox(height: 8),
+                      RecordLabTestLines(tests: p.labTests),
+                    ],
                     if (p.notes != null) ...[
                       const SizedBox(height: 10),
                       RecordField(label: 'Notes', value: p.notes!),

@@ -255,12 +255,12 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
           decoration: BoxDecoration(
             color: isActive
                 ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.1)
-                : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                : (isDark ? const Color(0xFF232323) : Colors.white),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isActive
                   ? primaryColor
-                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
               width: 1,
             ),
           ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../domain/entities/prescriptions/lab_test_entity.dart';
 import '../../../domain/entities/prescriptions/prescription_item.dart';
 import '../../patient/diet/diet_ui.dart';
 import '../../patient_profile/widgets/record_tab_ui.dart';
 
 class SinglePrescriptionCard extends StatelessWidget {
   final List<MedicationItem> medications;
+  final List<PrescribedLabTest> labTests;
   final String date;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -15,6 +17,7 @@ class SinglePrescriptionCard extends StatelessWidget {
   const SinglePrescriptionCard({
     super.key,
     required this.medications,
+    this.labTests = const [],
     required this.date,
     this.onEdit,
     this.onDelete,
@@ -46,11 +49,13 @@ class SinglePrescriptionCard extends StatelessWidget {
               title: "Prescription Record",
               subtitle: date,
             ),
-            const SizedBox(height: 12),
-            Text(
-              "$count ${count == 1 ? 'Medicine' : 'Medicines'}",
-              style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
-            ),
+            if (count > 0) ...[
+              const SizedBox(height: 12),
+              Text(
+                "$count ${count == 1 ? 'Medicine' : 'Medicines'}",
+                style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
+              ),
+            ],
             for (final med in medications.take(3)) ...[
               const SizedBox(height: 8),
               RecordMedicineLine(name: med.name, detail: _timing(med)),
@@ -61,6 +66,15 @@ class SinglePrescriptionCard extends StatelessWidget {
                 "+ ${medications.length - 3} more medications",
                 style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
               ),
+            ],
+            if (labTests.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                "${labTests.length} ${labTests.length == 1 ? 'Lab Test' : 'Lab Tests'}",
+                style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
+              ),
+              const SizedBox(height: 8),
+              RecordLabTestLines(tests: labTests, limit: 3),
             ],
             const SizedBox(height: 8),
             Row(

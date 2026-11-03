@@ -4,8 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import '../../../domain/entities/prescriptions/lab_test_entity.dart';
 import '../../../domain/entities/prescriptions/prescription_entity.dart';
 import '../../../domain/repositories/prescritpions/prescriptions_repo.dart';
+import '../../models/prescriptions/lab_test_model.dart';
 import '../../models/prescriptions/prescriptions_model.dart';
 
 class PrescriptionRepositoryImpl implements PrescriptionRepository {
@@ -120,6 +122,8 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
             'note': m.instructions ?? '',
           };
         }).toList(),
+        if (prescription.labTests != null)
+          'labTests': prescription.labTests!.map(PrescribedLabTestModel.toJson).toList(),
       };
 
       final response = await _apiClient.account(showSuccessSnack: true).post(
@@ -157,5 +161,23 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
       );
       rethrow;
     }
+  }
+
+  @override
+  Future<List<HospitalLabTest>> getHospitalLabTests(String hospitalId) async {
+    final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+    final response = await _apiClient.account(showSuccessSnack: false).get(
+      URLs.hospitalLabTestsUrl(hospitalId),
+      options: Options(
+        headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+        // The picker shows its own error with a retry.
+        extra: {'suppressErrorSnack': true},
+      ),
+    );
+    final body = response.data;
+    if (body is! Map || body['data'] is! List) {
+      throw Exception('Unexpected lab tests response');
+    }
+    return HospitalLabTestModel.listFromJson(body['data']);
   }
 }

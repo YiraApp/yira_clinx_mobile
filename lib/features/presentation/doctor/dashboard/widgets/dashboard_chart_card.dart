@@ -24,11 +24,11 @@ class DashboardChartCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isTab ? 20.0 : 16.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           width: 1,
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -58,7 +58,7 @@ class DashboardChartCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF334155).withValues(alpha: 0.6)
+                      ? const Color(0xFF3A3A3A).withValues(alpha: 0.6)
                       : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),

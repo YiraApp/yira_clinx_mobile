@@ -7,6 +7,8 @@ import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/widgets/doctor_avatar_widget.dart';
 import '../prescription_details_screen.dart';
 import '../../patient/diet/diet_ui.dart';
+import '../../patient_profile/widgets/record_tab_ui.dart';
+import '../../../domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 class PrescriptionCard extends StatelessWidget {
@@ -20,6 +22,7 @@ class PrescriptionCard extends StatelessWidget {
   final String status;
   final String pharmacy;
   final List<Map<String, dynamic>> medications;
+  final List<PrescribedLabTest> labTests;
   final String? pdfUrl;
   final bool isSelf;
   final VoidCallback? onDelete;
@@ -36,6 +39,7 @@ class PrescriptionCard extends StatelessWidget {
     required this.status,
     required this.pharmacy,
     required this.medications,
+    this.labTests = const [],
     this.pdfUrl,
     this.isSelf = false,
     this.onDelete,
@@ -114,6 +118,7 @@ class PrescriptionCard extends StatelessWidget {
             'status': status,
             'pharmacy': pharmacy,
             'medications': medications,
+            'labTests': labTests,
             'pdfUrl': pdfUrl,
             'isSelf': isSelf,
           },
@@ -294,9 +299,20 @@ class PrescriptionCard extends StatelessWidget {
                             style: DietUi.text(11.5, FontWeight.w600, primaryColor),
                           ),
                         ),
-                    ] else ...[
+                    ] else if (labTests.isEmpty) ...[
                       const SizedBox(height: 10),
                       Text('No medicines listed', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
+                    ],
+
+                    // Lab tests the doctor ordered
+                    if (labTests.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'LAB TESTS · ${labTests.length}',
+                        style: DietUi.text(10.5, FontWeight.w700, DietUi.muted(isDark)).copyWith(letterSpacing: 0.6),
+                      ),
+                      const SizedBox(height: 6),
+                      RecordLabTestLines(tests: labTests, limit: preview),
                     ],
                   ],
                 ),

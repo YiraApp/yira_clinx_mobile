@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
 
 class PrescriptionEntity extends Equatable {
@@ -12,6 +13,9 @@ class PrescriptionEntity extends Equatable {
   final String additionalNotes;
   final String? pdfUrl;
 
+  /// On a save, a list replaces the prescription's tests and null leaves them.
+  final List<PrescribedLabTest>? labTests;
+
   const PrescriptionEntity({
     this.id,
     required this.patientId,
@@ -22,6 +26,7 @@ class PrescriptionEntity extends Equatable {
     required this.medications,
     required this.additionalNotes,
     this.pdfUrl,
+    this.labTests,
   });
 
   PrescriptionEntity copyWith({
@@ -34,6 +39,7 @@ class PrescriptionEntity extends Equatable {
     List<MedicationItem>? medications,
     String? additionalNotes,
     String? pdfUrl,
+    List<PrescribedLabTest>? labTests,
   }) {
     return PrescriptionEntity(
       id: id ?? this.id,
@@ -45,6 +51,7 @@ class PrescriptionEntity extends Equatable {
       medications: medications ?? this.medications,
       additionalNotes: additionalNotes ?? this.additionalNotes,
       pdfUrl: pdfUrl ?? this.pdfUrl,
+      labTests: labTests ?? this.labTests,
     );
   }
 
@@ -59,5 +66,6 @@ class PrescriptionEntity extends Equatable {
         medications,
         additionalNotes,
         pdfUrl,
+        labTests,
       ];
 }

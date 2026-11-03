@@ -98,7 +98,7 @@ class _FamilyProfilesStripState extends State<FamilyProfilesStrip> {
                           decoration: BoxDecoration(
                             color: primary,
                             shape: BoxShape.circle,
-                            border: Border.all(color: isDark ? const Color(0xFF1E293B) : Colors.white, width: 2),
+                            border: Border.all(color: isDark ? const Color(0xFF232323) : Colors.white, width: 2),
                           ),
                           child: const PhosphorIcon(PhosphorIconsBold.check, size: 10, color: Colors.white),
                         ),
@@ -153,9 +153,9 @@ class _FamilyProfilesStripState extends State<FamilyProfilesStrip> {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 8, 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE6EAF0)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

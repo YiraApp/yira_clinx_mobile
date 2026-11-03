@@ -174,10 +174,10 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     });
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
         leading: IconButton(
           icon: const PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20),
@@ -332,10 +332,10 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   Widget _buildSearchBar(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.1,
         ),
         boxShadow: [
@@ -382,10 +382,10 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   Widget _buildMyDoctorsQuickDeck(bool isDark, bool isTab) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.1,
         ),
         boxShadow: [
@@ -526,7 +526,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     }
 
     return Material(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF232323) : Colors.white,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -534,12 +534,12 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
         child: Ink(
           decoration: BoxDecoration(
             // Solid fill so the shadow stays behind the card.
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isDefault
                   ? primaryBlue.withValues(alpha: isDark ? 0.55 : 0.35)
-                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
               width: isDefault ? 1.4 : 1,
             ),
             boxShadow: [
@@ -638,7 +638,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                 ],
               ),
               const SizedBox(height: 12),
-              Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+              Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -704,10 +704,10 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
       width: double.infinity,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -785,8 +785,8 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   // ─── 7. MEDIBUDDY SHIMMER ─────────────────────────────────────────────
   Widget _buildMediBuddyShimmer(bool isDark, bool isTab) {
     return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      baseColor: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: isTab ? 28 : 16, vertical: 16),
         child: Column(

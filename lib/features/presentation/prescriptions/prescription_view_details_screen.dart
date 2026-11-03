@@ -10,6 +10,7 @@ import '../../../core/common_widgets/custom_button.dart';
 import '../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../core/api/base_api_configuration.dart';
 import '../../../core/shimmer_widgets/base_shimmer.dart';
+import '../patient_profile/widgets/record_tab_ui.dart';
 
 class PrescriptionViewDetailsScreen extends StatelessWidget {
   final String? patientId;
@@ -43,6 +44,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
         body: SafeArea(
           child: BlocBuilder<PrescriptionBloc, PrescriptionState>(
             builder: (context, state) {
+              final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
               return Column(
                 children: [
                   // ── Header ──
@@ -112,41 +114,46 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                             physics: const BouncingScrollPhysics(),
                             padding: const EdgeInsets.only(bottom: 24),
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: screenHorizontalSpacePadding, top: 12, bottom: 6),
-                                child: Text(
-                                  'Prescribed Medications',
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade500,
+                              if (validMeds.isNotEmpty || state.labTests.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: screenHorizontalSpacePadding, top: 12, bottom: 6),
+                                  child: Text(
+                                    'Prescribed Medications',
+                                    style: TextStyle(
+                                      fontFamily: appPoppinFont,
+                                      fontSize: displayWidth(context) * (isTab ? 0.015 : 0.035),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade500,
+                                    ),
                                   ),
                                 ),
-                              ),
 
-                              state.medications.where((m) => m.name.trim().isNotEmpty).isEmpty
-                                  ? Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 30),
-                                        child: Text(
-                                          'No medications mapped.',
-                                          style: TextStyle(fontFamily: appPoppinFont, color: Colors.grey.shade400),
-                                        ),
-                                      ),
-                                    )
-                                  : ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      itemCount: state.medications.where((m) => m.name.trim().isNotEmpty).length,
-                                      itemBuilder: (context, index) {
-                                        final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
-                                        return DetailedPrescriptionExpandableCard(
-                                          key: ValueKey(validMeds[index].id),
-                                          item: validMeds[index],
-                                        );
-                                      },
+                              if (validMeds.isEmpty && state.labTests.isEmpty)
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 30),
+                                    child: Text(
+                                      'No medications mapped.',
+                                      style: TextStyle(fontFamily: appPoppinFont, color: Colors.grey.shade400),
                                     ),
+                                  ),
+                                ),
+
+                              for (final med in validMeds)
+                                DetailedPrescriptionExpandableCard(key: ValueKey(med.id), item: med),
+
+                              if (state.labTests.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(screenHorizontalSpacePadding, 12, screenHorizontalSpacePadding, 6),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const RecordSectionTitle(icon: Icons.biotech_outlined, title: 'Lab Tests'),
+                                      const SizedBox(height: 8),
+                                      RecordCard(child: RecordLabTestLines(tests: state.labTests)),
+                                    ],
+                                  ),
+                                ),
 
                               if (state.additionalNotes.trim().isNotEmpty) ...[
                                 const SizedBox(height: 6),

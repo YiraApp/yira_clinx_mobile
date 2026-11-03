@@ -492,8 +492,8 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
 
   // --- Styling helpers ---
 
-  Color _cardColor(bool isDark) => isDark ? const Color(0xFF1E293B) : Colors.white;
-  Color _borderColor(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  Color _cardColor(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
+  Color _borderColor(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
   Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
@@ -514,7 +514,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
         if (await _confirmDiscard() && mounted) navigator.pop(false);
       },
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -531,7 +531,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: _borderColor(isDark),
@@ -681,7 +681,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       errorText: error,
       hintStyle: _ts(12.5, FontWeight.w400, _textSecondary(isDark)),
       filled: true,
-      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: border(_borderColor(isDark)),
       enabledBorder: border(_borderColor(isDark)),
@@ -742,7 +742,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: _borderColor(isDark)),
               ),
@@ -1120,7 +1120,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

@@ -473,7 +473,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
             return PopScope(
               canPop: !isCancelling,
               child: AlertDialog(
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Row(
                   children: [
@@ -925,10 +925,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 child: Container(
                                   height: 42,
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    color: isDark ? const Color(0xFF232323) : Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                                     ),
                                   ),
                                   child: TextField(
@@ -968,17 +968,17 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 height: 42,
                                 padding: const EdgeInsets.symmetric(horizontal: 10),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  color: isDark ? const Color(0xFF232323) : Colors.white,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                                   ),
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedStatus,
                                     icon: const Icon(Icons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
-                                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 12,
@@ -1176,12 +1176,12 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         decoration: BoxDecoration(
           color: isActive
               ? (isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE))
-              : (isDark ? const Color(0xFF1E293B) : Colors.white),
+              : (isDark ? const Color(0xFF232323) : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isActive
                 ? const Color(0xFF2563EB)
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             width: isActive ? 1.8 : 1.0,
           ),
           boxShadow: [
@@ -1199,7 +1199,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               decoration: BoxDecoration(
                 color: isActive
                     ? const Color(0xFF2563EB)
-                    : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                    : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9)),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -1273,11 +1273,11 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     return Container(
       padding: const EdgeInsets.all(14.0),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           width: 1,
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: BaseShimmer(
@@ -1386,7 +1386,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
               child: Icon(

@@ -228,18 +228,18 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                           )
                         : null,
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                   ),
@@ -276,13 +276,13 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                                 : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
                           selectedColor: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                             side: BorderSide(
                               color: isSelected
                                   ? primaryColor
-                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                  : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                             ),
                           ),
                           showCheckmark: false,

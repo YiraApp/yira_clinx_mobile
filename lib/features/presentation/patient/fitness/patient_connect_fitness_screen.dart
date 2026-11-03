@@ -189,7 +189,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                color: isDark ? const Color(0xFF121212) : Colors.white,
                 border: Border(top: BorderSide(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE8ECF2))),
               ),
               child: Column(
