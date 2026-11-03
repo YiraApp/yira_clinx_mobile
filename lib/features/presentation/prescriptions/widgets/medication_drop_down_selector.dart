@@ -58,7 +58,7 @@ class MedicationDropdownSelector extends StatelessWidget {
                 maxWidth: constraints.maxWidth > 0 ? constraints.maxWidth : 200,
               ),
               onSelected: (String newValue) => onChanged(newValue),
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               offset: const Offset(0, 46),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(computedRadius)),
               itemBuilder: (context) => items.map((String item) {

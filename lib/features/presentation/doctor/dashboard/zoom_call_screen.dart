@@ -1,5 +1,6 @@
 /*
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../core/colors/colors.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -63,6 +64,12 @@ class _ZoomCallScreenState extends State<ZoomCallScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
+        // White status-bar icons on this dark bar; the theme default is dark icons.
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),

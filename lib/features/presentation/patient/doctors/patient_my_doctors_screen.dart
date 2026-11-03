@@ -12,6 +12,8 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/widgets/entity_logo.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'widgets/scan_doctor_qr_sheet.dart';
 
@@ -57,6 +59,22 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
     List<Map<String, dynamic>> fetchedDoctors = [];
     Set<String> unlinkedIds = {};
+    // Track doctor IDs we've already added to avoid duplicates
+    Set<String> seenDoctorIds = {};
+
+    bool shouldSkip(String docId, String name) {
+      if (_isTestDoctor(name)) return true;
+      if (docId.isNotEmpty && unlinkedIds.contains(docId)) return true;
+      if (name.isNotEmpty && unlinkedIds.contains(name.toLowerCase())) return true;
+      if (docId.isNotEmpty && seenDoctorIds.contains(docId.toLowerCase())) return true;
+      return false;
+    }
+
+    void addDoctor(Map<String, dynamic> map) {
+      final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? '').toString().trim();
+      if (docId.isNotEmpty) seenDoctorIds.add(docId.toLowerCase());
+      fetchedDoctors.add(map);
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -74,77 +92,221 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         }
         localStr ??= prefs.getString('patient_linked_doctors');
       }
-
+      List<Map<String, dynamic>> localItems = [];
       if (localStr != null) {
         final List<dynamic> localList = jsonDecode(localStr);
         for (final item in localList) {
-          final map = Map<String, dynamic>.from(item);
-          final name = (map['name'] ?? map['displayName'] ?? '').toString().trim();
-          final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? '').toString().trim();
-
-          if (_isTestDoctor(name)) continue;
-          if (docId.isNotEmpty && unlinkedIds.contains(docId)) continue;
-          if (name.isNotEmpty && unlinkedIds.contains(name.toLowerCase())) continue;
-
-          if (!fetchedDoctors.any((d) =>
-              (docId.isNotEmpty && (d['doctorId'] == docId || d['id'] == docId)) ||
-              (d['name'] != null && d['name'].toString().toLowerCase() == name.toLowerCase()))) {
-            fetchedDoctors.add(map);
+          if (item is Map<String, dynamic>) {
+            localItems.add(Map<String, dynamic>.from(item));
           }
         }
       }
 
-      // 2. Fetch doctors from hospital backend if available
       final token = currentUser?.data?.accessToken ?? '';
-      final curHosp = currentUser?.data?.latestHospitalId;
-      final hospId = (curHosp != null && curHosp > 1) ? curHosp.toString() : '19';
+      List<dynamic> apptList = [];
+      List<dynamic> consentList = [];
+      Set<int> hospitalIdsToFetch = {};
 
-      Future<void> fetchHospitalDoctors(String targetHospId) async {
+      final userHospId = int.tryParse((currentUser?.data?.latestHospitalId ?? '').toString());
+      if (userHospId != null && userHospId > 0) {
+        hospitalIdsToFetch.add(userHospId);
+      }
+
+      if (token.isNotEmpty) {
+        // 2. Fetch doctors from appointment history (who actually treated the patient)
         try {
-          final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
-            URLs.hospitalDoctorsUrl,
-            queryParameters: {'hospitalId': targetHospId},
+          final apptRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            URLs.patientAppointmentsUrl,
+            data: {'userId': patientId},
             options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
           );
 
-          if (res.data != null && res.data['data'] is List) {
-            final List<dynamic> apiList = res.data['data'] as List;
-            for (final item in apiList) {
-              if (item is Map<String, dynamic>) {
-                final map = Map<String, dynamic>.from(item);
-                final firstName = (map['firstName'] ?? '').toString().trim();
-                final lastName = (map['lastName'] ?? '').toString().trim();
-                final nameField = (map['name'] ?? map['displayName'] ?? '').toString().trim();
-                final name = nameField.isNotEmpty
-                    ? nameField
-                    : (firstName.isNotEmpty || lastName.isNotEmpty
-                        ? 'Dr. $firstName $lastName'.trim()
-                        : '');
-                final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? map['providerId'] ?? '').toString().trim();
-
-                if (_isTestDoctor(name)) continue;
-                if (docId.isNotEmpty && unlinkedIds.contains(docId)) continue;
-                if (name.isNotEmpty && unlinkedIds.contains(name.toLowerCase())) continue;
-
-                map['name'] = name;
-                map['doctorId'] ??= docId;
-                map['id'] ??= docId;
-
-                if (!fetchedDoctors.any((d) =>
-                    (docId.isNotEmpty && (d['doctorId'] == docId || d['id'] == docId)) ||
-                    (d['name'] != null && d['name'].toString().toLowerCase() == name.toLowerCase()))) {
-                  fetchedDoctors.add(map);
-                }
+          if (apptRes.data != null && apptRes.data['data'] is List) {
+            apptList = apptRes.data['data'] as List;
+            for (final appt in apptList) {
+              if (appt is! Map<String, dynamic>) continue;
+              final hId = int.tryParse((appt['hospitalId'] ?? '').toString());
+              if (hId != null && hId > 0) {
+                hospitalIdsToFetch.add(hId);
               }
             }
           }
         } catch (_) {}
-      }
 
-      if (token.isNotEmpty) {
-        await fetchHospitalDoctors(hospId);
-        if (fetchedDoctors.isEmpty && hospId != '19') {
-          await fetchHospitalDoctors('19');
+        // 3. Fetch doctors connected via QR scan (consent records)
+        try {
+          final consentRes = await sl<ApiClient>().account(showSuccessSnack: false).get(
+            URLs.patientConsentsListUrl,
+            queryParameters: {'patientId': patientId},
+            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          );
+
+          if (consentRes.data != null && consentRes.data['data'] is List) {
+            consentList = consentRes.data['data'] as List;
+            for (final consent in consentList) {
+              if (consent is! Map<String, dynamic>) continue;
+              final hId = int.tryParse((consent['hospitalId'] ?? '').toString());
+              if (hId != null && hId > 0) {
+                hospitalIdsToFetch.add(hId);
+              }
+            }
+          }
+        } catch (_) {}
+
+        // 4. Enrich doctor details from their linked hospital(s)
+        final Map<String, Map<String, dynamic>> doctorProfileMap = {};
+        for (final hId in hospitalIdsToFetch) {
+          try {
+            final docRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
+              URLs.hospitalDoctorsUrl,
+              data: {'hospitalId': hId},
+              options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+            );
+            if (docRes.data != null && docRes.data['data'] is List) {
+              for (final d in docRes.data['data']) {
+                if (d is! Map<String, dynamic>) continue;
+                final docMap = Map<String, dynamic>.from(d);
+                final dId = (docMap['doctorId'] ?? docMap['id'] ?? docMap['userId'] ?? '').toString().trim();
+                final dName = (docMap['name'] ?? '').toString().trim().toLowerCase();
+                if (dId.isNotEmpty) {
+                  doctorProfileMap[dId.toLowerCase()] = docMap;
+                }
+                if (dName.isNotEmpty) {
+                  doctorProfileMap[dName] = docMap;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
+        // Add doctors who actually treated the patient (non-cancelled appointments)
+        for (final appt in apptList) {
+          if (appt is! Map<String, dynamic>) continue;
+          final docId = (appt['doctorId'] ?? '').toString().trim();
+          final docName = (appt['doctorName'] ?? '').toString().trim();
+          final hospId = appt['hospitalId'];
+          final hospName = (appt['hospitalName'] ?? '').toString().trim();
+          final status = (appt['status'] ?? '').toString().toLowerCase();
+
+          // Exclude cancelled or rejected appointments
+          if (status.contains('cancel') || status.contains('reject')) continue;
+          if (docId.isEmpty || shouldSkip(docId, docName)) continue;
+
+          final profile = doctorProfileMap[docId.toLowerCase()] ?? doctorProfileMap[docName.toLowerCase()] ?? {};
+          final finalHospitalName = hospName.isNotEmpty
+              ? hospName
+              : (profile['hospitalName'] ?? '').toString().trim();
+          final finalHospitalId = hospId ?? profile['hospitalId'];
+
+          addDoctor({
+            'doctorId': docId,
+            'id': docId,
+            'name': docName.isNotEmpty ? docName : (profile['name'] ?? 'Dr. Specialist'),
+            'specialty': (appt['specialty'] ?? profile['specialty'] ?? '').toString().trim(),
+            'qualification': (appt['qualification'] ?? profile['qualification'] ?? '').toString().trim(),
+            'experience': (appt['experience'] ?? profile['experience'] ?? '').toString().trim(),
+            'consultationFee': appt['consultationFee'] ?? profile['consultationFee'],
+            'imagePath': appt['doctorPhoto'] ?? appt['imagePath'] ?? profile['imagePath'] ?? '',
+            'hospitalId': finalHospitalId,
+            'hospitalName': finalHospitalName,
+            'orgId': appt['organizationId'] ?? profile['orgId'],
+            'isLinked': true,
+          });
+        }
+
+        // Add doctors connected via QR scan / consent
+        for (final consent in consentList) {
+          if (consent is! Map<String, dynamic>) continue;
+          final docId = (consent['doctorId'] ?? '').toString().trim();
+          final docName = (consent['doctorName'] ?? '').toString().trim();
+          if (docId.isEmpty || shouldSkip(docId, docName)) continue;
+
+          final profile = doctorProfileMap[docId.toLowerCase()] ?? doctorProfileMap[docName.toLowerCase()] ?? {};
+          final consentHospName = (consent['hospitalName'] ?? '').toString().trim();
+
+          addDoctor({
+            'doctorId': docId,
+            'id': docId,
+            'name': docName.isNotEmpty ? docName : (profile['name'] ?? 'Dr. Specialist'),
+            'specialty': (consent['specialty'] ?? profile['specialty'] ?? '').toString().trim(),
+            'qualification': (consent['qualification'] ?? profile['qualification'] ?? '').toString().trim(),
+            'experience': (consent['experience'] ?? profile['experience'] ?? '').toString().trim(),
+            'consultationFee': consent['consultationFee'] ?? profile['consultationFee'],
+            'hospitalId': consent['hospitalId'] ?? profile['hospitalId'],
+            'hospitalName': consentHospName.isNotEmpty ? consentHospName : (profile['hospitalName'] ?? '').toString().trim(),
+            'imagePath': consent['doctorPhoto'] ?? profile['imagePath'] ?? '',
+            'isLinked': true,
+          });
+        }
+
+        // Add explicitly saved local items enriched with profile details
+        for (final item in localItems) {
+          final name = (item['name'] ?? item['displayName'] ?? '').toString().trim();
+          final docId = (item['doctorId'] ?? item['id'] ?? item['userId'] ?? '').toString().trim();
+          if (shouldSkip(docId, name)) continue;
+
+          final profile = doctorProfileMap[docId.toLowerCase()] ?? doctorProfileMap[name.toLowerCase()] ?? {};
+          addDoctor({
+            ...item,
+            if ((item['specialty'] ?? '').toString().isEmpty && profile['specialty'] != null)
+              'specialty': profile['specialty'],
+            if ((item['hospitalName'] ?? '').toString().isEmpty && profile['hospitalName'] != null)
+              'hospitalName': profile['hospitalName'],
+            if (item['hospitalId'] == null && profile['hospitalId'] != null)
+              'hospitalId': profile['hospitalId'],
+            if ((item['qualification'] ?? '').toString().isEmpty && profile['qualification'] != null)
+              'qualification': profile['qualification'],
+            if ((item['experience'] ?? '').toString().isEmpty && profile['experience'] != null)
+              'experience': profile['experience'],
+            if (item['consultationFee'] == null && profile['consultationFee'] != null)
+              'consultationFee': profile['consultationFee'],
+            if ((item['imagePath'] ?? '').toString().isEmpty && profile['imagePath'] != null)
+              'imagePath': profile['imagePath'],
+            'isLinked': true,
+          });
+        }
+
+        // 5. Nothing linked yet (e.g. a switched family profile): fall back to the hospital's doctors
+        if (fetchedDoctors.isEmpty) {
+          final curHosp = currentUser?.data?.latestHospitalId;
+          final hospId = (curHosp != null && curHosp > 1) ? curHosp.toString() : '19';
+
+          Future<void> fetchHospitalDoctors(String targetHospId) async {
+            try {
+              final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
+                URLs.hospitalDoctorsUrl,
+                queryParameters: {'hospitalId': targetHospId},
+                options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+              );
+
+              if (res.data != null && res.data['data'] is List) {
+                for (final item in res.data['data'] as List) {
+                  if (item is! Map<String, dynamic>) continue;
+                  final map = Map<String, dynamic>.from(item);
+                  final firstName = (map['firstName'] ?? '').toString().trim();
+                  final lastName = (map['lastName'] ?? '').toString().trim();
+                  final nameField = (map['name'] ?? map['displayName'] ?? '').toString().trim();
+                  final name = nameField.isNotEmpty
+                      ? nameField
+                      : (firstName.isNotEmpty || lastName.isNotEmpty
+                          ? 'Dr. $firstName $lastName'.trim()
+                          : '');
+                  final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? map['providerId'] ?? '').toString().trim();
+                  if (shouldSkip(docId, name)) continue;
+
+                  map['name'] = name;
+                  map['doctorId'] ??= docId;
+                  map['id'] ??= docId;
+                  addDoctor(map);
+                }
+              }
+            } catch (_) {}
+          }
+
+          await fetchHospitalDoctors(hospId);
+          if (fetchedDoctors.isEmpty && hospId != '19') {
+            await fetchHospitalDoctors('19');
+          }
         }
       }
     } catch (_) {}
@@ -328,30 +490,13 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               width: 1.2,
             ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(13),
             child: avatarContent,
-          ),
-        ),
-        // Connected Dot Indicator
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                width: 2,
-              ),
-            ),
           ),
         ),
       ],
@@ -362,7 +507,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     return Container(
       width: size,
       height: size,
-      color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+      color: EntityLogo.colorFor(initials).withValues(alpha: isDark ? 0.22 : 0.1),
       alignment: Alignment.center,
       child: Text(
         initials,
@@ -370,7 +515,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           fontFamily: appPoppinFont,
           fontSize: size * 0.36,
           fontWeight: FontWeight.bold,
-          color: _primaryBlue,
+          color: EntityLogo.colorFor(initials),
         ),
       ),
     );
@@ -510,15 +655,15 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                 )
                               : null,
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                         ),
                       ),
@@ -555,13 +700,13 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                       : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                 ),
                                 selectedColor: _primaryBlue,
-                                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                backgroundColor: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
                                     color: isSelected
                                         ? _primaryBlue
-                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                   ),
                                 ),
                                 showCheckmark: false,
@@ -606,20 +751,25 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     bool isTab,
   ) {
     final name = (doctor['name'] ?? doctor['displayName'] ?? 'Dr. Specialist').toString();
-    final specialty = (doctor['specialty'] ?? 'General Physician').toString();
-    final hospital = (doctor['hospitalName'] ?? 'Healthcare Network').toString();
+    final specialty = (doctor['specialty'] ?? '').toString().trim();
+    final hospital = (doctor['hospitalName'] ?? '').toString().trim();
     final qualification = (doctor['qualification'] ?? '').toString().trim();
-    final experience = (doctor['experience'] ?? '').toString().trim();
-    final fee = doctor['consultationFee'] != null ? '₹${doctor['consultationFee']}' : '';
+    final rawExperience = (doctor['experience'] ?? '').toString().trim();
+    final experienceYears = num.tryParse(rawExperience);
+    final experience = (rawExperience.isEmpty || rawExperience == '0' || rawExperience == 'null')
+        ? ''
+        : (experienceYears != null ? '${rawExperience.replaceAll(RegExp(r'\.0$'), '')} yrs experience' : rawExperience);
+    final feeValue = num.tryParse((doctor['consultationFee'] ?? '').toString());
+    final fee = feeValue == null ? '' : (feeValue == 0 ? 'Free' : '₹${feeValue.toString().replaceAll(RegExp(r'\.0$'), '')}');
     final docId = (doctor['doctorId'] ?? doctor['id'] ?? doctor['userId'] ?? '').toString();
 
     return Container(
       padding: EdgeInsets.all(isTab ? 16 : 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -657,6 +807,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (specialty.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       specialty,
@@ -669,11 +820,13 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    ],
+                    if (hospital.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
-                          Icons.local_hospital_rounded,
+                        PhosphorIcon(
+                          PhosphorIconsFill.hospital,
                           size: 12,
                           color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                         ),
@@ -692,6 +845,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         ),
                       ],
                     ),
+                    ],
                   ],
                 ),
               ),
@@ -707,7 +861,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                 constraints: const BoxConstraints(),
                 tooltip: 'Options',
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 elevation: 6,
                 onSelected: (val) {
                   if (val == 'book') {
@@ -800,7 +954,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    experience.contains('Exp') ? experience : '$experience Exp',
+                    experience,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 10,
@@ -961,7 +1115,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           child: Container(
             height: 140,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
               borderRadius: BorderRadius.circular(16),
             ),
           ),

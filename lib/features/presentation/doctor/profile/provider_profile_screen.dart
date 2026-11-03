@@ -73,7 +73,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       builder: (ctx) => Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(28),
             topRight: Radius.circular(28),
@@ -400,10 +400,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         ),
                         DoctorProfileFieldItem(
                           label: "Medical Council Reg. No.",
-                          value: profile.registrationNumber ?? "REG-ACTIVE",
+                          // Nothing checks this number against the medical council yet, so no
+                          // "Verified" badge, and no made-up value when it's missing.
+                          value: (profile.registrationNumber ?? '').trim().isEmpty ? "Not added" : profile.registrationNumber!,
                           icon: Icons.verified_user_outlined,
-                          isVerified: true,
-                          isCopyable: true,
+                          isVerified: false,
+                          isCopyable: (profile.registrationNumber ?? '').trim().isNotEmpty,
                         ),
                         DoctorProfileFieldItem(
                           label: "Clinical Experience",
@@ -519,10 +521,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -565,11 +567,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     bool isTab,
   ) {
     return Material(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF232323) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
@@ -595,7 +597,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               );
             },
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.headset_mic_outlined,
             iconColor: const Color(0xFF10B981),
@@ -616,7 +618,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               );
             },
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.description_outlined,
             iconColor: const Color(0xFF0284C7),
@@ -636,7 +638,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               );
             },
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.privacy_tip_outlined,
             iconColor: const Color(0xFFF59E0B),
@@ -656,7 +658,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               );
             },
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.receipt_long_outlined,
             iconColor: const Color(0xFF10B981),
@@ -689,11 +691,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     bool isTab,
   ) {
     return Material(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF232323) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
@@ -712,7 +714,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ProviderTourController().restartTour();
             },
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.switch_account_rounded,
             iconColor: primaryColor,
@@ -722,7 +724,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             isTab: isTab,
             onTap: () => ProfileSwitcherSheet.show(context),
           ),
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
             icon: Icons.logout_rounded,
             iconColor: Colors.red.shade500,

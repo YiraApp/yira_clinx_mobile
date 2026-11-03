@@ -433,7 +433,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -540,10 +540,10 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                            color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                             ),
                           ),
                           child: Row(
@@ -702,12 +702,12 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? const Color(0xFF2563EB)
-                                          : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
+                                          : (isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC)),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF2563EB)
-                                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                            : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                         width: isSelected ? 1.5 : 1,
                                       ),
                                       boxShadow: isSelected
@@ -845,10 +845,10 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                    color: isDark ? const Color(0xFF121212) : Colors.white,
                     border: Border(
                       top: BorderSide(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                   ),
@@ -924,9 +924,9 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+              border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
             ),
             child: Center(
               child: Text(
@@ -1025,12 +1025,12 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
         decoration: BoxDecoration(
           color: isSelected
               ? (isDark ? const Color(0xFF1D4ED8) : const Color(0xFF2563EB))
-              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+              : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF2563EB)
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
           ),
         ),
         child: Row(
@@ -1097,10 +1097,10 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       padding: const EdgeInsets.all(12),
@@ -1151,7 +1151,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                 decoration: BoxDecoration(
                   color: openCount > 0
                       ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7))
-                      : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                      : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: openCount > 0
@@ -1299,12 +1299,12 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF2563EB)
-              : (isDark ? const Color(0xFF0F172A) : Colors.white),
+              : (isDark ? const Color(0xFF121212) : Colors.white),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF2563EB)
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
@@ -1356,9 +1356,9 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 children: [
@@ -1411,10 +1411,10 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Column(

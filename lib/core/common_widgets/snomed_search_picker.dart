@@ -719,7 +719,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
             constraints: const BoxConstraints(minHeight: 46),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),

@@ -43,7 +43,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF232323) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
                   ),
@@ -120,7 +120,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
       ),

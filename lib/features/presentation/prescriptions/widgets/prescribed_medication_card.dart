@@ -215,10 +215,10 @@ class _PrescribedPrescriptionCardState
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         border: Border.all(
           color: isDark
-              ? const Color(0xFF334155)
+              ? const Color(0xFF3A3A3A)
               : const Color(0xFFE2E8F0),
           width: 1,
         ),
@@ -248,7 +248,7 @@ class _PrescribedPrescriptionCardState
               ),
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
                 ),
               ),
             ),
@@ -411,12 +411,12 @@ class _PrescribedPrescriptionCardState
                         decoration: BoxDecoration(
                           color: isSelected
                               ? _primaryBlue
-                              : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                              : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSelected
                                 ? _primaryBlue
-                                : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                                : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1)),
                           ),
                         ),
                         child: Text(
@@ -592,19 +592,19 @@ class _PrescribedPrescriptionCardState
       ),
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF0F172A)
+          ? const Color(0xFF121212)
           : const Color(0xFFF8FAFC),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
         ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
         ),
       ),
       focusedBorder: OutlineInputBorder(

@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/time_line_segement_item.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
-import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
 import 'patient_info_card.dart';
 
 class PatientHistoryCard extends StatelessWidget {
@@ -12,8 +10,6 @@ class PatientHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return PatientInfoCard(
       isTab: isTab,
       title: 'Visit History',
@@ -41,9 +37,6 @@ class PatientHistoryCard extends StatelessWidget {
             value: patient.nextScheduledAppointment ?? 'None scheduled',
             icon: Icons.event_repeat_outlined,
             isLast: true,
-            valueColor: patient.nextScheduledAppointment == null
-                ? (isDark ? Colors.blue[300] : const Color(0xFF1A73E8))
-                : null,
           ),
         ],
       ),

@@ -188,7 +188,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                         totalSteps: 3,
                                         currentStep: _getStep(_passwordStrength),
                                         selectedColor: _getColor(_passwordStrength),
-                                        unselectedColor: isDark ? const Color(0xFF334155) : Colors.grey[300]!, // Custom dark step track background
+                                        unselectedColor: isDark ? const Color(0xFF3A3A3A) : Colors.grey[300]!, // Custom dark step track background
                                       ),
                                     );
                                   },

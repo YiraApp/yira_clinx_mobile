@@ -7,18 +7,21 @@ import 'package:yiraclinics/features/presentation/prescriptions/add_prescription
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
-import '../../../../core/constants/constants.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
-import '../../../../core/common_widgets/common_text.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 
 class PrescriptionListScreen extends StatelessWidget {
   final PatientProfileEntity? patient;
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -28,6 +31,7 @@ class PrescriptionListScreen extends StatelessWidget {
     this.patient,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -73,7 +77,7 @@ class PrescriptionListScreen extends StatelessWidget {
               if (context.mounted) {
                 context.read<PrescriptionBloc>().add(LoadPrescriptionData(
                   patientId: effectivePatientId,
-                  appointmentId: appointmentId,
+                  appointmentId: listWholeHospital ? null : appointmentId,
                   hospitalId: hospitalId,
                   orgId: orgId,
                 ));
@@ -107,23 +111,17 @@ class PrescriptionListScreen extends StatelessWidget {
           final validMeds = state.medications
               .where((m) => m.name.trim().isNotEmpty)
               .toList();
-          final bool hasPrescription = validMeds.isNotEmpty;
+          final bool hasPrescription = validMeds.isNotEmpty || state.labTests.isNotEmpty;
 
           Widget bodyWidget;
 
           if (state.status == PrescriptionStatus.loading) {
             bodyWidget = PrescriptionListShimmer(itemCount: 4, isTab: isTab);
           } else {
-            if (validMeds.isEmpty) {
-              bodyWidget = Center(
-                child: CommonText(
-                  'No prescriptions records found.',
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: displayWidth(context) * 0.035,
-                    color: Colors.grey,
-                  ),
-                ),
+            if (!hasPrescription) {
+              bodyWidget = const RecordEmptyState(
+                icon: Icons.medication_outlined,
+                title: 'No prescriptions yet',
               );
             } else {
               bodyWidget = ListView(
@@ -132,6 +130,7 @@ class PrescriptionListScreen extends StatelessWidget {
                 children: [
                   SinglePrescriptionCard(
                     medications: validMeds,
+                    labTests: state.labTests,
                     date: 'Today • Clinical Consultation',
                     onEdit: (isPatient || !allowAdd)
                         ? null
@@ -151,7 +150,7 @@ class PrescriptionListScreen extends StatelessWidget {
                               if (context.mounted) {
                                 context.read<PrescriptionBloc>().add(LoadPrescriptionData(
                                   patientId: effectivePatientId,
-                                  appointmentId: appointmentId,
+                                  appointmentId: listWholeHospital ? null : appointmentId,
                                   hospitalId: hospitalId,
                                   orgId: orgId,
                                 ));
@@ -272,6 +271,7 @@ class PrescriptionListScreen extends StatelessWidget {
           for (final med in meds) {
             context.read<PrescriptionBloc>().add(RemoveMedication(med.id));
           }
+          context.read<PrescriptionBloc>().add(const SetLabTests([]));
         },
         secondaryLabel: "Cancel",
         onSecondary: () => Navigator.pop(dialogContext),

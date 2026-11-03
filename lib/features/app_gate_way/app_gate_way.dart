@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:yiraclinics/core/services/notification_services/notification_target.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -254,6 +255,13 @@ class AppGateway extends StatelessWidget {
                         final String? targetRoute = payload['route']?.toString().trim();
                         final String? itemId = payload['id']?.toString().trim();
                         final String? type = payload['type']?.toString().trim();
+
+                        // Same targets as tapping the notification in the app's list.
+                        final target = notificationTargetFor(type: type ?? '', route: targetRoute);
+                        if (target != null && target.url == null) {
+                          NavigationService.navigatorKey.currentState?.pushNamed(target.route, arguments: target.arguments);
+                          return;
+                        }
 
                         final typeUpper = (type ?? '').toUpperCase();
                         if (typeUpper == 'MEDICAL_RECORD_ADDED' ||

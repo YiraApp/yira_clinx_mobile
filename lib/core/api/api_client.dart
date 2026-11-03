@@ -56,10 +56,13 @@ class ApiClient {
   Dio get health => _healthDio;
 }
 */
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../error_interceptor/error_interceptor.dart';
+import '../local/global_session.dart';
 import 'base_api_configuration.dart';
 
 enum ApiType { account, health }
@@ -109,6 +112,12 @@ class ApiClient {
             options.headers.remove('Content-Type');
             options.headers.remove('content-type');
             options.contentType = null;
+          }
+          // Every call to our API carries the session token, unless the caller set its own.
+          final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+          final isOwnApi = options.uri.host == Uri.parse(formattedUrl).host;
+          if (isOwnApi && token.isNotEmpty && options.headers[HttpHeaders.authorizationHeader] == null) {
+            options.headers[HttpHeaders.authorizationHeader] = 'Bearer $token';
           }
           return handler.next(options);
         },

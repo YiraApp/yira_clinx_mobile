@@ -8,6 +8,7 @@ import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
+import 'package:yiraclinics/features/data/models/prescriptions/lab_test_model.dart';
 import 'package:yiraclinics/features/domain/entities/medication/medication_entity.dart';
 import 'package:yiraclinics/features/use_cases/ge_prescription_use_case.dart';
 
@@ -158,8 +159,18 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                 final diags = p['Diagnoses'] ?? p['diagnoses'];
                 String condition = 'General Consultation';
                 if (diags is List && diags.isNotEmpty) {
-                  final first = diags.first;
-                  condition = (first is Map ? (first['Diagnosis'] ?? first['name'] ?? first['diagnosis']) : first.toString()) ?? 'General Consultation';
+                  // Every diagnosis, cleaned of stray separators (",viral pyrexia" -> "viral pyrexia").
+                  final names = <String>[];
+                  for (final d in diags) {
+                    final raw = (d is Map ? (d['Diagnosis'] ?? d['name'] ?? d['diagnosis']) : d)?.toString() ?? '';
+                    for (final part in raw.split(RegExp(r'[,;]'))) {
+                      final clean = part.trim();
+                      if (clean.isNotEmpty && !names.any((n) => n.toLowerCase() == clean.toLowerCase())) {
+                        names.add(clean);
+                      }
+                    }
+                  }
+                  if (names.isNotEmpty) condition = names.join(', ');
                 }
 
                 final medsRaw = p['Medications'] ?? p['medications'] ?? [];
@@ -224,6 +235,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
                   "pharmacy": "Yira Clinx E-Pharmacy",
                   "notes": (p['Notes'] ?? p['notes'] ?? 'Follow-up as advised. Take medicines as prescribed.').toString(),
                   "medications": medList,
+                  "labTests": PrescribedLabTestModel.listFromJson(p['LabTests'] ?? p['labTests']),
                   "pdfUrl": pdfUrl,
                   "needRefill": medList.isNotEmpty,
                   "isSelf": isSelf,

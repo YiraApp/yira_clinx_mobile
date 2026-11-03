@@ -312,6 +312,10 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                       final String createdAt = _formatDate(item['CreatedAt']);
                       final String? filePath = item['FilePath'];
                       final String? fileName = item['FileName'];
+                      // Only the doctor who wrote it may delete it (the server enforces this too).
+                      final String authorId = (item['DoctorId'] ?? item['Doctor']?['Id'] ?? '').toString().toLowerCase();
+                      final String meId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').toLowerCase();
+                      final bool canDelete = authorId.isNotEmpty && authorId == meId;
 
                       // Doctor Info
                       final doctor = item['Doctor'];
@@ -327,11 +331,11 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: isDark ? const Color(0xFF232323) : Colors.white,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF334155)
+                                ? const Color(0xFF3A3A3A)
                                 : const Color(0xFFE2E8F0),
                           ),
                           boxShadow: [
@@ -394,7 +398,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                     ],
                                   ),
                                 ),
-                                if (id > 0)
+                                if (id > 0 && canDelete)
                                   IconButton(
                                     icon: Icon(
                                       Icons.delete_outline_rounded,

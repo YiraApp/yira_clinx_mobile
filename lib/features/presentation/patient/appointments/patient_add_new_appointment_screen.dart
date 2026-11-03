@@ -650,7 +650,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
           builder: (context, setSheetState) {
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -705,7 +705,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -897,7 +897,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       builder: (sheetContext) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -951,7 +951,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -1073,10 +1073,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     final bool isTab = isTablet(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         title: Text(
           "New Appointment",
@@ -1107,7 +1107,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   Container(
                     padding: EdgeInsets.all(isTab ? 24 : 18),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -1132,7 +1132,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                              color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -1252,10 +1252,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                                   ),
                                 ),
                                 child: DropdownButtonHideUnderline(
@@ -1263,7 +1263,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     value: selectedHospId,
                                     isExpanded: true,
                                     icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
-                                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                     items: distinctHospitals.map((h) {
                                       final hId = (h['id'] ?? h['hospitalId'])?.toString().trim() ?? '';
                                       return DropdownMenuItem<String>(
@@ -1315,10 +1315,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                                 ),
                               ),
                               child: Row(
@@ -1384,12 +1384,12 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? (isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE))
-                                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                            : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected
                                               ? const Color(0xFF2563EB)
-                                              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                              : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                           width: isSelected ? 1.8 : 1.0,
                                         ),
                                       ),
@@ -1483,12 +1483,12 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(0xFFE0F2FE)
-                                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                      : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFF2563EB)
-                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                     width: isSelected ? 1.5 : 1.0,
                                   ),
                                 ),
@@ -1533,7 +1533,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
@@ -1594,12 +1594,12 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? const Color(0xFF2563EB)
-                                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                        : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSelected
                                           ? const Color(0xFF2563EB)
-                                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                          : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                                     ),
                                   ),
                                   child: Column(
@@ -1663,7 +1663,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                             ),
@@ -1719,7 +1719,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     color: isSelected
                                         ? const Color(0xFF2563EB)
                                         : (isAvail
-                                            ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9))
+                                            ? (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9))
                                             : (isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9))),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
@@ -1727,7 +1727,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                           ? const Color(0xFF2563EB)
                                           : (isBooked
                                               ? (isDark ? Colors.redAccent.withValues(alpha: 0.25) : Colors.red.withValues(alpha: 0.2))
-                                              : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1))),
+                                              : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1))),
                                     ),
                                   ),
                                   child: Row(
@@ -1809,7 +1809,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(0xFF2563EB)
-                                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+                                      : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: isSelected
@@ -1906,7 +1906,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             hintText: "Enter primary complaint or purpose of visit...",
                             hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                               borderSide: BorderSide(
@@ -1936,10 +1936,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                                   ),
                                 ),
                                 child: Text(
@@ -2043,7 +2043,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           border: Border(
             top: BorderSide(
               color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -2206,10 +2206,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       width: double.infinity,
       padding: EdgeInsets.all(isTab ? 16 : 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.1,
         ),
       ),
@@ -2277,7 +2277,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         color: const Color(0xFF10B981),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          color: isDark ? const Color(0xFF121212) : Colors.white,
                           width: 2,
                         ),
                       ),
@@ -2384,7 +2384,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -2527,7 +2527,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -2567,8 +2567,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
 
   Widget _buildDoctorCardsShimmer(bool isDark) {
     return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      baseColor: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC),
       child: SizedBox(
         height: 88,
         child: ListView.separated(
@@ -2579,10 +2579,10 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
             width: 220,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -2619,8 +2619,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
 
   Widget _buildSlotsShimmer(bool isDark) {
     return Shimmer.fromColors(
-      baseColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-      highlightColor: isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC),
+      baseColor: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
+      highlightColor: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -2628,7 +2628,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
           width: 92,
           height: 38,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
         )),
@@ -2637,9 +2637,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   }
 
   Widget _buildFullAppointmentShimmer(bool isDark, bool isTab) {
-    final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
-    final highlightColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
-    final placeholderColor = isDark ? const Color(0xFF334155) : Colors.white;
+    final baseColor = isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0);
+    final highlightColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC);
+    final placeholderColor = isDark ? const Color(0xFF3A3A3A) : Colors.white;
 
     Widget shimmerBlock({double? width, required double height, double radius = 8}) {
       return Container(
@@ -2691,7 +2691,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
             Container(
               padding: EdgeInsets.all(isTab ? 24 : 18),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),

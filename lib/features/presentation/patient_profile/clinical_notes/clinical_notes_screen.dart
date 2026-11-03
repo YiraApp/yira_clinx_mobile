@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import '../widgets/record_tab_ui.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
@@ -16,6 +17,10 @@ import '../../../../core/common_widgets/custom_button.dart';
 class ClinicalNotesScreen extends StatefulWidget {
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -24,6 +29,7 @@ class ClinicalNotesScreen extends StatefulWidget {
     super.key,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -65,7 +71,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
       final String token = currentUser?.data?.accessToken ?? '';
 
       final queryParams = <String, dynamic>{};
-      if (widget.appointmentId != null && widget.appointmentId!.trim().isNotEmpty) {
+      if (!widget.listWholeHospital && widget.appointmentId != null && widget.appointmentId!.trim().isNotEmpty) {
         queryParams['appointmentId'] = widget.appointmentId!.trim();
       }
       if (widget.hospitalId != null && widget.hospitalId!.trim().isNotEmpty) {
@@ -371,86 +377,45 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     String formattedDate = 'Recent Visit';
     if (createdAtRaw.isNotEmpty) {
       try {
-        final parsed = DateTime.parse(createdAtRaw);
+        // Server times are UTC; show them in the phone's time zone.
+        final parsed = DateTime.parse(createdAtRaw).toLocal();
         formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(parsed);
       } catch (_) {
         formattedDate = createdAtRaw;
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? darkModeCardColor : Colors.white,
-        borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.2),
-          width: 0.5,
-        ),
-      ),
+    return RecordCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.medical_services_outlined,
-                  size: 14,
-                  color: primaryColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                formattedDate.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white54 : Colors.black45,
-                ),
-              ),
-              if (!isPatient && widget.allowAdd) ...[
-                const Spacer(),
-                IconButton(
-                  icon: Icon(Icons.edit_outlined, size: 18, color: Colors.grey.shade600),
-                  onPressed: () => _startEditing(noteItem),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 14),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                  onPressed: () => _deleteNote(noteId),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ],
+          RecordCardHeader(
+            icon: Icons.sticky_note_2_outlined,
+            title: 'Dr. $createdBy',
+            subtitle: formattedDate,
+            trailing: (!isPatient && widget.allowAdd)
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit note', onTap: () => _startEditing(noteItem)),
+                      RecordIconAction(
+                        icon: Icons.delete_outline_rounded,
+                        tooltip: 'Delete note',
+                        danger: true,
+                        onTap: () => _deleteNote(noteId),
+                      ),
+                    ],
+                  )
+                : null,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             notesText,
             style: TextStyle(
               fontFamily: appPoppinFont,
-              fontSize: isWideScreen ? 14 : displayWidth(context) * 0.035,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'By Dr. $createdBy',
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 11,
-              color: isDark ? Colors.white38 : Colors.black38,
-              fontStyle: FontStyle.italic,
+              fontSize: isWideScreen ? 14 : 13,
+              height: 1.45,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
             ),
           ),
         ],
@@ -459,39 +424,12 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
   }
 
   Widget _buildEmptyStateView(BuildContext context, bool isWideScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 24.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.note_alt_outlined,
-              size: isWideScreen ? 56 : 44,
-              color: isDark ? Colors.white24 : Colors.grey.shade300,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No Historical Clinical Notes Found',
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: isWideScreen ? 16 : 14,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white60 : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Enter notes above to record doctor clinical observations.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 40),
+      child: RecordEmptyState(
+        icon: Icons.note_alt_outlined,
+        title: 'No Historical Clinical Notes Found',
+        message: 'Enter notes above to record doctor clinical observations.',
       ),
     );
   }

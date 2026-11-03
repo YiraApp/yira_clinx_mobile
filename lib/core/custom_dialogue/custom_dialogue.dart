@@ -99,7 +99,7 @@ class CustomUrlDialog {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(14),
       ),
       child: _buildContactRowItem(context, Icons.alternate_email_rounded, 'contact@yira.ai', primaryColor, isDark, () {
@@ -115,7 +115,7 @@ class CustomUrlDialog {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(

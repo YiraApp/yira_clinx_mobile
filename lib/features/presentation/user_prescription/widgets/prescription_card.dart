@@ -7,6 +7,9 @@ import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/widgets/doctor_avatar_widget.dart';
 import '../prescription_details_screen.dart';
 import '../../patient/diet/diet_ui.dart';
+import '../../patient_profile/widgets/record_tab_ui.dart';
+import '../../../domain/entities/prescriptions/lab_test_entity.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 class PrescriptionCard extends StatelessWidget {
   final String id;
@@ -19,6 +22,7 @@ class PrescriptionCard extends StatelessWidget {
   final String status;
   final String pharmacy;
   final List<Map<String, dynamic>> medications;
+  final List<PrescribedLabTest> labTests;
   final String? pdfUrl;
   final bool isSelf;
   final VoidCallback? onDelete;
@@ -35,6 +39,7 @@ class PrescriptionCard extends StatelessWidget {
     required this.status,
     required this.pharmacy,
     required this.medications,
+    this.labTests = const [],
     this.pdfUrl,
     this.isSelf = false,
     this.onDelete,
@@ -113,6 +118,7 @@ class PrescriptionCard extends StatelessWidget {
             'status': status,
             'pharmacy': pharmacy,
             'medications': medications,
+            'labTests': labTests,
             'pdfUrl': pdfUrl,
             'isSelf': isSelf,
           },
@@ -121,18 +127,27 @@ class PrescriptionCard extends StatelessWidget {
     );
   }
 
+  /// "1-0-1 · 5 Days" style summary of how to take a medicine.
+  String _howToTake(Map<String, dynamic> m) {
+    final freq = (m['frequency'] ?? '').toString().trim();
+    var dosage = (m['dosage'] ?? '').toString().trim();
+    if (freq.isNotEmpty && dosage.endsWith(' - $freq')) {
+      dosage = dosage.substring(0, dosage.length - freq.length - 3).trim();
+    }
+    final duration = (m['duration'] ?? '').toString().trim();
+    return [dosage, freq, duration].where((p) => p.isNotEmpty).toSet().join(' · ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTab = isTablet(context);
-    final names = medications
-        .map((m) => (m['name'] ?? '').toString().trim())
-        .where((n) => n.isNotEmpty)
+    final meds = medications
+        .where((m) => (m['name'] ?? '').toString().trim().isNotEmpty)
         .toList();
     const preview = 3;
-    final shown = names.take(preview).toList();
-    final more = names.length - shown.length;
-    final medCount = medications.length;
+    final shown = meds.take(preview).toList();
+    final more = meds.length - shown.length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -151,7 +166,7 @@ class PrescriptionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Doctor and date
+                    // Who prescribed it and when
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -163,26 +178,35 @@ class PrescriptionCard extends StatelessWidget {
                             children: [
                               Text(
                                 _doctorNameOnly,
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: DietUi.text(isTab ? 15.5 : 14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25),
                               ),
-                              if (_specialtyOnly.isNotEmpty)
-                                Text(
-                                  _specialtyOnly,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
-                                ),
+                              const SizedBox(height: 2),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (_specialtyOnly.isNotEmpty)
+                                    Text(
+                                      _specialtyOnly,
+                                      style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
+                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      PhosphorIcon(PhosphorIconsBold.calendarBlank, size: 13, color: DietUi.hint(isDark)),
+                                      const SizedBox(width: 3),
+                                      Text(_shortDate(date), style: DietUi.text(11.5, FontWeight.w600, DietUi.muted(isDark))),
+                                    ],
+                                  ),
+                                  if (isSelf) DietUi.pill('Added by you', const Color(0xFF6366F1), isDark),
+                                ],
+                              ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        if (isSelf) ...[
-                          DietUi.pill('Self Added', const Color(0xFF6366F1), isDark),
-                          const SizedBox(width: 6),
-                        ],
-                        DietUi.pill(_shortDate(date), primaryColor, isDark, icon: Icons.event_rounded),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -197,87 +221,109 @@ class PrescriptionCard extends StatelessWidget {
                         border: Border.all(color: DietUi.line(isDark)),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.healing_rounded, size: 15, color: primaryColor),
-                          const SizedBox(width: 8),
-                          Text('Diagnosis', style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 1),
+                            child: PhosphorIcon(PhosphorIconsBold.stethoscope, size: 15, color: primaryColor),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              condition,
-                              maxLines: 1,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(text: 'Diagnosis  ', style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
+                                  TextSpan(text: condition, style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark))),
+                                ],
+                              ),
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark)),
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    // Medicines
+                    // Medicines, one per line with how to take them
                     if (shown.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          for (final name in shown)
-                            Container(
-                              constraints: const BoxConstraints(maxWidth: 220),
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.07),
-                                borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 12),
+                      Text(
+                        'MEDICINES · ${meds.length}',
+                        style: DietUi.text(10.5, FontWeight.w700, DietUi.muted(isDark)).copyWith(letterSpacing: 0.6),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final m in shown)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 7),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const PhosphorIcon(PhosphorIconsBold.pill, size: 15, color: primaryColor),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.medication_rounded, size: 13, color: primaryColor),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      name,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      (m['name'] ?? '').toString().trim(),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: DietUi.text(11.5, FontWeight.w600, isDark ? Colors.white : const Color(0xFF1E3A8A)),
+                                      style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark)),
                                     ),
-                                  ),
-                                ],
+                                    if (_howToTake(m).isNotEmpty)
+                                      Text(
+                                        _howToTake(m),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          if (more > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: DietUi.sunken(isDark),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: DietUi.line(isDark)),
-                              ),
-                              child: Text('+$more more', style: DietUi.text(11.5, FontWeight.w600, DietUi.muted(isDark))),
-                            ),
-                        ],
+                            ],
+                          ),
+                        ),
+                      if (more > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 36),
+                          child: Text(
+                            '+ $more more medicine${more == 1 ? '' : 's'}',
+                            style: DietUi.text(11.5, FontWeight.w600, primaryColor),
+                          ),
+                        ),
+                    ] else if (labTests.isEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text('No medicines listed', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
+                    ],
+
+                    // Lab tests the doctor ordered
+                    if (labTests.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'LAB TESTS · ${labTests.length}',
+                        style: DietUi.text(10.5, FontWeight.w700, DietUi.muted(isDark)).copyWith(letterSpacing: 0.6),
                       ),
+                      const SizedBox(height: 6),
+                      RecordLabTestLines(tests: labTests, limit: preview),
                     ],
                   ],
                 ),
               ),
 
-              // Footer: count, PDF and details
+              // Actions
               Divider(height: 1, color: DietUi.line(isDark)),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 4, 6, 4),
+                padding: const EdgeInsets.fromLTRB(8, 4, 6, 4),
                 child: Row(
                   children: [
-                    Icon(Icons.medication_outlined, size: 15, color: DietUi.hint(isDark)),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        medCount == 0 ? 'No medicines listed' : '$medCount medicine${medCount == 1 ? '' : 's'}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
-                      ),
-                    ),
                     if (isSelf && onDelete != null)
                       TextButton.icon(
                         onPressed: onDelete,
@@ -286,9 +332,10 @@ class PrescriptionCard extends StatelessWidget {
                           visualDensity: VisualDensity.compact,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
-                        icon: const Icon(Icons.delete_outline_rounded, size: 15, color: Color(0xFFEF4444)),
+                        icon: const PhosphorIcon(PhosphorIconsBold.trash, size: 15, color: Color(0xFFEF4444)),
                         label: Text('Remove', style: DietUi.text(12, FontWeight.w600, const Color(0xFFEF4444))),
                       ),
+                    const Spacer(),
                     if (_hasPdf)
                       TextButton.icon(
                         onPressed: () => _openPdf(context),
@@ -297,8 +344,8 @@ class PrescriptionCard extends StatelessWidget {
                           visualDensity: VisualDensity.compact,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
-                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 15),
-                        label: Text('PDF', style: DietUi.text(12, FontWeight.w700, const Color(0xFF059669))),
+                        icon: const PhosphorIcon(PhosphorIconsBold.filePdf, size: 15),
+                        label: Text('View PDF', style: DietUi.text(12, FontWeight.w700, const Color(0xFF059669))),
                       ),
                     TextButton(
                       onPressed: () => _navigateToDetails(context),
@@ -312,7 +359,7 @@ class PrescriptionCard extends StatelessWidget {
                         children: [
                           Text('View details', style: DietUi.text(12, FontWeight.w700, primaryColor)),
                           const SizedBox(width: 2),
-                          const Icon(Icons.chevron_right_rounded, size: 18),
+                          const PhosphorIcon(PhosphorIconsBold.caretRight, size: 18),
                         ],
                       ),
                     ),

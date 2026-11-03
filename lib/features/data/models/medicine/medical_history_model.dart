@@ -34,7 +34,9 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
       final docMap = json['Doctor'] as Map;
       docName = "Dr. ${docMap['FirstName'] ?? ''} ${docMap['LastName'] ?? ''}".trim();
     }
-    if (docName.isEmpty) docName = 'Dr. Provider';
+    // No doctor (for example a vitals check the patient logged): leave it blank
+    // rather than inventing "Dr. Provider".
+    if (docName.trim() == 'Dr.') docName = '';
 
     final bp = json['BloodPressure'] ?? json['bloodPressure'];
     final hr = json['HeartRate'] ?? json['heartRate'];

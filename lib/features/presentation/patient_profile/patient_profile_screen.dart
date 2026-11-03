@@ -70,8 +70,27 @@ class _DoctorPatientProfileScreenState
 
   late final List<String> _tabs;
 
-  /// Record tabs the doctor switched to "Full history".
+  bool get _hasHospital => (widget.hospitalId ?? '').trim().isNotEmpty;
+
+  /// Record tabs the doctor switched to "Full history" (without access yet,
+  /// where it shows the request screen).
   final Set<String> _fullHistoryTabs = {};
+
+  /// Record tabs the doctor switched back to this visit. With access, tabs
+  /// open on the full history.
+  final Set<String> _visitOnlyTabs = {};
+
+  void _openTab(String tab, {required bool fullHistory}) {
+    final idx = _tabs.indexOf(tab);
+    if (idx == -1) return;
+    setState(() {
+      if (fullHistory) {
+        _fullHistoryTabs.add(tab);
+        _visitOnlyTabs.remove(tab);
+      }
+    });
+    context.read<PatientProfileBloc>().add(TabChanged(idx));
+  }
 
   /// A record tab for a doctor: this visit's records, or the patient's full
   /// history across hospitals once the patient has given consent. Patients
@@ -86,9 +105,19 @@ class _DoctorPatientProfileScreenState
     if (_isPatient()) return build(false);
     final hasAccess = accessStatus?.hasAccess ?? false;
     return PatientRecordScopeTab(
-      showHistory: _fullHistoryTabs.contains(tabName),
-      onChanged: (full) => setState(() => full ? _fullHistoryTabs.add(tabName) : _fullHistoryTabs.remove(tabName)),
-      visitLabel: widget.appointmentId != null ? 'This visit' : 'This hospital',
+      showHistory: hasAccess ? !_visitOnlyTabs.contains(tabName) : _fullHistoryTabs.contains(tabName),
+      onChanged: (full) => setState(() {
+        if (full) {
+          _fullHistoryTabs.add(tabName);
+          _visitOnlyTabs.remove(tabName);
+        } else {
+          _fullHistoryTabs.remove(tabName);
+          _visitOnlyTabs.add(tabName);
+        }
+      }),
+      // Records added anywhere in this hospital are open to its staff once the
+      // patient has visited; other hospitals' records need the patient's consent.
+      visitLabel: (widget.appointmentId != null && !_hasHospital) ? 'This visit' : 'This hospital',
       hasAccess: hasAccess,
       accessStatus: accessStatus,
       visit: () => build(false),
@@ -317,6 +346,8 @@ class _DoctorPatientProfileScreenState
               final idx = _tabs.indexOf('Appointments');
               if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
             },
+            onOpenRecordTab: _isPatient() ? null : (tab) => _openTab(tab, fullHistory: accessStatus?.hasAccess ?? false),
+            onRequestAccess: _isPatient() ? null : () => _openTab('Medical Record', fullHistory: true),
           ),
         );
       case 'Appointments':
@@ -360,6 +391,7 @@ class _DoctorPatientProfileScreenState
               patient: patient,
               patientId: widget.patientId ?? patient.id,
               appointmentId: full ? null : widget.appointmentId,
+              listWholeHospital: _hasHospital,
               hospitalId: full ? null : widget.hospitalId,
               orgId: full ? null : widget.orgId,
               allowAdd: !full,
@@ -378,13 +410,14 @@ class _DoctorPatientProfileScreenState
             create: (_) => sl<PrescriptionBloc>()
               ..add(LoadPrescriptionData(
                 patientId: widget.patientId ?? patient.id,
-                appointmentId: full ? null : widget.appointmentId,
+                appointmentId: (full || _hasHospital) ? null : widget.appointmentId,
                 hospitalId: full ? null : widget.hospitalId,
                 orgId: full ? null : widget.orgId,
               )),
             child: PrescriptionListScreen(
               patient: patient,
               appointmentId: full ? null : widget.appointmentId,
+              listWholeHospital: _hasHospital,
               hospitalId: full ? null : widget.hospitalId,
               orgId: full ? null : widget.orgId,
               allowAdd: !full,
@@ -401,6 +434,7 @@ class _DoctorPatientProfileScreenState
             key: ValueKey('NotesTabFrame$full'),
             patientId: widget.patientId ?? patient.id,
             appointmentId: full ? null : widget.appointmentId,
+            listWholeHospital: _hasHospital,
             hospitalId: full ? null : widget.hospitalId,
             orgId: full ? null : widget.orgId,
             allowAdd: !full,
@@ -418,6 +452,7 @@ class _DoctorPatientProfileScreenState
             child: UploadedRecordsScreen(
               patientId: widget.patientId ?? patient.id,
               appointmentId: full ? null : widget.appointmentId,
+              listWholeHospital: _hasHospital,
               hospitalId: full ? null : widget.hospitalId,
               orgId: full ? null : widget.orgId,
               allowAdd: !full,

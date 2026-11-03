@@ -287,10 +287,10 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
             ),
             boxShadow: [
               BoxShadow(

@@ -263,10 +263,10 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
           Container(
             height: 46,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: TextField(
@@ -332,10 +332,10 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
               boxShadow: [
                 BoxShadow(
@@ -451,14 +451,14 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? (isFavPill ? const Color(0xFFD97706) : primaryColor)
-                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                    : (isDark ? const Color(0xFF232323) : Colors.white),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isSelected
                       ? (isFavPill ? const Color(0xFFD97706) : primaryColor)
                       : (isFavPill
                           ? const Color(0xFFF59E0B).withValues(alpha: 0.5)
-                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                          : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0))),
                   width: 1,
                 ),
                 boxShadow: isSelected

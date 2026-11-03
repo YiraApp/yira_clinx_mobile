@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// What a dialog is about. Sets its accent colour and default icon.
 enum AppDialogTone { info, success, warning, danger }
@@ -161,7 +162,7 @@ class AppDialog extends StatelessWidget {
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.transparent),
+        side: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : Colors.transparent),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 400),
@@ -178,7 +179,7 @@ class AppDialog extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: badge ?? Icon(icon ?? _defaultIcon, color: accent, size: 30),
+                child: badge ?? PhosphorIcon(icon ?? _defaultIcon, color: accent, size: 30),
               ),
               const SizedBox(height: 16),
               Text(
@@ -261,7 +262,7 @@ class AppDialog extends StatelessWidget {
         foregroundColor: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
         minimumSize: const Size(0, 48),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        side: BorderSide(color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+        side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       child: _label(secondaryLabel!, FontWeight.w600),

@@ -243,6 +243,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
           child: Container(
             width: 36,
             height: 4,
+            margin: const EdgeInsets.only(bottom: 2),
             decoration: BoxDecoration(color: DietUi.line(isDark), borderRadius: BorderRadius.circular(2)),
           ),
         ),
@@ -261,6 +262,18 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                     style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark)),
                   ),
                 ],
+              ),
+            ),
+            Material(
+              color: DietUi.sunken(isDark),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => Navigator.pop(context),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.close_rounded, size: 20, color: DietUi.muted(isDark)),
+                ),
               ),
             ),
           ],

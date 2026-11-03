@@ -405,7 +405,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
             return PopScope(
               canPop: !isCancelling,
               child: AlertDialog(
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Row(
                   children: [
@@ -1512,7 +1512,38 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
       );
     }
 
-    return const SizedBox.shrink();
+    // A failed load used to leave this area blank.
+    if (state is AppointmentError) {
+      debugPrint('[Appointments] ${state.message}');
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off_rounded, size: 40, color: isDark ? Colors.white38 : Colors.grey.shade400),
+              const SizedBox(height: 12),
+              Text(
+                "Couldn't load appointments",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : Colors.black87),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: isDark ? Colors.white54 : Colors.grey.shade600),
+              ),
+              const SizedBox(height: 14),
+              OutlinedButton(onPressed: _loadWithDateFilter, child: const Text('Try again')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Before the first load finishes.
+    return AppointmentListShimmer(itemCount: 4, isTab: isTab);
   }
 
   Widget _buildEmptyState(

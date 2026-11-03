@@ -63,6 +63,30 @@ class UpdateMedicationDetails extends PrescriptionEvent {
 
 class TogglePrescriptionExpansion extends PrescriptionEvent {}
 
+/// Loads the hospital's lab tests once; after a failure it tries again.
+class LoadLabTestCatalog extends PrescriptionEvent {
+  final String? hospitalId;
+  const LoadLabTestCatalog(this.hospitalId);
+}
+
+class SetLabTests extends PrescriptionEvent {
+  final List<PrescribedLabTest> tests;
+  const SetLabTests(this.tests);
+}
+
+class RemoveLabTest extends PrescriptionEvent {
+  final String key;
+  const RemoveLabTest(this.key);
+}
+
+class UpdateLabTest extends PrescriptionEvent {
+  final String key;
+  final String? priority;
+  final String? instructions;
+
+  const UpdateLabTest({required this.key, this.priority, this.instructions});
+}
+
 class SubmitPrescription extends PrescriptionEvent {
   final String patientId;
   final String? appointmentId;

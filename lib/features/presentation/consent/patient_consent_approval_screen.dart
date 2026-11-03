@@ -196,9 +196,9 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     return BlocProvider.value(
       value: _consentBloc,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
         appBar: CommonAppBar(
-          titleText: "Approvals",
+          titleText: "Requests from doctors",
           showBackButton: widget.showBackButton,
           actions: [
             IconButton(
@@ -291,7 +291,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                               )
                             : null,
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -467,7 +467,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         ),
         selected: isSelected,
         onSelected: (_) => setState(() => _selectedFilter = filter),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         selectedColor: primaryColor,
         checkmarkColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -511,7 +511,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
     return Container(
       padding: EdgeInsets.all(isTab ? 18 : 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isPending
@@ -641,7 +641,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -840,7 +840,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFE2E8F0)),
         ),

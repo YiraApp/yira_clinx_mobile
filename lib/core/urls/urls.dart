@@ -32,6 +32,7 @@ class URLs {
   static const doctorSlotBlockUrl = "/v1/api/auth/doctor-slots/block";
   static const hospitalDoctorsUrl = "/v1/api/auth/hospital-doctors";
   static const allHospitalsUrl = "/v1/api/auth/hospitals";
+  static String hospitalLabTestsUrl(String hospitalId) => "$allHospitalsUrl/$hospitalId/lab-tests";
   static const patientsListUrl = "/v1/api/auth/patients";
   static const favoritePatientsListUrl = "/v1/api/auth/favorite-patients/list";
   static const toggleFavoritePatientUrl = "/v1/api/auth/favorite-patients/toggle";
@@ -75,6 +76,12 @@ class URLs {
   static const patientConsentsListUrl = "/v1/api/auth/patient-access/patient-consents";
   static const patientConsentRespondUrl = "/v1/api/auth/patient-access/respond";
   static const patientAccessConnectByQrUrl = "/v1/api/auth/patient-access/connect-by-qr";
+  static const patientAccessGrantUrl = "/v1/api/auth/patient-access/grant";
+
+  /*Share my profile (web links for doctors not on Yira)*/
+  static const profileShareLinksUrl = "/v1/api/auth/patient/share-links";
+  /// GET {base}/{patientId}/past-records?appointmentId=&hospitalId=
+  static const providerPatientsUrl = "/v1/api/auth/provider/patients";
 
   /*In-App Notifications*/
   static const notificationsListUrl = "/v1/api/auth/notifications";
@@ -94,6 +101,8 @@ class URLs {
   static const patientFitnessSyncUrl = "/v1/api/auth/patient/fitness/sync";
   static const patientFitnessSummaryUrl = "/v1/api/auth/patient/fitness/summary";
   static const patientFitnessStatusUrl = "/v1/api/auth/patient/fitness/status";
+  static const patientBillingUrl = "/v1/api/auth/patient/billing";
+  static const patientPoliciesUrl = "/v1/api/auth/patient/policies";
   static const patientFitnessDisconnectUrl = "/v1/api/auth/patient/fitness/disconnect";
 
   /*Online Payments & Razorpay*/

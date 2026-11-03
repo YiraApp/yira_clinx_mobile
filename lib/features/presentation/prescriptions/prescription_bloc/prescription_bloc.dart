@@ -1,8 +1,10 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
+import '../../../domain/entities/prescriptions/lab_test_entity.dart';
 import '../../../domain/entities/prescriptions/prescription_item.dart';
 import '../../../domain/entities/prescriptions/prescription_entity.dart';
+import '../../../use_cases/get_hospital_lab_tests_use_case.dart';
 import '../../../use_cases/save_prescription_use_case.dart';
 
 part 'prescription_event.dart';
@@ -10,10 +12,13 @@ part 'prescription_state.dart';
 
 class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
   final SavePrescriptionUseCase? _savePrescriptionUseCase;
+  final GetHospitalLabTestsUseCase? _getHospitalLabTestsUseCase;
 
   PrescriptionBloc({
     SavePrescriptionUseCase? savePrescriptionUseCase,
+    GetHospitalLabTestsUseCase? getHospitalLabTestsUseCase,
   })  : _savePrescriptionUseCase = savePrescriptionUseCase,
+        _getHospitalLabTestsUseCase = getHospitalLabTestsUseCase,
         super(PrescriptionState()) {
     on<LoadPrescriptionData>(_onLoadPrescriptionData);
     on<SubmitPrescription>(_onSubmitPrescription);
@@ -24,6 +29,10 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
     on<RemoveMedication>(_onRemoveMedication);
     on<UpdateMedicationDetails>(_onUpdateMedicationDetails);
     on<TogglePrescriptionExpansion>(_onTogglePrescriptionExpansion);
+    on<LoadLabTestCatalog>(_onLoadLabTestCatalog);
+    on<SetLabTests>(_onSetLabTests);
+    on<RemoveLabTest>(_onRemoveLabTest);
+    on<UpdateLabTest>(_onUpdateLabTest);
     on<AddPrescriptionRecordNavEvent>((event, emit) async {
       emit(AddPrescriptionRecordNavState());
     });
@@ -31,6 +40,8 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
       emit(SinglePrescriptionDetailsNavState(event.prescriptionId));
     });
   }
+
+  bool _savedTestsLoaded = false;
 
   Future<void> _onLoadPrescriptionData(
     LoadPrescriptionData event,
@@ -46,18 +57,26 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
         hospitalId: event.hospitalId,
         orgId: event.orgId,
       );
-      if (data != null && (data.medications.isNotEmpty || data.diagnoses.isNotEmpty || data.additionalNotes.isNotEmpty)) {
+      final labTests = data?.labTests ?? const <PrescribedLabTest>[];
+      if (data != null &&
+          (data.medications.isNotEmpty ||
+              data.diagnoses.isNotEmpty ||
+              data.additionalNotes.isNotEmpty ||
+              labTests.isNotEmpty)) {
         emit(state.copyWith(
           status: PrescriptionStatus.success,
           diagnoses: data.diagnoses,
           medications: data.medications.isEmpty
               ? [MedicationItem(id: DateTime.now().millisecondsSinceEpoch.toString(), name: '')]
               : data.medications,
+          labTests: labTests,
           additionalNotes: data.additionalNotes,
           pdfUrl: data.pdfUrl,
           prescriptionId: data.id,
         ));
       }
+      // A failed load comes back as an empty prescription with no id.
+      _savedTestsLoaded = (data?.id ?? '').isNotEmpty;
     } catch (_) {}
   }
 
@@ -78,6 +97,10 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
         diagnoses: state.diagnoses,
         medications: validMeds,
         additionalNotes: event.additionalNotes,
+        // Always a list, even empty, so removing every test reaches the server.
+        // Null leaves the saved tests alone: an empty form after a failed load
+        // must not read as the doctor removing them.
+        labTests: (_savedTestsLoaded || state.labTests.isNotEmpty) ? state.labTests : null,
       );
 
       final PrescriptionEntity synchronizedData = await _savePrescriptionUseCase!.call(payload);
@@ -149,6 +172,43 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
       return item;
     }).toList();
     emit(state.copyWith(medications: updated));
+  }
+
+  Future<void> _onLoadLabTestCatalog(LoadLabTestCatalog event, Emitter<PrescriptionState> emit) async {
+    if (state.labCatalogStatus == LabCatalogStatus.loading || state.labCatalogStatus == LabCatalogStatus.success) {
+      return;
+    }
+    final hospitalId = event.hospitalId?.trim() ?? '';
+    final useCase = _getHospitalLabTestsUseCase;
+    if (hospitalId.isEmpty || useCase == null) {
+      emit(state.copyWith(labCatalogStatus: LabCatalogStatus.failure));
+      return;
+    }
+    emit(state.copyWith(labCatalogStatus: LabCatalogStatus.loading));
+    try {
+      final tests = await useCase(hospitalId);
+      emit(state.copyWith(labCatalogStatus: LabCatalogStatus.success, labCatalog: tests));
+    } catch (_) {
+      emit(state.copyWith(labCatalogStatus: LabCatalogStatus.failure));
+    }
+  }
+
+  void _onSetLabTests(SetLabTests event, Emitter<PrescriptionState> emit) {
+    emit(state.copyWith(labTests: List<PrescribedLabTest>.from(event.tests)));
+  }
+
+  void _onRemoveLabTest(RemoveLabTest event, Emitter<PrescriptionState> emit) {
+    emit(state.copyWith(labTests: state.labTests.where((test) => test.key != event.key).toList()));
+  }
+
+  void _onUpdateLabTest(UpdateLabTest event, Emitter<PrescriptionState> emit) {
+    emit(state.copyWith(
+      labTests: state.labTests
+          .map((test) => test.key == event.key
+              ? test.copyWith(priority: event.priority, instructions: event.instructions)
+              : test)
+          .toList(),
+    ));
   }
 
   void _onTogglePrescriptionExpansion(TogglePrescriptionExpansion event, Emitter<PrescriptionState> emit) {

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/display_format.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/api/base_api_configuration.dart';
 import '../../../../core/constants/constants.dart';
-import '../../../../core/widgets/doctor_avatar_widget.dart';
 import '../../../../core/local/global_session.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../../../domain/entities/patient_profile/patient_profile_entity.dart';
+import '../../patient/diet/diet_ui.dart';
+import 'record_tab_ui.dart';
 
 class PatientAppointmentsCard extends StatelessWidget {
   final List<PatientAppointmentEntity> appointments;
@@ -34,28 +36,6 @@ class PatientAppointmentsCard extends StatelessWidget {
         roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
   }
 
-  // ═══════════════════════════════════════════════
-  //  STATUS COLORS
-  // ═══════════════════════════════════════════════
-
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case "COMPLETED":
-        return const Color(0xFF10B981);
-      case "CONFIRMED":
-        return const Color(0xFF2563EB);
-      case "IN PROGRESS":
-      case "IN_PROGRESS":
-        return const Color(0xFF8B5CF6);
-      case "CANCELLED":
-        return const Color(0xFFEF4444);
-      case "PENDING":
-      case "PAYMENT PENDING":
-        return const Color(0xFFF59E0B);
-      default:
-        return const Color(0xFF0284C7);
-    }
-  }
 
   // ═══════════════════════════════════════════════
   //  1️⃣ PRESCRIPTION DETAIL SHEET
@@ -76,7 +56,7 @@ class PatientAppointmentsCard extends StatelessWidget {
           maxHeight: MediaQuery.of(ctx).size.height * 0.85,
         ),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -102,79 +82,13 @@ class PatientAppointmentsCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.medication_liquid_rounded,
-                                color: primaryColor,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Prescription Details",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: isTab ? 17 : 16,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  Text(
-                                    _formatPrescriptionDateTime(pres),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 11.5,
-                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (pres.doctorName.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.08),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              pres.doctorName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: primaryColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                  RecordCardHeader(
+                    icon: Icons.medication_outlined,
+                    title: "Prescription Details",
+                    subtitle: [
+                      _formatPrescriptionDateTime(pres),
+                      if (pres.doctorName.isNotEmpty) pres.doctorName,
+                    ].join(' · '),
                   ),
                 ],
               ),
@@ -188,148 +102,45 @@ class PatientAppointmentsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (pres.diagnoses.isNotEmpty) ...[
-                      Text(
-                        "DIAGNOSES",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      const RecordSectionTitle(icon: Icons.medical_information_outlined, title: "Diagnoses"),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 6,
-                        children: pres.diagnoses
-                            .map((d) => Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.2 : 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    "🩺 ${d.name}${d.icd10.isNotEmpty ? ' (${d.icd10})' : ''}",
-                                    style: const TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2563EB),
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
+                        children: pres.diagnoses.map((d) => RecordPill("${d.name}${d.icd10.isNotEmpty ? ' (${d.icd10})' : ''}")).toList(),
                       ),
                       const SizedBox(height: 18),
                     ],
-                    Text(
-                      "MEDICATIONS (${pres.medications.length})",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    RecordSectionTitle(icon: Icons.medication_outlined, title: "Medications (${pres.medications.length})"),
                     const SizedBox(height: 10),
                     if (pres.medications.isNotEmpty)
-                      ...pres.medications.map((m) => Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      ...pres.medications.map((m) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _buildInfoContainer(
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
-                                      child: Text(
-                                        m.name,
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                        ),
-                                      ),
+                                      child: Text(m.name, style: DietUi.text(13.5, FontWeight.w600, RecordUi.ink(isDark))),
                                     ),
-                                    if (m.dosage.isNotEmpty)
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          m.dosage,
-                                          style: TextStyle(
-                                            fontFamily: appPoppinFont,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: primaryColor,
-                                          ),
-                                        ),
-                                      ),
+                                    if (m.dosage.isNotEmpty) ...[const SizedBox(width: 8), RecordPill(m.dosage)],
                                   ],
                                 ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    if (m.frequency.isNotEmpty) ...[
-                                      Icon(Icons.schedule, size: 13, color: isDark ? Colors.white60 : Colors.grey.shade600),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        m.frequency,
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 11.5,
-                                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                    ],
-                                    if (m.duration.isNotEmpty) ...[
-                                      Icon(Icons.timelapse, size: 13, color: isDark ? Colors.white60 : Colors.grey.shade600),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        m.duration,
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: 11.5,
-                                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                if (m.instructions.isNotEmpty) ...[
+                                if (m.frequency.isNotEmpty || m.duration.isNotEmpty) ...[
                                   const SizedBox(height: 6),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-                                    ),
-                                    child: Text(
-                                      "Instructions: ${m.instructions}",
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: 11,
-                                        color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                      ),
-                                    ),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (m.frequency.isNotEmpty) RecordMeta(icon: Icons.schedule, text: m.frequency),
+                                      if (m.duration.isNotEmpty) RecordMeta(icon: Icons.timelapse, text: m.duration),
+                                    ],
                                   ),
+                                ],
+                                if (m.instructions.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  RecordField(label: "Instructions", value: m.instructions),
                                 ],
                               ],
                             ),
@@ -337,45 +148,19 @@ class PatientAppointmentsCard extends StatelessWidget {
                     else
                       Text(
                         "No specific medicines listed.",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          color: isDark ? Colors.white54 : Colors.grey,
-                        ),
+                        style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark)),
                       ),
                     if (!_isPatient() && pres.notes.isNotEmpty) ...[
                       const SizedBox(height: 14),
-                      Text(
-                        "DOCTOR NOTES",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        pres.notes,
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12.5,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
+                      RecordField(label: "Doctor Notes", value: pres.notes),
                     ],
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
                       height: 46,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF059669),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+                      child: RecordPrimaryButton(
+                        label: "View Full Prescription (PDF)",
+                        icon: Icons.picture_as_pdf_outlined,
                         onPressed: () {
                           final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                           final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
@@ -390,15 +175,6 @@ class PatientAppointmentsCard extends StatelessWidget {
                             isAppointmentDoc: true,
                           );
                         },
-                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                        label: const Text(
-                          "View Full Prescription (PDF)",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -406,25 +182,13 @@ class PatientAppointmentsCard extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         height: 46,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: primaryColor),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
+                        child: RecordSecondaryButton(
+                          label: "Open in Prescriptions Tab",
+                          icon: Icons.arrow_forward_rounded,
                           onPressed: () {
                             Navigator.pop(ctx);
                             onPrescribeTap?.call();
                           },
-                          icon: Icon(Icons.arrow_forward_rounded, size: 16, color: primaryColor),
-                          label: Text(
-                            "Open in Prescriptions Tab",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: primaryColor,
-                            ),
-                          ),
                         ),
                       ),
                   ],
@@ -454,7 +218,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -472,97 +236,42 @@ class PatientAppointmentsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.edit_note_rounded, color: primaryColor, size: 22),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        note.doctorName.isNotEmpty ? note.doctorName : "Clinical Note",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      if (note.createdAt.isNotEmpty)
-                        Text(
-                          "Recorded on: ${note.createdAt}",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 18),
-                  tooltip: "Copy Note",
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: note.notes));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Clinical note copied to clipboard")),
-                    );
-                  },
-                ),
-              ],
+            RecordCardHeader(
+              icon: Icons.edit_note_rounded,
+              title: note.doctorName.isNotEmpty ? note.doctorName : "Clinical Note",
+              subtitle: note.createdAt.isNotEmpty ? "Recorded on: ${note.createdAt}" : null,
+              trailing: RecordIconAction(
+                icon: Icons.copy_rounded,
+                tooltip: "Copy Note",
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: note.notes));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Clinical note copied to clipboard")),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-              ),
-              child: Text(
-                note.notes.isNotEmpty ? note.notes : "No note content recorded.",
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+            _buildInfoContainer(
+              children: [
+                Text(
+                  note.notes.isNotEmpty ? note.notes : "No note content recorded.",
+                  style: DietUi.text(13, FontWeight.w400, DietUi.body(isDark), height: 1.5),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 20),
             if (onNoteTap != null)
               SizedBox(
                 width: double.infinity,
                 height: 46,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: primaryColor),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                child: RecordSecondaryButton(
+                  label: "Open in Notes Tab",
+                  icon: Icons.arrow_forward_rounded,
                   onPressed: () {
                     Navigator.pop(ctx);
                     onNoteTap?.call();
                   },
-                  icon: Icon(Icons.arrow_forward_rounded, size: 16, color: primaryColor),
-                  label: Text(
-                    "Open in Notes Tab",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: primaryColor,
-                    ),
-                  ),
                 ),
               ),
           ],
@@ -603,7 +312,7 @@ class PatientAppointmentsCard extends StatelessWidget {
               maxWidth: MediaQuery.of(dialogCtx).size.width * 0.95,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              color: isDark ? const Color(0xFF121212) : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -620,7 +329,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -640,7 +349,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                "${doc.category} • ${doc.type}",
+                                "${doc.category} · ${doc.type}",
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: 11,
@@ -707,7 +416,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -743,7 +452,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -768,91 +477,32 @@ class PatientAppointmentsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.description_outlined, color: primaryColor, size: 26),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        doc.fileName.isNotEmpty ? doc.fileName : "Medical Document",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        "${doc.category} • ${doc.type}",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 12,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            RecordCardHeader(
+              icon: Icons.description_outlined,
+              title: doc.fileName.isNotEmpty ? doc.fileName : "Medical Document",
+              subtitle: "${doc.category} · ${doc.type}",
             ),
             const SizedBox(height: 18),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
-                children: [
-                  _buildGridRow([
-                    _buildInfoTile(
-                      label: "Document Type",
-                      value: doc.type.isNotEmpty ? doc.type : "Lab / Clinical Report",
-                      icon: Icons.category_outlined,
-                      isDark: isDark,
-                    ),
-                    _buildInfoTile(
-                      label: "Category",
-                      value: doc.category.isNotEmpty ? doc.category : "General",
-                      icon: Icons.folder_outlined,
-                      isDark: isDark,
-                    ),
-                  ]),
-                  if (doc.createdAt.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _buildInfoTile(
-                      label: "Upload Date",
-                      value: doc.createdAt,
-                      icon: Icons.calendar_today_outlined,
-                      isDark: isDark,
-                    ),
-                  ],
+            _buildInfoContainer(
+              children: [
+                _buildGridRow([
+                  RecordField(label: "Document Type", value: doc.type.isNotEmpty ? doc.type : "Lab / Clinical Report"),
+                  RecordField(label: "Category", value: doc.category.isNotEmpty ? doc.category : "General"),
+                ]),
+                if (doc.createdAt.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  RecordField(label: "Upload Date", value: doc.createdAt),
                 ],
-              ),
+              ],
             ),
             const SizedBox(height: 20),
             if (url.isNotEmpty)
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                child: RecordPrimaryButton(
+                  label: "View Document",
+                  icon: Icons.visibility_outlined,
                   onPressed: () {
                     Navigator.pop(ctx);
                     InAppDocumentViewer.show(
@@ -865,15 +515,6 @@ class PatientAppointmentsCard extends StatelessWidget {
                       isAppointmentDoc: true,
                     );
                   },
-                  icon: const Icon(Icons.visibility_rounded, size: 18),
-                  label: const Text(
-                    "View Document",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
                 ),
               )
             else
@@ -883,11 +524,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   "No electronic document file attached.",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : Colors.grey,
-                  ),
+                  style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark)),
                 ),
               ),
           ],
@@ -915,7 +552,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -933,55 +570,19 @@ class PatientAppointmentsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.assignment_outlined, color: primaryColor, size: 26),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        rec.recordType.isNotEmpty ? rec.recordType : "Medical Record",
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      if (rec.createdAt.isNotEmpty)
-                        Text(
-                          "Recorded on: ${rec.createdAt}",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
+            RecordCardHeader(
+              icon: Icons.assignment_outlined,
+              title: rec.recordType.isNotEmpty ? rec.recordType : "Medical Record",
+              subtitle: rec.createdAt.isNotEmpty ? "Recorded on: ${rec.createdAt}" : null,
             ),
             const SizedBox(height: 20),
             if (url.isNotEmpty)
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                child: RecordPrimaryButton(
+                  label: "View Medical Record",
+                  icon: Icons.visibility_outlined,
                   onPressed: () {
                     Navigator.pop(ctx);
                     InAppDocumentViewer.show(
@@ -994,15 +595,6 @@ class PatientAppointmentsCard extends StatelessWidget {
                       isAppointmentDoc: true,
                     );
                   },
-                  icon: const Icon(Icons.visibility_rounded, size: 18),
-                  label: const Text(
-                    "View Medical Record",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
                 ),
               ),
           ],
@@ -1021,7 +613,6 @@ class PatientAppointmentsCard extends StatelessWidget {
     bool isDark,
     Color primaryColor,
   ) {
-    final statusColor = _getStatusColor(appt.status);
 
     showModalBottomSheet(
       context: context,
@@ -1033,7 +624,7 @@ class PatientAppointmentsCard extends StatelessWidget {
             maxHeight: MediaQuery.of(ctx).size.height * 0.92,
           ),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
@@ -1059,80 +650,15 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  appt.isTeleConsultation
-                                      ? Icons.videocam_rounded
-                                      : Icons.calendar_month_rounded,
-                                  color: primaryColor,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Appointment Details",
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: isTab ? 18 : 16.5,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    Text(
-                                      appt.tokenNumber.isNotEmpty
-                                          ? "Token #${appt.tokenNumber} • ID: ${appt.id}"
-                                          : "Appointment ID: ${appt.id}",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            appt.status.toUpperCase(),
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                              color: statusColor,
-                            ),
-                          ),
-                        ),
-                      ],
+                    RecordCardHeader(
+                      icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.calendar_month_outlined,
+                      title: "Appointment Details",
+                      subtitle: appt.tokenNumber.isNotEmpty
+                          ? "Token #${appt.tokenNumber} · ID: ${appt.id}"
+                          : "Appointment ID: ${appt.id}",
                     ),
+                    const SizedBox(height: 8),
+                    Align(alignment: Alignment.centerLeft, child: RecordStatusPill(humanizeStatus(appt.status))),
                   ],
                 ),
               ),
@@ -1150,69 +676,42 @@ class PatientAppointmentsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1️⃣ SCHEDULE & TIMING
-                      _buildSectionHeader(
-                        number: "1",
-                        title: "Schedule & Timing",
-                        icon: Icons.access_time_rounded,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.access_time_rounded, title: "Schedule & Timing"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
-                        isDark: isDark,
                         children: [
                           _buildGridRow([
-                            _buildInfoTile(
+                            RecordField(
                               label: "Appointment Date",
                               value: appt.appointmentDate.isNotEmpty ? appt.appointmentDate : "Not Set",
-                              icon: Icons.calendar_today_outlined,
-                              isDark: isDark,
                             ),
-                            _buildInfoTile(
+                            RecordField(
                               label: "Slot Timing",
                               value: appt.startTime.isNotEmpty
-                                  ? (appt.endTime.isNotEmpty ? "${appt.startTime} - ${appt.endTime}" : appt.startTime)
+                                  ? (appt.endTime.isNotEmpty ? "${formatClockTime(appt.startTime)} - ${formatClockTime(appt.endTime)}" : formatClockTime(appt.startTime))
                                   : "Unscheduled",
-                              icon: Icons.schedule_outlined,
-                              isDark: isDark,
                             ),
                           ]),
                           const SizedBox(height: 10),
                           _buildGridRow([
-                            _buildInfoTile(
+                            RecordField(
                               label: "Duration",
                               value: appt.duration.isNotEmpty ? appt.duration : "15 mins",
-                              icon: Icons.timelapse_outlined,
-                              isDark: isDark,
                             ),
-                            _buildInfoTile(
+                            RecordField(
                               label: "Token Number",
                               value: appt.tokenNumber.isNotEmpty ? "#${appt.tokenNumber}" : "General Queue",
-                              icon: Icons.confirmation_number_outlined,
-                              isDark: isDark,
                             ),
                           ]),
                           const SizedBox(height: 10),
                           _buildGridRow([
-                            _buildInfoTile(
+                            RecordField(
                               label: "Consultation Type",
                               value: appt.isTeleConsultation ? "Video Call (Zoom)" : "In-Clinic Visit",
-                              icon: appt.isTeleConsultation ? Icons.videocam_rounded : Icons.storefront_rounded,
-                              isDark: isDark,
                             ),
-                            _buildInfoTile(
+                            RecordField(
                               label: "Payment Mode",
                               value: appt.isTeleConsultation ? "Paid Online (Razorpay)" : "Pay at Clinic Reception",
-                              icon: appt.isTeleConsultation ? Icons.check_circle_outline_rounded : Icons.payment_rounded,
-                              isDark: isDark,
-                              valueStyle: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: appt.isTeleConsultation
-                                    ? const Color(0xFF10B981)
-                                    : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                              ),
                             ),
                           ]),
                         ],
@@ -1221,36 +720,19 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 2️⃣ CLINICAL CONDITION & REASON
-                      _buildSectionHeader(
-                        number: "2",
-                        title: "Clinical Condition & Reason",
-                        icon: Icons.healing_rounded,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.healing_rounded, title: "Clinical Condition & Reason"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
-                        isDark: isDark,
                         children: [
-                          _buildInfoTile(
+                          RecordField(
                             label: "Chief Complaint / Condition",
                             value: appt.condition.isNotEmpty ? appt.condition : "General Consultation",
-                            icon: Icons.medical_services_outlined,
-                            isDark: isDark,
-                            valueStyle: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
                           ),
                           if (appt.reason.isNotEmpty && appt.reason != appt.condition) ...[
                             const SizedBox(height: 10),
-                            _buildInfoTile(
+                            RecordField(
                               label: "Reason for Visit",
                               value: appt.reason,
-                              icon: Icons.notes_outlined,
-                              isDark: isDark,
                             ),
                           ],
                         ],
@@ -1259,13 +741,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 3️⃣ PRESCRIPTIONS
-                      _buildSectionHeader(
-                        number: "3",
-                        title: "Prescriptions (${appt.prescriptions.length})",
-                        icon: Icons.medication_liquid_rounded,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.medication_liquid_rounded, title: "Prescriptions (${appt.prescriptions.length})"),
                       const SizedBox(height: 10),
                       if (appt.prescriptions.isNotEmpty)
                         ...appt.prescriptions.map((p) => _buildPrescriptionCard(
@@ -1281,13 +757,7 @@ class PatientAppointmentsCard extends StatelessWidget {
 
                       // 4️⃣ CLINICAL NOTES (Visible to Doctors only; hidden for Patients)
                       if (!_isPatient()) ...[
-                        _buildSectionHeader(
-                          number: "4",
-                          title: "Clinical Notes (${appt.clinicalNotes.length})",
-                          icon: Icons.edit_note_rounded,
-                          color: primaryColor,
-                          isDark: isDark,
-                        ),
+                        RecordSectionTitle(icon: Icons.edit_note_rounded, title: "Clinical Notes (${appt.clinicalNotes.length})"),
                         const SizedBox(height: 10),
                         if (appt.clinicalNotes.isNotEmpty)
                           ...appt.clinicalNotes.map((n) => _buildClinicalNoteCard(
@@ -1298,13 +768,10 @@ class PatientAppointmentsCard extends StatelessWidget {
                               ))
                         else if (appt.notes.isNotEmpty)
                           _buildInfoContainer(
-                            isDark: isDark,
                             children: [
-                              _buildInfoTile(
+                              RecordField(
                                 label: "Appointment Notes",
                                 value: appt.notes,
-                                icon: Icons.note_outlined,
-                                isDark: isDark,
                               ),
                             ],
                           )
@@ -1314,13 +781,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ],
 
                       // 5️⃣ DOCUMENTS & LAB REPORTS
-                      _buildSectionHeader(
-                        number: _isPatient() ? "4" : "5",
-                        title: "Documents & Reports (${appt.documents.length})",
-                        icon: Icons.folder_shared_outlined,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.folder_shared_outlined, title: "Documents & Reports (${appt.documents.length})"),
                       const SizedBox(height: 10),
                       if (appt.documents.isNotEmpty)
                         ...appt.documents.map((d) => _buildDocumentCard(
@@ -1335,13 +796,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 6️⃣ MEDICAL RECORDS
-                      _buildSectionHeader(
-                        number: _isPatient() ? "5" : "6",
-                        title: "Medical Records & Diagnoses (${appt.medicalRecords.length})",
-                        icon: Icons.assignment_outlined,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.assignment_outlined, title: "Medical Records & Diagnoses (${appt.medicalRecords.length})"),
                       const SizedBox(height: 10),
                       if (appt.medicalRecords.isNotEmpty)
                         ...appt.medicalRecords.map((r) => _buildMedicalRecordCard(
@@ -1356,48 +811,31 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 7️⃣ PROVIDER & FACILITY DETAILS
-                      _buildSectionHeader(
-                        number: _isPatient() ? "6" : "7",
-                        title: "Provider & Facility",
-                        icon: Icons.local_hospital_outlined,
-                        color: primaryColor,
-                        isDark: isDark,
-                      ),
+                      RecordSectionTitle(icon: Icons.local_hospital_outlined, title: "Provider & Facility"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
-                        isDark: isDark,
                         children: [
                           _buildGridRow([
-                            _buildInfoTile(
+                            RecordField(
                               label: "Consulting Doctor",
                               value: appt.doctorName.isNotEmpty ? appt.doctorName : "Assigned Physician",
-                              icon: Icons.health_and_safety_outlined,
-                              isDark: isDark,
                             ),
-                            _buildInfoTile(
+                            RecordField(
                               label: "Mode",
                               value: appt.appointmentType,
-                              icon: appt.isTeleConsultation
-                                  ? Icons.videocam_outlined
-                                  : Icons.domain_outlined,
-                              isDark: isDark,
                             ),
                           ]),
                           if (appt.hospitalName.isNotEmpty || appt.location.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             _buildGridRow([
-                              _buildInfoTile(
+                              RecordField(
                                 label: "Hospital / Clinic",
                                 value: appt.hospitalName.isNotEmpty ? appt.hospitalName : appt.location,
-                                icon: Icons.location_city_outlined,
-                                isDark: isDark,
                               ),
                               if (appt.hospitalPhone.isNotEmpty)
-                                _buildInfoTile(
+                                RecordField(
                                   label: "Helpline",
                                   value: appt.hospitalPhone,
-                                  icon: Icons.phone_in_talk_outlined,
-                                  isDark: isDark,
                                 ),
                             ]),
                           ],
@@ -1409,25 +847,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       SizedBox(
                         width: double.infinity,
                         height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text(
-                            "Done",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+                        child: RecordPrimaryButton(label: "Done", onPressed: () => Navigator.pop(ctx)),
                       ),
                     ],
                   ),
@@ -1463,7 +883,7 @@ class PatientAppointmentsCard extends StatelessWidget {
         timePart = "$hour:$min $ampm";
       }
 
-      return timePart.isNotEmpty ? "$datePart • $timePart" : datePart;
+      return timePart.isNotEmpty ? "$datePart · $timePart" : datePart;
     }
 
     // 2. If rawDate is already formatted (e.g. "Mar 18, 2026")
@@ -1472,7 +892,7 @@ class PatientAppointmentsCard extends StatelessWidget {
         if (rawDate.toLowerCase().contains(rawTime.toLowerCase())) {
           return rawDate;
         }
-        return "$rawDate • $rawTime";
+        return "$rawDate · $rawTime";
       }
       return rawDate;
     }
@@ -1491,194 +911,61 @@ class PatientAppointmentsCard extends StatelessWidget {
     bool isDark,
     Color primaryColor,
   ) {
-    return InkWell(
+    return _sheetCard(
       onTap: () => _viewPrescriptionDetails(context, pres, isDark, primaryColor),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      if (pres.doctorName.isNotEmpty) ...[
-                        DoctorAvatarWidget(
-                          doctorName: pres.doctorName,
-                          size: 20,
-                          borderRadius: 6,
-                        ),
-                        const SizedBox(width: 7),
-                      ] else ...[
-                        Icon(Icons.calendar_today_rounded, size: 13, color: primaryColor),
-                        const SizedBox(width: 6),
-                      ],
-                      Flexible(
-                        child: Text(
-                          pres.doctorName.isNotEmpty
-                              ? "Dr. ${pres.doctorName.replaceFirst('Dr. ', '')} • ${_formatPrescriptionDateTime(pres)}"
-                              : _formatPrescriptionDateTime(pres),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
-                        final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
-                        final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RecordCardHeader(
+            icon: Icons.medication_outlined,
+            title: pres.doctorName.isNotEmpty
+                ? "Dr. ${pres.doctorName.replaceFirst('Dr. ', '')}"
+                : _formatPrescriptionDateTime(pres),
+            subtitle: pres.doctorName.isNotEmpty ? _formatPrescriptionDateTime(pres) : null,
+            trailing: RecordIconAction(
+              icon: Icons.picture_as_pdf_outlined,
+              tooltip: "View PDF",
+              onTap: () {
+                final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
+                final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
+                final effectivePdfUrl = '$baseUrl/v1/api/auth/prescriptions/${pres.id}/pdf';
 
-                        InAppDocumentViewer.show(
-                          context,
-                          title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
-                          category: 'Prescription',
-                          fileUrl: effectivePdfUrl,
-                          hospitalName: 'Yira Super Speciality Hospitals',
-                          isAppointmentDoc: true,
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669).withValues(alpha: isDark ? 0.2 : 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: const Color(0xFF059669).withValues(alpha: 0.35),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.picture_as_pdf_rounded,
-                              size: 11,
-                              color: Color(0xFF059669),
-                            ),
-                            SizedBox(width: 3),
-                            Text(
-                              "PDF",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF059669),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Text(
-                      "View Details",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
-                  ],
-                ),
-              ],
+                InAppDocumentViewer.show(
+                  context,
+                  title: pres.doctorName.isNotEmpty ? '${pres.doctorName} - Prescription' : 'Digital Prescription',
+                  category: 'Prescription',
+                  fileUrl: effectivePdfUrl,
+                  hospitalName: 'Yira Super Speciality Hospitals',
+                  isAppointmentDoc: true,
+                );
+              },
             ),
-            if (pres.diagnoses.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: pres.diagnoses
-                    .map((d) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            "🩺 ${d.name}${d.icd10.isNotEmpty ? ' (${d.icd10})' : ''}",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ],
-            if (pres.medications.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              ...pres.medications.map((m) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(Icons.circle, size: 6, color: primaryColor),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                m.name,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                ),
-                              ),
-                              Text(
-                                [
-                                  if (m.dosage.isNotEmpty) m.dosage,
-                                  if (m.frequency.isNotEmpty) m.frequency,
-                                  if (m.duration.isNotEmpty) m.duration,
-                                ].join(" • "),
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 11,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-            ],
+          ),
+          if (pres.diagnoses.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: pres.diagnoses.map((d) => RecordPill("${d.name}${d.icd10.isNotEmpty ? ' (${d.icd10})' : ''}")).toList(),
+            ),
           ],
-        ),
+          if (pres.medications.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...pres.medications.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: RecordMedicineLine(
+                    name: m.name,
+                    detail: [
+                      if (m.dosage.isNotEmpty) m.dosage,
+                      if (m.frequency.isNotEmpty) m.frequency,
+                      if (m.duration.isNotEmpty) m.duration,
+                    ].join(' · '),
+                  ),
+                )),
+          ],
+          const SizedBox(height: 2),
+          const RecordCardLink(),
+        ],
       ),
     );
   }
@@ -1689,76 +976,25 @@ class PatientAppointmentsCard extends StatelessWidget {
     bool isDark,
     Color primaryColor,
   ) {
-    return InkWell(
+    return _sheetCard(
       onTap: () => _viewClinicalNoteDetails(context, note, isDark, primaryColor),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit_note_rounded, size: 15, color: primaryColor),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Read Note",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              note.notes,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12,
-                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RecordSectionTitle(
+            icon: Icons.edit_note_rounded,
+            title: note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
+          ),
+          const SizedBox(height: 8),
+          Text(
+            note.notes,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: DietUi.text(13, FontWeight.w400, DietUi.body(isDark), height: 1.4),
+          ),
+          const SizedBox(height: 4),
+          const RecordCardLink(label: "Read Note"),
+        ],
       ),
     );
   }
@@ -1769,72 +1005,17 @@ class PatientAppointmentsCard extends StatelessWidget {
     bool isDark,
     Color primaryColor,
   ) {
-    return InkWell(
+    return _sheetCard(
       onTap: () => _viewDocumentDetails(context, doc, isDark, primaryColor),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.description_outlined, color: primaryColor, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    doc.fileName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  Text(
-                    "${doc.category} • ${doc.type}${doc.createdAt.isNotEmpty ? ' • ${doc.createdAt}' : ''}",
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 10.5,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                Text(
-                  "View",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Icon(Icons.open_in_new_rounded, size: 12, color: primaryColor),
-              ],
-            ),
-          ],
-        ),
+      child: Column(
+        children: [
+          RecordCardHeader(
+            icon: Icons.description_outlined,
+            title: doc.fileName,
+            subtitle: "${doc.category} · ${doc.type}${doc.createdAt.isNotEmpty ? ' · ${doc.createdAt}' : ''}",
+          ),
+          const RecordCardLink(label: "View"),
+        ],
       ),
     );
   }
@@ -1845,71 +1026,17 @@ class PatientAppointmentsCard extends StatelessWidget {
     bool isDark,
     Color primaryColor,
   ) {
-    return InkWell(
+    return _sheetCard(
       onTap: () => _viewMedicalRecordDetails(context, rec, isDark, primaryColor),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.assignment_outlined, color: primaryColor, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    rec.recordType,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  if (rec.createdAt.isNotEmpty)
-                    Text(
-                      "Recorded on: ${rec.createdAt}",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10.5,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                Text(
-                  "View",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 3),
-                Icon(Icons.open_in_new_rounded, size: 12, color: primaryColor),
-              ],
-            ),
-          ],
-        ),
+      child: Column(
+        children: [
+          RecordCardHeader(
+            icon: Icons.assignment_outlined,
+            title: rec.recordType,
+            subtitle: rec.createdAt.isNotEmpty ? "Recorded on: ${rec.createdAt}" : null,
+          ),
+          const RecordCardLink(label: "View"),
+        ],
       ),
     );
   }
@@ -1921,154 +1048,43 @@ class PatientAppointmentsCard extends StatelessWidget {
   Widget _buildEmptyTile(String text, IconData icon, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.3) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: isDark ? Colors.white38 : Colors.grey.shade400),
+          Icon(icon, size: 16, color: DietUi.muted(isDark)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11.5,
-                color: isDark ? Colors.white38 : Colors.grey.shade500,
-              ),
-            ),
-          ),
+          Expanded(child: Text(text, style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark)))),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader({
-    required String number,
-    required String title,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.2 : 0.12),
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            number,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
+  Widget _buildInfoContainer({required List<Widget> children}) {
+    return SizedBox(
+      width: double.infinity,
+      child: RecordCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
         ),
-        const SizedBox(width: 8),
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab ? 13.5 : 12.5,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildInfoContainer({
-    required bool isDark,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
+  /// A card with a gap beneath it, full width in a sheet's left-aligned column.
+  Widget _sheetCard({required VoidCallback onTap, required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SizedBox(width: double.infinity, child: RecordCard(onTap: onTap, child: child)),
     );
   }
 
   Widget _buildGridRow(List<Widget> children) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
       children: children.map((c) => Expanded(child: c)).toList(),
-    );
-  }
-
-  Widget _buildInfoTile({
-    required String label,
-    required String value,
-    required IconData icon,
-    required bool isDark,
-    TextStyle? valueStyle,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 13,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: valueStyle ??
-              TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-        ),
-      ],
     );
   }
 
@@ -2080,54 +1096,15 @@ class PatientAppointmentsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = theme.primaryColor;
+    const primaryColor = DietUi.blue;
 
     if (appointments.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    primaryColor.withValues(alpha: 0.15),
-                    primaryColor.withValues(alpha: 0.05),
-                  ],
-                ),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Icon(Icons.event_busy_rounded, size: 28, color: primaryColor),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "No Appointments Found",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontWeight: FontWeight.w700,
-                fontSize: isTab ? 16 : 15,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              "No past or upcoming appointments\nrecorded for this patient.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12.5,
-                height: 1.5,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              ),
-            ),
-          ],
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: RecordEmptyState(
+          icon: Icons.event_busy_outlined,
+          title: "No Appointments Found",
+          message: "No past or upcoming appointments\nrecorded for this patient.",
         ),
       );
     }
@@ -2137,10 +1114,9 @@ class PatientAppointmentsCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: appointments.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final appt = appointments[index];
-        final statusColor = _getStatusColor(appt.status);
 
         final bool isPatientUser = _isPatient();
         final int presCount = appt.prescriptions.length;
@@ -2149,298 +1125,54 @@ class PatientAppointmentsCard extends StatelessWidget {
         final int recsCount = appt.medicalRecords.length;
         final int totalRecords = presCount + notesCount + docsCount + recsCount;
 
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _showAppointmentDetailSheet(context, appt, isDark, primaryColor),
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.all(14.0),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  width: 1,
+        return RecordCard(
+          onTap: () => _showAppointmentDetailSheet(context, appt, isDark, primaryColor),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RecordCardHeader(
+                icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.calendar_month_outlined,
+                title: appt.appointmentDate.isNotEmpty ? appt.appointmentDate : "Appointment #${index + 1}",
+                subtitle: [
+                  if (appt.tokenNumber.isNotEmpty) "Token #${appt.tokenNumber}",
+                  if (appt.startTime.isNotEmpty) formatClockTime(appt.startTime),
+                ].join(' · '),
+                trailing: RecordStatusPill(humanizeStatus(appt.status)),
+              ),
+              if (appt.condition.isNotEmpty || appt.reason.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                RecordField(
+                  label: appt.condition.isNotEmpty ? "Condition" : "Reason for Visit",
+                  value: appt.condition.isNotEmpty ? appt.condition : appt.reason,
                 ),
-                boxShadow: [
-                  if (!isDark)
-                    BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.025),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
                 children: [
-                  // ── Top Row: Date, Token & Status Badge ──
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            if (appt.tokenNumber.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                child: Text(
-                                  "#${appt.tokenNumber}",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Expanded(
-                              child: Text(
-                                appt.appointmentDate.isNotEmpty
-                                    ? appt.appointmentDate
-                                    : "Appointment #${index + 1}",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: isTab ? 14 : 13.5,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Clean status badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: isDark ? 0.18 : 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              appt.status.toUpperCase(),
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                                color: statusColor,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  RecordMeta(
+                    icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.location_on_outlined,
+                    text: [
+                      if (appt.appointmentType.isNotEmpty) appt.appointmentType,
+                      appt.isTeleConsultation ? "Paid Online" : "Pay at Clinic",
+                    ].join(' · '),
                   ),
-
-                  const SizedBox(height: 5),
-
-                  // ── Second Row: Time & Type ──
-                  Row(
-                    children: [
-                      if (appt.startTime.isNotEmpty) ...[
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 12,
-                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(width: 3.5),
-                        Text(
-                          appt.startTime,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Container(
-                            width: 3,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                      Icon(
-                        appt.isTeleConsultation
-                            ? Icons.videocam_rounded
-                            : Icons.location_on_rounded,
-                        size: 12,
-                        color: appt.isTeleConsultation
-                            ? const Color(0xFF2563EB)
-                            : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
-                      ),
-                      const SizedBox(width: 3.5),
-                      Expanded(
-                        child: Text(
-                          appt.isTeleConsultation
-                              ? "${appt.appointmentType} • Paid Online"
-                              : "${appt.appointmentType} • Pay at Clinic",
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: appt.isTeleConsultation
-                                ? const Color(0xFF2563EB)
-                                : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // ── Condition / Reason Box (if present) ──
-                  if (appt.condition.isNotEmpty || appt.reason.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F172A).withValues(alpha: 0.5)
-                            : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF334155)
-                              : const Color(0xFFE2E8F0),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.medical_services_rounded,
-                            size: 13,
-                            color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              appt.condition.isNotEmpty
-                                  ? appt.condition
-                                  : appt.reason,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 11.5,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  // ── Footer: Doctor Name & Attached Records ──
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Doctor name
-                      if (appt.doctorName.isNotEmpty)
-                        Expanded(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 13,
-                                color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  appt.doctorName,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        const Spacer(),
-
-                      // Records summary (if any)
-                      if (totalRecords > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.folder_outlined,
-                                size: 11,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "$totalRecords ${totalRecords == 1 ? 'record' : 'records'}",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        size: 16,
-                        color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
-                      ),
-                    ],
-                  ),
+                  if (appt.doctorName.isNotEmpty) RecordMeta(icon: Icons.person_outline_rounded, text: appt.doctorName),
                 ],
               ),
-            ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (totalRecords > 0)
+                    RecordMeta(
+                      icon: Icons.folder_outlined,
+                      text: "$totalRecords ${totalRecords == 1 ? 'record' : 'records'}",
+                    ),
+                  const Expanded(child: RecordCardLink()),
+                ],
+              ),
+            ],
           ),
         );
       },

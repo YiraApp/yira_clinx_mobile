@@ -557,7 +557,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
     const bgLight = Color(0xFFF8FAFC);
     const surfaceDark = Color(0xFF131B2E);
     const surfaceLight = Colors.white;
-    final borderColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final borderColor = isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0);
 
     return PopScope(
       canPop: true,
@@ -668,10 +668,10 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -840,10 +840,10 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -1026,11 +1026,11 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF0F172A).withValues(alpha: 0.85)
+            ? const Color(0xFF121212).withValues(alpha: 0.85)
             : Colors.white.withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Row(
@@ -1076,11 +1076,11 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF0F172A).withValues(alpha: 0.90)
+            ? const Color(0xFF121212).withValues(alpha: 0.90)
             : Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
         ),
         boxShadow: [
           BoxShadow(
@@ -1245,14 +1245,14 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
           color: isSelected
               ? widget.metricColor
               : isDark
-                  ? const Color(0xFF1E293B)
+                  ? const Color(0xFF232323)
                   : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
             color: isSelected
                 ? widget.metricColor
                 : isDark
-                    ? const Color(0xFF334155)
+                    ? const Color(0xFF3A3A3A)
                     : const Color(0xFFE2E8F0),
           ),
         ),

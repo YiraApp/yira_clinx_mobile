@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -381,7 +382,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         orgId: widget.orgId,
       ));
 
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -418,6 +419,12 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: primaryColor,
+        // White status-bar icons on this dark bar; the theme default is dark icons.
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, size: 20, color: Colors.white),

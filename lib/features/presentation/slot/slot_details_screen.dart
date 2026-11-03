@@ -138,7 +138,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : primaryColor.withValues(alpha: 0.1),
+              color: isDark ? const Color(0xFF232323) : primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -279,7 +279,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF5F8FF),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF5F8FF),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(color: const Color(0xFFD2E3FC).withValues(alpha: 0.4), width: 0.5),
       ),
@@ -504,7 +504,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           height: 46,
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(fieldBorderRadius),
           ),
           child: Row(
@@ -652,7 +652,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.12)
-                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                        : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
@@ -804,7 +804,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),

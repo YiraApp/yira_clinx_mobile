@@ -205,6 +205,8 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
         final String? reason = item['reason']?.toString();
         
         final formattedTime = _formatTime(startTime);
+        // The slot's real length from its start and end; the local setting is only a fallback.
+        final int slotMinutes = _minutesBetween(startTime, item['endTime']?.toString()) ?? durationMinutes;
 
         AppointmentType? aptType;
         if (isBooked) {
@@ -228,7 +230,7 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
         fetched.add(TimeSlot(
           id: id,
           time: formattedTime,
-          duration: isBlocked ? "Blocked" : "${durationMinutes}m",
+          duration: isBlocked ? "Blocked" : "${slotMinutes}m",
           status: status,
           patientName: isBooked ? (patientName ?? "Patient") : null,
           type: aptType,
@@ -540,5 +542,17 @@ class SchedulerRepositoryImpl implements SchedulerRepository {
       debugPrint("cancelSlotAppointment Error: $e");
       return false;
     }
+  }
+
+  /// Minutes from "HH:mm[:ss]" [start] to [end], or null if either is unreadable.
+  static int? _minutesBetween(String start, String? end) {
+    int? toMinutes(String? t) {
+      final m = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch((t ?? '').trim());
+      return m == null ? null : int.parse(m.group(1)!) * 60 + int.parse(m.group(2)!);
+    }
+
+    final a = toMinutes(start), b = toMinutes(end);
+    if (a == null || b == null || b <= a) return null;
+    return b - a;
   }
 }

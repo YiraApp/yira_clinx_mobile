@@ -26,7 +26,7 @@ class NotificationBadgeIcon extends StatelessWidget {
     final primaryColor = theme.primaryColor;
     final effectiveIconColor = iconColor ?? (isDark ? Colors.white : const Color(0xFF0F172A));
     final effectiveBadgeColor = badgeColor ?? const Color(0xFFEF4444);
-    final borderBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderBg = isDark ? const Color(0xFF232323) : Colors.white;
 
     return ValueListenableBuilder<int>(
       valueListenable: NotificationBadgeService.instance.unreadCountNotifier,

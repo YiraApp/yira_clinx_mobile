@@ -37,7 +37,7 @@ class CommonDropdown extends StatelessWidget {
 
     return PopupMenuButton<String>(
       onSelected: onSelected,
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF232323) : Colors.white,
       offset: const Offset(0, 48), // Adjusted offset slightly for a clean dropdown alignment
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(computedRadius)),
       itemBuilder: (context) => options.map((String option) {

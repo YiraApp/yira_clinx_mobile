@@ -246,7 +246,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            color: isDark ? const Color(0xFF232323) : Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
@@ -333,7 +333,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                           height: isTab ? 45 : 40,
                                           padding: const EdgeInsets.symmetric(horizontal: 10),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                            color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
                                               color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
@@ -343,7 +343,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                             child: DropdownButton<String>(
                                               isExpanded: true,
                                               value: _selectedVisitType,
-                                              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                              dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                               icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF2563EB)),
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
@@ -421,7 +421,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF232323) : Colors.white,
                     border: Border(
                       top: BorderSide(
                         color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),

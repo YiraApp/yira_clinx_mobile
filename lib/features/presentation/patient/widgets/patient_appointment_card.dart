@@ -61,7 +61,7 @@ class PatientAppointmentCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(isTab ? 18 : 16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE2E8F0),
@@ -147,7 +147,7 @@ class PatientAppointmentCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -209,7 +209,7 @@ class PatientAppointmentCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : Colors.grey[50],
+                color: isDark ? const Color(0xFF121212) : Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

@@ -10,6 +10,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/services/gemini_analysis_service.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_analysis_result.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// Bottom sheet that lets the user pick/capture a prescription image or PDF (up to 2 pages),
 /// sends it to Gemini AI for analysis, and returns the extracted result directly to the form.
@@ -296,8 +297,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.auto_awesome_rounded,
+              child: const PhosphorIcon(
+                PhosphorIconsFill.sparkle,
                 color: Colors.white,
                 size: 22,
               ),
@@ -364,8 +365,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                   color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.close_rounded,
+                child: PhosphorIcon(
+                  PhosphorIconsBold.x,
                   size: 18,
                   color: isDark ? Colors.white70 : const Color(0xFF64748B),
                 ),
@@ -378,7 +379,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
         // Camera Card
         _buildEnhancedOption(
           gradientColors: [const Color(0xFF0284C7), const Color(0xFF0EA5E9)],
-          icon: Icons.camera_alt_rounded,
+          icon: PhosphorIconsDuotone.camera,
           title: 'Take Photo',
           subtitle: 'Capture physical paper prescription',
           badgeText: 'Instant OCR',
@@ -390,7 +391,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
         // Gallery Card
         _buildEnhancedOption(
           gradientColors: [const Color(0xFF7C3AED), const Color(0xFF9333EA)],
-          icon: Icons.photo_library_rounded,
+          icon: PhosphorIconsDuotone.images,
           title: 'Choose from Gallery',
           subtitle: 'Upload prescription photo from your device',
           badgeText: 'Images',
@@ -402,7 +403,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
         // PDF Card (Highlights 2 pages support)
         _buildEnhancedOption(
           gradientColors: [const Color(0xFFE11D48), const Color(0xFFF43F5E)],
-          icon: Icons.picture_as_pdf_rounded,
+          icon: PhosphorIconsDuotone.filePdf,
           title: 'Upload PDF Document',
           subtitle: 'E-prescription or clinical discharge summary',
           badgeText: 'Supports up to 2 pages',
@@ -424,8 +425,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.security_rounded,
+              PhosphorIcon(
+                PhosphorIconsBold.shieldCheck,
                 size: 16,
                 color: isDark ? Colors.white54 : const Color(0xFF64748B),
               ),
@@ -505,7 +506,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                     ),
                   ],
                 ),
-                child: Icon(icon, color: Colors.white, size: 22),
+                child: PhosphorIcon(icon, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -567,8 +568,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                   color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
+                child: PhosphorIcon(
+                  PhosphorIconsBold.caretRight,
                   size: 12,
                   color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
                 ),
@@ -648,8 +649,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                   ],
                 ),
                 child: Center(
-                  child: Icon(
-                    _isPdf ? Icons.picture_as_pdf_rounded : Icons.document_scanner_rounded,
+                  child: PhosphorIcon(
+                    _isPdf ? PhosphorIconsDuotone.filePdf : PhosphorIconsDuotone.scan,
                     size: 32,
                     color: primaryColor,
                   ),
@@ -687,8 +688,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                _isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
+              PhosphorIcon(
+                _isPdf ? PhosphorIconsBold.filePdf : PhosphorIconsBold.image,
                 size: 13,
                 color: primaryColor,
               ),
@@ -780,8 +781,8 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
             shape: BoxShape.circle,
           ),
           child: const Center(
-            child: Icon(
-              Icons.error_outline_rounded,
+            child: PhosphorIcon(
+              PhosphorIconsDuotone.warningCircle,
               size: 34,
               color: Color(0xFFEF4444),
             ),

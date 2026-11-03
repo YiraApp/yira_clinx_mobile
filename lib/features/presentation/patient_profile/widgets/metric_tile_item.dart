@@ -1,12 +1,13 @@
-
 import 'package:flutter/material.dart';
-import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
-import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 
 class MetricTileItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+
+  /// Kept for callers; the icon is grey so that colour stays for what matters,
+  /// such as [valueColor] on an allergy.
   final Color accentColor;
   final Color? valueColor;
   final bool isTab;
@@ -17,70 +18,36 @@ class MetricTileItem extends StatelessWidget {
     required this.label,
     required this.value,
     required this.accentColor,
-    this.valueColor, required this.isTab,
+    this.valueColor,
+    required this.isTab,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final trimmed = value.trim();
+    final displayVal = (trimmed.isEmpty ||
+            trimmed.toLowerCase() == 'none' ||
+            trimmed.toLowerCase() == 'none scheduled' ||
+            trimmed == '-')
+        ? 'N/A'
+        : value;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDark ? accentColor.withOpacity(0.18) : accentColor.withOpacity(0.07),
-            borderRadius: BorderRadius.circular(fieldBorderRadius),
-          ),
-          child: Icon(
-            icon,
-            size: 14,
-            color: isDark ? accentColor.withOpacity(0.9) : accentColor,
-          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 18, color: DietUi.muted(isDark)),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize:isTab?  displayWidth(context) * 0.018: displayWidth(context) * 0.024,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                  color: isDark ? Colors.grey[500] : Colors.grey[400],
-                ),
-              ),
-              const SizedBox(height: 3),
-              Builder(
-                builder: (context) {
-                  final trimmed = value.trim();
-                  final displayVal = (trimmed.isEmpty ||
-                          trimmed.toLowerCase() == 'none' ||
-                          trimmed.toLowerCase() == 'none scheduled' ||
-                          trimmed == '-')
-                      ? 'N/A'
-                      : value;
-                  return Text(
-                    displayVal,
-                    style: TextStyle(
-                      fontFamily: appPoppinFont,
-                      fontSize: isTab
-                          ? displayWidth(context) * 0.02
-                          : displayWidth(context) * 0.032,
-                      fontWeight: FontWeight.w500,
-                      height: 1.3,
-                      color: valueColor ??
-                          (isDark
-                              ? Colors.white.withOpacity(0.9)
-                              : Colors.black87),
-                    ),
-                  );
-                },
-              ),
+              Text(label, style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
+              const SizedBox(height: 2),
+              Text(displayVal, style: DietUi.text(13, FontWeight.w500, valueColor ?? DietUi.body(isDark), height: 1.35)),
             ],
           ),
         ),

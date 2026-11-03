@@ -50,7 +50,9 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Started only after camera permission is settled, so Android asks once (auto-start asked a second time).
     _scannerController = MobileScannerController(
+      autoStart: false,
       detectionSpeed: DetectionSpeed.noDuplicates,
       facing: CameraFacing.back,
       torchEnabled: false,
@@ -72,12 +74,19 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      setState(() {
-        _cameraPermissionDenied = false;
-        _hasCameraPermission = true;
+    // Closing Android's permission dialog also "resumes" the app, so only re-check here
+    // (e.g. the user allowed the camera in Settings); never ask again from this path.
+    if (state == AppLifecycleState.resumed && _cameraPermissionDenied) {
+      Permission.camera.status.then((status) async {
+        if (!mounted || !(status.isGranted || status.isLimited)) return;
+        setState(() {
+          _cameraPermissionDenied = false;
+          _hasCameraPermission = true;
+        });
+        try {
+          await _scannerController.start();
+        } catch (_) {}
       });
-      _checkAndRequestCameraPermission();
     }
   }
 
@@ -104,6 +113,12 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
               await _scannerController.start();
             } catch (_) {}
           }
+        } else if (mounted) {
+          // Refused: show the permission panel instead of asking again.
+          setState(() {
+            _hasCameraPermission = false;
+            _cameraPermissionDenied = true;
+          });
         }
       } else if (status.isGranted || status.isLimited) {
         if (mounted) {
@@ -327,7 +342,14 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
     final size = MediaQuery.of(context).size;
     final scanBoxSize = (size.width * 0.72).clamp(230.0, 290.0);
 
-    return Scaffold(
+    // Black camera screen: white status-bar icons (the app default is dark).
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
@@ -536,6 +558,8 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                       const SizedBox(height: 12),
                     ],
 
+                    // While the camera is blocked, the permission panel already offers the gallery.
+                    if (!_cameraPermissionDenied) ...[
                     const Text(
                       'Align Doctor\'s QR code within frame to scan automatically',
                       textAlign: TextAlign.center,
@@ -565,6 +589,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                         ),
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),
@@ -597,6 +622,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
             ),
         ],
       ),
+    ),
     );
   }
 

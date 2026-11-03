@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -111,6 +112,12 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   backgroundColor: primaryColor,
+                  // White status-bar icons on this dark bar; the theme default is dark icons.
+                  systemOverlayStyle: const SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: Brightness.light,
+                    statusBarBrightness: Brightness.dark,
+                  ),
                   automaticallyImplyLeading: false,
                   toolbarHeight: kToolbarHeight + 16,
                   titleSpacing: screenHorizontalSpacePadding,

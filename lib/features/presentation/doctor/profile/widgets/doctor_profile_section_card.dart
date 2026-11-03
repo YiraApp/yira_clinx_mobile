@@ -47,10 +47,10 @@ class DoctorProfileSectionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -130,7 +130,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
           ),
 
           // Field Items
@@ -144,7 +144,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
               thickness: 0.8,
               indent: 48,
               endIndent: 16,
-              color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF3A3A3A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
             ),
             itemBuilder: (context, index) {
               final field = fields[index];

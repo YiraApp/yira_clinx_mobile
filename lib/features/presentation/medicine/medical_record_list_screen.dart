@@ -1,5 +1,7 @@
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
+
+import '../patient_profile/widgets/record_tab_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -21,6 +23,10 @@ class MedicalRecordsListScreen extends StatefulWidget {
   final PatientProfileEntity? patient;
   final String? patientId;
   final String? appointmentId;
+
+  /// List every record from [hospitalId], not only this visit's. New records
+  /// still attach to [appointmentId].
+  final bool listWholeHospital;
   final String? hospitalId;
   final String? orgId;
   final bool allowAdd;
@@ -30,6 +36,7 @@ class MedicalRecordsListScreen extends StatefulWidget {
     this.patient,
     this.patientId,
     this.appointmentId,
+    this.listWholeHospital = false,
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
@@ -46,7 +53,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
     super.initState();
     context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
           patientId: widget.patientId ?? widget.patient?.id,
-          appointmentId: widget.appointmentId,
+          appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         ));
@@ -55,7 +62,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
   void _refreshRecords() {
     context.read<MedicalHistoryBloc>().add(LoadMedicalHistoryRecords(
           patientId: widget.patientId ?? widget.patient?.id,
-          appointmentId: widget.appointmentId,
+          appointmentId: widget.listWholeHospital ? null : widget.appointmentId,
           hospitalId: widget.hospitalId,
           orgId: widget.orgId,
         ));
@@ -162,21 +169,17 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
 
     if (state is MedicalHistoryLoaded) {
       if (state.records.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.assignment_outlined, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
-              const CommonText("No medical records history found."),
-            ],
-          ),
+        return const RecordEmptyState(
+          icon: Icons.assignment_outlined,
+          title: 'No medical records yet',
+          message: 'Records added at a visit will appear here.',
         );
       }
       return ListView.builder(
         padding: const EdgeInsets.only(
           left: screenHorizontalSpacePadding,
           right: screenHorizontalSpacePadding,
+          top: 8,
           bottom: 80,
         ),
         itemCount: state.records.length,
@@ -188,7 +191,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
               isTab: isTab,
               title: item.title,
               formattedDate: DateFormat(
-                'MMMM dd, yyyy',
+                'd MMM yyyy',
               ).format(item.recordDate),
               doctorName: item.doctorName,
               status: item.status,

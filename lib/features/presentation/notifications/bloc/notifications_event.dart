@@ -15,6 +15,11 @@ class FetchNotificationsEvent extends NotificationsEvent {
   List<Object?> get props => [isRefresh];
 }
 
+/// Loads the next page when the list is scrolled near its end.
+class LoadMoreNotificationsEvent extends NotificationsEvent {
+  const LoadMoreNotificationsEvent();
+}
+
 class MarkNotificationAsReadEvent extends NotificationsEvent {
   final String notificationId;
   const MarkNotificationAsReadEvent(this.notificationId);

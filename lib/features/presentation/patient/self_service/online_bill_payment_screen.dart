@@ -46,7 +46,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
             child: Container(
               padding: EdgeInsets.all(isTab ? 28 : 20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
                 boxShadow: [

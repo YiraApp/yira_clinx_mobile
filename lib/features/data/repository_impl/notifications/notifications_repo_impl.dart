@@ -36,7 +36,17 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
         final rawData = response.data as Map<String, dynamic>;
         final data = rawData['data'];
         if (data != null && data is Map<String, dynamic>) {
-          return NotificationsPayloadModel.fromJson(data);
+          final payload = NotificationsPayloadModel.fromJson(data);
+          if (GlobalSession.instance.isCurrentProfilePrimary || userId.isEmpty) return payload;
+          // A family member sees only what was sent to them, whatever the server returns.
+          final own = payload.notifications
+              .where((n) => n.userId.toLowerCase() == userId.toLowerCase())
+              .toList();
+          return NotificationsPayloadModel(
+            notifications: own,
+            total: own.length,
+            unreadCount: own.where((n) => !n.isRead).length,
+          );
         }
       }
       return null;

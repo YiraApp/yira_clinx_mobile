@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -8,10 +6,10 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
+import 'package:yiraclinics/core/widgets/profile_visuals.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:yiraclinics/core/navigation_services/navigation_services.dart';
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
@@ -26,6 +24,24 @@ class ProfileSwitcherSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => const ProfileSwitcherSheet(),
     );
+  }
+
+  /// Switches straight to one of the account's family profiles, as tapping it
+  /// in the sheet would. Shows a message if the switch fails.
+  static Future<void> switchToFamilyProfile(BuildContext context, String profileUserId) async {
+    final user = GlobalSession.instance.userNotifier.value;
+    final profiles = user?.data?.profiles ?? [];
+    final primaryUserId = (profiles.isNotEmpty && (profiles.first.id ?? '').isNotEmpty) ? profiles.first.id! : (user?.data?.id ?? '');
+    final items = _buildFamilyItems(user, primaryUserId, (_, image) => image);
+    final target = items.where((i) => (i.profileUserId ?? '').toLowerCase() == profileUserId.toLowerCase()).firstOrNull;
+    if (target == null) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final error = await _performSwitch(target);
+    if (error == null) {
+      NavigationService.navigateTo(AppRoutes.userConfiguration);
+    } else {
+      messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+    }
   }
 
   @override
@@ -96,171 +112,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       final List<_FlatWorkspaceItem> items = [];
 
-      final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
-          ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
-          : 'Primary Account';
-
-      final bool primaryHasPatientRole = allRoles.any((r) {
-        final rName = (r.roleName ?? '').toLowerCase();
-        final rId = (r.roleId ?? '').toUpperCase();
-        return rId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
-               rName.contains('patient') ||
-               rName.contains('user');
-      });
-
-      RoleEntity? providerRoleEntity;
-      for (final r in allRoles) {
-        final rName = (r.roleName ?? '').toLowerCase();
-        final rId = (r.roleId ?? '').toUpperCase();
-        if (rId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
-            rName.contains('provider') ||
-            rName.contains('doctor') ||
-            rName.contains('physician')) {
-          providerRoleEntity = r;
-          break;
-        }
-      }
-      final bool primaryHasProviderRole = providerRoleEntity != null &&
-          providerRoleEntity.roleId != null &&
-          providerRoleEntity.roleId!.isNotEmpty;
-
-      final String primaryRoleId = primaryHasPatientRole
-          ? '4FC67429-28AE-4106-93EF-436228282ED0'
-          : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
-
-      final effectiveHospitalId = (currentUser?.data?.latestHospitalId != null && currentUser!.data!.latestHospitalId! > 1)
-          ? currentUser.data!.latestHospitalId!
-          : 19;
-      final effectiveOrgId = currentUser?.data?.latestOrgId ?? 1;
-
-      // 1. Add Family Profiles (Primary + Dependents)
-      if (profiles.isNotEmpty) {
-        int primaryIndex = profiles.indexWhere((p) {
-          final r = (p.relation ?? '').trim().toLowerCase();
-          final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
-          return p.isPrimary == true && !isFam;
-        });
-
-        if (primaryIndex != -1) {
-          final primaryProf = profiles[primaryIndex];
-          final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
-              ? primaryProf.name!
-              : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
-                  ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
-                  : fallbackPrimaryName;
-
-          final String? primaryImage = resolveProfileImage(
-            primaryProf.id ?? primaryUserId,
-            primaryProf.imagePath ?? currentUser?.data?.imagePath,
-          );
-
-          items.add(_FlatWorkspaceItem(
-            roleId: primaryRoleId,
-            roleName: 'Primary',
-            orgId: effectiveOrgId,
-            orgName: 'Family Profile',
-            hospitalId: effectiveHospitalId,
-            hospitalName: pPrimaryName,
-            location: null,
-            profileUserId: primaryProf.id ?? primaryUserId,
-            firstName: primaryProf.firstName,
-            lastName: primaryProf.lastName,
-            gender: primaryProf.gender,
-            dob: primaryProf.dob,
-            phoneNumber: primaryProf.phoneNumber,
-            relation: 'Self',
-            imagePath: primaryImage,
-          ));
-        } else {
-          final String? primaryImage = resolveProfileImage(
-            primaryUserId,
-            currentUser?.data?.imagePath,
-          );
-          items.add(_FlatWorkspaceItem(
-            roleId: primaryRoleId,
-            roleName: 'Primary',
-            orgId: effectiveOrgId,
-            orgName: 'Family Profile',
-            hospitalId: effectiveHospitalId,
-            hospitalName: fallbackPrimaryName,
-            location: null,
-            profileUserId: primaryUserId,
-            firstName: currentUser?.data?.firstName,
-            lastName: currentUser?.data?.lastName,
-            gender: currentUser?.data?.gender,
-            dob: currentUser?.data?.dob,
-            phoneNumber: currentUser?.data?.phoneNumber,
-            relation: 'Self',
-            imagePath: primaryImage,
-          ));
-        }
-
-        // 2. All other family members retain their exact fixed relations
-        for (int i = 0; i < profiles.length; i++) {
-          if (primaryIndex != -1 && i == primaryIndex) continue;
-
-          final p = profiles[i];
-          final rawRel = (p.relation ?? '').trim();
-          final bool hasFamilyRelation = rawRel.isNotEmpty &&
-              rawRel.toLowerCase() != 'self' &&
-              rawRel.toLowerCase() != 'primary' &&
-              rawRel.toLowerCase() != 'admin';
-
-          final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
-          final String pName = (p.name?.isNotEmpty ?? false)
-              ? p.name!
-              : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
-                  ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
-                  : pRel;
-
-          final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
-          final String? depImage = resolveProfileImage(
-            pUserId,
-            p.imagePath,
-          );
-
-          items.add(_FlatWorkspaceItem(
-            roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
-            roleName: 'Family Member',
-            orgId: effectiveOrgId,
-            orgName: 'Family Profile',
-            hospitalId: effectiveHospitalId,
-            hospitalName: pName,
-            location: null,
-            profileUserId: pUserId,
-            firstName: p.firstName,
-            lastName: p.lastName,
-            gender: p.gender,
-            dob: p.dob,
-            phoneNumber: p.phoneNumber,
-            relation: pRel,
-            imagePath: depImage,
-          ));
-        }
-      } else {
-        final String? fallbackImage = resolveProfileImage(
-          primaryUserId,
-          currentUser?.data?.imagePath,
-        );
-
-        items.add(_FlatWorkspaceItem(
-          roleId: primaryRoleId,
-          roleName: 'Primary',
-          orgId: currentUser?.data?.latestOrgId ?? 1,
-          orgName: 'Family Profile',
-          hospitalId: currentUser?.data?.latestHospitalId ?? 1,
-          hospitalName: fallbackPrimaryName,
-          location: null,
-          profileUserId: primaryUserId,
-          firstName: currentUser?.data?.firstName,
-          lastName: currentUser?.data?.lastName,
-          gender: currentUser?.data?.gender,
-          dob: currentUser?.data?.dob,
-          phoneNumber: currentUser?.data?.phoneNumber,
-          relation: 'Self',
-          imagePath: fallbackImage,
-        ));
-      }
+      items.addAll(_buildFamilyItems(currentUser, primaryUserId, resolveProfileImage));
 
       // 2. Add Provider / Staff Workspaces for each facility
       for (final role in roles) {
@@ -393,109 +245,21 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       _switchingKey = key;
     });
 
-    try {
-      final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
-      final params = UpdateLatestOrgDetailsModelParams(
-        userId: item.profileUserId,
-        latestRoleId: item.roleId,
-        latestOrgId: item.orgId,
-        latestHospitalId: item.hospitalId,
+    final error = await _performSwitch(item);
+    if (error == null) {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      NavigationService.navigateTo(AppRoutes.userConfiguration);
+    } else if (mounted) {
+      setState(() {
+        _switchingKey = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-
-      final response = await updateUseCase(params);
-
-      if (response != null && response.status == true && response.data != null) {
-        final currentSession = GlobalSession.instance.userNotifier.value;
-        final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
-        final bool isPatientRole = effectiveRoleId.toUpperCase() ==
-                "4FC67429-28AE-4106-93EF-436228282ED0" ||
-            item.roleName.toLowerCase().contains("patient") ||
-            item.roleName.toLowerCase().contains("user") ||
-            (item.relation != null &&
-             item.relation!.toLowerCase() != 'doctor' &&
-             item.relation!.toLowerCase() != 'provider' &&
-             effectiveRoleId.toUpperCase() != "FE80173F-9DB3-4703-84A8-5C23E7CC493C");
-        final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
-        final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
-
-        if (currentSession?.data != null) {
-          final oldData = currentSession!.data!;
-          final targetUserId = (item.profileUserId != null && item.profileUserId!.isNotEmpty)
-              ? item.profileUserId!
-              : oldData.id;
-
-          final updatedData = DataEntity(
-            id: targetUserId,
-            accessToken: oldData.accessToken,
-            refreshToken: oldData.refreshToken,
-            accessTokenExpiry: oldData.accessTokenExpiry,
-            refreshTokenExpiry: oldData.refreshTokenExpiry,
-            isMobileVerified: oldData.isMobileVerified,
-            isEmailVerified: oldData.isEmailVerified,
-            roleCount: oldData.roleCount,
-            hospitalCount: oldData.hospitalCount,
-            organizationCount: oldData.organizationCount,
-            roles: oldData.roles,
-            firstName: item.firstName ?? oldData.firstName,
-            lastName: item.lastName ?? oldData.lastName,
-            email: oldData.email,
-            phoneNumber: item.phoneNumber ?? oldData.phoneNumber,
-            countryCode: oldData.countryCode,
-            gender: item.gender ?? oldData.gender,
-            dob: item.dob ?? oldData.dob,
-            height: oldData.height,
-            weight: oldData.weight,
-            heightUnit: oldData.heightUnit,
-            weightUnit: oldData.weightUnit,
-            latestRoleId: effectiveRoleId,
-            latestOrgId: response.data?.latestOrgId ?? item.orgId,
-            latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
-            latestUserRole: latestUserRole,
-            navigationId: navigationId,
-            profiles: oldData.profiles,
-            imagePath: item.imagePath ?? oldData.imagePath,
-          );
-
-          await GlobalSession.instance.update(
-            LoginEntity(
-              status: true,
-              message: "Session updated",
-              data: updatedData,
-            ),
-          );
-        }
-
-        if (mounted) {
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-        NavigationService.navigateTo(AppRoutes.userConfiguration);
-      } else {
-        if (mounted) {
-          setState(() {
-            _switchingKey = null;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response?.message ?? "Failed to switch workspace"),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _switchingKey = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error switching workspace: $e"),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
     }
   }
 
@@ -568,7 +332,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
       ),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -631,7 +395,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                         ),
                       ),
                       Text(
-                        "Tap to switch profile or workspace",
+                        "Choose a family member or a workspace",
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 12.5 : 11.5,
@@ -675,14 +439,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                                 physics: const BouncingScrollPhysics(),
                                 children: [
                                   if (profileItems.isNotEmpty) ...[
-                                    _buildSectionHeader(
-                                      title: "Profiles & Family Members",
-                                      icon: Icons.people_alt_rounded,
-                                      color: const Color(0xFF0284C7),
-                                      isDark: isDark,
-                                      isTab: isTab,
-                                    ),
-                                    const SizedBox(height: 8),
+ProfileSectionLabel(title: "Family profiles", count: profileItems.length, isDark: isDark),
                                     ...profileItems.map((item) => _buildItemTile(
                                           item: item,
                                           isDark: isDark,
@@ -692,17 +449,12 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                                           activeRoleId: activeRoleId,
                                           activeHospitalId: activeHospitalId,
                                         )),
+                                    if (_isPatientSession(currentUser) && !GlobalSession.instance.isSignedInAsFamilyMember)
+                                      _buildAddFamilyTile(isDark: isDark, primaryColor: primaryColor, isTab: isTab),
                                   ],
                                   if (roleItems.isNotEmpty) ...[
                                     if (profileItems.isNotEmpty) const SizedBox(height: 12),
-                                    _buildSectionHeader(
-                                      title: "Roles & Responsibilities",
-                                      icon: Icons.badge_rounded,
-                                      color: const Color(0xFF2563EB),
-                                      isDark: isDark,
-                                      isTab: isTab,
-                                    ),
-                                    const SizedBox(height: 8),
+ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark),
                                     ...roleItems.map((item) => _buildItemTile(
                                           item: item,
                                           isDark: isDark,
@@ -720,38 +472,6 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required bool isDark,
-    required bool isTab,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.25 : 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 14, color: color),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? 13.5 : 12.5,
-            fontWeight: FontWeight.w700,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-            letterSpacing: 0.2,
-          ),
-        ),
-      ],
     );
   }
 
@@ -797,143 +517,205 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
             item.roleId.toUpperCase() == activeRoleIdStr &&
             item.hospitalId.toString() == activeHospitalId.toString());
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
+    final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final Color cardColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final bool isOtherSwitching = _switchingKey != null && !isSwitching;
 
-    // Format: "Ramesh Ch" for patient or "Yira Hospital (Provider)" for staff
-    final String displayTitle = isPatientItem
-        ? item.hospitalName
-        : (item.roleName == 'User'
-            ? item.hospitalName
-            : "${item.hospitalName} (${item.roleName})");
+    final String relation = (item.relation ?? '').trim();
+    final bool isSelf = relation.isEmpty || relation.toLowerCase() == 'self' || item.roleName == 'Primary';
+    final String tagLabel = isPatientItem ? (isSelf ? 'You' : relation) : item.roleName;
+    final Color accent = isPatientItem ? profileRelationColor(relation, isPrimary: isSelf) : roleColor;
+    final String title = item.hospitalName;
+    final String gender = (item.gender ?? '').trim();
+    final String? age = profileAgeLabel(item.dob);
+    final String? location = (item.location != null && item.location!.trim().isNotEmpty) ? item.location!.trim() : null;
+
+    final Widget leading = isPatientItem
+        ? ProfileAvatar(name: title, imagePath: item.imagePath, color: accent, size: isTab ? 46 : 42)
+        : Container(
+            width: isTab ? 50 : 46,
+            height: isTab ? 50 : 46,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [accent.withValues(alpha: 0.8), accent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [BoxShadow(color: accent.withValues(alpha: 0.28), blurRadius: 10, offset: const Offset(0, 3))],
+            ),
+            child: Icon(_getRoleIcon(item.roleName), size: 21, color: Colors.white),
+          );
+
+    final List<Widget> info = isPatientItem
+        ? [
+            if (gender.isNotEmpty) ProfileInfoItem(icon: profileGenderIcon(gender), text: gender, color: infoColor, isTab: isTab),
+            if (age != null) ProfileInfoItem(icon: Icons.cake_outlined, text: age, color: infoColor, isTab: isTab),
+          ]
+        : [
+            if (item.orgName.isNotEmpty) ProfileInfoItem(icon: Icons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
+            if (location != null) ProfileInfoItem(icon: Icons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
+          ];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: isActive
-            ? roleColor.withValues(alpha: isDark ? 0.2 : 0.08)
-            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: isActive
-                ? roleColor
-                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-            width: isActive ? 1.6 : 1,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: isOtherSwitching ? 0.5 : 1,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: isActive ? Color.alphaBlend(accent.withValues(alpha: isDark ? 0.2 : 0.07), cardColor) : cardColor,
+            border: Border.all(
+              color: isActive ? accent.withValues(alpha: 0.6) : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
+              width: isActive ? 1.4 : 1,
+            ),
+            boxShadow: isDark
+                ? null
+                : [BoxShadow(color: Colors.black.withValues(alpha: 0.035), blurRadius: 12, offset: const Offset(0, 4))],
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: isActuallyCurrentModeAndItem || _switchingKey != null ? null : () => _switchWorkspace(item),
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    leading,
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 15.5 : 14.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ProfileTag(label: tagLabel, color: accent, isDark: isDark),
+                            ],
+                          ),
+                          if (info.isNotEmpty) ...[
+                            const SizedBox(height: 5),
+                            Wrap(spacing: 12, runSpacing: 4, children: info),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    if (isSwitching)
+                      SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: accent))
+                    else if (isActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(20)),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_rounded, size: 13, color: Colors.white),
+                            SizedBox(width: 3),
+                            Text(
+                              'Current',
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.arrow_forward_ios_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey.shade600),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  bool _isPatientSession(dynamic currentUser) {
+    final role = (currentUser?.data?.latestUserRole ?? '').toString().toLowerCase().trim();
+    final roleId = (currentUser?.data?.latestRoleId?.toString() ?? '').toUpperCase();
+    return role.contains('patient') ||
+        role == 'user' ||
+        currentUser?.data?.navigationId?.toString().trim() == '1' ||
+        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
+  }
+
+  Widget _buildAddFamilyTile({required bool isDark, required Color primaryColor, required bool isTab}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: primaryColor.withValues(alpha: isDark ? 0.12 : 0.05),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: primaryColor.withValues(alpha: 0.25)),
+        ),
         child: InkWell(
-          onTap: isActuallyCurrentModeAndItem || isSwitching
+          borderRadius: BorderRadius.circular(18),
+          onTap: _switchingKey != null
               ? null
-              : () => _switchWorkspace(item),
-          borderRadius: BorderRadius.circular(16),
+              : () {
+                  final navigator = Navigator.of(context);
+                  navigator.pop();
+                  navigator.pushNamed(AppRoutes.patientMyFamily);
+                },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
               children: [
-                // Icon / Profile Avatar
                 Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? roleColor
-                        : roleColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _buildItemAvatar(
-                    item: item,
-                    isActive: isActive,
-                    roleColor: roleColor,
-                    isDark: isDark,
-                  ),
+                  width: isTab ? 46 : 42,
+                  height: isTab ? 46 : 42,
+                  decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
+                  child: Icon(Icons.person_add_alt_1_rounded, size: 20, color: primaryColor),
                 ),
-                const SizedBox(width: 12),
-
-                // Title
+                const SizedBox(width: 13),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'Add a family member',
                         style: TextStyle(
                           fontFamily: appPoppinFont,
-                          fontSize: isTab ? 15 : 13.5,
-                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          fontSize: isTab ? 15 : 14,
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
                         ),
                       ),
-                      if (isPatientItem) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          item.relation != null && item.relation!.isNotEmpty
-                              ? item.relation!
-                              : (item.orgName.isNotEmpty ? item.orgName : 'Family Profile'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 12 : 11,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
+                      Text(
+                        'Manage their records from your account',
+                        style: TextStyle(
+                          fontFamily: appPoppinFont,
+                          fontSize: isTab ? 12 : 11,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
-                      ] else if (item.orgName.isNotEmpty || item.location != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          [
-                            if (item.orgName.isNotEmpty) item.orgName,
-                            if (item.location != null && item.location!.isNotEmpty)
-                              item.location!,
-                          ].join(' • '),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 12 : 11,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-
-                // Action / Status Pill
-                if (isSwitching)
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: roleColor,
-                    ),
-                  )
-                else if (isActive)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                    decoration: BoxDecoration(
-                      color: roleColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      "ACTIVE",
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: isDark ? Colors.white38 : Colors.grey.shade400,
-                  ),
               ],
             ),
           ),
@@ -953,10 +735,10 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -1055,72 +837,274 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
     );
   }
 
-  Widget _buildItemAvatar({
-    required _FlatWorkspaceItem item,
-    required bool isActive,
-    required Color roleColor,
-    required bool isDark,
-  }) {
-    final defaultIcon = Center(
-      child: Icon(
-        _getRoleIcon(item.roleName),
-        size: 18,
-        color: isActive ? Colors.white : roleColor,
-      ),
+}
+
+
+/// The account's family profiles (primary first, then dependents) as switch
+/// targets. Shared by the sheet and the profile row on My Profile.
+List<_FlatWorkspaceItem> _buildFamilyItems(
+  LoginEntity? currentUser,
+  String primaryUserId,
+  String? Function(String? id, String? serverImage) resolveProfileImage,
+) {
+  final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
+  final List<RoleEntity> allRoles = currentUser?.data?.roles ?? [];
+  final List<_FlatWorkspaceItem> items = [];
+
+  final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
+      ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
+      : 'Primary Account';
+
+  final bool primaryHasPatientRole = allRoles.any((r) {
+    final rName = (r.roleName ?? '').toLowerCase();
+    final rId = (r.roleId ?? '').toUpperCase();
+    return rId == '4FC67429-28AE-4106-93EF-436228282ED0' ||
+           rName.contains('patient') ||
+           rName.contains('user');
+  });
+
+  RoleEntity? providerRoleEntity;
+  for (final r in allRoles) {
+    final rName = (r.roleName ?? '').toLowerCase();
+    final rId = (r.roleId ?? '').toUpperCase();
+    if (rId == 'FE80173F-9DB3-4703-84A8-5C23E7CC493C' ||
+        rName.contains('provider') ||
+        rName.contains('doctor') ||
+        rName.contains('physician')) {
+      providerRoleEntity = r;
+      break;
+    }
+  }
+  final bool primaryHasProviderRole = providerRoleEntity != null &&
+      providerRoleEntity.roleId != null &&
+      providerRoleEntity.roleId!.isNotEmpty;
+
+  final String primaryRoleId = primaryHasPatientRole
+      ? '4FC67429-28AE-4106-93EF-436228282ED0'
+      : (primaryHasProviderRole ? providerRoleEntity.roleId! : '4FC67429-28AE-4106-93EF-436228282ED0');
+
+  final effectiveHospitalId = (currentUser?.data?.latestHospitalId != null && currentUser!.data!.latestHospitalId! > 1)
+      ? currentUser.data!.latestHospitalId!
+      : 19;
+  final effectiveOrgId = currentUser?.data?.latestOrgId ?? 1;
+
+  // 1. Add Family Profiles (Primary + Dependents)
+  if (profiles.isNotEmpty) {
+    int primaryIndex = profiles.indexWhere((p) {
+      final r = (p.relation ?? '').trim().toLowerCase();
+      final isFam = r.isNotEmpty && r != 'self' && r != 'primary' && r != 'admin';
+      return p.isPrimary == true && !isFam;
+    });
+
+    if (primaryIndex != -1) {
+      final primaryProf = profiles[primaryIndex];
+      final String pPrimaryName = (primaryProf.name?.isNotEmpty ?? false)
+          ? primaryProf.name!
+          : '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim().isNotEmpty
+              ? '${primaryProf.firstName ?? ''} ${primaryProf.lastName ?? ''}'.trim()
+              : fallbackPrimaryName;
+
+      final String? primaryImage = resolveProfileImage(
+        primaryProf.id ?? primaryUserId,
+        primaryProf.imagePath ?? currentUser?.data?.imagePath,
+      );
+
+      items.add(_FlatWorkspaceItem(
+        roleId: primaryRoleId,
+        roleName: 'Primary',
+        orgId: effectiveOrgId,
+        orgName: 'Family Profile',
+        hospitalId: effectiveHospitalId,
+        hospitalName: pPrimaryName,
+        location: null,
+        profileUserId: primaryProf.id ?? primaryUserId,
+        firstName: primaryProf.firstName,
+        lastName: primaryProf.lastName,
+        gender: primaryProf.gender,
+        dob: primaryProf.dob,
+        phoneNumber: primaryProf.phoneNumber,
+        relation: 'Self',
+        imagePath: primaryImage,
+      ));
+    } else {
+      final String? primaryImage = resolveProfileImage(
+        primaryUserId,
+        currentUser?.data?.imagePath,
+      );
+      items.add(_FlatWorkspaceItem(
+        roleId: primaryRoleId,
+        roleName: 'Primary',
+        orgId: effectiveOrgId,
+        orgName: 'Family Profile',
+        hospitalId: effectiveHospitalId,
+        hospitalName: fallbackPrimaryName,
+        location: null,
+        profileUserId: primaryUserId,
+        firstName: currentUser?.data?.firstName,
+        lastName: currentUser?.data?.lastName,
+        gender: currentUser?.data?.gender,
+        dob: currentUser?.data?.dob,
+        phoneNumber: currentUser?.data?.phoneNumber,
+        relation: 'Self',
+        imagePath: primaryImage,
+      ));
+    }
+
+    // 2. All other family members retain their exact fixed relations
+    for (int i = 0; i < profiles.length; i++) {
+      if (primaryIndex != -1 && i == primaryIndex) continue;
+
+      final p = profiles[i];
+      final rawRel = (p.relation ?? '').trim();
+      final bool hasFamilyRelation = rawRel.isNotEmpty &&
+          rawRel.toLowerCase() != 'self' &&
+          rawRel.toLowerCase() != 'primary' &&
+          rawRel.toLowerCase() != 'admin';
+
+      final String pRel = hasFamilyRelation ? rawRel : 'Dependent';
+      final String pName = (p.name?.isNotEmpty ?? false)
+          ? p.name!
+          : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim().isNotEmpty
+              ? '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim()
+              : pRel;
+
+      final String pUserId = (p.id != null && p.id!.isNotEmpty) ? p.id! : '';
+      final String? depImage = resolveProfileImage(
+        pUserId,
+        p.imagePath,
+      );
+
+      items.add(_FlatWorkspaceItem(
+        roleId: '4FC67429-28AE-4106-93EF-436228282ED0',
+        roleName: 'Family Member',
+        orgId: effectiveOrgId,
+        orgName: 'Family Profile',
+        hospitalId: effectiveHospitalId,
+        hospitalName: pName,
+        location: null,
+        profileUserId: pUserId,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        gender: p.gender,
+        dob: p.dob,
+        phoneNumber: p.phoneNumber,
+        relation: pRel,
+        imagePath: depImage,
+      ));
+    }
+  } else {
+    final String? fallbackImage = resolveProfileImage(
+      primaryUserId,
+      currentUser?.data?.imagePath,
     );
 
-    final img = item.imagePath?.trim();
-    if (img == null || img.isEmpty) {
-      return defaultIcon;
-    }
+    items.add(_FlatWorkspaceItem(
+      roleId: primaryRoleId,
+      roleName: 'Primary',
+      orgId: currentUser?.data?.latestOrgId ?? 1,
+      orgName: 'Family Profile',
+      hospitalId: currentUser?.data?.latestHospitalId ?? 1,
+      hospitalName: fallbackPrimaryName,
+      location: null,
+      profileUserId: primaryUserId,
+      firstName: currentUser?.data?.firstName,
+      lastName: currentUser?.data?.lastName,
+      gender: currentUser?.data?.gender,
+      dob: currentUser?.data?.dob,
+      phoneNumber: currentUser?.data?.phoneNumber,
+      relation: 'Self',
+      imagePath: fallbackImage,
+    ));
+  }
 
-    if (img.startsWith('data:image')) {
-      try {
-        final commaIdx = img.indexOf(',');
-        final b64 = commaIdx != -1 ? img.substring(commaIdx + 1) : img;
-        return Image.memory(
-          base64Decode(b64),
-          width: 38,
-          height: 38,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => defaultIcon,
+  return items;
+}
+
+/// Switches the session to [item] on the server and locally. Returns null on
+/// success, or a message to show.
+Future<String?> _performSwitch(_FlatWorkspaceItem item) async {
+  try {
+    final updateUseCase = sl<UpdateLatestOrgDetailsUseCase>();
+    final params = UpdateLatestOrgDetailsModelParams(
+      userId: item.profileUserId,
+      latestRoleId: item.roleId,
+      latestOrgId: item.orgId,
+      latestHospitalId: item.hospitalId,
+    );
+
+    final response = await updateUseCase(params);
+
+    if (response != null && response.status == true && response.data != null) {
+      final currentSession = GlobalSession.instance.userNotifier.value;
+      final String effectiveRoleId = response.data?.latestRoleId ?? item.roleId;
+      final bool isPatientRole = effectiveRoleId.toUpperCase() ==
+              "4FC67429-28AE-4106-93EF-436228282ED0" ||
+          item.roleName.toLowerCase().contains("patient") ||
+          item.roleName.toLowerCase().contains("user") ||
+          (item.relation != null &&
+           item.relation!.toLowerCase() != 'doctor' &&
+           item.relation!.toLowerCase() != 'provider' &&
+           effectiveRoleId.toUpperCase() != "FE80173F-9DB3-4703-84A8-5C23E7CC493C");
+      final String navigationId = response.data?.navigationId ?? (isPatientRole ? "1" : "2");
+      final String latestUserRole = (navigationId == "2" || !isPatientRole) ? "Provider" : "Patient";
+
+      if (currentSession?.data != null) {
+        final oldData = currentSession!.data!;
+        final targetUserId = (item.profileUserId != null && item.profileUserId!.isNotEmpty)
+            ? item.profileUserId!
+            : oldData.id;
+
+        // Switching to another person: take only their details, never fill
+        // gaps from the previous profile (that showed the wrong photo and age).
+        final bool samePerson = (targetUserId ?? '').toLowerCase() == (oldData.id ?? '').toLowerCase();
+        final updatedData = DataEntity(
+          id: targetUserId,
+          accessToken: oldData.accessToken,
+          refreshToken: oldData.refreshToken,
+          accessTokenExpiry: oldData.accessTokenExpiry,
+          refreshTokenExpiry: oldData.refreshTokenExpiry,
+          isMobileVerified: oldData.isMobileVerified,
+          isEmailVerified: oldData.isEmailVerified,
+          roleCount: oldData.roleCount,
+          hospitalCount: oldData.hospitalCount,
+          organizationCount: oldData.organizationCount,
+          roles: oldData.roles,
+          // hospitalName holds the profile's display name for family items.
+          firstName: samePerson ? (item.firstName ?? oldData.firstName) : (item.firstName ?? item.hospitalName),
+          lastName: samePerson ? (item.lastName ?? oldData.lastName) : item.lastName,
+          email: oldData.email,
+          phoneNumber: item.phoneNumber ?? oldData.phoneNumber,
+          countryCode: oldData.countryCode,
+          gender: samePerson ? (item.gender ?? oldData.gender) : item.gender,
+          dob: samePerson ? (item.dob ?? oldData.dob) : item.dob,
+          height: oldData.height,
+          weight: oldData.weight,
+          heightUnit: oldData.heightUnit,
+          weightUnit: oldData.weightUnit,
+          latestRoleId: effectiveRoleId,
+          latestOrgId: response.data?.latestOrgId ?? item.orgId,
+          latestHospitalId: response.data?.latestHospitalId ?? item.hospitalId,
+          latestUserRole: latestUserRole,
+          navigationId: navigationId,
+          profiles: oldData.profiles,
+          // A different person keeps only their own photo (none if they have none);
+          // falling back to the old one showed the previous profile's picture.
+          imagePath: samePerson ? (item.imagePath ?? oldData.imagePath) : item.imagePath,
         );
-      } catch (_) {
-        return defaultIcon;
-      }
-    } else if (img.startsWith('http://') || img.startsWith('https://')) {
-      return CachedNetworkImage(
-        imageUrl: img,
-        width: 38,
-        height: 38,
-        fit: BoxFit.cover,
-        placeholder: (_, _) => Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: roleColor,
-            ),
+
+        await GlobalSession.instance.update(
+          LoginEntity(
+            status: true,
+            message: "Session updated",
+            data: updatedData,
           ),
-        ),
-        errorWidget: (_, _, _) => defaultIcon,
-      );
-    } else {
-      try {
-        final f = File(img);
-        if (f.existsSync()) {
-          return Image.file(
-            f,
-            width: 38,
-            height: 38,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => defaultIcon,
-          );
-        }
-      } catch (_) {}
-      return defaultIcon;
+        );
+      }
+      return null;
     }
+    return response?.message ?? "Failed to switch profile";
+  } catch (e) {
+    return "Couldn't switch profile: $e";
   }
 }
 

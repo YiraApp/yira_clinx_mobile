@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/services/medication_reminder_service.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
+import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/user_prescription/widgets/prescription_card.dart';
@@ -14,6 +15,7 @@ import 'package:yiraclinics/core/widgets/notification_badge_icon.dart';
 import 'package:yiraclinics/core/widgets/doctor_avatar_widget.dart';
 import 'add_user_prescription_screen.dart';
 import 'widgets/reminder_alert_settings_sheet.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// Prescriptions from doctors (and ones the patient added), plus the daily
 /// medication reminders made from them.
@@ -90,21 +92,25 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         subtitle: 'Your medicines & daily reminders',
         actions: [
           DietUi.actionIcon(
-            Icons.notifications_active_outlined,
+            PhosphorIconsBold.slidersHorizontal,
             isDark,
             () => ReminderAlertSettingsSheet.show(context),
-            tooltip: 'Reminder alerts',
+            tooltip: 'Reminder settings',
           ),
-          const NotificationBadgeIcon(size: 22),
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: Center(child: NotificationBadgeIcon(size: 20, showCapsule: true)),
+          ),
         ],
       ),
-      floatingActionButton: Builder(
+      // Adding a prescription belongs to the Prescriptions tab; on My Medicines it would cover the list.
+      floatingActionButton: _tabController.index != 0 ? null : Builder(
         builder: (ctx) => FloatingActionButton.extended(
           onPressed: () => _navigateToAddPrescription(ctx),
           backgroundColor: primaryColor,
           elevation: 3,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+          icon: const PhosphorIcon(PhosphorIconsBold.plus, color: Colors.white, size: 20),
           label: Text('Add Prescription', style: DietUi.text(13, FontWeight.w700, Colors.white)),
         ),
       ),
@@ -135,7 +141,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   // TAB SWITCHER
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTabStrip(bool isDark) {
-    // A clean text switcher; on very narrow phones the second label is shortened.
+    // A clean text switcher with a count on each tab; very narrow phones drop the counts.
     final compact = MediaQuery.sizeOf(context).width < 360;
 
     Widget tab(IconData icon, String label, int count, bool selected) {
@@ -146,7 +152,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           children: [
 
             Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis)),
-            if (count > 0) ...[
+            if (count > 0 && !compact) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -171,7 +177,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: DietUi.line(isDark)),
         ),
@@ -194,10 +200,10 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               labelStyle: DietUi.text(12.5, FontWeight.w700, primaryColor),
               unselectedLabelStyle: DietUi.text(12.5, FontWeight.w500, DietUi.muted(isDark)),
               tabs: [
-                tab(Icons.receipt_long_rounded, 'Prescriptions', state.allPrescriptions.length, _tabController.index == 0),
+                tab(PhosphorIconsDuotone.prescription, 'Prescriptions', state.allPrescriptions.length, _tabController.index == 0),
                 tab(
-                  Icons.alarm_on_rounded,
-                  compact ? 'Active Meds' : 'Active Medication',
+                  PhosphorIconsDuotone.alarm,
+                  'My Medicines',
                   reminders.where((r) => r.isActive).length,
                   _tabController.index == 1,
                 ),
@@ -212,6 +218,9 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 1: DOCTOR PRESCRIPTIONS
   // ══════════════════════════════════════════════════════════════════════════
+  List<PrescribedLabTest> _labTestsOf(Map<String, dynamic> prescription) =>
+      (prescription['labTests'] as List? ?? const []).whereType<PrescribedLabTest>().toList();
+
   Widget _buildPrescriptionsTab(bool isDark) {
     return BlocConsumer<MedicationBloc, MedicationState>(
       listener: (context, state) {
@@ -238,7 +247,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 final meds = (p['medications'] as List? ?? [])
                     .map((m) => (m is Map ? (m['name'] ?? '') : '').toString().toLowerCase())
                     .join(' ');
-                return title.contains(q) || doc.contains(q) || condition.contains(q) || meds.contains(q);
+                final labs = _labTestsOf(p).map((t) => t.testName.toLowerCase()).join(' ');
+                return title.contains(q) || doc.contains(q) || condition.contains(q) || meds.contains(q) || labs.contains(q);
               }).toList();
 
         // Group by month, keeping the list's order (newest first).
@@ -259,9 +269,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildNextDoseBanner(isDark),
                       _buildSearchField(isDark),
-                      const SizedBox(height: 12),
-                      _buildOverviewCard(state, isDark),
                       const SizedBox(height: 18),
                     ],
                   ),
@@ -305,6 +314,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                             status: item['status'] ?? 'Active',
                             pharmacy: item['pharmacy'] ?? 'Yira Clinx E-Pharmacy',
                             medications: List<Map<String, dynamic>>.from(item['medications'] ?? []),
+                            labTests: _labTestsOf(item),
                             pdfUrl: (item['pdfUrl'] ?? '').toString(),
                             isSelf: isSelf,
                             onDelete: isSelf
@@ -333,7 +343,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         title: "Remove Prescription?",
         message: "Are you sure you want to remove \"$title\"? This will permanently delete the prescription and any reminders created from it.",
         tone: AppDialogTone.danger,
-        icon: Icons.delete_forever_rounded,
+        icon: PhosphorIconsDuotone.trash,
         primaryLabel: "Remove",
         onPrimary: () async {
           Navigator.pop(dialogContext);
@@ -378,10 +388,10 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         decoration: InputDecoration(
           hintText: 'Search doctor, medicine or diagnosis',
           hintStyle: DietUi.text(12.5, FontWeight.w400, DietUi.hint(isDark)),
-          prefixIcon: Icon(Icons.search_rounded, size: 20, color: DietUi.muted(isDark)),
+          prefixIcon: PhosphorIcon(PhosphorIconsBold.magnifyingGlass, size: 20, color: DietUi.muted(isDark)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.close_rounded, size: 18, color: DietUi.muted(isDark)),
+                  icon: PhosphorIcon(PhosphorIconsBold.x, size: 18, color: DietUi.muted(isDark)),
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
@@ -395,51 +405,74 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
     );
   }
 
-  /// Three figures at a glance; the reminders figure opens My Medications.
-  Widget _buildOverviewCard(MedicationState state, bool isDark) {
-    final prescriptions = state.allPrescriptions.length;
-
-    Widget stat(IconData icon, Color color, String value, String label, {VoidCallback? onTap}) {
-      return Expanded(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              children: [
-                DietUi.iconBadge(icon, color, isDark, size: 34, iconSize: 17),
-                const SizedBox(height: 6),
-                Text(value, style: DietUi.text(16, FontWeight.w700, DietUi.strong(isDark))),
-                Text(label, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    Widget divider() => Container(width: 1, height: 44, color: DietUi.line(isDark));
-
+  /// Today's next dose, if any. Tapping it opens My Medicines.
+  Widget _buildNextDoseBanner(bool isDark) {
     return ValueListenableBuilder<List<MedicationReminder>>(
       valueListenable: MedicationReminderService.instance.remindersNotifier,
-      builder: (context, reminders, _) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        decoration: DietUi.cardDecoration(isDark),
-        child: Row(
-          children: [
-            stat(Icons.receipt_long_rounded, primaryColor, '$prescriptions', 'Prescriptions'),
-            divider(),
-            stat(
-              Icons.alarm_on_rounded,
-              _green,
-              '${reminders.where((r) => r.isActive).length}',
-              'Active Medication',
+      builder: (context, reminders, _) {
+        if (reminders.isEmpty) return const SizedBox.shrink();
+        final doses = [...MedicationReminderService.instance.getTodayDoses()]
+          ..sort((a, b) => _minutes(a.time).compareTo(_minutes(b.time)));
+        final total = doses.length;
+        final taken = doses.where((d) => d.isTaken).length;
+        final now = TimeOfDay.now().hour * 60 + TimeOfDay.now().minute;
+        TodayMedicationDose? next;
+        for (final d in doses) {
+          if (!d.isTaken && _minutes(d.time) >= now - 30) {
+            next = d;
+            break;
+          }
+        }
+        final String headline = total == 0
+            ? 'No doses scheduled today'
+            : next != null
+                ? 'Next: ${next.time} · ${next.reminder.medicineName}'
+                : taken == total
+                    ? 'All of today\'s doses are taken'
+                    : '${total - taken} dose${total - taken == 1 ? '' : 's'} not marked today';
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Material(
+            color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.06),
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
               onTap: () => _tabController.animateTo(1),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const PhosphorIcon(PhosphorIconsDuotone.alarm, size: 20, color: primaryColor),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            headline,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: DietUi.text(12.5, FontWeight.w700, DietUi.strong(isDark)),
+                          ),
+                          Text(
+                            total == 0 ? 'Tap to open My Medicines' : '$taken of $total taken today',
+                            style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PhosphorIcon(PhosphorIconsBold.caretRight, color: primaryColor),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -453,7 +486,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         child: Column(
           children: [
             DietUi.iconBadge(
-              searching ? Icons.search_off_rounded : Icons.receipt_long_outlined,
+              searching ? PhosphorIconsDuotone.magnifyingGlass : PhosphorIconsDuotone.prescription,
               primaryColor,
               isDark,
               size: 60,
@@ -483,7 +516,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: const PhosphorIcon(PhosphorIconsBold.plus, size: 18),
                 label: Text('Add a prescription', style: DietUi.text(13, FontWeight.w600, Colors.white)),
               ),
             ],
@@ -525,9 +558,9 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
 
   ({String label, IconData icon, Color color}) _period(String time) {
     final m = _minutes(time);
-    if (m < 12 * 60) return (label: 'Morning', icon: Icons.wb_sunny_rounded, color: const Color(0xFFF59E0B));
-    if (m < 17 * 60) return (label: 'Afternoon', icon: Icons.light_mode_rounded, color: const Color(0xFFF97316));
-    return (label: 'Evening & Night', icon: Icons.bedtime_rounded, color: const Color(0xFF8B5CF6));
+    if (m < 12 * 60) return (label: 'Morning', icon: PhosphorIconsFill.sunHorizon, color: const Color(0xFFF59E0B));
+    if (m < 17 * 60) return (label: 'Afternoon', icon: PhosphorIconsFill.sun, color: const Color(0xFFF97316));
+    return (label: 'Evening & Night', icon: PhosphorIconsFill.moonStars, color: const Color(0xFF8B5CF6));
   }
 
   Widget _buildMedicationsReminderTab(bool isDark) {
@@ -569,7 +602,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 decoration: DietUi.cardDecoration(isDark),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_outline_rounded, size: 22, color: DietUi.hint(isDark)),
+                    PhosphorIcon(PhosphorIconsBold.checkCircle, size: 22, color: DietUi.hint(isDark)),
                     const SizedBox(width: 10),
                     Text('No doses scheduled for today.', style: DietUi.text(12.5, FontWeight.w500, DietUi.muted(isDark))),
                   ],
@@ -589,7 +622,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 const SizedBox(height: 8),
               ],
             const SizedBox(height: 12),
-            DietUi.sectionLabel('ACTIVE MEDICATION · ${reminders.length}', isDark),
+            DietUi.sectionLabel('YOUR MEDICINES · ${reminders.length}', isDark),
             for (final reminder in reminders) _buildActiveCourseCard(reminder, isDark),
           ],
         );
@@ -663,7 +696,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.notifications_active_rounded, size: 17, color: primaryColor),
+                  const PhosphorIcon(PhosphorIconsFill.bellRinging, size: 17, color: primaryColor),
                   const SizedBox(width: 8),
                   Text('Next', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
                   const SizedBox(width: 8),
@@ -693,7 +726,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           decoration: DietUi.cardDecoration(isDark),
           child: Column(
             children: [
-              DietUi.iconBadge(Icons.alarm_add_rounded, primaryColor, isDark, size: 60, iconSize: 28),
+              DietUi.iconBadge(PhosphorIconsDuotone.alarm, primaryColor, isDark, size: 60, iconSize: 28),
               const SizedBox(height: 14),
               Text('No medication reminders', style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark))),
               const SizedBox(height: 6),
@@ -712,7 +745,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(Icons.receipt_long_rounded, size: 18),
+                icon: const PhosphorIcon(PhosphorIconsBold.prescription, size: 18),
                 label: Text('View prescriptions', style: DietUi.text(13, FontWeight.w600, Colors.white)),
               ),
             ],
@@ -727,11 +760,20 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   Widget _buildTodayDoseCard(TodayMedicationDose dose, bool isDark) {
     final r = dose.reminder;
     final period = _period(dose.time);
-    final color = dose.isTaken ? _green : period.color;
+    final nowMinutes = TimeOfDay.now().hour * 60 + TimeOfDay.now().minute;
+    // More than an hour past its time and still not marked.
+    final bool missed = !dose.isTaken && _minutes(dose.time) < nowMinutes - 60;
+    const red = Color(0xFFEF4444);
+    final color = dose.isTaken ? _green : (missed ? red : period.color);
+    // "1 Dose - 1-0-1" -> "1 Dose": the daily pattern is already the time of this card.
+    final dosageText = r.dosage.split(' - ').first.trim();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: DietUi.cardDecoration(isDark, borderColor: dose.isTaken ? _green.withValues(alpha: 0.4) : null),
+      decoration: DietUi.cardDecoration(
+        isDark,
+        borderColor: dose.isTaken ? _green.withValues(alpha: 0.4) : (missed ? red.withValues(alpha: 0.35) : null),
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
         child: Row(
@@ -745,7 +787,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               ),
               child: Column(
                 children: [
-                  Icon(dose.isTaken ? Icons.check_rounded : period.icon, size: 16, color: color),
+                  PhosphorIcon(dose.isTaken ? PhosphorIconsBold.check : period.icon, size: 16, color: color),
                   const SizedBox(height: 2),
                   Text(
                     dose.time.replaceAll(' ', '\n'),
@@ -771,10 +813,14 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                       height: 1.25,
                     ).copyWith(decoration: dose.isTaken ? TextDecoration.lineThrough : null),
                   ),
-                  if (r.dosage.trim().isNotEmpty || r.mealRelation.isNotEmpty) ...[
+                  if (missed) ...[
+                    const SizedBox(height: 3),
+                    Text('Missed this dose', style: DietUi.text(11, FontWeight.w600, red)),
+                  ],
+                  if (dosageText.isNotEmpty || r.mealRelation.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
-                      [if (r.dosage.trim().isNotEmpty) r.dosage.trim(), if (r.mealRelation.isNotEmpty) r.mealRelation]
+                      [if (dosageText.isNotEmpty) dosageText, if (r.mealRelation.isNotEmpty) r.mealRelation]
                           .join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -819,8 +865,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      dose.isTaken ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                    PhosphorIcon(
+                      dose.isTaken ? PhosphorIconsFill.checkCircle : PhosphorIconsBold.circle,
                       size: 15,
                       color: dose.isTaken ? Colors.white : DietUi.muted(isDark),
                     ),
@@ -857,7 +903,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DietUi.iconBadge(Icons.medication_rounded, primaryColor, isDark, size: 40),
+              DietUi.iconBadge(PhosphorIconsDuotone.pill, primaryColor, isDark, size: 40),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -881,11 +927,15 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   ],
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.alarm_off_rounded, size: 19, color: DietUi.hint(isDark)),
-                tooltip: 'Stop reminders',
-                visualDensity: VisualDensity.compact,
+              TextButton.icon(
                 onPressed: () => _confirmDeleteReminder(r),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFEF4444),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                icon: const PhosphorIcon(PhosphorIconsBold.bellSimpleSlash, size: 16),
+                label: Text('Stop', style: DietUi.text(12, FontWeight.w600, const Color(0xFFEF4444))),
               ),
             ],
           ),
@@ -921,7 +971,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: [for (final t in r.times) DietUi.pill(t, primaryColor, isDark, icon: Icons.access_time_rounded)],
+                  children: [for (final t in r.times) DietUi.pill(t, primaryColor, isDark, icon: PhosphorIconsBold.clock)],
                 ),
                 if (r.doctorName.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -955,7 +1005,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         title: 'Stop reminders?',
         message: 'You will no longer get reminders for ${r.medicineName}.',
         tone: AppDialogTone.danger,
-        icon: Icons.alarm_off_rounded,
+        icon: PhosphorIconsDuotone.bellSimpleSlash,
         primaryLabel: 'Stop',
         onPrimary: () {
           Navigator.pop(ctx);

@@ -758,10 +758,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF232323) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -868,10 +868,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -914,10 +914,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      color: isDark ? const Color(0xFF232323) : Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -1081,10 +1081,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
         vertical: isTab ? 14 : 11,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -1343,7 +1343,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       child: Container(
         padding: EdgeInsets.all(isTab ? 16 : 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
@@ -1490,12 +1490,12 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           decoration: BoxDecoration(
             color: isSelected
                 ? _primaryBlue
-                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected
                   ? _primaryBlue
-                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                  : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
               width: 0.8,
             ),
           ),
@@ -1554,10 +1554,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -1843,10 +1843,10 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -1982,7 +1982,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
           borderRadius: BorderRadius.circular(18),
         ),
       ),

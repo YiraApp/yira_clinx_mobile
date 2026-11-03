@@ -198,7 +198,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                 maxHeight: MediaQuery.of(sheetCtx).size.height * 0.85,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: SafeArea(
@@ -321,7 +321,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                               decoration: InputDecoration(
                                 hintText: 'e.g. Rahul',
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -343,7 +343,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                               decoration: InputDecoration(
                                 hintText: 'e.g. Kumar',
                                 filled: true,
-                                fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -368,7 +368,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         label: Text(rel),
                         selected: isSel,
                         selectedColor: primaryColor.withValues(alpha: isDark ? 0.3 : 0.15),
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                         side: BorderSide(color: isSel ? primaryColor : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
                         labelStyle: TextStyle(
                           fontFamily: appPoppinFont,
@@ -405,7 +405,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                               ),
@@ -413,7 +413,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                 child: DropdownButton<String>(
                                   value: selectedGender,
                                   isExpanded: true,
-                                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                   items: ['Male', 'Female', 'Other'].map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13)))).toList(),
                                   onChanged: (val) {
                                     if (val != null) setSheetState(() => selectedGender = val);
@@ -447,7 +447,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                  color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
                                 ),
@@ -531,7 +531,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                       suffixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+                      fillColor: isDark ? const Color(0xFF121212).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       disabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -763,10 +763,10 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
       width: double.infinity,
       padding: EdgeInsets.all(isTab ? 20 : 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -904,7 +904,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       width: 92,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.4) : const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF121212).withValues(alpha: 0.4) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -984,7 +984,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                     width: 104,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),

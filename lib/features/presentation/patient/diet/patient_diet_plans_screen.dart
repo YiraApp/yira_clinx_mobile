@@ -4,6 +4,7 @@ import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:yiraclinics/features/data/data_sources/diet/diet_api_error.dart';
 import 'package:yiraclinics/features/data/data_sources/diet/patient_diet_remote_data_source.dart';
 import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_preview_sheet.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_edit_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plan_screen.dart';
@@ -30,6 +31,10 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
   List<PatientDietPlanSummary> _plans = const [];
   int? _busyPlanId;
 
+  /// Each plan's foods, fetched in the background for the preview.
+  final Map<int, List<TodayDietMealItem>> _planMeals = {};
+  final Set<int> _loadingMeals = {};
+
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy');
 
   @override
@@ -52,7 +57,12 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
         _plans = plans;
         _isLoading = false;
         _error = null;
+        // Plans can be edited elsewhere; fetch their foods again.
+        _planMeals.clear();
       });
+      for (final p in plans) {
+        _loadMeals(p.id);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -60,6 +70,114 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
         _error = dietApiErrorMessage(e, "We couldn't load your diet plans. Pull down to try again.");
       });
     }
+  }
+
+  Future<void> _loadMeals(int planId) async {
+    if (_loadingMeals.contains(planId)) return;
+    setState(() => _loadingMeals.add(planId));
+    try {
+      final details = await _dataSource.getPlanDetails(planId);
+      final raw = details?['Meals'];
+      final meals = raw is List
+          ? raw.whereType<Map>().map((m) => TodayDietMealItem.fromJson(Map<String, dynamic>.from(m))).toList()
+          : <TodayDietMealItem>[];
+      if (mounted && details != null) setState(() => _planMeals[planId] = meals);
+    } catch (_) {
+      // The card still works without a preview.
+    } finally {
+      if (mounted) setState(() => _loadingMeals.remove(planId));
+    }
+  }
+
+  Future<void> _preview(PatientDietPlanSummary plan) async {
+    var meals = _planMeals[plan.id];
+    if (meals == null) {
+      await _loadMeals(plan.id);
+      meals = _planMeals[plan.id];
+    }
+    if (!mounted) return;
+    if (meals == null) {
+      _showMessage("Couldn't load this plan's foods. Please try again.", color: DietUi.red);
+      return;
+    }
+    await DietPlanPreviewSheet.show(context, plan: plan, meals: meals, onOpen: () => _open(plan));
+  }
+
+  /// "31-day plan · 2-day rotation" and the first few foods.
+  Widget _buildPreviewStrip(PatientDietPlanSummary plan, bool isDark) {
+    final length = dietPlanLengthDays(plan.startDate, plan.endDate);
+    final meals = _planMeals[plan.id];
+    final foods = meals == null ? const <String>[] : dietUniqueFoods(meals);
+    final loading = meals == null && _loadingMeals.contains(plan.id);
+    final lengthText = length != null ? '$length-day plan' : 'No end date';
+    final rotation = plan.totalDays > 1 ? '${plan.totalDays}-day menu rotation' : 'Same menu every day';
+
+    String foodsText;
+    if (loading) {
+      foodsText = 'Loading foods…';
+    } else if (meals == null) {
+      foodsText = '${plan.mealCount} ${plan.mealCount == 1 ? 'food' : 'foods'}';
+    } else if (foods.isEmpty) {
+      foodsText = 'No foods added yet';
+    } else {
+      const shown = 3;
+      final more = foods.length - shown;
+      foodsText = 'Includes ${foods.take(shown).join(', ')}${more > 0 ? ' +$more more' : ''}';
+    }
+
+    return Material(
+      color: DietUi.sunken(isDark),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _preview(plan),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: DietUi.line(isDark)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.event_note_rounded, size: 14, color: DietUi.blue),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '$lengthText · $rotation',
+                            style: DietUi.text(11.5, FontWeight.w600, DietUi.body(isDark)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      foodsText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark), height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Preview', style: DietUi.text(12, FontWeight.w700, DietUi.blue)),
+                  const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   PatientDietPlanSummary? get _activePlan {
@@ -379,6 +497,8 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 10),
+                _buildPreviewStrip(plan, isDark),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -548,6 +668,11 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildPreviewStrip(plan, isDark),
+                ),
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: SizedBox(

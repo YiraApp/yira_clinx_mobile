@@ -271,7 +271,8 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     } else if (selectedTab == 1) {
       items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.booked));
     } else if (selectedTab == 2) {
-      items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.available));
+      // Free slots whose time has passed today can't be booked, so they aren't "available".
+      items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.available && !_isSlotPast(state.targetDate, s.time)));
     } else if (selectedTab == 3) {
       items.addAll(nonBreakTimeSlots.where((s) => s.status == SlotStatus.blocked));
     } else if (selectedTab == 4) {
@@ -318,7 +319,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
         .where((s) => s.status == SlotStatus.booked)
         .length;
     final availableCount = state.timeSlots
-        .where((s) => s.status == SlotStatus.available)
+        .where((s) => s.status == SlotStatus.available && !_isSlotPast(state.targetDate, s.time))
         .length;
     final blockedCount = state.timeSlots
         .where((s) => s.status == SlotStatus.blocked)
@@ -480,9 +481,12 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                   : ListView.builder(
                       controller: _scrollController,
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: screenHorizontalSpacePadding,
-                        vertical: 0.0,
+                      // Bottom room so the floating calendar button never covers the last slot's Book button.
+                      padding: const EdgeInsets.fromLTRB(
+                        screenHorizontalSpacePadding,
+                        0,
+                        screenHorizontalSpacePadding,
+                        88,
                       ),
                       itemCount: visibleItems.length,
                       itemBuilder: (context, index) {
@@ -590,7 +594,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
         border: Border.all(
           color: isDark ? Colors.amber.withValues(alpha: 0.3) : const Color(0xFFFDE68A),

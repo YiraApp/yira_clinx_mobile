@@ -35,10 +35,10 @@ class PatientCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [
@@ -71,7 +71,7 @@ class PatientCard extends StatelessWidget {
                           width: isTab ? 48 : 42,
                           height: isTab ? 48 : 42,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -216,7 +216,7 @@ class PatientCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isFav
                         ? const Color(0xFFFEF3C7) // Amber 100
-                        : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isFav

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
+import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 
 /// Look of the patient diet screens. Matches the rest of the patient app
 /// (Doctor Suggestions, Vitals): slate background, white app bar with a
@@ -13,12 +14,12 @@ class DietUi {
   static const Color violet = Color(0xFF8B5CF6);
   static const Color slate = Color(0xFF64748B);
 
-  static Color background(bool isDark) => isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-  static Color card(bool isDark) => isDark ? const Color(0xFF1E293B) : Colors.white;
+  static Color background(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+  static Color card(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
 
   /// Panels set inside a card (stats, inputs).
-  static Color sunken(bool isDark) => isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-  static Color line(bool isDark) => isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+  static Color sunken(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+  static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
   static Color strong(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
   static Color body(bool isDark) => isDark ? Colors.white70 : const Color(0xFF475569);
   static Color muted(bool isDark) => isDark ? Colors.white60 : const Color(0xFF64748B);
@@ -69,7 +70,7 @@ class DietUi {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
                 color: line(isDark),
@@ -169,7 +170,7 @@ class DietUi {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
               border: Border.all(
                 color: line(isDark),
@@ -182,7 +183,7 @@ class DietUi {
                 borderRadius: BorderRadius.circular(19),
                 onTap: onTap,
                 child: Center(
-                  child: Icon(icon, size: 18, color: iconColor),
+                  child: PhosphorIcon(icon, size: 18, color: iconColor),
                 ),
               ),
             ),
@@ -240,7 +241,7 @@ class DietUi {
                         shape: BoxShape.circle,
                       ),
                       child: Center(
-                        child: Icon(icon, size: 13, color: Colors.white),
+                        child: PhosphorIcon(icon, size: 13, color: Colors.white),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -269,7 +270,7 @@ class DietUi {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 13, color: color),
+            PhosphorIcon(icon, size: 13, color: color),
             const SizedBox(width: 4),
           ],
           Text(label, style: text(11, FontWeight.w600, color)),
@@ -286,7 +287,7 @@ class DietUi {
         color: color.withValues(alpha: isDark ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(size * 0.3),
       ),
-      child: Icon(icon, size: iconSize, color: color),
+      child: PhosphorIcon(icon, size: iconSize, color: color),
     );
   }
 
@@ -313,7 +314,7 @@ class DietUi {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
+          PhosphorIcon(icon, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(child: Text(message, style: text(12, FontWeight.w500, body(isDark), height: 1.4))),
           ?action,

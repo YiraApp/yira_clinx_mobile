@@ -329,6 +329,9 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         return;
       } else {
         _timer?.cancel();
+        // A resend replaces the previous code and session; the verify screen
+        // must submit the new session id or the server rejects the new code.
+        emit(ReSendOtpSuccessState(result));
         _startCountdown();
       }
     } catch (error, stackTrace) {

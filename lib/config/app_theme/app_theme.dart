@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
 import '../../core/colors/colors.dart';
@@ -29,6 +30,12 @@ class AppTheme {
     textTheme: _buildTextTheme(Colors.black),
     appBarTheme: const AppBarTheme(
       backgroundColor: lightBackGroundColor,
+      // Dark status-bar icons. Transparent app bars on light screens otherwise get white icons.
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
       elevation: 0,
@@ -94,6 +101,11 @@ class AppTheme {
     textTheme: _buildTextTheme(textDarkModePrimaryColor),
     appBarTheme: const AppBarTheme(
       backgroundColor: darkBg,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
       elevation: 0,

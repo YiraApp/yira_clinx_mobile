@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import '../../../../config/app_route/app_routes.dart';
@@ -32,12 +30,16 @@ import '../offers/widgets/offer_popup_ad_dialog.dart';
 import '../../../../core/widgets/notification_badge_icon.dart';
 import '../../../../core/services/notification_services/notification_badge_service.dart';
 import '../../../../core/services/fitness/fitness_sync_service.dart';
-import '../insurance/widgets/policies_icon_asset.dart';
+import '../../../../core/widgets/active_profile_chip.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
 
-  const PatientDashboardScreen({super.key, this.onNavigateTab});
+  /// True while the dashboard tab is showing; switching back to it refreshes
+  /// the data, since appointments may have changed on another tab.
+  final bool isActive;
+
+  const PatientDashboardScreen({super.key, this.onNavigateTab, this.isActive = true});
 
   @override
   State<PatientDashboardScreen> createState() => _PatientDashboardScreenState();
@@ -52,6 +54,68 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
 
   PatientOverViewBloc? _overviewBloc;
   String? _currentLoadedUserId;
+
+  /// Family members' appointments, shown on the main account's home (each
+  /// card says who it is for). Empty on a family member's own profile.
+  List<PatientAppointmentEntity> _familyAppointments = const [];
+
+  Future<void> _loadFamilyAppointments() async {
+    final data = GlobalSession.instance.userNotifier.value?.data;
+    final me = (data?.id ?? '').toLowerCase();
+    final profiles = data?.profiles ?? const [];
+    final onMainProfile = profiles.length > 1 &&
+        profiles.any((p) => (p.id ?? '').toLowerCase() == me && p.isPrimary == true);
+    if (!onMainProfile || GlobalSession.instance.isSignedInAsFamilyMember) {
+      if (_familyAppointments.isNotEmpty && mounted) setState(() => _familyAppointments = const []);
+      return;
+    }
+    try {
+      // Asked per person so this works on servers that return only one person's list.
+      final list = <Map>[];
+      final seenIds = <String>{};
+      for (final id in [data?.id, ...GlobalSession.instance.familyProfileIdsOnMainAccount]) {
+        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+              URLs.patientAppointmentsUrl,
+              data: {'userId': id},
+              options: Options(
+                headers: {HttpHeaders.authorizationHeader: 'Bearer ${data?.accessToken ?? ''}'},
+                extra: const {'suppressErrorSnack': true},
+              ),
+            );
+        final rows = res.data is Map && res.data['data'] is List ? res.data['data'] as List : const [];
+        for (final a in rows.whereType<Map>()) {
+          if (seenIds.add('${a['id']}')) list.add(a);
+        }
+      }
+      final family = <PatientAppointmentEntity>[
+        for (final a in list)
+          if ((a['patientUserId'] ?? '').toString().toLowerCase() != me)
+            PatientAppointmentEntity(
+              id: '${a['id'] ?? ''}',
+              appointmentNumber: '${a['id'] ?? ''}',
+              appointmentDate: '${a['appointmentDate'] ?? ''}',
+              rawDate: a['appointmentDate'],
+              startTime: '${a['startTime'] ?? ''}',
+              endTime: '${a['endTime'] ?? ''}',
+              reason: '${a['reason'] ?? ''}',
+              status: '${a['status'] ?? 'Confirmed'}',
+              appointmentType: '${a['appointmentType'] ?? 'In-Clinic'}',
+              isTeleConsultation: a['isTeleConsultation'] == true,
+              meetingUrl: '${a['meetingUrl'] ?? ''}',
+              hospitalName: '${a['hospitalName'] ?? ''}',
+              doctorId: '${a['doctorId'] ?? ''}',
+              doctorName: '${a['doctorName'] ?? ''}',
+              patientName: '${a['patientName'] ?? ''}',
+              patientUserId: '${a['patientUserId'] ?? ''}',
+              relation: '${a['relation'] ?? ''}',
+              isPrimary: a['isPrimary'] == true,
+            ),
+      ];
+      if (mounted) setState(() => _familyAppointments = family);
+    } catch (_) {
+      // The family list is extra; the profile's own appointments still show.
+    }
+  }
 
   @override
   void initState() {
@@ -68,18 +132,36 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final orgId = currentUser?.latestOrgId?.toString() ?? '1';
     final hospitalId = currentUser?.latestHospitalId?.toString() ?? '1';
     _overviewBloc!.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+    _loadFamilyAppointments();
 
     GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadCachedProfileImage();
     NotificationService.instance.syncFcmTokenWithBackend();
     NotificationBadgeService.instance.syncUnreadCount();
-    if (GlobalSession.instance.isCurrentProfilePrimary) {
-      FitnessSyncService.instance.init();
-    }
+    FitnessSyncService.instance.init();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       PatientTourController().startDashboardTour(context: context);
       OfferPopupAdDialog.showIfAvailable(context);
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant PatientDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      final current = GlobalSession.instance.userNotifier.value?.data;
+      final id = current?.id ?? '';
+      if (id.isNotEmpty) {
+        _overviewBloc?.add(
+          LoadPatientData(
+            id,
+            orgId: current?.latestOrgId?.toString() ?? '1',
+            hospitalId: current?.latestHospitalId?.toString() ?? '1',
+            silent: true,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -100,6 +182,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       final orgId = current?.latestOrgId?.toString() ?? '1';
       final hospitalId = current?.latestHospitalId?.toString() ?? '1';
       _overviewBloc?.add(LoadPatientData(newId, orgId: orgId, hospitalId: hospitalId));
+      _loadFamilyAppointments();
     }
     if (mounted) setState(() {});
   }
@@ -107,9 +190,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      if (GlobalSession.instance.isCurrentProfilePrimary) {
-        FitnessSyncService.instance.syncNow(silent: true);
-      }
+      FitnessSyncService.instance.syncNow(silent: true);
       _loadCachedProfileImage();
     }
   }
@@ -124,7 +205,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       }
       final prefs = await SharedPreferences.getInstance();
 
-      final bool wasRemoved = (prefs.getBool('patient_profile_removed_$userId') ?? false) ||
+      final bool wasRemoved =
+          (prefs.getBool('patient_profile_removed_$userId') ?? false) ||
           (prefs.getBool('patient_profile_removed_${userId.toLowerCase()}') ?? false) ||
           (prefs.getBool('patient_profile_removed_${userId.toUpperCase()}') ?? false);
 
@@ -137,16 +219,15 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         return;
       }
 
-      final localPath = prefs.getString('patient_profile_image_$userId') ??
+      final localPath =
+          prefs.getString('patient_profile_image_$userId') ??
           prefs.getString('patient_profile_image_${userId.toLowerCase()}') ??
           prefs.getString('patient_profile_image_${userId.toUpperCase()}');
 
       String? matchingProfileImg;
       if (currentUser?.data?.profiles != null) {
         for (final p in currentUser!.data!.profiles!) {
-          if (p.id?.toLowerCase() == userId.toLowerCase() &&
-              p.imagePath != null &&
-              p.imagePath!.trim().isNotEmpty) {
+          if (p.id?.toLowerCase() == userId.toLowerCase() && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
             matchingProfileImg = p.imagePath!.trim();
             break;
           }
@@ -154,7 +235,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       }
 
       final sessionImg = currentUser?.data?.imagePath?.trim();
-      final networkUrl = prefs.getString('patient_profile_network_image_$userId') ??
+      final networkUrl =
+          prefs.getString('patient_profile_network_image_$userId') ??
           prefs.getString('patient_profile_network_image_${userId.toLowerCase()}') ??
           prefs.getString('patient_profile_network_image_${userId.toUpperCase()}') ??
           (sessionImg != null && sessionImg.isNotEmpty ? sessionImg : null) ??
@@ -186,9 +268,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final profiles = user?.data?.profiles;
     if (profiles != null && profiles.isNotEmpty) {
       for (final p in profiles) {
-        if (p.id?.toLowerCase() == activeId.toLowerCase() &&
-            p.imagePath != null &&
-            p.imagePath!.trim().isNotEmpty) {
+        if (p.id?.toLowerCase() == activeId.toLowerCase() && p.imagePath != null && p.imagePath!.trim().isNotEmpty) {
           return p.imagePath!.trim();
         }
       }
@@ -198,66 +278,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       return _profileImagePath!.trim();
     }
     return null;
-  }
-
-  Widget _buildDashboardAvatar(String? imgPath, String patientName, Color primaryColor) {
-    if (imgPath != null && imgPath.isNotEmpty) {
-      if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
-        return CachedNetworkImage(
-          imageUrl: imgPath,
-          width: 36,
-          height: 36,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: primaryColor.withValues(alpha: 0.1),
-            alignment: Alignment.center,
-            child: SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 1.5, color: primaryColor),
-            ),
-          ),
-          errorWidget: (context, url, error) => _buildDashboardInitials(patientName, primaryColor),
-        );
-      } else if (imgPath.startsWith('data:image')) {
-        try {
-          final commaIdx = imgPath.indexOf(',');
-          final base64Str = commaIdx != -1 ? imgPath.substring(commaIdx + 1) : imgPath;
-          return Image.memory(
-            base64Decode(base64Str),
-            width: 36,
-            height: 36,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _buildDashboardInitials(patientName, primaryColor),
-          );
-        } catch (_) {}
-      } else if (File(imgPath).existsSync()) {
-        return Image.file(
-          File(imgPath),
-          width: 36,
-          height: 36,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildDashboardInitials(patientName, primaryColor),
-        );
-      }
-    }
-    return _buildDashboardInitials(patientName, primaryColor);
-  }
-
-  Widget _buildDashboardInitials(String patientName, Color primaryColor) {
-    return Container(
-      color: primaryColor.withValues(alpha: 0.15),
-      alignment: Alignment.center,
-      child: Text(
-        patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
-        style: TextStyle(
-          fontFamily: appPoppinFont,
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-          color: primaryColor,
-        ),
-      ),
-    );
   }
 
   void _openProfileSwitcher() {
@@ -279,8 +299,18 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
 
     try {
       const monthMap = {
-        'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-        'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+        'jan': 1,
+        'feb': 2,
+        'mar': 3,
+        'apr': 4,
+        'may': 5,
+        'jun': 6,
+        'jul': 7,
+        'aug': 8,
+        'sep': 9,
+        'oct': 10,
+        'nov': 11,
+        'dec': 12,
       };
       final clean = s.replaceAll(',', ' ').replaceAll('-', ' ').replaceAll('/', ' ');
       final parts = clean.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
@@ -389,547 +419,399 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         return BlocProvider<PatientOverViewBloc>.value(
           value: _overviewBloc!,
           child: BlocBuilder<PatientOverViewBloc, PatientOverViewState>(
-        builder: (context, state) {
-          PatientOverViewEntity? overViewEntity;
-          if (state is LoadPatientDataState) {
-            overViewEntity = state.patientOverViewEntity;
-          }
+            builder: (context, state) {
+              PatientOverViewEntity? overViewEntity;
+              if (state is LoadPatientDataState) {
+                overViewEntity = state.patientOverViewEntity;
+              }
 
-          final data = overViewEntity?.data;
+              final data = overViewEntity?.data;
 
-          final List<PatientAppointmentEntity> allAppointments = List.from(data?.appointments ?? []);
-          if (allAppointments.isEmpty) {
-            final nextList = <NextAppointmentEntity>[];
-            if (data?.upcomingAppointments != null && data!.upcomingAppointments!.isNotEmpty) {
-              nextList.addAll(data.upcomingAppointments!);
-            } else if (data?.nextAppointment != null) {
-              nextList.add(data!.nextAppointment!);
-            }
-            for (final na in nextList) {
-              allAppointments.add(
-                PatientAppointmentEntity(
-                  id: na.id?.toString() ?? na.appointmentId ?? '',
-                  appointmentNumber: na.appointmentId ?? '',
-                  appointmentDate: na.appointmentDate ?? na.formattedDate ?? '',
-                  rawDate: na.appointmentDate,
-                  startTime: na.startTime ?? na.formattedTime ?? '',
-                  reason: na.reason ?? '',
-                  status: na.status ?? 'Confirmed',
-                  appointmentType: na.consultationType ?? 'In-Clinic',
-                  isTeleConsultation: na.isTeleconsultation ?? false,
-                  meetingUrl: na.meetingUrl ?? '',
-                  hospitalName: na.hospitalName ?? '',
-                  hospitalAddress: na.hospitalAddress ?? '',
-                  hospitalPhone: na.hospitalPhone ?? '',
-                  hospitalLogo: na.hospitalLogo ?? '',
-                  doctorId: na.doctorId ?? '',
-                  doctorName: na.doctorName ?? '',
-                  patientName: patientName,
-                ),
-              );
-            }
-          }
-
-          final now = DateTime.now();
-          final todayStart = DateTime(now.year, now.month, now.day);
-
-          // 1. Only include appointments for Today or in the Future (>= todayStart), excluding completed/cancelled
-          final validUpcoming = allAppointments.where((a) {
-            final status = a.status.toLowerCase().trim();
-            if (status == 'completed' || status == 'cancelled') return false;
-
-            final aptDateTime = _parseAppointmentDateTime(a);
-            if (aptDateTime == null) return true;
-
-            final aptDay = DateTime(aptDateTime.year, aptDateTime.month, aptDateTime.day);
-            return !aptDay.isBefore(todayStart);
-          }).toList();
-
-          // 2. Sort ascending: nearest date & time first
-          validUpcoming.sort((a, b) {
-            final dtA = _parseAppointmentDateTime(a);
-            final dtB = _parseAppointmentDateTime(b);
-            if (dtA == null && dtB == null) return 0;
-            if (dtA == null) return 1;
-            if (dtB == null) return -1;
-            return dtA.compareTo(dtB);
-          });
-
-          return ValueListenableBuilder<bool>(
-            valueListenable: PatientTourController().isTourActiveNotifier,
-            builder: (context, isTourActive, _) {
-              final List<PatientAppointmentEntity> upcomingAppointments = isTourActive
-                  ? PatientTourMockData.demoUpcomingAppointments
-                  : validUpcoming.take(2).toList();
-
-              final bool isLoading = state is LoadingPatientViewDetails && !isTourActive;
-
-              return Scaffold(
-                backgroundColor: theme.scaffoldBackgroundColor,
-                appBar: AppBar(
-                  elevation: 0,
-                  backgroundColor: theme.scaffoldBackgroundColor,
-                  automaticallyImplyLeading: false,
-                  titleSpacing: screenHorizontalSpacePadding,
-                  centerTitle: false,
-                  title: Container(
-                    key: _headerProfileKey,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SvgPicture.asset(
-                            appLogo,
-                            width: isTab ? 32 : 28,
-                            height: isTab ? 32 : 28,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: GestureDetector(
-                            onTap: _openProfileSwitcher,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    patientName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? 18.0 : 16.0,
-                                      fontWeight: FontWeight.w700,
-                                      color: adaptiveTextColor,
-                                      letterSpacing: -0.4,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 20,
-                                  color: adaptiveTextColor.withValues(alpha: 0.7),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    const NotificationBadgeIcon(
-                      showCapsule: true,
-                      size: 20,
-                    ),
-                    IconButton(
-                      tooltip: 'Scan Doctor QR',
-                  icon: Icon(Icons.qr_code_scanner_rounded, color: primaryColor),
-                  onPressed: () {
-                    ScanDoctorQrSheet.show(context);
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(right: screenHorizontalSpacePadding),
-                  child: GestureDetector(
-                    onTap: () async {
-                      if (widget.onNavigateTab != null) {
-                        widget.onNavigateTab!(3);
-                      } else {
-                        await Navigator.pushNamed(context, AppRoutes.patientProfile);
-                        _loadCachedProfileImage();
-                      }
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: primaryColor.withValues(alpha: 0.35),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: ClipOval(
-                        child: _buildDashboardAvatar(
-                          _resolvePatientAvatarPath(currentUser),
-                          patientName,
-                          primaryColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            body: RefreshIndicator(
-              onRefresh: () async {
-                _loadCachedProfileImage();
-                _offerCarouselKey.currentState?.refresh();
-                if (GlobalSession.instance.isCurrentProfilePrimary) {
-                  FitnessSyncService.instance.syncNow(silent: true);
+              final List<PatientAppointmentEntity> allAppointments = List.from(data?.appointments ?? []);
+              if (allAppointments.isEmpty) {
+                final nextList = <NextAppointmentEntity>[];
+                if (data?.upcomingAppointments != null && data!.upcomingAppointments!.isNotEmpty) {
+                  nextList.addAll(data.upcomingAppointments!);
+                } else if (data?.nextAppointment != null) {
+                  nextList.add(data!.nextAppointment!);
                 }
-                _overviewBloc?.add(
-                  LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
-                );
-                await Future.delayed(const Duration(milliseconds: 600));
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: screenHorizontalSpacePadding,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Offer Banners Carousel (only occupies space if active banners exist)
-                    OfferBannerCarousel(
-                      key: _offerCarouselKey,
-                      organizationId: orgId,
+                for (final na in nextList) {
+                  allAppointments.add(
+                    PatientAppointmentEntity(
+                      id: na.id?.toString() ?? na.appointmentId ?? '',
+                      appointmentNumber: na.appointmentId ?? '',
+                      appointmentDate: na.appointmentDate ?? na.formattedDate ?? '',
+                      rawDate: na.appointmentDate,
+                      startTime: na.startTime ?? na.formattedTime ?? '',
+                      reason: na.reason ?? '',
+                      status: na.status ?? 'Confirmed',
+                      appointmentType: na.consultationType ?? 'In-Clinic',
+                      isTeleConsultation: na.isTeleconsultation ?? false,
+                      meetingUrl: na.meetingUrl ?? '',
+                      hospitalName: na.hospitalName ?? '',
+                      hospitalAddress: na.hospitalAddress ?? '',
+                      hospitalPhone: na.hospitalPhone ?? '',
+                      hospitalLogo: na.hospitalLogo ?? '',
+                      doctorId: na.doctorId ?? '',
+                      doctorName: na.doctorName ?? '',
+                      patientName: patientName,
                     ),
+                  );
+                }
+              }
 
-                    // Quick Services Section (Single Unified Master Card)
-                    Container(
-                      key: _quickServicesKey,
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                          width: 1.1,
+              // Add family members' appointments (main account only).
+              final ownIds = allAppointments.map((a) => a.id).toSet();
+              allAppointments.addAll(_familyAppointments.where((a) => !ownIds.contains(a.id)));
+
+              final now = DateTime.now();
+              final todayStart = DateTime(now.year, now.month, now.day);
+
+              // 1. Only include appointments for Today or in the Future (>= todayStart), excluding completed/cancelled
+              final validUpcoming = allAppointments.where((a) {
+                final status = a.status.toLowerCase().trim();
+                if (status == 'completed' || status == 'cancelled') return false;
+
+                final aptDateTime = _parseAppointmentDateTime(a);
+                if (aptDateTime == null) return true;
+
+                final aptDay = DateTime(aptDateTime.year, aptDateTime.month, aptDateTime.day);
+                return !aptDay.isBefore(todayStart);
+              }).toList();
+
+              // 2. Sort ascending: nearest date & time first
+              validUpcoming.sort((a, b) {
+                final dtA = _parseAppointmentDateTime(a);
+                final dtB = _parseAppointmentDateTime(b);
+                if (dtA == null && dtB == null) return 0;
+                if (dtA == null) return 1;
+                if (dtB == null) return -1;
+                return dtA.compareTo(dtB);
+              });
+
+              return ValueListenableBuilder<bool>(
+                valueListenable: PatientTourController().isTourActiveNotifier,
+                builder: (context, isTourActive, _) {
+                  final List<PatientAppointmentEntity> upcomingAppointments = isTourActive
+                      ? PatientTourMockData.demoUpcomingAppointments
+                      : validUpcoming.take(2).toList();
+
+                  final bool isLoading = state is LoadingPatientViewDetails && !isTourActive;
+
+                  return Scaffold(
+                    backgroundColor: theme.scaffoldBackgroundColor,
+                    appBar: AppBar(
+                      elevation: 0,
+                      backgroundColor: theme.scaffoldBackgroundColor,
+                      automaticallyImplyLeading: false,
+                      titleSpacing: screenHorizontalSpacePadding,
+                      centerTitle: false,
+                      title: Container(
+                        key: _headerProfileKey,
+                        alignment: Alignment.centerLeft,
+                        child: Builder(
+                          builder: (context) {
+                            final profiles = currentUser?.data?.profiles ?? [];
+                            final activeId = (currentUser?.data?.id ?? '').toLowerCase();
+                            final active = profiles.where((p) => (p.id ?? '').toLowerCase() == activeId).firstOrNull;
+                            return ActiveProfileChip(
+                              name: patientName,
+                              imagePath: _resolvePatientAvatarPath(currentUser),
+                              relation: active?.relation ?? 'Self',
+                              isPrimary: active?.isPrimary ?? profiles.isEmpty,
+                              profileCount: profiles.length,
+                              isTab: isTab,
+                              onTap: _openProfileSwitcher,
+                            );
+                          },
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Quick Services 6-Grid inside the single card
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 18, 8, 18),
-                            child: GridView.count(
-                              crossAxisCount: isTab ? 6 : 3,
-                              crossAxisSpacing: 6,
-                              mainAxisSpacing: 14,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              childAspectRatio: isTab ? 1.05 : 0.86,
-                              children: [
-                                // 1. Book Appointment
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Book\nAppointment',
-                                  imagePath: 'assets/images/dashboard_icons/book_appointment_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () {
-                                    PatientBookAppointmentSheet.show(
-                                      context,
-                                      onAppointmentBooked: () {
-                                        if (mounted) {
-                                          context.read<PatientOverViewBloc>().add(
-                                            LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-
-                                // 2. Prescriptions (Pill Icon)
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Prescriptions',
-                                  imagePath: 'assets/images/dashboard_icons/pill_prescriptions_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.userPrescriptionManagement,
-                                  ),
-                                ),
-
-                                // 2. Health Records
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Health\nRecords',
-                                  imagePath: 'assets/images/dashboard_icons/health_records_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => const PatientDocumentsScreen(),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                // 3. My Vitals
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'My Vitals',
-                                  imagePath: 'assets/images/dashboard_icons/my_vitals_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientVitalsTracking,
-                                  ),
-                                ),
-
-                                // 4. My Fitness (Quick Action - Primary Account Only)
-                                if (GlobalSession.instance.isCurrentProfilePrimary)
-                                  _buildServiceCard(
-                                    context: context,
-                                    title: 'My Fitness',
-                                    imagePath: 'assets/images/dashboard_icons/my_fitness_thick.png',
-                                    isDark: isDark,
-                                    isTab: isTab,
-                                    onTap: () async {
-                                      bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
-                                      if (!isConnected) {
-                                        isConnected = await FitnessSyncService.instance.checkIsConnected();
-                                      }
-                                      if (!context.mounted) return;
-                                      if (isConnected) {
-                                        Navigator.pushNamed(context, AppRoutes.patientFitnessTracking);
-                                      } else {
-                                        Navigator.pushNamed(context, AppRoutes.patientConnectFitness);
-                                      }
-                                    },
-                                  ),
-
-                                // 5. Doctor Suggestions
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Doctor\nSuggestions',
-                                  imagePath: 'assets/images/dashboard_icons/doctor_suggestions_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientDoctorSuggestions,
-                                  ),
-                                ),
-
-                                // 6. My Family
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'My Family',
-                                  imagePath: 'assets/images/dashboard_icons/my_family_thick.png',
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () async {
-                                    await Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.patientMyFamily,
-                                    );
-                                    if (mounted) setState(() {});
-                                  },
-                                ),
-
-                                // 7. Diet Plan
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Diet\nPlan',
-                                  customIcon: SvgPicture.asset(
-                                    'assets/images/dashboard_icons/diet_plan_thick.svg',
-                                    width: isTab ? 74 : 64,
-                                    height: isTab ? 74 : 64,
-                                    fit: BoxFit.contain,
-                                  ),
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientDietPlan,
-                                  ),
-                                ),
-
-                                // 8. Policies
-                                _buildServiceCard(
-                                  context: context,
-                                  title: 'Policies',
-                                  customIcon: _buildInsuranceDashboardIcon(isTab: isTab),
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.patientPolicies,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      actions: [
+                        const NotificationBadgeIcon(showCapsule: true, size: 20),
+                        IconButton(
+                          tooltip: 'Scan Doctor QR',
+                          icon: Icon(Icons.qr_code_scanner_rounded, color: primaryColor),
+                          onPressed: () {
+                            ScanDoctorQrSheet.show(context);
+                          },
+                        ),
+                        const SizedBox(width: screenHorizontalSpacePadding - 8),
                       ],
                     ),
-                  ),
-                    const SizedBox(height: 20),
+                    body: RefreshIndicator(
+                      onRefresh: () async {
+                        _loadCachedProfileImage();
+                        _offerCarouselKey.currentState?.refresh();
+                        FitnessSyncService.instance.syncNow(silent: true);
+                        _overviewBloc?.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+                        _loadFamilyAppointments();
+                        await Future.delayed(const Duration(milliseconds: 600));
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: screenHorizontalSpacePadding, vertical: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Offer Banners Carousel (only occupies space if active banners exist)
+                            OfferBannerCarousel(key: _offerCarouselKey, organizationId: orgId),
 
-                    // 3. Upcoming Appointments Section
-                    Container(
-                      key: _upcomingAppointmentsKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
+                            // Quick Services Section (Single Unified Master Card)
+                            Container(
+                              key: _quickServicesKey,
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF232323) : Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
+                                  width: 1.1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(7),
-                                    decoration: BoxDecoration(
-                                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Icon(
-                                      Icons.event_note_rounded,
-                                      size: 17,
-                                      color: primaryColor,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Appointments',
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: isTab ? 18 : 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: adaptiveTextColor,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                  if (upcomingAppointments.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                                          width: 1,
+                                  // Quick services. My Vitals lives on My Profile.
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(6, 16, 6, 10),
+                                    child: _buildServiceGrid(
+                                      isTab: isTab,
+                                      isDark: isDark,
+                                      services: [
+                                        _DashboardService(
+                                          title: 'Book\nAppointment',
+                                          asset: 'assets/images/dashboard_icons/book_appointment.svg',
+                                          onTap: () {
+                                            PatientBookAppointmentSheet.show(
+                                              context,
+                                              onAppointmentBooked: () {
+                                                if (mounted) {
+                                                  context.read<PatientOverViewBloc>().add(
+                                                    LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
+                                                  );
+                                                }
+                                              },
+                                            );
+                                          },
                                         ),
-                                      ),
-                                      child: Row(
+                                        _DashboardService(
+                                          title: 'Prescriptions',
+                                          asset: 'assets/images/dashboard_icons/prescriptions.svg',
+                                          onTap: () =>
+                                              Navigator.pushNamed(context, AppRoutes.userPrescriptionManagement),
+                                        ),
+                                        _DashboardService(
+                                          title: 'Health\nRecords',
+                                          asset: 'assets/images/dashboard_icons/health_records.svg',
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
+                                          ),
+                                        ),
+                                          // Family members sharing the main number have no fitness of their own
+                                          if (GlobalSession.instance.currentProfileHasOwnNumber)
+                                          _DashboardService(
+                                            title: 'My\nFitness',
+                                          asset: 'assets/images/dashboard_icons/my_fitness.svg',
+                                          onTap: () async {
+                                            bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
+                                            if (!isConnected) {
+                                              isConnected = await FitnessSyncService.instance.checkIsConnected();
+                                            }
+                                            if (!context.mounted) return;
+                                            Navigator.pushNamed(
+                                              context,
+                                              isConnected
+                                                  ? AppRoutes.patientFitnessTracking
+                                                  : AppRoutes.patientConnectFitness,
+                                            );
+                                          },
+                                        ),
+                                        _DashboardService(
+                                          title: 'Diet\nPlan',
+                                          asset: 'assets/images/dashboard_icons/diet_plan.svg',
+                                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientDietPlan),
+                                        ),
+                                        // Managed from the primary account
+                                        if (!GlobalSession.instance.isSignedInAsFamilyMember && GlobalSession.instance.isCurrentProfilePrimary)
+                                          _DashboardService(
+                                            title: 'My\nFamily',
+                                            asset: 'assets/images/dashboard_icons/my_family.svg',
+                                            onTap: () async {
+                                              await Navigator.pushNamed(context, AppRoutes.patientMyFamily);
+                                              if (mounted) setState(() {});
+                                            },
+                                          ),
+                                        _DashboardService(
+                                          title: 'My\nBilling',
+                                          asset: 'assets/images/dashboard_icons/my_billing.svg',
+                                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientBilling),
+                                        ),
+                                        _DashboardService(
+                                          title: 'My\nPolicies',
+                                          asset: 'assets/images/dashboard_icons/my_policies.svg',
+                                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientPolicies),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // 3. Upcoming Appointments Section
+                            Container(
+                              key: _upcomingAppointmentsKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF10B981),
-                                              shape: BoxShape.circle,
+                                            padding: const EdgeInsets.all(7),
+                                            decoration: BoxDecoration(
+                                              color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                                              borderRadius: BorderRadius.circular(10),
                                             ),
+                                            child: Icon(Icons.event_note_rounded, size: 17, color: primaryColor),
                                           ),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: 10),
                                           Text(
-                                            '${upcomingAppointments.length} Scheduled',
-                                            style: const TextStyle(
+                                            'Appointments',
+                                            style: TextStyle(
                                               fontFamily: appPoppinFont,
-                                              fontSize: 10.5,
+                                              fontSize: isTab ? 18 : 16,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF059669),
+                                              color: adaptiveTextColor,
+                                              letterSpacing: -0.3,
                                             ),
                                           ),
+                                          if (upcomingAppointments.isNotEmpty) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: 6,
+                                                    height: 6,
+                                                    decoration: const BoxDecoration(
+                                                      color: Color(0xFF10B981),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${upcomingAppointments.length} Scheduled',
+                                                    style: const TextStyle(
+                                                      fontFamily: appPoppinFont,
+                                                      fontSize: 10.5,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Color(0xFF059669),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ],
                                       ),
+                                      TextButton(
+                                        onPressed: () {
+                                          if (widget.onNavigateTab != null) {
+                                            widget.onNavigateTab!(1);
+                                          } else {
+                                            Navigator.pushNamed(context, AppRoutes.patientAppointments);
+                                          }
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'View All',
+                                              style: TextStyle(
+                                                fontFamily: appPoppinFont,
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: primaryColor,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2),
+                                            Icon(Icons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  if (isLoading)
+                                    _buildAppointmentsShimmer(context, isDark)
+                                  else if (upcomingAppointments.isEmpty)
+                                    _buildNoAppointmentsCard(
+                                      context: context,
+                                      isDark: isDark,
+                                      isTab: isTab,
+                                      primaryColor: primaryColor,
+                                      userId: userId,
+                                      orgId: orgId,
+                                      hospitalId: hospitalId,
+                                    )
+                                  else
+                                    Column(
+                                      children: upcomingAppointments.map((apt) {
+                                        return _buildPatientAppointmentCard(
+                                          context: context,
+                                          apt: apt,
+                                          patientName: patientName,
+                                          userId: userId,
+                                          orgId: orgId,
+                                          hospitalId: hospitalId,
+                                          isDark: isDark,
+                                          isTab: isTab,
+                                          primaryColor: primaryColor,
+                                        );
+                                      }).toList(),
                                     ),
-                                  ],
                                 ],
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  if (widget.onNavigateTab != null) {
-                                    widget.onNavigateTab!(1);
-                                  } else {
-                                    Navigator.pushNamed(context, AppRoutes.patientAppointments);
-                                  }
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'View All',
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: primaryColor,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 11,
-                                      color: primaryColor,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          if (isLoading)
-                            _buildAppointmentsShimmer(context, isDark)
-                          else if (upcomingAppointments.isEmpty)
-                            _buildNoAppointmentsCard(
-                              context: context,
-                              isDark: isDark,
-                              isTab: isTab,
-                              primaryColor: primaryColor,
-                              userId: userId,
-                              orgId: orgId,
-                              hospitalId: hospitalId,
-                            )
-                          else
-                            Column(
-                              children: upcomingAppointments.map((apt) {
-                                return _buildPatientAppointmentCard(
-                                  context: context,
-                                  apt: apt,
-                                  patientName: patientName,
-                                  userId: userId,
-                                  orgId: orgId,
-                                  hospitalId: hospitalId,
-                                  isDark: isDark,
-                                  isTab: isTab,
-                                  primaryColor: primaryColor,
-                                );
-                              }).toList(),
                             ),
-                        ],
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
-  ),
-);
+                  );
+                },
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -989,7 +871,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             return PopScope(
               canPop: !isCancelling,
               child: AlertDialog(
-                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 title: Row(
                   children: [
@@ -999,11 +881,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         color: const Color(0xFFEF4444).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.cancel_outlined,
-                        color: Color(0xFFDC2626),
-                        size: 22,
-                      ),
+                      child: const Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1040,9 +918,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         decoration: BoxDecoration(
                           color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                          ),
+                          border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
                         ),
                         child: Row(
                           children: [
@@ -1069,9 +945,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 actions: [
                   TextButton(
                     onPressed: isCancelling ? null : () => Navigator.of(ctx).pop(false),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    ),
+                    style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)),
                     child: Text(
                       "Keep Appointment",
                       style: TextStyle(
@@ -1092,14 +966,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             final currentUser = GlobalSession.instance.userNotifier.value;
                             final token = currentUser?.data?.accessToken ?? '';
                             try {
-                              final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
-                                URLs.updateAppointmentStatusUrl,
-                                data: {
-                                  "appointmentId": appointmentId,
-                                  "status": "Cancelled",
-                                },
-                                options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-                              );
+                              final response = await sl<ApiClient>()
+                                  .account(showSuccessSnack: false)
+                                  .post(
+                                    URLs.updateAppointmentStatusUrl,
+                                    data: {"appointmentId": appointmentId, "status": "Cancelled"},
+                                    options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+                                  );
 
                               if (!ctx.mounted) return;
 
@@ -1145,10 +1018,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               ),
                               SizedBox(width: 8),
                               Text(
@@ -1164,11 +1034,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                           )
                         : const Text(
                             "Yes, Cancel",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
+                            style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600, fontSize: 13),
                           ),
                   ),
                 ],
@@ -1186,16 +1052,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
           backgroundColor: Color(0xFFDC2626),
         ),
       );
-      context.read<PatientOverViewBloc>().add(
-        LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId),
-      );
+      context.read<PatientOverViewBloc>().add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
     }
   }
 
-  static const _monthAbbr = [
-    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
-  ];
+  static const _monthAbbr = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
   Widget _buildPatientAppointmentCard({
     required BuildContext context,
@@ -1215,21 +1076,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         : (apt.reason.isNotEmpty ? apt.reason : 'General Consultation');
     final isTele = apt.isTeleConsultation;
 
-    final bool canReschedule = !apt.status.toLowerCase().contains('complet') &&
-        !apt.status.toLowerCase().contains('cancel');
-    final bool canCancel = !apt.status.toLowerCase().contains('complet') &&
-        !apt.status.toLowerCase().contains('cancel');
+    final bool canReschedule =
+        !apt.status.toLowerCase().contains('complet') && !apt.status.toLowerCase().contains('cancel');
+    final bool canCancel =
+        !apt.status.toLowerCase().contains('complet') && !apt.status.toLowerCase().contains('cancel');
     final bool hasOptions = canReschedule || canCancel;
 
     // Parse date & time
     final parsedDt = _parseAppointmentDateTime(apt);
     final now = DateTime.now();
-    final isToday = parsedDt != null &&
-        parsedDt.year == now.year &&
-        parsedDt.month == now.month &&
-        parsedDt.day == now.day;
+    final isToday =
+        parsedDt != null && parsedDt.year == now.year && parsedDt.month == now.month && parsedDt.day == now.day;
     final tomorrow = now.add(const Duration(days: 1));
-    final isTomorrow = parsedDt != null &&
+    final isTomorrow =
+        parsedDt != null &&
         parsedDt.year == tomorrow.year &&
         parsedDt.month == tomorrow.month &&
         parsedDt.day == tomorrow.day;
@@ -1262,26 +1122,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       timeStr = apt.startTime.isNotEmpty ? _formatTime12h(apt.startTime) : 'Upcoming';
     }
 
-    final isDifferentPatient = apt.patientName.isNotEmpty &&
+    final isDifferentPatient =
+        apt.patientName.isNotEmpty &&
         apt.patientName.trim().toLowerCase() != 'patient' &&
         apt.patientName.trim().toLowerCase() != patientName.trim().toLowerCase();
 
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
     final borderColor = isToday
         ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.4 : 0.3)
-        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
+        : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: _PressableCard(
-        onTap: () => _navigateToAppointmentDetails(
-          context,
-          apt,
-          patientName,
-          userId,
-          orgId,
-          hospitalId,
-        ),
+        onTap: () => _navigateToAppointmentDetails(context, apt, patientName, userId, orgId, hospitalId),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -1313,17 +1167,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     height: 70,
                     decoration: BoxDecoration(
                       color: isToday
-                          ? (isDark
-                              ? const Color(0xFF064E3B).withValues(alpha: 0.3)
-                              : const Color(0xFFF0FDF4))
-                          : (isDark
-                              ? const Color(0xFF0F172A)
-                              : const Color(0xFFF8FAFC)),
+                          ? (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4))
+                          : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isToday
                             ? const Color(0xFF10B981).withValues(alpha: 0.35)
-                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                         width: 1,
                       ),
                     ),
@@ -1337,8 +1187,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                           color: isToday
                               ? const Color(0xFF10B981)
                               : (isTomorrow
-                                  ? const Color(0xFF2563EB)
-                                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                                    ? const Color(0xFF2563EB)
+                                    : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0))),
                           alignment: Alignment.center,
                           child: Text(
                             monthHeader,
@@ -1421,11 +1271,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.verified_rounded,
-                                    size: 14,
-                                    color: Color(0xFF3B82F6),
-                                  ),
+                                  const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF3B82F6)),
                                 ],
                               ),
                             ),
@@ -1436,11 +1282,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               decoration: BoxDecoration(
                                 color: isTele
                                     ? (isDark
-                                        ? const Color(0xFF312E81).withValues(alpha: 0.35)
-                                        : const Color(0xFFEEF2FF))
+                                          ? const Color(0xFF312E81).withValues(alpha: 0.35)
+                                          : const Color(0xFFEEF2FF))
                                     : (isDark
-                                        ? const Color(0xFF064E3B).withValues(alpha: 0.25)
-                                        : const Color(0xFFECFDF5)),
+                                          ? const Color(0xFF064E3B).withValues(alpha: 0.25)
+                                          : const Color(0xFFECFDF5)),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
                                   color: isTele
@@ -1481,10 +1327,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 tooltip: 'Options',
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                color: isDark ? const Color(0xFF232323) : Colors.white,
                                 elevation: 6,
                                 onSelected: (val) {
                                   if (val == 'reschedule') {
@@ -1651,7 +1495,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
               // Bottom CTA Row (Allowed whole day for active appointments; blocked for previous day)
               Builder(
                 builder: (context) {
-                  final bool canJoinCall = isTele &&
+                  final bool canJoinCall =
+                      isTele &&
                       !apt.status.toLowerCase().contains('complet') &&
                       !apt.status.toLowerCase().contains('cancel') &&
                       !apt.status.toLowerCase().contains('past') &&
@@ -1672,16 +1517,14 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                     displayName: patientName,
                                     onLaunchFailure: (err) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text(err)),
-                                        );
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
                                       }
                                     },
                                   );
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('No meeting link available yet.')),
-                                  );
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(const SnackBar(content: Text('No meeting link available yet.')));
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -1689,18 +1532,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 padding: EdgeInsets.zero,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                               icon: const Icon(Icons.videocam_rounded, size: 15),
                               label: const Text(
                                 'Join Call',
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700),
                               ),
                             ),
                           ),
@@ -1714,14 +1551,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(10),
                               child: InkWell(
-                                onTap: () => _navigateToAppointmentDetails(
-                                  context,
-                                  apt,
-                                  patientName,
-                                  userId,
-                                  orgId,
-                                  hospitalId,
-                                ),
+                                onTap: () =>
+                                    _navigateToAppointmentDetails(context, apt, patientName, userId, orgId, hospitalId),
                                 borderRadius: BorderRadius.circular(10),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1761,14 +1592,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                       color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
                       child: InkWell(
-                        onTap: () => _navigateToAppointmentDetails(
-                          context,
-                          apt,
-                          patientName,
-                          userId,
-                          orgId,
-                          hospitalId,
-                        ),
+                        onTap: () =>
+                            _navigateToAppointmentDetails(context, apt, patientName, userId, orgId, hospitalId),
                         borderRadius: BorderRadius.circular(10),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -1812,12 +1637,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              width: 1,
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(width: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
           ),
           child: BaseShimmer(
             child: Column(
@@ -1830,10 +1652,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     Container(
                       width: 64,
                       height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1843,28 +1662,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                           Container(
                             width: 130,
                             height: 14,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
                           ),
                           const SizedBox(height: 7),
                           Container(
                             width: 90,
                             height: 11,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
                           ),
                           const SizedBox(height: 6),
                           Container(
                             width: 110,
                             height: 10,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
                           ),
                         ],
                       ),
@@ -1875,10 +1685,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 Container(
                   width: double.infinity,
                   height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
                 ),
               ],
             ),
@@ -1901,18 +1708,12 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
       width: double.infinity,
       padding: EdgeInsets.all(isTab ? 22 : 18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark
-              ? const Color(0xFF334155)
-              : const Color(0xFFE2E8F0),
-          width: 1.2,
-        ),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF0F172A))
-                .withValues(alpha: isDark ? 0.25 : 0.04),
+            color: (isDark ? Colors.black : const Color(0xFF0F172A)).withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1938,17 +1739,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.2), width: 1),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  Icons.event_available_rounded,
-                  color: primaryColor,
-                  size: 24,
-                ),
+                child: Icon(Icons.event_available_rounded, color: primaryColor, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1981,10 +1775,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             ],
           ),
           const SizedBox(height: 16),
-          Divider(
-            height: 1,
-            color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
-          ),
+          Divider(height: 1, color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9)),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
@@ -2012,11 +1803,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
               icon: const Icon(Icons.calendar_today_rounded, size: 15),
               label: const Text(
                 'Book Consultation',
-                style: TextStyle(
-                  fontFamily: appPoppinFont,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -2025,78 +1812,87 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     );
   }
 
-  Widget _buildInsuranceDashboardIcon({required bool isTab}) {
-    final double size = isTab ? 74 : 64;
-    return Image.asset(
-      'assets/images/dashboard_icons/policies_3d.png',
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Image.memory(
-          kPoliciesIconBytes,
-          width: size,
-          height: size,
-          fit: BoxFit.contain,
+  Widget _buildServiceGrid({required bool isTab, required bool isDark, required List<_DashboardService> services}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Phones: two full rows of 3 for six services, 4 a row beyond that
+        final perRow = constraints.maxWidth > 560 ? services.length.clamp(4, 8) : (services.length <= 6 ? 3 : 4);
+        final width = constraints.maxWidth / perRow;
+        return Wrap(
+          runSpacing: 6,
+          children: [
+            for (final service in services)
+              SizedBox(
+                width: width,
+                child: _PressableCard(
+                  onTap: service.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture(
+                          SvgAssetLoader(
+                            service.asset,
+                            // Icon colours follow the theme so they show on dark cards.
+                            theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
+                            colorMapper: isDark ? const _DarkIconColors() : null,
+                          ),
+                          width: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                          height: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          service.title,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: appPoppinFont,
+                            fontSize: isTab ? 12.5 : 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
   }
+}
 
-  Widget _buildServiceCard({
-    required BuildContext context,
-    required String title,
-    String? imagePath,
-    Widget? customIcon,
-    required bool isDark,
-    required bool isTab,
-    required VoidCallback onTap,
-  }) {
-    return _PressableCard(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: isTab ? 74 : 64,
-            height: isTab ? 74 : 64,
-            child: customIcon ??
-                Image.asset(
-                  imagePath ?? '',
-                  width: isTab ? 74 : 64,
-                  height: isTab ? 74 : 64,
-                  fit: BoxFit.contain,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: isTab ? 13 : 11.5,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-              height: 1.2,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+/// Swaps the icons' white and light blue fills for dark ones on dark cards.
+class _DarkIconColors extends ColorMapper {
+  const _DarkIconColors();
+
+  @override
+  Color substitute(String? id, String elementName, String attributeName, Color color) {
+    if (attributeName != 'fill') return color;
+    if (color.toARGB32() == 0xFFFFFFFF) return const Color(0xFF232323);
+    if (color.toARGB32() == 0xFFBFE1F6) return const Color(0xFF3F5566);
+    return color;
   }
+}
+
+class _DashboardService {
+  final String title;
+  final String asset;
+  final VoidCallback onTap;
+
+  const _DashboardService({required this.title, required this.asset, required this.onTap});
 }
 
 class _PressableCard extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
 
-  const _PressableCard({
-    required this.child,
-    required this.onTap,
-  });
+  const _PressableCard({required this.child, required this.onTap});
 
   @override
   State<_PressableCard> createState() => _PressableCardState();

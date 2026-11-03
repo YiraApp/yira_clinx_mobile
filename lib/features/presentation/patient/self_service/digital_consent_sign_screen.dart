@@ -48,7 +48,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
             child: Container(
               padding: EdgeInsets.all(isTab ? 28 : 20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF232323) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: isDark ? Colors.white.withOpacity(0.06) : Colors.grey.shade200),
                 boxShadow: [
@@ -84,7 +84,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
                           height: 180,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : Colors.grey[100],
+                            color: isDark ? const Color(0xFF121212) : Colors.grey[100],
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const SingleChildScrollView(
@@ -113,7 +113,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
                           width: double.infinity,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : Colors.grey[50],
+                            color: isDark ? const Color(0xFF121212) : Colors.grey[50],
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
                           ),

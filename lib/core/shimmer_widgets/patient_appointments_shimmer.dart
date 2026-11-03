@@ -14,8 +14,8 @@ class PatientAppointmentsShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
-    final highlightColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
+    final baseColor = isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0);
+    final highlightColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF8FAFC);
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -50,10 +50,10 @@ class PatientAppointmentsShimmer extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(14.0),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF232323) : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                     ),
                   ),
                   child: Column(
@@ -231,10 +231,10 @@ class PatientAppointmentsShimmer extends StatelessWidget {
       width: width,
       height: 30,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 0.8,
         ),
       ),

@@ -159,7 +159,9 @@ class CustomBarChart extends StatelessWidget {
     final lineColor = barColors?.first ?? primaryColor;
 
     return [
-      SplineAreaSeries<_ChartDataPoint, String>(
+      // Straight segments: a spline overshoots below zero and invents bumps
+      // between whole-number counts.
+      AreaSeries<_ChartDataPoint, String>(
         dataSource: data,
         xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
         yValueMapper: (_ChartDataPoint point, _) => point.yValue,
@@ -167,7 +169,7 @@ class CustomBarChart extends StatelessWidget {
         animationDuration: 400,
         enableTooltip: false,
       ),
-      SplineSeries<_ChartDataPoint, String>(
+      LineSeries<_ChartDataPoint, String>(
         dataSource: data,
         xValueMapper: (_ChartDataPoint point, _) => point.xLabel,
         yValueMapper: (_ChartDataPoint point, _) => point.yValue,
@@ -217,16 +219,8 @@ class CustomBarChart extends StatelessWidget {
         animationDuration: 400,
         enableTooltip: true,
         dataLabelSettings: const DataLabelSettings(isVisible: false),
-        pointColorMapper: (_ChartDataPoint point, _) {
-          if (barColors != null && point.index < barColors!.length) {
-            return barColors![point.index];
-          } else {
-            final double opacity = (point.index % 2 == 0)
-                ? 1.0
-                : (isDark ? 0.45 : 0.6);
-            return primaryColor.withOpacity(opacity);
-          }
-        },
+        // One series, one colour: different colours per day would suggest categories.
+        color: barColors?.first ?? primaryColor,
       ),
     ];
   }
