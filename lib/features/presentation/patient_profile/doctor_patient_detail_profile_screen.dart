@@ -319,13 +319,18 @@ class _DoctorPatientDetailProfileScreenState
         );
       case 'Appointments':
         // Appointments Tab (Full patient visit schedule & clinical consultations, consent-aware)
+        final effectiveHospitalId = (widget.hospitalId != null &&
+                widget.hospitalId!.trim().isNotEmpty &&
+                widget.hospitalId != '0')
+            ? widget.hospitalId
+            : (GlobalSession.instance.userNotifier.value?.data?.latestHospitalId?.toString());
         return BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>(),
           child: PatientAppointmentsScreen(
             key: const ValueKey('PatientDetailAppointmentsTabFrame'),
             patient: patient,
             patientId: widget.patientId ?? patient.id,
-            hospitalId: widget.hospitalId,
+            hospitalId: effectiveHospitalId,
             orgId: widget.orgId,
             isTab: isTab,
             hasAccess: hasAccess,

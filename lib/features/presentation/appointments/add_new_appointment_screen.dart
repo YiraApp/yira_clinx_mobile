@@ -279,6 +279,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   Map<String, dynamic>? _selectedDoctorMap;
   bool _isLoadingDoctors = false;
   bool _isLoadingInitial = true;
+  bool _shareRecords = true;
 
   Future<void> _initPatientHospitalsAndDoctors() async {
     setState(() => _isLoadingInitial = true);
@@ -500,13 +501,15 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       setState(() {
         _filteredDoctors = docs;
         if (preferredDoctor != null) {
-          final hasDoc = _filteredDoctors.any((d) =>
-              (d['doctorId'] ?? d['id'])?.toString().trim() ==
-              (preferredDoctor['doctorId'] ?? preferredDoctor['id'])?.toString().trim());
-          if (!hasDoc) {
+          final prefId = (preferredDoctor['doctorId'] ?? preferredDoctor['id'])?.toString().trim();
+          final matchingDocIndex = _filteredDoctors.indexWhere((d) =>
+              (d['doctorId'] ?? d['id'])?.toString().trim() == prefId);
+          if (matchingDocIndex != -1) {
+            _selectedDoctorMap = _filteredDoctors[matchingDocIndex];
+          } else {
             _filteredDoctors.insert(0, preferredDoctor);
+            _selectedDoctorMap = preferredDoctor;
           }
-          _selectedDoctorMap = preferredDoctor;
         } else if (_filteredDoctors.isNotEmpty) {
           _selectedDoctorMap = _filteredDoctors.first;
         } else {
@@ -1601,6 +1604,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         discountAmount: (!isPatient && discount > 0) ? discount : null,
         includeConsultationFee: effectiveIncludeConsultationFee,
         consultationFee: consultationFeeAmt,
+        grantRecordAccess: _shareRecords,
       ),
     );
   }
@@ -2023,6 +2027,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             "₹${_consultationFee.toStringAsFixed(0)}",
                             Icons.currency_rupee_rounded,
                             isDark,
+                          ),
+                        ],
+                        if (_shareRecords) ...[
+                          const SizedBox(height: 8),
+                          _buildSummaryRow(
+                            "Record Access",
+                            "Shared (7 Days)",
+                            Icons.verified_user_rounded,
+                            isDark,
+                            highlight: true,
                           ),
                         ],
                       ],
@@ -3061,6 +3075,89 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // Record Sharing Consent Card (Default: Checked / 7-Day Access)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _shareRecords
+                        ? primaryColor.withValues(alpha: isDark ? 0.12 : 0.06)
+                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _shareRecords
+                          ? primaryColor.withValues(alpha: 0.35)
+                          : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _shareRecords = !_shareRecords;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Transform.scale(
+                          scale: 1.05,
+                          child: Checkbox(
+                            value: _shareRecords,
+                            activeColor: primaryColor,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                            onChanged: (val) {
+                              setState(() {
+                                _shareRecords = val ?? true;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.verified_user_rounded,
+                                    size: 16,
+                                    color: _shareRecords ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      "Share Medical Records (7 Days Access)",
+                                      style: TextStyle(
+                                        fontFamily: appPoppinFont,
+                                        fontSize: isTab ? 13.5 : 12.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Allow \${_selectedDoctorMap?['name'] ?? _selectedDoctor ?? 'the doctor'} to access your medical history and records for 7 days during consultation. You can revoke access anytime in Approvals.",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: isTab ? 12 : 11,
+                                  height: 1.35,
+                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // 7. Submit Button
                 Builder(
                   builder: (context) {
@@ -3325,55 +3422,76 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+          () {
+            final seenHospIds = <String>{};
+            final List<Map<String, dynamic>> distinctHospitals = [];
+            for (final h in _hospitals) {
+              final hId = (h['id'] ?? h['hospitalId'])?.toString().trim();
+              if (hId != null && hId.isNotEmpty && seenHospIds.add(hId)) {
+                distinctHospitals.add(h);
+              }
+            }
+
+            final currentHospId = (_selectedHospital?['id'] ?? _selectedHospital?['hospitalId'])?.toString().trim();
+            final selectedHospId = distinctHospitals.any((h) => (h['id'] ?? h['hospitalId'])?.toString().trim() == currentHospId)
+                ? currentHospId
+                : (distinctHospitals.isNotEmpty ? (distinctHospitals.first['id'] ?? distinctHospitals.first['hospitalId'])?.toString().trim() : null);
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+                ),
               ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<Map<String, dynamic>>(
-                value: _selectedHospital,
-                isExpanded: true,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                items: _hospitals.map((h) {
-                  return DropdownMenuItem<Map<String, dynamic>>(
-                    value: h,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.local_hospital_rounded, color: primaryColor, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            h['name'] ?? 'Hospital',
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedHospId,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  items: distinctHospitals.map((h) {
+                    final hId = (h['id'] ?? h['hospitalId'])?.toString().trim() ?? '';
+                    return DropdownMenuItem<String>(
+                      value: hId,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.local_hospital_rounded, color: primaryColor, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              h['name'] ?? 'Hospital',
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (val) async {
-                  if (val != null) {
-                    setState(() {
-                      _selectedHospital = val;
-                      _selectedTreatmentPlanIds.clear();
-                    });
-                    await _filterDoctorsForHospital(val['id']);
-                  }
-                },
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (valId) async {
+                    if (valId != null) {
+                      final h = distinctHospitals.firstWhere(
+                        (item) => (item['id'] ?? item['hospitalId'])?.toString().trim() == valId,
+                        orElse: () => distinctHospitals.first,
+                      );
+                      setState(() {
+                        _selectedHospital = h;
+                        _selectedTreatmentPlanIds.clear();
+                      });
+                      await _filterDoctorsForHospital(h['id']);
+                    }
+                  },
+                ),
               ),
-            ),
-          ),
+            );
+          }(),
           const SizedBox(height: 14),
           _buildInputLabel("Select Doctor *", isDark, isTab),
           const SizedBox(height: 6),
@@ -3427,62 +3545,83 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               ),
             ),
           ] else ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+            () {
+              final seenDocIds = <String>{};
+              final List<Map<String, dynamic>> distinctDoctors = [];
+              for (final doc in _filteredDoctors) {
+                final dId = (doc['doctorId'] ?? doc['id'] ?? doc['userId'])?.toString().trim();
+                if (dId != null && dId.isNotEmpty && seenDocIds.add(dId)) {
+                  distinctDoctors.add(doc);
+                }
+              }
+
+              final currentDocId = (_selectedDoctorMap?['doctorId'] ?? _selectedDoctorMap?['id'] ?? _selectedDoctorMap?['userId'])?.toString().trim();
+              final selectedDocId = distinctDoctors.any((d) => (d['doctorId'] ?? d['id'] ?? d['userId'])?.toString().trim() == currentDocId)
+                  ? currentDocId
+                  : (distinctDoctors.isNotEmpty ? (distinctDoctors.first['doctorId'] ?? distinctDoctors.first['id'] ?? distinctDoctors.first['userId'])?.toString().trim() : null);
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
+                  ),
                 ),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<Map<String, dynamic>>(
-                  value: _selectedDoctorMap,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  items: _filteredDoctors.map((doc) {
-                    return DropdownMenuItem<Map<String, dynamic>>(
-                      value: doc,
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 12,
-                            backgroundColor: primaryColor.withValues(alpha: 0.12),
-                            child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              "${doc['name']} • ${doc['specialty'] ?? 'Specialist'} (₹${doc['consultationFee'] ?? 0})",
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: selectedDocId,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    items: distinctDoctors.map((doc) {
+                      final docId = (doc['doctorId'] ?? doc['id'] ?? doc['userId'])?.toString().trim() ?? '';
+                      return DropdownMenuItem<String>(
+                        value: docId,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundColor: primaryColor.withValues(alpha: 0.12),
+                              child: const Icon(Icons.medical_services_rounded, color: primaryColor, size: 14),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _selectedDoctorMap = val;
-                        _selectedDoctor = val['name'] ?? 'Doctor';
-                        _consultationFee = (double.tryParse(val['consultationFee']?.toString() ?? '') ?? 0.0);
-                      });
-                      _fetchDoctorSlots(_selectedDate);
-                    }
-                  },
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                "${doc['name']} • ${doc['specialty'] ?? 'Specialist'} (₹${doc['consultationFee'] ?? 0})",
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (valId) {
+                      if (valId != null) {
+                        final doc = distinctDoctors.firstWhere(
+                          (d) => (d['doctorId'] ?? d['id'] ?? d['userId'])?.toString().trim() == valId,
+                          orElse: () => distinctDoctors.first,
+                        );
+                        setState(() {
+                          _selectedDoctorMap = doc;
+                          _selectedDoctor = doc['name'] ?? 'Doctor';
+                          _consultationFee = (double.tryParse(doc['consultationFee']?.toString() ?? '') ?? 0.0);
+                        });
+                        _fetchDoctorSlots(_selectedDate);
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ),
+              );
+            }(),
             if (_selectedDoctorMap != null) ...[
               const SizedBox(height: 12),
               _buildDoctorInfoCard(_selectedDoctorMap!, isDark, isTab),

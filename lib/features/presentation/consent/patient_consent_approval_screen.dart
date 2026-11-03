@@ -198,7 +198,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         appBar: CommonAppBar(
-          titleText: "Medical Record Consents",
+          titleText: "Approvals",
           showBackButton: widget.showBackButton,
           actions: [
             IconButton(
@@ -206,7 +206,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                 Icons.refresh_rounded,
                 color: isDark ? Colors.white : Colors.black87,
               ),
-              tooltip: "Refresh Consents",
+              tooltip: "Refresh Approvals",
               onPressed: () {
                 _consentBloc.add(LoadPatientConsentsEvent(patientId: currentPatientId));
               },
@@ -360,7 +360,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                                       ),
                                       const SizedBox(height: 18),
                                       Text(
-                                        "No Consent Requests Found",
+                                        "No Approval Requests Found",
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.bold,

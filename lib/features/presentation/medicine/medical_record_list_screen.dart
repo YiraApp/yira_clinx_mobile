@@ -201,7 +201,8 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
                 );
               },
               onDeletePressed: (isPatient || !widget.allowAdd) ? null : () => _confirmDeleteRecord(item),
-              onEditPressed: (isPatient || !widget.allowAdd) ? null : () => _openRecordFormModal(item),
+              // Enforce clinical immutability: No editing of medical records once added/submitted
+              onEditPressed: null,
             ),
           );
         },

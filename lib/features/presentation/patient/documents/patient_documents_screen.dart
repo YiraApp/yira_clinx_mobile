@@ -19,6 +19,7 @@ import '../../upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import '../diet/diet_ui.dart';
 import 'report_insights_screen.dart';
 import 'report_upload_sheet.dart';
+import 'edit_document_modal.dart';
 
 class PatientDocumentsScreen extends StatefulWidget {
   const PatientDocumentsScreen({super.key});
@@ -209,6 +210,17 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
       }
     }
   }
+
+  // ─── EDIT DOCUMENT DETAILS MODAL ──────────────────────────────────────────
+  void _openEditDocumentModal(BuildContext blocContext, UploadedRecord doc) {
+    EditDocumentModal.show(
+      context,
+      blocContext: blocContext,
+      doc: doc,
+      availableCategories: _categoryFilters,
+    );
+  }
+
 
   // ─── UPLOAD + AI ANALYSIS ─────────────────────────────────────────────────
   Future<void> _openReportUpload(BuildContext blocContext) async {
@@ -987,6 +999,8 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       onSelected: (action) {
                         if (action == 'view') {
                           _openFullPageDocument(context, doc);
+                        } else if (action == 'edit') {
+                          _openEditDocumentModal(blocContext, doc);
                         } else if (action == 'insights') {
                           _openInsights(blocContext, doc);
                         } else if (action == 'download') {
@@ -1011,6 +1025,24 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                               const SizedBox(width: 10),
                               Text(
                                 'View Document',
+                                style: TextStyle(
+                                  fontFamily: appPoppinFont,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF10B981)),
+                              const SizedBox(width: 10),
+                              Text(
+                                'Edit Document',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: 13,

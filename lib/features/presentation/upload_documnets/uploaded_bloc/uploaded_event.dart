@@ -48,6 +48,13 @@ class UpdateUploadedRecord extends UploadedBlocEvent {
   UpdateUploadedRecord(this.record);
 }
 
+/// Replaces an existing record with a new record (supporting changed ID after replacement upload)
+class ReplaceUploadedRecord extends UploadedBlocEvent {
+  final String oldRecordId;
+  final UploadedRecord newRecord;
+  ReplaceUploadedRecord({required this.oldRecordId, required this.newRecord});
+}
+
 class FilterCategoryChanged extends UploadedBlocEvent {
   final String category;
   FilterCategoryChanged(this.category);

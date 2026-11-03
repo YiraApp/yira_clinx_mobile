@@ -47,22 +47,56 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
   void _loadAppointments() {
     final String pid = widget.patientId ?? widget.patient.id.toString();
+    final effectiveHospitalId = (widget.hospitalId != null &&
+            widget.hospitalId!.trim().isNotEmpty &&
+            widget.hospitalId != '0')
+        ? widget.hospitalId!.trim()
+        : (GlobalSession.instance.userNotifier.value?.data?.latestHospitalId?.toString() ?? '');
+    final effectiveOrgId = (widget.orgId != null &&
+            widget.orgId!.trim().isNotEmpty &&
+            widget.orgId != '0')
+        ? widget.orgId!.trim()
+        : (GlobalSession.instance.userNotifier.value?.data?.latestOrgId?.toString() ?? '');
+
     context.read<PatientOverViewBloc>().add(LoadPatientData(
           pid,
-          orgId: widget.orgId,
-          hospitalId: widget.hospitalId,
+          orgId: effectiveOrgId,
+          hospitalId: effectiveHospitalId,
         ));
   }
 
   List<PatientAppointmentEntity> _getBaseAppointments(List<PatientAppointmentEntity> all) {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final roleName = (currentUser?.data?.latestUserRole ?? '').toLowerCase().trim();
+    final roleId = (currentUser?.data?.latestRoleId ?? '').toUpperCase().trim();
+    final bool isPatient = roleName.contains('patient') ||
+        roleName == 'user' ||
+        roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
+
+    // When viewed by a doctor/provider: ONLY show appointments belonging to THAT hospital!
+    List<PatientAppointmentEntity> hospitalFiltered = all;
+    if (!isPatient) {
+      final effectiveHospitalId = (widget.hospitalId != null &&
+              widget.hospitalId!.trim().isNotEmpty &&
+              widget.hospitalId != '0')
+          ? widget.hospitalId!.trim()
+          : (currentUser?.data?.latestHospitalId?.toString().trim() ?? '');
+
+      if (effectiveHospitalId.isNotEmpty) {
+        hospitalFiltered = all.where((a) {
+          final aHospId = a.hospitalId.trim();
+          return aHospId == effectiveHospitalId;
+        }).toList();
+      }
+    }
+
     if (widget.hasAccess) {
-      return all;
+      return hospitalFiltered;
     }
     // Without consent: only show treated / completed appointments or appointments belonging to this doctor
-    final currentDoctorId =
-        GlobalSession.instance.userNotifier.value?.data?.id?.toString().trim() ?? '';
+    final currentDoctorId = currentUser?.data?.id?.toString().trim() ?? '';
 
-    return all.where((a) {
+    return hospitalFiltered.where((a) {
       final s = a.status.toLowerCase().trim();
       final isTreated = s == 'completed' || s == 'treated';
       final isThisDoctor = currentDoctorId.isNotEmpty && a.doctorId.trim() == currentDoctorId;

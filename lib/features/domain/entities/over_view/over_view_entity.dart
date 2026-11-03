@@ -53,6 +53,7 @@ class PatientAppointmentEntity {
   final bool isTeleConsultation;
   final String meetingUrl;
   final String location;
+  final String hospitalId;
   final String hospitalName;
   final String hospitalAddress;
   final String hospitalPhone;
@@ -90,6 +91,7 @@ class PatientAppointmentEntity {
     this.isTeleConsultation = false,
     this.meetingUrl = '',
     this.location = '',
+    this.hospitalId = '',
     this.hospitalName = '',
     this.hospitalAddress = '',
     this.hospitalPhone = '',

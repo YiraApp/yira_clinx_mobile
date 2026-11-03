@@ -68,12 +68,16 @@ class AppointmentRepoImpl implements AppointmentRepo {
 
     try {
       final String token = currentUser?.data?.accessToken ?? '';
+      final String userId = currentUser?.data?.id ?? doctorId;
 
       final response = await _apiClient.account(showSuccessSnack: false).post(
         endPoint,
         data: requestBody,
         options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          headers: {
+            HttpHeaders.authorizationHeader: 'Bearer $token',
+            'x-user-id': userId,
+          },
         ),
       );
 
@@ -132,6 +136,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
     double? discountAmount,
     bool? includeConsultationFee,
     double? consultationFee,
+    bool? shareRecords,
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final endPoint = URLs.bookAppointmentUrl;
@@ -159,6 +164,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
       if (discountAmount != null && discountAmount > 0) "discountAmount": discountAmount,
       if (includeConsultationFee != null) "includeConsultationFee": includeConsultationFee,
       if (consultationFee != null) "consultationFee": consultationFee,
+      if (shareRecords != null) "shareRecords": shareRecords,
     };
 
     try {

@@ -98,7 +98,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     final navItems = [
       {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
       {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
-      {'label': 'Consents', 'icon': Icons.verified_user_rounded, 'outlined': Icons.verified_user_outlined},
+      {'label': 'Approvals', 'icon': Icons.verified_user_rounded, 'outlined': Icons.verified_user_outlined},
       {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
     ];
 

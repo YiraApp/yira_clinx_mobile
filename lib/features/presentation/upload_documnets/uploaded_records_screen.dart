@@ -11,6 +11,7 @@ import 'package:yiraclinics/features/presentation/patient/documents/report_insig
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/widgets/uploaded_record_card.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/upload_records_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/documents/edit_document_modal.dart';
 import '../../../core/common_widgets/in_app_document_viewer.dart';
 
 class UploadedRecordsScreen extends StatefulWidget {
@@ -389,6 +390,14 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
               record: record,
               isTab: isTab,
               onView: () => _viewDocument(context, record),
+              onEdit: widget.allowAdd
+                  ? () => EditDocumentModal.show(
+                        context,
+                        blocContext: context,
+                        doc: record,
+                        availableCategories: _categories,
+                      )
+                  : null,
               onAiInsights: () => _openInsights(context, record),
               onDelete: widget.allowAdd
                   ? () {

@@ -24,10 +24,13 @@ class UploadedRecordCard extends StatefulWidget {
     required this.record,
     this.onDelete,
     this.onView,
+    this.onEdit,
     this.onDownload,
     this.onAiInsights,
     required this.isTab,
   });
+
+  final VoidCallback? onEdit;
 
   @override
   State<UploadedRecordCard> createState() => _UploadedRecordCardState();
@@ -310,6 +313,8 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                       onSelected: (action) {
                         if (action == 'view' && widget.onView != null) {
                           widget.onView!();
+                        } else if (action == 'edit' && widget.onEdit != null) {
+                          widget.onEdit!();
                         } else if (action == 'download') {
                           _handleDownload();
                         } else if (action == 'delete' && widget.onDelete != null) {
@@ -335,6 +340,25 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                             ],
                           ),
                         ),
+                        if (widget.onEdit != null)
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF10B981)),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Edit Document',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         PopupMenuItem<String>(
                           value: 'download',
                           child: Row(

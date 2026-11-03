@@ -594,7 +594,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   @override
   void initState() {
     super.initState();
-    context.read<AppointmentBloc>().add(LoadAppointmentsEvent());
+    _loadWithDateFilter();
   }
 
   @override
@@ -1418,15 +1418,22 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                     ? () => _confirmAndCancelAppointment(appointment)
                     : null,
                 onTap: () async {
+                  final currentUser = GlobalSession.instance.userNotifier.value;
+                  final effectiveHospId = (appointment.hospitalId != null && appointment.hospitalId! > 0)
+                      ? appointment.hospitalId.toString()
+                      : (currentUser?.data?.latestHospitalId?.toString() ?? '');
+                  final effectiveOrgId = (appointment.orgId != null && appointment.orgId! > 0)
+                      ? appointment.orgId.toString()
+                      : (currentUser?.data?.latestOrgId?.toString() ?? '');
+
                   await Navigator.pushNamed(
                     context,
                     AppRoutes.doctorPatientProfileScreen,
                     arguments: {
                       'patientId': appointment.patientUserId ?? '',
                       'appointmentId': appointment.id,
-                      'hospitalId':
-                          appointment.hospitalId?.toString() ?? '',
-                      'orgId': appointment.orgId?.toString() ?? '',
+                      'hospitalId': effectiveHospId,
+                      'orgId': effectiveOrgId,
                       'patientName': appointment.patientName,
                       'initialStatus': appointment.statusRaw,
                       'initialTabIndex': 0,

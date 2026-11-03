@@ -36,6 +36,7 @@ abstract class AppointmentRepo {
     double? discountAmount,
     bool? includeConsultationFee,
     double? consultationFee,
+    bool? shareRecords,
   });
 
   Future<bool> updateAppointmentStatus({

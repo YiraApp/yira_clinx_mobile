@@ -39,6 +39,7 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   final double? discountAmount;
   final bool? includeConsultationFee;
   final double? consultationFee;
+  final bool grantRecordAccess;
 
   SubmitBookAppointmentEvent({
     required this.patientName,
@@ -64,6 +65,7 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.discountAmount,
     this.includeConsultationFee,
     this.consultationFee,
+    this.grantRecordAccess = true,
   });
 }
 

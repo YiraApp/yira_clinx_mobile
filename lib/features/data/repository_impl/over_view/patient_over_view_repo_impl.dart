@@ -34,12 +34,12 @@ class PatientOverViewRepoImpl extends PatientOverViewRepo {
     var endPoint = URLs.patientOverViewUrl;
     final currentUser = GlobalSession.instance.userNotifier.value;
 
-    final dynamic finalOrgId = (orgId != null && orgId.trim().isNotEmpty)
+    final dynamic finalOrgId = (orgId != null && orgId.trim().isNotEmpty && orgId.trim() != '0')
         ? (int.tryParse(orgId.trim()) ?? orgId.trim())
-        : 1;
-    final dynamic finalHospId = (hospitalId != null && hospitalId.trim().isNotEmpty)
+        : (currentUser?.data?.latestOrgId ?? 1);
+    final dynamic finalHospId = (hospitalId != null && hospitalId.trim().isNotEmpty && hospitalId.trim() != '0')
         ? (int.tryParse(hospitalId.trim()) ?? hospitalId.trim())
-        : 1;
+        : (currentUser?.data?.latestHospitalId ?? 1);
 
     var requestBody = {
       "patientId": userId,

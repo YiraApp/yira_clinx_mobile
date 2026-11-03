@@ -2099,7 +2099,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           ),
                         ],
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
@@ -2131,6 +2133,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           Navigator.pushNamed(context, AppRoutes.patientPolicies);
                         },
                       ),
+                      ),
                     ),
 
                     // 5. Spotlight Product Tour Tile
@@ -2151,7 +2154,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           ),
                         ],
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
@@ -2182,6 +2187,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         onTap: () {
                           PatientTourController().restartTour(context: context);
                         },
+                      ),
                       ),
                     ),
 
@@ -2355,7 +2361,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           ),
                         ],
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
@@ -2385,6 +2393,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.deepOrange, size: 14),
                         onTap: () => _showDeleteAccountConfirmation(context, primaryColor),
                       ),
+                      ),
                     ),
 
                     // 9. Sign Out Tile
@@ -2405,7 +2414,9 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           ),
                         ],
                       ),
-                      child: ListTile(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         leading: Container(
                           padding: const EdgeInsets.all(8),
@@ -2428,6 +2439,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         onTap: () async {
                           await SignOutAlert.showSignCustomDialog(context, primaryColor);
                         },
+                      ),
                       ),
                     ),
                   ],

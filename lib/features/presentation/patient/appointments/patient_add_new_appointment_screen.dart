@@ -58,6 +58,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   bool _isTeleConsultation = false;
   final TextEditingController _reasonController = TextEditingController();
   String? _slotError;
+  bool _shareRecords = true;
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
   final List<String> _quickReasons = const [
@@ -528,6 +529,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "appointmentType": _isTeleConsultation ? "Video" : "Consultation",
       "isTeleConsultation": _isTeleConsultation,
       "consultationFee": _selectedDoctor!['consultationFee'] ?? 0,
+      "shareRecords": _shareRecords,
     };
 
     try {
@@ -1232,54 +1234,75 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                              ),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<Map<String, dynamic>>(
-                                value: _selectedHospital,
-                                isExpanded: true,
-                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
-                                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                                items: _hospitals.map((h) {
-                                  return DropdownMenuItem<Map<String, dynamic>>(
-                                    value: h,
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(
-                                            h['name'] ?? 'Hospital',
-                                            style: TextStyle(
-                                              fontFamily: appPoppinFont,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            () {
+                              final seenHospIds = <String>{};
+                              final List<Map<String, dynamic>> distinctHospitals = [];
+                              for (final h in _hospitals) {
+                                final hId = (h['id'] ?? h['hospitalId'])?.toString().trim();
+                                if (hId != null && hId.isNotEmpty && seenHospIds.add(hId)) {
+                                  distinctHospitals.add(h);
+                                }
+                              }
+
+                              final currentHospId = (_selectedHospital?['id'] ?? _selectedHospital?['hospitalId'])?.toString().trim();
+                              final selectedHospId = distinctHospitals.any((h) => (h['id'] ?? h['hospitalId'])?.toString().trim() == currentHospId)
+                                  ? currentHospId
+                                  : (distinctHospitals.isNotEmpty ? (distinctHospitals.first['id'] ?? distinctHospitals.first['hospitalId'])?.toString().trim() : null);
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: selectedHospId,
+                                    isExpanded: true,
+                                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+                                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    items: distinctHospitals.map((h) {
+                                      final hId = (h['id'] ?? h['hospitalId'])?.toString().trim() ?? '';
+                                      return DropdownMenuItem<String>(
+                                        value: hId,
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                h['name'] ?? 'Hospital',
+                                                style: TextStyle(
+                                                  fontFamily: appPoppinFont,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                ),
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedHospital = val;
-                                    });
-                                    _filterDoctorsForHospital(val['id']);
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (valId) {
+                                      if (valId != null) {
+                                        final h = distinctHospitals.firstWhere(
+                                          (item) => (item['id'] ?? item['hospitalId'])?.toString().trim() == valId,
+                                          orElse: () => distinctHospitals.first,
+                                        );
+                                        setState(() {
+                                          _selectedHospital = h;
+                                        });
+                                        _filterDoctorsForHospital(h['id']);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              );
+                            }(),
 
                           const SizedBox(height: 14),
 
@@ -1932,6 +1955,84 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           }).toList(),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Section 6: Record Sharing Consent (Default: Checked / 7-Day Access)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _shareRecords
+                          ? const Color(0xFF2563EB).withValues(alpha: isDark ? 0.12 : 0.06)
+                          : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _shareRecords
+                            ? const Color(0xFF2563EB).withValues(alpha: 0.35)
+                            : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: () => setState(() => _shareRecords = !_shareRecords),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Transform.scale(
+                            scale: 1.05,
+                            child: Checkbox(
+                              value: _shareRecords,
+                              activeColor: const Color(0xFF2563EB),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              onChanged: (val) => setState(() => _shareRecords = val ?? true),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.verified_user_rounded,
+                                      size: 16,
+                                      color: _shareRecords
+                                          ? const Color(0xFF2563EB)
+                                          : (isDark ? Colors.white70 : const Color(0xFF64748B)),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        "Share Medical Records (7 Days Access)",
+                                        style: TextStyle(
+                                          fontFamily: appPoppinFont,
+                                          fontSize: isTab ? 13.5 : 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Allow \${_selectedDoctor?['name'] ?? 'the doctor'} to access your medical history and test records for 7 days. You can revoke access anytime in Approvals.",
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: isTab ? 12 : 11,
+                                    height: 1.35,
+                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 

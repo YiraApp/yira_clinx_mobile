@@ -13,6 +13,7 @@ import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashb
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_patient_contact_row.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/widgets/dashboard_patient_vital_tile.dart';
 import '../../../../core/common_widgets/common_text.dart';
+import '../../../../core/local/global_session.dart';
 import '../../../domain/entities/dashboard/dashboard_patient_details_entity.dart';
 import '../../../domain/entities/dashboard/doctor_dashboard_entity.dart';
 
@@ -44,17 +45,24 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         ? (dashboardPatientDetails?.recentPatients?.patientUserId ?? '')
         : (dashboardPatientDetails?.todaysSchedule?.patientUserId ?? '');
 
-    final orgId = (isRecent
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    final rawOrgId = (isRecent
             ? dashboardPatientDetails?.recentPatients?.orgId
             : dashboardPatientDetails?.todaysSchedule?.orgId)
         ?.toString() ??
         '';
+    final orgId = (rawOrgId.isNotEmpty && rawOrgId != '0')
+        ? rawOrgId
+        : (currentUser?.data?.latestOrgId?.toString() ?? '');
 
-    final hospitalId = (isRecent
+    final rawHospitalId = (isRecent
             ? dashboardPatientDetails?.recentPatients?.hospitalId
             : dashboardPatientDetails?.todaysSchedule?.hospitalId)
         ?.toString() ??
         '';
+    final hospitalId = (rawHospitalId.isNotEmpty && rawHospitalId != '0')
+        ? rawHospitalId
+        : (currentUser?.data?.latestHospitalId?.toString() ?? '');
 
     final patientName = isRecent
         ? dashboardPatientDetails?.recentPatients?.name

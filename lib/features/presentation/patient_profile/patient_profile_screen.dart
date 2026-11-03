@@ -321,6 +321,11 @@ class _DoctorPatientProfileScreenState
         );
       case 'Appointments':
         // Appointments Tab (Dedicated tab showing all Appointments with full clinical records)
+        final effectiveHospitalId = (widget.hospitalId != null &&
+                widget.hospitalId!.trim().isNotEmpty &&
+                widget.hospitalId != '0')
+            ? widget.hospitalId
+            : (GlobalSession.instance.userNotifier.value?.data?.latestHospitalId?.toString());
         return BlocProvider<PatientOverViewBloc>(
           create: (_) => sl<PatientOverViewBloc>(),
           child: PatientAppointmentsScreen(
@@ -328,7 +333,7 @@ class _DoctorPatientProfileScreenState
             patient: patient,
             patientId: widget.patientId ?? patient.id,
             appointmentId: widget.appointmentId,
-            hospitalId: widget.hospitalId,
+            hospitalId: effectiveHospitalId,
             orgId: widget.orgId,
             isTab: isTab,
             hasAccess: accessStatus?.hasAccess ?? true,

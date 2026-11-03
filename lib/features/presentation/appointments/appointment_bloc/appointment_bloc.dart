@@ -34,7 +34,10 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           _currentSearch = event.search;
         }
 
-        final targetDate = event.date ?? _currentDate;
+        final todayIso = DateTime.now().toIso8601String().split('T')[0];
+        final targetDate = (event.dateFrom == null && event.dateTo == null && _currentDateFrom == null && _currentDateTo == null)
+            ? (event.date ?? _currentDate ?? todayIso)
+            : (event.date ?? _currentDate);
         final targetDateFrom = event.dateFrom ?? _currentDateFrom;
         final targetDateTo = event.dateTo ?? _currentDateTo;
         final targetStatus = event.status ?? _currentStatus;
@@ -47,7 +50,9 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
                 ? currentUser.data!.navigationId!.trim()
                 : '1';
         final int orgId = currentUser?.data?.latestOrgId ?? 1;
-        final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
+        final int hospitalId = (currentUser?.data?.latestHospitalId != null && currentUser!.data!.latestHospitalId! > 0)
+            ? currentUser.data!.latestHospitalId!
+            : 0;
 
         final result = await getAppointmentDashboardUseCase(
           doctorId: doctorId,
@@ -126,6 +131,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           discountAmount: event.discountAmount,
           includeConsultationFee: event.includeConsultationFee,
           consultationFee: event.consultationFee,
+          shareRecords: event.grantRecordAccess,
         );
 
         if (bookingData != null) {

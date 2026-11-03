@@ -426,7 +426,7 @@ Future<void> init() async {
       updateLatestOrgDetailsUseCase: sl<UpdateLatestOrgDetailsUseCase>(),
     ),
   );
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => AppointmentBloc(
       getAppointmentDashboardUseCase: sl<GetAppointmentDashboardUseCase>(),
       appointmentRepo: sl<AppointmentRepo>(),
@@ -440,7 +440,7 @@ Future<void> init() async {
   sl.registerFactory(
     () => MedicalRecordBloc(repository: sl<MedicalHistoryRepository>()),
   );
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => DoctorDashboardBloc(
       doctorDashboardUseCase: sl<DoctorDashboardUseCase>()
     ),

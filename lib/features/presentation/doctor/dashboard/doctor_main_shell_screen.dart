@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/navigation_drawer-bloc/navigation_drawer_bloc.dart';
 import 'package:yiraclinics/core/tour/provider_tour_controller.dart';
@@ -38,9 +39,10 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
         _onTabTapped(index);
       }
     });
+    final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     sl<NavigationDrawerBloc>().add(const InitializeDrawerData());
     sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
-    sl<AppointmentBloc>().add(LoadAppointmentsEvent());
+    sl<AppointmentBloc>().add(LoadAppointmentsEvent(date: todayStr));
     sl<DashboardBloc>().add(const GetDashboardData());
     sl<SlotBloc>().add(InitializeSlotsEvent());
   }
@@ -50,15 +52,16 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
       setState(() {
         _currentIndex = index;
       });
-      if (index == 2) {
-        sl<DashboardBloc>().add(const GetDashboardData());
-      } else if (index == 1) {
-        sl<AppointmentBloc>().add(LoadAppointmentsEvent());
-      } else if (index == 0) {
-        sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
-      } else if (index == 3) {
-        sl<SlotBloc>().add(InitializeSlotsEvent(resetToToday: true));
-      }
+    }
+    if (index == 2) {
+      sl<DashboardBloc>().add(const GetDashboardData());
+    } else if (index == 1) {
+      final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      sl<AppointmentBloc>().add(LoadAppointmentsEvent(date: todayStr));
+    } else if (index == 0) {
+      sl<DoctorDashboardBloc>().add(FetchDoctorDashboardData());
+    } else if (index == 3) {
+      sl<SlotBloc>().add(InitializeSlotsEvent(resetToToday: true));
     }
   }
 
