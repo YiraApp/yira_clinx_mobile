@@ -81,21 +81,16 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
           }
         }
 
+        // Keyed by lower-case id: a member added on this phone can carry the same
+        // id in a different letter case from the server's copy.
         final Map<String, ProfileEntity> map = {};
-        for (final p in currentProfiles) {
-          if (p.id != null && p.id!.isNotEmpty) map[p.id!] = p;
-        }
-        for (final p in incomingProfiles) {
-          if (p.id != null && p.id!.isNotEmpty) {
-            if (!map.containsKey(p.id!)) {
-              map[p.id!] = p;
-            }
-          }
+        for (final p in [...currentProfiles, ...incomingProfiles]) {
+          if (p.id != null && p.id!.isNotEmpty) map.putIfAbsent(p.id!.trim().toLowerCase(), () => p);
         }
 
         // Clean & guarantee that ONLY rootPrimaryId is Primary, all others are their relation or Dependent
         List<ProfileEntity> mergedProfiles = map.values.map((p) {
-          final isRealPrimary = (rootPrimaryId != null && p.id == rootPrimaryId);
+          final isRealPrimary = (rootPrimaryId != null && (p.id ?? '').toLowerCase() == rootPrimaryId.toLowerCase());
           final rawRel = (p.relation ?? '').trim();
           final bool hasFamilyRel = rawRel.isNotEmpty &&
               rawRel.toLowerCase() != 'self' &&

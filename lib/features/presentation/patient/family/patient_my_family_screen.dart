@@ -80,12 +80,19 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           if (res.data != null && res.data['data'] is List) {
             final list = res.data['data'] as List;
             final currentSession = GlobalSession.instance.userNotifier.value;
-            final currentProfiles = List<ProfileEntity>.from(currentSession?.data?.profiles ?? []);
+            // Ids can differ in letter case between the login and this lookup, so
+            // compare them case-insensitively, and drop copies an older build saved.
+            final seenIds = <String>{};
+            final savedProfiles = currentSession?.data?.profiles ?? const <ProfileEntity>[];
+            final currentProfiles = [
+              for (final p in savedProfiles)
+                if ((p.id ?? '').trim().isEmpty || seenIds.add(p.id!.trim().toLowerCase())) p,
+            ];
 
-            bool hasNewProfiles = false;
+            bool hasNewProfiles = currentProfiles.length != savedProfiles.length;
             for (final item in list) {
               final itemUserId = (item['id'] ?? item['userId'] ?? '').toString().trim();
-              if (itemUserId.isNotEmpty && !currentProfiles.any((p) => (p.id ?? '').trim() == itemUserId)) {
+              if (itemUserId.isNotEmpty && seenIds.add(itemUserId.toLowerCase())) {
                 final fName = (item['firstName'] ?? '').toString().trim();
                 final lName = (item['lastName'] ?? '').toString().trim();
                 final depName = '$fName $lName'.trim();
@@ -219,11 +226,12 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final List<ProfileEntity> raw = [...(currentUser?.data?.profiles ?? [])];
 
-    // Deduplicate profiles by unique ID
+    // Deduplicate profiles by id, ignoring letter case; the first copy wins
+    // because it comes from the login, which has the full details.
     final Map<String, ProfileEntity> map = {};
     for (final p in raw) {
       if (p.id != null && p.id!.isNotEmpty) {
-        map[p.id!] = p;
+        map.putIfAbsent(p.id!.trim().toLowerCase(), () => p);
       }
     }
     List<ProfileEntity> unique = map.values.toList();
@@ -233,7 +241,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
 
     int primaryIdx = -1;
     if (rootPrimaryGuid != null && rootPrimaryGuid.isNotEmpty) {
-      primaryIdx = unique.indexWhere((p) => p.id == rootPrimaryGuid);
+      primaryIdx = unique.indexWhere((p) => (p.id ?? '').toLowerCase() == rootPrimaryGuid.toLowerCase());
     }
     if (primaryIdx == -1) {
       primaryIdx = unique.indexWhere((p) {

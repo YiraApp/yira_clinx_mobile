@@ -44,8 +44,12 @@ class _FamilyProfilesStripState extends State<FamilyProfilesStrip> {
   Widget build(BuildContext context) {
     if (GlobalSession.instance.isSignedInAsFamilyMember) return const SizedBox.shrink();
     final user = GlobalSession.instance.userNotifier.value;
-    final profiles = [...(user?.data?.profiles ?? const <ProfileEntity>[])]
-      ..sort((a, b) => (_isSelf(b) ? 1 : 0).compareTo(_isSelf(a) ? 1 : 0));
+    // One entry per person: saved lists can hold the same id in different letter case.
+    final seenIds = <String>{};
+    final profiles = [
+      for (final p in user?.data?.profiles ?? const <ProfileEntity>[])
+        if (seenIds.add((p.id ?? '').trim().toLowerCase())) p,
+    ]..sort((a, b) => (_isSelf(b) ? 1 : 0).compareTo(_isSelf(a) ? 1 : 0));
     if (profiles.isEmpty) return const SizedBox.shrink();
     final currentId = (user?.data?.id ?? '').toLowerCase();
     final isDark = widget.isDark;
