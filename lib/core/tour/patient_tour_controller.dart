@@ -107,7 +107,7 @@ class PatientTourController {
           position: TourCardPosition.top,
           targetPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           borderRadius: 14,
-          tabIndex: 2,
+          tabIndex: 3,
         ),
 
         // ─── 2. APPOINTMENTS TAB (Index 1) ──────────────────────────
@@ -142,7 +142,7 @@ class PatientTourController {
           targetKey: passportProfileCardKey,
           icon: Icons.health_and_safety_rounded,
           position: TourCardPosition.bottom,
-          tabIndex: 2,
+          tabIndex: 3,
         ),
       ];
 

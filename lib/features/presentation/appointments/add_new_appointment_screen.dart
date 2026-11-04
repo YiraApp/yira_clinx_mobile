@@ -1517,6 +1517,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     });
   }
 
+  static final RegExp _userIdPattern =
+      RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+
+  /// True for a user account id (GUID); false for token numbers and empty values.
+  static bool _isUserId(String? id) => id != null && _userIdPattern.hasMatch(id.trim());
+
   void _validateAndSubmit(BuildContext context) {
     setState(() {
       _nameError = null;
@@ -1621,9 +1627,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         doctorId: patientDocId,
         hospitalId: patientHospId,
         orgId: patientOrgId,
-        patientUserId: _selectedPatient?.userId.isNotEmpty == true
+        // Only a real user id: the patients list's `id` can be a token number (e.g. "YRA0012")
+        patientUserId: _isUserId(_selectedPatient?.userId)
             ? _selectedPatient!.userId
-            : (_selectedPatient?.id.isNotEmpty == true ? _selectedPatient!.id : null),
+            : (_isUserId(_selectedPatient?.id) ? _selectedPatient!.id : null),
         parentUserId: _selectedPatient?.parentUserId ??
             ((_selectedPatient != null && !_selectedPatient!.isPrimary)
                 ? (GlobalSession.instance.rootPrimaryUserId ?? currentUser?.data?.id)

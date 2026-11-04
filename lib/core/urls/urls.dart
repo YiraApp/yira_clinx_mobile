@@ -110,6 +110,14 @@ class URLs {
   static const verifyPaymentUrl = "/v1/api/auth/payments/verify";
   static const getPaymentByAppointmentUrl = "/v1/api/auth/payments/by-appointment";
 
+  /*Lab Packages (patient): list by pincode, hospitals, order + Razorpay with the hospital's keys*/
+  static const labPackagesUrl = "/v1/api/auth/lab-packages";
+  static const labPackageHospitalsUrl = "/v1/api/auth/lab-packages/hospitals";
+  static const labPackageOrderUrl = "/v1/api/auth/lab-packages/order";
+  static const labPackageVerifyUrl = "/v1/api/auth/lab-packages/verify";
+  static const labPackageMyOrdersUrl = "/v1/api/auth/lab-packages/my-orders";
+  static const labPackageOrdersUrl = "/v1/api/auth/lab-packages/orders"; // + /:id/report
+
   /*Account Management*/
   static const accountDeactivateUrl = "/v1/api/auth/account/deactivate";
 

@@ -8,6 +8,7 @@ import '../../../../di/dependency_injection.dart';
 import '../appointments/appointment_bloc/appointment_bloc.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'dashboard/patient_dashboard_screen.dart';
+import 'lab_packages/patient_lab_packages_screen.dart';
 import 'profile/patient_profile_passport_screen.dart';
 
 class PatientMainShellScreen extends StatefulWidget {
@@ -52,8 +53,9 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     super.dispose();
   }
 
-  /// Dashboard, Appointments, Profile. Sharing moved from a tab into Profile.
-  static const int _tabCount = 3;
+  /// Dashboard, Appointments, Lab Tests, Profile. Sharing moved from a tab into Profile.
+  static const int _tabCount = 4;
+  static const int _profileTab = 3;
   static int _clampTab(int index) => index.clamp(0, _tabCount - 1);
 
   void _onTabSelected(int index) {
@@ -73,7 +75,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
         return _dashboardNavKey;
       case 1:
         return _apptsNavKey;
-      case 2:
+      case _profileTab:
         return _profileNavKey;
       default:
         return null;
@@ -92,12 +94,14 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
         onNavigateTab: _onTabSelected,
         isActive: _currentIndex == 1,
       ),
+      PatientLabPackagesScreen(isActive: _currentIndex == 2),
       const PatientProfilePassportScreen(),
     ];
 
     final navItems = [
       {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
       {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
+      {'label': 'Lab Tests', 'icon': Icons.science_rounded, 'outlined': Icons.science_outlined},
       {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
     ];
 

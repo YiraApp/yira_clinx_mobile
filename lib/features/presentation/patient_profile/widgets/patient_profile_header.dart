@@ -59,6 +59,11 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         : 'CONFIRMED';
   }
 
+  static bool _isCancelledStatus(String status) {
+    final s = status.trim().toLowerCase();
+    return s == 'cancelled' || s == 'canceled';
+  }
+
   Future<void> _toggleFavorite() async {
     final pId = widget.patientId ?? widget.patient.id;
     final altId = widget.patient.id;
@@ -75,12 +80,14 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (dialogContext) {
+        final isCompleted = _currentStatus.toLowerCase().contains('complet');
         final statuses = [
           'Scheduled',
           'Confirmed',
           'In Progress',
           'Completed',
-          'Cancelled',
+          // A completed visit cannot be cancelled
+          if (!isCompleted) 'Cancelled',
         ];
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final primaryColor = Theme.of(context).primaryColor;
@@ -212,16 +219,15 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
 
     try {
       final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
-      final doctorId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
-      final aptId = widget.appointmentId;
-      final patientId = widget.patientId ?? widget.patient.id;
+      final aptId = widget.appointmentId?.trim() ?? '';
+      // Only this appointment is changed. Sending the patient instead made the server pick the
+      // patient's latest appointment, which could be one already cancelled.
+      if (aptId.isEmpty) return;
 
       final response = await sl<ApiClient>().account(showSuccessSnack: true).post(
         URLs.updateAppointmentStatusUrl,
         data: {
-          if (aptId != null && aptId.isNotEmpty) 'appointmentId': aptId,
-          'patientId': patientId,
-          if (doctorId.isNotEmpty) 'doctorId': doctorId,
+          'appointmentId': aptId,
           'status': newStatus,
         },
         options: Options(
@@ -229,15 +235,15 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
         ),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if ((response.statusCode == 200 || response.statusCode == 201) && mounted) {
         setState(() {
           _currentStatus = newStatus.toUpperCase();
         });
       }
     } catch (e) {
-      setState(() {
-        _currentStatus = newStatus.toUpperCase();
-      });
+      // The change was refused or failed (the error is shown by the API client): keep the status the
+      // appointment really has instead of showing the one that was not saved
+      debugPrint("Appointment status not changed: $e");
     } finally {
       if (mounted) {
         setState(() {
@@ -374,7 +380,10 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                     if (widget.showStatus && widget.appointmentId != null && widget.appointmentId!.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: (_isUpdating || isPatient) ? null : () => _showStatusPicker(context),
+                        // A cancelled appointment's slot is released, so it is not changed again (book a new one)
+                        onTap: (_isUpdating || isPatient || _isCancelledStatus(_currentStatus))
+                            ? null
+                            : () => _showStatusPicker(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(

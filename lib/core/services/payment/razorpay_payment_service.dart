@@ -31,6 +31,25 @@ class RazorpayPaymentResult {
   });
 }
 
+/// Result of buying a lab package: the order it created and how the payment went.
+class LabPackagePaymentResult {
+  final bool success;
+  final String? labOrderId;
+  final String? orderNumber;
+  final String? paymentId;
+  final String? errorMessage;
+  final bool isCancelled;
+
+  const LabPackagePaymentResult({
+    required this.success,
+    this.labOrderId,
+    this.orderNumber,
+    this.paymentId,
+    this.errorMessage,
+    this.isCancelled = false,
+  });
+}
+
 /// Order payload returned from the backend order creation API.
 class RazorpayOrderData {
   final String orderId;
@@ -65,6 +84,13 @@ class RazorpayPaymentService {
   Razorpay? _razorpay;
   Completer<RazorpayPaymentResult>? _paymentCompleter;
   RazorpayOrderData? _currentOrder;
+
+  /// Where the open checkout is verified: appointment payments, or lab package orders
+  String _verifyUrl = URLs.verifyPaymentUrl;
+
+  /// Lab package checkouts treat a refusal from the server as a failed payment; only a lost
+  /// connection is left for the webhook to settle.
+  bool _strictVerify = false;
 
   RazorpayPaymentService._internal() {
     _initRazorpay();
@@ -222,7 +248,7 @@ class RazorpayPaymentService {
 
     try {
       final verifyRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.verifyPaymentUrl,
+        _verifyUrl,
         data: {
           "transactionId": order.transactionId,
           "razorpay_payment_id": response.paymentId,
@@ -255,6 +281,20 @@ class RazorpayPaymentService {
       }
     } catch (e) {
       debugPrint("[RazorpayPaymentService] Backend verification error: $e");
+      if (_strictVerify && e is DioException && e.response != null) {
+        // The server answered and refused the payment (e.g. signature mismatch)
+        final data = e.response?.data;
+        _paymentCompleter?.complete(RazorpayPaymentResult(
+          success: false,
+          paymentId: response.paymentId,
+          orderId: response.orderId ?? order.orderId,
+          transactionId: order.transactionId,
+          errorMessage: (data is Map && data['message'] != null)
+              ? data['message'].toString()
+              : "Payment verification failed.",
+        ));
+        return;
+      }
       // Even if network blips during verify, backend webhook or retry can reconcile
       _paymentCompleter?.complete(RazorpayPaymentResult(
         success: true,
@@ -285,6 +325,129 @@ class RazorpayPaymentService {
   void _handleExternalWallet(ExternalWalletResponse response) {
     debugPrint("[RazorpayPaymentService] External Wallet Selected: ${response.walletName}");
     // External wallet redirects externally
+  }
+
+  /// Buys a lab package: the backend creates the order with the chosen hospital's own Razorpay
+  /// keys for the package's total including GST, the checkout opens, and the payment is verified
+  /// through the lab package endpoint. The amount always comes from the server.
+  Future<LabPackagePaymentResult> processLabPackagePayment({
+    required int packageId,
+    required int hospitalId,
+    String? pincode,
+    String? preferredDate,
+    String? notes,
+    String? patientName,
+    String? patientPhone,
+    String? patientEmail,
+  }) async {
+    final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+
+    Map<String, dynamic> order;
+    try {
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        URLs.labPackageOrderUrl,
+        data: {
+          "packageId": packageId,
+          "hospitalId": hospitalId,
+          if (pincode != null && pincode.isNotEmpty) "pincode": pincode,
+          if (preferredDate != null && preferredDate.isNotEmpty) "preferredDate": preferredDate,
+          if (notes != null && notes.trim().isNotEmpty) "notes": notes.trim(),
+        },
+        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+      );
+      final data = (res.data is Map) ? res.data['data'] : null;
+      if (data is! Map) {
+        return const LabPackagePaymentResult(success: false, errorMessage: "Unable to start the payment. Please try again.");
+      }
+      order = Map<String, dynamic>.from(data);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      return LabPackagePaymentResult(
+        success: false,
+        errorMessage: (data is Map && data['message'] != null)
+            ? data['message'].toString()
+            : "Unable to start the payment. Please try again.",
+      );
+    } catch (e) {
+      return LabPackagePaymentResult(success: false, errorMessage: "Unable to start the payment: $e");
+    }
+
+    final labOrderId = order['orderId']?.toString();
+    final orderNumber = order['orderNumber']?.toString();
+
+    // A free package needs no checkout
+    if (order['requiresPayment'] == false) {
+      return LabPackagePaymentResult(success: true, labOrderId: labOrderId, orderNumber: orderNumber);
+    }
+
+    final orderData = RazorpayOrderData(
+      orderId: (order['razorpayOrderId'] ?? '').toString(),
+      key: (order['key'] ?? '').toString(),
+      transactionId: (order['transactionId'] ?? '').toString(),
+      amount: double.tryParse((order['amount'] ?? 0).toString()) ?? 0.0,
+    );
+    if (orderData.orderId.isEmpty || orderData.key.isEmpty) {
+      return LabPackagePaymentResult(
+        success: false,
+        labOrderId: labOrderId,
+        orderNumber: orderNumber,
+        errorMessage: "Unable to initialize payment gateway. Please try again or contact support.",
+      );
+    }
+
+    _currentOrder = orderData;
+    _paymentCompleter = Completer<RazorpayPaymentResult>();
+    _verifyUrl = URLs.labPackageVerifyUrl;
+    _strictVerify = true;
+    if (_razorpay == null) _initRazorpay();
+
+    final cleanPhone = (patientPhone ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+    final formattedPhone = cleanPhone.length > 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
+    final hospitalName = (order['hospitalName'] ?? '').toString();
+    final packageName = (order['packageName'] ?? '').toString();
+
+    try {
+      _razorpay!.open({
+        'key': orderData.key,
+        'amount': (orderData.amount * 100).round(),
+        'name': hospitalName.isNotEmpty ? hospitalName : 'Yira Health',
+        'description': packageName.isNotEmpty ? 'Lab package: $packageName' : 'Lab package',
+        'order_id': orderData.orderId,
+        'timeout': 300,
+        'prefill': {
+          if (formattedPhone.isNotEmpty) 'contact': formattedPhone,
+          if (patientEmail != null && patientEmail.isNotEmpty) 'email': patientEmail,
+          if (patientName != null && patientName.isNotEmpty) 'name': patientName,
+        },
+        'theme': {'color': '#00A896'},
+        'retry': {'enabled': true, 'max_count': 3},
+      });
+    } catch (e) {
+      _resetVerifyTarget();
+      return LabPackagePaymentResult(
+        success: false,
+        labOrderId: labOrderId,
+        orderNumber: orderNumber,
+        errorMessage: "Failed to open payment gateway: $e",
+      );
+    }
+
+    final result = await _paymentCompleter!.future;
+    _resetVerifyTarget();
+    return LabPackagePaymentResult(
+      success: result.success,
+      labOrderId: labOrderId,
+      orderNumber: orderNumber,
+      paymentId: result.paymentId,
+      errorMessage: result.errorMessage,
+      isCancelled: result.isCancelled,
+    );
+  }
+
+  /// Back to the appointment payment endpoint once a lab checkout is over.
+  void _resetVerifyTarget() {
+    _verifyUrl = URLs.verifyPaymentUrl;
+    _strictVerify = false;
   }
 
   /// Fetch payment details for an appointment

@@ -526,7 +526,7 @@ class AppRouter {
       case AppRoutes.patientDocuments:
         return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
       case AppRoutes.patientProfile:
-        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
+        return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
       case AppRoutes.uploadDocumentsViaLink:
         final token = settings.arguments as String?;
         return MaterialPageRoute(settings: settings, builder: (_) => DocumentUploadViaLinkScreen(token: token));
@@ -618,7 +618,7 @@ class AppRouter {
           return _guardedRoute(settings: settings, builder: (_) => const PatientDocumentsScreen());
         }
         if (lower == 'patientprofile' || lower == 'profile') {
-          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 2));
+          return _guardedRoute(settings: settings, builder: (_) => const PatientMainShellScreen(initialIndex: 3));
         }
         if (lower == 'patientvitalstracking' || lower == 'vitalstracking' || lower == 'vitals') {
           return _guardedRoute(settings: settings, builder: (_) => const PatientVitalsTrackingScreen());
