@@ -5,9 +5,9 @@ class EnvironmentService {
   static Environment _currentEnv = Environment.local;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
-  // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables 100% stable connection over USB, bypassing Wi-Fi AP isolation & firewall
-  // - Or use Wi-Fi LAN IP (192.168.0.7) if running purely over wireless network. Override with --dart-define=BACKEND_IP=<ip>.
-  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.4");
+  // - 192.168.0.5:5000 (Current Wi-Fi LAN IP). Override with --dart-define=BACKEND_IP=<ip>.
+  // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables stable connection over USB
+  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.5");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
   static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
@@ -16,17 +16,18 @@ class EnvironmentService {
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
 
   /// Probes available local channels:
-  /// 1. 127.0.0.1:5000 (direct USB tunnel via `adb reverse tcp:5000 tcp:5000` - immune to Wi-Fi AP isolation)
-  /// 2. 192.168.0.4:5000 (Current Wi-Fi LAN)
-  /// 3. Fallback candidates (192.168.0.7, 192.168.0.3, 192.168.0.6, 10.0.2.2)
+  /// 1. 192.168.0.5:5000 (Current Wi-Fi LAN)
+  /// 2. 127.0.0.1:5000 (direct USB tunnel via `adb reverse tcp:5000 tcp:5000`)
+  /// 3. Fallback candidates (192.168.0.4, 192.168.0.7, 192.168.0.3, 192.168.0.6, 10.0.2.2)
   static Future<void> autoDetectLocalHost({bool force = true}) async {
     if (_currentEnv != Environment.local) return;
     if (!force && _customBaseUrl != null && _customBaseUrl!.isNotEmpty) return;
     _customBaseUrl = null;
 
     final candidates = [
-      '127.0.0.1',
       localHostIp,
+      '192.168.0.5',
+      '127.0.0.1',
       '192.168.0.4',
       '192.168.0.7',
       '192.168.0.3',
@@ -50,9 +51,7 @@ class EnvironmentService {
       } catch (_) {}
     }
 
-    _customBaseUrl = (!kIsWeb && Platform.isAndroid)
-        ? "http://127.0.0.1:$localPort"
-        : "http://$localHostIp:$localPort";
+    _customBaseUrl = "http://$localHostIp:$localPort";
     debugPrint('[Environment] ⚠️ Using local fallback URL: $_customBaseUrl');
   }
 
@@ -63,9 +62,6 @@ class EnvironmentService {
     const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
     if (envUrl.isNotEmpty) {
       return envUrl.trim();
-    }
-    if (!kIsWeb && Platform.isAndroid) {
-      return "http://127.0.0.1:$localPort";
     }
     return "http://$localHostIp:$localPort";
   }
