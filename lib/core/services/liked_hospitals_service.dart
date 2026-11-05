@@ -69,6 +69,7 @@ class LikedHospitalsService {
       dynamic logoUrl,
       dynamic imageUrl,
       bool isLiked = false,
+      bool keepName = false,
     }) {
       if (id == null) return;
       final hospIdStr = id.toString().trim();
@@ -77,6 +78,9 @@ class LikedHospitalsService {
 
       // Filter out generic placeholder names
       if (hospNameStr.toLowerCase() == 'user' || hospNameStr.toLowerCase() == 'null') return;
+      // Older builds saved a made-up "Yira Hospitals" label for hospital 19 on the
+      // phone; it is not a real hospital, so saved copies of it are skipped.
+      if (keepName && hospNameStr.toLowerCase() == 'yira hospitals') return;
 
       final resolvedLogo = (logo ?? logoUrl ?? imageUrl)?.toString();
       final existingIndex = hospitals.indexWhere((h) => h['id']?.toString() == hospIdStr);
@@ -112,7 +116,7 @@ class LikedHospitalsService {
         });
       } else {
         final cur = hospitals[existingIndex];
-        if (hospNameStr.isNotEmpty) cur['name'] = hospNameStr;
+        if (hospNameStr.isNotEmpty && !keepName) cur['name'] = hospNameStr;
         if (hospitalCode != null && hospitalCode.toString().isNotEmpty) cur['hospitalCode'] = hospitalCode.toString();
         if (hospitalType != null && hospitalType.toString().isNotEmpty) cur['hospitalType'] = hospitalType.toString();
         if (address != null && address.toString().isNotEmpty) cur['address'] = address.toString();
@@ -266,6 +270,7 @@ class LikedHospitalsService {
               final hName = doc['hospitalName'];
               if (hId != null && hName != null) {
                 addHospital(
+                  keepName: true,
                   hId,
                   hName,
                   orgId: doc['orgId'],
@@ -290,6 +295,7 @@ class LikedHospitalsService {
               final hName = h['name'] ?? h['hospitalName'];
               if (hId != null && hName != null) {
                 addHospital(
+                  keepName: true,
                   hId,
                   hName,
                   orgId: h['orgId'],
@@ -309,21 +315,25 @@ class LikedHospitalsService {
       }
     }
 
-    // Ensure default hospital (Yira Hospitals) is always present and at the top
+    // Ensure the configured default hospital is always present and at the top
+    await loadDefaultHospital();
+    final defaultEntry = defaultHospitalEntry();
+    // Contact details below belong to the built-in fallback hospital only.
+    final builtIn = '${defaultEntry['id']}' == '19';
     final bool hasDefault = hospitals.any(isDefaultHospital);
     if (!hasDefault) {
       addHospital(
-        19,
-        'Yira Hospitals',
-        orgId: 1,
-        orgName: 'yira',
-        hospitalCode: 'Hosp11',
-        hospitalType: 'General',
-        city: 'K.V.Rangareddy',
-        state: 'Telangana',
-        country: 'India',
-        address: '6-123, kota , andhra pradesh',
-        mobileNumber: '9908875796',
+        defaultEntry['id'],
+        '${defaultEntry['name']}',
+        orgId: defaultEntry['orgId'],
+        orgName: '${defaultEntry['orgName']}',
+        hospitalCode: builtIn ? 'Hosp11' : null,
+        hospitalType: builtIn ? 'General' : null,
+        city: builtIn ? 'K.V.Rangareddy' : null,
+        state: builtIn ? 'Telangana' : null,
+        country: builtIn ? 'India' : null,
+        address: builtIn ? '6-123, kota , andhra pradesh' : null,
+        mobileNumber: builtIn ? '9908875796' : null,
         is24Hours: true,
         logo: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
         logoUrl: 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
@@ -351,11 +361,44 @@ class LikedHospitalsService {
   }
 
   /// Determines whether a hospital is the system default hospital (Yira Hospitals)
+  static Map<String, dynamic>? _defaultHospital;
+
+  /// The hospital admins chose as the default (Default Organization page).
+  /// Loaded once; until then, or if it fails, the older built-in default is used.
+  static Future<void> loadDefaultHospital() async {
+    if (_defaultHospital != null) return;
+    try {
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
+            URLs.activeDefaultOrganizationUrl,
+            options: Options(extra: const {'suppressErrorSnack': true, 'suppressSessionExpired': true}),
+          );
+      final data = res.data is Map ? res.data['data'] : null;
+      if (data is Map && data['HospitalId'] != null) {
+        _defaultHospital = {
+          'id': int.tryParse('${data['HospitalId']}') ?? data['HospitalId'],
+          'name': '${data['HospitalName'] ?? 'Yira Hospitals'}',
+          'orgId': int.tryParse('${data['OrganizationId']}') ?? data['OrganizationId'],
+          'orgName': '${data['OrganizationName'] ?? 'yira'}',
+        };
+      }
+    } catch (_) {}
+  }
+
+  static String get defaultHospitalId => '${_defaultHospital?['id'] ?? 19}';
+
+  /// The default hospital as an entry for hospital lists.
+  static Map<String, dynamic> defaultHospitalEntry() => {
+        ...(_defaultHospital ?? const {'id': 19, 'name': 'Yira Hospitals', 'orgId': 1, 'orgName': 'yira'}),
+        'isDefault': true,
+        'isLinked': true,
+        'logo': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+        'logoUrl': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
+      };
+
   static bool isDefaultHospital(Map<String, dynamic> h) {
-    final name = (h['name'] ?? h['hospitalName'] ?? '').toString().toLowerCase();
     final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
-    final isDef = h['isDefault'] == true || h['isDefault'] == 1 || h['isDefault'] == 'true';
-    return isDef || name.contains('yira') || idStr == '19';
+    final isDef = h['isDefault'] == true || h['isDefault'] == 1;
+    return isDef || idStr == defaultHospitalId;
   }
 
   /// Retrieves all doctors linked to this patient that belong to the given hospital.
@@ -412,7 +455,7 @@ class LikedHospitalsService {
     // 1. If initial doctor matches this hospital, add it first
     if (initialDoctor != null) {
       final initHospId = (initialDoctor['hospitalId'] ?? '').toString().trim();
-      if (initHospId.isEmpty || initHospId == hospIdStr || hospIdStr == '19') {
+      if (initHospId.isEmpty || initHospId == hospIdStr || hospIdStr == defaultHospitalId) {
         addDoctor(initialDoctor);
       }
     }
@@ -467,7 +510,7 @@ class LikedHospitalsService {
         for (final item in localDocs) {
           if (item is Map<String, dynamic>) {
             final docHospId = (item['hospitalId'] ?? '').toString().trim();
-            if (docHospId.isEmpty || docHospId == hospIdStr || docHospId == '19' || hospIdStr == '19') {
+            if (docHospId.isEmpty || docHospId == hospIdStr || docHospId == defaultHospitalId || hospIdStr == defaultHospitalId) {
               addDoctor(item);
             }
           }
@@ -611,7 +654,7 @@ class LikedHospitalsService {
       }
     }
 
-    if (hospIdStr == '19' || nameLower == 'yira hospitals') {
+    if (hospIdStr == '19' || hospIdStr == defaultHospitalId || nameLower == 'yira hospitals') {
       return 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg';
     }
     return null;

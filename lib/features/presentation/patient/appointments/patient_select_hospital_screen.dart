@@ -45,9 +45,16 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   void initState() {
     super.initState();
     if (widget.initialHospitals != null && widget.initialHospitals!.isNotEmpty) {
-      _hospitals = List.from(widget.initialHospitals!);
-      _prioritizeDefaultHospital(_hospitals);
-      _isLoading = false;
+      // The default hospital is configured on the server; wait for it before sorting.
+      _isLoading = true;
+      LikedHospitalsService.loadDefaultHospital().whenComplete(() {
+        if (!mounted) return;
+        setState(() {
+          _hospitals = List.from(widget.initialHospitals!);
+          _prioritizeDefaultHospital(_hospitals);
+          _isLoading = false;
+        });
+      });
     } else {
       _loadHospitals();
     }
@@ -66,24 +73,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
   void _prioritizeDefaultHospital(List<Map<String, dynamic>> list) {
     final bool hasDefault = list.any(_isDefaultHospital);
     if (!hasDefault) {
-      list.insert(0, {
-        'id': 19,
-        'name': 'Yira Hospitals',
-        'orgId': 1,
-        'orgName': 'yira',
-        'hospitalCode': 'Hosp11',
-        'hospitalType': 'General',
-        'city': 'K.V.Rangareddy',
-        'state': 'Telangana',
-        'country': 'India',
-        'address': '6-123, kota , andhra pradesh',
-        'mobileNumber': '9908875796',
-        'is24Hours': true,
-        'isDefault': true,
-        'isLinked': true,
-        'logo': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
-        'logoUrl': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
-      });
+      list.insert(0, LikedHospitalsService.defaultHospitalEntry());
     }
 
     for (final h in list) {
@@ -107,6 +97,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     final userId = (currentUser?.data?.id ?? '').trim();
 
     try {
+      await LikedHospitalsService.loadDefaultHospital();
       final list = await LikedHospitalsService.instance.getLikedAndLinkedHospitals(patientId: userId);
       _prioritizeDefaultHospital(list);
       if (mounted) {

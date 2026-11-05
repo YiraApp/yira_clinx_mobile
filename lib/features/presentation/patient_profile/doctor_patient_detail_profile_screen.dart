@@ -22,6 +22,7 @@ import 'suggestions/add_suggestion_sheet.dart';
 import 'suggestions/doctor_suggestions_screen.dart';
 import 'widgets/request_access_duration_modal.dart';
 import '../doctor/diet/doctor_patient_diet_tab.dart';
+import '../doctor/questionnaires/doctor_patient_questionnaires_tab.dart';
 import '../../../di/dependency_injection.dart';
 import '../../domain/entities/patient_profile/patient_profile_entity.dart';
 import '../medicine/medical_history_bloc/medical_history_bloc.dart';
@@ -54,7 +55,7 @@ class _DoctorPatientDetailProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
-  // 8 tabs for Doctor Patient Management Record
+  // Tabs for Doctor Patient Management Record
   final List<String> _tabs = [
     'Info',
     'Appointments',
@@ -64,6 +65,7 @@ class _DoctorPatientDetailProfileScreenState
     'Notes',
     'Documents',
     'Suggestions',
+    'Questionnaires',
   ];
 
   void _openTab(BuildContext context, String name) {
@@ -457,6 +459,14 @@ class _DoctorPatientDetailProfileScreenState
           patientName: widget.patientName ?? patient.name,
           showFab: false,
         ));
+      case 'Questionnaires':
+        final questionnairesTab = DoctorPatientQuestionnairesTab(
+          key: ValueKey('PatientDetailQuestionnairesTabFrame$hasAccess'),
+          patientId: widget.patientId ?? patient.id,
+          hospitalId: widget.hospitalId,
+          fullHistory: hasAccess,
+        );
+        return hasAccess ? _fullHistory(accessStatus, questionnairesTab) : questionnairesTab;
       case 'Diet':
         // Diet Tab (Plans prescribed to this patient, and prescribing a new one)
         final dietTab = DoctorPatientDietTab(

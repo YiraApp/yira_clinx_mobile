@@ -83,9 +83,35 @@ class ConfigBloc extends Bloc<ConfigEvent, ConfigState> {
 
         // Keyed by lower-case id: a member added on this phone can carry the same
         // id in a different letter case from the server's copy.
+        // The server's list is the truth when it sends one; saved copies only fill in
+        // when it sends none. Otherwise profiles from another account, or members
+        // removed on the server, would stay on this phone.
+        // The exception is a family member opened from the main account: the server
+        // then lists only that member's own profile, and the main account and the
+        // rest of the family must stay on the list so the user can switch back.
+        bool lists(List<ProfileEntity> profiles, String? id) {
+          final key = (id ?? '').trim().toLowerCase();
+          return key.isNotEmpty && profiles.any((p) => (p.id ?? '').trim().toLowerCase() == key);
+        }
+        final openedFromMainAccount = lists(currentProfiles, rootPrimaryId) &&
+            lists(currentProfiles, result.data?.id) &&
+            !lists(incomingProfiles, rootPrimaryId);
         final Map<String, ProfileEntity> map = {};
-        for (final p in [...currentProfiles, ...incomingProfiles]) {
+        for (final p in (incomingProfiles.isNotEmpty && !openedFromMainAccount) ? incomingProfiles : currentProfiles) {
           if (p.id != null && p.id!.isNotEmpty) map.putIfAbsent(p.id!.trim().toLowerCase(), () => p);
+        }
+        // A root profile that is no longer on the list came from an earlier account.
+        if (rootPrimaryId != null && !map.containsKey(rootPrimaryId.trim().toLowerCase())) {
+          ProfileEntity? root;
+          for (final p in map.values) {
+            final r = (p.relation ?? '').trim().toLowerCase();
+            if (p.isPrimary == true && (r.isEmpty || r == 'self' || r == 'primary' || r == 'admin')) {
+              root = p;
+              break;
+            }
+          }
+          rootPrimaryId = root?.id;
+          GlobalSession.instance.setRootPrimaryUserId(rootPrimaryId);
         }
 
         // Clean & guarantee that ONLY rootPrimaryId is Primary, all others are their relation or Dependent

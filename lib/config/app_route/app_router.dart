@@ -44,6 +44,7 @@ import 'package:yiraclinics/features/presentation/patient/insurance/screens/pati
 import 'package:yiraclinics/features/presentation/patient/insurance/screens/patient_add_edit_policy_screen.dart';
 import 'package:yiraclinics/features/data/models/insurance/patient_insurance_policy_model.dart';
 import 'package:yiraclinics/features/presentation/patient/wallet/patient_billing_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/questionnaires/patient_questionnaires_screen.dart';
 import 'package:yiraclinics/features/presentation/doctor/dashboard/patient_deatils_bloc/patient_details_bloc.dart';
 import 'package:yiraclinics/features/presentation/doctor/profile/provider_profile_screen.dart';
 import 'package:yiraclinics/features/presentation/forgot_password/forgot_password_bloc/forgot_password_bloc.dart';
@@ -597,6 +598,8 @@ class AppRouter {
         return _guardedRoute(settings: settings, builder: (_) => PatientAddEditPolicyScreen(policy: policy));
       case AppRoutes.patientBilling:
         return _guardedRoute(settings: settings, builder: (_) => const PatientBillingScreen());
+      case AppRoutes.patientQuestionnaires:
+        return _guardedRoute(settings: settings, builder: (_) => const PatientQuestionnairesScreen());
       default:
         final lower = (settings.name ?? '').toLowerCase().replaceAll('/', '').replaceAll('_', '').trim();
         if (lower == 'patientpolicies' || lower == 'policies' || lower == 'insurance' || lower == 'insurances') {
