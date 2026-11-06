@@ -53,7 +53,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     super.dispose();
   }
 
-  /// Dashboard, Appointments, Lab Tests, Profile. Sharing moved from a tab into Profile.
+  /// Dashboard, Appointments, Packages (lab packages), Profile. Sharing moved from a tab into Profile.
   static const int _tabCount = 4;
   static const int _profileTab = 3;
   static int _clampTab(int index) => index.clamp(0, _tabCount - 1);
@@ -101,7 +101,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     final navItems = [
       {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
       {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
-      {'label': 'Lab Tests', 'icon': Icons.science_rounded, 'outlined': Icons.science_outlined},
+      {'label': 'Packages', 'icon': Icons.science_rounded, 'outlined': Icons.science_outlined},
       {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
     ];
 

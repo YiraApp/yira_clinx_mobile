@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart' as geo;
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
@@ -28,6 +30,12 @@ int _offPercent(double original, double offer) =>
 
 /// 18 rather than 18.0
 String _pct(double value) => value % 1 == 0 ? value.toInt().toString() : value.toString();
+
+/// "Fri, 06 Nov" for a "YYYY-MM-DD" visit date
+String _slotDay(String? ymd) {
+  final d = DateTime.tryParse(ymd ?? '');
+  return d == null ? (ymd ?? '') : DateFormat('EEE, dd MMM').format(d);
+}
 
 String _errorText(Object e, String fallback) {
   if (e is DioException) {
@@ -61,6 +69,16 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
   String? _packagesError;
   List<Map<String, dynamic>> _packages = [];
 
+  /// Nothing offered in the pincode: the default hospital's packages, shown below the notice
+  List<Map<String, dynamic>> _fallbackPackages = [];
+  String _fallbackHospitalName = '';
+
+  /// Finding the pincode from the device's location
+  bool _locating = false;
+  bool _firstLoadStarted = false;
+  /// "Kukatpally, Hyderabad" while the pincode shown came from the current location
+  String? _locationLabel;
+
   bool _loadingOrders = false;
   String? _ordersError;
   List<Map<String, dynamic>> _orders = [];
@@ -71,7 +89,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
   void initState() {
     super.initState();
     // The shell builds every tab at start; load only once this tab is opened
-    if (widget.isActive) _loadPackages();
+    if (widget.isActive) _firstLoad();
   }
 
   @override
@@ -79,7 +97,11 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     super.didUpdateWidget(oldWidget);
     // Opening (or coming back to) the tab loads or refreshes what is shown
     if (widget.isActive && !oldWidget.isActive) {
-      if (!_packagesLoadedOnce || _segment == 0) {
+      if (!_firstLoadStarted) {
+        _firstLoad();
+      } else if (_locating) {
+        // still finding the location; the load follows it
+      } else if (!_packagesLoadedOnce || _segment == 0) {
         _loadPackages(pincode: _pincodeController.text.trim());
       } else {
         _loadOrders();
@@ -107,10 +129,15 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       final data = (res.data is Map) ? res.data['data'] : null;
       final list = (data is Map && data['packages'] is List) ? data['packages'] as List : const [];
       final usedPincode = (data is Map ? data['pincode'] : null)?.toString() ?? '';
+      final fallback = (data is Map && data['fallback'] is Map) ? data['fallback'] as Map : null;
+      final fallbackList = (fallback != null && fallback['packages'] is List) ? fallback['packages'] as List : const [];
+      final fallbackHospital = (fallback != null && fallback['hospital'] is Map) ? fallback['hospital'] as Map : null;
       if (!mounted) return;
       setState(() {
         _packagesLoadedOnce = true;
         _packages = list.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+        _fallbackPackages = fallbackList.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+        _fallbackHospitalName = fallbackHospital?['name']?.toString() ?? '';
         if (_pincodeController.text.trim().isEmpty && usedPincode.isNotEmpty) {
           _pincodeController.text = usedPincode;
         }
@@ -141,6 +168,108 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       setState(() => _ordersError = _errorText(e, 'Could not load your lab orders.'));
     } finally {
       if (mounted) setState(() => _loadingOrders = false);
+    }
+  }
+
+  /// First open of the tab: the pincode of where the patient is now, else the server falls back
+  /// to the pincode of their saved address.
+  Future<void> _firstLoad() async {
+    _firstLoadStarted = true;
+    if (_pincodeController.text.trim().isNotEmpty) {
+      await _loadPackages(pincode: _pincodeController.text.trim());
+      return;
+    }
+    setState(() => _loadingPackages = true);
+    final found = await _locatePincode(interactive: false);
+    if (!mounted) return;
+    if (found != null) {
+      _applyLocatedPincode(found);
+    } else {
+      await _loadPackages();
+    }
+  }
+
+  /// The location icon in the pincode field: always asks, and says why when it can't.
+  Future<void> _useCurrentLocation() async {
+    if (_locating) return;
+    FocusScope.of(context).unfocus();
+    final found = await _locatePincode(interactive: true);
+    if (!mounted || found == null) return;
+    _applyLocatedPincode(found);
+  }
+
+  void _applyLocatedPincode(({String pincode, String label}) found) {
+    setState(() {
+      _pincodeController.text = found.pincode;
+      _locationLabel = found.label.isEmpty ? null : found.label;
+    });
+    _loadPackages(pincode: found.pincode);
+  }
+
+  /// The device's position turned into a 6-digit pincode and an area name. [interactive] shows a
+  /// message (and the way to settings) when location is off or not allowed; the automatic first
+  /// try stays quiet and lets the saved address be used instead.
+  Future<({String pincode, String label})?> _locatePincode({required bool interactive}) async {
+    setState(() => _locating = true);
+    void tell(String message, {SnackBarAction? action}) {
+      if (!interactive || !mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), action: action));
+    }
+
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        tell('Turn on location to find packages near you.',
+            action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openLocationSettings()));
+        return null;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        tell('Location access is off for this app. Allow it in settings, or type your pincode.',
+            action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openAppSettings()));
+        return null;
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
+        tell('Allow location access to find your pincode, or type it.');
+        return null;
+      }
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
+        );
+      } catch (_) {
+        // no fix in time (indoors, GPS warming up): the last known position is close enough for a pincode
+        position = await Geolocator.getLastKnownPosition();
+      }
+      if (position == null) {
+        tell('Could not find your location. Type your pincode instead.');
+        return null;
+      }
+
+      final places = await geo.Geocoding()
+          .placemarkFromCoordinates(position.latitude, position.longitude)
+          .timeout(const Duration(seconds: 10));
+      for (final place in places) {
+        final pin = (place.postalCode ?? '').replaceAll(RegExp(r'\s'), '');
+        if (RegExp(r'^[1-9]\d{5}$').hasMatch(pin)) {
+          final label = {place.subLocality, place.locality}
+              .map((s) => (s ?? '').trim())
+              .where((s) => s.isNotEmpty)
+              .join(', ');
+          return (pincode: pin, label: label);
+        }
+      }
+      tell('Could not find the pincode for your location. Type it instead.');
+      return null;
+    } catch (_) {
+      tell('Could not find your location. Type your pincode instead.');
+      return null;
+    } finally {
+      if (mounted) setState(() => _locating = false);
     }
   }
 
@@ -175,6 +304,29 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       _switchSegment(1);
       _loadOrders();
     }
+  }
+
+  /// Pick or move the visit slot of a paid order; the sheet saves it and returns the updated order.
+  Future<void> _changeSlot(Map<String, dynamic> order) async {
+    final slot = order['slot'] is Map ? order['slot'] as Map : null;
+    final updated = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SlotPickerSheet(
+        orderId: order['id']?.toString(),
+        currentDate: slot?['date']?.toString(),
+        currentStart: slot?['start']?.toString(),
+      ),
+    );
+    if (updated == null || !mounted) return;
+    setState(() => _orders = _orders.map((o) => o['id'] == updated['id'] ? updated : o).toList());
+    final booked = updated['slot'] is Map ? updated['slot'] as Map : null;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: _teal,
+      content: Text(booked != null ? 'Visit booked: ${_slotDay(booked['date']?.toString())}, ${booked['label']}' : 'Visit slot saved.'),
+    ));
   }
 
   Future<void> _openReport(Map<String, dynamic> order) async {
@@ -224,7 +376,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
-                'Lab Tests',
+                'Packages',
                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
             ),
@@ -259,10 +411,24 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _searchPincode(),
+                  // a typed pincode is no longer "your current location"
+                  onChanged: (_) {
+                    if (_locationLabel != null) setState(() => _locationLabel = null);
+                  },
                   style: const TextStyle(fontFamily: appPoppinFont, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Your pincode',
                     prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                    suffixIcon: _locating
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                          )
+                        : IconButton(
+                            tooltip: 'Use my current location',
+                            icon: const Icon(Icons.my_location, size: 20, color: _primary),
+                            onPressed: _loadingPackages ? null : _useCurrentLocation,
+                          ),
                     isDense: true,
                     filled: true,
                     fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -277,6 +443,9 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
                   foregroundColor: Colors.white,
+                  // the app theme's buttons are full width (Size(infinity, 54)); inside this Row that
+                  // has no width to fill and breaks the whole tab's layout
+                  minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -285,14 +454,48 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             ],
           ),
         ),
+        if (_locationLabel != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 16, 0),
+            child: Row(
+              children: [
+                const Icon(Icons.near_me, size: 14, color: _teal),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Your current location · $_locationLabel',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                  ),
+                ),
+              ],
+            ),
+          ),
         const SizedBox(height: 8),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _loadPackages(pincode: _pincodeController.text.trim()),
-            child: _loadingPackages
-                ? const Center(child: CircularProgressIndicator())
+            child: _loadingPackages || (_locating && !_packagesLoadedOnce)
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        if (_locating) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            'Finding your location…',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
                 : _packagesError != null
                     ? _messageList(Icons.error_outline, _packagesError!, isDark)
+                    : _packages.isEmpty && _fallbackPackages.isNotEmpty
+                        ? _buildFallback(isDark)
                     : _packages.isEmpty
                         ? _messageList(
                             Icons.science_outlined,
@@ -333,8 +536,66 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                         isDark: isDark,
                         openingReport: _openingReportFor == _orders[i]['id']?.toString(),
                         onViewReport: () => _openReport(_orders[i]),
+                        onChangeSlot: () => _changeSlot(_orders[i]),
                       ),
                     ),
+    );
+  }
+
+  /// No package in the pincode: say so, then list the default hospital's packages below.
+  Widget _buildFallback(bool isDark) {
+    final pin = _pincodeController.text.trim();
+    final hospital = _fallbackHospitalName.isNotEmpty ? _fallbackHospitalName : 'our hospital';
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFFDE68A)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  pin.isEmpty
+                      ? 'Add your pincode to see packages near you. Meanwhile, here are the packages from $hospital.'
+                      : 'No lab packages near pincode $pin yet. You can still book these packages from $hospital.',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, height: 1.4, color: isDark ? Colors.white70 : const Color(0xFF78350F)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Icon(Icons.local_hospital_outlined, size: 18, color: _primary),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Packages from $hospital',
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+              ),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 24, top: 2, bottom: 10),
+          child: Text('Bookable from any pincode', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted)),
+        ),
+        for (final pkg in _fallbackPackages) ...[
+          _PackageCard(pkg: pkg, isDark: isDark, onTap: () => _openPackage(pkg)),
+          const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 
@@ -444,7 +705,9 @@ class _PackageCard extends StatelessWidget {
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
                       const SizedBox(height: 2),
                       Text(
-                        '${tests.length} test${tests.length == 1 ? '' : 's'}${(pkg['reportTurnaround'] ?? '').toString().isNotEmpty ? ' · Report in ${pkg['reportTurnaround']}' : ''}',
+                        '${tests.length} test${tests.length == 1 ? '' : 's'}'
+                        '${_num(pkg['parameterCount']) > tests.length ? ' · ${_num(pkg['parameterCount']).toInt()} parameters' : ''}'
+                        '${(pkg['reportTurnaround'] ?? '').toString().isNotEmpty ? ' · Report in ${pkg['reportTurnaround']}' : ''}',
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                       ),
                     ],
@@ -467,6 +730,17 @@ class _PackageCard extends StatelessWidget {
                 Icon(Icons.info_outline, size: 14, color: Colors.orange.shade700),
                 const SizedBox(width: 4),
                 Expanded(child: Text(prep, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: Colors.orange.shade800))),
+              ]),
+            ],
+            if (_num(pkg['benefitsValue']) > 0) ...[
+              const SizedBox(height: 6),
+              Row(children: [
+                const Icon(Icons.workspace_premium_outlined, size: 14, color: Color(0xFF047857)),
+                const SizedBox(width: 4),
+                Text(
+                  'Worth ${_rupees(_num(pkg['benefitsValue']))}${pkg['benefitsValuePlus'] == true ? '+' : ''} of care',
+                  style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF047857)),
+                ),
               ]),
             ],
             const SizedBox(height: 12),
@@ -501,12 +775,258 @@ class _PackageCard extends StatelessWidget {
   }
 }
 
+/// Whole rupees with Indian grouping: ₹4,100
+String _rupees(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(value.round());
+
+/// Icon and colours of a "why it is worth it" card; the same set as the web admin's picker
+const Map<String, (IconData, Color, Color)> _benefitIcons = {
+  'lab': (Icons.science_outlined, Color(0xFFECFDF5), Color(0xFF047857)),
+  'doctor': (Icons.medical_services_outlined, Color(0xFFEEF2FF), Color(0xFF4338CA)),
+  'report': (Icons.description_outlined, Color(0xFFFFFBEB), Color(0xFFB45309)),
+  'dental': (Icons.mood, Color(0xFFFDF2F8), Color(0xFFBE185D)),
+  'eye': (Icons.visibility_outlined, Color(0xFFF0F9FF), Color(0xFF0369A1)),
+  'insurance': (Icons.verified_user_outlined, Color(0xFF047857), Colors.white),
+  'home': (Icons.home_outlined, Color(0xFFF0FDFA), Color(0xFF0F766E)),
+  'family': (Icons.family_restroom, Color(0xFFF5F3FF), Color(0xFF6D28D9)),
+  'support': (Icons.support_agent, Color(0xFFFFF7ED), Color(0xFFC2410C)),
+  'heart': (Icons.favorite_border, Color(0xFFFFF1F2), Color(0xFFBE123C)),
+  'calendar': (Icons.event_available, Color(0xFFF7FEE7), Color(0xFF4D7C0F)),
+  'video': (Icons.videocam_outlined, Color(0xFFEFF6FF), Color(0xFF1D4ED8)),
+};
+
+/// A package's tests with their parameters: `testGroups` from the server, or (older packages) the
+/// plain `tests` names, each then a single test.
+List<Map<String, dynamic>> _testGroupsOf(Map<String, dynamic> pkg) {
+  final groups = pkg['testGroups'];
+  if (groups is List && groups.isNotEmpty) {
+    return groups.whereType<Map>().map((g) => Map<String, dynamic>.from(g)).toList();
+  }
+  final tests = pkg['tests'] is List ? pkg['tests'] as List : const [];
+  return tests.map((t) => <String, dynamic>{'name': t.toString(), 'description': '', 'tests': const <String>[]}).toList();
+}
+
+/// Badge colours (background, number) the test cards cycle through
+const List<(Color, Color)> _testBadgeColors = [
+  (Color(0xFFE6F4EE), Color(0xFF0F7A55)),
+  (Color(0xFFFFF4DC), Color(0xFFB7791F)),
+  (Color(0xFFE8EEFF), Color(0xFF3B5BDB)),
+  (Color(0xFFFDECEF), Color(0xFFC2255C)),
+  (Color(0xFFE3F5FA), Color(0xFF0B7285)),
+  (Color(0xFFF1EAFE), Color(0xFF6741D9)),
+];
+
+/// "Tests included": a card per test with its parameter count, name and description; tapping +
+/// opens the parameters in two columns, − closes them.
+class _TestGroupCards extends StatefulWidget {
+  final List<Map<String, dynamic>> groups;
+  final bool isDark;
+  const _TestGroupCards({required this.groups, required this.isDark});
+
+  @override
+  State<_TestGroupCards> createState() => _TestGroupCardsState();
+}
+
+class _TestGroupCardsState extends State<_TestGroupCards> {
+  final Set<int> _open = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final groups = widget.groups;
+    final parameters = groups.fold<int>(0, (n, g) => n + ((g['tests'] is List && (g['tests'] as List).isNotEmpty) ? (g['tests'] as List).length : 1));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Tests included', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
+        Text('${groups.length} test${groups.length == 1 ? '' : 's'}${parameters > groups.length ? ' · $parameters parameters' : ''}',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+        const SizedBox(height: 10),
+        for (var i = 0; i < groups.length; i++) _card(i, groups[i], textColor, subColor),
+      ],
+    );
+  }
+
+  Widget _card(int i, Map<String, dynamic> group, Color textColor, Color subColor) {
+    final isDark = widget.isDark;
+    final params = group['tests'] is List ? (group['tests'] as List).map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList() : <String>[];
+    final description = (group['description'] ?? '').toString().trim();
+    final canOpen = params.isNotEmpty;
+    final open = canOpen && _open.contains(i);
+    final (badgeBg, badgeFg) = _testBadgeColors[i % _testBadgeColors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: canOpen ? () => setState(() => open ? _open.remove(i) : _open.add(i)) : null,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: isDark ? badgeFg.withValues(alpha: 0.2) : badgeBg, borderRadius: BorderRadius.circular(12)),
+                    child: Text('${canOpen ? params.length : 1}',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: isDark ? Colors.white : badgeFg)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(group['name']?.toString() ?? '', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
+                        if (description.isNotEmpty) Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                      ],
+                    ),
+                  ),
+                  if (canOpen) Icon(open ? Icons.remove : Icons.add, color: _teal, size: 22),
+                ],
+              ),
+            ),
+          ),
+          if (open) ...[
+            Divider(height: 1, color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+              child: LayoutBuilder(
+                builder: (_, constraints) {
+                  final column = (constraints.maxWidth - 12) / 2;
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: params
+                        .map((p) => SizedBox(
+                              width: column,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 6),
+                                    child: CircleAvatar(radius: 3, backgroundColor: Color(0xFF0F7A55)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: Text(p, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: textColor))),
+                                ],
+                              ),
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// "WHY IT IS WORTH IT · ₹4,100+ of care for ₹1,299": each card with what it would cost if booked separately
+class _WorthItSection extends StatelessWidget {
+  final List<Map> benefits;
+  final double pays;
+  final bool isDark;
+  const _WorthItSection({required this.benefits, required this.pays, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = benefits.fold<double>(0, (s, b) => s + _num(b['value']));
+    final plus = benefits.any((b) => b['valuePlus'] == true);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('WHY IT IS WORTH IT',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2, color: Color(0xFF047857))),
+        if (total > 0) ...[
+          const SizedBox(height: 6),
+          Text('${_rupees(total)}${plus ? '+' : ''} of care for ${_rupees(pays)}.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w800, color: textColor, height: 1.2)),
+        ],
+        const SizedBox(height: 4),
+        Text('What these would typically cost if you booked them separately.',
+            textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+        const SizedBox(height: 12),
+        ...benefits.map((b) {
+          final style = _benefitIcons[b['icon']?.toString()] ?? _benefitIcons['lab']!;
+          final highlight = b['highlight'] == true;
+          final value = _num(b['value']);
+          final description = (b['description'] ?? '').toString();
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: highlight ? const Color(0xFFA7F3D0) : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
+              gradient: highlight
+                  ? LinearGradient(colors: [const Color(0xFFECFDF5), isDark ? const Color(0xFF1E293B) : Colors.white])
+                  : null,
+              color: highlight ? null : (isDark ? const Color(0xFF1E293B) : Colors.white),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(color: style.$2, borderRadius: BorderRadius.circular(12)),
+                  child: Icon(style.$1, color: style.$3, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text((b['title'] ?? '').toString(),
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w800, color: highlight && isDark ? Colors.white : textColor)),
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                      ],
+                    ],
+                  ),
+                ),
+                if (value > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${_rupees(value)}${b['valuePlus'] == true ? '+' : ''} value',
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
 class _OrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
   final bool isDark;
   final bool openingReport;
   final VoidCallback onViewReport;
-  const _OrderCard({required this.order, required this.isDark, required this.openingReport, required this.onViewReport});
+  final VoidCallback onChangeSlot;
+  const _OrderCard({required this.order, required this.isDark, required this.openingReport, required this.onViewReport, required this.onChangeSlot});
 
   static const Map<String, Color> _statusColors = {
     'Paid': Color(0xFF2563EB),
@@ -523,6 +1043,12 @@ class _OrderCard extends StatelessWidget {
     final created = DateTime.tryParse(order['createdAt']?.toString() ?? '')?.toLocal();
     final preferred = order['preferredDate']?.toString();
     final hasReport = order['hasReport'] == true;
+    final slot = order['slot'] is Map ? order['slot'] as Map : null;
+    final canChangeSlot = order['canChangeSlot'] == true;
+    final changeUntil = DateTime.tryParse(order['slotChangeUntil']?.toString() ?? '')?.toLocal();
+    final lockedReason = order['slotLockedReason']?.toString();
+    final showSlot = slot != null || status == 'Paid';
+    final muted = isDark ? Colors.white54 : Colors.grey.shade600;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -552,9 +1078,48 @@ class _OrderCard extends StatelessWidget {
               style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569))),
           const SizedBox(height: 2),
           Text(
-            '${order['orderNumber'] ?? ''}${created != null ? ' · ${DateFormat('dd MMM yyyy').format(created)}' : ''}${preferred != null && preferred.isNotEmpty ? ' · Visit ${_formatDay(preferred)}' : ''}',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600),
+            '${order['orderNumber'] ?? ''}${created != null ? ' · ${DateFormat('dd MMM yyyy').format(created)}' : ''}${slot == null && preferred != null && preferred.isNotEmpty ? ' · Visit ${_formatDay(preferred)}' : ''}',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
           ),
+          if (showSlot) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
+              decoration: BoxDecoration(
+                color: slot != null ? _primary.withValues(alpha: isDark ? 0.15 : 0.06) : const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(slot != null ? Icons.event_available : Icons.event_outlined, size: 20, color: slot != null ? _primary : const Color(0xFFD97706)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          slot != null ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}' : 'No visit slot chosen yet',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                        ),
+                        if (slot != null && canChangeSlot && changeUntil != null)
+                          Text('You can change it until ${DateFormat('hh:mm a, dd MMM').format(changeUntil)}',
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted))
+                        else if (slot == null && canChangeSlot)
+                          Text('Choose when to visit the hospital for your sample.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted))
+                        else if (!canChangeSlot && status == 'Paid' && lockedReason != null)
+                          Text(lockedReason, style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted)),
+                      ],
+                    ),
+                  ),
+                  if (canChangeSlot)
+                    TextButton(
+                      onPressed: onChangeSlot,
+                      child: Text(slot == null ? 'Choose' : 'Reschedule', style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700)),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
@@ -602,7 +1167,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   String? _hospitalsError;
   List<Map<String, dynamic>> _hospitals = [];
   int? _hospitalId;
-  DateTime? _preferredDate;
+  /// Optional at checkout; it can also be chosen from My Orders after paying
+  _SlotChoice? _slot;
   final TextEditingController _notesController = TextEditingController();
   bool _paying = false;
   String? _payError;
@@ -630,7 +1196,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       if (!mounted) return;
       setState(() {
         _hospitals = (data is List ? data : const []).whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
-        if (_hospitals.length == 1) _hospitalId = int.tryParse(_hospitals.first['id'].toString());
+        // No hospital choice in the sheet: the server lists those in the patient's pincode first
+        if (_hospitals.isNotEmpty) _hospitalId = int.tryParse(_hospitals.first['id'].toString());
       });
     } catch (e) {
       if (!mounted) return;
@@ -640,15 +1207,25 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     }
   }
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
+  /// The chosen hospital's visit slots (its timings from Lab Package Orders → Settings).
+  Future<void> _pickSlot() async {
+    if (_hospitalId == null) {
+      setState(() => _payError = _loadingHospitals ? 'Please wait a moment and try again.' : 'This package cannot be booked online right now.');
+      return;
+    }
+    final choice = await showModalBottomSheet<_SlotChoice>(
       context: context,
-      initialDate: _preferredDate ?? now,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 90)),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SlotPickerSheet(hospitalId: _hospitalId, currentDate: _slot?.date, currentStart: _slot?.start),
     );
-    if (picked != null) setState(() => _preferredDate = picked);
+    if (choice != null && mounted) {
+      setState(() {
+        _slot = choice;
+        _payError = null;
+      });
+    }
   }
 
   Future<void> _pay() async {
@@ -665,7 +1242,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       packageId: int.tryParse(widget.package['id'].toString()) ?? 0,
       hospitalId: _hospitalId!,
       pincode: widget.pincode,
-      preferredDate: _preferredDate != null ? DateFormat('yyyy-MM-dd').format(_preferredDate!) : null,
+      preferredDate: _slot?.date,
+      slotStart: _slot?.start,
       notes: _notesController.text,
       patientName: user?.firstName?.toString(),
       patientPhone: user?.phoneNumber?.toString(),
@@ -686,7 +1264,6 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pkg = widget.package;
-    final tests = (pkg['tests'] is List) ? (pkg['tests'] as List).map((e) => e.toString()).toList() : <String>[];
     final price = _num(pkg['price']);
     final original = pkg['mrp'] == null ? 0.0 : _num(pkg['mrp']);
     final off = _offPercent(original, price);
@@ -726,72 +1303,34 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                     if ((pkg['reportTurnaround'] ?? '').toString().isNotEmpty) _chip(Icons.schedule, 'Report in ${pkg['reportTurnaround']}', isDark),
                     if ((pkg['preparation'] ?? '').toString().isNotEmpty) _chip(Icons.info_outline, pkg['preparation'].toString(), isDark),
                   ]),
+                  if (pkg['benefits'] is List && (pkg['benefits'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _WorthItSection(benefits: (pkg['benefits'] as List).whereType<Map>().toList(), pays: total, isDark: isDark),
+                  ],
                   const SizedBox(height: 18),
-                  Text('Tests included (${tests.length})', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
-                  const SizedBox(height: 8),
-                  ...tests.map((t) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(children: [
-                          const Icon(Icons.check_circle, size: 16, color: _teal),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(t, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: textColor))),
-                        ]),
-                      )),
+                  _TestGroupCards(groups: _testGroupsOf(pkg), isDark: isDark),
                   const SizedBox(height: 18),
-                  Text('Choose hospital', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
-                  const SizedBox(height: 8),
-                  if (_loadingHospitals)
-                    const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()))
-                  else if (_hospitalsError != null)
-                    Text(_hospitalsError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red))
-                  else if (_hospitals.isEmpty)
-                    Text('This package cannot be booked online right now.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor))
-                  else
-                    ..._hospitals.map((h) {
-                      final id = int.tryParse(h['id'].toString());
-                      final selected = id != null && id == _hospitalId;
-                      final address = [h['address'], h['city'], h['pincode']].where((v) => v != null && v.toString().trim().isNotEmpty).join(', ');
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: _paying ? null : () => setState(() => _hospitalId = id),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: selected ? _primary : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)), width: selected ? 1.6 : 1),
-                              color: selected ? _primary.withValues(alpha: 0.06) : Colors.transparent,
-                            ),
-                            child: Row(children: [
-                              Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? _primary : subColor, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Text(h['name']?.toString() ?? '', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
-                                  if (address.isNotEmpty) Text(address, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor)),
-                                ]),
-                              ),
-                              if (h['isInPincode'] == true)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(color: _teal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                                  child: const Text('Near you', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, fontWeight: FontWeight.w700, color: _teal)),
-                                ),
-                            ]),
-                          ),
-                        ),
-                      );
-                    }),
-                  const SizedBox(height: 12),
+                  // The hospital is picked for the patient (no choice shown); only say when booking is not possible
+                  if (_hospitalsError != null) ...[
+                    Text(_hospitalsError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red)),
+                    const SizedBox(height: 10),
+                  ] else if (!_loadingHospitals && _hospitals.isEmpty) ...[
+                    Text('This package cannot be booked online right now.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                    const SizedBox(height: 10),
+                  ],
                   OutlinedButton.icon(
-                    onPressed: _paying ? null : _pickDate,
-                    icon: const Icon(Icons.event_outlined, size: 18),
+                    onPressed: _paying ? null : _pickSlot,
+                    icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),
                     label: Text(
-                      _preferredDate == null ? 'Preferred visit date (optional)' : 'Visit on ${DateFormat('EEE, dd MMM yyyy').format(_preferredDate!)}',
+                      _slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}',
                       style: const TextStyle(fontFamily: appPoppinFont),
                     ),
                     style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 4),
+                    child: Text('You can also choose or change it later in My Orders, until 5 hours before the slot.',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor)),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -887,5 +1426,243 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       const Spacer(),
       Text(value, style: TextStyle(fontFamily: appPoppinFont, fontSize: bold ? 16 : 13, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: valueColor)),
     ]);
+  }
+}
+
+/// A visit slot chosen at checkout, before there is an order: "YYYY-MM-DD", "HH:mm" and its label.
+typedef _SlotChoice = ({String date, String start, String label});
+
+/// The hospital's bookable visit slots by day (its timings from Lab Package Orders → Settings, 10 AM –
+/// 6 PM by default), starting 5+ hours from now. With [orderId] the chosen slot is saved to the paid
+/// order and the sheet pops with the updated order; with [hospitalId] (checkout) it pops a [_SlotChoice].
+class _SlotPickerSheet extends StatefulWidget {
+  final String? orderId;
+  final int? hospitalId;
+  final String? currentDate;
+  final String? currentStart;
+  const _SlotPickerSheet({this.orderId, this.hospitalId, this.currentDate, this.currentStart});
+
+  @override
+  State<_SlotPickerSheet> createState() => _SlotPickerSheetState();
+}
+
+class _SlotPickerSheetState extends State<_SlotPickerSheet> {
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _days = [];
+  int _cutoffHours = 5;
+  String? _date;
+  String? _start;
+  bool _saving = false;
+  String? _saveError;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  List<Map<String, dynamic>> _slotsOf(String? date) {
+    final day = _days.where((d) => d['date']?.toString() == date).firstOrNull;
+    final slots = day?['slots'];
+    return slots is List ? slots.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList() : [];
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            URLs.labPackageSlotsUrl,
+            data: widget.orderId != null ? {'orderId': widget.orderId} : {'hospitalId': widget.hospitalId},
+            options: _auth(),
+          );
+      final data = (res.data is Map) ? res.data['data'] : null;
+      final days = (data is Map && data['days'] is List) ? data['days'] as List : const [];
+      if (!mounted) return;
+      setState(() {
+        _days = days.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+        _cutoffHours = int.tryParse('${data is Map ? data['cutoffHours'] : ''}') ?? 5;
+        // start on the booked slot's day when it is still open, else the first open day
+        _date = _days.any((d) => d['date'] == widget.currentDate) ? widget.currentDate : (_days.isNotEmpty ? _days.first['date']?.toString() : null);
+        _start = _slotsOf(_date).any((s) => s['start'] == widget.currentStart) ? widget.currentStart : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = _errorText(e, 'Could not load the visit slots. Try again.'));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _confirm() async {
+    final date = _date, start = _start;
+    if (date == null || start == null) return;
+    final label = _slotsOf(date).firstWhere((s) => s['start'] == start, orElse: () => {'label': start})['label'].toString();
+    if (widget.orderId == null) {
+      Navigator.of(context).pop<_SlotChoice>((date: date, start: start, label: label));
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
+    try {
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
+            '${URLs.labPackageOrdersUrl}/${widget.orderId}/slot',
+            data: {'date': date, 'slotStart': start},
+            options: _auth(),
+          );
+      final data = (res.data is Map) ? res.data['data'] : null;
+      if (!mounted) return;
+      if (data is Map) {
+        Navigator.of(context).pop(Map<String, dynamic>.from(data));
+      } else {
+        setState(() => _saveError = 'Could not save the slot. Try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saveError = _errorText(e, 'Could not save the slot. Try again.'));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final rescheduling = widget.currentStart != null;
+    final unchanged = _date == widget.currentDate && _start == widget.currentStart;
+    final slots = _slotsOf(_date);
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)))),
+              const SizedBox(height: 14),
+              Text(rescheduling ? 'Reschedule your visit' : 'Choose a visit slot',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+              const SizedBox(height: 4),
+              Text('You can change it until $_cutoffHours hours before the slot.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+              const SizedBox(height: 16),
+              if (_loading)
+                const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+              else if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(children: [
+                    Text(_error!, textAlign: TextAlign.center, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.red)),
+                    TextButton(onPressed: _load, child: const Text('Try again', style: TextStyle(fontFamily: appPoppinFont))),
+                  ]),
+                )
+              else if (_days.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text('No visit slots are open in the next 14 days. Please call the hospital.',
+                      textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor)),
+                )
+              else ...[
+                SizedBox(
+                  height: 74,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _days.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      final date = _days[i]['date']?.toString();
+                      final d = DateTime.tryParse(date ?? '');
+                      final selected = date == _date;
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: _saving
+                            ? null
+                            : () => setState(() {
+                                  _date = date;
+                                  if (!_slotsOf(date).any((s) => s['start'] == _start)) _start = null;
+                                }),
+                        child: Container(
+                          width: 58,
+                          decoration: BoxDecoration(
+                            color: selected ? _primary : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(d != null ? DateFormat('EEE').format(d) : '',
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor)),
+                              Text(d != null ? DateFormat('dd').format(d) : (date ?? ''),
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: selected ? Colors.white : textColor)),
+                              Text(d != null ? DateFormat('MMM').format(d) : '',
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor)),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('Time', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: textColor)),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: slots.map((s) {
+                        final selected = s['start'] == _start;
+                        return ChoiceChip(
+                          label: Text(s['label']?.toString() ?? '', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: selected ? Colors.white : textColor)),
+                          selected: selected,
+                          selectedColor: _primary,
+                          showCheckmark: false,
+                          onSelected: _saving ? null : (_) => setState(() => _start = s['start']?.toString()),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+              if (_saveError != null) ...[
+                const SizedBox(height: 10),
+                Text(_saveError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: (_saving || _loading || _date == null || _start == null || unchanged) ? null : _confirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: _saving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(rescheduling ? 'Reschedule' : 'Confirm slot', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

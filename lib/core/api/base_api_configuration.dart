@@ -5,9 +5,9 @@ class EnvironmentService {
   static Environment _currentEnv = Environment.local;
   static void setEnvironment(Environment env) => _currentEnv = env;
 
-  // - 192.168.0.5:5000 (Current Wi-Fi LAN IP). Override with --dart-define=BACKEND_IP=<ip>.
+  // - 192.168.0.2:5000 (Current Wi-Fi LAN IP). Override with --dart-define=BACKEND_IP=<ip>.
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables stable connection over USB
-  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.5");
+  static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.2");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
   static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
   static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
@@ -26,6 +26,7 @@ class EnvironmentService {
 
     final candidates = [
       localHostIp,
+      '192.168.0.2',
       '192.168.0.5',
       '127.0.0.1',
       '192.168.0.4',
@@ -58,10 +59,6 @@ class EnvironmentService {
   static String get _localHostUrl {
     if (_customBaseUrl != null && _customBaseUrl!.trim().isNotEmpty) {
       return _customBaseUrl!.trim();
-    }
-    const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
-    if (envUrl.isNotEmpty) {
-      return envUrl.trim();
     }
     return "http://$localHostIp:$localPort";
   }

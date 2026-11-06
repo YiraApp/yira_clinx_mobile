@@ -335,6 +335,8 @@ class RazorpayPaymentService {
     required int hospitalId,
     String? pincode,
     String? preferredDate,
+    /// "HH:mm" of the chosen visit slot on [preferredDate]; optional, it can be chosen after paying
+    String? slotStart,
     String? notes,
     String? patientName,
     String? patientPhone,
@@ -351,6 +353,7 @@ class RazorpayPaymentService {
           "hospitalId": hospitalId,
           if (pincode != null && pincode.isNotEmpty) "pincode": pincode,
           if (preferredDate != null && preferredDate.isNotEmpty) "preferredDate": preferredDate,
+          if (slotStart != null && slotStart.isNotEmpty) "slotStart": slotStart,
           if (notes != null && notes.trim().isNotEmpty) "notes": notes.trim(),
         },
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
