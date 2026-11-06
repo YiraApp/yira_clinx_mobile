@@ -25,6 +25,7 @@ import '../medicine/medical_history_bloc/medical_history_bloc.dart';
 import 'appointments/patient_appointments_screen.dart';
 import 'over_view/over_view_screen.dart';
 import '../doctor/diet/doctor_patient_diet_tab.dart';
+import '../doctor/questionnaires/doctor_patient_questionnaires_tab.dart';
 
 class DoctorPatientProfileScreen extends StatefulWidget {
   final String? patientId;
@@ -156,6 +157,7 @@ class _DoctorPatientProfileScreenState
             'Diet',
             'Notes',
             'Documents',
+            'Questionnaires',
           ];
 
     final namedTab = widget.initialTabName == null ? -1 : _tabs.indexOf(widget.initialTabName!);
@@ -457,6 +459,21 @@ class _DoctorPatientProfileScreenState
               orgId: full ? null : widget.orgId,
               allowAdd: !full,
             ),
+          ),
+        );
+      case 'Questionnaires':
+        // Questionnaires the patient filled in, every attempt
+        return _scoped(
+          tabName,
+          patient,
+          accessStatus,
+          recordType: 'Questionnaires',
+          build: (full) => DoctorPatientQuestionnairesTab(
+            key: ValueKey('QuestionnairesTabFrame$full'),
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: widget.hospitalId,
+            appointmentId: widget.appointmentId,
+            fullHistory: full,
           ),
         );
       case 'Diet':

@@ -26,6 +26,7 @@ const _knownRoutes = {
   AppRoutes.patientDietPlan,
   AppRoutes.patientVitalsTracking,
   AppRoutes.patientBilling,
+  AppRoutes.patientQuestionnaires,
   AppRoutes.patientPolicies,
   AppRoutes.patientConsentsScreen,
   AppRoutes.patientBookAppointment,

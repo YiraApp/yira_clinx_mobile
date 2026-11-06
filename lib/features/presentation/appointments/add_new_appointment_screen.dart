@@ -381,49 +381,23 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         }
       }
 
-      // Ensure default hospital (Yira Hospitals) is always present and at the top
-      final bool hasDefault = hospitals.any((h) {
-        final name = (h['name'] ?? h['hospitalName'] ?? '').toString().toLowerCase();
-        final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
-        return name.contains('yira') || idStr == '19' || h['isDefault'] == true;
-      });
+      // The default hospital is the one admins configured, not a fixed one
+      await LikedHospitalsService.loadDefaultHospital();
+      final bool hasDefault = hospitals.any(LikedHospitalsService.isDefaultHospital);
 
       if (!hasDefault) {
-        hospitals.insert(0, {
-          'id': 19,
-          'name': 'Yira Hospitals',
-          'orgId': 1,
-          'orgName': 'yira',
-          'hospitalCode': 'Hosp11',
-          'hospitalType': 'General',
-          'city': 'K.V.Rangareddy',
-          'state': 'Telangana',
-          'country': 'India',
-          'address': '6-123, kota , andhra pradesh',
-          'mobileNumber': '9908875796',
-          'is24Hours': true,
-          'isDefault': true,
-          'isLinked': true,
-          'logo': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
-          'logoUrl': 'https://yiraappdev.blob.core.windows.net/adminuploadedfiles/yiraai.svg',
-        });
+        hospitals.insert(0, LikedHospitalsService.defaultHospitalEntry());
       }
 
       for (final h in hospitals) {
-        final name = (h['name'] ?? h['hospitalName'] ?? '').toString().toLowerCase();
-        final idStr = (h['id'] ?? h['hospitalId'])?.toString().trim();
-        if (name.contains('yira') || idStr == '19') {
+        if (LikedHospitalsService.isDefaultHospital(h)) {
           h['isDefault'] = true;
         }
       }
 
       hospitals.sort((a, b) {
-        final aIsDef = (a['isDefault'] == true) ||
-            (a['name'] ?? a['hospitalName'] ?? '').toString().toLowerCase().contains('yira') ||
-            (a['id'] ?? a['hospitalId'])?.toString().trim() == '19';
-        final bIsDef = (b['isDefault'] == true) ||
-            (b['name'] ?? b['hospitalName'] ?? '').toString().toLowerCase().contains('yira') ||
-            (b['id'] ?? b['hospitalId'])?.toString().trim() == '19';
+        final aIsDef = LikedHospitalsService.isDefaultHospital(a);
+        final bIsDef = LikedHospitalsService.isDefaultHospital(b);
         if (aIsDef && !bIsDef) return -1;
         if (!aIsDef && bIsDef) return 1;
         return 0;
@@ -437,7 +411,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       final providerName = 'Dr. $firstName $lastName'.trim();
 
       hospitals = [
-        {'id': userHospId, 'name': 'Yira Hospitals', 'orgId': userOrgId, 'orgName': 'yira'},
+        {'id': userHospId, 'name': '${LikedHospitalsService.instance.getHospitalById(userHospId)?['name'] ?? 'Your hospital'}', 'orgId': userOrgId, 'orgName': ''},
       ];
 
       doctors = [

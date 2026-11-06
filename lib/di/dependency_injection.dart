@@ -430,7 +430,8 @@ Future<void> init() async {
       updateLatestOrgDetailsUseCase: sl<UpdateLatestOrgDetailsUseCase>(),
     ),
   );
-  sl.registerLazySingleton(
+  // A fresh bloc per screen: screens close the one they use when they leave.
+  sl.registerFactory(
     () => AppointmentBloc(
       getAppointmentDashboardUseCase: sl<GetAppointmentDashboardUseCase>(),
       appointmentRepo: sl<AppointmentRepo>(),
@@ -444,7 +445,8 @@ Future<void> init() async {
   sl.registerFactory(
     () => MedicalRecordBloc(repository: sl<MedicalHistoryRepository>()),
   );
-  sl.registerLazySingleton(
+  // A fresh bloc per screen: screens close the one they use when they leave.
+  sl.registerFactory(
     () => DoctorDashboardBloc(
       doctorDashboardUseCase: sl<DoctorDashboardUseCase>()
     ),

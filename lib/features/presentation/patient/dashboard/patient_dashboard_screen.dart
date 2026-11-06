@@ -31,6 +31,7 @@ import '../../../../core/widgets/notification_badge_icon.dart';
 import '../../../../core/services/notification_services/notification_badge_service.dart';
 import '../../../../core/services/fitness/fitness_sync_service.dart';
 import '../../../../core/widgets/active_profile_chip.dart';
+import '../../../data/data_sources/questionnaires/questionnaire_remote_data_source.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   final Function(int index)? onNavigateTab;
@@ -133,6 +134,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final hospitalId = currentUser?.latestHospitalId?.toString() ?? '1';
     _overviewBloc!.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
     _loadFamilyAppointments();
+    _loadQuestionnairesDue();
 
     GlobalSession.instance.userNotifier.addListener(_onSessionUpdated);
     _loadCachedProfileImage();
@@ -172,7 +174,27 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     super.dispose();
   }
 
+  /// How many questionnaires the open profile has to fill in, for the tile's badge.
+  int _questionnairesDue = 0;
+  String _questionnairesDueFor = '';
+
+  Future<void> _loadQuestionnairesDue() async {
+    final id = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+    if (id.isEmpty) return;
+    _questionnairesDueFor = id;
+    try {
+      final result = await QuestionnaireRemoteDataSource().list();
+      if (mounted && _questionnairesDueFor == id) setState(() => _questionnairesDue = result.dueCount);
+    } catch (_) {
+      // The badge is a hint; the screen itself shows any error.
+    }
+  }
+
   void _onSessionUpdated() {
+    if ((GlobalSession.instance.userNotifier.value?.data?.id ?? '') != _questionnairesDueFor) {
+      _questionnairesDue = 0;
+      _loadQuestionnairesDue();
+    }
     FitnessSyncService.instance.handleProfileSwitched();
     _loadCachedProfileImage();
     final current = GlobalSession.instance.userNotifier.value?.data;
@@ -657,6 +679,15 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                           title: 'My\nPolicies',
                                           asset: 'assets/images/dashboard_icons/my_policies.svg',
                                           onTap: () => Navigator.pushNamed(context, AppRoutes.patientPolicies),
+                                        ),
+                                        _DashboardService(
+                                          title: 'Question-\nnaires',
+                                          asset: 'assets/images/dashboard_icons/questionnaires.svg',
+                                          badge: _questionnairesDue,
+                                          onTap: () async {
+                                            await Navigator.pushNamed(context, AppRoutes.patientQuestionnaires);
+                                            _loadQuestionnairesDue();
+                                          },
                                         ),
                                       ],
                                     ),
@@ -1816,7 +1847,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     return LayoutBuilder(
       builder: (context, constraints) {
         // Phones: two full rows of 3 for six services, 4 a row beyond that
-        final perRow = constraints.maxWidth > 560 ? services.length.clamp(4, 8) : (services.length <= 6 ? 3 : 4);
+        final perRow = constraints.maxWidth > 560
+            ? services.length.clamp(4, 8)
+            : (services.length <= 6 || services.length == 9 ? 3 : 4);
         final width = constraints.maxWidth / perRow;
         return Wrap(
           runSpacing: 6,
@@ -1831,15 +1864,39 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SvgPicture(
-                          SvgAssetLoader(
-                            service.asset,
-                            // Icon colours follow the theme so they show on dark cards.
-                            theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
-                            colorMapper: isDark ? const _DarkIconColors() : null,
-                          ),
-                          width: isTab ? 66 : (perRow == 3 ? 62 : 56),
-                          height: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            SvgPicture(
+                              SvgAssetLoader(
+                                service.asset,
+                                // Icon colours follow the theme so they show on dark cards.
+                                theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
+                                colorMapper: isDark ? const _DarkIconColors() : null,
+                              ),
+                              width: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                              height: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                            ),
+                            if (service.badge > 0)
+                              Positioned(
+                                top: -4,
+                                right: -6,
+                                child: Container(
+                                  constraints: const BoxConstraints(minWidth: 20),
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2563EB),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: isDark ? const Color(0xFF232323) : Colors.white, width: 2),
+                                  ),
+                                  child: Text(
+                                    service.badge > 9 ? '9+' : '${service.badge}',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -1873,9 +1930,12 @@ class _DarkIconColors extends ColorMapper {
 
   @override
   Color substitute(String? id, String elementName, String attributeName, Color color) {
+    final argb = color.toARGB32();
+    // Details cut out of the solid parts (#FEFEFE) take the card colour.
+    if (attributeName == 'stroke') return argb == 0xFFFEFEFE ? const Color(0xFF232323) : color;
     if (attributeName != 'fill') return color;
-    if (color.toARGB32() == 0xFFFFFFFF) return const Color(0xFF232323);
-    if (color.toARGB32() == 0xFFBFE1F6) return const Color(0xFF3F5566);
+    if (argb == 0xFFFFFFFF) return const Color(0xFF232323);
+    if (argb == 0xFF111111) return Colors.white;
     return color;
   }
 }
@@ -1885,7 +1945,10 @@ class _DashboardService {
   final String asset;
   final VoidCallback onTap;
 
-  const _DashboardService({required this.title, required this.asset, required this.onTap});
+  /// A count shown on the icon, such as questionnaires to fill in. Hidden at 0.
+  final int badge;
+
+  const _DashboardService({required this.title, required this.asset, required this.onTap, this.badge = 0});
 }
 
 class _PressableCard extends StatefulWidget {

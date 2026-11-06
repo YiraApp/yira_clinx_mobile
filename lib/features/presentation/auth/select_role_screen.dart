@@ -13,6 +13,7 @@ import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/domain/entities/work_space/get_work_space_entity.dart' as ws;
 import 'package:yiraclinics/features/use_cases/get_work_space_details_use_case.dart';
 import 'package:yiraclinics/features/use_cases/update_latest_org_details_use_case.dart';
+import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
 
 class SelectRoleScreen extends StatefulWidget {
   final SelectRoleModel? roles;
@@ -104,14 +105,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                   _selectedProfile!.relation!.toLowerCase() != "self" &&
                   _selectedProfile!.relation!.toLowerCase() != "admin"));
       if (isDep) {
-        _switchWorkspace(_FlatWorkspaceItem(
-          roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-          roleName: "User",
-          orgId: 1,
-          orgName: "",
-          hospitalId: 19,
-          hospitalName: "Yira Hospitals",
-        ));
+        _switchToDefaultPatientWorkspace();
         return;
       }
       _currentStep = 1;
@@ -127,6 +121,21 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     super.dispose();
   }
 
+  /// Family members only have the patient role; they open at the hospital
+  /// admins set as the default, not a fixed one.
+  Future<void> _switchToDefaultPatientWorkspace() async {
+    await LikedHospitalsService.loadDefaultHospital();
+    final hospital = LikedHospitalsService.defaultHospitalEntry();
+    _switchWorkspace(_FlatWorkspaceItem(
+      roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
+      roleName: "User",
+      orgId: int.tryParse('${hospital['orgId']}') ?? 1,
+      orgName: '${hospital['orgName'] ?? ''}',
+      hospitalId: int.tryParse('${hospital['id']}') ?? 19,
+      hospitalName: '${hospital['name']}',
+    ));
+  }
+
   Future<void> _loadAllRolesAndWorkspaces() async {
     final bool isDep = _selectedProfile != null &&
         (_selectedProfile!.isPrimary == false ||
@@ -137,14 +146,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
     if (isDep) {
       // Dependents only have Patient access -> direct login immediately
-      _switchWorkspace(_FlatWorkspaceItem(
-        roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-        roleName: "User",
-        orgId: 1,
-        orgName: "",
-        hospitalId: 19,
-        hospitalName: "Yira Hospitals",
-      ));
+      _switchToDefaultPatientWorkspace();
       return;
     }
 
@@ -152,6 +154,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
       _isLoadingWorkspaces = true;
       _workspaceErrorMessage = null;
     });
+    // Patient workspaces open at the configured default hospital.
+    await LikedHospitalsService.loadDefaultHospital();
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = _selectedProfile?.id ?? currentUser?.data?.id ?? '';
@@ -195,9 +199,9 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
           items.add(_FlatWorkspaceItem(
             roleId: roleId.isNotEmpty ? roleId : "4FC67429-28AE-4106-93EF-436228282ED0",
             roleName: "User",
-            orgId: 1,
+            orgId: int.tryParse('${LikedHospitalsService.defaultHospitalEntry()['orgId']}') ?? 1,
             orgName: "Unified Global Patient",
-            hospitalId: 19,
+            hospitalId: int.tryParse(LikedHospitalsService.defaultHospitalId) ?? 19,
             hospitalName: "User",
             location: "",
           ));
@@ -242,7 +246,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                     roleName: roleName,
                     orgId: orgId,
                     orgName: orgName,
-                    hospitalId: 19,
+                    hospitalId: int.tryParse(LikedHospitalsService.defaultHospitalId) ?? 19,
                     hospitalName: 'Healthcare Facility',
                   ));
                 }
@@ -797,14 +801,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
 
       if (!isPrimaryCard) {
         // A family member only has the patient role, so sign straight in.
-        _switchWorkspace(_FlatWorkspaceItem(
-          roleId: "4FC67429-28AE-4106-93EF-436228282ED0",
-          roleName: "User",
-          orgId: 1,
-          orgName: "",
-          hospitalId: 19,
-          hospitalName: "Yira Hospitals",
-        ));
+        _switchToDefaultPatientWorkspace();
         return;
       }
 

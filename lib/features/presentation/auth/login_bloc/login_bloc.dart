@@ -94,6 +94,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         emit(LoginFailure(errorMessage: failureMessage));
         return;
       } else {
+        // A new sign-in starts clean: nothing from a previous account carries over.
+        await GlobalSession.instance.clear();
         await Future.wait([
           GlobalSession.instance.update(result),
           sharedPrefsService.setValue<bool>(
@@ -148,6 +150,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         emit(LoginFailure(errorMessage: failureMessage));
         return;
       } else {
+        // A new sign-in starts clean: nothing from a previous account carries over.
+        await GlobalSession.instance.clear();
         await Future.wait([
           GlobalSession.instance.update(result),
           sharedPrefsService.setValue<bool>(
@@ -281,6 +285,8 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         return;
       } else {
         _timer?.cancel();
+        // A new sign-in starts clean: nothing from a previous account carries over.
+        await GlobalSession.instance.clear();
         await Future.wait([
           GlobalSession.instance.update(result),
           sharedPrefsService.setValue<bool>(

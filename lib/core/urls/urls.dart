@@ -39,6 +39,7 @@ class URLs {
   static const dashboardPatientDetailsUrl = "/v1/api/auth/patient/details";
   static const dashboardPatientClinicalDetailsUrl = "/v1/api/auth/clinical-data";
   static const treatmentPlansUrl = "/v1/api/auth/treatment-plans";
+  static const activeDefaultOrganizationUrl = "/api/default-organizations/active";
   static const patientAppointmentsUrl = "/v1/api/auth/patient-appointments";
   static const patientAccountsByPhoneUrl = "/v1/api/auth/patients/accounts-by-phone";
   static const addDependentPatientUrl = "/v1/api/auth/patients/add-dependent";
@@ -103,6 +104,11 @@ class URLs {
   static const patientFitnessStatusUrl = "/v1/api/auth/patient/fitness/status";
   static const patientBillingUrl = "/v1/api/auth/patient/billing";
   static const patientPoliciesUrl = "/v1/api/auth/patient/policies";
+  static const patientQuestionnairesUrl = "/v1/api/auth/patient/questionnaires";
+  static const patientQuestionnaireSubmissionsUrl = "/v1/api/auth/patient/questionnaire-submissions";
+  static String doctorPatientQuestionnairesUrl(String patientId) => "/v1/api/auth/provider/patients/$patientId/questionnaires";
+  static String doctorSendableQuestionnairesUrl(String patientId) => "/v1/api/auth/provider/patients/$patientId/questionnaires/sendable";
+  static String doctorSendQuestionnaireUrl(String patientId, int id) => "/v1/api/auth/provider/patients/$patientId/questionnaires/$id/send";
   static const patientFitnessDisconnectUrl = "/v1/api/auth/patient/fitness/disconnect";
 
   /*Online Payments & Razorpay*/
