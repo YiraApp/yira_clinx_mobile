@@ -13,6 +13,7 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'lab_collection_address.dart';
 
 const Color _primary = Color(0xFF2563EB);
 /// The screen's one accent: the app's blue.
@@ -1117,6 +1118,17 @@ class _OrderCard extends StatelessWidget {
             '${order['orderNumber'] ?? ''}${created != null ? ' · ${DateFormat('dd MMM yyyy').format(created)}' : ''}${slot == null && preferred != null && preferred.isNotEmpty ? ' · Visit ${_formatDay(preferred)}' : ''}',
             style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
           ),
+          if (order['collectionAddress'] is Map && ((order['collectionAddress'] as Map)['text'] ?? '').toString().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(Icons.location_on_outlined, size: 14, color: muted),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text((order['collectionAddress'] as Map)['text'].toString(),
+                    maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted)),
+              ),
+            ]),
+          ],
           if (showSlot) ...[
             const SizedBox(height: 10),
             Container(
@@ -1205,6 +1217,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   int? _hospitalId;
   /// Optional at checkout; it can also be chosen from My Orders after paying
   _SlotChoice? _slot;
+  /// Where the sample is collected; every order needs one
+  LabCollectionAddress? _address;
   final TextEditingController _notesController = TextEditingController();
   bool _paying = false;
   String? _payError;
@@ -1221,11 +1235,14 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     super.dispose();
   }
 
+  /// The collection address's pincode once there is one, else the pincode the patient searched.
+  String get _pincode => _address?.pincode ?? widget.pincode;
+
   Future<void> _loadHospitals() async {
     try {
       final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
             URLs.labPackageHospitalsUrl,
-            data: {'packageId': widget.package['id'], if (widget.pincode.isNotEmpty) 'pincode': widget.pincode},
+            data: {'packageId': widget.package['id'], if (_pincode.isNotEmpty) 'pincode': _pincode},
             options: _auth(),
           );
       final data = (res.data is Map) ? res.data['data'] : null;
@@ -1264,7 +1281,31 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     }
   }
 
+  Future<void> _pickAddress() async {
+    final picked = await LabAddressPickerSheet.show(context, current: _address, pincode: _pincode);
+    if (picked == null || !mounted) return;
+    final pincodeChanged = picked.pincode != _pincode;
+    setState(() {
+      _address = picked;
+      _payError = null;
+      if (pincodeChanged) {
+        // Hospitals near the new pincode come first; the slot belongs to the old hospital.
+        _loadingHospitals = true;
+        _hospitalsError = null;
+        _hospitals = [];
+        _hospitalId = null;
+        _slot = null;
+      }
+    });
+    if (pincodeChanged) await _loadHospitals();
+  }
+
   Future<void> _pay() async {
+    if (_address == null) {
+      setState(() => _payError = 'Add the address where your sample will be collected.');
+      _pickAddress();
+      return;
+    }
     if (_hospitalId == null) {
       setState(() => _payError = 'Choose the hospital where you will give your sample.');
       return;
@@ -1277,7 +1318,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     final result = await RazorpayPaymentService.instance.processLabPackagePayment(
       packageId: int.tryParse(widget.package['id'].toString()) ?? 0,
       hospitalId: _hospitalId!,
-      pincode: widget.pincode,
+      pincode: _pincode,
+      address: _address!.toJson(),
       preferredDate: _slot?.date,
       slotStart: _slot?.start,
       notes: _notesController.text,
@@ -1294,6 +1336,44 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       _paying = false;
       _payError = result.isCancelled ? 'Payment was cancelled. You can try again.' : (result.errorMessage ?? 'Payment failed. Please try again.');
     });
+  }
+
+  /// The collection address, or a prompt to add one.
+  Widget _addressTile(bool isDark, Color textColor, Color subColor) {
+    final a = _address;
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFD7DCE3);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _paying ? null : _pickAddress,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: a == null && _payError != null ? Colors.red : line),
+          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(Icons.location_on_outlined, size: 20, color: a == null ? (isDark ? const Color(0xFF93B4FF) : _accent) : textColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: a == null
+                  ? Text('Add sample collection address *',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : _accent))
+                  : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Sample collection address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                      const SizedBox(height: 2),
+                      Text(a.text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w500, color: textColor, height: 1.35)),
+                    ]),
+            ),
+            if (a != null) ...[
+              const SizedBox(width: 8),
+              Text('Change', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : _accent)),
+            ],
+          ]),
+        ),
+      ),
+    );
   }
 
   @override
@@ -1354,6 +1434,8 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                     Text('This package cannot be booked online right now.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
                     const SizedBox(height: 10),
                   ],
+                  _addressTile(isDark, textColor, subColor),
+                  const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: _paying ? null : _pickSlot,
                     icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),

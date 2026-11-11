@@ -8,6 +8,8 @@ class VitalSignsSection extends StatefulWidget {
   final TextEditingController weightController;
   final TextEditingController heightController;
   final TextEditingController oxygenSaturationController;
+  /// Respiratory rate; the tile shows only when this is given.
+  final TextEditingController? respiratoryRateController;
   final bool isTab;
 
   const VitalSignsSection({
@@ -18,6 +20,7 @@ class VitalSignsSection extends StatefulWidget {
     required this.weightController,
     required this.heightController,
     required this.oxygenSaturationController,
+    this.respiratoryRateController,
     required this.isTab,
   });
 
@@ -364,6 +367,27 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
               ),
             ],
           ),
+          if (widget.respiratoryRateController != null) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildVitalTile(
+                    context: context,
+                    label: "Respiratory Rate",
+                    unit: "/min",
+                    hintText: "18",
+                    icon: Icons.air_rounded,
+                    iconColor: const Color(0xFF0EA5E9),
+                    controller: widget.respiratoryRateController!,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ],
         ],
       ),
     );

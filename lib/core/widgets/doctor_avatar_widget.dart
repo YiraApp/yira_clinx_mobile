@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../colors/colors.dart';
 
 /// Reusable Doctor Avatar widget that displays a doctor's profile image
@@ -21,7 +22,7 @@ class DoctorAvatarWidget extends StatelessWidget {
     this.size = 42.0,
     this.borderRadius,
     this.isCircular = false,
-    this.fallbackAsset = 'assets/images/dashboard_icons/connected_doctors_thick.png',
+    this.fallbackAsset = 'assets/images/dashboard_icons/doctor.svg',
   });
 
   @override
@@ -96,6 +97,26 @@ class DoctorAvatarWidget extends StatelessWidget {
   }
 
   Widget _buildDoctorLogo(bool isDark) {
+    final pad = size * 0.1;
+    // The doctor icon in the same black-fill style as the dashboard icons.
+    if (fallbackAsset.endsWith('.svg')) {
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
+        padding: EdgeInsets.all(pad),
+        child: SvgPicture(
+          SvgAssetLoader(
+            fallbackAsset,
+            theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
+            colorMapper: isDark ? const _DarkDoctorIcon() : null,
+          ),
+          width: size - pad * 2,
+          height: size - pad * 2,
+        ),
+      );
+    }
     return Container(
       width: size,
       height: size,
@@ -107,18 +128,27 @@ class DoctorAvatarWidget extends StatelessWidget {
         width: size * 0.84,
         height: size * 0.84,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => Image.asset(
-          'assets/images/icons_3d/doctor.png',
-          width: size * 0.84,
-          height: size * 0.84,
-          fit: BoxFit.contain,
-          errorBuilder: (context2, error2, stackTrace2) => Icon(
-            Icons.medical_services_rounded,
-            color: primaryColor,
-            size: size * 0.55,
-          ),
+        errorBuilder: (context, error, stackTrace) => Icon(
+          Icons.medical_services_rounded,
+          color: primaryColor,
+          size: size * 0.55,
         ),
       ),
     );
+  }
+}
+
+/// On dark cards: white fills become the card colour and the cut-out details follow.
+class _DarkDoctorIcon extends ColorMapper {
+  const _DarkDoctorIcon();
+
+  @override
+  Color substitute(String? id, String elementName, String attributeName, Color color) {
+    final argb = color.toARGB32();
+    if (attributeName == 'stroke') return argb == 0xFFFEFEFE ? const Color(0xFF232323) : color;
+    if (attributeName != 'fill') return color;
+    if (argb == 0xFFFFFFFF) return const Color(0xFF232323);
+    if (argb == 0xFF111111) return Colors.white;
+    return color;
   }
 }

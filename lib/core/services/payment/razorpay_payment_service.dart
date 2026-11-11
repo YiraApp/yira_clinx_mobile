@@ -338,6 +338,8 @@ class RazorpayPaymentService {
     /// "HH:mm" of the chosen visit slot on [preferredDate]; optional, it can be chosen after paying
     String? slotStart,
     String? notes,
+    /// Where the sample is collected: line1, line2, landmark, city, state, pincode
+    Map<String, dynamic>? address,
     String? patientName,
     String? patientPhone,
     String? patientEmail,
@@ -355,6 +357,7 @@ class RazorpayPaymentService {
           if (preferredDate != null && preferredDate.isNotEmpty) "preferredDate": preferredDate,
           if (slotStart != null && slotStart.isNotEmpty) "slotStart": slotStart,
           if (notes != null && notes.trim().isNotEmpty) "notes": notes.trim(),
+          "address": ?address,
         },
         options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
       );

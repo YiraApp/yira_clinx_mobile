@@ -124,6 +124,7 @@ class URLs {
   static const labPackageMyOrdersUrl = "/v1/api/auth/lab-packages/my-orders";
   static const labPackageOrdersUrl = "/v1/api/auth/lab-packages/orders"; // + /:id/report, /:id/slot
   static const labPackageSlotsUrl = "/v1/api/auth/lab-packages/slots";
+  static const labPackageAddressesUrl = "/v1/api/auth/lab-packages/addresses";
 
   /*Account Management*/
   static const accountDeactivateUrl = "/v1/api/auth/account/deactivate";
