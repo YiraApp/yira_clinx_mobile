@@ -82,7 +82,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Invoice Breakdown', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                            Text('Invoice Breakdown', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
@@ -131,7 +131,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white70 : Colors.grey[700])),
-          Text(amount, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+          Text(amount, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
         ],
       ),
     );

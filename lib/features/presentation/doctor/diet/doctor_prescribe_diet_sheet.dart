@@ -1170,7 +1170,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     fontFamily: appPoppinFont,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1192,7 +1192,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           subtitle: Text(
@@ -1410,7 +1410,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                             fontFamily: appPoppinFont,
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
-                                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                            color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                                           ),
                                         ),
                                       ],
@@ -1461,7 +1461,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                                 fontFamily: appPoppinFont,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700,
-                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                color: isDark ? Colors.white : const Color(0xFF121212),
                                               ),
                                             ),
                                           ],
@@ -1474,7 +1474,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                                 style: TextStyle(
                                                   fontFamily: appPoppinFont,
                                                   fontSize: 11.5,
-                                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                                                 ),
                                               ),
                                             )),
@@ -1779,7 +1779,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             fontFamily: appPoppinFont,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                         IconButton(
@@ -1795,7 +1795,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1814,7 +1814,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontWeight: FontWeight.w600,
                               color: alreadyAdded
                                   ? (isDark ? Colors.white38 : Colors.black38)
-                                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                  : (isDark ? Colors.white : const Color(0xFF232323)),
                             ),
                           ),
                           backgroundColor: alreadyAdded
@@ -1838,7 +1838,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -2197,7 +2197,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                 fontFamily: appPoppinFont,
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -2343,7 +2343,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 13,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -2450,7 +2450,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       context: context,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final primaryText = isDark ? Colors.white : const Color(0xFF0F172A);
+        final primaryText = isDark ? Colors.white : const Color(0xFF121212);
         final secondaryText = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
         Widget detailRow(String label, String value) {
@@ -2503,7 +2503,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,
                       height: 1.4,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 ),
@@ -2746,7 +2746,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     child: Icon(
                       Icons.arrow_back_ios_new_rounded,
                       size: 15,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                 ),
@@ -2766,7 +2766,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.2,
                 height: 1.25,
               ),
@@ -2990,7 +2990,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
               ),
             ),
             const SizedBox(height: 4),
@@ -3034,7 +3034,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: 12.5,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
             decoration: InputDecoration(
               isDense: true,
@@ -3104,7 +3104,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                              : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A)),
                         ),
                       ),
                     ),
@@ -3534,7 +3534,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ),
@@ -3643,7 +3643,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
   // ==========================================
   // TAB 2: CUSTOM PLAN BUILDER
   // ==========================================
-  Color _strongText(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _strongText(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
 
   Color _mutedText(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
@@ -3729,7 +3729,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           fontFamily: appPoppinFont,
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
-          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
         ),
       ),
     );
@@ -3744,7 +3744,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
   }) {
     final Color foreground = isSelected
         ? (isDark ? const Color(0xFF93C5FD) : _primaryBlue)
-        : (isDark ? Colors.white70 : const Color(0xFF334155));
+        : (isDark ? Colors.white70 : const Color(0xFF3A3A3A));
 
     return InkWell(
       onTap: onTap,
@@ -3830,7 +3830,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 11.5,
                 height: 1.4,
-                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
               ),
             ),
           ),
@@ -4233,7 +4233,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 12,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 ),
@@ -4580,7 +4580,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ],
@@ -4822,7 +4822,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 PopupMenuButton<String>(
@@ -4990,7 +4990,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontSize: 11,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                   ],
@@ -5181,7 +5181,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   child: OutlinedButton(
                     onPressed: busy ? null : () => _goToStep(_builderStep - 1),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+                      foregroundColor: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                       side: BorderSide(
                         color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                       ),
@@ -5261,7 +5261,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             fontFamily: appPoppinFont,
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
           ),
         ),
         const SizedBox(height: 6),
@@ -5272,7 +5272,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: 13,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -5392,7 +5392,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   backgroundColor: color.withOpacity(isDark ? 0.2 : 0.08),
@@ -5433,7 +5433,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ],
@@ -5524,7 +5524,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
     if (s.contains('lunch')) return const Color(0xFF2563EB);
     if (s.contains('snack') || s.contains('evening')) return const Color(0xFF8B5CF6);
     if (s.contains('dinner')) return const Color(0xFF6366F1);
-    if (s.contains('bed')) return const Color(0xFF475569);
+    if (s.contains('bed')) return const Color(0xFF4A4A4A);
     return _primaryBlue;
   }
 
@@ -5585,7 +5585,7 @@ class _PortionWeightDialogState extends State<_PortionWeightDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final presets = dietWeightPresets(_unit);
     final old = widget.item.weightAmount;
@@ -5853,7 +5853,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   Text(
@@ -5876,13 +5876,13 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final labelStyle = TextStyle(
       fontFamily: appPoppinFont,
       fontSize: 11.5,
       fontWeight: FontWeight.w600,
-      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
     );
 
     return Padding(
@@ -6021,7 +6021,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                         child: OutlinedButton(
                           onPressed: _saving ? null : () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+                            foregroundColor: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),

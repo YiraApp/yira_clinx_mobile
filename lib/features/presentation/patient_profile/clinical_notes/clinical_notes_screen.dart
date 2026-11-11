@@ -415,7 +415,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
               fontFamily: appPoppinFont,
               fontSize: isWideScreen ? 14 : 13,
               height: 1.45,
-              color: isDark ? Colors.white70 : const Color(0xFF334155),
+              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
             ),
           ),
         ],

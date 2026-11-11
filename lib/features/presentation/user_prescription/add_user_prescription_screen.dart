@@ -273,7 +273,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1E2430) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF222222) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -299,7 +299,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                     fontFamily: appPoppinFont,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -571,20 +571,20 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF1E2430) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF222222) : Colors.white;
     final borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     return Scaffold(
       backgroundColor: isDark ? theme.scaffoldBackgroundColor : const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1E2430) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF222222) : Colors.white,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
           icon: PhosphorIcon(
             PhosphorIconsBold.caretLeft,
             size: 19,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -594,7 +594,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
             fontFamily: appPoppinFont,
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
         ),
         centerTitle: false,
@@ -602,7 +602,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E2430) : Colors.white,
+          color: isDark ? const Color(0xFF222222) : Colors.white,
           border: Border(top: BorderSide(color: borderColor)),
         ),
         child: SizedBox(
@@ -741,7 +741,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF273142) : const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: borderColor),
                 ),
@@ -749,11 +749,11 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   child: DropdownButton<String>(
                     value: _selectedSpecialty,
                     isExpanded: true,
-                    dropdownColor: isDark ? const Color(0xFF1E2430) : Colors.white,
+                    dropdownColor: isDark ? const Color(0xFF222222) : Colors.white,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 13,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     items: _specialties.map((s) {
                       return DropdownMenuItem(value: s, child: Text(s));
@@ -781,7 +781,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                           colorScheme: const ColorScheme.light(
                             primary: primaryColor,
                             onPrimary: Colors.white,
-                            onSurface: Color(0xFF0F172A),
+                            onSurface: Color(0xFF121212),
                           ),
                         ),
                         child: child!,
@@ -793,7 +793,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF273142) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: borderColor),
                   ),
@@ -807,7 +807,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                           fontFamily: appPoppinFont,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       const Spacer(),
@@ -852,7 +852,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF273142) : const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: borderColor),
                       ),
@@ -861,7 +861,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 11,
-                          color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                         ),
                       ),
                     ),
@@ -890,7 +890,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const Spacer(),
@@ -933,7 +933,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF273142) : const Color(0xFFF1F5F9),
+                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: borderColor),
                   ),
@@ -954,7 +954,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                             fontFamily: appPoppinFont,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -982,7 +982,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF273142) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: borderColor,
@@ -1042,7 +1042,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
               fontFamily: appPoppinFont,
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
           const SizedBox(height: 14),
@@ -1208,7 +1208,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor
-              : (isDark ? const Color(0xFF273142) : const Color(0xFFF1F5F9)),
+              : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? primaryColor : borderColor,
@@ -1223,7 +1223,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected
                 ? Colors.white
-                : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
           ),
         ),
       ),
@@ -1240,7 +1240,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
           fontFamily: appPoppinFont,
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white70 : const Color(0xFF475569),
+          color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
         ),
       ),
     );
@@ -1257,7 +1257,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF273142) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
       ),
@@ -1267,7 +1267,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
         style: TextStyle(
           fontFamily: appPoppinFont,
           fontSize: 13,
-          color: isDark ? Colors.white : const Color(0xFF0F172A),
+          color: isDark ? Colors.white : const Color(0xFF121212),
         ),
         decoration: InputDecoration(
           hintText: hintText,

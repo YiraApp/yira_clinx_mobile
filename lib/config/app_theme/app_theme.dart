@@ -69,11 +69,11 @@ class AppTheme {
     ),
     dialogTheme: _dialogTheme(
       background: Colors.white,
-      title: const Color(0xFF0F172A),
-      body: const Color(0xFF475569),
+      title: const Color(0xFF121212),
+      body: const Color(0xFF4A4A4A),
     ),
     bottomSheetTheme: _bottomSheetTheme(Colors.white, const Color(0xFFCBD5E1)),
-    popupMenuTheme: _popupMenuTheme(Colors.white, const Color(0xFF0F172A)),
+    popupMenuTheme: _popupMenuTheme(Colors.white, const Color(0xFF121212)),
     datePickerTheme: _datePickerTheme(Colors.white),
     timePickerTheme: _timePickerTheme(Colors.white),
     cardTheme: CardThemeData(
@@ -141,7 +141,7 @@ class AppTheme {
       title: Colors.white,
       body: const Color(0xFFCBD5E1),
     ),
-    bottomSheetTheme: _bottomSheetTheme(darkModeCardColor, const Color(0xFF475569)),
+    bottomSheetTheme: _bottomSheetTheme(darkModeCardColor, const Color(0xFF4A4A4A)),
     datePickerTheme: _datePickerTheme(darkModeCardColor),
     timePickerTheme: _timePickerTheme(darkModeCardColor),
     cardTheme: CardThemeData(

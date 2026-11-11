@@ -131,13 +131,13 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
             children: [
               Icon(icon, color: iconColor, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+              Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             content,
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
           ),
         ],
       ),

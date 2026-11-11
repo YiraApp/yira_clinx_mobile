@@ -24,7 +24,7 @@ class NotificationBadgeIcon extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
-    final effectiveIconColor = iconColor ?? (isDark ? Colors.white : const Color(0xFF0F172A));
+    final effectiveIconColor = iconColor ?? (isDark ? Colors.white : const Color(0xFF121212));
     final effectiveBadgeColor = badgeColor ?? const Color(0xFFEF4444);
     final borderBg = isDark ? const Color(0xFF232323) : Colors.white;
 

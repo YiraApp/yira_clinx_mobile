@@ -85,7 +85,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                 colors: isDark
                     ? [
                         primaryColor.withValues(alpha: 0.18),
-                        const Color(0xFF0F172A).withValues(alpha: 0.0),
+                        const Color(0xFF121212).withValues(alpha: 0.0),
                       ]
                     : [
                         primaryColor.withValues(alpha: 0.09),
@@ -233,7 +233,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 22 : 19,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                           letterSpacing: -0.3,
                         ),
                       ),
@@ -376,7 +376,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                               Icon(
                                 Icons.qr_code_2_rounded,
                                 size: 18,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -385,7 +385,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                                   fontFamily: appPoppinFont,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ],
@@ -497,7 +497,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
               fontFamily: appPoppinFont,
               fontSize: isTab ? 15 : 13.5,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
               letterSpacing: -0.2,
             ),
           ),

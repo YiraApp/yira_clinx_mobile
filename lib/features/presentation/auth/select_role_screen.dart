@@ -505,7 +505,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     final bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF121212);
     final primaryColor = theme.primaryColor;
 
     return PopScope(
@@ -588,7 +588,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                     (isTab ? 0.032 : 0.06),
                                 fontWeight: FontWeight.w700,
                                 fontFamily: appPoppinFont,
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                color: isDarkMode ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -882,7 +882,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                       ? (isTab ? 17 : 15.5)
                                       : (isTab ? 16 : 14.5),
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ),
@@ -1167,7 +1167,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 16 : 14.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ),

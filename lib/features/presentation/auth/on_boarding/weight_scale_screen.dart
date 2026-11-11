@@ -183,7 +183,7 @@ class WeightScaleScreen extends StatelessWidget {
                   fontSize: referenceWidth * 0.18,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -2,
-                  color: isDark ? Colors.white : const Color(0xFF1D1D35),
+                  color: isDark ? Colors.white : const Color(0xFF1D1D1D),
                 ),
               ),
               Padding(
@@ -329,7 +329,7 @@ class WeightScaleScreen extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF1D1D35),
+                    color: isDark ? Colors.white : const Color(0xFF1D1D1D),
                     fontSize: isTab ? referenceWidth * 0.024: referenceWidth * 0.035,
                   ),
                 ),

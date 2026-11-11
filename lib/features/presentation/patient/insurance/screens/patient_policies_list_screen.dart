@@ -136,11 +136,11 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
     final primaryBlue = const Color(0xFF2563EB);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
@@ -167,7 +167,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w700,
                 fontSize: 16.5,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
           ],
@@ -227,7 +227,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           border: Border(
             top: BorderSide(
               color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -289,10 +289,10 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.1,
         ),
         boxShadow: [
@@ -344,7 +344,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                           fontFamily: appPoppinFont,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -388,7 +388,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
             ),
           ),
 
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
 
           // Body Meta Fields (Full Width & Clean)
           Padding(
@@ -408,7 +408,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
           // Expandable section for document preview (revealed when arrow is clicked)
           if (isExpanded) ...[
-            Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+            Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
             Padding(
               padding: const EdgeInsets.all(14),
               child: ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
@@ -416,7 +416,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   ? Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -443,7 +443,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -474,7 +474,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   : Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -543,7 +543,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
         width: 68,
         height: 68,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: const Color(0xFF2563EB).withValues(alpha: 0.25),
@@ -645,7 +645,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               fontFamily: appPoppinFont,
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ),
@@ -683,7 +683,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: 16.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 8),

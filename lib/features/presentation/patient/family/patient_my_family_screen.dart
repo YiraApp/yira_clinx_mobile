@@ -482,7 +482,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 16),
@@ -501,7 +501,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               onTap: () {
@@ -524,7 +524,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               onTap: () {
@@ -589,7 +589,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+          final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
           return Padding(
             padding: EdgeInsets.only(
@@ -765,7 +765,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 11.5,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                   ),
                                   selectedColor: _primaryBlue,
                                   backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
@@ -1238,7 +1238,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isTab = isTablet(context);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     final familyProfiles = _getFamilyProfiles();
@@ -1407,7 +1407,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         children: [
           const PhosphorIcon(PhosphorIconsDuotone.usersThree, size: 40, color: _primaryBlue),
           const SizedBox(height: 10),
-          Text('Add your family', style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+          Text('Add your family', style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212))),
           const SizedBox(height: 4),
           Text(
             'Add parents, children or a spouse to book appointments and track their health from your account.',
@@ -1446,7 +1446,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     ];
     // Dependents usually share the account number; only show a number of their own.
     final bool showPhone = phone.isNotEmpty && (isPrimary || phone != primaryPhone);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     return Container(

@@ -69,7 +69,7 @@ class _DeletePolicyConfirmationDialogState extends State<DeletePolicyConfirmatio
         child: Container(
           padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -109,7 +109,7 @@ class _DeletePolicyConfirmationDialogState extends State<DeletePolicyConfirmatio
                   fontFamily: appPoppinFont,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 10),

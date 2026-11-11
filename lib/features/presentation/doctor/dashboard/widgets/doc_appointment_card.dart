@@ -124,7 +124,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
             boxShadow: [
               if (!isDark)
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  color: const Color(0xFF121212).withValues(alpha: 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -177,7 +177,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                   fontWeight: FontWeight.w600,
                                   color: isDark
                                       ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                      : const Color(0xFF121212),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -298,7 +298,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                     fontFamily: appPoppinFont,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                               ],
@@ -530,7 +530,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                   : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9));
                               final badgeText = isForFamily
                                   ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
-                                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));
+                                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A));
                               final badgeBorder = isForFamily
                                   ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFBFDBFE))
                                   : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));

@@ -114,7 +114,7 @@ class PatientVitalsCard extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 16 : 14.5,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                   ],
@@ -135,7 +135,7 @@ class PatientVitalsCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.show_chart_rounded, size: 14, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                            Icon(Icons.show_chart_rounded, size: 14, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                             const SizedBox(width: 4),
                             Text(
                               'Graphs',
@@ -143,7 +143,7 @@ class PatientVitalsCard extends StatelessWidget {
                                 fontFamily: appPoppinFont,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                               ),
                             ),
                           ],
@@ -221,7 +221,7 @@ class PatientVitalsCard extends StatelessWidget {
                           fontFamily: appPoppinFont,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       const Spacer(),
@@ -423,7 +423,7 @@ class PatientVitalsCard extends StatelessWidget {
                       fontSize: isTab ? 17 : 15,
                       fontWeight: FontWeight.bold,
                       color: hasVal
-                          ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                          ? (isDark ? Colors.white : const Color(0xFF121212))
                           : (isDark ? Colors.white38 : Colors.grey.shade400),
                     ),
                   ),

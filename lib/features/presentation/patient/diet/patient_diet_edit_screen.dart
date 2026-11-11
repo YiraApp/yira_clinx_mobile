@@ -494,7 +494,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
 
   Color _cardColor(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
   Color _borderColor(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
-  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
   TextStyle _ts(double size, FontWeight weight, Color color, {double? height}) =>

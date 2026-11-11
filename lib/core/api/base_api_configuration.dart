@@ -13,6 +13,19 @@ class EnvironmentService {
   static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
   static String? _customBaseUrl;
 
+  /// The API that release builds (TestFlight and the stores) talk to.
+  static const String productionBaseUrl = "https://clinicsapi-fegha0fkfrcnfufu.centralindia-01.azurewebsites.net";
+
+  /// Release builds use production; debug runs use the local backend.
+  /// Override with --dart-define=APP_ENV=local|dev|qa|production.
+  static Environment get buildEnvironment {
+    const name = String.fromEnvironment('APP_ENV');
+    for (final env in Environment.values) {
+      if (env.name == name) return env;
+    }
+    return kReleaseMode ? Environment.production : Environment.local;
+  }
+
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
 
   /// Probes available local channels:
@@ -84,8 +97,8 @@ class EnvironmentService {
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: productionBaseUrl,
+          healthCampBaseUrl: productionBaseUrl,
         );
     }
   }

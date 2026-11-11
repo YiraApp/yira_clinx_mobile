@@ -98,7 +98,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -111,7 +111,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 20 : 18,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.3,
               ),
             ),
@@ -170,7 +170,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 14 : 13,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: "Search in favorite patients...",
@@ -288,7 +288,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 18 : 16,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 6),

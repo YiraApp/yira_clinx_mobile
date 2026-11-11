@@ -383,7 +383,7 @@ class _PatientDoctorSuggestionsScreenState
                             fontWeight: FontWeight.bold,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF0F172A),
+                                : const Color(0xFF121212),
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -416,7 +416,7 @@ class _PatientDoctorSuggestionsScreenState
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
               const SizedBox(height: 8),
@@ -440,7 +440,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
                     height: 1.6,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
               ),
@@ -452,7 +452,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -597,7 +597,7 @@ class _PatientDoctorSuggestionsScreenState
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -610,7 +610,7 @@ class _PatientDoctorSuggestionsScreenState
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 19 : 17,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             Text(
@@ -686,7 +686,7 @@ class _PatientDoctorSuggestionsScreenState
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       decoration: InputDecoration(
                         hintText: "Search suggestions or doctor...",
@@ -787,7 +787,7 @@ class _PatientDoctorSuggestionsScreenState
                                         ? Colors.white
                                         : (isDark
                                             ? Colors.white70
-                                            : const Color(0xFF475569)),
+                                            : const Color(0xFF4A4A4A)),
                                   ),
                                 ),
                               ],
@@ -926,7 +926,7 @@ class _PatientDoctorSuggestionsScreenState
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF0F172A),
+                                  : const Color(0xFF121212),
                             ),
                           ),
                           if (doctorSpecialty != null &&
@@ -985,7 +985,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 16 : 14.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1001,7 +1001,7 @@ class _PatientDoctorSuggestionsScreenState
                     height: 1.5,
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.75)
-                        : const Color(0xFF475569),
+                        : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1152,7 +1152,7 @@ class _PatientDoctorSuggestionsScreenState
                 fontFamily: appPoppinFont,
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 8),

@@ -274,9 +274,9 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF7F8FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
@@ -503,7 +503,7 @@ class _ResultTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
@@ -689,7 +689,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                   ),
                 ),
                 if (widget.isRequired)
@@ -769,7 +769,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                   ),
                                   const SizedBox(width: 4),
@@ -918,9 +918,9 @@ class _SnomedMultiFullScreenSearchState
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF7F8FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded,
@@ -995,7 +995,7 @@ class _SnomedMultiFullScreenSearchState
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: isDark
-                  ? const Color(0xFF161922)
+                  ? const Color(0xFF191919)
                   : theme.primaryColor.withValues(alpha: 0.04),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1200,7 +1200,7 @@ class _SnomedMultiFullScreenSearchState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1D27) : Colors.white,
+              color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -1250,7 +1250,7 @@ class _SnomedSearchShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1A1D27) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1C1C1C) : Colors.white;
 
     return ListView.builder(
       shrinkWrap: true,

@@ -114,7 +114,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final media = MediaQuery.of(context);
     final query = _searchCtrl.text.trim();
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final borderColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
 
@@ -281,7 +281,7 @@ class DietOptionField extends StatelessWidget {
                   fontSize: 13.5,
                   fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                   color: hasValue
-                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDark ? Colors.white : const Color(0xFF121212))
                       : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                 ),
               ),

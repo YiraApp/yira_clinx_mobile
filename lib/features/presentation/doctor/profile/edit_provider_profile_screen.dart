@@ -212,7 +212,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2538) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
@@ -296,7 +296,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                   MediaQuery.of(context).viewInsets.bottom > 0 ? 12 : 16,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2234) : Colors.white,
+                  color: isDark ? const Color(0xFF222222) : Colors.white,
                   border: Border(
                     top: BorderSide(
                       color: isDark ? Colors.white10 : Colors.grey.shade200,
@@ -331,7 +331,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 15 : 14,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                           ),
                         ),
                       ),
@@ -619,7 +619,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             fontFamily: appPoppinFont,
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF232323),
             letterSpacing: -0.2,
           ),
         ),
@@ -653,7 +653,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 fontFamily: appPoppinFont,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
               ),
             ),
             if (readOnly)
@@ -713,8 +713,8 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             ),
             filled: true,
             fillColor: readOnly
-                ? (isDark ? const Color(0xFF161F30) : Colors.grey.shade200)
-                : (isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC)),
+                ? (isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade200)
+                : (isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -760,14 +760,14 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             fontFamily: appPoppinFont,
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
           ),
         ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark ? Colors.white12 : Colors.grey.shade200,
@@ -778,7 +778,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               value: value,
               isExpanded: true,
               icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-              dropdownColor: isDark ? const Color(0xFF1E2538) : Colors.white,
+              dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
               items: items.map((e) {
                 return DropdownMenuItem<String>(
                   value: e,

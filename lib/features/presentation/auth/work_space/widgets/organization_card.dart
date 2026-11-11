@@ -26,7 +26,7 @@ class OrganizationCard extends StatelessWidget {
     final expandedSubTileBg = isDarkMode
         ? Colors.white.withOpacity(0.02)
         : const Color(0xFFFAFAFA);
-    final mainText = isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    final mainText = isDarkMode ? Colors.white : const Color(0xFF232323);
     final subText = isDarkMode ? Colors.white60 : const Color(0xFF94A3B8);
 
     final double widthFactor = displayWidth(context);

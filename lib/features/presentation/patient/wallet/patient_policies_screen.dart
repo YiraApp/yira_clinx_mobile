@@ -168,7 +168,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: c.isDark
-              ? [Color.alphaBlend(Theme.of(context).primaryColor.withValues(alpha: 0.22), c.card), c.card]
+              ? [Color.alphaBlend(Theme.of(context).primaryColor.withValues(alpha: 0.10), c.card), c.card]
               : [const Color(0xFFE8F0FF), Colors.white],
         ),
         borderRadius: BorderRadius.circular(18),

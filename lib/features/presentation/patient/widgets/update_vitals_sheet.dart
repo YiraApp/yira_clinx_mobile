@@ -220,7 +220,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
     final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     return Container(
       decoration: BoxDecoration(

@@ -127,7 +127,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                         Icon(
                           Icons.close_rounded,
                           size: 16,
-                          color: Color(0xFF475569),
+                          color: Color(0xFF4A4A4A),
                         ),
                         SizedBox(width: 4),
                         Text(
@@ -136,7 +136,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Inter',
-                            color: Color(0xFF475569),
+                            color: Color(0xFF4A4A4A),
                           ),
                         ),
                       ],
@@ -161,7 +161,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                    color: const Color(0xFF121212).withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -246,7 +246,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                                   fontFamily: 'Inter',
                                   color: isSelected
                                       ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                      : const Color(0xFF121212),
                                 ),
                               ),
                             ],

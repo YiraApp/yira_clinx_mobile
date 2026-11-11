@@ -98,7 +98,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                 ? Colors.grey.withValues(alpha: 0.12)
                 : const Color(0xFF0284C7).withValues(alpha: 0.12)));
 
-    final Color cardBg = isDark ? const Color(0xFF1E2638) : Colors.white;
+    final Color cardBg = isDark ? const Color(0xFF262626) : Colors.white;
     final Color borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     return Center(
@@ -163,7 +163,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 19 : 17,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 6),

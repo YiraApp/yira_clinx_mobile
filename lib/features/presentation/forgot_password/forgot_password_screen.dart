@@ -366,7 +366,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontSize: 12,
                   fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
                   color: isCurrent
-                      ? (isDarkMode ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDarkMode ? Colors.white : const Color(0xFF121212))
                       : (isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                 ),
               ),
@@ -446,7 +446,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             fontSize: isTabletDevice ? 24 : 22,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
-            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+            color: isDarkMode ? Colors.white : const Color(0xFF121212),
           ),
         ),
         const SizedBox(height: 6),
@@ -603,7 +603,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -636,13 +636,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    color: isDarkMode ? Colors.white : const Color(0xFF121212),
                   ),
                   dialogBackgroundColor:
                       isDarkMode ? const Color(0xFF232323) : Colors.white,
                   dialogTextStyle: TextStyle(
                     fontFamily: appPoppinFont,
-                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    color: isDarkMode ? Colors.white : const Color(0xFF121212),
                   ),
                   searchDecoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search, color: _primaryBlue),
@@ -676,7 +676,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       fontFamily: appPoppinFont,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                      color: isDarkMode ? Colors.white : const Color(0xFF121212),
                     ),
                     inputFormatters: [
                       LengthLimitingTextInputFormatter(10),
@@ -766,7 +766,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -790,7 +790,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 14.5,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                color: isDarkMode ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.email_outlined, size: 20, color: _primaryBlue),
@@ -944,7 +944,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               fontFamily: appPoppinFont,
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+              color: isDarkMode ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ),
@@ -996,7 +996,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                color: isDarkMode ? Colors.white : const Color(0xFF121212),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1125,7 +1125,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -1143,7 +1143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               fontFamily: appPoppinFont,
               fontSize: 14.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -1244,7 +1244,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               fontSize: 12,
                               fontWeight: isValid ? FontWeight.w600 : FontWeight.w400,
                               color: isValid
-                                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                  ? (isDark ? Colors.white : const Color(0xFF121212))
                                   : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ),
                           ),
@@ -1268,7 +1268,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -1292,7 +1292,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 14.5,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Re-enter new password",

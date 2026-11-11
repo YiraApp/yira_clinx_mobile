@@ -109,7 +109,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                         ),
                         const SizedBox(height: 20),
 
-                        Text('Document Title', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                        Text('Document Title', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _titleController,
@@ -122,7 +122,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                         ),
                         const SizedBox(height: 14),
 
-                        Text('Document Category', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                        Text('Document Category', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<String>(
                           value: _selectedCategory,

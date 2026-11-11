@@ -191,7 +191,7 @@ void main() {
         await tester.pumpWidget(_app(
           dark,
           Scaffold(
-            backgroundColor: dark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+            backgroundColor: dark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
             body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

@@ -107,7 +107,7 @@ class DashboardQuickActions extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 12 : 11,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
                       ),
                     ),
                   ],

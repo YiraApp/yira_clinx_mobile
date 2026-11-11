@@ -7,6 +7,7 @@ import 'painters/splash_background_painter.dart';
 import 'painters/hand_glow_painter.dart';
 import 'painters/ecosystem_lines_painter.dart';
 import 'painters/heartbeat_painter.dart';
+import 'painters/palm_sparkles_painter.dart';
 import 'widgets/service_icon_widget.dart';
 
 /// 10 Distinct Animation Styles available for the Yira Splash Screen.
@@ -33,10 +34,14 @@ class NodeTransform {
   final double scale;
   final double opacity;
 
+  /// 0 → 1 as this card appears, used for its landing ripple.
+  final double reveal;
+
   const NodeTransform({
     required this.position,
     required this.scale,
     required this.opacity,
+    this.reveal = 1.0,
   });
 }
 
@@ -87,7 +92,8 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
   late final List<SplashParticle> _particles;
 
   // Cached static cards for each healthcare node to prevent GC and widget rebuild churn
-  late final List<Widget> _cachedServiceCards;
+  late List<Widget> _cachedServiceCards;
+  bool? _cardsDark;
 
   // Hand center in exact visual center
   static const Offset _handCenter = Offset(0.5, 0.48);
@@ -96,9 +102,6 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
   void initState() {
     super.initState();
     _particles = generateSplashParticles(count: 20);
-    _cachedServiceCards = splashHealthcareServices
-        .map((s) => ServiceCardVisual(service: s))
-        .toList(growable: false);
     _setupAnimations();
     _startAnimationSequence();
   }
@@ -115,9 +118,6 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
       const AssetImage('assets/images/yira_hand_light_centered.png'),
       context,
     );
-    for (final service in splashHealthcareServices) {
-      precacheImage(AssetImage(service.assetPath), context);
-    }
   }
 
   void _setupAnimations() {
@@ -299,6 +299,9 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
     widget.onAnimationComplete?.call();
   }
 
+  /// 0 → 1 while the light sweeps across the logo, in the second half of the logo reveal.
+  double get _logoShine => Curves.easeInOut.transform(((_logoController.value - 0.45) / 0.45).clamp(0.0, 1.0));
+
   @override
   void dispose() {
     _screenFadeController.dispose();
@@ -334,7 +337,8 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
 
       double x = _handCenter.dx;
       double y = _handCenter.dy;
-      double scale = nodeReveal * convergeCollapse;
+      // Each card pops in with a slight overshoot, then settles.
+      double scale = Curves.easeOutBack.transform(rawProgress) * convergeCollapse;
 
       switch (widget.animationStyle) {
         // 1. Cosmic Orbit: Elliptical planetary orbit with continuous logarithmic spiral into palm
@@ -476,10 +480,13 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
           break;
       }
 
+      // A gentle float while the cards orbit, fading out as they converge.
+      y += sin(bgLoop * 2 * pi * 2 + i * 0.9) * 0.006 * nodeReveal * convergeCollapse;
       transforms.add(NodeTransform(
         position: Offset(x, y),
         scale: scale.clamp(0.0, 1.4),
         opacity: baseOpacity,
+        reveal: rawProgress,
       ));
     }
 
@@ -501,11 +508,18 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
       ]),
       builder: (context, _) {
         final size = MediaQuery.of(context).size;
+        final dark = Theme.of(context).brightness == Brightness.dark;
+        if (_cardsDark != dark) {
+          _cardsDark = dark;
+          _cachedServiceCards = splashHealthcareServices
+              .map((s) => ServiceCardVisual(service: s, dark: dark))
+              .toList(growable: false);
+        }
         final nodeTransforms = _calculateNodeTransforms(size);
         final rawPositions = nodeTransforms.map((t) => t.position).toList();
 
         return ColoredBox(
-          color: const Color(0xFFF8FAFC),
+          color: dark ? const Color(0xFF0A0A0B) : const Color(0xFFF8FAFC),
           child: FadeTransition(
             opacity: _screenFadeIn,
             child: SizedBox.expand(
@@ -520,6 +534,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                         animationValue: _bgController.value,
                         fadeIn: _bgFadeIn.value,
                         particles: _particles,
+                        dark: dark,
                       ),
                     ),
                   ),
@@ -529,6 +544,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                     child: CustomPaint(
                       size: size,
                       painter: EcosystemLinesPainter(
+                        dark: dark,
                         iconPositions: rawPositions,
                         revealProgress: _linesReveal.value,
                         convergence: _convergeFactor.value,
@@ -541,11 +557,28 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                   // ── Layer 3: Centered Cybernetic Hand ("Health in Your Hands") ──
                   _buildCenteredHand(size),
 
+                  // ── Layer 3b: Sparkles rising from the palm into the orb ──
+                  RepaintBoundary(
+                    child: CustomPaint(
+                      size: size,
+                      painter: PalmSparklesPainter(
+                        progress: _bgController.value,
+                        opacity: (_handFadeIn.value *
+                                (1.0 - _convergeFactor.value) *
+                                (1.0 - _shockwaveProgress.value))
+                            .clamp(0.0, 1.0),
+                        normalizedCenter: _handCenter,
+                        dark: dark,
+                      ),
+                    ),
+                  ),
+
                   // ── Layer 4: Biometric Rings & Shockwave ──
                   RepaintBoundary(
                     child: CustomPaint(
                       size: size,
                       painter: HandGlowPainter(
+                        dark: dark,
                         fadeIn: (_handFadeIn.value *
                                 (1.0 - pow(_shockwaveProgress.value, 1.4)))
                             .clamp(0.0, 1.0),
@@ -561,10 +594,10 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                   _buildHealthcareNodes(size, nodeTransforms),
 
                   // ── Layer 6: Brand Climax (Logo, Tagline, ECG Heartbeat) ──
-                  _buildBrandClimax(size),
+                  _buildBrandClimax(size, dark),
 
                   // ── Layer 7: Bottom Security Environment Badge ──
-                  _buildBottomBadge(size),
+                  _buildBottomBadge(size, dark),
                 ],
               ),
             ),
@@ -624,16 +657,41 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
           return const SizedBox.shrink();
         }
 
+        // A ring in the card's colour spreads out as it lands.
+        final ripple = ((t.reveal - 0.35) / 0.65).clamp(0.0, 1.0);
         return Positioned(
           left: t.position.dx * size.width - 35,
           top: t.position.dy * size.height - 35,
-          child: RepaintBoundary(
-            child: ServiceIconWidget(
-              service: services[i],
-              opacity: t.opacity,
-              scale: t.scale,
-              child: _cachedServiceCards[i],
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (ripple > 0 && ripple < 1)
+                Positioned(
+                  left: 35 - (35 + ripple * 26),
+                  top: 35 - (35 + ripple * 26),
+                  width: 70 + ripple * 52,
+                  height: 70 + ripple * 52,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26 + ripple * 14),
+                        border: Border.all(
+                          color: services[i].glowColor.withValues(alpha: 0.45 * (1 - ripple) * t.opacity),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              RepaintBoundary(
+                child: ServiceIconWidget(
+                  service: services[i],
+                  opacity: t.opacity,
+                  scale: t.scale,
+                  child: _cachedServiceCards[i],
+                ),
+              ),
+            ],
           ),
         );
       }),
@@ -641,7 +699,8 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
   }
 
   /// Builds the official Yira logo reveal, bold typography, tagline, and animated heartbeat.
-  Widget _buildBrandClimax(Size size) {
+  Widget _buildBrandClimax(Size size, bool dark) {
+    final beat = max(0.0, sin(_heartbeatLoopController.value * 2 * pi));
     if (_logoFadeIn.value <= 0.005) return const SizedBox.shrink();
 
     return Center(
@@ -662,8 +721,8 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF2563EB)
-                              .withValues(alpha: _logoFadeIn.value * 0.32),
-                          blurRadius: 36,
+                              .withValues(alpha: _logoFadeIn.value * (dark ? 0.45 : 0.32) * (0.85 + 0.15 * beat)),
+                          blurRadius: 36 + 14 * beat,
                           offset: const Offset(0, 12),
                           spreadRadius: 4,
                         ),
@@ -691,10 +750,36 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(20),
-                          child: SvgPicture.asset(
-                            'assets/images/svgs/ic_apps_logo.svg',
-                            width: 82,
-                            height: 82,
+                          child: Stack(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/images/svgs/ic_apps_logo.svg',
+                                width: 82,
+                                height: 82,
+                              ),
+                              // A soft light sweeps across the logo once it lands.
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: FractionalTranslation(
+                                    translation: Offset(-1.4 + 2.8 * _logoShine, 0),
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withValues(alpha: 0),
+                                            Colors.white.withValues(alpha: 0.45),
+                                            Colors.white.withValues(alpha: 0),
+                                          ],
+                                          stops: const [0.3, 0.5, 0.7],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -704,13 +789,16 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                   const SizedBox(height: 22),
 
                   // 2. High-Contrast Title: "Yira Health"
-                  Text(
-                    'Yira Health',
+                  Text.rich(
+                    const TextSpan(children: [
+                      TextSpan(text: 'Yira '),
+                      TextSpan(text: 'Health', style: TextStyle(color: Color(0xFF3B82F6))),
+                    ]),
                     style: TextStyle(
                       fontSize: 34,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Poppins',
-                      color: const Color(0xFF0F172A),
+                      color: dark ? Colors.white : const Color(0xFF121212),
                       letterSpacing: 1.5,
                       shadows: [
                         Shadow(
@@ -735,10 +823,11 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          fontFamily: 'Inter',
-                          color: const Color(0xFF2563EB)
+                          fontFamily: 'Poppins',
+                          color: (dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB))
                               .withValues(alpha: _taglineFadeIn.value),
-                          letterSpacing: 4.5,
+                          // Letters track in from wide to their resting spacing.
+                          letterSpacing: 4.5 + 7 * (1 - Curves.easeOutCubic.transform(_taglineFadeIn.value)),
                         ),
                       ),
                     ),
@@ -758,6 +847,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                             revealProgress: _heartbeatReveal.value,
                             opacity: _heartbeatReveal.value * 0.95,
                             loopValue: _heartbeatLoopController.value,
+                            dark: dark,
                           ),
                         ),
                       ),
@@ -773,7 +863,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
   }
 
   /// Builds the bottom security indicator for Light Mode.
-  Widget _buildBottomBadge(Size size) {
+  Widget _buildBottomBadge(Size size, bool dark) {
     if (_taglineFadeIn.value <= 0.005) return const SizedBox.shrink();
 
     return Positioned(
@@ -791,10 +881,10 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: dark ? const Color(0xFF1A1A1D) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                    color: const Color(0xFF3B82F6).withValues(alpha: dark ? 0.40 : 0.25),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -805,22 +895,22 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.verified_user_rounded,
                       size: 15,
-                      color: Color(0xFF2563EB),
+                      color: dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
                       'SECURE AI HEALTH ENVIRONMENT',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        fontFamily: 'Inter',
-                        color: Color(0xFF1E293B),
+                        fontFamily: 'Poppins',
+                        color: dark ? Colors.white70 : const Color(0xFF232323),
                         letterSpacing: 1.6,
                       ),
                     ),

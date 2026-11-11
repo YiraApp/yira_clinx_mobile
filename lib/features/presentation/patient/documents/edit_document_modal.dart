@@ -164,7 +164,7 @@ class EditDocumentModal {
         builder: (sheetCtx) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -176,7 +176,7 @@ class EditDocumentModal {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -188,7 +188,7 @@ class EditDocumentModal {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 4),
@@ -217,7 +217,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -250,7 +250,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -283,7 +283,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -323,7 +323,7 @@ class EditDocumentModal {
               bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
@@ -344,7 +344,7 @@ class EditDocumentModal {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -373,7 +373,7 @@ class EditDocumentModal {
                                 fontFamily: appPoppinFont,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             Text(
@@ -406,7 +406,7 @@ class EditDocumentModal {
                           fontFamily: appPoppinFont,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                         ),
                       ),
                     ],
@@ -415,10 +415,10 @@ class EditDocumentModal {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Row(
@@ -430,7 +430,7 @@ class EditDocumentModal {
                             width: 48,
                             height: 48,
                             color: isCurrentImage
-                                ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0))
+                                ? (isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0))
                                 : const Color(0xFFEF4444).withValues(alpha: 0.1),
                                 child: isCurrentImage
                                     ? (currentDocUrl.isNotEmpty
@@ -498,7 +498,7 @@ class EditDocumentModal {
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ],
@@ -540,7 +540,7 @@ class EditDocumentModal {
                           fontFamily: appPoppinFont,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                         ),
                       ),
                       const Spacer(),
@@ -573,10 +573,10 @@ class EditDocumentModal {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF121212).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: Row(
@@ -600,7 +600,7 @@ class EditDocumentModal {
                                     fontFamily: appPoppinFont,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                                 Text(
@@ -704,7 +704,7 @@ class EditDocumentModal {
                                         fontFamily: appPoppinFont,
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                   ],
@@ -743,7 +743,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -752,21 +752,21 @@ class EditDocumentModal {
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 14,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     decoration: InputDecoration(
                       hintText: 'e.g. Blood Test Report',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       prefixIcon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF64748B)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -783,7 +783,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -801,17 +801,17 @@ class EditDocumentModal {
                           }
                         },
                         selectedColor: _primaryBlue,
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                         labelStyle: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 12,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                          color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A)),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                         ),
                       );
@@ -826,7 +826,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -836,20 +836,20 @@ class EditDocumentModal {
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 13,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     decoration: InputDecoration(
                       hintText: 'Add notes about doctor, diagnosis or findings...',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

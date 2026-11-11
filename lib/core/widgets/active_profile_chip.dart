@@ -99,7 +99,7 @@ class ActiveProfileChip extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           height: 1.2,
                           letterSpacing: -0.2,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text.rich(

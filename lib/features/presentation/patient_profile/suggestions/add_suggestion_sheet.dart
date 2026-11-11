@@ -290,7 +290,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 18 : 16,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           if (widget.patientName != null &&
@@ -327,7 +327,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -354,7 +354,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                                 isSelected ? FontWeight.bold : FontWeight.w500,
                             color: isSelected
                                 ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
                           ),
                           selectedColor: const Color(0xFF2563EB),
                           backgroundColor: isDark
@@ -382,7 +382,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -393,7 +393,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: "e.g. Low Sodium Diet & Morning Walk",
@@ -438,7 +438,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -451,7 +451,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText:
@@ -497,7 +497,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -533,7 +533,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                               fontFamily: appPoppinFont,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ],
@@ -568,7 +568,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

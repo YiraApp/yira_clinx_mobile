@@ -81,7 +81,7 @@ class YiraClinxLogo extends StatelessWidget {
               spreadRadius: -2,
             ),
             BoxShadow(
-              color: isDarkMode ? Colors.black.withOpacity(0.4) : const Color(0xFF0F172A).withOpacity(0.04),
+              color: isDarkMode ? Colors.black.withOpacity(0.4) : const Color(0xFF121212).withOpacity(0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

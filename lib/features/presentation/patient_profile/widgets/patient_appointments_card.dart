@@ -345,7 +345,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                                   fontFamily: appPoppinFont,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(

@@ -105,7 +105,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       fontFamily: appPoppinFont,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                 ],
@@ -186,7 +186,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 16 : 14.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -229,11 +229,11 @@ class DoctorQrCodeSheet extends StatelessWidget {
                     size: isTab ? 220.0 : 190.0,
                     eyeStyle: const QrEyeStyle(
                       eyeShape: QrEyeShape.square,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF121212),
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
                       dataModuleShape: QrDataModuleShape.square,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF121212),
                     ),
                   ),
                 ),
@@ -273,7 +273,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                   icon: const Icon(Icons.copy_rounded, size: 16),
                   label: const Text("Copy Link"),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                    foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
                     side: BorderSide(
                       color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                     ),

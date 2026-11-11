@@ -108,7 +108,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         : "Patient Record";
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
         listener: (context, state) {
           if (state is MedicalRecordSuccess) {
@@ -278,7 +278,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: isTab ? 14 : 13,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                   ),
                                 ],
@@ -349,7 +349,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab ? 13 : 12,
                                                 fontWeight: FontWeight.w600,
-                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                color: isDark ? Colors.white : const Color(0xFF121212),
                                               ),
                                               items: const [
                                                 DropdownMenuItem(
@@ -458,7 +458,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 14 : 13,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.grey.shade300 : const Color(0xFF475569),
+                                color: isDark ? Colors.grey.shade300 : const Color(0xFF4A4A4A),
                               ),
                             ),
                           ),

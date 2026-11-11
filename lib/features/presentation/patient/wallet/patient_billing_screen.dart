@@ -171,7 +171,7 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: c.isDark ? [Color.alphaBlend(primary.withValues(alpha: 0.22), c.card), c.card] : [const Color(0xFFE8F0FF), Colors.white],
+          colors: c.isDark ? [Color.alphaBlend(primary.withValues(alpha: 0.10), c.card), c.card] : [const Color(0xFFE8F0FF), Colors.white],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: c.line),

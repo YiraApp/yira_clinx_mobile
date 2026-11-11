@@ -60,7 +60,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 11.5,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                               ),
                             ),
                           ),

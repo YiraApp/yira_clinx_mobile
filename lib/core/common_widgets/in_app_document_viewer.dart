@@ -299,7 +299,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
@@ -319,7 +319,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
             ),
@@ -330,7 +330,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: 13,
-            color: isDark ? Colors.white70 : const Color(0xFF475569),
+            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
           ),
         ),
         actions: [
@@ -552,7 +552,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 fontFamily: appPoppinFont,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -599,7 +599,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   )
                 : Icon(
                     Icons.file_download_outlined,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                     size: 22,
                   ),
             onPressed: _isDownloading ? null : _downloadDocument,
@@ -720,7 +720,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 fontFamily: appPoppinFont,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -877,7 +877,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 8),

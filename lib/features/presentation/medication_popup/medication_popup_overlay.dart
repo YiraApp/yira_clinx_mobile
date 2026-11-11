@@ -40,7 +40,7 @@ class MedicationPopupOverlay extends StatefulWidget {
 class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with WidgetsBindingObserver {
   static const Color _blue = Color(0xFF2563EB);
   static const Color _green = Color(0xFF10B981);
-  static const Color _strong = Color(0xFF0F172A);
+  static const Color _strong = Color(0xFF121212);
   static const Color _muted = Color(0xFF64748B);
   static const Color _line = Color(0xFFE2E8F0);
 

@@ -113,7 +113,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             colorScheme: isDark
                 ? const ColorScheme.dark(
                     primary: Color(0xFF2563EB),
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                   )
                 : const ColorScheme.light(
                     primary: Color(0xFF2563EB),
@@ -296,20 +296,20 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBlue = const Color(0xFF2563EB);
 
-    final inputFill = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final inputBorder = isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
-    final labelColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final inputFill = isDark ? const Color(0xFF232323) : Colors.white;
+    final inputBorder = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1);
+    final labelColor = isDark ? Colors.white70 : const Color(0xFF4A4A4A);
 
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
 
     return PopScope(
       canPop: !_isSaving,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+          backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+          foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
             onPressed: _isSaving ? null : () => Navigator.pop(context),
@@ -320,7 +320,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: 16.5,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
         ),
         centerTitle: true,
@@ -517,7 +517,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       style: TextStyle(
         fontFamily: appPoppinFont,
         fontSize: 13.5,
-        color: isDark ? Colors.white : const Color(0xFF0F172A),
+        color: isDark ? Colors.white : const Color(0xFF121212),
       ),
       decoration: InputDecoration(
         hintText: hintText,
@@ -574,7 +574,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                   fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected
-                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDark ? Colors.white : const Color(0xFF121212))
                       : (isDark ? Colors.white30 : const Color(0xFF94A3B8)),
                 ),
               ),
@@ -600,10 +600,10 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+          color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
           width: 1.1,
         ),
       ),
@@ -619,7 +619,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                     height: 50,
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: const Color(0xFF2563EB).withValues(alpha: 0.35),
@@ -677,7 +677,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                           fontFamily: appPoppinFont,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -750,7 +750,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                               fontFamily: appPoppinFont,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           Text(

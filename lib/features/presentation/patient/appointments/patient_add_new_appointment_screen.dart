@@ -427,7 +427,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               ? ThemeData.dark().copyWith(
                   colorScheme: const ColorScheme.dark(
                     primary: Color(0xFF2563EB),
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                   ),
                 )
               : ThemeData.light().copyWith(
@@ -661,7 +661,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                       fontFamily: appPoppinFont,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -908,7 +908,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   fontFamily: appPoppinFont,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 6),
@@ -1033,7 +1033,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               fontWeight: FontWeight.w700,
               color: highlight
                   ? const Color(0xFF2563EB)
-                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                  : (isDark ? Colors.white : const Color(0xFF232323)),
             ),
           ),
         ),
@@ -1051,7 +1051,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
         title: Text(
           "New Appointment",
           style: TextStyle(
@@ -1133,7 +1133,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     fontFamily: appPoppinFont,
                                     fontSize: isTab ? 16 : 14.5,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -1253,7 +1253,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                                   fontFamily: appPoppinFont,
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
-                                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                                 ),
                                               ),
                                             ),
@@ -1395,7 +1395,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                                     fontFamily: appPoppinFont,
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 12,
-                                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                                   ),
                                                 ),
                                                 Text(
@@ -1481,7 +1481,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         fontFamily: appPoppinFont,
                                         fontSize: 12,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                        color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white : const Color(0xFF121212)),
                                       ),
                                     ),
                                   ],
@@ -1524,7 +1524,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                       fontFamily: appPoppinFont,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                      color: isDark ? Colors.white : const Color(0xFF232323),
                                     ),
                                   ),
                                 ),
@@ -1599,7 +1599,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                           fontWeight: FontWeight.bold,
                                           color: isSelected
                                               ? Colors.white
-                                              : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                              : (isDark ? Colors.white : const Color(0xFF121212)),
                                         ),
                                       ),
                                     ],
@@ -1694,7 +1694,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         ? const Color(0xFF2563EB)
                                         : (isAvail
                                             ? (isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9))
-                                            : (isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9))),
+                                            : (isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9))),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: isSelected
@@ -1724,7 +1724,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                           color: isSelected
                                               ? Colors.white
                                               : (isAvail
-                                                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                                  ? (isDark ? Colors.white : const Color(0xFF121212))
                                                   : (isBooked
                                                       ? (isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400)
                                                       : (isDark ? Colors.white24 : Colors.grey.shade400))),
@@ -1799,7 +1799,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                     color: isSelected
                                         ? Colors.white
-                                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                        : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                   ),
                                 ),
                               ),
@@ -1823,7 +1823,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                       fontFamily: appPoppinFont,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                      color: isDark ? Colors.white : const Color(0xFF232323),
                                     ),
                                   ),
                                   Text(
@@ -1921,7 +1921,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: 11,
-                                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                                   ),
                                 ),
                               ),
@@ -1940,7 +1940,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                     decoration: BoxDecoration(
                       color: _shareRecords
                           ? const Color(0xFF2563EB).withValues(alpha: isDark ? 0.12 : 0.06)
-                          : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                          : (isDark ? const Color(0xFF232323) : Colors.white),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _shareRecords
@@ -1986,7 +1986,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab ? 13.5 : 12.5,
                                           fontWeight: FontWeight.w700,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                       ),
                                     ),
@@ -2048,7 +2048,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                       fontFamily: appPoppinFont,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   Text(
@@ -2149,7 +2149,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
             fontFamily: appPoppinFont,
             fontSize: 13.5,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
+            color: isDark ? Colors.white : const Color(0xFF232323),
           ),
         ),
       ],
@@ -2273,7 +2273,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 15 : 14,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2338,14 +2338,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                     icon: Icons.hub_rounded,
                     label: subSpecialty,
                     isDark: isDark,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 if (regNo.isNotEmpty)
                   _buildDoctorDetailChip(
                     icon: Icons.badge_rounded,
                     label: "Reg: $regNo",
                     isDark: isDark,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
               ],
             ),
@@ -2381,7 +2381,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                         height: 1.35,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -2437,7 +2437,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           fontWeight: FontWeight.w700,
                           color: fee == null || fee == 0
                               ? const Color(0xFF059669)
-                              : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                              : (isDark ? Colors.white : const Color(0xFF121212)),
                         ),
                       ),
                     ],
@@ -2459,7 +2459,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2475,7 +2475,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2519,7 +2519,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white70 : const Color(0xFF475569),
+              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
             ),
           ),
         ],
@@ -2534,7 +2534,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         fontFamily: appPoppinFont,
         fontWeight: FontWeight.w600,
         fontSize: isTab ? 13 : 11.5,
-        color: isDark ? Colors.white70 : const Color(0xFF475569),
+        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
       ),
     );
   }

@@ -497,7 +497,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                     ),
@@ -513,7 +513,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
                         height: 1.45,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                     ),
                     if (timeStr.isNotEmpty) ...[
@@ -817,7 +817,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                         fontFamily: appPoppinFont,
                                         fontWeight: FontWeight.w700,
                                         fontSize: isTab ? width * 0.028 : width * 0.058,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                     Text(
@@ -937,7 +937,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 13,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     decoration: InputDecoration(
                                       hintText: "Search doctor, hospital, condition...",
@@ -983,7 +983,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     items: _statusOptions.map((s) {
                                       return DropdownMenuItem(value: s, child: Text(s));
@@ -1404,7 +1404,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 6),

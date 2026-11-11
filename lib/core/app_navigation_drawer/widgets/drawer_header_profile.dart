@@ -86,7 +86,7 @@ class DrawerHeaderProfile extends StatelessWidget {
                     padding: const EdgeInsets.all(2),
                     child: CircleAvatar(
                       radius: currentDrawerWidth * 0.115,
-                      backgroundColor: isDark ? const Color(0xFF232733) : const Color(0xFFE9ECEF),
+                      backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE9ECEF),
                       backgroundImage: avatarImage,
                       child: avatarImage == null
                           ? Icon(Icons.person_rounded, size: currentDrawerWidth * 0.115, color: theme.primaryColor.withValues(alpha: 0.7))
@@ -105,7 +105,7 @@ class DrawerHeaderProfile extends StatelessWidget {
                           fontFamily: appPoppinFont,
                           fontSize: currentDrawerWidth * (isTab ? 0.052 : 0.05),
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF0A2540),
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF151515),
                           letterSpacing: -0.3,
                         ),
                       ),

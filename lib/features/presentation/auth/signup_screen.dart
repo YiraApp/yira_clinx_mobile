@@ -750,7 +750,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 12 : 11,
                     fontWeight: FontWeight.w400,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     height: 1.35,
                   ),
                   children: [
@@ -780,7 +780,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       text: ' and ',
                       style: TextStyle(
                         fontFamily: appPoppinFont,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                     ),
                     TextSpan(

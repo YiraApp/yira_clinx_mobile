@@ -262,7 +262,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 18 : 16,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -381,7 +381,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                           fontWeight: FontWeight.bold,
                                           color: isDark
                                               ? Colors.white
-                                              : const Color(0xFF0F172A),
+                                              : const Color(0xFF121212),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -425,7 +425,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                 height: 1.45,
                                 color: isDark
                                     ? Colors.white.withValues(alpha: 0.9)
-                                    : const Color(0xFF334155),
+                                    : const Color(0xFF3A3A3A),
                               ),
                             ),
 

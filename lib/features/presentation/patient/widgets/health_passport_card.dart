@@ -33,7 +33,7 @@ class HealthPassportCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              ? [const Color(0xFF232323), const Color(0xFF121212)]
               : [primaryColor, primaryColor.withOpacity(0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -225,7 +225,7 @@ class MockQrPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = const Color(0xFF121212)
       ..style = PaintingStyle.fill;
 
     double cellSize = size.width / 5;

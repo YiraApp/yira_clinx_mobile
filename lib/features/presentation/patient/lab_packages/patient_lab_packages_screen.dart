@@ -15,7 +15,8 @@ import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 
 const Color _primary = Color(0xFF2563EB);
-const Color _teal = Color(0xFF00A896);
+/// The screen's one accent: the app's blue.
+const Color _accent = Color(0xFF2563EB);
 
 String _money(num value) {
   final f = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: value % 1 == 0 ? 0 : 2);
@@ -298,7 +299,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     );
     if (booked != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: _teal,
+        backgroundColor: _accent,
         content: Text(booked.isNotEmpty ? 'Payment successful. Order $booked is booked.' : 'Payment successful. Your lab package is booked.'),
       ));
       _switchSegment(1);
@@ -324,7 +325,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     setState(() => _orders = _orders.map((o) => o['id'] == updated['id'] ? updated : o).toList());
     final booked = updated['slot'] is Map ? updated['slot'] as Map : null;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: _teal,
+      backgroundColor: _accent,
       content: Text(booked != null ? 'Visit booked: ${_slotDay(booked['date']?.toString())}, ${booked['label']}' : 'Visit slot saved.'),
     ));
   }
@@ -367,7 +368,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -377,7 +378,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
                 'Packages',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212)),
               ),
             ),
             Padding(
@@ -431,7 +432,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                           ),
                     isDense: true,
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    fillColor: isDark ? const Color(0xFF232323) : Colors.white,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300)),
                   ),
@@ -459,14 +460,14 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             padding: const EdgeInsets.fromLTRB(20, 6, 16, 0),
             child: Row(
               children: [
-                const Icon(Icons.near_me, size: 14, color: _teal),
+                const Icon(Icons.near_me, size: 14, color: _accent),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     'Your current location · $_locationLabel',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                   ),
                 ),
               ],
@@ -554,7 +555,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFFDE68A)),
           ),
@@ -582,7 +583,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             Expanded(
               child: Text(
                 'Packages from $hospital',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212)),
               ),
             ),
           ],
@@ -625,7 +626,7 @@ class _SegmentSwitch extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -638,7 +639,7 @@ class _SegmentSwitch extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
-                  color: active ? (isDark ? const Color(0xFF334155) : Colors.white) : Colors.transparent,
+                  color: active ? (isDark ? const Color(0xFF3A3A3A) : Colors.white) : Colors.transparent,
                   borderRadius: BorderRadius.circular(9),
                 ),
                 alignment: Alignment.center,
@@ -680,7 +681,7 @@ class _PackageCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
         ),
@@ -702,7 +703,7 @@ class _PackageCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(pkg['name']?.toString() ?? 'Lab package',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212))),
                       const SizedBox(height: 2),
                       Text(
                         '${tests.length} test${tests.length == 1 ? '' : 's'}'
@@ -721,7 +722,7 @@ class _PackageCard extends StatelessWidget {
                 tests.take(4).join(' • ') + (tests.length > 4 ? ' +${tests.length - 4} more' : ''),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
               ),
             ],
             if (prep.isNotEmpty) ...[
@@ -758,8 +759,8 @@ class _PackageCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: _teal.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
-                    child: Text('$off% OFF', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, color: _teal)),
+                    decoration: BoxDecoration(color: _accent.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
+                    child: Text('$off% OFF', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, color: _accent)),
                   ),
                 ],
                 const Spacer(),
@@ -779,20 +780,41 @@ class _PackageCard extends StatelessWidget {
 String _rupees(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(value.round());
 
 /// Icon and colours of a "why it is worth it" card; the same set as the web admin's picker
-const Map<String, (IconData, Color, Color)> _benefitIcons = {
-  'lab': (Icons.science_outlined, Color(0xFFECFDF5), Color(0xFF047857)),
-  'doctor': (Icons.medical_services_outlined, Color(0xFFEEF2FF), Color(0xFF4338CA)),
-  'report': (Icons.description_outlined, Color(0xFFFFFBEB), Color(0xFFB45309)),
-  'dental': (Icons.mood, Color(0xFFFDF2F8), Color(0xFFBE185D)),
-  'eye': (Icons.visibility_outlined, Color(0xFFF0F9FF), Color(0xFF0369A1)),
-  'insurance': (Icons.verified_user_outlined, Color(0xFF047857), Colors.white),
-  'home': (Icons.home_outlined, Color(0xFFF0FDFA), Color(0xFF0F766E)),
-  'family': (Icons.family_restroom, Color(0xFFF5F3FF), Color(0xFF6D28D9)),
-  'support': (Icons.support_agent, Color(0xFFFFF7ED), Color(0xFFC2410C)),
-  'heart': (Icons.favorite_border, Color(0xFFFFF1F2), Color(0xFFBE123C)),
-  'calendar': (Icons.event_available, Color(0xFFF7FEE7), Color(0xFF4D7C0F)),
-  'video': (Icons.videocam_outlined, Color(0xFFEFF6FF), Color(0xFF1D4ED8)),
+const Map<String, IconData> _benefitIcons = {
+  'lab': Icons.science_outlined,
+  'doctor': Icons.medical_services_outlined,
+  'report': Icons.description_outlined,
+  'dental': Icons.sentiment_satisfied_alt_outlined,
+  'eye': Icons.visibility_outlined,
+  'insurance': Icons.health_and_safety_outlined,
+  'home': Icons.home_outlined,
+  'family': Icons.family_restroom_outlined,
+  'support': Icons.support_agent_outlined,
+  'heart': Icons.favorite_border,
+  'calendar': Icons.event_available_outlined,
+  'video': Icons.videocam_outlined,
 };
+
+/// Words in a benefit's title that name its icon, for benefits saved with the generic
+/// 'lab' icon (or none): "Dental check-up" gets the dental icon, not a flask.
+const List<(String, String)> _benefitKeywords = [
+  ('dental', 'dental'), ('dentist', 'dental'), ('tooth', 'dental'), ('teeth', 'dental'),
+  ('eye', 'eye'), ('vision', 'eye'), ('optic', 'eye'),
+  ('insurance', 'insurance'), ('accident', 'insurance'), ('cover', 'insurance'),
+  ('consult', 'doctor'), ('doctor', 'doctor'), ('physician', 'doctor'),
+  ('report', 'report'), ('home', 'home'), ('family', 'family'),
+  ('video', 'video'), ('heart', 'heart'), ('cardio', 'heart'), ('support', 'support'),
+];
+
+IconData _benefitIcon(Map benefit) {
+  final key = benefit['icon']?.toString().trim().toLowerCase() ?? '';
+  if (key.isNotEmpty && key != 'lab' && _benefitIcons.containsKey(key)) return _benefitIcons[key]!;
+  final title = (benefit['title'] ?? '').toString().toLowerCase();
+  for (final (word, icon) in _benefitKeywords) {
+    if (title.contains(word)) return _benefitIcons[icon]!;
+  }
+  return _benefitIcons['lab']!;
+}
 
 /// A package's tests with their parameters: `testGroups` from the server, or (older packages) the
 /// plain `tests` names, each then a single test.
@@ -807,12 +829,7 @@ List<Map<String, dynamic>> _testGroupsOf(Map<String, dynamic> pkg) {
 
 /// Badge colours (background, number) the test cards cycle through
 const List<(Color, Color)> _testBadgeColors = [
-  (Color(0xFFE6F4EE), Color(0xFF0F7A55)),
-  (Color(0xFFFFF4DC), Color(0xFFB7791F)),
-  (Color(0xFFE8EEFF), Color(0xFF3B5BDB)),
-  (Color(0xFFFDECEF), Color(0xFFC2255C)),
-  (Color(0xFFE3F5FA), Color(0xFF0B7285)),
-  (Color(0xFFF1EAFE), Color(0xFF6741D9)),
+  (Color(0xFFEAF0FE), _accent),
 ];
 
 /// "Tests included": a card per test with its parameter count, name and description; tapping +
@@ -832,7 +849,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     final groups = widget.groups;
     final parameters = groups.fold<int>(0, (n, g) => n + ((g['tests'] is List && (g['tests'] as List).isNotEmpty) ? (g['tests'] as List).length : 1));
@@ -860,7 +877,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
       ),
@@ -879,7 +896,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: isDark ? badgeFg.withValues(alpha: 0.2) : badgeBg, borderRadius: BorderRadius.circular(12)),
                     child: Text('${canOpen ? params.length : 1}',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: isDark ? Colors.white : badgeFg)),
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: isDark ? const Color(0xFF93B4FF) : badgeFg)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -891,7 +908,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                       ],
                     ),
                   ),
-                  if (canOpen) Icon(open ? Icons.remove : Icons.add, color: _teal, size: 22),
+                  if (canOpen) Icon(open ? Icons.remove : Icons.add, color: _accent, size: 22),
                 ],
               ),
             ),
@@ -914,7 +931,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                                 children: [
                                   const Padding(
                                     padding: EdgeInsets.only(top: 6),
-                                    child: CircleAvatar(radius: 3, backgroundColor: Color(0xFF0F7A55)),
+                                    child: CircleAvatar(radius: 3, backgroundColor: _accent),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(child: Text(p, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: textColor))),
@@ -944,78 +961,97 @@ class _WorthItSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = benefits.fold<double>(0, (s, b) => s + _num(b['value']));
     final plus = benefits.any((b) => b['valuePlus'] == true);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    // Values marked "+" are estimates, so the saving is rounded down to a round figure.
+    final saving = plus ? ((total - pays) / 100).floor() * 100.0 : total - pays;
+    final accent = Theme.of(context).primaryColor;
+    final ink = isDark ? Colors.white : const Color(0xFF111111);
+    final muted = isDark ? Colors.white70 : const Color(0xFF5F6368);
+    final card = isDark ? const Color(0xFF232323) : Colors.white;
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('WHY IT IS WORTH IT',
+        Text('WHY IT IS WORTH IT',
             textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2, color: Color(0xFF047857))),
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6, color: accent)),
         if (total > 0) ...[
           const SizedBox(height: 6),
-          Text('${_rupees(total)}${plus ? '+' : ''} of care for ${_rupees(pays)}.',
+          Text('${_rupees(total)}${plus ? '+' : ''} of care for ${_rupees(pays)}',
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w800, color: textColor, height: 1.2)),
-        ],
-        const SizedBox(height: 4),
-        Text('What these would typically cost if you booked them separately.',
-            textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-        const SizedBox(height: 12),
-        ...benefits.map((b) {
-          final style = _benefitIcons[b['icon']?.toString()] ?? _benefitIcons['lab']!;
-          final highlight = b['highlight'] == true;
-          final value = _num(b['value']);
-          final description = (b['description'] ?? '').toString();
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: highlight ? const Color(0xFFA7F3D0) : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
-              gradient: highlight
-                  ? LinearGradient(colors: [const Color(0xFFECFDF5), isDark ? const Color(0xFF1E293B) : Colors.white])
-                  : null,
-              color: highlight ? null : (isDark ? const Color(0xFF1E293B) : Colors.white),
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 21, fontWeight: FontWeight.w700, color: ink, height: 1.25)),
+          if (saving > 0) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(color: accent.withValues(alpha: isDark ? 0.2 : 0.08), borderRadius: BorderRadius.circular(20)),
+                child: Text('You save ${_rupees(saving)}${plus ? '+' : ''}',
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : accent)),
+              ),
             ),
-            child: Row(
+          ],
+        ],
+        const SizedBox(height: 8),
+        Text('What each would typically cost if booked on its own.',
+            textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted)),
+        const SizedBox(height: 14),
+        Container(
+          decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(18), border: Border.all(color: line)),
+          child: Column(
+            children: [
+              for (final (i, b) in benefits.indexed) ...[
+                if (i > 0) Divider(height: 1, thickness: 1, indent: 66, color: line),
+                _benefitRow(b, accent: accent, ink: ink, muted: muted),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _benefitRow(Map b, {required Color accent, required Color ink, required Color muted}) {
+    final value = _num(b['value']);
+    final description = (b['description'] ?? '').toString();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(color: accent.withValues(alpha: isDark ? 0.18 : 0.08), borderRadius: BorderRadius.circular(12)),
+            child: Icon(_benefitIcon(b), color: isDark ? const Color(0xFF93B4FF) : accent, size: 21),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(color: style.$2, borderRadius: BorderRadius.circular(12)),
-                  child: Icon(style.$1, color: style.$3, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text((b['title'] ?? '').toString(),
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w800, color: highlight && isDark ? Colors.white : textColor)),
-                      if (description.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-                      ],
-                    ],
-                  ),
-                ),
-                if (value > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(20)),
-                    child: Text('${_rupees(value)}${b['valuePlus'] == true ? '+' : ''} value',
-                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
-                  ),
+                Text((b['title'] ?? '').toString(),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: ink, height: 1.3)),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted, height: 1.35)),
                 ],
               ],
             ),
-          );
-        }),
-      ],
+          ),
+          if (value > 0) ...[
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('${_rupees(value)}${b['valuePlus'] == true ? '+' : ''}',
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w700, color: ink)),
+                Text('value', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted)),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -1052,7 +1088,7 @@ class _OrderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
       ),
@@ -1063,7 +1099,7 @@ class _OrderCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(order['packageName']?.toString() ?? 'Lab package',
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212))),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1075,7 +1111,7 @@ class _OrderCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(order['hospitalName']?.toString() ?? '',
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569))),
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A))),
           const SizedBox(height: 2),
           Text(
             '${order['orderNumber'] ?? ''}${created != null ? ' · ${DateFormat('dd MMM yyyy').format(created)}' : ''}${slot == null && preferred != null && preferred.isNotEmpty ? ' · Visit ${_formatDay(preferred)}' : ''}',
@@ -1099,7 +1135,7 @@ class _OrderCard extends StatelessWidget {
                       children: [
                         Text(
                           slot != null ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}' : 'No visit slot chosen yet',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
                         ),
                         if (slot != null && canChangeSlot && changeUntil != null)
                           Text('You can change it until ${DateFormat('hh:mm a, dd MMM').format(changeUntil)}',
@@ -1124,7 +1160,7 @@ class _OrderCard extends StatelessWidget {
           Row(
             children: [
               Text(_money(_num(order['totalAmount'])),
-                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF121212))),
               const SizedBox(width: 6),
               Text('paid', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600)),
               const Spacer(),
@@ -1270,7 +1306,7 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     final gstPct = _num(pkg['gstPercentage']);
     final gst = _num(pkg['gstAmount']);
     final total = _num(pkg['totalAmount']);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     return DraggableScrollableSheet(
@@ -1280,7 +1316,7 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       expand: false,
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          color: isDark ? const Color(0xFF121212) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -1325,7 +1361,12 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                       _slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}',
                       style: const TextStyle(fontFamily: appPoppinFont),
                     ),
-                    style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isDark ? const Color(0xFF93B4FF) : _accent,
+                      side: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFD7DCE3)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4, left: 4),
@@ -1348,7 +1389,7 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
                     child: Column(children: [
                       if (off > 0) ...[
                         Row(children: [
@@ -1369,7 +1410,7 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Text('You save ${_money(original - price)}',
-                              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700, color: _teal)),
+                              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700, color: _accent)),
                         ),
                       ],
                     ]),
@@ -1411,11 +1452,11 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   Widget _chip(IconData icon, String text, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 14, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+        Icon(icon, size: 14, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
         const SizedBox(width: 4),
-        Flexible(child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF475569)))),
+        Flexible(child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)))),
       ]),
     );
   }
@@ -1533,7 +1574,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     final rescheduling = widget.currentStart != null;
     final unchanged = _date == widget.currentDate && _start == widget.currentStart;
@@ -1542,7 +1583,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -1598,7 +1639,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
                         child: Container(
                           width: 58,
                           decoration: BoxDecoration(
-                            color: selected ? _primary : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
+                            color: selected ? _primary : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Column(

@@ -588,7 +588,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
 
   // --- Styling helpers ---
 
-  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
 
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 

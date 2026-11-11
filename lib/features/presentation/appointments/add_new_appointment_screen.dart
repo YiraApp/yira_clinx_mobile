@@ -1762,7 +1762,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -1977,7 +1977,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: isDark ? Colors.white : const Color(0xFF232323),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -2144,7 +2144,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               fontWeight: FontWeight.w700,
               color: highlight
                   ? const Color(0xFF2563EB)
-                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                  : (isDark ? Colors.white : const Color(0xFF232323)),
             ),
           ),
         ),
@@ -2245,7 +2245,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           appBar: AppBar(
             elevation: 0,
             backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
-            foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+            foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
             title: Text(
               isPatient ? "Book appointment" : "New Appointment",
               style: TextStyle(
@@ -2514,7 +2514,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 13,
-                                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                          color: isDark ? Colors.white : const Color(0xFF232323),
                                         ),
                                       ),
                                       subtitle: Text(
@@ -2572,7 +2572,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                    color: isDark ? Colors.white : const Color(0xFF232323),
                                   ),
                                 ),
                               ),
@@ -2693,7 +2693,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                 ),
                               ),
                             ),
@@ -2745,7 +2745,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                    color: isDark ? Colors.white : const Color(0xFF232323),
                                   ),
                                 ),
                                 Text(
@@ -2818,7 +2818,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        color: isDark ? Colors.white : const Color(0xFF232323),
                                       ),
                                     ),
                                     Text(
@@ -2863,7 +2863,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                      color: isDark ? Colors.white : const Color(0xFF232323),
                                     ),
                                   ),
                                   Text(
@@ -2885,7 +2885,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: _includeConsultationFee
-                                          ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                                          ? (isDark ? Colors.white : const Color(0xFF232323))
                                           : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                                       decoration: !_includeConsultationFee ? TextDecoration.lineThrough : null,
                                     ),
@@ -2924,7 +2924,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             fontFamily: appPoppinFont,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            color: isDark ? Colors.white : const Color(0xFF232323),
                           ),
                           decoration: _inputDecoration(
                             hintText: "Enter discount (e.g. 100)",
@@ -3034,7 +3034,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        color: isDark ? Colors.white : const Color(0xFF232323),
                                       ),
                                     ),
                                   ],
@@ -3058,7 +3058,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                           fontFamily: appPoppinFont,
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                          color: isDark ? Colors.white : const Color(0xFF232323),
                                         ),
                                       ),
                                     ],
@@ -3101,7 +3101,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        color: isDark ? Colors.white : const Color(0xFF232323),
                                       ),
                                     ),
                                     Text(
@@ -3133,7 +3133,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   decoration: BoxDecoration(
                     color: _shareRecords
                         ? primaryColor.withValues(alpha: isDark ? 0.12 : 0.06)
-                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                        : (isDark ? const Color(0xFF232323) : Colors.white),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _shareRecords
@@ -3185,7 +3185,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? 13.5 : 12.5,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                   ),
@@ -3347,7 +3347,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             fontFamily: appPoppinFont,
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
+            color: isDark ? Colors.white : const Color(0xFF232323),
           ),
         ),
       ],
@@ -3377,7 +3377,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     "Skin problem",
   ];
 
-  Color _pText(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _pText(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
   Color _pMuted(bool isDark) => isDark ? Colors.white60 : const Color(0xFF64748B);
   Color _pCard(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
   Color _pLine(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
@@ -3975,7 +3975,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
               ),
@@ -4036,7 +4036,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               Expanded(
                 child: Text(
                   "Consultation fee",
-                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF232323)),
                 ),
               ),
               Text(
@@ -4045,7 +4045,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: fee > 0 ? (isDark ? Colors.white : const Color(0xFF0F172A)) : const Color(0xFF059669),
+                  color: fee > 0 ? (isDark ? Colors.white : const Color(0xFF121212)) : const Color(0xFF059669),
                 ),
               ),
             ],
@@ -4076,7 +4076,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     final hospitalPlace = address.isNotEmpty ? address : (hosp?['city'] ?? '').toString().trim();
     final hospitalLogo = (hosp?['logo'] ?? hosp?['logoUrl'] ?? hosp?['imageUrl'])?.toString();
     final bool canChange = _filteredDoctors.length > 1 || _hospitals.length > 1;
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
 
     return Container(
@@ -4227,7 +4227,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 16 : 14.5,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 6),
@@ -4332,7 +4332,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 fontFamily: appPoppinFont,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                           ),
@@ -4461,7 +4461,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -4529,7 +4529,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF232323),
                 ),
               ),
               Text(
@@ -4663,7 +4663,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 15 : 14,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -4728,14 +4728,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     icon: Icons.hub_rounded,
                     label: subSpecialty,
                     isDark: isDark,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 if (regNo.isNotEmpty)
                   _buildDoctorDetailChip(
                     icon: Icons.badge_rounded,
                     label: "Reg: $regNo",
                     isDark: isDark,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
               ],
             ),
@@ -4771,7 +4771,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                         height: 1.35,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -4827,7 +4827,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           fontWeight: FontWeight.w700,
                           color: fee == null || fee == 0
                               ? const Color(0xFF059669)
-                              : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                              : (isDark ? Colors.white : const Color(0xFF121212)),
                         ),
                       ),
                     ],
@@ -4849,7 +4849,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -4865,7 +4865,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: 10.5,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -4909,7 +4909,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white70 : const Color(0xFF475569),
+              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
             ),
           ),
         ],
@@ -4983,7 +4983,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
               ),
             ),
             Text(
@@ -5055,7 +5055,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isBooked
@@ -5137,7 +5137,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               color: isSelected
                   ? Colors.white
-                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                  : (isDark ? Colors.white : const Color(0xFF232323)),
             ),
           ),
         ),
@@ -5152,7 +5152,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         fontFamily: appPoppinFont,
         fontSize: isTab ? 13 : 12,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
       ),
     );
   }
@@ -5184,7 +5184,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         fontFamily: appPoppinFont,
         fontSize: 13.5,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white : const Color(0xFF1E293B),
+        color: isDark ? Colors.white : const Color(0xFF232323),
       ),
       suffixIcon: suffixIcon,
       errorText: errorText,
@@ -5275,7 +5275,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: isDark ? Colors.white : const Color(0xFF232323),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -5407,7 +5407,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           fontSize: 12.5,
                           fontWeight: _patientSearchMode == PatientSearchMode.byPhone ? FontWeight.w700 : FontWeight.w500,
                           color: _patientSearchMode == PatientSearchMode.byPhone
-                              ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                              ? (isDark ? Colors.white : const Color(0xFF232323))
                               : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                         ),
                       ),
@@ -5463,7 +5463,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           fontSize: 12.5,
                           fontWeight: _patientSearchMode == PatientSearchMode.byName ? FontWeight.w700 : FontWeight.w500,
                           color: _patientSearchMode == PatientSearchMode.byName
-                              ? (isDark ? Colors.white : const Color(0xFF1E293B))
+                              ? (isDark ? Colors.white : const Color(0xFF232323))
                               : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                         ),
                       ),
@@ -5564,7 +5564,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? 16 : 14.5,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                   ),
@@ -5684,7 +5684,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 fontFamily: appPoppinFont,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                               ),
                             ),
                             if (patient.lastVisitDate != null && patient.lastVisitDate!.isNotEmpty) ...[
@@ -5802,7 +5802,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
             ),
@@ -5867,7 +5867,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 fontFamily: appPoppinFont,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             Text(
@@ -5944,7 +5944,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                     color: isSelected
                                         ? Colors.white
-                                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                        : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                   ),
                                 ),
                               ),
@@ -6030,7 +6030,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
               ),
@@ -6146,7 +6146,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 13.5,
                                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                   ),
                                 ),
@@ -6244,7 +6244,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                     ),
                   ],
@@ -6410,7 +6410,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         fontFamily: appPoppinFont,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                     Text(
@@ -6493,7 +6493,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                           fontFamily: appPoppinFont,
                                           fontSize: 12,
                                           fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                                          color: isSel ? relColor : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                          color: isSel ? relColor : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
                                         ),
                                       ),
                                     ],
@@ -6566,7 +6566,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                                       fontFamily: appPoppinFont,
                                                       fontSize: 12,
                                                       fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
-                                                      color: isSel ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                                      color: isSel ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
                                                     ),
                                                   ),
                                                 ),
@@ -6750,7 +6750,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: 12.5,
-            color: isDark ? Colors.white : const Color(0xFF1E293B),
+            color: isDark ? Colors.white : const Color(0xFF232323),
           ),
           decoration: _inputDecoration(
             hintText: "Search clinical procedures / packages...",
@@ -6926,7 +6926,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 12.5,
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                    color: isDark ? Colors.white : const Color(0xFF232323),
                                   ),
                                 ),
                                 if (plan.description.isNotEmpty)
@@ -6950,7 +6950,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white70 : const Color(0xFF334155),
+                              color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
                           ),
                         ],

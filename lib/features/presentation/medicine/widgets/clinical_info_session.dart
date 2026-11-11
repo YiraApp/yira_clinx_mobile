@@ -72,7 +72,7 @@ class ClinicalInfoSection extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 17 : 15,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                     Text(

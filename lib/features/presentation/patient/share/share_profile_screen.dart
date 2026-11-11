@@ -14,11 +14,11 @@ const Color _green = Color(0xFF059669);
 const Color _amber = Color(0xFFD97706);
 const Color _red = Color(0xFFDC2626);
 
-Color _text(bool d) => d ? Colors.white : const Color(0xFF0F172A);
+Color _text(bool d) => d ? Colors.white : const Color(0xFF121212);
 Color _muted(bool d) => d ? Colors.white60 : const Color(0xFF64748B);
-Color _card(bool d) => d ? const Color(0xFF1E293B) : Colors.white;
-Color _line(bool d) => d ? const Color(0xFF334155) : const Color(0xFFE6EAF0);
-Color _page(bool d) => d ? const Color(0xFF0F172A) : const Color(0xFFF4F6FA);
+Color _card(bool d) => d ? const Color(0xFF232323) : Colors.white;
+Color _line(bool d) => d ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
+Color _page(bool d) => d ? const Color(0xFF121212) : const Color(0xFFF4F6FA);
 
 TextStyle _ts(double size, FontWeight w, Color c, {double? height}) =>
     TextStyle(fontFamily: appPoppinFont, fontSize: size, fontWeight: w, color: c, height: height);
@@ -538,7 +538,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
         children: [
           Padding(padding: const EdgeInsets.only(top: 1), child: PhosphorIcon(icon, size: 16, color: color)),
           const SizedBox(width: 8),
-          Expanded(child: Text(text, style: _ts(12, FontWeight.w500, isDark ? Colors.white70 : const Color(0xFF334155), height: 1.4))),
+          Expanded(child: Text(text, style: _ts(12, FontWeight.w500, isDark ? Colors.white70 : const Color(0xFF3A3A3A), height: 1.4))),
         ],
       ),
     );

@@ -265,7 +265,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         );
       case ReportStatus.unknown:
         return (
-          gradient: const [Color(0xFF64748B), Color(0xFF334155)],
+          gradient: const [Color(0xFF64748B), Color(0xFF3A3A3A)],
           color: DietUi.slate,
           icon: Icons.help_outline_rounded,
           label: 'No health insights',

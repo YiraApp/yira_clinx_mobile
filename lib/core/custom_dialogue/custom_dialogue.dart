@@ -128,7 +128,7 @@ class CustomUrlDialog {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontFamily: appPoppinFont,
-                  color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                  color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                   fontWeight: FontWeight.w600,
                 ),
               ),

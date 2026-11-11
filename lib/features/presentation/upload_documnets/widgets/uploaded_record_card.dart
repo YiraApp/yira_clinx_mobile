@@ -99,7 +99,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                 Expanded(child: Text('Downloaded "$cleanTitle" successfully!')),
               ],
             ),
-            backgroundColor: const Color(0xFF0F172A),
+            backgroundColor: const Color(0xFF121212),
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: 'Open',
@@ -215,7 +215,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ],
@@ -234,7 +234,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                               ],
@@ -244,7 +244,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                           value: 'download',
                           child: Row(
                             children: [
-                              Icon(Icons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                              Icon(Icons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                               const SizedBox(width: 10),
                               Text(
                                 'Download',
@@ -252,7 +252,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ],

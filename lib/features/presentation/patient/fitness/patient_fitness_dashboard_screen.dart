@@ -225,16 +225,16 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final syncing = _sync.isSyncingNotifier.value;
-    final fg = isDark ? Colors.white : const Color(0xFF0F172A);
+    final fg = isDark ? Colors.white : const Color(0xFF121212);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF4F6FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 0,
-        backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF4F6FA),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
         leading: IconButton(
           icon: Icon(PhosphorIconsBold.caretLeft, color: fg),
           onPressed: () => Navigator.pop(context),
@@ -298,14 +298,14 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           fontFamily: appPoppinFont,
           fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: isDark ? Colors.white : const Color(0xFF0F172A),
+          color: isDark ? Colors.white : const Color(0xFF121212),
         ),
       );
 
   BoxDecoration _card(bool isDark) => BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
+        color: isDark ? const Color(0xFF161616) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE8ECF2)),
+        border: Border.all(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2)),
       );
 
   Color _muted(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
@@ -372,7 +372,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                       fontFamily: appPoppinFont,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                      color: isDark ? Colors.white : const Color(0xFF121212))),
               const Spacer(),
               Text(DateFormat('EEE, d MMM').format(DateTime.now()),
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: _muted(isDark))),
@@ -390,7 +390,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                     painter: _RingPainter(
                       progress: progress,
                       color: green,
-                      track: isDark ? const Color(0xFF1F2937) : const Color(0xFFEAF7EF),
+                      track: isDark ? const Color(0xFF232323) : const Color(0xFFEAF7EF),
                     ),
                     child: Center(
                       child: Column(
@@ -405,7 +405,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                                 fontFamily: appPoppinFont,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                           ),
@@ -494,7 +494,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       height: 1.1,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                      color: isDark ? Colors.white : const Color(0xFF121212))),
               Text(label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -572,7 +572,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         decoration: _card(isDark).copyWith(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: selected ? m.color.withValues(alpha: 0.6) : (isDark ? const Color(0xFF1F2937) : const Color(0xFFE8ECF2))),
+          border: Border.all(color: selected ? m.color.withValues(alpha: 0.6) : (isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -598,7 +598,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                           fontFamily: appPoppinFont,
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                          color: isDark ? Colors.white : const Color(0xFF121212))),
                   TextSpan(
                       text: ' $unit',
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: _muted(isDark))),
@@ -654,7 +654,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                             fontFamily: appPoppinFont,
                             fontSize: minutes == null ? 15 : 20,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                            color: isDark ? Colors.white : const Color(0xFF121212)),
                       ),
                     ],
                   ),
@@ -809,7 +809,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                               fontFamily: appPoppinFont,
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                              color: isDark ? Colors.white : const Color(0xFF121212))),
                       if (avg != null && _metric != FitnessMetricType.sleep)
                         TextSpan(
                             text: ' ${m.unit}', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: _muted(isDark))),
@@ -908,7 +908,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: selected ? (isDark ? const Color(0xFF1F2937) : Colors.white) : Colors.transparent,
+              color: selected ? (isDark ? const Color(0xFF232323) : Colors.white) : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: selected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2))] : null,
             ),
@@ -918,7 +918,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? (isDark ? Colors.white : const Color(0xFF0F172A)) : _muted(isDark),
+                  color: selected ? (isDark ? Colors.white : const Color(0xFF121212)) : _muted(isDark),
                 )),
           ),
         ),
@@ -928,7 +928,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1120) : const Color(0xFFF1F4F8),
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F4F8),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(children: [button('7 days', FitnessPeriod.week), button('30 days', FitnessPeriod.month)]),
@@ -949,7 +949,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           height: 34,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: selected ? m.color : (isDark ? const Color(0xFF1F2937) : const Color(0xFFF1F4F8)),
+            color: selected ? m.color : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F4F8)),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -962,7 +962,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                     fontFamily: appPoppinFont,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: selected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                    color: selected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
                   )),
             ],
           ),
@@ -1042,7 +1042,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           drawVerticalLine: false,
           horizontalInterval: maxY / 4,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFEEF1F5), strokeWidth: 1),
+              FlLine(color: isDark ? const Color(0xFF232323) : const Color(0xFFEEF1F5), strokeWidth: 1),
         ),
         titlesData: _titles(points, isDark),
         extraLinesData: goal == null
@@ -1052,7 +1052,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
               ]),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => isDark ? const Color(0xFF1F2937) : const Color(0xFF0F172A),
+            getTooltipColor: (_) => isDark ? const Color(0xFF232323) : const Color(0xFF121212),
             getTooltipItem: (group, _, rod, _) {
               final p = points[group.x];
               final v = values[group.x];
@@ -1104,12 +1104,12 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           drawVerticalLine: false,
           horizontalInterval: (maxY - minY) / 4 == 0 ? 1 : (maxY - minY) / 4,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFEEF1F5), strokeWidth: 1),
+              FlLine(color: isDark ? const Color(0xFF232323) : const Color(0xFFEEF1F5), strokeWidth: 1),
         ),
         titlesData: _titles(points, isDark),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => isDark ? const Color(0xFF1F2937) : const Color(0xFF0F172A),
+            getTooltipColor: (_) => isDark ? const Color(0xFF232323) : const Color(0xFF121212),
             getTooltipItems: (spots) => spots
                 .map((s) => LineTooltipItem(
                       '${_tooltipDate(points[s.x.round()])}\n',
@@ -1152,7 +1152,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : const Color(0xFFEFF4FF),
+        color: isDark ? const Color(0xFF161616) : const Color(0xFFEFF4FF),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1229,7 +1229,7 @@ class _HourlyBars extends StatelessWidget {
                       heightFactor: top == 0 ? 0.04 : math.max(0.04, byHour[h] / top),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: byHour[h] == 0 ? (isDark ? const Color(0xFF1F2937) : const Color(0xFFEFF2F6)) : color,
+                          color: byHour[h] == 0 ? (isDark ? const Color(0xFF232323) : const Color(0xFFEFF2F6)) : color,
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),

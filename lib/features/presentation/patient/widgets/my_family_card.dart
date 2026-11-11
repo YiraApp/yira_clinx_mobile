@@ -243,7 +243,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                         fontFamily: appPoppinFont,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                     Text(
@@ -313,7 +313,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('First Name *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                            Text('First Name *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                             const SizedBox(height: 6),
                             TextField(
                               controller: firstNameController,
@@ -335,7 +335,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Last Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                            Text('Last Name', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                             const SizedBox(height: 6),
                             TextField(
                               controller: lastNameController,
@@ -357,7 +357,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                   const SizedBox(height: 14),
 
                   // Relationship Selection Chips
-                  Text('Relationship to Primary Account *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                  Text('Relationship to Primary Account *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -374,7 +374,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                           fontFamily: appPoppinFont,
                           fontSize: 12,
                           fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                          color: isSel ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                          color: isSel ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                         ),
                         onSelected: (val) {
                           if (val) {
@@ -400,7 +400,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Gender *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                            Text('Gender *', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                             const SizedBox(height: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -429,7 +429,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Date of Birth', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                            Text('Date of Birth', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                             const SizedBox(height: 6),
                             InkWell(
                               onTap: () async {
@@ -461,7 +461,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: 12.5,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -487,7 +487,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                           fontFamily: appPoppinFont,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -525,7 +525,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
@@ -813,7 +813,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 17 : 15,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -930,7 +930,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                               fontFamily: appPoppinFont,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ],
@@ -1102,7 +1102,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
 

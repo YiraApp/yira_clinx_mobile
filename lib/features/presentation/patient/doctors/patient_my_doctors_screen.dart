@@ -526,7 +526,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isTab = isTablet(context);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     // Filter doctors by search query and category
     final filteredDoctors = _doctors.where((d) {
@@ -697,7 +697,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                 ),
                                 selectedColor: _primaryBlue,
                                 backgroundColor: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
@@ -802,7 +802,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 15 : 14,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -894,7 +894,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                             fontFamily: appPoppinFont,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                       ],
@@ -942,7 +942,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -959,7 +959,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -976,7 +976,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -1053,7 +1053,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
                 textAlign: TextAlign.center,
               ),

@@ -58,7 +58,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final bool isTab = isTablet(context);
 
-    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF121212);
     final paragraphColor = isDarkMode ? Colors.white60 : const Color(0xFF64748B);
     final panelBg = isDarkMode ? theme.cardColor : Colors.white;
     final bool currentIsInApp = widget.roleEntity?.inApp ?? false;
@@ -142,7 +142,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontFamily: appPoppinFont,
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                color: isDarkMode ? Colors.white : const Color(0xFF121212),
                                 fontSize: displayWidth(context) * (isTab ? 0.025 : 0.065),
                               ),
                             ),

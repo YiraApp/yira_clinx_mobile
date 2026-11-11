@@ -298,7 +298,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 ? const ColorScheme.dark(
                     primary: _primaryBlue,
                     onPrimary: Colors.white,
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                     onSurface: Colors.white,
                   )
                 : const ColorScheme.light(
@@ -627,7 +627,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
               size: 20,
             ),
             onPressed: () {
@@ -792,7 +792,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 17 : 15.5,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -884,7 +884,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                             fontFamily: appPoppinFont,
                             fontSize: 13.5,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -947,7 +947,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? 15.5 : 13.5,
                                         fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -972,7 +972,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                                       fontFamily: appPoppinFont,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                                     ),
                                   ),
                                 ),
@@ -1134,7 +1134,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 13 : 12,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1210,7 +1210,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 16 : 14.5,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               Text(
@@ -1425,7 +1425,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                             fontSize: isTab ? 20 : 17,
                             fontWeight: FontWeight.bold,
                             color: hasVal
-                                ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                ? (isDark ? Colors.white : const Color(0xFF121212))
                                 : (isDark ? Colors.white38 : Colors.grey[400]),
                           ),
                           maxLines: 1,
@@ -1517,7 +1517,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   fontFamily: appPoppinFont,
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                 ),
               ),
             ],
@@ -1598,7 +1598,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 26 : 22,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                         ),
@@ -1674,7 +1674,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
               fontFamily: appPoppinFont,
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
         ],
@@ -1868,7 +1868,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 16 : 14.5,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               if (isAllScreen)
@@ -1961,7 +1961,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                               fontFamily: appPoppinFont,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                         ],

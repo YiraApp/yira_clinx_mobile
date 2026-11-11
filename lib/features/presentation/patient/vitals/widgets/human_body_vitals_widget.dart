@@ -339,7 +339,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF0F172A),
+                                  : const Color(0xFF121212),
                             ),
                           ),
                           Text(

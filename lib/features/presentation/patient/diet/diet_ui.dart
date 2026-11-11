@@ -20,8 +20,8 @@ class DietUi {
   /// Panels set inside a card (stats, inputs).
   static Color sunken(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
   static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
-  static Color strong(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
-  static Color body(bool isDark) => isDark ? Colors.white70 : const Color(0xFF475569);
+  static Color strong(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
+  static Color body(bool isDark) => isDark ? Colors.white70 : const Color(0xFF4A4A4A);
   static Color muted(bool isDark) => isDark ? Colors.white60 : const Color(0xFF64748B);
   static Color hint(bool isDark) => isDark ? Colors.white38 : const Color(0xFF94A3B8);
 

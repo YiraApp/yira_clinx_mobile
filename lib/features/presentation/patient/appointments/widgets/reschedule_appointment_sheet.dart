@@ -403,7 +403,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
               ? ThemeData.dark().copyWith(
                   colorScheme: const ColorScheme.dark(
                     primary: Color(0xFF2563EB),
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                   ),
                 )
               : ThemeData.light().copyWith(
@@ -499,7 +499,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                   fontFamily: appPoppinFont,
                                   fontWeight: FontWeight.w700,
                                   fontSize: isTab ? 20 : 17,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(
@@ -577,7 +577,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                               fontFamily: appPoppinFont,
                                               fontWeight: FontWeight.w700,
                                               fontSize: isTab ? 15 : 13.5,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              color: isDark ? Colors.white : const Color(0xFF121212),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -635,7 +635,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w700,
                                 fontSize: isTab ? 16 : 14,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             InkWell(
@@ -743,7 +743,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                             fontSize: 17,
                                             color: isSelected
                                                 ? Colors.white
-                                                : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                                : (isDark ? Colors.white : const Color(0xFF121212)),
                                           ),
                                         ),
                                         Text(
@@ -778,7 +778,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w700,
                                 fontSize: isTab ? 16 : 14,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             Text(
@@ -1054,7 +1054,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected
                     ? Colors.white
-                    : (isDark ? Colors.white : const Color(0xFF334155)),
+                    : (isDark ? Colors.white : const Color(0xFF3A3A3A)),
               ),
             ),
             const SizedBox(width: 5),
@@ -1131,7 +1131,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: isTab ? 14 : 12.5,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -1232,7 +1232,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isBooked
@@ -1337,7 +1337,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
                       ? Colors.white
-                      : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                      : (isDark ? Colors.white : const Color(0xFF232323)),
                 ),
               ),
             ],
@@ -1431,7 +1431,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.w700,
               fontSize: 14,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
           const SizedBox(height: 4),

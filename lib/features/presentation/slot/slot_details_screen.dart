@@ -162,7 +162,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                     fontSize: headlineSize,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -318,7 +318,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         fontFamily: appPoppinFont,
                         fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                   ],
@@ -790,7 +790,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
         fontFamily: appPoppinFont,
         fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.028,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
       ),
     );
   }

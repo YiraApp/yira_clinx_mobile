@@ -83,7 +83,7 @@ class PatientVitalsGrid extends StatelessWidget {
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 18 : 15,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   Container(
@@ -199,7 +199,7 @@ class PatientVitalsGrid extends StatelessWidget {
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 16 : 14,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(

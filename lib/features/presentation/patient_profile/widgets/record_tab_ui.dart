@@ -8,7 +8,7 @@ import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 class RecordUi {
   RecordUi._();
 
-  static Color ink(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  static Color ink(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
   static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
   static Color soft(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9);
   static const Color urgent = Color(0xFFD97706);

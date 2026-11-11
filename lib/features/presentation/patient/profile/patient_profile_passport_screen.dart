@@ -472,7 +472,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 fontFamily: appPoppinFont,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 4),
@@ -659,7 +659,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 fontFamily: appPoppinFont,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
           ],
@@ -859,7 +859,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final activeProfile = _openProfile(currentUser);
@@ -960,11 +960,11 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                           colorScheme: ColorScheme.dark(
                             primary: primaryColor,
                             onPrimary: Colors.white,
-                            surface: const Color(0xFF1E293B),
+                            surface: const Color(0xFF232323),
                             onSurface: Colors.white,
                           ),
                           dialogTheme: const DialogThemeData(
-                            backgroundColor: Color(0xFF1E293B),
+                            backgroundColor: Color(0xFF232323),
                           ),
                         )
                       : ThemeData.light().copyWith(
@@ -972,7 +972,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             primary: primaryColor,
                             onPrimary: Colors.white,
                             surface: Colors.white,
-                            onSurface: const Color(0xFF0F172A),
+                            onSurface: const Color(0xFF121212),
                           ),
                           dialogTheme: const DialogThemeData(
                             backgroundColor: Colors.white,
@@ -1249,7 +1249,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: isPhoneAvailable
-                        ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
+                        ? (isDark ? const Color(0xFF1E1E1E) : Colors.grey[200])
                         : (isDark ? const Color(0xFF121212) : Colors.grey[100]),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1301,7 +1301,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: isEmailAvailable
-                        ? (isDark ? const Color(0xFF161F30) : Colors.grey[200])
+                        ? (isDark ? const Color(0xFF1E1E1E) : Colors.grey[200])
                         : (isDark ? const Color(0xFF121212) : Colors.grey[100]),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1554,7 +1554,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     final initialName = _cleanValue(_cachedEmergencyName ?? emergency?.name, '');
     final initialPhone = _cleanValue(_cachedEmergencyPhone ?? emergency?.phone, '');
@@ -2281,7 +2281,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       if (gender.trim().isNotEmpty) gender.trim(),
     ].join(' · ');
 
-    final Color ink = isDark ? Colors.white : const Color(0xFF0F172A);
+    final Color ink = isDark ? Colors.white : const Color(0xFF121212);
     final Color muted = isDark ? Colors.white60 : const Color(0xFF64748B);
     final Color line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
 
@@ -2311,7 +2311,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [Color.alphaBlend(primaryColor.withValues(alpha: 0.22), const Color(0xFF1E293B)), const Color(0xFF1E293B)]
+              ? [Color.alphaBlend(primaryColor.withValues(alpha: 0.22), const Color(0xFF232323)), const Color(0xFF232323)]
               : [const Color(0xFFE8F0FF), Colors.white],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -2423,7 +2423,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-            child: PhosphorIcon(PhosphorIconsBold.phoneCall, size: 19, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+            child: PhosphorIcon(PhosphorIconsBold.phoneCall, size: 19, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2431,7 +2431,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Emergency contact',
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212))),
                 Text('Who should doctors call if you need help?',
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
               ],
@@ -2477,7 +2477,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     final bg = bloodGroup.trim();
     final bool hasBg = bg.isNotEmpty && bg.toLowerCase() != 'none' && bg.toLowerCase() != 'null' && bg != '-';
 
-    final Color ink = isDark ? Colors.white : const Color(0xFF0F172A);
+    final Color ink = isDark ? Colors.white : const Color(0xFF121212);
     final Color muted = isDark ? Colors.white60 : const Color(0xFF64748B);
     final Color primary = Theme.of(context).primaryColor;
 
@@ -2585,7 +2585,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               Text(l.$3,
                                   textAlign: TextAlign.center,
                                   maxLines: 2,
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w500, height: 1.25, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w500, height: 1.25, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
                             ],
                           ),
                         ),
@@ -2643,7 +2643,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               borderRadius: BorderRadius.circular(11),
                             ),
                             child: PhosphorIcon(items[i].icon,
-                                size: 19, color: items[i].danger ? items[i].color : (isDark ? Colors.white70 : const Color(0xFF475569))),
+                                size: 19, color: items[i].danger ? items[i].color : (isDark ? Colors.white70 : const Color(0xFF4A4A4A))),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -2655,7 +2655,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                                         fontFamily: appPoppinFont,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: items[i].danger ? items[i].color : (isDark ? Colors.white : const Color(0xFF0F172A)))),
+                                        color: items[i].danger ? items[i].color : (isDark ? Colors.white : const Color(0xFF121212)))),
                                 if (items[i].subtitle != null)
                                   Text(items[i].subtitle!,
                                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: isDark ? Colors.white60 : const Color(0xFF64748B))),

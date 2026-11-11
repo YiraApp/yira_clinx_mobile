@@ -1160,7 +1160,7 @@ class ParametersCard extends StatelessWidget {
         fontFamily: appPoppinFont,
         fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
         letterSpacing: 0.3,
       ),
     );

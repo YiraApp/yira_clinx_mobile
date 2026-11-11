@@ -89,7 +89,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 fontFamily: appPoppinFont,
                 fontSize: widget.isTab ? 13 : 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
               ),
             ),
           ],
@@ -114,7 +114,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     fontFamily: appPoppinFont,
                     fontSize: widget.isTab ? 14 : 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: hintText,
@@ -207,7 +207,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                           fontFamily: appPoppinFont,
                           fontSize: widget.isTab ? 17 : 15,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(

@@ -144,11 +144,11 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
         listenWhen: (previous, current) =>
             current is GetDataSuccessState || current is GetDataFailureState,
         builder: (context, state) {
-          return const Scaffold(
-            backgroundColor: Color(0xFFF8FAFC),
+          return Scaffold(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A0A0B) : const Color(0xFFF8FAFC),
             extendBodyBehindAppBar: true,
             extendBody: true,
-            body: YiraSplashScreen(),
+            body: const YiraSplashScreen(),
           );
         },
       ),

@@ -53,7 +53,7 @@ class CustomSettingTile extends StatelessWidget {
               fontFamily: appPoppinFont,
               fontSize: isTab? width*0.02:width * 0.035,
               fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B),
+              color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF232323),
             ),
           ),
           subtitle: Padding(

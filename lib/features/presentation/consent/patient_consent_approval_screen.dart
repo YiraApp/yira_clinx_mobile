@@ -276,7 +276,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF121212)),
                       decoration: InputDecoration(
                         hintText: 'Search doctor, hospital, or specialty...',
                         hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey.shade400),
@@ -365,7 +365,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.bold,
                                           fontSize: isTab ? 18 : 16,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -439,7 +439,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                 fontFamily: appPoppinFont,
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
               ),
             ),
             if (count > 0) ...[
@@ -582,7 +582,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 15.5 : 14.5,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -655,7 +655,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                       fontFamily: appPoppinFont,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -736,7 +736,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 11.5,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
             ),

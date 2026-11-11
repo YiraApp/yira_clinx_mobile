@@ -177,7 +177,7 @@ class _AddPrescriptionRecordScreenState
                 icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 20,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -187,7 +187,7 @@ class _AddPrescriptionRecordScreenState
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 18 : 16.5,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               centerTitle: true,
@@ -224,7 +224,7 @@ class _AddPrescriptionRecordScreenState
                     flex: 1,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: isDark ? Colors.white70 : const Color(0xFF475569),
+                        foregroundColor: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                         side: BorderSide(
                           color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                         ),
@@ -322,7 +322,7 @@ class _AddPrescriptionRecordScreenState
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 16 : 14.5,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                         ],
@@ -522,7 +522,7 @@ class _AddPrescriptionRecordScreenState
                                 fontFamily: appPoppinFont,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                           ],
@@ -558,7 +558,7 @@ class _AddPrescriptionRecordScreenState
                                     fontFamily: appPoppinFont,
                                     fontSize: 10.5,
                                     fontWeight: isAdded ? FontWeight.bold : FontWeight.w500,
-                                    color: isAdded ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                    color: isAdded ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                   ),
                                 ),
                               ),
@@ -573,7 +573,7 @@ class _AddPrescriptionRecordScreenState
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 12.5,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                           decoration: InputDecoration(
                             hintText: "Enter special instructions or diet advice...",
@@ -666,7 +666,7 @@ class _AddPrescriptionRecordScreenState
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

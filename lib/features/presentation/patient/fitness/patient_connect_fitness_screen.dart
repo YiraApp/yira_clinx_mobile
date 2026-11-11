@@ -121,18 +121,18 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).primaryColor;
-    final fg = isDark ? Colors.white : const Color(0xFF0F172A);
+    final fg = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final platform = Platform.isIOS ? 'Apple Health' : 'Health Connect';
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF4F6FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleSpacing: 0,
-        backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF4F6FA),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
         leading: IconButton(icon: Icon(PhosphorIconsBold.caretLeft, color: fg), onPressed: () => Navigator.pop(context)),
         title: Text('Fitness',
             style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w700, color: fg)),
@@ -165,7 +165,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF111827) : const Color(0xFFECFDF5),
+                      color: isDark ? const Color(0xFF161616) : const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -190,7 +190,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF121212) : Colors.white,
-                border: Border(top: BorderSide(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE8ECF2))),
+                border: Border(top: BorderSide(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2))),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -233,7 +233,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [const Color(0xFF14532D), const Color(0xFF0F172A)]
+              ? [const Color(0xFF14532D), const Color(0xFF121212)]
               : [const Color(0xFFDCFCE7), const Color(0xFFE0F2FE)],
         ),
         borderRadius: BorderRadius.circular(22),
@@ -278,7 +278,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
   Widget _familyNote(bool isDark) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1F2937) : const Color(0xFFFFFBEB),
+          color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
         ),
@@ -308,9 +308,9 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
+        color: isDark ? const Color(0xFF161616) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE8ECF2)),
+        border: Border.all(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

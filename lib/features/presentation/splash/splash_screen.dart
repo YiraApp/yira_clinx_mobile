@@ -13,7 +13,6 @@ import '../../domain/repositories/side_menu/side_menu_repo.dart';
 import '../configuration/config_bloc.dart';
 import '../configuration/configuration_screen.dart';
 import 'auth_bloc/auth_bloc.dart';
-import 'widgets/service_icon_widget.dart';
 import 'yira_splash_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -47,9 +46,6 @@ class _SplashScreenState extends State<SplashScreen> {
       const AssetImage('assets/images/yira_hand_light_centered.png'),
       context,
     );
-    for (final service in splashHealthcareServices) {
-      precacheImage(AssetImage(service.assetPath), context);
-    }
   }
 
   void _initializeFlow() async {
@@ -130,10 +126,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     // Crisp dark status bar icons for clean light mode
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    // Status bar icons that read on the splash, light or dark.
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
+      statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: dark ? Brightness.dark : Brightness.light,
     ));
 
     return BlocListener<ConfigBloc, ConfigState>(
@@ -148,7 +146,7 @@ class _SplashScreenState extends State<SplashScreen> {
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: dark ? const Color(0xFF0A0A0B) : const Color(0xFFF8FAFC),
         extendBodyBehindAppBar: true,
         extendBody: true,
         body: YiraSplashScreen(

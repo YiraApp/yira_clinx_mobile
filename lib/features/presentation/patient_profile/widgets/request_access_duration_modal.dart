@@ -180,7 +180,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1B2234) : Colors.white,
+        color: isDark ? const Color(0xFF222222) : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -237,7 +237,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 19 : 17,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0A2540),
+                        color: isDark ? Colors.white : const Color(0xFF151515),
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -282,7 +282,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                          : (isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC)),
+                          : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
@@ -306,7 +306,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                             size: 18,
                             color: isSelected
                                 ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -320,7 +320,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 14.5 : 13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(
@@ -375,7 +375,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                 color: isDark ? Colors.white38 : Colors.grey.shade500,
               ),
               filled: true,
-              fillColor: isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC),
+              fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

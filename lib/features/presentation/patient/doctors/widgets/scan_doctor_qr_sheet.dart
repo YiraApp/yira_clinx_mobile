@@ -604,7 +604,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: const Color(0xFF232323),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Column(

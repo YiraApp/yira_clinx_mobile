@@ -80,7 +80,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
     final isTablet = mediaQuery.size.shortestSide >= 600;
 
     final Color bgColor = isDarkMode ? const Color(0xff121316) : Colors.white;
-    final Color titleColor = isDarkMode ? Colors.white : const Color(0xff1E293B);
+    final Color titleColor = isDarkMode ? Colors.white : const Color(0xFF232323);
     final Color bodyColor = isDarkMode ? const Color(0xff94A3B8) : const Color(0xff64748B);
 
     final double iconContainerSize = isTablet ? 140.0 : 108.0;

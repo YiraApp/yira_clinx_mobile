@@ -148,7 +148,7 @@ class AppDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = accentColor ?? toneColor(tone);
-    final titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final titleColor = isDark ? Colors.white : const Color(0xFF121212);
     final bodyColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     // Two long labels do not fit side by side on a phone, so stack them.
@@ -259,7 +259,7 @@ class AppDialog extends StatelessWidget {
     return OutlinedButton(
       onPressed: isPrimaryLoading ? null : (onSecondary ?? () => Navigator.of(context).pop(false)),
       style: OutlinedButton.styleFrom(
-        foregroundColor: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+        foregroundColor: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
         minimumSize: const Size(0, 48),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),

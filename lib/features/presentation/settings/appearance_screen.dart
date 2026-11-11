@@ -115,7 +115,7 @@ class _ThemeSelectorRow extends StatelessWidget {
               icon: Icons.dark_mode_outlined,
               isSelected: state.themeMode == ThemeMode.dark,
               onTap: () => context.read<ThemeBloc>().add(SetThemeEvent(ThemeMode.dark)),
-              iconColor: isDark ? Colors.white : const Color(0xFF2D3142),
+              iconColor: isDark ? Colors.white : const Color(0xFF303030),
             ),
             _ThemeOptionCard(
               label: "System",

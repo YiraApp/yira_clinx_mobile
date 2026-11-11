@@ -510,7 +510,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 13),
                                     ),
                                     behavior: SnackBarBehavior.floating,
-                                    backgroundColor: const Color(0xFF334155),
+                                    backgroundColor: const Color(0xFF3A3A3A),
                                     duration: const Duration(seconds: 2),
                                   ),
                                 );

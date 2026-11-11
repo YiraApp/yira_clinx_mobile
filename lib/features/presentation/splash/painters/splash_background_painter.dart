@@ -12,16 +12,21 @@ class SplashBackgroundPainter extends CustomPainter {
   final double fadeIn;
   final List<SplashParticle> _particles;
 
+  /// Near-black scene with a blue glow instead of the white clinical one.
+  final bool dark;
+
   SplashBackgroundPainter({
     required this.animationValue,
     this.fadeIn = 1.0,
     required List<SplashParticle> particles,
+    this.dark = false,
   }) : _particles = particles;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (fadeIn <= 0.005) return;
     _drawGradientBackground(canvas, size);
+    _drawAurora(canvas, size);
     _drawParticles(canvas, size);
   }
 
@@ -34,11 +39,17 @@ class SplashBackgroundPainter extends CustomPainter {
     final baseGradient = ui.Gradient.radial(
       Offset(centerX, centerY),
       size.height * 0.85,
-      [
-        Color(0xFFE6F0FA).withValues(alpha: fadeIn), // Soft luminous ice blue aura
-        Color(0xFFF1F6FD).withValues(alpha: fadeIn), // Delicate sky white
-        Color(0xFFF8FAFC).withValues(alpha: fadeIn), // Crisp clinical white
-      ],
+      dark
+          ? [
+              const Color(0xFF131313).withValues(alpha: fadeIn),
+              const Color(0xFF0D0D0D).withValues(alpha: fadeIn),
+              const Color(0xFF0A0A0B).withValues(alpha: fadeIn),
+            ]
+          : [
+              const Color(0xFFE6F0FA).withValues(alpha: fadeIn), // Soft luminous ice blue aura
+              const Color(0xFFF1F6FD).withValues(alpha: fadeIn), // Delicate sky white
+              const Color(0xFFF8FAFC).withValues(alpha: fadeIn), // Crisp clinical white
+            ],
       [0.0, 0.55, 1.0],
     );
 
@@ -46,7 +57,7 @@ class SplashBackgroundPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
     // Subtle royal blue ambient energy pulse at center
-    final pulse = (0.05 + 0.03 * sin(animationValue * 2 * pi)) * fadeIn;
+    final pulse = ((dark ? 0.09 : 0.05) + 0.03 * sin(animationValue * 2 * pi)) * fadeIn;
     final accentGradient = ui.Gradient.radial(
       Offset(size.width * 0.5, size.height * 0.42),
       size.width * 0.75,
@@ -59,6 +70,29 @@ class SplashBackgroundPainter extends CustomPainter {
     );
     final accentPaint = Paint()..shader = accentGradient;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), accentPaint);
+  }
+
+  /// Two soft lights drifting slowly behind everything, like an aurora.
+  void _drawAurora(Canvas canvas, Size size) {
+    final t = animationValue * 2 * pi;
+    final blobs = [
+      (Offset(size.width * (0.22 + 0.10 * sin(t)), size.height * (0.24 + 0.05 * cos(t))), const Color(0xFF3B82F6)),
+      (Offset(size.width * (0.80 - 0.10 * cos(t * 0.8)), size.height * (0.70 + 0.06 * sin(t * 0.8))), const Color(0xFF06B6D4)),
+    ];
+    final strength = (dark ? 0.07 : 0.10) * fadeIn;
+    for (final (center, color) in blobs) {
+      final radius = size.width * 0.75;
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..shader = ui.Gradient.radial(
+            center,
+            radius,
+            [color.withValues(alpha: strength), color.withValues(alpha: 0)],
+          ),
+      );
+    }
   }
 
   void _drawParticles(Canvas canvas, Size size) {
@@ -75,7 +109,7 @@ class SplashBackgroundPainter extends CustomPainter {
       final y = (particle.baseY - progress * particle.speed) % 1.0 * size.height;
 
       final opacity =
-          ((sin(progress * pi) * particle.maxOpacity) * fadeIn).clamp(0.0, 1.0);
+          ((sin(progress * pi) * particle.maxOpacity) * fadeIn * (dark ? 1.8 : 1.0)).clamp(0.0, 1.0);
 
       if (opacity <= 0.005) continue;
 
@@ -94,7 +128,8 @@ class SplashBackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(SplashBackgroundPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue ||
-        oldDelegate.fadeIn != fadeIn;
+        oldDelegate.fadeIn != fadeIn ||
+        oldDelegate.dark != dark;
   }
 }
 

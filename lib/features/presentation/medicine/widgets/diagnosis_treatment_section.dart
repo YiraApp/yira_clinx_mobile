@@ -67,7 +67,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 17 : 15,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                     Text(
@@ -101,7 +101,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
             ],
@@ -121,7 +121,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter clinical diagnosis...",
@@ -148,7 +148,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
               const SizedBox(width: 4),
@@ -183,7 +183,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter clinical consultation notes, findings, and observations...",
@@ -210,7 +210,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
             ],
@@ -231,7 +231,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter recommended treatment, lifestyle care, or follow-up plans...",

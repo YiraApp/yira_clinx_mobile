@@ -376,7 +376,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final plan = widget.plan;
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     TextStyle ts(double size, FontWeight w, Color c) =>
         TextStyle(fontFamily: appPoppinFont, fontSize: size, fontWeight: w, color: c);

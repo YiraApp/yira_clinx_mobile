@@ -19,8 +19,17 @@ class HandGlowPainter extends CustomPainter {
 
   /// Normalized center position
   final Offset normalizedCenter;
+  final bool dark;
+
+  Color get _blue => dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB);
+  Color get _sky => dark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7);
+  Color get _cyan => dark ? const Color(0xFF7DD3FC) : const Color(0xFF38BDF8);
+
+  /// Fade used for colours: glows read a little stronger on the dark scene.
+  double get _f => (fadeIn * (dark ? 1.3 : 1.0)).clamp(0.0, 1.0);
 
   HandGlowPainter({
+    this.dark = false,
     required this.fadeIn,
     required this.glowPulse,
     required this.scale,
@@ -65,9 +74,9 @@ class HandGlowPainter extends CustomPainter {
       center,
       r,
       [
-        Color(0xFF2563EB).withValues(alpha: fadeIn * 0.16),
-        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.09),
-        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.03),
+        _blue.withValues(alpha: _f * 0.16),
+        _cyan.withValues(alpha: _f * 0.09),
+        _cyan.withValues(alpha: _f * 0.03),
         Colors.transparent,
       ],
       [0.0, 0.45, 0.78, 1.0],
@@ -83,14 +92,14 @@ class HandGlowPainter extends CustomPainter {
 
     // Ring 1: Inner subtle blue ring
     ringPaint
-      ..color = const Color(0xFF2563EB).withValues(alpha: fadeIn * 0.35)
+      ..color = _blue.withValues(alpha: _f * 0.35)
       ..strokeWidth = 1.2
       ..maskFilter = null;
     canvas.drawCircle(center, radius * 0.80, ringPaint);
 
     // Ring 2: Outer dashed precision ring
     ringPaint
-      ..color = const Color(0xFF0284C7).withValues(alpha: fadeIn * 0.45)
+      ..color = _sky.withValues(alpha: _f * 0.45)
       ..strokeWidth = 1.2
       ..maskFilter = null;
 
@@ -111,7 +120,7 @@ class HandGlowPainter extends CustomPainter {
 
     // 4 Precision crosshair ticks
     final tickPaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: fadeIn * 0.55)
+      ..color = _blue.withValues(alpha: _f * 0.55)
       ..strokeWidth = 1.8
       ..strokeCap = StrokeCap.round;
 
@@ -133,8 +142,8 @@ class HandGlowPainter extends CustomPainter {
       center,
       orbRadius,
       [
-        Color(0xFF2563EB).withValues(alpha: fadeIn * 0.35),
-        Color(0xFF38BDF8).withValues(alpha: fadeIn * 0.15),
+        _blue.withValues(alpha: _f * 0.35),
+        _cyan.withValues(alpha: _f * 0.15),
         Colors.transparent,
       ],
       [0.0, 0.55, 1.0],
@@ -151,13 +160,13 @@ class HandGlowPainter extends CustomPainter {
 
     // Primary shockwave ring in vibrant royal blue (crisp layered strokes, no blur)
     final outerWavePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.35)
+      ..color = _blue.withValues(alpha: opacity * 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6.0 * (1.0 - shockwaveProgress * 0.4);
     canvas.drawCircle(center, currentRadius, outerWavePaint);
 
     final wavePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.85)
+      ..color = _blue.withValues(alpha: opacity * 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5 * (1.0 - shockwaveProgress * 0.4);
     canvas.drawCircle(center, currentRadius, wavePaint);
@@ -167,7 +176,7 @@ class HandGlowPainter extends CustomPainter {
       final trailRadius = currentRadius * 0.78;
       final trailOpacity = (opacity * 0.45).clamp(0.0, 1.0);
       final trailPaint = Paint()
-        ..color = const Color(0xFF0284C7).withValues(alpha: trailOpacity)
+        ..color = _sky.withValues(alpha: trailOpacity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.0;
       canvas.drawCircle(center, trailRadius, trailPaint);
@@ -198,6 +207,7 @@ class HandGlowPainter extends CustomPainter {
     return oldDelegate.fadeIn != fadeIn ||
         oldDelegate.glowPulse != glowPulse ||
         oldDelegate.scale != scale ||
-        oldDelegate.shockwaveProgress != shockwaveProgress;
+        oldDelegate.shockwaveProgress != shockwaveProgress ||
+        oldDelegate.dark != dark;
   }
 }

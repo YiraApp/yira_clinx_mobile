@@ -426,7 +426,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
     final isTab = isTablet(context);
-    final adaptiveTextColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final adaptiveTextColor = isDark ? Colors.white : const Color(0xFF121212);
 
     return ValueListenableBuilder<LoginEntity?>(
       valueListenable: GlobalSession.instance.userNotifier,
@@ -922,7 +922,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                     ),
@@ -938,7 +938,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
                         height: 1.45,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                     ),
                     if (timeStr.isNotEmpty) ...[
@@ -1178,7 +1178,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
               BoxShadow(
                 color: isToday
                     ? const Color(0xFF10B981).withValues(alpha: isDark ? 0.08 : 0.04)
-                    : (isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF0F172A).withValues(alpha: 0.03)),
+                    : (isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF121212).withValues(alpha: 0.03)),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -1229,7 +1229,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               fontWeight: FontWeight.w700,
                               color: isToday || isTomorrow
                                   ? Colors.white
-                                  : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                  : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -1246,7 +1246,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 height: 1.1,
                                 color: isToday
                                     ? (isDark ? const Color(0xFF34D399) : const Color(0xFF065F46))
-                                    : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                    : (isDark ? Colors.white : const Color(0xFF121212)),
                               ),
                             ),
                           ),
@@ -1294,7 +1294,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? 15.5 : 14,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                         letterSpacing: -0.2,
                                       ),
                                       maxLines: 1,
@@ -1418,7 +1418,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                               fontFamily: appPoppinFont,
                                               fontSize: 12.5,
                                               fontWeight: FontWeight.w600,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              color: isDark ? Colors.white : const Color(0xFF121212),
                                             ),
                                           ),
                                         ],
@@ -1469,7 +1469,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 12.5 : 11.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1596,7 +1596,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                           fontFamily: appPoppinFont,
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w600,
-                                          color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                          color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                                         ),
                                       ),
                                       const SizedBox(width: 4),
@@ -1637,7 +1637,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   fontFamily: appPoppinFont,
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                  color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -1744,7 +1744,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
         border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF0F172A)).withValues(alpha: isDark ? 0.25 : 0.04),
+            color: (isDark ? Colors.black : const Color(0xFF121212)).withValues(alpha: isDark ? 0.25 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1786,7 +1786,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         fontFamily: appPoppinFont,
                         fontWeight: FontWeight.w700,
                         fontSize: isTab ? 16 : 14.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -1908,7 +1908,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 12.5 : 11,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                             height: 1.25,
                           ),
                         ),
