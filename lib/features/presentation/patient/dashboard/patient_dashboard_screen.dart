@@ -72,17 +72,21 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     }
     try {
       // Asked per person so this works on servers that return only one person's list.
+      // All people are asked at once; the answers are read in the same order as before.
       final list = <Map>[];
       final seenIds = <String>{};
-      for (final id in [data?.id, ...GlobalSession.instance.familyProfileIdsOnMainAccount]) {
-        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-              URLs.patientAppointmentsUrl,
-              data: {'userId': id},
-              options: Options(
-                headers: {HttpHeaders.authorizationHeader: 'Bearer ${data?.accessToken ?? ''}'},
-                extra: const {'suppressErrorSnack': true},
+      final responses = await Future.wait([
+        for (final id in [data?.id, ...GlobalSession.instance.familyProfileIdsOnMainAccount])
+          sl<ApiClient>().account(showSuccessSnack: false).post(
+                URLs.patientAppointmentsUrl,
+                data: {'userId': id},
+                options: Options(
+                  headers: {HttpHeaders.authorizationHeader: 'Bearer ${data?.accessToken ?? ''}'},
+                  extra: const {'suppressErrorSnack': true},
+                ),
               ),
-            );
+      ]);
+      for (final res in responses) {
         final rows = res.data is Map && res.data['data'] is List ? res.data['data'] as List : const [];
         for (final a in rows.whereType<Map>()) {
           if (seenIds.add('${a['id']}')) list.add(a);

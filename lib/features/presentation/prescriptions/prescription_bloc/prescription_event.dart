@@ -93,6 +93,7 @@ class SubmitPrescription extends PrescriptionEvent {
   final String? hospitalId;
   final String? orgId;
   final String additionalNotes;
+  final String? medicalRecordId;
 
   const SubmitPrescription({
     required this.patientId,
@@ -100,6 +101,7 @@ class SubmitPrescription extends PrescriptionEvent {
     this.hospitalId,
     this.orgId,
     required this.additionalNotes,
+    this.medicalRecordId,
   });
 }
 

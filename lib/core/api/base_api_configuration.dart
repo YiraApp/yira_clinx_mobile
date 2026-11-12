@@ -14,7 +14,8 @@ class EnvironmentService {
   static String? _customBaseUrl;
 
   /// The API that release builds (TestFlight and the stores) talk to.
-  static const String productionBaseUrl = "https://clinicsapi-fegha0fkfrcnfufu.centralindia-01.azurewebsites.net";
+  /// This is the live server (Azure "Clinicx-api-dev", deployed from the 22-04-2026-Dev branch).
+  static const String productionBaseUrl = "https://clinicx-api-dev.azurewebsites.net";
 
   /// Release builds use production; debug runs use the local backend.
   /// Override with --dart-define=APP_ENV=local|dev|qa|production.

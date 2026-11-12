@@ -91,6 +91,10 @@ class FitnessSyncService {
 
   String get _userId => GlobalSession.instance.userNotifier.value?.data?.id ?? '';
   String get _token => GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+
+  /// Whether [id] is still the profile on screen. A sync started for one
+  /// profile can finish after a switch, and must not show its numbers on the next.
+  bool _isActiveProfile(String id) => id.isNotEmpty && _userId.toLowerCase() == id.toLowerCase();
   String get _userName {
     final d = GlobalSession.instance.userNotifier.value?.data;
     return '${d?.firstName ?? ''} ${d?.lastName ?? ''}'.trim();
@@ -159,11 +163,10 @@ class FitnessSyncService {
         return false;
       }
 
-      if (!await FitnessService.instance.hasOsPermission()) {
-        await prefs.setBool(_connectedKey(userId), false);
-        return false;
-      }
-      return true;
+      // Not saved as a disconnect: Health Connect is briefly unavailable while
+      // it updates, and access turned back on in Settings should just work again.
+      // Only the user's own Disconnect clears the link.
+      return await FitnessService.instance.hasOsPermission();
     } catch (e) {
       debugPrint('⚠️ [FitnessSyncService] Error checking isConnected: $e');
       return isConnectedNotifier.value;
@@ -433,12 +436,12 @@ class FitnessSyncService {
       final latestWeight = todayDay.weightKg ?? await FitnessService.instance.readLatestWeight();
       final todayMap = _todayMap(todayDay, latestWeight, now);
       final todayData = TodayFitnessData.fromJson(todayMap);
-      todayFitnessNotifier.value = todayData;
+      if (_isActiveProfile(userId)) todayFitnessNotifier.value = todayData;
       await prefs.setString(_todayKey(userId), jsonEncode(todayMap));
 
       final sources = <String>{for (final d in days) ...d.sources}.toList()..sort();
       if (sources.isNotEmpty) {
-        sourcesNotifier.value = sources;
+        if (_isActiveProfile(userId)) sourcesNotifier.value = sources;
         await prefs.setStringList(_sourcesKey(userId), sources);
       }
 
@@ -496,7 +499,7 @@ class FitnessSyncService {
     await prefs.setInt(_schemaKey(userId), _syncSchema);
     await prefs.setString(_lastSyncDayKey(userId), FitnessService.dateKey(now));
     await prefs.setString(_lastSyncAtKey(userId), now.toIso8601String());
-    lastSyncedAtNotifier.value = now;
+    if (_isActiveProfile(userId)) lastSyncedAtNotifier.value = now;
   }
 
   Map<String, dynamic> _todayMap(FitnessDay day, double? latestWeight, DateTime now) {

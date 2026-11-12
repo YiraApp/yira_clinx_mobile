@@ -8,6 +8,8 @@ class PrescriptionEntity extends Equatable {
   final String? appointmentId;
   final String? hospitalId;
   final String? orgId;
+  /// The medical record printed on the prescription PDF (else the visit's latest record).
+  final String? medicalRecordId;
   final List<String> diagnoses;
   final List<MedicationItem> medications;
   final String additionalNotes;
@@ -22,6 +24,7 @@ class PrescriptionEntity extends Equatable {
     this.appointmentId,
     this.hospitalId,
     this.orgId,
+    this.medicalRecordId,
     required this.diagnoses,
     required this.medications,
     required this.additionalNotes,
@@ -35,6 +38,7 @@ class PrescriptionEntity extends Equatable {
     String? appointmentId,
     String? hospitalId,
     String? orgId,
+    String? medicalRecordId,
     List<String>? diagnoses,
     List<MedicationItem>? medications,
     String? additionalNotes,
@@ -47,6 +51,7 @@ class PrescriptionEntity extends Equatable {
       appointmentId: appointmentId ?? this.appointmentId,
       hospitalId: hospitalId ?? this.hospitalId,
       orgId: orgId ?? this.orgId,
+      medicalRecordId: medicalRecordId ?? this.medicalRecordId,
       diagnoses: diagnoses ?? this.diagnoses,
       medications: medications ?? this.medications,
       additionalNotes: additionalNotes ?? this.additionalNotes,
@@ -62,6 +67,7 @@ class PrescriptionEntity extends Equatable {
         appointmentId,
         hospitalId,
         orgId,
+        medicalRecordId,
         diagnoses,
         medications,
         additionalNotes,

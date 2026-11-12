@@ -186,7 +186,9 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              // Shrinks, so the BMI pill fits beside the title on a phone.
+              Expanded(
+                child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -201,7 +203,8 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
+                  Expanded(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -223,8 +226,11 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                       ),
                     ],
                   ),
+                  ),
                 ],
               ),
+              ),
+              if (bmi != null) const SizedBox(width: 8),
               if (bmi != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

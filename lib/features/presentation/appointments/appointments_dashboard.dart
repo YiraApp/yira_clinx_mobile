@@ -594,7 +594,9 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _loadWithDateFilter();
+    // In the shell, the shell has already asked its shared bloc for today's list (the
+    // same request this would send with the default filters), so don't send it twice.
+    if (!widget.isShellChild) _loadWithDateFilter();
   }
 
   @override

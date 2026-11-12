@@ -9,6 +9,10 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_item.dart';
 import 'package:yiraclinics/features/domain/entities/patient_profile/patient_profile_entity.dart';
+import 'package:yiraclinics/features/domain/entities/medicine/medical_history_entity.dart';
+import 'package:yiraclinics/features/domain/repositories/medicine/medical_history_repo.dart';
+import 'package:yiraclinics/features/presentation/medicine/create_medicine_screen.dart';
+import 'package:yiraclinics/features/presentation/medicine/medical_record_bloc/medical_record_bloc.dart';
 import '../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../di/dependency_injection.dart';
 
@@ -76,10 +80,61 @@ class _AddPrescriptionRecordScreenState
     'Rest adequately',
   ];
 
+  // This visit's medical record: added or edited from here without leaving the prescription, and
+  // printed on its PDF.
+  MedicalRecordBriefEntity? _record;
+  bool _recordLoading = false;
+
+  String? get _patientId => widget.patientId ?? widget.patient?.id;
+
+  /// A record belongs to a visit, so it can be added here only when the prescription has one.
+  bool get _hasVisit =>
+      (widget.appointmentId?.trim().isNotEmpty ?? false) && (_patientId?.trim().isNotEmpty ?? false);
+
   @override
   void initState() {
     super.initState();
     _notesController = TextEditingController();
+    _loadRecord();
+  }
+
+  Future<void> _loadRecord() async {
+    if (!_hasVisit) return;
+    setState(() => _recordLoading = true);
+    try {
+      final records = await sl<MedicalHistoryRepository>().fetchMedicalRecords(
+        patientId: _patientId,
+        appointmentId: widget.appointmentId,
+        hospitalId: widget.hospitalId,
+        orgId: widget.orgId,
+      );
+      records.sort((a, b) => b.recordDate.compareTo(a.recordDate));
+      if (mounted) setState(() => _record = records.isEmpty ? null : records.first);
+    } catch (_) {
+      // The card then offers to add one; the prescription itself is unaffected.
+    } finally {
+      if (mounted) setState(() => _recordLoading = false);
+    }
+  }
+
+  Future<void> _openRecordForm() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => BlocProvider<MedicalRecordBloc>(
+          create: (_) => sl<MedicalRecordBloc>(),
+          child: CreateMedicalRecordScreen(
+            patient: widget.patient,
+            recordToEdit: _record,
+            patientId: _patientId,
+            appointmentId: widget.appointmentId,
+            hospitalId: widget.hospitalId,
+            orgId: widget.orgId,
+          ),
+        ),
+      ),
+    );
+    if (mounted) _loadRecord();
   }
 
   @override
@@ -271,6 +326,7 @@ class _AddPrescriptionRecordScreenState
                                       hospitalId: widget.hospitalId,
                                       orgId: widget.orgId,
                                       additionalNotes: _notesController.text,
+                                      medicalRecordId: _record?.id,
                                     ),
                                   );
                             },
@@ -305,6 +361,11 @@ class _AddPrescriptionRecordScreenState
                   // ── Patient Info Card (If available) ──
                   if (widget.patient != null) ...[
                     _buildPatientBanner(widget.patient!, isDark, isTab),
+                    const SizedBox(height: 14),
+                  ],
+
+                  if (_hasVisit) ...[
+                    _buildMedicalRecordCard(isDark),
                     const SizedBox(height: 14),
                   ],
 
@@ -699,6 +760,85 @@ class _AddPrescriptionRecordScreenState
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF059669),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The visit's medical record, with a button to add or edit it.
+  Widget _buildMedicalRecordCard(bool isDark) {
+    final record = _record;
+    final summary = record == null
+        ? ''
+        : [
+            if (record.chiefComplaint.trim().isNotEmpty) 'C/O: ${record.chiefComplaint.trim()}',
+            if ((record.allergies ?? '').trim().isNotEmpty) 'Allergies: ${record.allergies!.trim()}',
+          ].join(' · ');
+    final subtitle = _recordLoading && record == null
+        ? 'Checking this visit for a record'
+        : record == null
+            ? 'Not added yet. It prints on the prescription PDF.'
+            : (summary.isEmpty ? 'Added for this visit' : summary);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF232323) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.assignment_outlined, color: _primaryBlue, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Medical record',
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF121212),
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: appPoppinFont,
+                    fontSize: 11.5,
+                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: _recordLoading ? null : _openRecordForm,
+            icon: Icon(record == null ? Icons.add_rounded : Icons.edit_outlined, size: 16),
+            label: Text(
+              record == null ? 'Add' : 'Edit',
+              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _primaryBlue,
+              side: BorderSide(color: _primaryBlue.withValues(alpha: 0.4)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

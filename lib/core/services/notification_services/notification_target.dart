@@ -79,6 +79,11 @@ NotificationTarget? notificationTargetFor({required String type, String? route, 
       case 'CONSENT_REQUEST':
       case 'CONSENT_REQUIRED':
         return const NotificationTarget(route: AppRoutes.patientConsentsScreen, actionLabel: 'Review request');
+      case 'FAMILY_LINK_REQUEST':
+        return const NotificationTarget(route: AppRoutes.patientMyFamily, actionLabel: 'Review request');
+      case 'FAMILY_LINKED':
+      case 'FAMILY_LINK_ACCEPTED':
+        return const NotificationTarget(route: AppRoutes.patientMyFamily, actionLabel: 'Open My Family');
     }
   }
 

@@ -39,13 +39,18 @@ const Map<FitnessMetricType, _Metric> _metrics = {
 };
 
 class PatientFitnessDashboardScreen extends StatefulWidget {
-  const PatientFitnessDashboardScreen({super.key, this.previewSummary, this.previewToday});
+  const PatientFitnessDashboardScreen({super.key, this.previewSummary, this.previewToday, this.summaryLoader});
 
   /// Fixed data for screenshots and widget tests; the screen then neither reads the phone nor syncs.
   @visibleForTesting
   final PatientFitnessSummaryResponse? previewSummary;
   @visibleForTesting
   final TodayFitnessData? previewToday;
+
+  /// Stands in for the server in widget tests ('week' or 'month'; null is a failed load).
+  /// Like the preview data, it skips the phone and the sync.
+  @visibleForTesting
+  final Future<PatientFitnessSummaryResponse?> Function(String period)? summaryLoader;
 
   @override
   State<PatientFitnessDashboardScreen> createState() => _PatientFitnessDashboardScreenState();
@@ -57,6 +62,10 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   FitnessPeriod _period = FitnessPeriod.week;
   PatientFitnessSummaryResponse? _summary;
   bool _isLoading = true;
+  bool _loadFailed = false;
+  // Only the newest summary request may update the screen, so a slow 30-day
+  // reply can't land after the person has switched back to 7 days.
+  int _summaryRequest = 0;
   int _stepGoal = 8000;
   late final String _profileId;
   final Map<FitnessMetricType, GlobalKey> _chipKeys = {for (final t in FitnessMetricType.values) t: GlobalKey()};
@@ -104,6 +113,10 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   }
 
   Future<void> _start() async {
+    if (widget.summaryLoader != null) {
+      await _loadSummary(showSpinner: true);
+      return;
+    }
     if (widget.previewSummary != null || widget.previewToday != null) {
       setState(() {
         _summary = widget.previewSummary;
@@ -125,11 +138,16 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   }
 
   Future<void> _loadSummary({bool showSpinner = false}) async {
+    final request = ++_summaryRequest;
     if (showSpinner && mounted) setState(() => _isLoading = true);
-    final res = await _sync.fetchSummaryFromBackend(period: _period == FitnessPeriod.week ? 'week' : 'month');
-    if (!mounted) return;
+    final period = _period == FitnessPeriod.week ? 'week' : 'month';
+    final loader = widget.summaryLoader;
+    final res = loader != null ? await loader(period) : await _sync.fetchSummaryFromBackend(period: period);
+    if (!mounted || request != _summaryRequest) return;
     setState(() {
+      // A failed refresh keeps what's already on screen.
       if (res != null) _summary = res;
+      _loadFailed = res == null;
       _isLoading = false;
     });
   }
@@ -302,11 +320,15 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         ),
       );
 
+  // The app's charcoal palette (as on the diet screens and this screen's shimmer):
+  // #232323 cards on the #121212 page, #3A3A3A lines, #121212 for wells inside a card.
   BoxDecoration _card(bool isDark) => BoxDecoration(
-        color: isDark ? const Color(0xFF161616) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2)),
+        border: Border.all(color: _line(isDark)),
       );
+
+  Color _line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8ECF2);
 
   Color _muted(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
@@ -390,7 +412,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                     painter: _RingPainter(
                       progress: progress,
                       color: green,
-                      track: isDark ? const Color(0xFF232323) : const Color(0xFFEAF7EF),
+                      track: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFEAF7EF),
                     ),
                     child: Center(
                       child: Column(
@@ -572,7 +594,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         decoration: _card(isDark).copyWith(
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: selected ? m.color.withValues(alpha: 0.6) : (isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2))),
+          border: Border.all(color: selected ? m.color.withValues(alpha: 0.6) : _line(isDark)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,7 +793,9 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     final values = [for (final p in points) _value(p, _metric)];
     final present = values.whereType<double>().toList();
     final avg = present.isEmpty ? null : present.reduce((a, b) => a + b) / present.length;
-    final days = _period == FitnessPeriod.week ? 7 : 30;
+    // Counted from the points on screen, which can still be the other period's while a switch loads.
+    final days = points.isNotEmpty ? points.length : (_period == FitnessPeriod.week ? 7 : 30);
+    final noHistory = _summary == null && (_isLoading || _loadFailed);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
@@ -823,19 +847,55 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           const SizedBox(height: 14),
           SizedBox(
             height: 190,
-            child: present.isEmpty
-                ? Center(
-                    child: Text('No ${m.label.toLowerCase()} readings in the last $days days',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: _muted(isDark))),
-                  )
-                : (m.bars ? _barChart(points, values, m, isDark) : _lineChart(points, values, m, isDark)),
+            child: noHistory
+                ? _historyState(isDark)
+                : present.isEmpty
+                    ? Center(
+                        child: Text('No ${m.label.toLowerCase()} readings in the last $days days',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: _muted(isDark))),
+                      )
+                    : (m.bars ? _barChart(points, values, m, isDark) : _lineChart(points, values, m, isDark)),
           ),
+          if (!noHistory) ...[
+            const SizedBox(height: 8),
+            Text(
+              '${present.length} of $days days have a reading'
+              '${_metric == FitnessMetricType.steps && present.isNotEmpty ? ' · dashed line is your goal' : ''}',
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: _muted(isDark)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// The history couldn't be loaded yet: a spinner while it loads, else a way to retry.
+  /// Never "no readings", which would say the person recorded nothing.
+  Widget _historyState(bool isDark) {
+    if (_isLoading) {
+      return const Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)));
+    }
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(PhosphorIconsBold.warningCircle, size: 22, color: _muted(isDark)),
           const SizedBox(height: 8),
-          Text(
-            '${present.length} of $days days have a reading'
-            '${_metric == FitnessMetricType.steps && present.isNotEmpty ? ' · dashed line is your goal' : ''}',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: _muted(isDark)),
+          Text('Couldn\'t load your fitness history',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: appPoppinFont,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF121212))),
+          const SizedBox(height: 2),
+          Text('Check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: _muted(isDark))),
+          TextButton(
+            onPressed: () => _loadSummary(showSpinner: true),
+            child: const Text('Try again', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -871,7 +931,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     final up = pct > 0;
     final good = up == higherIsBetter;
     return _changePill(
-      '${up ? '+' : ''}$pct% vs previous ${_period == FitnessPeriod.week ? '7' : '30'} days',
+      '${up ? '+' : ''}$pct% vs previous ${_summary?.period == 'month' ? '30' : '7'} days',
       good ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
       up ? PhosphorIconsBold.trendUp : PhosphorIconsBold.trendDown,
     );
@@ -908,7 +968,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: selected ? (isDark ? const Color(0xFF232323) : Colors.white) : Colors.transparent,
+              color: selected ? (isDark ? const Color(0xFF3A3A3A) : Colors.white) : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
               boxShadow: selected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6, offset: const Offset(0, 2))] : null,
             ),
@@ -949,7 +1009,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           height: 34,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: selected ? m.color : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F4F8)),
+            color: selected ? m.color : (isDark ? const Color(0xFF121212) : const Color(0xFFF1F4F8)),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -1042,7 +1102,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           drawVerticalLine: false,
           horizontalInterval: maxY / 4,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: isDark ? const Color(0xFF232323) : const Color(0xFFEEF1F5), strokeWidth: 1),
+              FlLine(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFEEF1F5), strokeWidth: 1),
         ),
         titlesData: _titles(points, isDark),
         extraLinesData: goal == null
@@ -1052,7 +1112,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
               ]),
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
-            getTooltipColor: (_) => isDark ? const Color(0xFF232323) : const Color(0xFF121212),
+            getTooltipColor: (_) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFF121212),
             getTooltipItem: (group, _, rod, _) {
               final p = points[group.x];
               final v = values[group.x];
@@ -1104,12 +1164,12 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           drawVerticalLine: false,
           horizontalInterval: (maxY - minY) / 4 == 0 ? 1 : (maxY - minY) / 4,
           getDrawingHorizontalLine: (_) =>
-              FlLine(color: isDark ? const Color(0xFF232323) : const Color(0xFFEEF1F5), strokeWidth: 1),
+              FlLine(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFEEF1F5), strokeWidth: 1),
         ),
         titlesData: _titles(points, isDark),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => isDark ? const Color(0xFF232323) : const Color(0xFF121212),
+            getTooltipColor: (_) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFF121212),
             getTooltipItems: (spots) => spots
                 .map((s) => LineTooltipItem(
                       '${_tooltipDate(points[s.x.round()])}\n',
@@ -1138,7 +1198,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             barWidth: 2.5,
             dotData: FlDotData(
               getDotPainter: (_, _, _, _) =>
-                  FlDotCirclePainter(radius: 3.2, color: m.color, strokeWidth: 1.5, strokeColor: Colors.white),
+                  FlDotCirclePainter(radius: 3.2, color: m.color, strokeWidth: 1.5, strokeColor: isDark ? const Color(0xFF232323) : Colors.white),
             ),
             belowBarData: BarAreaData(show: true, color: m.color.withValues(alpha: 0.08)),
           ),
@@ -1152,7 +1212,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161616) : const Color(0xFFEFF4FF),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFEFF4FF),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1229,7 +1289,7 @@ class _HourlyBars extends StatelessWidget {
                       heightFactor: top == 0 ? 0.04 : math.max(0.04, byHour[h] / top),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: byHour[h] == 0 ? (isDark ? const Color(0xFF232323) : const Color(0xFFEFF2F6)) : color,
+                          color: byHour[h] == 0 ? (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFEFF2F6)) : color,
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),

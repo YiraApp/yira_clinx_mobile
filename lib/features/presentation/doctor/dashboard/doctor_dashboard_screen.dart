@@ -60,7 +60,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       shared = context.read<DoctorDashboardBloc>();
     } catch (_) {}
     _ownsDashboardBloc = shared == null;
-    _dashboardBloc = (shared ?? sl<DoctorDashboardBloc>())..add(FetchDoctorDashboardData());
+    _dashboardBloc = shared ?? sl<DoctorDashboardBloc>();
+    // The shell already asked for the dashboard of the bloc it shares (on open and on
+    // each tab tap); asking again here sent the same request twice on every open.
+    if (_ownsDashboardBloc) _dashboardBloc.add(FetchDoctorDashboardData());
     _fetchUnreadNotificationsCount();
     NotificationService.instance.syncFcmTokenWithBackend();
     WidgetsBinding.instance.addPostFrameCallback((_) {

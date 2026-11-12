@@ -699,7 +699,7 @@ class BillDetailSheet extends StatelessWidget {
             if (b.fileUrl != null) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => openWalletFile(context, b.fileUrl!),
+                onPressed: () => openWalletFile(context, b.fileUrl!, title: b.fileName ?? b.title, category: b.category),
                 icon: PhosphorIcon(PhosphorIconsBold.fileText, size: 16, color: Theme.of(context).primaryColor),
                 label: Text(b.fileName ?? 'View attached bill', overflow: TextOverflow.ellipsis),
               ),

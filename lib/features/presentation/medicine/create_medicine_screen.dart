@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_info_session.dart';
-import 'package:yiraclinics/features/presentation/medicine/widgets/diagnosis_treatment_section.dart';
+import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_note_sections.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/vital_signs_section.dart';
 
 import '../../../core/colors/colors.dart';
@@ -49,13 +49,25 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
   final TextEditingController _tempController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
+  // Diagnosis and plan are not on the form any more (as on the web); an edited record keeps the
+  // values it already had.
   final TextEditingController _diagnosisController = TextEditingController();
-  final TextEditingController _doctorNotesController = TextEditingController();
   final TextEditingController _treatmentPlanController =
       TextEditingController();
   final TextEditingController _oxygenSaturationController =
       TextEditingController();
+  final _allergiesController = TextEditingController();
+  final _respiratoryRateController = TextEditingController();
+  final _cvsController = TextEditingController();
+  final _rsController = TextEditingController();
+  final _abdomenController = TextEditingController();
+  final _cnsController = TextEditingController();
+  final _hpiController = TextEditingController();
+  final _familyHistoryController = TextEditingController();
+  final _pastHistoryController = TextEditingController();
+  final _currentMedicationsController = TextEditingController();
 
+  static const _visitTypes = ["New Consultation", "Follow Up", "Emergency / Walk-in"];
   String _selectedVisitType = "New Consultation";
 
   @override
@@ -67,13 +79,23 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
       _symptomsController.text = rec.symptoms ?? '';
       _physicalExamController.text = rec.physicalExamination ?? '';
       _diagnosisController.text = rec.diagnosis;
-      _doctorNotesController.text = rec.treatmentPlan ?? '';
       _treatmentPlanController.text = rec.treatmentPlan ?? '';
       _bpController.text = rec.bloodPressure ?? '';
       _hrController.text = rec.heartRate ?? '';
       _tempController.text = rec.temperature ?? '';
       _weightController.text = rec.weight ?? '';
       _heightController.text = rec.height ?? '';
+      _oxygenSaturationController.text = rec.spo2 ?? '';
+      _respiratoryRateController.text = rec.respiratoryRate ?? '';
+      _allergiesController.text = rec.allergies ?? '';
+      _cvsController.text = rec.cvsExamination ?? '';
+      _rsController.text = rec.respiratoryExamination ?? '';
+      _abdomenController.text = rec.abdomenExamination ?? '';
+      _cnsController.text = rec.cnsExamination ?? '';
+      _hpiController.text = rec.historyOfPresentIllness ?? '';
+      _familyHistoryController.text = rec.familyHistory ?? '';
+      _pastHistoryController.text = rec.pastHistory ?? '';
+      _currentMedicationsController.text = rec.currentMedications ?? '';
       if (rec.title.isNotEmpty) {
         _selectedVisitType = rec.title;
       }
@@ -92,10 +114,124 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _diagnosisController.dispose();
-    _doctorNotesController.dispose();
     _treatmentPlanController.dispose();
     _oxygenSaturationController.dispose();
+    for (final c in [
+      _allergiesController, _respiratoryRateController, _cvsController, _rsController, _abdomenController,
+      _cnsController, _hpiController, _familyHistoryController, _pastHistoryController, _currentMedicationsController,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  /// The note fields by their API keys. All are sent so a cleared field is cleared on the server.
+  Map<String, String> _clinicalNote() => {
+        'allergies': _allergiesController.text,
+        'respiratoryRate': _respiratoryRateController.text,
+        'cvsExamination': _cvsController.text,
+        'respiratoryExamination': _rsController.text,
+        'abdomenExamination': _abdomenController.text,
+        'cnsExamination': _cnsController.text,
+        'historyOfPresentIllness': _hpiController.text,
+        'familyHistory': _familyHistoryController.text,
+        'pastHistory': _pastHistoryController.text,
+        'currentMedications': _currentMedicationsController.text,
+      };
+
+  /// What the preview shows, in the order the record prints on the prescription.
+  RecordPreviewData _previewData() {
+    List<MapEntry<String, String>> filled(List<MapEntry<String, String>> entries) =>
+        entries.where((e) => e.value.trim().isNotEmpty).map((e) => MapEntry(e.key, e.value.trim())).toList();
+    // Same rules as the web preview and the PDF: a unit is added only to a plain number, and a
+    // temperature from 50 up is Fahrenheit, below it Celsius.
+    final plainNumber = RegExp(r'^\d+(\.\d+)?$');
+    String unit(String value, String suffix) {
+      final v = value.trim();
+      return plainNumber.hasMatch(v) ? '$v $suffix' : v;
+    }
+    final temp = _tempController.text.trim();
+    final bp = _bpController.text.trim();
+    return RecordPreviewData(
+      allergies: _allergiesController.text.trim(),
+      vitals: filled([
+        MapEntry("Temp", unit(temp, (double.tryParse(temp) ?? 0) >= 50 ? "°F" : "°C")),
+        MapEntry("Pulse", unit(_hrController.text, "/min")),
+        MapEntry("BP", RegExp(r'^\d{2,3}\s*/\s*\d{2,3}$').hasMatch(bp) ? "${bp.replaceAll(RegExp(r'\s+'), '')} mmHg" : bp),
+        MapEntry("RR", unit(_respiratoryRateController.text, "/min")),
+        MapEntry("SpO2", unit(_oxygenSaturationController.text, "%")),
+        MapEntry("Weight", unit(_weightController.text, "kg")),
+        MapEntry("Height", unit(_heightController.text, "cm")),
+      ]),
+      generalExamination: _physicalExamController.text.trim(),
+      systemic: filled([
+        MapEntry("CVS", _cvsController.text),
+        MapEntry("RS", _rsController.text),
+        MapEntry("P/A", _abdomenController.text),
+        MapEntry("CNS", _cnsController.text),
+      ]),
+      history: filled([
+        MapEntry("Chief Complaints (C/O)", _chiefComplaintController.text),
+        MapEntry("Symptoms", _symptomsController.text),
+        MapEntry("History of Present Illness (H/O)", _hpiController.text),
+        MapEntry("Family History", _familyHistoryController.text),
+        MapEntry("Relevant Past / Comorbid History", _pastHistoryController.text),
+        MapEntry("Current Medications", _currentMedicationsController.text),
+      ]),
+    );
+  }
+
+  Future<void> _previewAndSave(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    if (_chiefComplaintController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  "Chief Complaint is mandatory",
+                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+    if (!_formKey.currentState!.validate()) return;
+    final bloc = context.read<MedicalRecordBloc>();
+    // OK saves the record; Edit goes back to the form with everything as it was.
+    final save = await showRecordPreview(context, _previewData(), isEdit: widget.recordToEdit != null);
+    if (!save || !mounted) return;
+    bloc.add(
+      SaveMedicalRecordEvent(
+        recordId: widget.recordToEdit?.id,
+        patientId: widget.patientId ?? widget.patient?.id,
+        appointmentId: widget.appointmentId,
+        hospitalId: widget.hospitalId,
+        orgId: widget.orgId,
+        visitType: _selectedVisitType,
+        chiefComplaint: _chiefComplaintController.text,
+        symptoms: _symptomsController.text,
+        physicalExamination: _physicalExamController.text,
+        bp: _bpController.text,
+        hr: _hrController.text,
+        temperature: _tempController.text,
+        weight: _weightController.text,
+        height: _heightController.text,
+        spo2: _oxygenSaturationController.text,
+        diagnosis: _diagnosisController.text,
+        treatmentPlan: _treatmentPlanController.text,
+        clinicalNote: _clinicalNote(),
+      ),
+    );
   }
 
   @override
@@ -351,19 +487,10 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                                 fontWeight: FontWeight.w600,
                                                 color: isDark ? Colors.white : const Color(0xFF121212),
                                               ),
-                                              items: const [
-                                                DropdownMenuItem(
-                                                  value: "New Consultation",
-                                                  child: Text("New Consultation"),
-                                                ),
-                                                DropdownMenuItem(
-                                                  value: "Follow Up",
-                                                  child: Text("Follow Up"),
-                                                ),
-                                                DropdownMenuItem(
-                                                  value: "Emergency / Walk-in",
-                                                  child: Text("Emergency / Walk-in"),
-                                                ),
+                                              // A saved record may have another type (e.g. "Consultation"); it stays selectable.
+                                              items: [
+                                                for (final type in {..._visitTypes, _selectedVisitType})
+                                                  DropdownMenuItem(value: type, child: Text(type)),
                                               ],
                                               onChanged: (val) {
                                                 if (val != null) {
@@ -383,16 +510,11 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Section 1: Clinical Assessment & Symptoms
-                        ClinicalInfoSection(
-                          chiefComplaintController: _chiefComplaintController,
-                          symptomsController: _symptomsController,
-                          physicalExamController: _physicalExamController,
-                          isTab: isTab,
-                        ),
+                        // The same order as the web and the prescription PDF: allergies, then
+                        // examination and vitals, then the clinical history.
+                        AllergiesSection(controller: _allergiesController, isTab: isTab),
                         const SizedBox(height: 16),
 
-                        // Section 2: Vital Signs & Biometrics
                         VitalSignsSection(
                           isTab: isTab,
                           bpController: _bpController,
@@ -401,15 +523,35 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                           weightController: _weightController,
                           heightController: _heightController,
                           oxygenSaturationController: _oxygenSaturationController,
+                          respiratoryRateController: _respiratoryRateController,
                         ),
                         const SizedBox(height: 16),
 
-                        // Section 3: Diagnosis & Treatment Plan
-                        DiagnosisTreatmentSection(
+                        ExaminationSection(
+                          generalController: _physicalExamController,
+                          cvsController: _cvsController,
+                          rsController: _rsController,
+                          abdomenController: _abdomenController,
+                          cnsController: _cnsController,
                           isTab: isTab,
-                          diagnosisController: _diagnosisController,
-                          doctorNotesController: _doctorNotesController,
-                          treatmentPlanController: _treatmentPlanController,
+                        ),
+                        const SizedBox(height: 16),
+
+                        ClinicalInfoSection(
+                          chiefComplaintController: _chiefComplaintController,
+                          symptomsController: _symptomsController,
+                          physicalExamController: _physicalExamController,
+                          isTab: isTab,
+                          showExamination: false,
+                          title: "Clinical History & Presentation",
+                          subtitle: "Complaints, present illness and past history",
+                          icon: Icons.history_edu_outlined,
+                          extraFields: historyNoteFields(
+                            hpiController: _hpiController,
+                            familyController: _familyHistoryController,
+                            pastController: _pastHistoryController,
+                            medicinesController: _currentMedicationsController,
+                          ),
                         ),
                         const SizedBox(height: 24),
                       ],
@@ -484,93 +626,14 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    if (_chiefComplaintController.text.trim().isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: const Row(
-                                            children: [
-                                              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
-                                              SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  "Chief Complaint is mandatory",
-                                                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          backgroundColor: Colors.red.shade600,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final doctorNotes = _doctorNotesController.text.trim();
-                                    final treatmentPlan = _treatmentPlanController.text.trim();
-
-                                    if (doctorNotes.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: const Row(
-                                            children: [
-                                              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
-                                              SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                  "Doctor Note is mandatory when recording consultation",
-                                                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          backgroundColor: Colors.red.shade600,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final combinedTreatment = treatmentPlan.isNotEmpty && treatmentPlan != doctorNotes
-                                        ? "Doctor Notes: $doctorNotes\n\nPlan: $treatmentPlan"
-                                        : doctorNotes;
-
-                                    if (_formKey.currentState!.validate()) {
-                                      context.read<MedicalRecordBloc>().add(
-                                        SaveMedicalRecordEvent(
-                                          recordId: widget.recordToEdit?.id,
-                                          patientId: widget.patientId ?? widget.patient?.id,
-                                          appointmentId: widget.appointmentId,
-                                          hospitalId: widget.hospitalId,
-                                          orgId: widget.orgId,
-                                          visitType: _selectedVisitType,
-                                          chiefComplaint: _chiefComplaintController.text,
-                                          symptoms: _symptomsController.text,
-                                          physicalExamination: _physicalExamController.text,
-                                          bp: _bpController.text,
-                                          hr: _hrController.text,
-                                          temperature: _tempController.text,
-                                          weight: _weightController.text,
-                                          height: _heightController.text,
-                                          spo2: _oxygenSaturationController.text,
-                                          diagnosis: _diagnosisController.text,
-                                          treatmentPlan: combinedTreatment,
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onPressed: () => _previewAndSave(context),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
+                                      const Icon(Icons.visibility_outlined, color: Colors.white, size: 18),
                                       const SizedBox(width: 8),
                                       Text(
-                                        widget.recordToEdit != null
-                                            ? "Update Record"
-                                            : "Save Record",
+                                        "Preview",
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab ? 14 : 13,

@@ -91,7 +91,9 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
   Future<void> _onLoadMedicationData(LoadMedicationData event, Emitter<MedicationState> emit) async {
     emit(state.copyWith(status: MedicationStatus.loading));
     try {
-      final summaryData = await getMedicationSummary();
+      // The summary and the list below don't depend on each other, so the summary is
+      // asked for now and only awaited where it is used.
+      final summaryRequest = getMedicationSummary();
 
       final currentUser = GlobalSession.instance.userNotifier.value;
       final userId = currentUser?.data?.id ?? '';
@@ -251,6 +253,7 @@ class MedicationBloc extends Bloc<MedicationEvent, MedicationState> {
       final int totalMedications = realList.fold<int>(0, (sum, p) => sum + ((p['medications'] as List?)?.length ?? 0));
       final int needRefill = realList.where((p) => p['needRefill'] == true && p['status'].toString().toLowerCase() == 'active').length;
 
+      final summaryData = await summaryRequest;
       final dynamicSummary = MedicationEntity(
         totalPrescriptions: totalPrescriptions > 0 ? totalPrescriptions : (summaryData.totalPrescriptions),
         activeMeds: activeMeds > 0 ? activeMeds : (summaryData.activeMeds),

@@ -144,6 +144,16 @@ class URLs {
   static const doctorDietTemplatesUrl = "/v1/api/diet/templates";
   static const doctorDietAssignUrl = "/v1/api/diet/assign";
   static const doctorDietFoodsUrl = "/v1/api/diet/foods";
+  static const dietFoodAskAiUrl = "/v1/api/diet/foods/ask-ai";
   static const doctorDietFoodRecommendationsUrl = "/v1/api/diet/foods/recommendations";
+
+  /*Family links (people with their own Yira account)*/
+  static const familyCodeUrl = "/v1/api/auth/family/code";
+  static const familyCodeRefreshUrl = "/v1/api/auth/family/code/refresh";
+  static const familyLookupUrl = "/v1/api/auth/family/lookup";
+  static const familyLinkWithCodeUrl = "/v1/api/auth/family/link-with-code";
+  static const familyRequestsUrl = "/v1/api/auth/family/requests"; // + /:id/accept, /:id/decline, /:id/cancel
+  static const familyMembersUrl = "/v1/api/auth/family/members";
+  static const familyLinksUrl = "/v1/api/auth/family/links"; // + /:id/remove
 }
 

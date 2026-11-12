@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/utils/record_display_name.dart';
 import '../../../domain/entities/uploaded_record/uploaded_record_entity.dart';
 import '../../../domain/repositories/uploaded_record/uploaded_record_repo.dart';
 
@@ -77,12 +78,17 @@ class RecordsRepositoryImpl implements RecordsRepository {
                 }
               }
 
-              final fileName = (json['fileName'] ?? json['FileName'] ?? json['OriginalName'] ?? 'Document.pdf').toString();
-              String fileType = (json['documentType'] ?? json['DocumentType'] ?? json['fileType'] ?? '').toString();
-              if (fileType.isEmpty && fileName.contains('.')) {
-                fileType = fileName.substring(fileName.lastIndexOf('.') + 1).toUpperCase();
-              }
+              final rawName = (json['originalFileName'] ?? json['OriginalFileName'] ?? json['fileName'] ?? json['FileName'] ?? json['OriginalName'] ?? 'Document.pdf').toString();
+              final storedName = (json['fileName'] ?? json['FileName'] ?? rawName).toString();
+              // The file's own extension decides its type; DocumentType holds the record kind ("Prescription")
+              final ext = recordFileExtension(rawName).isNotEmpty ? recordFileExtension(rawName) : recordFileExtension(storedName);
+              String fileType = ext.toUpperCase();
+              if (fileType.isEmpty) fileType = (json['fileType'] ?? '').toString().replaceAll('.', '').toUpperCase();
               if (fileType.isEmpty) fileType = 'PDF';
+              // "Prescription_<id>.pdf" reads as "Prescription · 12 Nov 2026"
+              final fileName = recordDisplayName(rawName,
+                  category: (json['category'] ?? json['Category'] ?? json['documentCategory'] ?? json['DocumentCategory'] ?? '').toString(),
+                  date: date);
 
               final description = (json['description'] ?? json['Description'] ?? json['notes'] ?? json['Notes'] ?? '').toString().trim();
               final appointmentDate = (json['appointmentDate'] ?? json['AppointmentDate'] ?? '').toString().trim();
@@ -97,24 +103,20 @@ class RecordsRepositoryImpl implements RecordsRepository {
               String doctorName = '';
 
               // If record was added by hospital/provider, resolve hospital and doctor name
+              // The API sends Hospital / Appointment.Hospital / Organization with a "Name", and
+              // Doctor / UploadedByUser with FirstName + LastName, as the web Health Records reads them.
               if (!isPatientUploaded) {
-                hospitalName = (json['hospitalName'] ??
-                        json['HospitalName'] ??
-                        (json['hospital'] is Map ? json['hospital']['hospitalName'] ?? json['hospital']['HospitalName'] : '') ??
-                        (json['Hospital'] is Map ? json['Hospital']['HospitalName'] ?? json['Hospital']['hospitalName'] : '') ??
-                        (json['appointment'] is Map && json['appointment']['hospital'] is Map ? json['appointment']['hospital']['hospitalName'] : '') ??
-                        (json['Appointment'] is Map && json['Appointment']['Hospital'] is Map ? json['Appointment']['Hospital']['HospitalName'] : '') ??
-                        '')
-                    .toString()
-                    .trim();
+                hospitalName = _text(json['hospitalName'] ?? json['HospitalName']) ??
+                    _nameOf(json['Hospital'] ?? json['hospital']) ??
+                    _nameOf(json['Appointment'] is Map ? json['Appointment']['Hospital'] : null) ??
+                    _nameOf(json['Organization']) ??
+                    '';
 
-                doctorName = (json['doctorName'] ??
-                        json['DoctorName'] ??
-                        (json['doctor'] is Map ? json['doctor']['name'] ?? json['doctor']['DoctorName'] : '') ??
-                        (json['Doctor'] is Map ? json['Doctor']['DoctorName'] ?? json['Doctor']['name'] : '') ??
-                        '')
-                    .toString()
-                    .trim();
+                final isDoctorUploaded = json['IsDoctorUploaded'] == true || json['isDoctorUploaded'] == true;
+                doctorName = _text(json['doctorName'] ?? json['DoctorName']) ??
+                    _personName(json['Doctor'] ?? json['doctor']) ??
+                    (isDoctorUploaded ? _personName(json['UploadedByUser']) : null) ??
+                    '';
               }
 
               return UploadedRecord(
@@ -158,6 +160,14 @@ class RecordsRepositoryImpl implements RecordsRepository {
     final text = value?.toString().trim() ?? '';
     return text.isEmpty || text == 'null' ? null : text;
   }
+
+  /// A hospital or organization's name from its JSON object.
+  static String? _nameOf(dynamic value) =>
+      value is Map ? _text(value['Name'] ?? value['name'] ?? value['HospitalName'] ?? value['hospitalName']) : null;
+
+  /// A person's "FirstName LastName" from a user JSON object.
+  static String? _personName(dynamic value) =>
+      value is Map ? _text('${value['FirstName'] ?? ''} ${value['LastName'] ?? ''}') : null;
 
   @override
   Future<UploadedRecord?> uploadDocument({

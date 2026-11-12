@@ -114,18 +114,31 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
     List<Map<String, dynamic>> loadedList = [];
 
-    // 1. Fetch from patient-appointments API
+    // 1. Fetch from patient-appointments API. The family requests below are sent at
+    // the same time; their answers are still read after this one, in order.
+    final selfRequest = sl<ApiClient>().account(showSuccessSnack: false).post(
+      URLs.patientAppointmentsUrl,
+      data: {
+        // By profile only: family members share a phone, so a number here
+        // would bring back the main account's appointments on their profiles.
+        "userId": userId,
+        "onlySelf": true,
+      },
+      options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+    );
+    final familyRequests = [
+      for (final familyId in GlobalSession.instance.familyProfileIdsOnMainAccount)
+        sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientAppointmentsUrl,
+          data: {"userId": familyId},
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            extra: const {'suppressErrorSnack': true},
+          ),
+        ).then<Response?>((res) => res, onError: (_) => null),
+    ];
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.patientAppointmentsUrl,
-        data: {
-          // By profile only: family members share a phone, so a number here
-          // would bring back the main account's appointments on their profiles.
-          "userId": userId,
-          "onlySelf": true,
-        },
-        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-      );
+      final res = await selfRequest;
 
       if (res.data != null && res.data['data'] is List) {
         final list = res.data['data'] as List;
@@ -143,17 +156,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     // The main account also sees its family's appointments. Asked per person so
     // this works on servers that return only one person's list.
     final seenIds = {for (final a in loadedList) '${a['id']}'};
-    for (final familyId in GlobalSession.instance.familyProfileIdsOnMainAccount) {
+    for (final request in familyRequests) {
       try {
-        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-          URLs.patientAppointmentsUrl,
-          data: {"userId": familyId},
-          options: Options(
-            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-            extra: const {'suppressErrorSnack': true},
-          ),
-        );
-        if (res.data != null && res.data['data'] is List) {
+        final res = await request;
+        if (res != null && res.data != null && res.data['data'] is List) {
           for (final a in res.data['data'] as List) {
             if (seenIds.add('${a['id']}')) loadedList.add(Map<String, dynamic>.from(a));
           }
@@ -759,7 +765,8 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
       if (!matchesSearch) return false;
 
       if (_selectedStatus != "All Status") {
-        if (!status.contains(_selectedStatus.toLowerCase())) {
+        // Spaces ignored: the server saves "InProgress" (the web's name) for "In Progress"
+        if (!status.replaceAll(' ', '').contains(_selectedStatus.toLowerCase().replaceAll(' ', ''))) {
           return false;
         }
       }
@@ -1054,7 +1061,9 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           final isCompleted = statusLabel.toLowerCase().contains('complete');
                           final isCancelled = statusLabel.toLowerCase().contains('cancel');
 
-                          final displayStatusLabel = isPaymentPending ? "Pending Payment" : statusLabel;
+                          final displayStatusLabel = isPaymentPending
+                              ? "Pending Payment"
+                              : (statusLabel.toLowerCase().replaceAll(' ', '') == 'inprogress' ? "In Progress" : statusLabel);
                           final statusColor = isCompleted
                               ? const Color(0xFF059669)
                               : (isCancelled

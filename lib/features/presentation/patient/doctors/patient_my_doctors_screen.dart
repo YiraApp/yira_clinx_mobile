@@ -113,15 +113,24 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       }
 
       if (token.isNotEmpty) {
+        // Steps 2 and 3 don't depend on each other, so both requests go out at once;
+        // their answers are read in the same order as before.
+        final apptRequest = sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientAppointmentsUrl,
+          data: {'userId': patientId},
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        ).then<Response?>((res) => res, onError: (_) => null);
+        final consentRequest = sl<ApiClient>().account(showSuccessSnack: false).get(
+          URLs.patientConsentsListUrl,
+          queryParameters: {'patientId': patientId},
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        ).then<Response?>((res) => res, onError: (_) => null);
+
         // 2. Fetch doctors from appointment history (who actually treated the patient)
         try {
-          final apptRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            URLs.patientAppointmentsUrl,
-            data: {'userId': patientId},
-            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-          );
+          final apptRes = await apptRequest;
 
-          if (apptRes.data != null && apptRes.data['data'] is List) {
+          if (apptRes != null && apptRes.data != null && apptRes.data['data'] is List) {
             apptList = apptRes.data['data'] as List;
             for (final appt in apptList) {
               if (appt is! Map<String, dynamic>) continue;
@@ -135,13 +144,9 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
         // 3. Fetch doctors connected via QR scan (consent records)
         try {
-          final consentRes = await sl<ApiClient>().account(showSuccessSnack: false).get(
-            URLs.patientConsentsListUrl,
-            queryParameters: {'patientId': patientId},
-            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-          );
+          final consentRes = await consentRequest;
 
-          if (consentRes.data != null && consentRes.data['data'] is List) {
+          if (consentRes != null && consentRes.data != null && consentRes.data['data'] is List) {
             consentList = consentRes.data['data'] as List;
             for (final consent in consentList) {
               if (consent is! Map<String, dynamic>) continue;
@@ -153,16 +158,21 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           }
         } catch (_) {}
 
-        // 4. Enrich doctor details from their linked hospital(s)
+        // 4. Enrich doctor details from their linked hospital(s). Every hospital is
+        // asked at once; the answers are merged in the same order as before.
         final Map<String, Map<String, dynamic>> doctorProfileMap = {};
-        for (final hId in hospitalIdsToFetch) {
-          try {
-            final docRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        final hospitalDoctorRequests = [
+          for (final hId in hospitalIdsToFetch)
+            sl<ApiClient>().account(showSuccessSnack: false).post(
               URLs.hospitalDoctorsUrl,
               data: {'hospitalId': hId},
               options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-            );
-            if (docRes.data != null && docRes.data['data'] is List) {
+            ).then<Response?>((res) => res, onError: (_) => null),
+        ];
+        for (final request in hospitalDoctorRequests) {
+          try {
+            final docRes = await request;
+            if (docRes != null && docRes.data != null && docRes.data['data'] is List) {
               for (final d in docRes.data['data']) {
                 if (d is! Map<String, dynamic>) continue;
                 final docMap = Map<String, dynamic>.from(d);

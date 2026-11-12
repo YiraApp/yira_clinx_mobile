@@ -1238,6 +1238,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       existingItem: existingItem,
       authToken: _authToken,
       orgId: _orgId,
+      dietType: _selectedDietType,
       onSubmit: (item) {
         if (!mounted) return;
         item.dayNumber = day;

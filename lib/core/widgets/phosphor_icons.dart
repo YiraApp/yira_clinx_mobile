@@ -161,10 +161,40 @@ class PhosphorIconsDuotone {
   static const IconData videoCamera = IconData(0xe4db, fontFamily: 'PhosphorDuotone');
   static const IconData warningCircle = IconData(0xe4e3, fontFamily: 'PhosphorDuotone');
   static const IconData xCircle = IconData(0xe4f9, fontFamily: 'PhosphorDuotone');
+  static const IconData drop = IconData(0xe211, fontFamily: 'PhosphorDuotone');
+  static const IconData butterfly = IconData(0xea6f, fontFamily: 'PhosphorDuotone');
+  static const IconData genderFemale = IconData(0xe6e1, fontFamily: 'PhosphorDuotone');
+  static const IconData personSimple = IconData(0xe72f, fontFamily: 'PhosphorDuotone');
+  static const IconData dna = IconData(0xe925, fontFamily: 'PhosphorDuotone');
+  static const IconData brain = IconData(0xe74f, fontFamily: 'PhosphorDuotone');
+  static const IconData bone = IconData(0xe7f3, fontFamily: 'PhosphorDuotone');
+  static const IconData virus = IconData(0xe7d7, fontFamily: 'PhosphorDuotone');
+  static const IconData thermometer = IconData(0xe5c7, fontFamily: 'PhosphorDuotone');
+  static const IconData testTube = IconData(0xe7a1, fontFamily: 'PhosphorDuotone');
+  static const IconData syringe = IconData(0xe969, fontFamily: 'PhosphorDuotone');
+  static const IconData heart = IconData(0xe2a9, fontFamily: 'PhosphorDuotone');
+  static const IconData sun = IconData(0xe473, fontFamily: 'PhosphorDuotone');
+  static const IconData microscope = IconData(0xec7b, fontFamily: 'PhosphorDuotone');
+  static const IconData eye = IconData(0xe221, fontFamily: 'PhosphorDuotone');
 }
 
 /// The background glyph drawn under each two-tone icon, by code point.
 const Map<int, IconData> _duotoneBackground = {
+  0xe211: IconData(0xe210, fontFamily: 'PhosphorDuotone'),
+  0xea6f: IconData(0xea6e, fontFamily: 'PhosphorDuotone'),
+  0xe6e1: IconData(0xe6e0, fontFamily: 'PhosphorDuotone'),
+  0xe72f: IconData(0xe72e, fontFamily: 'PhosphorDuotone'),
+  0xe925: IconData(0xe924, fontFamily: 'PhosphorDuotone'),
+  0xe74f: IconData(0xe74e, fontFamily: 'PhosphorDuotone'),
+  0xe7f3: IconData(0xe7f2, fontFamily: 'PhosphorDuotone'),
+  0xe7d7: IconData(0xe7d6, fontFamily: 'PhosphorDuotone'),
+  0xe5c7: IconData(0xe5c6, fontFamily: 'PhosphorDuotone'),
+  0xe7a1: IconData(0xe7a0, fontFamily: 'PhosphorDuotone'),
+  0xe969: IconData(0xe968, fontFamily: 'PhosphorDuotone'),
+  0xe2a9: IconData(0xe2a8, fontFamily: 'PhosphorDuotone'),
+  0xe473: IconData(0xe472, fontFamily: 'PhosphorDuotone'),
+  0xec7b: IconData(0xec7a, fontFamily: 'PhosphorDuotone'),
+  0xe221: IconData(0xe220, fontFamily: 'PhosphorDuotone'),
   0xe007: IconData(0xe006, fontFamily: 'PhosphorDuotone'),
   0xe0b5: IconData(0xe0b4, fontFamily: 'PhosphorDuotone'),
   0xe0cd: IconData(0xe0cc, fontFamily: 'PhosphorDuotone'),

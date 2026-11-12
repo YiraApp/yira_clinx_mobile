@@ -94,6 +94,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
         appointmentId: event.appointmentId,
         hospitalId: event.hospitalId,
         orgId: event.orgId,
+        medicalRecordId: event.medicalRecordId,
         diagnoses: state.diagnoses,
         medications: validMeds,
         additionalNotes: event.additionalNotes,

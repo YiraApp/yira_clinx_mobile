@@ -165,7 +165,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF161616) : const Color(0xFFECFDF5),
+                      color: isDark ? const Color(0xFF232323) : const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -190,7 +190,7 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF121212) : Colors.white,
-                border: Border(top: BorderSide(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2))),
+                border: Border(top: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8ECF2))),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -308,9 +308,9 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161616) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? const Color(0xFF232323) : const Color(0xFFE8ECF2)),
+        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE8ECF2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -126,7 +126,7 @@ class ClinicalInfoSection extends StatelessWidget {
 
           // Symptoms
           SnomedMultiSearchPicker(
-            label: "Symptoms & History",
+            label: showExamination ? "Symptoms & History" : "Symptoms",
             hintText: "Search symptoms & observations (SNOMED CT)...",
             initialValue: symptomsController.text,
             snomedType: "finding",

@@ -127,7 +127,7 @@ class NoteField extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade400 : Colors.grey.shade700))),
-              if (trailing != null) trailing!,
+              ?trailing,
             ],
           ),
           const SizedBox(height: 6),
@@ -290,7 +290,7 @@ class _AllergiesSectionState extends State<AllergiesSection> {
                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF121212)),
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: "Type an allergy, e.g. Ibuprofen - rash",
+                  hintText: "e.g. Ibuprofen - rash",
                   hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.grey.shade500),
                   filled: true,
                   fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFFFF7F8),
@@ -345,7 +345,7 @@ class ExaminationSection extends StatelessWidget {
           ),
         );
     return NoteCard(
-      icon: Icons.monitor_heart_outlined,
+      icon: Icons.medical_services_outlined,
       title: "Clinical Examination",
       subtitle: "General and systemic examination",
       isTab: isTab,

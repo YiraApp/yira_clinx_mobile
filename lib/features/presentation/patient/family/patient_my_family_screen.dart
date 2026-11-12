@@ -19,6 +19,10 @@ import 'package:yiraclinics/features/data/models/login/login_model.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
+import 'family_link_api.dart';
+import 'family_links_section.dart';
+import 'family_add_options_sheet.dart';
+import 'family_session_sync.dart';
 
 class PatientMyFamilyScreen extends StatefulWidget {
   const PatientMyFamilyScreen({super.key});
@@ -42,6 +46,16 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
   static const Color _primaryBlue = Color(0xFF2563EB);
   bool _isRefreshing = false;
 
+  final FamilyLinkApi _familyApi = FamilyLinkApi();
+
+  /// People linked from their own Yira account, by lower-case user id.
+  final Map<String, FamilyLinkedMember> _linkedMembers = {};
+  int _linksReload = 0;
+
+  /// Family codes and links belong to the account holder's own profile.
+  bool get _canManageLinks =>
+      GlobalSession.instance.isCurrentProfilePrimary && !GlobalSession.instance.isSignedInAsFamilyMember;
+
   @override
   void initState() {
     super.initState();
@@ -64,7 +78,13 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       if (sl.isRegistered<ConfigUseCase>()) {
         final freshLogin = await sl<ConfigUseCase>().call(null);
         if (freshLogin != null && freshLogin.data != null) {
-          await GlobalSession.instance.update(freshLogin);
+          // Keep the tokens and the family list when the reply leaves them out
+          // (a family member's or a linked person's profile is open).
+          await GlobalSession.instance.update(mergeFreshFamilySession(
+            GlobalSession.instance.userNotifier.value,
+            freshLogin,
+            rootId: GlobalSession.instance.rootPrimaryUserId,
+          ));
         }
       }
 
@@ -163,6 +183,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         }
       }
 
+      await _syncLinkedMembers();
       await _loadMemberImages();
     } catch (e) {
       debugPrint("[PatientMyFamily] Error refreshing family: $e");
@@ -170,6 +191,83 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
       if (mounted) {
         setState(() => _isRefreshing = false);
       }
+    }
+  }
+
+  /// Loads the people linked from their own account and puts any the session
+  /// doesn't list yet on it, so they also show in the profile switcher.
+  Future<void> _syncLinkedMembers() async {
+    if (!_canManageLinks) return;
+    try {
+      final info = await _familyApi.getMembers();
+      _linkedMembers
+        ..clear()
+        ..addEntries(info.linked.map((m) => MapEntry(m.userId.trim().toLowerCase(), m)));
+      final session = GlobalSession.instance.userNotifier.value;
+      final data = session?.data;
+      if (session != null && data != null) {
+        final profiles = data.profiles ?? const <ProfileEntity>[];
+        final updated = withLinkedFamily(profiles, info.linked);
+        if (updated.length != profiles.length) {
+          await GlobalSession.instance.update(
+            LoginEntity(status: session.status, message: session.message, data: copyFamilyData(data, profiles: updated)),
+          );
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint("[PatientMyFamily] Could not load linked family: $e");
+    }
+  }
+
+  Future<void> _confirmRemoveLink(FamilyLinkedMember member, String name) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+        title: Text('Remove $name?', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700)),
+        content: const Text(
+          'You will no longer see each other in My Family or open each other\'s profiles. Their own account is not affected.',
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await _familyApi.removeLink(member.linkId);
+      final session = GlobalSession.instance.userNotifier.value;
+      final data = session?.data;
+      if (session != null && data != null) {
+        final updated = withLinkedFamily(data.profiles ?? const <ProfileEntity>[], const [], removedIds: {member.userId});
+        await GlobalSession.instance.update(
+          LoginEntity(status: session.status, message: session.message, data: copyFamilyData(data, profiles: updated)),
+        );
+      }
+      _linkedMembers.remove(member.userId.trim().toLowerCase());
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$name was removed from your family'), backgroundColor: _primaryBlue, behavior: SnackBarBehavior.floating),
+      );
+      _refreshFamilyData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(familyLinkError(e, 'Could not remove $name. Please try again.').message),
+          backgroundColor: const Color(0xFFD97706),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -565,6 +663,21 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         ),
       ),
     );
+  }
+
+  final GlobalKey<FamilyLinksSectionState> _linksKey = GlobalKey<FamilyLinksSectionState>();
+
+  Future<void> _openAddOptions(BuildContext context, bool isDark, bool canAdd) async {
+    final choice = await FamilyAddOptionsSheet.show(context, canAddMore: canAdd, canLink: _canManageLinks);
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case FamilyAddChoice.addMember:
+        if (context.mounted) _showAddMemberSheet(context, isDark);
+      case FamilyAddChoice.linkUser:
+        await _linksKey.currentState?.openLinkSheet();
+      case FamilyAddChoice.myCode:
+        await _linksKey.currentState?.openCode();
+    }
   }
 
   void _showAddMemberSheet(BuildContext context, bool isDark) {
@@ -1271,9 +1384,11 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 19 : 17, fontWeight: FontWeight.w700, color: textColor),
         ),
       ),
-      floatingActionButton: canAdd
+      // One button for everything: add a member, link a Yira user, or show the family code
+      floatingActionButton: canAdd || _canManageLinks
           ? FloatingActionButton.extended(
-              onPressed: () => _showAddMemberSheet(context, isDark),
+              key: const Key('familyAdd.open'),
+              onPressed: () => _openAddOptions(context, isDark, canAdd),
               backgroundColor: _primaryBlue,
               foregroundColor: Colors.white,
               elevation: 3,
@@ -1282,50 +1397,37 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             )
           : null,
       body: RefreshIndicator(
-        onRefresh: _refreshFamilyData,
+        onRefresh: () async {
+          setState(() => _linksReload++);
+          await _refreshFamilyData();
+        },
         color: _primaryBlue,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: EdgeInsets.fromLTRB(isTab ? 28 : 16, 14, isTab ? 28 : 16, 96),
           children: [
-            // Summary
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF4F46E5)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
+            if (_canManageLinks)
+              FamilyLinksSection(
+                api: _familyApi,
+                phoneNumber: primaryPhone,
+                canAddMore: canAdd,
+                key: _linksKey,
+                reloadToken: _linksReload,
+                onFamilyChanged: _refreshFamilyData,
+              )
+            else
+              Row(
                 children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(14)),
-                    alignment: Alignment.center,
-                    child: const PhosphorIcon(PhosphorIconsDuotone.usersThree, size: 26, color: Colors.white, duotoneSecondaryOpacity: 0.35),
-                  ),
-                  const SizedBox(width: 14),
+                  PhosphorIcon(PhosphorIconsBold.info, size: 14, color: muted),
+                  const SizedBox(width: 6),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          dependents == 0 ? 'Just you so far' : '$dependents family ${dependents == 1 ? 'member' : 'members'}',
-                          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          canAdd
-                              ? 'Book visits and keep health records for everyone in one place. You can add ${_maxFamilyMembers - dependents} more.'
-                              : 'You have added the maximum of $_maxFamilyMembers family members.',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, height: 1.4, color: Colors.white.withValues(alpha: 0.85)),
-                        ),
-                      ],
+                    child: Text(
+                      'Switch to your own profile to see your family code and link people who use Yira.',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
                     ),
                   ),
                 ],
               ),
-            ),
             if (_isRefreshing && familyProfiles.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
@@ -1430,6 +1532,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     final age = profileAgeLabel(profile.dob);
     final phone = (profile.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
     final relColor = profileRelationColor(rawRel, isPrimary: isPrimary);
+    final FamilyLinkedMember? linked = isPrimary ? null : _linkedMembers[pId.toLowerCase()];
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final currentUserId = (currentUser?.data?.id ?? '').trim().toLowerCase();
@@ -1489,6 +1592,10 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                       const SizedBox(width: 6),
                       ProfileTag(label: 'You', color: relColor, isDark: isDark),
                     ],
+                    if (linked != null) ...[
+                      const SizedBox(width: 6),
+                      ProfileTag(label: 'Linked', color: _primaryBlue, isDark: isDark),
+                    ],
                   ],
                 ),
                 if (meta.isNotEmpty) ...[
@@ -1509,6 +1616,15 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             ),
           ),
           const SizedBox(width: 8),
+          if (linked != null && _canManageLinks) ...[
+            IconButton(
+              tooltip: 'Remove from family',
+              onPressed: () => _confirmRemoveLink(linked, pName),
+              icon: PhosphorIcon(PhosphorIconsBold.linkBreak, size: 17, color: muted),
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 2),
+          ],
           FilledButton.tonalIcon(
             onPressed: () => PatientBookAppointmentSheet.show(
               context,

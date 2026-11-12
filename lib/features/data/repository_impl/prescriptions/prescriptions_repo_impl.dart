@@ -98,6 +98,8 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
           'organizationId': prescription.orgId!.trim(),
           'OrganizationId': prescription.orgId!.trim(),
         },
+        if (prescription.medicalRecordId != null && prescription.medicalRecordId!.trim().isNotEmpty)
+          'medicalRecordId': prescription.medicalRecordId!.trim(),
         'notes': prescription.additionalNotes,
         'diagnoses': prescription.diagnoses,
         'medications': prescription.medications.map((m) {

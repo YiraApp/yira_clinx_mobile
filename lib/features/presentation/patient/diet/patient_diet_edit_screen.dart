@@ -319,6 +319,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       authToken: _authToken,
       orgId: _orgId,
       allowSaveToList: false,
+      dietType: _dietType,
       onSubmit: (item) {
         if (!mounted) return;
         item.dayNumber = day;

@@ -18,6 +18,18 @@ class MedicalRecordBriefEntity extends Equatable {
   final String? temperature;
   final String? weight;
   final String? height;
+  // The OPD note fields the web and app record forms share (the prescription PDF prints them).
+  final String? spo2;
+  final String? respiratoryRate;
+  final String? allergies;
+  final String? historyOfPresentIllness;
+  final String? familyHistory;
+  final String? pastHistory;
+  final String? currentMedications;
+  final String? cvsExamination;
+  final String? respiratoryExamination;
+  final String? abdomenExamination;
+  final String? cnsExamination;
 
   const MedicalRecordBriefEntity({
     required this.id,
@@ -36,6 +48,17 @@ class MedicalRecordBriefEntity extends Equatable {
     this.temperature,
     this.weight,
     this.height,
+    this.spo2,
+    this.respiratoryRate,
+    this.allergies,
+    this.historyOfPresentIllness,
+    this.familyHistory,
+    this.pastHistory,
+    this.currentMedications,
+    this.cvsExamination,
+    this.respiratoryExamination,
+    this.abdomenExamination,
+    this.cnsExamination,
   });
 
   @override
@@ -56,5 +79,16 @@ class MedicalRecordBriefEntity extends Equatable {
         temperature,
         weight,
         height,
+        spo2,
+        respiratoryRate,
+        allergies,
+        historyOfPresentIllness,
+        familyHistory,
+        pastHistory,
+        currentMedications,
+        cvsExamination,
+        respiratoryExamination,
+        abdomenExamination,
+        cnsExamination,
       ];
 }
