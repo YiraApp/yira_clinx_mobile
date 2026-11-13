@@ -9,13 +9,10 @@ class EnvironmentService {
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables stable connection over USB
   static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.2");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
-  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
   static String? _customBaseUrl;
 
   /// The API that release builds (TestFlight and the stores) talk to.
-  /// This is the live server (Azure "Clinicx-api-dev", deployed from the 22-04-2026-Dev branch).
-  static const String productionBaseUrl = "https://clinicx-api-dev.azurewebsites.net";
+  static const String productionBaseUrl = "https://clinicsapi-fegha0fkfrcnfufu.centralindia-01.azurewebsites.net";
 
   /// Release builds use production; debug runs use the local backend.
   /// Override with --dart-define=APP_ENV=local|dev|qa|production.

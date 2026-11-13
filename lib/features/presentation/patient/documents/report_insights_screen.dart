@@ -51,6 +51,9 @@ enum _ResultFilter { all, flagged, normal }
 class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   MedicalReportAnalysis? _analysis;
   String? _error;
+
+  /// True while MedSense (or the Gemini fallback) is reading the report in the background.
+  bool _pending = false;
   bool _loading = false;
   _Tab _tab = _Tab.overview;
   _ResultFilter _filter = _ResultFilter.all;
@@ -75,6 +78,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _pending = false;
     });
     try {
       final result = await MedicalReportAiService.analyzeDocument(widget.documentId, force: force);
@@ -90,6 +94,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       setState(() {
         _loading = false;
         _error = e.toString();
+        _pending = e is ReportAiException && e.code == 'ANALYSIS_PENDING';
       });
     }
   }
@@ -168,9 +173,11 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DietUi.iconBadge(Icons.cloud_off_rounded, DietUi.amber, isDark, size: 64, iconSize: 30),
+            DietUi.iconBadge(_pending ? Icons.hourglass_top_rounded : Icons.cloud_off_rounded, _pending ? DietUi.blue : DietUi.amber,
+                isDark, size: 64, iconSize: 30),
             const SizedBox(height: 16),
-            Text("Couldn't analyse this document", style: DietUi.text(16, FontWeight.w700, DietUi.strong(isDark))),
+            Text(_pending ? 'Analysing your report' : "Couldn't analyse this document",
+                style: DietUi.text(16, FontWeight.w700, DietUi.strong(isDark))),
             const SizedBox(height: 6),
             Text(
               _error ?? '',
@@ -181,7 +188,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
             ElevatedButton.icon(
               onPressed: () => _analyze(),
               icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text('Try again', style: DietUi.text(13, FontWeight.w600, Colors.white)),
+              label: Text(_pending ? 'Check again' : 'Try again', style: DietUi.text(13, FontWeight.w600, Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: DietUi.blue,
                 foregroundColor: Colors.white,
