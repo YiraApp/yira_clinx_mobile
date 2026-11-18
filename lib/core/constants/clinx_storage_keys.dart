@@ -13,5 +13,7 @@ class ClinxStorageKeys {
   static const String appVersionInfo = 'app_version_info';
   static const String userData = 'user_data';
   static const String isUserLoggedIn = 'is_logged_in';
+  /// The splash story video plays on the first launch only.
+  static const String hasSeenSplashStory = 'has_seen_splash_story_v1';
   static const String isNewlyRegisteredUser = 'is_newly_registered_user';
 }

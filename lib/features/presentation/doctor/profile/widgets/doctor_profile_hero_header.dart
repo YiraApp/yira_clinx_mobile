@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -207,7 +208,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                               ],
                             ),
                             child: const Icon(
-                              Icons.camera_alt_rounded,
+                              IosIcons.camera_alt_rounded,
                               color: Colors.white,
                               size: 13,
                             ),
@@ -246,7 +247,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.check,
+                        IosIcons.check,
                         size: 12,
                         color: Colors.white,
                       ),
@@ -285,7 +286,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.apartment_rounded,
+                      IosIcons.apartment_rounded,
                       size: 14,
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
@@ -333,7 +334,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.edit_note_rounded, size: 18, color: Colors.white),
+                              Icon(IosIcons.edit_note_rounded, size: 18, color: Colors.white),
                               SizedBox(width: 6),
                               Text(
                                 "Edit Profile",
@@ -374,7 +375,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.qr_code_2_rounded,
+                                IosIcons.qr_code_2_rounded,
                                 size: 18,
                                 color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
@@ -419,7 +420,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                       isTab: isTab,
                       title: "Experience",
                       value: profile.experience?.isNotEmpty == true ? profile.experience! : "8+ Years",
-                      icon: Icons.timeline_rounded,
+                      icon: IosIcons.timeline_rounded,
                       accentColor: const Color(0xFF4F46E5), // Indigo
                     ),
                   ),
@@ -431,7 +432,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                       isTab: isTab,
                       title: "Department",
                       value: profile.department?.isNotEmpty == true ? profile.department! : "Clinical",
-                      icon: Icons.local_hospital_rounded,
+                      icon: IosIcons.local_hospital_rounded,
                       accentColor: const Color(0xFF0284C7), // Sky Blue
                     ),
                   ),
@@ -443,7 +444,7 @@ class DoctorProfileHeroHeader extends StatelessWidget {
                       isTab: isTab,
                       title: "Status",
                       value: "Active",
-                      icon: Icons.check_circle_rounded,
+                      icon: IosIcons.check_circle_rounded,
                       accentColor: const Color(0xFF10B981), // Emerald
                     ),
                   ),

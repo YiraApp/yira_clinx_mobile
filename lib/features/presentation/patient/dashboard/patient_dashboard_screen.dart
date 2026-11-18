@@ -1,7 +1,8 @@
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import '../../../../config/app_route/app_routes.dart';
@@ -561,7 +562,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         const NotificationBadgeIcon(showCapsule: true, size: 20),
                         IconButton(
                           tooltip: 'Scan Doctor QR',
-                          icon: Icon(Icons.qr_code_scanner_rounded, color: primaryColor),
+                          icon: Icon(IosIcons.qr_code_scanner_rounded, color: primaryColor),
                           onPressed: () {
                             ScanDoctorQrSheet.show(context);
                           },
@@ -590,34 +591,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             // Quick Services Section (Single Unified Master Card)
                             Container(
                               key: _quickServicesKey,
-                              decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF232323) : Colors.white,
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
-                                  width: 1.1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.04),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Quick services. My Vitals lives on My Profile.
+                                  // Quick services, each in its own soft tile. My Vitals lives on My Profile.
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(6, 16, 6, 10),
+                                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
                                     child: _buildServiceGrid(
                                       isTab: isTab,
                                       isDark: isDark,
                                       services: [
                                         _DashboardService(
-                                          title: 'Book\nAppointment',
-                                          asset: 'assets/images/dashboard_icons/book_appointment.svg',
+                                          title: 'Appointment',
+                                          icon: HugeIcons.stethoscope,
+                                          badgeIcon: HugeIcons.calendar03,
                                           onTap: () {
                                             PatientBookAppointmentSheet.show(
                                               context,
@@ -633,13 +620,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                         ),
                                         _DashboardService(
                                           title: 'Prescriptions',
-                                          asset: 'assets/images/dashboard_icons/prescriptions.svg',
+                                          icon: HugeIcons.medicineBottle01,
                                           onTap: () =>
                                               Navigator.pushNamed(context, AppRoutes.userPrescriptionManagement),
                                         ),
                                         _DashboardService(
-                                          title: 'Health\nRecords',
-                                          asset: 'assets/images/dashboard_icons/health_records.svg',
+                                          title: 'Health Records',
+                                          icon: HugeIcons.folderAdd,
                                           onTap: () => Navigator.push(
                                             context,
                                             MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
@@ -648,8 +635,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                           // Family members sharing the main number have no fitness of their own
                                           if (GlobalSession.instance.currentProfileHasOwnNumber)
                                           _DashboardService(
-                                            title: 'My\nFitness',
-                                          asset: 'assets/images/dashboard_icons/my_fitness.svg',
+                                            title: 'My Fitness',
+                                          icon: HugeIcons.workoutRun,
                                           onTap: () async {
                                             bool isConnected = FitnessSyncService.instance.isConnectedNotifier.value;
                                             if (!isConnected) {
@@ -665,33 +652,33 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                           },
                                         ),
                                         _DashboardService(
-                                          title: 'Diet\nPlan',
-                                          asset: 'assets/images/dashboard_icons/diet_plan.svg',
+                                          title: 'Diet Plan',
+                                          icon: HugeIcons.riceBowl01,
                                           onTap: () => Navigator.pushNamed(context, AppRoutes.patientDietPlan),
                                         ),
                                         // Managed from the primary account
                                         if (!GlobalSession.instance.isSignedInAsFamilyMember && GlobalSession.instance.isCurrentProfilePrimary)
                                           _DashboardService(
-                                            title: 'My\nFamily',
-                                            asset: 'assets/images/dashboard_icons/my_family.svg',
+                                            title: 'My Family',
+                                            icon: HugeIcons.userGroup,
                                             onTap: () async {
                                               await Navigator.pushNamed(context, AppRoutes.patientMyFamily);
                                               if (mounted) setState(() {});
                                             },
                                           ),
                                         _DashboardService(
-                                          title: 'My\nBilling',
-                                          asset: 'assets/images/dashboard_icons/my_billing.svg',
+                                          title: 'My Billing',
+                                          icon: HugeIcons.invoice01,
                                           onTap: () => Navigator.pushNamed(context, AppRoutes.patientBilling),
                                         ),
                                         _DashboardService(
-                                          title: 'My\nPolicies',
-                                          asset: 'assets/images/dashboard_icons/my_policies.svg',
+                                          title: 'My Policies',
+                                          icon: HugeIcons.policy,
                                           onTap: () => Navigator.pushNamed(context, AppRoutes.patientPolicies),
                                         ),
                                         _DashboardService(
-                                          title: 'Question-\nnaires',
-                                          asset: 'assets/images/dashboard_icons/questionnaires.svg',
+                                          title: 'Questionnaires',
+                                          icon: HugeIcons.task01,
                                           badge: _questionnairesDue,
                                           onTap: () async {
                                             await Navigator.pushNamed(context, AppRoutes.patientQuestionnaires);
@@ -724,7 +711,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                               color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                                               borderRadius: BorderRadius.circular(10),
                                             ),
-                                            child: Icon(Icons.event_note_rounded, size: 17, color: primaryColor),
+                                            child: Icon(IosIcons.event_note_rounded, size: 17, color: primaryColor),
                                           ),
                                           const SizedBox(width: 10),
                                           Text(
@@ -802,7 +789,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                               ),
                                             ),
                                             const SizedBox(width: 2),
-                                            Icon(Icons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
+                                            Icon(IosIcons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
                                           ],
                                         ),
                                       ),
@@ -921,7 +908,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         color: const Color(0xFFEF4444).withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.cancel_outlined, color: Color(0xFFDC2626), size: 22),
+                      child: const Icon(IosIcons.cancel_outlined, color: Color(0xFFDC2626), size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -962,7 +949,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                            const Icon(IosIcons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -1311,7 +1298,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.verified_rounded, size: 14, color: Color(0xFF3B82F6)),
+                                  const Icon(IosIcons.verified_rounded, size: 14, color: Color(0xFF3B82F6)),
                                 ],
                               ),
                             ),
@@ -1339,7 +1326,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    isTele ? Icons.videocam_rounded : Icons.local_hospital_rounded,
+                                    isTele ? IosIcons.videocam_rounded : IosIcons.local_hospital_rounded,
                                     size: 11,
                                     color: isTele ? const Color(0xFF4F46E5) : const Color(0xFF059669),
                                   ),
@@ -1360,7 +1347,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               const SizedBox(width: 4),
                               PopupMenuButton<String>(
                                 icon: Icon(
-                                  Icons.more_vert_rounded,
+                                  IosIcons.more_vert_rounded,
                                   size: 20,
                                   color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                 ),
@@ -1415,7 +1402,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: const Icon(
-                                              Icons.edit_calendar_rounded,
+                                              IosIcons.edit_calendar_rounded,
                                               size: 15,
                                               color: Color(0xFFD97706),
                                             ),
@@ -1446,7 +1433,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                               borderRadius: BorderRadius.circular(6),
                                             ),
                                             child: const Icon(
-                                              Icons.cancel_outlined,
+                                              IosIcons.cancel_outlined,
                                               size: 15,
                                               color: Color(0xFFDC2626),
                                             ),
@@ -1489,7 +1476,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                         Row(
                           children: [
                             Icon(
-                              Icons.location_on_outlined,
+                              IosIcons.location_on_outlined,
                               size: 12,
                               color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                             ),
@@ -1574,7 +1561,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                 padding: EdgeInsets.zero,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
-                              icon: const Icon(Icons.videocam_rounded, size: 15),
+                              icon: const Icon(IosIcons.videocam_rounded, size: 15),
                               label: const Text(
                                 'Join Call',
                                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700),
@@ -1610,7 +1597,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
-                                        Icons.arrow_forward_rounded,
+                                        IosIcons.arrow_forward_rounded,
                                         size: 13,
                                         color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                       ),
@@ -1651,7 +1638,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               ),
                               const SizedBox(width: 4),
                               Icon(
-                                Icons.arrow_forward_rounded,
+                                IosIcons.arrow_forward_rounded,
                                 size: 13,
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
@@ -1782,7 +1769,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                   border: Border.all(color: primaryColor.withValues(alpha: 0.2), width: 1),
                 ),
                 alignment: Alignment.center,
-                child: Icon(Icons.event_available_rounded, color: primaryColor, size: 24),
+                child: Icon(IosIcons.event_available_rounded, color: primaryColor, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1840,7 +1827,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                   },
                 );
               },
-              icon: const Icon(Icons.calendar_today_rounded, size: 15),
+              icon: const Icon(IosIcons.calendar_today_rounded, size: 15),
               label: const Text(
                 'Book Consultation',
                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700),
@@ -1861,7 +1848,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             : (services.length <= 6 || services.length == 9 ? 3 : 4);
         final width = constraints.maxWidth / perRow;
         return Wrap(
-          runSpacing: 6,
+          runSpacing: 2,
           children: [
             for (final service in services)
               SizedBox(
@@ -1869,34 +1856,30 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                 child: _PressableCard(
                   onTap: service.onTap,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 5),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            SvgPicture(
-                              SvgAssetLoader(
-                                service.asset,
-                                // Icon colours follow the theme so they show on dark cards.
-                                theme: SvgTheme(currentColor: isDark ? Colors.white : const Color(0xFF111111)),
-                                colorMapper: isDark ? const _DarkIconColors() : null,
-                              ),
-                              width: isTab ? 66 : (perRow == 3 ? 62 : 56),
-                              height: isTab ? 66 : (perRow == 3 ? 62 : 56),
+                            _ServiceIconTile(
+                              icon: service.icon,
+                              badgeIcon: service.badgeIcon,
+                              isDark: isDark,
+                              size: isTab ? 62 : (perRow == 3 ? 54 : 50),
                             ),
                             if (service.badge > 0)
                               Positioned(
-                                top: -4,
-                                right: -6,
+                                top: -5,
+                                right: -7,
                                 child: Container(
                                   constraints: const BoxConstraints(minWidth: 20),
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2563EB),
+                                    color: const Color(0xFFEF4444),
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: isDark ? const Color(0xFF232323) : Colors.white, width: 2),
+                                    border: Border.all(color: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F8), width: 2),
                                   ),
                                   child: Text(
                                     service.badge > 9 ? '9+' : '${service.badge}',
@@ -1907,18 +1890,23 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          service.title,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: appPoppinFont,
-                            fontSize: isTab ? 12.5 : 11,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : const Color(0xFF121212),
-                            height: 1.25,
+                        const SizedBox(height: 7),
+                        // One line per label, all the same size; only an unusually long one shrinks.
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              service.title,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: isTab ? 12.5 : 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF121212),
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1933,31 +1921,86 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   }
 }
 
-/// Swaps the icons' white and light blue fills for dark ones on dark cards.
-class _DarkIconColors extends ColorMapper {
-  const _DarkIconColors();
+/// A service icon in a soft rounded tile (white in light mode, charcoal in dark).
+class _ServiceIconTile extends StatelessWidget {
+  final IconData icon;
+  final bool isDark;
+  final double size;
+
+  /// A small second icon at the lower right, e.g. a calendar on the doctor icon.
+  final IconData? badgeIcon;
+
+  const _ServiceIconTile({required this.icon, required this.isDark, required this.size, this.badgeIcon});
 
   @override
-  Color substitute(String? id, String elementName, String attributeName, Color color) {
-    final argb = color.toARGB32();
-    // Details cut out of the solid parts (#FEFEFE) take the card colour.
-    if (attributeName == 'stroke') return argb == 0xFFFEFEFE ? const Color(0xFF232323) : color;
-    if (attributeName != 'fill') return color;
-    if (argb == 0xFFFFFFFF) return const Color(0xFF232323);
-    if (argb == 0xFF111111) return Colors.white;
-    return color;
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * 0.3),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? const [Color(0xFF2C2F36), Color(0xFF1F2126)]
+              : const [Colors.white, Color(0xFFF6F7FA)],
+        ),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.07) : const Color(0xFFECEDF2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.35) : const Color(0xFF4F5B93).withValues(alpha: 0.09),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: badgeIcon == null
+          ? Icon(icon, size: size * 0.54, color: isDark ? Colors.white : const Color(0xFF474749))
+          : SizedBox(
+              width: size * 0.62,
+              height: size * 0.62,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: Icon(icon, size: size * 0.47, color: isDark ? Colors.white : const Color(0xFF474749)),
+                  ),
+                  // The badge sits on a disc in the tile colour, so it cuts cleanly into the main icon.
+                  Positioned(
+                    right: -size * 0.02,
+                    bottom: -size * 0.02,
+                    child: Container(
+                      padding: EdgeInsets.all(size * 0.025),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF26292F) : const Color(0xFFFAFAFC),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(badgeIcon, size: size * 0.3, color: isDark ? Colors.white : const Color(0xFF474749)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
   }
 }
 
 class _DashboardService {
   final String title;
-  final String asset;
+  final IconData icon;
+  final IconData? badgeIcon;
   final VoidCallback onTap;
 
   /// A count shown on the icon, such as questionnaires to fill in. Hidden at 0.
   final int badge;
 
-  const _DashboardService({required this.title, required this.asset, required this.onTap, this.badge = 0});
+  const _DashboardService({required this.title, required this.icon, required this.onTap, this.badge = 0, this.badgeIcon});
 }
 
 class _PressableCard extends StatefulWidget {

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -130,7 +131,7 @@ class OfferPopupAdDialog extends StatelessWidget {
                       ],
                     ),
                     child: const Icon(
-                      Icons.close_rounded,
+                      IosIcons.close_rounded,
                       color: Colors.white,
                       size: 20,
                     ),

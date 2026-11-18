@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -166,7 +167,7 @@ class PermissionHelper {
         title: title,
         message: message,
         tone: AppDialogTone.warning,
-        icon: Icons.lock_outline_rounded,
+        icon: IosIcons.lock_outline_rounded,
         primaryLabel: 'Open Settings',
         onPrimary: () async {
           Navigator.of(dialogContext).pop();

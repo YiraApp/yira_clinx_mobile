@@ -32,6 +32,18 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
   Timer? _timer;
   static const int _countdownDuration = reSendOtpDuration;
   String currentCountryCode = "+91";
+
+  /// How a number outside India gets its code: "whatsapp" (default) or "sms".
+  /// Indian numbers always get SMS.
+  String otpChannel = otpChannelWhatsApp;
+
+  static const String otpChannelWhatsApp = 'whatsapp';
+  static const String otpChannelSms = 'sms';
+
+  static bool isIndianCode(String countryCode) => countryCode.replaceAll('+', '').trim() == '91';
+
+  /// The channel to ask the server for, or null to keep its default (SMS).
+  String? channelFor(String countryCode) => isIndianCode(countryCode) ? null : otpChannel;
   String bloodGroup = '';
   String relationType = '';
   LoginBloc({
@@ -46,6 +58,9 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
     // Auth & API Events
     on<OnCountryCodeChanged>((event, emit) {
       currentCountryCode = event.countryCode;
+    });
+    on<OnOtpChannelChanged>((event, emit) {
+      otpChannel = event.channel;
     });
     on<OnTapEmailSignInEvent>(_onTapEmailSignIn);
     on<OnTapMobileSignInEvent>(_onTapMobileSignIn);
@@ -206,6 +221,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         countryCode: event.countryCode.trim(),
         mobileNumber: event.mobileNumber.trim(),
         isReSend: false,
+        channel: channelFor(event.countryCode),
       );
 
       if (result == null || !(result.status ?? false)) {
@@ -238,6 +254,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         countryCode: event.countryCode.trim(),
         mobileNumber: event.mobileNumber.trim(),
         email: event.email?.trim(),
+        channel: channelFor(event.countryCode),
       );
 
       if (result == null || !(result.status ?? false)) {
@@ -326,6 +343,7 @@ class LoginBloc extends Bloc<LogInEvent, LogInState> {
         countryCode: event.countryCode.trim(),
         mobileNumber: event.mobileNumber.trim(),
         isReSend: true,
+        channel: channelFor(event.countryCode),
       );
 
       if (result == null || !(result.status ?? false)) {

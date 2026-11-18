@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/yira_colors/yira_colors.dart';
@@ -81,7 +82,7 @@ class CustomUrlDialog {
         return AppDialog(
           title: title,
           message: description,
-          icon: Icons.notifications_active_outlined,
+          icon: IosIcons.notifications_active_outlined,
           accentColor: buttonPrimaryColor,
           primaryLabel: 'Disable Anyway',
           onPrimary: () {
@@ -102,7 +103,7 @@ class CustomUrlDialog {
         color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: _buildContactRowItem(context, Icons.alternate_email_rounded, 'contact@yira.ai', primaryColor, isDark, () {
+      child: _buildContactRowItem(context, IosIcons.alternate_email_rounded, 'contact@yira.ai', primaryColor, isDark, () {
         _launchURL('mailto:contact@yira.ai');
       }),
     );
@@ -133,7 +134,7 @@ class CustomUrlDialog {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 12, color: isDark ? Colors.white30 : Colors.black38),
+            Icon(IosIcons.arrow_forward_ios, size: 12, color: isDark ? Colors.white30 : Colors.black38),
           ],
         ),
       ),

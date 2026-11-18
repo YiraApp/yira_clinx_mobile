@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -440,7 +441,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                      icon: const Icon(IosIcons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
                       label: const Text(
                         "Delete",
                         style: TextStyle(
@@ -473,7 +474,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                               Navigator.pop(sheetContext);
                               Utils.launchURL(rawRoute);
                             },
-                            icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Colors.white),
+                            icon: const Icon(IosIcons.open_in_new_rounded, size: 18, color: Colors.white),
                             label: const Text(
                               "Open Link",
                               style: TextStyle(
@@ -527,7 +528,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         title: "Clear Notifications",
         message: "Are you sure you want to clear all notifications? This will permanently remove them from your notification center.",
         tone: AppDialogTone.danger,
-        icon: Icons.delete_sweep_rounded,
+        icon: IosIcons.delete_sweep_rounded,
         primaryLabel: "Clear All",
         onPrimary: () {
           Navigator.pop(dialogContext);
@@ -592,7 +593,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
           backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               size: 20,
               color: isDark ? Colors.white : const Color(0xFF121212),
             ),
@@ -683,7 +684,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(),
                       icon: Icon(
-                        Icons.delete_sweep_outlined,
+                        IosIcons.delete_sweep_outlined,
                         size: 22,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
@@ -715,7 +716,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
+                        child: Icon(IosIcons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -1035,7 +1036,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 22),
+            Icon(IosIcons.delete_outline_rounded, color: Colors.white, size: 22),
             SizedBox(width: 6),
             Text(
               "Delete",
@@ -1265,7 +1266,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.open_in_new_rounded, size: 12, color: primaryColor),
+                                          Icon(IosIcons.open_in_new_rounded, size: 12, color: primaryColor),
                                           const SizedBox(width: 4),
                                           Text(
                                             "Open Website",
@@ -1332,7 +1333,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isFiltered ? Icons.mark_email_read_outlined : Icons.notifications_none_rounded,
+                isFiltered ? IosIcons.mark_email_read_outlined : IosIcons.notifications_none_rounded,
                 size: 50,
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),

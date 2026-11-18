@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_logout_service.dart';
 import 'app_info_state_template.dart';
@@ -20,7 +21,7 @@ class SessionExpiredScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
         ),
         child: Icon(
-          Icons.timer_off_outlined,
+          IosIcons.timer_off_outlined,
           size: 48,
           color: isDark ? Colors.amberAccent : const Color(0XFFB68A1C),
         ),
@@ -32,7 +33,7 @@ class SessionExpiredScreen extends StatelessWidget {
       onButtonPressed: () async {
         await AuthLogoutService.performLogout(context: context);
       },
-      buttonIcon: const Icon(Icons.logout),
+      buttonIcon: const Icon(IosIcons.logout),
     );
   }
 }

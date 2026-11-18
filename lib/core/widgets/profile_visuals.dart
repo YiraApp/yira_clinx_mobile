@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -68,9 +69,9 @@ String? profileAgeLabel(String? rawDob) {
 
 IconData profileGenderIcon(String gender) {
   final lower = gender.toLowerCase();
-  if (lower.startsWith('f')) return Icons.female_rounded;
-  if (lower.startsWith('m')) return Icons.male_rounded;
-  return Icons.person_outline_rounded;
+  if (lower.startsWith('f')) return IosIcons.female_rounded;
+  if (lower.startsWith('m')) return IosIcons.male_rounded;
+  return IosIcons.person_outline_rounded;
 }
 
 /// Round avatar: the profile photo when there is one (web link, embedded image or

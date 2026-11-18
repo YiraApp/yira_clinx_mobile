@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -248,7 +249,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 20),
+                icon: const Icon(IosIcons.refresh_rounded, size: 20),
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
                 tooltip: "Refresh List",
                 onPressed: () {
@@ -288,13 +289,13 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                 ),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  IosIcons.search_rounded,
                   size: 20,
                   color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
+                        icon: const Icon(IosIcons.close_rounded, size: 18),
                         onPressed: () {
                           _searchController.clear();
                           context.read<DashboardBloc>().add(const SearchPatients(""));
@@ -358,7 +359,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                     ),
                   )
                 else
-                  Icon(Icons.expand_more_rounded, size: 18, color: primaryColor),
+                  Icon(IosIcons.expand_more_rounded, size: 18, color: primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   state.isLoadingMore
@@ -477,7 +478,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   children: [
                     if (isFavPill) ...[
                       Icon(
-                        Icons.star_rounded,
+                        IosIcons.star_rounded,
                         size: isTab ? 16 : 14,
                         color: isSelected ? Colors.white : const Color(0xFFD97706),
                       ),
@@ -530,7 +531,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isFavFilter ? Icons.star_outline_rounded : Icons.people_outline_rounded,
+                isFavFilter ? IosIcons.star_outline_rounded : IosIcons.people_outline_rounded,
                 size: 44,
                 color: isFavFilter ? const Color(0xFFD97706) : primaryColor,
               ),
@@ -570,7 +571,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                   context.read<DashboardBloc>().add(const SearchPatients(""));
                   context.read<DashboardBloc>().add(const FilterPatients(status: "All", gender: "All"));
                 },
-                icon: const Icon(Icons.clear_all_rounded, size: 18),
+                icon: const Icon(IosIcons.clear_all_rounded, size: 18),
                 label: const Text("Reset Filters"),
                 style: TextButton.styleFrom(
                   foregroundColor: primaryColor,

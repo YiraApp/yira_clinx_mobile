@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -77,17 +78,17 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library, color: primaryColor),
+                leading: const Icon(IosIcons.photo_library, color: primaryColor),
                 title: const Text('Upload Photo from Gallery'),
                 onTap: () => Navigator.pop(context, 'gallery'),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: primaryColor),
+                leading: const Icon(IosIcons.camera_alt, color: primaryColor),
                 title: const Text('Take Photo with Camera'),
                 onTap: () => Navigator.pop(context, 'camera'),
               ),
               ListTile(
-                leading: const Icon(Icons.folder, color: primaryColor),
+                leading: const Icon(IosIcons.folder, color: primaryColor),
                 title: const Text('Upload Document from Files'),
                 onTap: () => Navigator.pop(context, 'files'),
               ),
@@ -130,7 +131,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                 child: CircleAvatar(
                   backgroundColor: Colors.black54,
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(IosIcons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(dialogContext),
                   ),
                 ),
@@ -381,7 +382,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           SnackBar(
             content: Row(
               children: [
-                Icon(failed == 0 ? Icons.check_circle : Icons.error_outline, color: Colors.white, size: 18),
+                Icon(failed == 0 ? IosIcons.check_circle : IosIcons.error_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(failed == 0
@@ -427,7 +428,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         ),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 20, color: Colors.white),
+          icon: const Icon(IosIcons.arrow_back, size: 20, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: const [],
@@ -582,7 +583,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                 ),
                               ),
                               child: const Icon(
-                                Icons.note_add_rounded,
+                                IosIcons.note_add_rounded,
                                 color: Color(0xFF0066FF),
                                 size: 26,
                               ),
@@ -707,7 +708,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
-                                          Icons.description_outlined,
+                                          IosIcons.description_outlined,
                                           color: isDark
                                               ? primaryColor.withOpacity(0.9)
                                               : primaryColor,
@@ -753,7 +754,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
                                 icon: const Icon(
-                                  Icons.cancel_rounded,
+                                  IosIcons.cancel_rounded,
                                   color: Colors.redAccent,
                                   size: 20,
                                 ),
@@ -790,7 +791,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                             ),
                             onPressed: _handleBrowseTap, // Updated Tap Handler
                             icon: const Icon(
-                              Icons.add_circle_outline_rounded,
+                              IosIcons.add_circle_outline_rounded,
                               color: primaryColor,
                               size: 18,
                             ),

@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -30,13 +31,13 @@ class UnSyncedDataDialog extends StatelessWidget {
               alignment: Alignment.topRight,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : Colors.black54),
+                child: Icon(IosIcons.close_rounded, color: isDark ? Colors.white70 : Colors.black54),
               ),
             ),
             Image.asset(
               'assets/icons/export_img.png',
               width: width * 0.16,
-              errorBuilder: (_, _, _) => const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.orange),
+              errorBuilder: (_, _, _) => const Icon(IosIcons.cloud_off_rounded, size: 48, color: Colors.orange),
             ),
             const SizedBox(height: 16),
             Text(

@@ -62,6 +62,8 @@ class URLs {
 
   /*Prescriptions*/
   static const prescriptionsUrl = "/v1/api/auth/prescriptions";
+  // The PDF an unsaved prescription would get (web API route; nothing is stored).
+  static const String prescriptionPreviewUrl = "/api/prescriptions/preview";
 
   /*Provider Profile*/
   static const providerProfileUrl = "/v1/api/auth/provider/profile";

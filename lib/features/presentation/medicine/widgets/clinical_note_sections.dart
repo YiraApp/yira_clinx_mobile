@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/constants.dart';
@@ -245,7 +246,7 @@ class _AllergiesSectionState extends State<AllergiesSection> {
     final items = _items;
     final suggestions = allergySuggestions.where((s) => !items.any((i) => i.toLowerCase() == s.toLowerCase())).toList();
     return NoteCard(
-      icon: Icons.warning_amber_rounded,
+      icon: IosIcons.warning_amber_rounded,
       title: "Allergies",
       subtitle: "Drug, food or other allergies, and the reaction",
       color: _rose,
@@ -269,7 +270,7 @@ class _AllergiesSectionState extends State<AllergiesSection> {
                     InkWell(
                       onTap: () => _remove(item),
                       borderRadius: BorderRadius.circular(12),
-                      child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.close_rounded, size: 14, semanticLabel: 'Remove $item', color: none ? const Color(0xFF065F46) : const Color(0xFF9F1239))),
+                      child: Padding(padding: const EdgeInsets.all(4), child: Icon(IosIcons.close_rounded, size: 14, semanticLabel: 'Remove $item', color: none ? const Color(0xFF065F46) : const Color(0xFF9F1239))),
                     ),
                   ],
                 ),
@@ -306,7 +307,7 @@ class _AllergiesSectionState extends State<AllergiesSection> {
               height: 42,
               child: OutlinedButton.icon(
                 onPressed: _draft.text.trim().isEmpty ? null : () => _add(_draft.text),
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: const Icon(IosIcons.add_rounded, size: 18),
                 label: const Text("Add", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(foregroundColor: _rose, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               ),
@@ -345,7 +346,7 @@ class ExaminationSection extends StatelessWidget {
           ),
         );
     return NoteCard(
-      icon: Icons.medical_services_outlined,
+      icon: IosIcons.medical_services_outlined,
       title: "Clinical Examination",
       subtitle: "General and systemic examination",
       isTab: isTab,
@@ -537,7 +538,7 @@ Future<bool> showRecordPreview(BuildContext context, RecordPreviewData data, {re
                         flex: 4,
                         child: OutlinedButton.icon(
                           onPressed: () => Navigator.of(sheetContext).pop(false),
-                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          icon: const Icon(IosIcons.edit_outlined, size: 18),
                           label: const Text("Edit", style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
                           style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                         ),
@@ -547,7 +548,7 @@ Future<bool> showRecordPreview(BuildContext context, RecordPreviewData data, {re
                         flex: 7,
                         child: ElevatedButton.icon(
                           onPressed: () => Navigator.of(sheetContext).pop(true),
-                          icon: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                          icon: const Icon(IosIcons.check_rounded, color: Colors.white, size: 18),
                           label: Text(isEdit ? "Save changes" : "Save record", style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white)),
                           style: ElevatedButton.styleFrom(backgroundColor: _blue, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                         ),

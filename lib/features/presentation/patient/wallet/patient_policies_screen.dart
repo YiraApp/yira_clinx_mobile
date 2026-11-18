@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -140,7 +141,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
         message: '${p.insurer}, ${p.policyNumber}. This can\'t be undone.',
         confirmLabel: 'Delete',
         tone: AppDialogTone.danger,
-        icon: Icons.delete_outline_rounded,
+        icon: IosIcons.delete_outline_rounded,
       );
       if (!ok || !mounted) return;
       try {

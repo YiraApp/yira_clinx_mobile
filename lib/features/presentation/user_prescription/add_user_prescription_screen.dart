@@ -1,12 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
-import 'package:yiraclinics/core/services/permission_helper.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_analysis_result.dart';
 import 'package:yiraclinics/features/domain/repositories/uploaded_record/uploaded_record_repo.dart';
@@ -132,8 +129,26 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
     final scanResult = await ScanPrescriptionSheet.show(context);
     if (scanResult == null || !mounted) return;
 
+    final result = scanResult.result;
+    if (result == null) {
+      // AI could not read it: keep the file attached and let the user type the details.
+      setState(() => _setAttachment(scanResult.scannedFile));
+      return;
+    }
     // Directly populate the form fields so the user can review and edit right on this screen
-    _applyAnalysisResult(scanResult.result, scanResult.scannedFile);
+    _applyAnalysisResult(result, scanResult.scannedFile);
+  }
+
+  void _setAttachment(File file) {
+    _attachedFile = file;
+    final ext = file.path.split('.').last.toLowerCase();
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+    _attachedFileName = 'Prescription_$timestamp.$ext';
+    try {
+      _attachedFileSize = file.lengthSync();
+    } catch (_) {
+      _attachedFileSize = null;
+    }
   }
 
   void _applyAnalysisResult(PrescriptionAnalysisResult result, File scannedFile) {
@@ -205,15 +220,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
       }
 
       // Attach the scanned file
-      _attachedFile = scannedFile;
-      final ext = scannedFile.path.split('.').last.toLowerCase();
-      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      _attachedFileName = 'Prescription_$timestamp.$ext';
-      try {
-        _attachedFileSize = scannedFile.lengthSync();
-      } catch (_) {
-        _attachedFileSize = null;
-      }
+      _setAttachment(scannedFile);
     });
 
     // Show success feedback
@@ -268,137 +275,6 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
   }
 
   // --- Attachment Options Bottom Sheet ---
-  void _showAttachmentSourceSheet() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: isDark ? const Color(0xFF222222) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 38,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Attach Prescription",
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF121212),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  leading: const PhosphorIcon(PhosphorIconsBold.camera, color: primaryColor),
-                  title: const Text("Take Photo with Camera"),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickFromCamera();
-                  },
-                ),
-                ListTile(
-                  leading: const PhosphorIcon(PhosphorIconsBold.images, color: primaryColor),
-                  title: const Text("Choose from Gallery"),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickFromGallery();
-                  },
-                ),
-                ListTile(
-                  leading: const PhosphorIcon(PhosphorIconsBold.filePdf, color: primaryColor),
-                  title: const Text("Upload PDF Document"),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickFromFiles();
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _pickFromCamera() async {
-    final bool hasPermission = await PermissionHelper.ensureCameraPermission(context);
-    if (!hasPermission) return;
-
-    try {
-      final photo = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85);
-      if (photo != null) {
-        final file = File(photo.path);
-        final size = await file.length();
-        final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-        setState(() {
-          _attachedFile = file;
-          _attachedFileName = 'Prescription_$timestamp.jpg';
-          _attachedFileSize = size;
-        });
-      }
-    } catch (e) {
-      debugPrint("Camera picker error: $e");
-    }
-  }
-
-  Future<void> _pickFromGallery() async {
-    final bool hasPermission = await PermissionHelper.ensurePhotosPermission(context);
-    if (!hasPermission) return;
-
-    try {
-      final photo = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-      if (photo != null) {
-        final file = File(photo.path);
-        final size = await file.length();
-        setState(() {
-          _attachedFile = file;
-          _attachedFileName = photo.name.isNotEmpty ? photo.name : 'Prescription_Image.jpg';
-          _attachedFileSize = size;
-        });
-      }
-    } catch (e) {
-      debugPrint("Gallery picker error: $e");
-    }
-  }
-
-  Future<void> _pickFromFiles() async {
-    final bool hasPermission = await PermissionHelper.ensureDocumentPermission(context);
-    if (!hasPermission || !mounted) return;
-
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
-      );
-      if (result != null && result.files.isNotEmpty && result.files.first.path != null) {
-        final picked = result.files.first;
-        final file = File(picked.path!);
-        setState(() {
-          _attachedFile = file;
-          _attachedFileName = picked.name;
-          _attachedFileSize = picked.size;
-        });
-      }
-    } catch (e) {
-      debugPrint("File picker error: $e");
-    }
-  }
-
   String _formatSize(int? bytes) {
     if (bytes == null) return '';
     if (bytes < 1024) return '$bytes B';
@@ -406,7 +282,6 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
-  // --- Save / Submit ---
   Future<void> _savePrescription() async {
     FocusScope.of(context).unfocus();
 
@@ -683,7 +558,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Scan Prescription with AI",
+                          "Upload Prescription",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 13.5,
@@ -693,7 +568,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          "Auto-fill form from photo or PDF",
+                          "Photo or PDF. AI fills the form for you to check.",
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
@@ -922,12 +797,12 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
           }),
           const SizedBox(height: 16),
 
-          // ── SECTION 3: ATTACH DOCUMENT / PHOTO (OPTIONAL) ──
-          _buildCard(
+          // ── SECTION 3: THE FILE ADDED WITH "UPLOAD PRESCRIPTION" ──
+          if (_attachedFile != null) _buildCard(
             isDark: isDark,
             cardBg: cardBg,
             borderColor: borderColor,
-            title: "Prescription Photo or PDF (Optional)",
+            title: "Attached Prescription",
             children: [
               if (_attachedFile != null) ...[
                 Container(
@@ -973,40 +848,6 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                         constraints: const BoxConstraints(),
                       ),
                     ],
-                  ),
-                ),
-              ] else ...[
-                InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: _showAttachmentSourceSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: borderColor,
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const PhosphorIcon(PhosphorIconsBold.cloudArrowUp, size: 20, color: primaryColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Attach prescription photo or PDF",
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ],

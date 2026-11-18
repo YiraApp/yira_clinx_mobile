@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -189,7 +190,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.tour_rounded, size: 14, color: primaryColor),
+                    const Icon(IosIcons.tour_rounded, size: 14, color: primaryColor),
                     const SizedBox(width: 6),
                     Text(
                       "PATIENT GUIDE",
@@ -229,7 +230,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: Icon(
-                Icons.close_rounded,
+                IosIcons.close_rounded,
                 size: 20,
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
               ),
@@ -353,7 +354,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isLast ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded,
+                    isLast ? IosIcons.play_arrow_rounded : IosIcons.arrow_forward_rounded,
                     size: 16,
                     color: Colors.white,
                   ),
@@ -442,7 +443,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(top: 5.0, right: 8.0),
-                      child: Icon(Icons.check_circle_rounded, color: primaryColor, size: 14),
+                      child: Icon(IosIcons.check_circle_rounded, color: primaryColor, size: 14),
                     ),
                     Expanded(
                       child: Text(
@@ -465,7 +466,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
 
   Widget _buildChapter1Dashboard(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.monitor_heart_rounded,
+      icon: IosIcons.monitor_heart_rounded,
       iconColor: const Color(0xFF3B82F6),
       title: "Health Vitals & Daily Check",
       subtitle: "Track blood pressure, heart rate, SpO2, and weight continuously.",
@@ -483,7 +484,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
           children: [
             _buildVitalsItem("Blood Pressure", "120/80", "mmHg", Colors.red, isDark),
             _buildVitalsItem("Pulse Rate", "72", "bpm", Colors.pink, isDark),
-            _buildVitalsItem("Blood Oxygen", "98%", "SpO2", Colors.blue, isDark),
+            _buildVitalsItem("Blood Oxygen", "98%", "SpO2", const Color(0xFF2563EB), isDark),
           ],
         ),
       ),
@@ -497,7 +498,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
 
   Widget _buildChapter2Appointments(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.video_camera_front_rounded,
+      icon: IosIcons.video_camera_front_rounded,
       iconColor: const Color(0xFF10B981),
       title: "Doctor Consultations & Video Visits",
       subtitle: "Book verified doctor visits and join HD live video calls with 1 tap.",
@@ -518,7 +519,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
                 color: const Color(0xFF10B981).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.videocam_rounded, color: Color(0xFF10B981), size: 22),
+              child: const Icon(IosIcons.videocam_rounded, color: Color(0xFF10B981), size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -558,7 +559,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
 
   Widget _buildChapter3Consents(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.security_rounded,
+      icon: IosIcons.security_rounded,
       iconColor: const Color(0xFF8B5CF6),
       title: "Consents & Medical Privacy",
       subtitle: "Control exactly which doctors and hospitals can view your records.",
@@ -573,7 +574,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.verified_user_rounded, color: Color(0xFF8B5CF6), size: 24),
+            const Icon(IosIcons.verified_user_rounded, color: Color(0xFF8B5CF6), size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -599,7 +600,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
 
   Widget _buildChapter4Passport(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.badge_rounded,
+      icon: IosIcons.badge_rounded,
       iconColor: const Color(0xFFF59E0B),
       title: "Digital Health Passport & ABHA",
       subtitle: "Your universal digital health passport with emergency QR scan.",
@@ -614,7 +615,7 @@ class _PatientTourDialogState extends State<PatientTourDialog> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.qr_code_rounded, color: Color(0xFFF59E0B), size: 28),
+            const Icon(IosIcons.qr_code_rounded, color: Color(0xFFF59E0B), size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

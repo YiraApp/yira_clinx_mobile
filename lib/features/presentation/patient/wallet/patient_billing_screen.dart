@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -481,7 +482,7 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
         message: '${b.title}, ${formatRupees(b.total)}. This can\'t be undone.',
         confirmLabel: 'Delete',
         tone: AppDialogTone.danger,
-        icon: Icons.delete_outline_rounded,
+        icon: IosIcons.delete_outline_rounded,
       );
       if (!ok || !mounted) return;
       try {

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
@@ -145,7 +146,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.event_note_rounded, size: 14, color: DietUi.blue),
+                        Icon(IosIcons.event_note_rounded, size: 14, color: DietUi.blue),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -170,7 +171,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text('Preview', style: DietUi.text(12, FontWeight.w700, DietUi.blue)),
-                  const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
+                  const Icon(IosIcons.chevron_right_rounded, size: 18, color: DietUi.blue),
                 ],
               ),
             ],
@@ -242,7 +243,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
             : 'Your daily meals will follow this plan.',
         confirmLabel: 'Start Plan',
         tone: AppDialogTone.success,
-        icon: Icons.play_circle_outline_rounded,
+        icon: IosIcons.play_circle_outline_rounded,
       );
     } else {
       proceed = await AppDialog.confirm(
@@ -251,7 +252,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
         message: "You won't see daily meals or reminders for it until you turn it back on.",
         confirmLabel: 'Pause Plan',
         tone: AppDialogTone.warning,
-        icon: Icons.pause_circle_outline_rounded,
+        icon: IosIcons.pause_circle_outline_rounded,
       );
     }
     if (!proceed || !mounted) return;
@@ -283,7 +284,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
       message: 'This plan and your meal records for it will be removed. This cannot be undone.',
       confirmLabel: 'Delete',
       tone: AppDialogTone.danger,
-      icon: Icons.delete_outline_rounded,
+      icon: IosIcons.delete_outline_rounded,
     );
     if (!proceed || !mounted) return;
     setState(() => _busyPlanId = plan.id);
@@ -337,7 +338,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
           width: 22,
           height: 22,
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.22), shape: BoxShape.circle),
-          child: const Center(child: Icon(Icons.add_rounded, size: 16, color: Colors.white)),
+          child: const Center(child: Icon(IosIcons.add_rounded, size: 16, color: Colors.white)),
         ),
         label: Text('New Plan', style: DietUi.text(13.5, FontWeight.w700, Colors.white, spacing: 0.2)),
       ),
@@ -362,7 +363,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
           if (_error != null)
             _buildMessageCard(
               isDark,
-              icon: Icons.cloud_off_rounded,
+              icon: IosIcons.cloud_off_rounded,
               title: "Couldn't load your plans",
               message: _error!,
               action: TextButton(onPressed: _load, child: const Text('Try again')),
@@ -370,7 +371,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
           else if (_plans.isEmpty)
             _buildMessageCard(
               isDark,
-              icon: Icons.restaurant_menu_rounded,
+              icon: IosIcons.restaurant_menu_rounded,
               title: 'No diet plan yet',
               message: 'When your doctor prescribes a diet plan, it will appear here.',
             )
@@ -383,7 +384,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
               DietUi.notice(
                 'No plan is active right now. Turn one on below to see your daily meals.',
                 DietUi.amber,
-                Icons.pause_circle_outline_rounded,
+                IosIcons.pause_circle_outline_rounded,
                 isDark,
               ),
               const SizedBox(height: 16),
@@ -440,7 +441,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.restaurant_menu_rounded, color: Colors.white, size: 21),
+                      child: const Icon(IosIcons.restaurant_menu_rounded, color: Colors.white, size: 21),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -502,7 +503,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    DietUi.pill('Active', DietUi.green, isDark, icon: Icons.check_circle_rounded),
+                    DietUi.pill('Active', DietUi.green, isDark, icon: IosIcons.check_circle_rounded),
                     const SizedBox(width: 8),
                     if (dates.isNotEmpty)
                       Expanded(
@@ -530,7 +531,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.visibility_outlined, size: 17),
+                        const Icon(IosIcons.visibility_outlined, size: 17),
                         const SizedBox(width: 6),
                         Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, Colors.white)),
                       ],
@@ -571,7 +572,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DietUi.iconBadge(Icons.restaurant_menu_rounded, color, isDark, size: 42),
+                    DietUi.iconBadge(IosIcons.restaurant_menu_rounded, color, isDark, size: 42),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -606,7 +607,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.only(top: 2),
-                                  child: Icon(Icons.event_rounded, size: 13, color: DietUi.hint(isDark)),
+                                  child: Icon(IosIcons.event_rounded, size: 13, color: DietUi.hint(isDark)),
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -659,7 +660,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                                   IconButton(
                                     tooltip: 'Delete plan',
                                     visualDensity: VisualDensity.compact,
-                                    icon: Icon(Icons.delete_outline_rounded, size: 20, color: DietUi.hint(isDark)),
+                                    icon: Icon(IosIcons.delete_outline_rounded, size: 20, color: DietUi.hint(isDark)),
                                     onPressed: () => _deletePlan(plan),
                                   ),
                               ],
@@ -685,7 +686,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                         side: BorderSide(color: DietUi.blue.withValues(alpha: 0.45)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      icon: const Icon(Icons.visibility_outlined, size: 17),
+                      icon: const Icon(IosIcons.visibility_outlined, size: 17),
                       label: Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
                     ),
                   ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -1636,7 +1637,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+            const Icon(IosIcons.warning_amber_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1749,7 +1750,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.payment_rounded,
+                      IosIcons.payment_rounded,
                       color: Color(0xFFD97706),
                       size: 36,
                     ),
@@ -1791,14 +1792,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         _buildSummaryRow(
                           "Doctor",
                           _selectedDoctorMap?['name']?.toString() ?? 'Doctor',
-                          Icons.person_outline_rounded,
+                          IosIcons.person_outline_rounded,
                           isDark,
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           "Amount Due",
                           "₹${fee.toStringAsFixed(0)}",
-                          Icons.currency_rupee_rounded,
+                          IosIcons.currency_rupee_rounded,
                           isDark,
                           highlight: true,
                         ),
@@ -1806,7 +1807,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         _buildSummaryRow(
                           "Consultation",
                           "Online Video Call",
-                          Icons.videocam_rounded,
+                          IosIcons.videocam_rounded,
                           isDark,
                         ),
                       ],
@@ -1965,7 +1966,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.check_circle_rounded,
+                      IosIcons.check_circle_rounded,
                       size: 38,
                       color: Color(0xFF10B981),
                     ),
@@ -2006,7 +2007,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           _buildSummaryRow(
                             "Doctor",
                             _selectedDoctorMap!['name'].toString().trim(),
-                            Icons.medical_services_outlined,
+                            IosIcons.medical_services_outlined,
                             isDark,
                           ),
                           const SizedBox(height: 8),
@@ -2014,21 +2015,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         _buildSummaryRow(
                           "Patient",
                           state.patientName ?? _patientSearchController.text,
-                          Icons.person_outline_rounded,
+                          IosIcons.person_outline_rounded,
                           isDark,
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           "Schedule",
                           "${DateFormat(_isPatientUser ? 'EEE, d MMM' : 'dd MMM yyyy').format(_selectedDate)} • ${_isPatientUser ? _slotLabel12h(_selectedSlot) : _selectedSlot}",
-                          Icons.event_available_rounded,
+                          IosIcons.event_available_rounded,
                           isDark,
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           "Visit Type",
                           _selectedVisitType,
-                          Icons.medical_services_outlined,
+                          IosIcons.medical_services_outlined,
                           isDark,
                         ),
                         if (_selectedTreatmentPlanIds.isNotEmpty) ...[
@@ -2036,7 +2037,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           _buildSummaryRow(
                             "Treatment Plans",
                             "${_selectedTreatmentPlanIds.length} Treatment Plan(s) selected",
-                            Icons.assignment_turned_in_rounded,
+                            IosIcons.assignment_turned_in_rounded,
                             isDark,
                             highlight: true,
                           ),
@@ -2046,7 +2047,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           _buildSummaryRow(
                             "Teleconsult",
                             "Zoom Video & WhatsApp Invite Sent",
-                            Icons.videocam_rounded,
+                            IosIcons.videocam_rounded,
                             isDark,
                             highlight: true,
                           ),
@@ -2056,7 +2057,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           _buildSummaryRow(
                             "Consultation Fee",
                             "₹${_consultationFee.toStringAsFixed(0)}",
-                            Icons.currency_rupee_rounded,
+                            IosIcons.currency_rupee_rounded,
                             isDark,
                           ),
                         ],
@@ -2065,7 +2066,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           _buildSummaryRow(
                             "Record Access",
                             "Shared (7 Days)",
-                            Icons.verified_user_rounded,
+                            IosIcons.verified_user_rounded,
                             isDark,
                             highlight: true,
                           ),
@@ -2256,7 +2257,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ),
             centerTitle: true,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -2400,7 +2401,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             decoration: _inputDecoration(
                               hintText: "Enter 10-digit mobile number...",
                               prefixText: "+91  ",
-                              prefixIcon: Icons.phone_iphone_rounded,
+                              prefixIcon: IosIcons.phone_iphone_rounded,
                               isDark: isDark,
                               errorText: _phoneError,
                               suffixIcon: _isLoadingAccounts
@@ -2413,7 +2414,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       ),
                                     )
                                   : (_phoneController.text.length == 10
-                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18)
+                                      ? const Icon(IosIcons.check_circle_rounded, color: Color(0xFF10B981), size: 18)
                                       : (_phoneController.text.isNotEmpty
                                           ? Padding(
                                               padding: const EdgeInsets.only(right: 12, top: 12),
@@ -2454,12 +2455,12 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             ),
                             decoration: _inputDecoration(
                               hintText: "Type patient name (e.g. Rahul Sharma)...",
-                              prefixIcon: Icons.person_search_rounded,
+                              prefixIcon: IosIcons.person_search_rounded,
                               isDark: isDark,
                               errorText: _nameError,
                               suffixIcon: _patientSearchController.text.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      icon: const Icon(IosIcons.clear_rounded, size: 18),
                                       onPressed: () {
                                         setState(() {
                                           _patientSearchController.clear();
@@ -2526,7 +2527,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         ),
                                       ),
                                       trailing: const Icon(
-                                        Icons.arrow_forward_ios_rounded,
+                                        IosIcons.arrow_forward_ios_rounded,
                                         size: 13,
                                         color: primaryColor,
                                       ),
@@ -2563,7 +2564,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today_outlined, size: 16, color: primaryColor),
+                              const Icon(IosIcons.calendar_today_outlined, size: 16, color: primaryColor),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -2723,7 +2724,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         ),
                         decoration: _inputDecoration(
                           hintText: isPatient ? "Describe your symptoms or reason for the visit" : "Enter primary complaint or purpose of visit...",
-                          prefixIcon: Icons.edit_note_rounded,
+                          prefixIcon: IosIcons.edit_note_rounded,
                           isDark: isDark,
                           errorText: _reasonError,
                         ),
@@ -2928,11 +2929,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                           decoration: _inputDecoration(
                             hintText: "Enter discount (e.g. 100)",
-                            prefixIcon: Icons.local_offer_outlined,
+                            prefixIcon: IosIcons.local_offer_outlined,
                             isDark: isDark,
                             suffixIcon: _discountController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 16),
+                                    icon: const Icon(IosIcons.clear_rounded, size: 16),
                                     onPressed: () => setState(() => _discountController.clear()),
                                   )
                                 : null,
@@ -3173,7 +3174,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               Row(
                                 children: [
                                   Icon(
-                                    Icons.verified_user_rounded,
+                                    IosIcons.verified_user_rounded,
                                     size: 16,
                                     color: _shareRecords ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF64748B)),
                                   ),
@@ -3262,7 +3263,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
-                                          _isTeleConsultation ? Icons.lock_outline_rounded : Icons.check_circle_outline_rounded,
+                                          _isTeleConsultation ? IosIcons.lock_outline_rounded : IosIcons.check_circle_outline_rounded,
                                           color: Colors.white,
                                           size: 20,
                                         ),
@@ -4215,7 +4216,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.local_hospital_rounded,
+                  IosIcons.local_hospital_rounded,
                   color: primaryColor,
                   size: 28,
                 ),
@@ -4257,7 +4258,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     },
                   );
                 },
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 16, color: Colors.white),
+                icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 16, color: Colors.white),
                 label: const Text(
                   "Scan Doctor / Clinic QR",
                   style: TextStyle(
@@ -4310,7 +4311,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 child: DropdownButton<String>(
                   value: selectedHospId,
                   isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                  icon: const Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
                   dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                   items: distinctHospitals.map((h) {
                     final hId = (h['id'] ?? h['hospitalId'])?.toString().trim() ?? '';
@@ -4375,7 +4376,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber),
+                  const Icon(IosIcons.info_outline_rounded, size: 16, color: Colors.amber),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -4438,7 +4439,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   child: DropdownButton<String>(
                     value: selectedDocId,
                     isExpanded: true,
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                    icon: const Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
                     dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                     items: distinctDoctors.map((doc) {
                       final docId = (doc['doctorId'] ?? doc['id'] ?? doc['userId'])?.toString().trim() ?? '';
@@ -4516,7 +4517,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         CircleAvatar(
           radius: 18,
           backgroundColor: primaryColor.withValues(alpha: 0.12),
-          child: const Icon(Icons.person_rounded, color: primaryColor, size: 20),
+          child: const Icon(IosIcons.person_rounded, color: primaryColor, size: 20),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -4670,7 +4671,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
+                        const Icon(IosIcons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -4690,7 +4691,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Row(
                         children: [
                           Icon(
-                            Icons.local_hospital_rounded,
+                            IosIcons.local_hospital_rounded,
                             size: 12,
                             color: isDark ? Colors.white54 : const Color(0xFF64748B),
                           ),
@@ -4725,14 +4726,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               children: [
                 if (subSpecialty.isNotEmpty && subSpecialty != specialty)
                   _buildDoctorDetailChip(
-                    icon: Icons.hub_rounded,
+                    icon: IosIcons.hub_rounded,
                     label: subSpecialty,
                     isDark: isDark,
                     color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 if (regNo.isNotEmpty)
                   _buildDoctorDetailChip(
-                    icon: Icons.badge_rounded,
+                    icon: IosIcons.badge_rounded,
                     label: "Reg: $regNo",
                     isDark: isDark,
                     color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
@@ -4758,7 +4759,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    Icons.info_outline_rounded,
+                    IosIcons.info_outline_rounded,
                     size: 14,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
@@ -4799,7 +4800,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.payments_rounded,
+                      IosIcons.payments_rounded,
                       size: 13,
                       color: Color(0xFF059669),
                     ),
@@ -4840,7 +4841,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (phoneNumber.isNotEmpty) ...[
-                        Icon(Icons.phone_in_talk_rounded, size: 12, color: primaryColor),
+                        Icon(IosIcons.phone_in_talk_rounded, size: 12, color: primaryColor),
                         const SizedBox(width: 3),
                         Flexible(
                           child: Text(
@@ -4856,7 +4857,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         ),
                       ] else if (email.isNotEmpty) ...[
-                        Icon(Icons.mail_outline_rounded, size: 12, color: primaryColor),
+                        Icon(IosIcons.mail_outline_rounded, size: 12, color: primaryColor),
                         const SizedBox(width: 3),
                         Flexible(
                           child: Text(
@@ -5084,7 +5085,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   children: [
                     if (isBooked) ...[
                       Icon(
-                        Icons.lock_outline_rounded,
+                        IosIcons.lock_outline_rounded,
                         size: 9.5,
                         color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
                       ),
@@ -5393,7 +5394,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.phone_android_rounded,
+                        IosIcons.phone_android_rounded,
                         size: 16,
                         color: _patientSearchMode == PatientSearchMode.byPhone
                             ? primaryColor
@@ -5449,7 +5450,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.person_search_rounded,
+                        IosIcons.person_search_rounded,
                         size: 16,
                         color: _patientSearchMode == PatientSearchMode.byName
                             ? primaryColor
@@ -5585,7 +5586,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          isIndependent ? Icons.person_rounded : Icons.people_alt_rounded,
+                                          isIndependent ? IosIcons.person_rounded : IosIcons.people_alt_rounded,
                                           size: 11,
                                           color: accentColor,
                                         ),
@@ -5644,7 +5645,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.swap_horiz_rounded, size: 15, color: primaryColor),
+                                Icon(IosIcons.swap_horiz_rounded, size: 15, color: primaryColor),
                                 SizedBox(width: 4),
                                 Text(
                                   "Change",
@@ -5676,7 +5677,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.history_rounded, size: 13, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            Icon(IosIcons.history_rounded, size: 13, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                             const SizedBox(width: 5),
                             Text(
                               "${patient.pastAppointmentsCount} Prior Consultation(s)",
@@ -5719,7 +5720,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.child_care_rounded, size: 14, color: Color(0xFF2563EB)),
+                            Icon(IosIcons.child_care_rounded, size: 14, color: Color(0xFF2563EB)),
                             SizedBox(width: 6),
                             Text(
                               "+ Book for Child / Family Member instead",
@@ -5759,7 +5760,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF64748B)),
+            const Icon(IosIcons.info_outline_rounded, size: 18, color: Color(0xFF64748B)),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -5853,7 +5854,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Center(
-                          child: Icon(Icons.person_add_rounded, color: primaryColor, size: 18),
+                          child: Icon(IosIcons.person_add_rounded, color: primaryColor, size: 18),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -5904,7 +5905,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     ),
                     decoration: _inputDecoration(
                       hintText: "Enter full name (e.g. Rahul Sharma)",
-                      prefixIcon: Icons.person_outline_rounded,
+                      prefixIcon: IosIcons.person_outline_rounded,
                       isDark: isDark,
                       errorText: _nameError,
                     ),
@@ -5982,7 +5983,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.group_add_rounded,
+                              IosIcons.group_add_rounded,
                               size: 15,
                               color: const Color(0xFF059669).withValues(alpha: 0.8),
                             ),
@@ -6047,7 +6048,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      Icon(Icons.person_add_alt_1_rounded, size: 14, color: primaryColor),
+                      Icon(IosIcons.person_add_alt_1_rounded, size: 14, color: primaryColor),
                       SizedBox(width: 4),
                       Text(
                         "+ Add Dependent",
@@ -6088,7 +6089,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
               // Uniform blue theme and same icon for all matching accounts per user request
               const Color tileAccent = Color(0xFF2563EB);
-              const IconData relationIcon = Icons.person_rounded;
+              const IconData relationIcon = IosIcons.person_rounded;
 
               final String badgeText = isPrimaryItem ? "Primary" : account.relation;
 
@@ -6174,10 +6175,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               children: [
                                 Icon(
                                   account.gender.toLowerCase() == 'male'
-                                      ? Icons.male_rounded
+                                      ? IosIcons.male_rounded
                                       : account.gender.toLowerCase() == 'female'
-                                          ? Icons.female_rounded
-                                          : Icons.person_rounded,
+                                          ? IosIcons.female_rounded
+                                          : IosIcons.person_rounded,
                                   size: 13,
                                   color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                                 ),
@@ -6203,7 +6204,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         child: Icon(
-                          isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                          isSelected ? IosIcons.check_circle_rounded : IosIcons.radio_button_unchecked_rounded,
                           key: ValueKey(isSelected),
                           size: 22,
                           color: isSelected ? tileAccent : const Color(0xFFCBD5E1),
@@ -6233,7 +6234,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.family_restroom_rounded,
+                      IosIcons.family_restroom_rounded,
                       size: 15,
                       color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
@@ -6254,11 +6255,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    _buildQuickRelationChip("Child", Icons.child_care_rounded, const Color(0xFF2563EB), isDark),
-                    _buildQuickRelationChip("Spouse", Icons.favorite_rounded, const Color(0xFF2563EB), isDark),
-                    _buildQuickRelationChip("Father", Icons.man_rounded, const Color(0xFF2563EB), isDark),
-                    _buildQuickRelationChip("Mother", Icons.woman_rounded, const Color(0xFF2563EB), isDark),
-                    _buildQuickRelationChip("Other", Icons.group_add_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Child", IosIcons.child_care_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Spouse", IosIcons.favorite_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Father", IosIcons.man_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Mother", IosIcons.woman_rounded, const Color(0xFF2563EB), isDark),
+                    _buildQuickRelationChip("Other", IosIcons.group_add_rounded, const Color(0xFF2563EB), isDark),
                   ],
                 ),
               ],
@@ -6327,13 +6328,13 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     bool isSavingDependent = false;
 
     final List<Map<String, dynamic>> relations = [
-      {"label": "Spouse", "icon": Icons.favorite_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Child", "icon": Icons.child_care_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Father", "icon": Icons.man_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Mother", "icon": Icons.woman_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Brother", "icon": Icons.people_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Sister", "icon": Icons.people_rounded, "color": const Color(0xFF2563EB)},
-      {"label": "Other", "icon": Icons.group_add_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Spouse", "icon": IosIcons.favorite_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Child", "icon": IosIcons.child_care_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Father", "icon": IosIcons.man_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Mother", "icon": IosIcons.woman_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Brother", "icon": IosIcons.people_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Sister", "icon": IosIcons.people_rounded, "color": const Color(0xFF2563EB)},
+      {"label": "Other", "icon": IosIcons.group_add_rounded, "color": const Color(0xFF2563EB)},
     ];
 
     showModalBottomSheet(
@@ -6396,7 +6397,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.group_add_rounded, size: 18, color: primaryColor),
+                                  child: Icon(IosIcons.group_add_rounded, size: 18, color: primaryColor),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -6434,7 +6435,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
-                                    Icons.close_rounded,
+                                    IosIcons.close_rounded,
                                     size: 18,
                                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                   ),
@@ -6523,7 +6524,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             ),
                             decoration: _inputDecoration(
                               hintText: "Enter full name (e.g. Priya Sharma)",
-                              prefixIcon: Icons.person_outline_rounded,
+                              prefixIcon: IosIcons.person_outline_rounded,
                               isDark: isDark,
                               errorText: localError,
                             ),
@@ -6705,7 +6706,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   : Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                                        const Icon(IosIcons.person_add_alt_1_rounded, size: 18),
                                         const SizedBox(width: 8),
                                         Text(
                                           "Add ${selectedRelation != 'Other' ? selectedRelation : 'Dependent'} & Schedule",
@@ -6754,11 +6755,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
           ),
           decoration: _inputDecoration(
             hintText: "Search clinical procedures / packages...",
-            prefixIcon: Icons.search_rounded,
+            prefixIcon: IosIcons.search_rounded,
             isDark: isDark,
             suffixIcon: _treatmentPlanSearchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear_rounded, size: 16),
+                    icon: const Icon(IosIcons.clear_rounded, size: 16),
                     onPressed: () {
                       setState(() => _treatmentPlanSearchController.clear());
                     },
@@ -6911,7 +6912,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       child: Row(
                         children: [
                           Icon(
-                            isSelected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                            isSelected ? IosIcons.check_box_rounded : IosIcons.check_box_outline_blank_rounded,
                             size: 18,
                             color: isSelected ? primaryColor : const Color(0xFF94A3B8),
                           ),

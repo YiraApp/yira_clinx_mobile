@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -593,7 +594,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                   color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.camera_alt_outlined, color: _primaryBlue, size: 20),
+                child: const Icon(IosIcons.camera_alt_outlined, color: _primaryBlue, size: 20),
               ),
               title: Text(
                 'Take a Photo',
@@ -616,7 +617,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                   color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.photo_library_outlined, color: _primaryBlue, size: 20),
+                child: const Icon(IosIcons.photo_library_outlined, color: _primaryBlue, size: 20),
               ),
               title: Text(
                 'Choose from Gallery',
@@ -640,7 +641,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                     color: Colors.redAccent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                  child: const Icon(IosIcons.delete_outline_rounded, color: Colors.redAccent, size: 20),
                 ),
                 title: const Text(
                   'Remove Photo',
@@ -747,7 +748,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                   color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(Icons.person_add_alt_1_rounded, color: _primaryBlue, size: 22),
+                                child: const Icon(IosIcons.person_add_alt_1_rounded, color: _primaryBlue, size: 22),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -775,7 +776,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 20),
+                                icon: const Icon(IosIcons.close_rounded, size: 20),
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                 onPressed: () => Navigator.pop(sheetCtx),
                                 visualDensity: VisualDensity.compact,
@@ -804,7 +805,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
+                                    const Icon(IosIcons.error_outline_rounded, color: Colors.red, size: 16),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
@@ -969,7 +970,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                           ),
                                           child: Row(
                                             children: [
-                                              Icon(Icons.cake_outlined, size: 16, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                              Icon(IosIcons.cake_outlined, size: 16, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                                               const SizedBox(width: 6),
                                               Expanded(
                                                 child: Text(
@@ -1199,7 +1200,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                     : const Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Icon(Icons.person_add_alt_1_rounded, size: 18),
+                                          Icon(IosIcons.person_add_alt_1_rounded, size: 18),
                                           SizedBox(width: 8),
                                           Text(
                                             'Add member',
@@ -1313,7 +1314,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                   width: 1.5,
                 ),
               ),
-              child: const Icon(Icons.camera_alt_rounded, size: 9, color: Colors.white),
+              child: const Icon(IosIcons.camera_alt_rounded, size: 9, color: Colors.white),
             ),
           ),
         ],

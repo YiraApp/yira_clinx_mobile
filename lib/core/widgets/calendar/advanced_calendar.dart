@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/widgets/calendar/view_range.dart';
@@ -211,14 +212,14 @@ class _AdvancedCalendarState extends State<AdvancedCalendar>
                                   iconSize: 16,
                                   padding: EdgeInsets.zero,
                                   visualDensity: VisualDensity.compact,
-                                  icon: const Icon(Icons.arrow_back_ios),
+                                  icon: const Icon(IosIcons.arrow_back_ios),
                                   onPressed: _handlePrevPressed,
                                 ),
                                 IconButton(
                                   iconSize: 16,
                                   padding: EdgeInsets.zero,
                                   visualDensity: VisualDensity.compact,
-                                  icon: const Icon(Icons.arrow_forward_ios),
+                                  icon: const Icon(IosIcons.arrow_forward_ios),
                                   onPressed: _handleNextPressed,
                                 ),
                               ],

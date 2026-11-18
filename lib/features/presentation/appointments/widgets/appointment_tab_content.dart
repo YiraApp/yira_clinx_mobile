@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -58,7 +59,7 @@ class AppointmentTabContent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.event_busy_outlined,
+                  IosIcons.event_busy_outlined,
                   size: displayWidth(context) * 0.18,
                   color: Theme.of(context).hintColor.withOpacity(0.3),
                 ),
@@ -89,7 +90,7 @@ class AppointmentTabContent extends StatelessWidget {
                   height: 40,
                   child: ElevatedButton.icon(
                     onPressed: onBookAppointment,
-                    icon: const Icon(Icons.add, size: 16),
+                    icon: const Icon(IosIcons.add, size: 16),
                     label: CommonText(
                       "Book Appointment",
                       style: TextStyle(

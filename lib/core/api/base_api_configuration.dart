@@ -51,8 +51,9 @@ class EnvironmentService {
 
     for (final host in candidates) {
       try {
-        final socket = await Socket.connect(host, port, timeout: const Duration(milliseconds: 800));
-        socket.destroy();
+        // An open port 5000 isn't enough: other Macs on the Wi-Fi answer on it with AirPlay
+        // ("AirTunes", 403), and the app then talked to them instead of the API.
+        if (!await _isClinicxApi(host, port)) continue;
         _customBaseUrl = "http://$host:$localPort";
         if (host == '127.0.0.1') {
           debugPrint('[Environment] 🚀 Connected via USB adb reverse: $_customBaseUrl');
@@ -65,6 +66,22 @@ class EnvironmentService {
 
     _customBaseUrl = "http://$localHostIp:$localPort";
     debugPrint('[Environment] ⚠️ Using local fallback URL: $_customBaseUrl');
+  }
+
+  /// Whether [host]:[port] is the Clinicx API: it answers in JSON (even a 401 for no token),
+  /// unlike AirPlay or other services that happen to listen on the same port.
+  static Future<bool> _isClinicxApi(String host, int port) async {
+    final client = HttpClient()..connectionTimeout = const Duration(milliseconds: 800);
+    try {
+      final request = await client.getUrl(Uri(scheme: 'http', host: host, port: port, path: '/'));
+      final response = await request.close().timeout(const Duration(milliseconds: 1500));
+      await response.drain<void>();
+      return response.headers.contentType?.mimeType == 'application/json';
+    } catch (_) {
+      return false;
+    } finally {
+      client.close(force: true);
+    }
   }
 
   static String get _localHostUrl {

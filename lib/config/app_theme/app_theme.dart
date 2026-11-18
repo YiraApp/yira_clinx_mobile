@@ -55,11 +55,15 @@ class AppTheme {
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith((states) =>
-      states.contains(WidgetState.selected) ? primaryTeal : null),
+      states.contains(WidgetState.selected) ? accentBlue : null),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
+    switchTheme: _switchTheme(accentBlue),
+    radioTheme: _radioTheme(accentBlue),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(color: accentBlue),
+    textSelectionTheme: _textSelectionTheme(accentBlue),
     elevatedButtonTheme: _buttonTheme(),
-    textButtonTheme: _textButtonTheme(),
+    textButtonTheme: _textButtonTheme(accentBlue),
     chipTheme: _chipTheme(Colors.grey.shade300),
     inputDecorationTheme: _inputTheme(lightBackGroundColor, Colors.grey.shade200),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -124,11 +128,15 @@ class AppTheme {
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith((states) =>
-      states.contains(WidgetState.selected) ? primaryTeal : null),
+      states.contains(WidgetState.selected) ? accentBlue : null),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
     ),
+    switchTheme: _switchTheme(accentBlueDark),
+    radioTheme: _radioTheme(accentBlueDark),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(color: accentBlueDark),
+    textSelectionTheme: _textSelectionTheme(accentBlueDark),
     elevatedButtonTheme: _buttonTheme(),
-    textButtonTheme: _textButtonTheme(),
+    textButtonTheme: _textButtonTheme(accentBlueDark),
     chipTheme: _chipTheme(Colors.white10),
     inputDecorationTheme: _inputTheme(darkSurface, Colors.transparent),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -221,11 +229,38 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_popupRadius)),
       );
 
-  /// Dialog actions are mostly plain TextButtons; give them the app font.
-  static TextButtonThemeData _textButtonTheme() => TextButtonThemeData(
+  /// Dialog actions and links are mostly plain TextButtons: app font, blue accent.
+  static TextButtonThemeData _textButtonTheme(Color accent) => TextButtonThemeData(
         style: TextButton.styleFrom(
+          foregroundColor: accent,
           textStyle: const TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600),
         ),
+      );
+
+  // --- The few places the brand blue shows: toggles, radios, cursor, progress ---
+
+  static SwitchThemeData _switchTheme(Color accent) => SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected) ? Colors.white : null,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected) ? accent : null,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected) ? accent : null,
+        ),
+      );
+
+  static RadioThemeData _radioTheme(Color accent) => RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected) ? accent : null,
+        ),
+      );
+
+  static TextSelectionThemeData _textSelectionTheme(Color accent) => TextSelectionThemeData(
+        cursorColor: accent,
+        selectionColor: accent.withValues(alpha: 0.25),
+        selectionHandleColor: accent,
       );
 
   static ElevatedButtonThemeData _buttonTheme() => ElevatedButtonThemeData(

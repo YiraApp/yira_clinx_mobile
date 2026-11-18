@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -150,9 +151,9 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         subtitle: analysis?.title.isNotEmpty == true ? analysis!.title : widget.documentTitle,
         actions: [
           if (widget.onViewDocument != null)
-            DietUi.actionIcon(Icons.description_outlined, isDark, widget.onViewDocument!, tooltip: 'View document'),
+            DietUi.actionIcon(IosIcons.description_outlined, isDark, widget.onViewDocument!, tooltip: 'View document'),
           if (showContent && widget.forPatient)
-            DietUi.actionIcon(Icons.refresh_rounded, isDark, _confirmReanalyze, tooltip: 'Analyse again'),
+            DietUi.actionIcon(IosIcons.refresh_rounded, isDark, _confirmReanalyze, tooltip: 'Analyse again'),
         ],
       ),
       bottomNavigationBar: showContent ? _bottomBar(analysis, isDark) : null,
@@ -173,7 +174,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DietUi.iconBadge(_pending ? Icons.hourglass_top_rounded : Icons.cloud_off_rounded, _pending ? DietUi.blue : DietUi.amber,
+            DietUi.iconBadge(_pending ? IosIcons.hourglass_top_rounded : IosIcons.cloud_off_rounded, _pending ? DietUi.blue : DietUi.amber,
                 isDark, size: 64, iconSize: 30),
             const SizedBox(height: 16),
             Text(_pending ? 'Analysing your report' : "Couldn't analyse this document",
@@ -187,7 +188,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
             const SizedBox(height: 18),
             ElevatedButton.icon(
               onPressed: () => _analyze(),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
+              icon: const Icon(IosIcons.refresh_rounded, size: 18),
               label: Text(_pending ? 'Check again' : 'Try again', style: DietUi.text(13, FontWeight.w600, Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: DietUi.blue,
@@ -250,7 +251,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         return (
           gradient: const [Color(0xFF10B981), Color(0xFF047857)],
           color: DietUi.green,
-          icon: Icons.verified_rounded,
+          icon: IosIcons.verified_rounded,
           label: 'All clear',
           tag: 'NORMAL',
         );
@@ -258,7 +259,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         return (
           gradient: const [Color(0xFFF59E0B), Color(0xFFEA580C)],
           color: DietUi.amber,
-          icon: Icons.error_outline_rounded,
+          icon: IosIcons.error_outline_rounded,
           label: 'Needs attention',
           tag: 'ATTENTION',
         );
@@ -266,7 +267,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         return (
           gradient: const [Color(0xFFEF4444), Color(0xFFB91C1C)],
           color: DietUi.red,
-          icon: Icons.warning_amber_rounded,
+          icon: IosIcons.warning_amber_rounded,
           label: 'Critical - act now',
           tag: 'CRITICAL',
         );
@@ -274,7 +275,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         return (
           gradient: const [Color(0xFF64748B), Color(0xFF3A3A3A)],
           color: DietUi.slate,
-          icon: Icons.help_outline_rounded,
+          icon: IosIcons.help_outline_rounded,
           label: 'No health insights',
           tag: 'INFO',
         );
@@ -285,9 +286,9 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
     final style = _statusStyle(a.status);
     final date = _prettyDate(a.reportDate);
     final meta = [
-      if (a.documentType.isNotEmpty) (Icons.description_outlined, a.documentType),
-      if (date.isNotEmpty) (Icons.event_outlined, date),
-      if (a.labName.isNotEmpty) (Icons.local_hospital_outlined, a.labName),
+      if (a.documentType.isNotEmpty) (IosIcons.description_outlined, a.documentType),
+      if (date.isNotEmpty) (IosIcons.event_outlined, date),
+      if (a.labName.isNotEmpty) (IosIcons.local_hospital_outlined, a.labName),
     ];
 
     return Container(
@@ -333,7 +334,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.auto_awesome_rounded, size: 12, color: Colors.white),
+                                const Icon(IosIcons.auto_awesome_rounded, size: 12, color: Colors.white),
                                 const SizedBox(width: 5),
                                 Text('Yira AI', style: DietUi.text(10.5, FontWeight.w600, Colors.white)),
                               ],
@@ -555,9 +556,9 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       ),
       child: Row(
         children: [
-          tab(_Tab.overview, 'Overview', Icons.dashboard_outlined),
-          tab(_Tab.results, 'Results', Icons.science_outlined, badge: flagged),
-          tab(_Tab.nextSteps, 'Next steps', Icons.checklist_rounded),
+          tab(_Tab.overview, 'Overview', IosIcons.dashboard_outlined),
+          tab(_Tab.results, 'Results', IosIcons.science_outlined, badge: flagged),
+          tab(_Tab.nextSteps, 'Next steps', IosIcons.checklist_rounded),
         ],
       ),
     );
@@ -572,18 +573,18 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
         DietUi.notice(
           "This doesn't look like a medical report, so there are no health insights. Upload a lab report, scan report or discharge summary.",
           DietUi.slate,
-          Icons.info_outline_rounded,
+          IosIcons.info_outline_rounded,
           isDark,
         ),
       if (a.readability != 'good' && a.readabilityNote.isNotEmpty)
-        DietUi.notice('Part of the document was hard to read: ${a.readabilityNote}', DietUi.amber, Icons.blur_on_rounded, isDark),
+        DietUi.notice('Part of the document was hard to read: ${a.readabilityNote}', DietUi.amber, IosIcons.blur_on_rounded, isDark),
       if (a.criticalAlerts.isNotEmpty || a.consultation.isEmergency) _alertsCard(a, isDark),
       if (a.isMedicalDocument && a.consultation.needed) _consultCard(a, isDark),
       if (a.summary.isNotEmpty || a.keyFindings.isNotEmpty || a.impression.isNotEmpty) _summaryCard(a, isDark),
       if (a.hasNumericResults)
         flagged.isNotEmpty
             ? _flaggedPreview(flagged, a, isDark)
-            : DietUi.notice('All ${a.stats.normal} results are within the normal range.', DietUi.green, Icons.verified_rounded, isDark),
+            : DietUi.notice('All ${a.stats.normal} results are within the normal range.', DietUi.green, IosIcons.verified_rounded, isDark),
     ];
   }
 
@@ -639,7 +640,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.directions_run_rounded, size: 16, color: red),
+                          const Icon(IosIcons.directions_run_rounded, size: 16, color: red),
                           const SizedBox(width: 8),
                           Expanded(child: Text(alert.action, style: DietUi.text(12.5, FontWeight.w600, red, height: 1.4))),
                         ],
@@ -654,7 +655,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                     height: 46,
                     child: ElevatedButton.icon(
                       onPressed: () => Utils.launchURL('tel:108'),
-                      icon: const Icon(Icons.call_rounded, size: 18),
+                      icon: const Icon(IosIcons.call_rounded, size: 18),
                       label: Text('Call emergency (108)', style: DietUi.text(13.5, FontWeight.w700, Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: red,
@@ -707,7 +708,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                   gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.medical_services_rounded, color: Colors.white, size: 22),
+                child: const Icon(IosIcons.medical_services_rounded, color: Colors.white, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -729,7 +730,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           // How soon: a 4-step meter.
           Row(
             children: [
-              Icon(Icons.schedule_rounded, size: 15, color: urgency.color),
+              Icon(IosIcons.schedule_rounded, size: 15, color: urgency.color),
               const SizedBox(width: 6),
               Text(urgency.label, style: DietUi.text(12.5, FontWeight.w700, urgency.color)),
               if (c.timeframe.isNotEmpty && c.timeframe.toLowerCase() != urgency.label.toLowerCase()) ...[
@@ -798,7 +799,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   Widget _summaryCard(MedicalReportAnalysis a, bool isDark) {
     return _card(
       title: 'What your report says',
-      icon: Icons.auto_awesome_rounded,
+      icon: IosIcons.auto_awesome_rounded,
       color: DietUi.violet,
       isDark: isDark,
       children: [
@@ -817,7 +818,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.format_quote_rounded, size: 16, color: DietUi.violet),
+                    const Icon(IosIcons.format_quote_rounded, size: 16, color: DietUi.violet),
                     const SizedBox(width: 4),
                     Text('IMPRESSION', style: DietUi.text(10.5, FontWeight.w700, DietUi.violet, spacing: 0.6)),
                   ],
@@ -840,7 +841,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 1.5),
-                    child: Icon(Icons.arrow_right_rounded, size: 20, color: DietUi.violet.withValues(alpha: 0.9)),
+                    child: Icon(IosIcons.arrow_right_rounded, size: 20, color: DietUi.violet.withValues(alpha: 0.9)),
                   ),
                   const SizedBox(width: 4),
                   Expanded(child: Text(f, style: DietUi.text(12.5, FontWeight.w500, DietUi.strong(isDark), height: 1.5))),
@@ -856,7 +857,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
     final shown = flagged.take(3).toList();
     return _card(
       title: 'Results to look at',
-      icon: Icons.flag_rounded,
+      icon: IosIcons.flag_rounded,
       color: flagged.any((t) => t.isCritical) ? DietUi.red : DietUi.amber,
       isDark: isDark,
       trailing: DietUi.pill('${flagged.length} of ${a.stats.total}', DietUi.amber, isDark),
@@ -876,7 +877,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                     style: DietUi.text(12.5, FontWeight.w700, DietUi.blue),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_rounded, size: 16, color: DietUi.blue),
+                  const Icon(IosIcons.arrow_forward_rounded, size: 16, color: DietUi.blue),
                 ],
               ),
             ),
@@ -940,7 +941,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           padding: const EdgeInsets.symmetric(vertical: 30),
           child: Column(
             children: [
-              Icon(Icons.search_off_rounded, size: 36, color: DietUi.hint(isDark)),
+              Icon(IosIcons.search_off_rounded, size: 36, color: DietUi.hint(isDark)),
               const SizedBox(height: 8),
               Text('No results in this filter', style: DietUi.text(13, FontWeight.w600, DietUi.muted(isDark))),
             ],
@@ -994,7 +995,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                 if (flagged > 0)
                   DietUi.pill('$flagged flagged', DietUi.amber, isDark)
                 else if (s.tests.any((t) => t.isNormal))
-                  DietUi.pill('All normal', DietUi.green, isDark, icon: Icons.check_rounded),
+                  DietUi.pill('All normal', DietUi.green, isDark, icon: IosIcons.check_rounded),
               ],
             ),
           ),
@@ -1083,7 +1084,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                         DietUi.pill(flag.label, flag.color, isDark),
                       if (hasMore && !initiallyOpen) ...[
                         const SizedBox(width: 2),
-                        Icon(open ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 18, color: DietUi.hint(isDark)),
+                        Icon(open ? IosIcons.expand_less_rounded : IosIcons.expand_more_rounded, size: 18, color: DietUi.hint(isDark)),
                       ],
                     ],
                   ),
@@ -1100,7 +1101,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(top: 1),
-                            child: Icon(Icons.lightbulb_outline_rounded, size: 14, color: DietUi.muted(isDark)),
+                            child: Icon(IosIcons.lightbulb_outline_rounded, size: 14, color: DietUi.muted(isDark)),
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -1124,17 +1125,17 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   ({IconData icon, Color color, String label}) _recStyle(String category) {
     switch (category) {
       case 'diet':
-        return (icon: Icons.restaurant_rounded, color: DietUi.green, label: 'Diet');
+        return (icon: IosIcons.restaurant_rounded, color: DietUi.green, label: 'Diet');
       case 'lifestyle':
-        return (icon: Icons.directions_walk_rounded, color: DietUi.blue, label: 'Lifestyle');
+        return (icon: IosIcons.directions_walk_rounded, color: DietUi.blue, label: 'Lifestyle');
       case 'monitoring':
-        return (icon: Icons.monitor_heart_outlined, color: DietUi.red, label: 'Monitoring');
+        return (icon: IosIcons.monitor_heart_outlined, color: DietUi.red, label: 'Monitoring');
       case 'followUpTest':
-        return (icon: Icons.biotech_outlined, color: DietUi.violet, label: 'Tests');
+        return (icon: IosIcons.biotech_outlined, color: DietUi.violet, label: 'Tests');
       case 'medication':
-        return (icon: Icons.medication_outlined, color: DietUi.amber, label: 'Medicines');
+        return (icon: IosIcons.medication_outlined, color: DietUi.amber, label: 'Medicines');
       default:
-        return (icon: Icons.tips_and_updates_outlined, color: DietUi.slate, label: 'General');
+        return (icon: IosIcons.tips_and_updates_outlined, color: DietUi.slate, label: 'General');
     }
   }
 
@@ -1142,7 +1143,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
     final steps = <({IconData icon, Color color, String label, String text})>[
       if (a.isMedicalDocument && a.consultation.needed)
         (
-          icon: Icons.medical_services_rounded,
+          icon: IosIcons.medical_services_rounded,
           color: _urgencyStyle(a.consultation.urgency).color,
           label: 'Doctor · ${_urgencyStyle(a.consultation.urgency).label}',
           text: 'See a ${a.consultation.specialty.isNotEmpty ? a.consultation.specialty : 'doctor'}'
@@ -1156,7 +1157,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       if (steps.isNotEmpty)
         _card(
           title: 'Your action plan',
-          icon: Icons.route_rounded,
+          icon: IosIcons.route_rounded,
           color: DietUi.green,
           isDark: isDark,
           children: [
@@ -1166,7 +1167,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       if (a.followUpTests.isNotEmpty)
         _card(
           title: 'Tests your doctor may suggest',
-          icon: Icons.event_repeat_rounded,
+          icon: IosIcons.event_repeat_rounded,
           color: DietUi.violet,
           isDark: isDark,
           children: [
@@ -1185,7 +1186,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.biotech_outlined, size: 14, color: DietUi.violet),
+                        const Icon(IosIcons.biotech_outlined, size: 14, color: DietUi.violet),
                         const SizedBox(width: 6),
                         Flexible(child: Text(t, style: DietUi.text(12, FontWeight.w500, DietUi.strong(isDark), height: 1.35))),
                       ],
@@ -1246,7 +1247,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   Widget _questionsCard(MedicalReportAnalysis a, bool isDark) {
     return _card(
       title: 'Questions to ask your doctor',
-      icon: Icons.question_answer_outlined,
+      icon: IosIcons.question_answer_outlined,
       color: DietUi.blue,
       isDark: isDark,
       trailing: InkWell(
@@ -1267,7 +1268,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.copy_rounded, size: 13, color: DietUi.blue),
+              const Icon(IosIcons.copy_rounded, size: 13, color: DietUi.blue),
               const SizedBox(width: 4),
               Text('Copy', style: DietUi.text(11.5, FontWeight.w700, DietUi.blue)),
             ],
@@ -1304,7 +1305,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   Widget _conditionsCard(MedicalReportAnalysis a, bool isDark) {
     return _card(
       title: 'What this may point to',
-      icon: Icons.manage_search_rounded,
+      icon: IosIcons.manage_search_rounded,
       color: DietUi.amber,
       isDark: isDark,
       children: [
@@ -1340,7 +1341,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           ),
         Row(
           children: [
-            Icon(Icons.info_outline_rounded, size: 13, color: DietUi.hint(isDark)),
+            Icon(IosIcons.info_outline_rounded, size: 13, color: DietUi.hint(isDark)),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -1357,17 +1358,17 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
   Widget _detailsCard(MedicalReportAnalysis a, bool isDark) {
     final patient = [a.patientName, a.patientAge, a.patientGender].where((e) => e.isNotEmpty).join(' · ');
     final rows = <(IconData, String, String)>[
-      if (a.labName.isNotEmpty) (Icons.local_hospital_outlined, 'Lab / hospital', a.labName),
-      if (a.referringDoctor.isNotEmpty) (Icons.person_outline_rounded, 'Referred by', a.referringDoctor),
-      if (a.reportDate.isNotEmpty) (Icons.event_outlined, 'Report date', _prettyDate(a.reportDate)),
-      if (patient.isNotEmpty) (Icons.badge_outlined, 'Patient', patient),
-      if (a.pagesAnalyzed != null) (Icons.layers_outlined, 'Pages read', '${a.pagesAnalyzed}'),
-      if (a.analyzedAt != null) (Icons.schedule_rounded, 'Analysed on', DateFormat('d MMM yyyy, h:mm a').format(a.analyzedAt!)),
+      if (a.labName.isNotEmpty) (IosIcons.local_hospital_outlined, 'Lab / hospital', a.labName),
+      if (a.referringDoctor.isNotEmpty) (IosIcons.person_outline_rounded, 'Referred by', a.referringDoctor),
+      if (a.reportDate.isNotEmpty) (IosIcons.event_outlined, 'Report date', _prettyDate(a.reportDate)),
+      if (patient.isNotEmpty) (IosIcons.badge_outlined, 'Patient', patient),
+      if (a.pagesAnalyzed != null) (IosIcons.layers_outlined, 'Pages read', '${a.pagesAnalyzed}'),
+      if (a.analyzedAt != null) (IosIcons.schedule_rounded, 'Analysed on', DateFormat('d MMM yyyy, h:mm a').format(a.analyzedAt!)),
     ];
 
     return _card(
       title: 'Report details',
-      icon: Icons.info_outline_rounded,
+      icon: IosIcons.info_outline_rounded,
       color: DietUi.slate,
       isDark: isDark,
       children: [
@@ -1388,7 +1389,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           const SizedBox(height: 2),
           Row(
             children: [
-              Icon(Icons.insights_rounded, size: 15, color: DietUi.muted(isDark)),
+              Icon(IosIcons.insights_rounded, size: 15, color: DietUi.muted(isDark)),
               const SizedBox(width: 8),
               SizedBox(width: 96, child: Text('AI confidence', style: DietUi.text(12, FontWeight.w500, DietUi.muted(isDark)))),
               Expanded(
@@ -1422,7 +1423,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined, size: 16, color: DietUi.muted(isDark)),
+          Icon(IosIcons.shield_outlined, size: 16, color: DietUi.muted(isDark)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1468,7 +1469,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                     height: 48,
                     child: ElevatedButton.icon(
                       onPressed: () => PatientBookAppointmentSheet.show(context),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                      icon: const Icon(IosIcons.calendar_month_rounded, size: 18),
                       label: Text('Book appointment', maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(13, FontWeight.w700, Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: bookColor,
@@ -1498,7 +1499,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
           side: BorderSide(color: DietUi.blue.withValues(alpha: 0.45)),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
-        child: const Icon(Icons.description_outlined, size: 20),
+        child: const Icon(IosIcons.description_outlined, size: 20),
       ),
     );
   }
@@ -1508,7 +1509,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
       height: 48,
       child: OutlinedButton.icon(
         onPressed: widget.onViewDocument,
-        icon: const Icon(Icons.description_outlined, size: 18),
+        icon: const Icon(IosIcons.description_outlined, size: 18),
         label: Text(label, style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
         style: OutlinedButton.styleFrom(
           foregroundColor: DietUi.blue,
@@ -1750,7 +1751,7 @@ class _AnalyzingViewState extends State<_AnalyzingView> {
               alignment: Alignment.center,
               children: [
                 const SizedBox(width: 76, height: 76, child: CircularProgressIndicator(strokeWidth: 3, color: DietUi.violet)),
-                DietUi.iconBadge(Icons.auto_awesome_rounded, DietUi.violet, isDark, size: 56, iconSize: 26),
+                DietUi.iconBadge(IosIcons.auto_awesome_rounded, DietUi.violet, isDark, size: 56, iconSize: 26),
               ],
             ),
             const SizedBox(height: 20),
@@ -1768,10 +1769,10 @@ class _AnalyzingViewState extends State<_AnalyzingView> {
                       width: 18,
                       height: 18,
                       child: i < _step
-                          ? const Icon(Icons.check_circle_rounded, size: 18, color: DietUi.green)
+                          ? const Icon(IosIcons.check_circle_rounded, size: 18, color: DietUi.green)
                           : i == _step
                               ? const Padding(padding: EdgeInsets.all(2), child: CircularProgressIndicator(strokeWidth: 2, color: DietUi.violet))
-                              : Icon(Icons.radio_button_unchecked_rounded, size: 18, color: DietUi.hint(isDark)),
+                              : Icon(IosIcons.radio_button_unchecked_rounded, size: 18, color: DietUi.hint(isDark)),
                     ),
                     const SizedBox(width: 10),
                     SizedBox(

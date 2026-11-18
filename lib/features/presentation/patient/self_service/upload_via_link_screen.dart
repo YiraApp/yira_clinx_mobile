@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -71,7 +72,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
               child: _uploadSuccess
                   ? Column(
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 64),
+                        const Icon(IosIcons.check_circle_rounded, color: Colors.green, size: 64),
                         const SizedBox(height: 16),
                         const Text('Upload Successful!', style: TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
@@ -96,7 +97,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.lock_clock_rounded, color: Colors.amber[800], size: 18),
+                              Icon(IosIcons.lock_clock_rounded, color: Colors.amber[800], size: 18),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -149,7 +150,7 @@ class _DocumentUploadViaLinkScreenState extends State<DocumentUploadViaLinkScree
                           ),
                           child: Column(
                             children: [
-                              Icon(Icons.cloud_upload_rounded, color: primaryColor, size: 44),
+                              Icon(IosIcons.cloud_upload_rounded, color: primaryColor, size: 44),
                               const SizedBox(height: 8),
                               const Text('Select or drag files here (PDF, JPG, PNG up to 25MB)', textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w500)),
                             ],

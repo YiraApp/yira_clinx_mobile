@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -58,7 +59,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
               child: _signedSuccess
                   ? Column(
                       children: [
-                        const Icon(Icons.verified_rounded, color: Colors.green, size: 64),
+                        const Icon(IosIcons.verified_rounded, color: Colors.green, size: 64),
                         const SizedBox(height: 16),
                         const Text('Consent Signed & Verified!', style: TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
@@ -121,7 +122,7 @@ class _DigitalConsentSignScreenState extends State<DigitalConsentSignScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.draw_rounded, color: primaryColor),
+                              Icon(IosIcons.draw_rounded, color: primaryColor),
                               const SizedBox(width: 8),
                               Text('Tap to Sign / Draw Signature', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: primaryColor, fontWeight: FontWeight.bold)),
                             ],

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -635,7 +636,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
           errorBuilder: (context, error, stackTrace) {
             return Center(
               child: Icon(
-                Icons.volunteer_activism_rounded,
+                IosIcons.volunteer_activism_rounded,
                 size: 96,
                 color: Color(0xFF2563EB).withValues(alpha: handOpacity * 0.9),
               ),
@@ -899,7 +900,7 @@ class _YiraSplashScreenState extends State<YiraSplashScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.verified_user_rounded,
+                      IosIcons.verified_user_rounded,
                       size: 15,
                       color: dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
                     ),

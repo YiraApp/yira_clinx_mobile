@@ -40,6 +40,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
   String _statusText = 'Reading your prescription...';
   String? _errorMessage;
   bool _isPdf = false;
+  File? _lastFile;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -169,6 +170,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
 
   Future<void> _analyzeFile(File file) async {
     if (!mounted) return;
+    _lastFile = file;
 
     setState(() {
       _state = _SheetState.analyzing;
@@ -851,7 +853,9 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                // Keep the chosen file attached so the user only fills the details.
+                onPressed: () => Navigator.of(context)
+                    .pop(_lastFile == null ? null : ScanResult(result: null, scannedFile: _lastFile!)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   side: BorderSide(
@@ -942,7 +946,8 @@ enum _SheetState { pickSource, analyzing, error }
 /// Result returned by the scan sheet containing both the AI extraction
 /// and the physical file (to attach with the prescription).
 class ScanResult {
-  final PrescriptionAnalysisResult result;
+  /// Null when the AI could not read it and the user chose to enter details manually.
+  final PrescriptionAnalysisResult? result;
   final File scannedFile;
 
   const ScanResult({required this.result, required this.scannedFile});

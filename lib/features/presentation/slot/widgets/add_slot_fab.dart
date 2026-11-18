@@ -1,5 +1,6 @@
 
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -65,7 +66,7 @@ class _AddSlotFabState extends State<AddSlotFab> with SingleTickerProviderStateM
       children: [
         _buildChildOption(
           label: 'Slot Generation',
-          icon: Icons.event,
+          icon: IosIcons.event,
           color: primaryColor,
           onTap: widget.onAddSlot,
           offsetMultiplier: 1,
@@ -80,7 +81,7 @@ class _AddSlotFabState extends State<AddSlotFab> with SingleTickerProviderStateM
           child: RotationTransition(
             turns: _animateIcon,
             child: Icon(
-              _isExpanded ? Icons.close_rounded : Icons.description_outlined,
+              _isExpanded ? IosIcons.close_rounded : IosIcons.description_outlined,
               size: 24,
             ),
           ),

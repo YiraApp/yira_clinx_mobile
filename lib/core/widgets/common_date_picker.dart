@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -173,7 +174,7 @@ class CommonDatePicker extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.calendar_today_rounded,
+              IosIcons.calendar_today_rounded,
               size: 18,
               color: isDark ? Colors.white : const Color(0xFF495057),
             ),

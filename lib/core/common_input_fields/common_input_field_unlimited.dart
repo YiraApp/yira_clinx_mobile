@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -162,7 +163,7 @@ class _CommonInputFieldUnlimitedState extends State<CommonInputFieldUnlimited> {
                 });
               },
               child: Icon(
-                _obscureText ? Icons.visibility_off : Icons.visibility,
+                _obscureText ? IosIcons.visibility_off : IosIcons.visibility,
                 color: isDark ? Colors.white70 : Colors.black54,
               ),
             )

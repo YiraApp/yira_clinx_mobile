@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -250,7 +251,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
         const SizedBox(height: 14),
         Row(
           children: [
-            DietUi.iconBadge(Icons.upload_file_rounded, DietUi.blue, isDark, size: 40),
+            DietUi.iconBadge(IosIcons.upload_file_rounded, DietUi.blue, isDark, size: 40),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -272,7 +273,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                 onTap: () => Navigator.pop(context),
                 child: Padding(
                   padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.close_rounded, size: 20, color: DietUi.muted(isDark)),
+                  child: Icon(IosIcons.close_rounded, size: 20, color: DietUi.muted(isDark)),
                 ),
               ),
             ),
@@ -283,11 +284,11 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
         // Sources
         Row(
           children: [
-            _source(isDark, Icons.document_scanner_outlined, _files.isEmpty || _hasPdf ? 'Scan pages' : 'Scan next', _addFromCamera),
+            _source(isDark, IosIcons.document_scanner_outlined, _files.isEmpty || _hasPdf ? 'Scan pages' : 'Scan next', _addFromCamera),
             const SizedBox(width: 8),
-            _source(isDark, Icons.photo_library_outlined, 'Photos', _addFromGallery),
+            _source(isDark, IosIcons.photo_library_outlined, 'Photos', _addFromGallery),
             const SizedBox(width: 8),
-            _source(isDark, Icons.picture_as_pdf_outlined, 'PDF file', _pickPdf),
+            _source(isDark, IosIcons.picture_as_pdf_outlined, 'PDF file', _pickPdf),
           ],
         ),
         const SizedBox(height: 12),
@@ -296,7 +297,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.layers_outlined, size: 14, color: DietUi.muted(isDark)),
+              Icon(IosIcons.layers_outlined, size: 14, color: DietUi.muted(isDark)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -313,14 +314,14 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
           DietUi.notice(
             'For best results, photograph each page flat, in good light, with all text visible.',
             DietUi.blue,
-            Icons.tips_and_updates_outlined,
+            IosIcons.tips_and_updates_outlined,
             isDark,
           ),
           const SizedBox(height: 14),
         ],
 
         if (_error != null) ...[
-          DietUi.notice(_error!, DietUi.red, Icons.error_outline_rounded, isDark),
+          DietUi.notice(_error!, DietUi.red, IosIcons.error_outline_rounded, isDark),
           const SizedBox(height: 12),
         ],
 
@@ -371,7 +372,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
             ),
             child: Row(
               children: [
-                DietUi.iconBadge(Icons.auto_awesome_rounded, DietUi.violet, isDark, size: 36, iconSize: 18),
+                DietUi.iconBadge(IosIcons.auto_awesome_rounded, DietUi.violet, isDark, size: 36, iconSize: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -401,7 +402,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
           height: 50,
           child: ElevatedButton.icon(
             onPressed: _picking || _files.isEmpty ? null : _submit,
-            icon: Icon(_analyze ? Icons.auto_awesome_rounded : Icons.cloud_upload_rounded, size: 18),
+            icon: Icon(_analyze ? IosIcons.auto_awesome_rounded : IosIcons.cloud_upload_rounded, size: 18),
             label: Text(_analyze ? 'Upload & analyse' : 'Upload report', style: DietUi.text(14, FontWeight.w700, Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: DietUi.blue,
@@ -474,7 +475,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.picture_as_pdf_rounded, color: DietUi.red, size: 26),
+                            const Icon(IosIcons.picture_as_pdf_rounded, color: DietUi.red, size: 26),
                             const SizedBox(height: 6),
                             Text(
                               f.file.path.split('/').last,
@@ -514,7 +515,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                       shape: BoxShape.circle,
                       border: Border.all(color: DietUi.card(isDark), width: 2),
                     ),
-                    child: const Icon(Icons.close_rounded, size: 12, color: Colors.white),
+                    child: const Icon(IosIcons.close_rounded, size: 12, color: Colors.white),
                   ),
                 ),
               ),
@@ -606,7 +607,7 @@ class _ProgressViewState extends State<_ProgressView> {
             alignment: Alignment.center,
             children: [
               SizedBox(width: 72, height: 72, child: CircularProgressIndicator(strokeWidth: 3, color: color)),
-              DietUi.iconBadge(widget.analyzing ? Icons.auto_awesome_rounded : Icons.cloud_upload_rounded, color, isDark, size: 52, iconSize: 24),
+              DietUi.iconBadge(widget.analyzing ? IosIcons.auto_awesome_rounded : IosIcons.cloud_upload_rounded, color, isDark, size: 52, iconSize: 24),
             ],
           ),
           const SizedBox(height: 18),
@@ -629,10 +630,10 @@ class _ProgressViewState extends State<_ProgressView> {
                     width: 18,
                     height: 18,
                     child: i < _step
-                        ? const Icon(Icons.check_circle_rounded, size: 18, color: DietUi.green)
+                        ? const Icon(IosIcons.check_circle_rounded, size: 18, color: DietUi.green)
                         : i == _step
                             ? Padding(padding: const EdgeInsets.all(2), child: CircularProgressIndicator(strokeWidth: 2, color: color))
-                            : Icon(Icons.radio_button_unchecked_rounded, size: 18, color: DietUi.hint(isDark)),
+                            : Icon(IosIcons.radio_button_unchecked_rounded, size: 18, color: DietUi.hint(isDark)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(

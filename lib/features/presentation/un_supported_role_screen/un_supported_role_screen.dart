@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/common_widgets/common_text.dart';
@@ -67,7 +68,7 @@ class _UnsupportedRoleScreenState extends State<UnsupportedRoleScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.lock_person_outlined,
+                  IosIcons.lock_person_outlined,
                   size: iconSize * 0.5,
                   color: theme.primaryColor,
                 ),

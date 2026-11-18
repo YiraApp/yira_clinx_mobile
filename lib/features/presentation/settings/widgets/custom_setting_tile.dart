@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -69,7 +70,7 @@ class CustomSettingTile extends StatelessWidget {
             ),
           ),
           trailing: Icon(
-            Icons.arrow_forward_ios_rounded,
+            IosIcons.arrow_forward_ios_rounded,
             size:isTab? 20: width * 0.035,
             color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
           ),

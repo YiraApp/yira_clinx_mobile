@@ -1,6 +1,7 @@
 
 
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/presentation/test_results/widgets/stat_count_card.dart';
 
@@ -21,7 +22,7 @@ class QuickStatsGrid extends StatelessWidget {
               child: StatCountCard(
                 title: "Blood Tests",
                 count: "${state.bloodTestsCount}",
-                icon: Icons.science_outlined,
+                icon: IosIcons.science_outlined,
                 iconColor: Colors.red.shade400,
                 bgColor: surface,
               ),
@@ -31,7 +32,7 @@ class QuickStatsGrid extends StatelessWidget {
               child: StatCountCard(
                 title: "Urine Tests",
                 count: "${state.urineTestsCount}",
-                icon: Icons.biotech_outlined,
+                icon: IosIcons.biotech_outlined,
                 iconColor: Colors.orange.shade400,
                 bgColor: surface,
               ),
@@ -45,7 +46,7 @@ class QuickStatsGrid extends StatelessWidget {
               child: StatCountCard(
                 title: "Normal",
                 count: "17",
-                icon: Icons.check_circle_outline,
+                icon: IosIcons.check_circle_outline,
                 iconColor: Colors.green.shade400,
                 bgColor: surface,
               ),
@@ -55,7 +56,7 @@ class QuickStatsGrid extends StatelessWidget {
               child: StatCountCard(
                 title: "Abnormal",
                 count: "${state.abnormalCount}",
-                icon: Icons.warning_amber_rounded,
+                icon: IosIcons.warning_amber_rounded,
                 iconColor: Colors.red.shade700,
                 bgColor: surface,
               ),

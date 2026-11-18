@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ const List<(List<String>, LabPackageLook)> _looks = [
   (['gene', 'dna', 'allergy', 'cancer', 'tumor', 'marker'],
       LabPackageLook('Advanced screening', PhosphorIconsDuotone.dna, [PhosphorIconsDuotone.microscope, PhosphorIconsDuotone.sparkle], Color(0xFF6366F1), Color(0xFF4338CA))),
   (['senior', 'elder', 'aged', 'men', 'man'],
-      LabPackageLook('Senior care', PhosphorIconsDuotone.heartbeat, [PhosphorIconsDuotone.pill, PhosphorIconsDuotone.stethoscope], Color(0xFF0EA5E9), Color(0xFF1E40AF))),
+      LabPackageLook('Senior care', PhosphorIconsDuotone.heartbeat, [PhosphorIconsDuotone.pill, PhosphorIconsDuotone.stethoscope], Color(0xFF0EA5E9), Color(0xFF1D4ED8))),
   (['full body', 'complete', 'health package', 'health check', 'master', 'executive', 'wellness', 'basic'],
       _fullBody),
 ];
@@ -66,6 +67,10 @@ class LabPackageCover extends StatelessWidget {
   final Widget? child;
   /// A bigger illustration and a softer bottom edge, for the details page header
   final bool large;
+  /// For list cards: when the package has a photo, size the cover to the photo's
+  /// own shape so the whole photo shows edge to edge. [height] is used until it loads
+  /// and for packages without a photo.
+  final bool fitPhoto;
 
   const LabPackageCover({
     super.key,
@@ -74,7 +79,12 @@ class LabPackageCover extends StatelessWidget {
     this.borderRadius = BorderRadius.zero,
     this.child,
     this.large = false,
+    this.fitPhoto = false,
   });
+
+  /// Where package photos come from; tests swap in a local image.
+  @visibleForTesting
+  static ImageProvider Function(String url) photoProvider = (url) => CachedNetworkImageProvider(url);
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +92,10 @@ class LabPackageCover extends StatelessWidget {
     final look = labPackageLook(package);
     final url = (package['imageUrl'] ?? '').toString().trim();
     final art = _CoverArt(look: look, isDark: isDark, large: large);
+
+    if (fitPhoto && url.startsWith('https://')) {
+      return _PhotoSizedCover(url: url, fallbackHeight: height, borderRadius: borderRadius, art: art, child: child);
+    }
 
     return ClipRRect(
       borderRadius: borderRadius,
@@ -91,15 +105,27 @@ class LabPackageCover extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (url.startsWith('https://'))
+            if (url.startsWith('https://')) ...[
+              // The whole photo is shown (never cropped); a blurred copy fills the sides.
+              ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22, tileMode: TileMode.clamp),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  fadeInDuration: Duration.zero,
+                  placeholder: (_, _) => art,
+                  errorWidget: (_, _, _) => art,
+                ),
+              ),
+              const ColoredBox(color: Color(0x26000000)),
               CachedNetworkImage(
                 imageUrl: url,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 fadeInDuration: const Duration(milliseconds: 200),
-                placeholder: (_, _) => art,
-                errorWidget: (_, _, _) => art,
-              )
-            else
+                placeholder: (_, _) => const SizedBox.shrink(),
+                errorWidget: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ] else
               art,
             if (url.startsWith('https://'))
               // keeps badges readable on any photo
@@ -121,6 +147,108 @@ class LabPackageCover extends StatelessWidget {
   }
 }
 
+/// A cover that takes its uploaded photo's own aspect ratio, so the photo shows whole
+/// with no cropping and no bars. Very tall or very wide photos are held between
+/// square and 2.4:1; the spare room then gets a blurred copy of the photo.
+class _PhotoSizedCover extends StatefulWidget {
+  final String url;
+  final double fallbackHeight;
+  final BorderRadius borderRadius;
+  final Widget art;
+  final Widget? child;
+  const _PhotoSizedCover({
+    required this.url,
+    required this.fallbackHeight,
+    required this.borderRadius,
+    required this.art,
+    this.child,
+  });
+
+  @override
+  State<_PhotoSizedCover> createState() => _PhotoSizedCoverState();
+}
+
+class _PhotoSizedCoverState extends State<_PhotoSizedCover> {
+  ImageStream? _stream;
+  late final ImageStreamListener _listener = ImageStreamListener(
+    (info, _) {
+      final r = info.image.width / info.image.height;
+      if (mounted && r.isFinite && r > 0) setState(() => _ratio = r);
+    },
+    onError: (_, _) {
+      if (mounted) setState(() => _failed = true);
+    },
+  );
+  double? _ratio;
+  bool _failed = false;
+
+  late final ImageProvider _provider = LabPackageCover.photoProvider(widget.url);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final stream = _provider.resolve(createLocalImageConfiguration(context));
+    if (stream.key != _stream?.key) {
+      _stream?.removeListener(_listener);
+      _stream = stream..addListener(_listener);
+    }
+  }
+
+  @override
+  void dispose() {
+    _stream?.removeListener(_listener);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = _ratio;
+    final Widget body;
+    if (ratio == null || _failed) {
+      body = SizedBox(height: widget.fallbackHeight, width: double.infinity, child: widget.art);
+    } else {
+      final shown = ratio.clamp(1.0, 2.4);
+      body = AspectRatio(
+        aspectRatio: shown,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (shown != ratio)
+              ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22, tileMode: TileMode.clamp),
+                child: Image(image: _provider, fit: BoxFit.cover),
+              ),
+            Image(image: _provider, fit: BoxFit.contain),
+          ],
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: widget.borderRadius,
+      child: Stack(
+        children: [
+          body,
+          if (ratio != null && !_failed)
+            // keeps badges readable on any photo
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x33000000), Color(0x00000000), Color(0x00000000), Color(0x4D000000)],
+                    stops: [0, 0.3, 0.7, 1],
+                  ),
+                ),
+              ),
+            ),
+          if (widget.child != null) Positioned.fill(child: widget.child!),
+        ],
+      ),
+    );
+  }
+}
+
 class _CoverArt extends StatelessWidget {
   final LabPackageLook look;
   final bool isDark;
@@ -134,7 +262,12 @@ class _CoverArt extends StatelessWidget {
     return LayoutBuilder(builder: (context, box) {
       final h = box.maxHeight.isFinite ? box.maxHeight : 140.0;
       final w = box.maxWidth.isFinite ? box.maxWidth : 360.0;
-      final iconSize = math.min(h * (large ? 0.58 : 0.62), w * 0.42);
+      // Everything fits inside the frame with a margin: disc, ring and both bubbles.
+      final iconSize = math.min(h * (large ? 0.46 : 0.48), w * 0.34);
+      final disc = iconSize * 1.35;
+      final discRight = w * 0.08;
+      final ringRadius = math.min(disc / 2 + h * 0.08, h / 2 - 6);
+      final ringRight = discRight + disc / 2 - ringRadius;
       return DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -145,14 +278,18 @@ class _CoverArt extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            Positioned.fill(child: CustomPaint(painter: _CoverPattern(seed: look.label.hashCode))),
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _CoverPattern(seed: look.label.hashCode, ringRadius: ringRadius, ringRight: ringRight),
+              ),
+            ),
             // main illustration, right side, on a soft disc
             Positioned(
-              right: w * 0.06,
-              top: (h - iconSize * 1.35) / 2,
+              right: discRight,
+              top: (h - disc) / 2,
               child: Container(
-                width: iconSize * 1.35,
-                height: iconSize * 1.35,
+                width: disc,
+                height: disc,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white.withValues(alpha: 0.14),
@@ -164,15 +301,18 @@ class _CoverArt extends StatelessWidget {
             ),
             // two small floating ones
             Positioned(
-              right: w * 0.06 + iconSize * 1.3,
-              top: h * 0.14,
-              child: _Bubble(icon: look.extras.first, size: iconSize * 0.34),
+              right: discRight + disc + w * 0.02,
+              top: h * 0.16,
+              child: _Bubble(icon: look.extras.first, size: iconSize * 0.36),
             ),
             if (look.extras.length > 1)
+              // The details header keeps its bottom row for labels, so its second
+              // bubble sits up beside the first one instead.
               Positioned(
-                right: w * 0.03,
-                bottom: h * 0.08,
-                child: _Bubble(icon: look.extras[1], size: iconSize * 0.28),
+                right: large ? discRight + disc + w * 0.02 + iconSize * 0.36 * 1.64 + 12 : discRight + disc + w * 0.035,
+                top: large ? h * 0.3 : null,
+                bottom: large ? null : h * 0.14,
+                child: _Bubble(icon: look.extras[1], size: iconSize * 0.3),
               ),
           ],
         ),
@@ -202,18 +342,26 @@ class _Bubble extends StatelessWidget {
 /// Large soft circles and a dot grid: depth without noise.
 class _CoverPattern extends CustomPainter {
   final int seed;
-  _CoverPattern({required this.seed});
+  /// The outer ring around the main illustration: its radius and gap from the right edge.
+  final double ringRadius;
+  final double ringRight;
+  _CoverPattern({required this.seed, required this.ringRadius, required this.ringRight});
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Soft light from the top right and a gentle ring behind the illustration,
+    // all kept inside the frame so the cover reads as a complete picture.
+    final glow = Paint()
+      ..shader = RadialGradient(
+        colors: [Colors.white.withValues(alpha: 0.16), Colors.white.withValues(alpha: 0)],
+      ).createShader(Rect.fromCircle(center: Offset(size.width * 0.85, 0), radius: size.height * 0.9));
+    canvas.drawRect(Offset.zero & size, glow);
     final ring = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..color = Colors.white.withValues(alpha: 0.10);
-    final fill = Paint()..color = Colors.white.withValues(alpha: 0.06);
-    canvas.drawCircle(Offset(size.width * 0.92, -size.height * 0.1), size.height * 0.75, fill);
-    canvas.drawCircle(Offset(-size.width * 0.05, size.height * 1.05), size.height * 0.6, fill);
-    canvas.drawCircle(Offset(size.width * 0.78, size.height * 0.5), size.height * 0.62, ring);
+    final c = Offset(size.width - ringRight - ringRadius, size.height / 2);
+    canvas.drawCircle(c, ringRadius, ring);
 
     final dot = Paint()..color = Colors.white.withValues(alpha: 0.16);
     const gap = 14.0;
@@ -229,5 +377,6 @@ class _CoverPattern extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CoverPattern old) => old.seed != seed;
+  bool shouldRepaint(covariant _CoverPattern old) =>
+      old.seed != seed || old.ringRadius != ringRadius || old.ringRight != ringRight;
 }

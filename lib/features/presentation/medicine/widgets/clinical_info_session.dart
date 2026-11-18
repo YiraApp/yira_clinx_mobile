@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import '../../../../core/constants/constants.dart';
@@ -30,7 +31,7 @@ class ClinicalInfoSection extends StatelessWidget {
     this.showExamination = true,
     this.title = "Clinical Assessment",
     this.subtitle = "Chief complaints, symptoms & findings",
-    this.icon = Icons.medical_information_outlined,
+    this.icon = IosIcons.medical_information_outlined,
     this.extraFields = const [],
   });
 

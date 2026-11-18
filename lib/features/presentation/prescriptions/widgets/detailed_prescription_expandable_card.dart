@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -69,7 +70,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.medical_information,
+                      IosIcons.medical_information,
                       color: isDark ?  iconDarkColor : const Color(0xFF2E7D32),
                       size: isTab ? 24 : 18,
                     ),
@@ -111,7 +112,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                     turns: _isExpanded ? 0.0 : 0.5,
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
-                      Icons.keyboard_arrow_up_rounded,
+                      IosIcons.keyboard_arrow_up_rounded,
                       color: Colors.grey.shade400,
                       size: 18,
                     ),

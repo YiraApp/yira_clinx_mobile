@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -38,7 +39,7 @@ class HeightScaleScreen extends StatelessWidget {
               padding: EdgeInsets.only(left: isTab ?  8 : 8.0),
               child: IconButton(
                 icon: Icon(
-                  Icons.arrow_back_ios_new,
+                  IosIcons.arrow_back_ios_new,
                   color: isDark ? Colors.white : Colors.black87,
                   size: 20,
                 ),
@@ -288,12 +289,12 @@ class HeightScaleScreen extends StatelessWidget {
             ? Colors.white.withOpacity(0.04)
             : const Color(0xFFF4F7FF),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(color: Colors.blue.withOpacity(0.08)),
+        border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.08)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFF005696), size: 20),
+          const Icon(IosIcons.info_outline_rounded, color: Color(0xFF005696), size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

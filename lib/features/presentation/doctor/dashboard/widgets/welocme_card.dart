@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -73,7 +74,7 @@ class WelcomeCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.medical_services_outlined,
+                      IosIcons.medical_services_outlined,
                       size: isTab ? 14 : 12.5,
                       color: primaryColor,
                     ),

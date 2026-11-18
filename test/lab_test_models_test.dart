@@ -69,6 +69,14 @@ class _FakeRepo implements PrescriptionRepository {
     if (failCatalog) throw Exception('offline');
     return const [HospitalLabTest(id: 1, testName: 'CBC', category: 'Haematology')];
   }
+
+  PrescriptionEntity? previewed;
+
+  @override
+  Future<Uint8List> previewPrescription(PrescriptionEntity prescription) async {
+    previewed = prescription;
+    return Uint8List.fromList('%PDF-1.4'.codeUnits);
+  }
 }
 
 PrescriptionBloc _bloc(_FakeRepo repo) => PrescriptionBloc(
@@ -117,6 +125,11 @@ void main() {
       expect(tests.last.priority, PrescribedLabTest.routine);
       expect(tests.last.instructions, '');
       expect(tests.last.detail, '');
+    });
+
+    test('a prescription and a medical record read when they were saved', () {
+      expect(PrescriptionModel.fromJson({'Id': 'rx1', 'CreatedAt': '2026-11-18T06:30:00.000Z'}).createdAt, DateTime.utc(2026, 11, 18, 6, 30));
+      expect(PrescriptionModel.fromJson({'Id': 'rx1'}).createdAt, isNull);
     });
 
     test('a prescription carries its lab tests, and older ones read as none', () {
@@ -195,8 +208,8 @@ void main() {
     const full = MedicationItem(id: '2', name: 'Dolo', dosage: '1', frequency: 'OD', duration: '5 Days', route: 'Oral');
 
     test('nothing prescribed is refused', () {
-      expect(prescriptionValidationError(const [blank], const []), 'Please add at least one medication or lab test.');
-      expect(prescriptionValidationError(const [], const []), 'Please add at least one medication or lab test.');
+      expect(prescriptionValidationError(const [blank], const []), 'Please add at least one medication or investigation.');
+      expect(prescriptionValidationError(const [], const []), 'Please add at least one medication or investigation.');
     });
 
     test('lab tests alone can be issued past the empty medicine row', () {
@@ -216,6 +229,47 @@ void main() {
   });
 
   group('bloc', () {
+    test('a saved prescription keeps when it was saved, for the one-hour edit window', () async {
+      final saved = DateTime.utc(2026, 11, 18, 6, 30);
+      final repo = _FakeRepo()
+        ..existing = PrescriptionEntity(
+          id: 'rx1',
+          patientId: 'p1',
+          diagnoses: const [],
+          medications: const [],
+          additionalNotes: 'Rest',
+          createdAt: saved,
+        );
+      final bloc = _bloc(repo)..add(const LoadPrescriptionData(patientId: 'p1'));
+      await _settle();
+      expect(bloc.state.prescriptionCreatedAt, saved);
+      await bloc.close();
+    });
+
+    test('the preview gets the same draft a save would send', () async {
+      final repo = _FakeRepo()
+        ..existing = const PrescriptionEntity(
+          id: 'rx1',
+          patientId: 'p1',
+          diagnoses: ['Viral fever'],
+          medications: [],
+          additionalNotes: '',
+          labTests: [PrescribedLabTest(testName: 'CBC')],
+        );
+      final bloc = _bloc(repo)..add(const LoadPrescriptionData(patientId: 'p1'));
+      await _settle();
+      final draft = bloc.draftFor(patientId: 'p1', appointmentId: '42', additionalNotes: 'After food');
+      final pdf = await bloc.previewPdf(draft);
+      expect(String.fromCharCodes(pdf.take(4)), '%PDF');
+      expect(repo.previewed!.id, 'rx1');
+      expect(repo.previewed!.appointmentId, '42');
+      expect(repo.previewed!.diagnoses, ['Viral fever']);
+      expect(repo.previewed!.labTests!.single.testName, 'CBC');
+      expect(repo.previewed!.additionalNotes, 'After food');
+      expect(repo.saved, isNull, reason: 'a preview saves nothing');
+      await bloc.close();
+    });
+
     test('a prescription with only lab tests loads for editing', () async {
       final repo = _FakeRepo()
         ..existing = const PrescriptionEntity(

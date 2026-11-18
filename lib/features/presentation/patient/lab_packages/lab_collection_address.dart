@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -225,7 +226,7 @@ class _LabAddressPickerSheetState extends State<LabAddressPickerSheet> {
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: line)),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Icon(Icons.location_on_outlined, size: 20, color: ink),
+                          Icon(IosIcons.location_on_outlined, size: 20, color: ink),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -243,7 +244,7 @@ class _LabAddressPickerSheetState extends State<LabAddressPickerSheet> {
                 if (!_adding)
                   OutlinedButton.icon(
                     onPressed: () => setState(() => _adding = true),
-                    icon: const Icon(Icons.add, size: 18),
+                    icon: const Icon(IosIcons.add, size: 18),
                     label: const Text('Add a new address', style: TextStyle(fontFamily: appPoppinFont)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: blue,

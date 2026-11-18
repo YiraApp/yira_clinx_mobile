@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../domain/entities/slot/slot_appointment_entity.dart';
@@ -53,7 +54,7 @@ class AppointmentModalSheet extends StatelessWidget {
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(IosIcons.close),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -146,7 +147,7 @@ class AppointmentModalSheet extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        isBlocked ? Icons.block : Icons.check_circle_outline,
+                        isBlocked ? IosIcons.block : IosIcons.check_circle_outline,
                         color: isBlocked ? Colors.redAccent : Colors.green,
                         size: 20,
                       ),

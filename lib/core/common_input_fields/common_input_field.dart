@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../colors/colors.dart';
@@ -142,7 +143,7 @@ class _CommonInputAddRecordTextFieldState extends State<CommonInputAddRecordText
                 });
               },
               child: Icon(
-                _obscureText ? Icons.visibility_off : Icons.visibility,
+                _obscureText ? IosIcons.visibility_off : IosIcons.visibility,
                 color: isDark ? Colors.white70 : Colors.black54,
               ),
             )

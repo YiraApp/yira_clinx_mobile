@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -230,7 +231,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                   color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(Icons.group_add_rounded, color: primaryColor, size: 22),
+                                child: Icon(IosIcons.group_add_rounded, color: primaryColor, size: 22),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -258,7 +259,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 20),
+                                icon: const Icon(IosIcons.close_rounded, size: 20),
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                 onPressed: () => Navigator.pop(sheetCtx),
                                 visualDensity: VisualDensity.compact,
@@ -287,7 +288,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 16),
+                          const Icon(IosIcons.error_outline_rounded, color: Colors.red, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -453,7 +454,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.cake_outlined, size: 16, color: Color(0xFF64748B)),
+                                    const Icon(IosIcons.cake_outlined, size: 16, color: Color(0xFF64748B)),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
@@ -500,7 +501,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.lock_rounded, size: 10, color: primaryColor),
+                            Icon(IosIcons.lock_rounded, size: 10, color: primaryColor),
                             const SizedBox(width: 4),
                             Text(
                               'Autofilled & Blocked',
@@ -528,8 +529,8 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                       color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                      suffixIcon: Icon(Icons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                      prefixIcon: Icon(IosIcons.phone_android_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                      suffixIcon: Icon(IosIcons.lock_outline_rounded, size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                       filled: true,
                       fillColor: isDark ? const Color(0xFF121212).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -722,7 +723,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                           : const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.person_add_alt_1_rounded, size: 18),
+                                Icon(IosIcons.person_add_alt_1_rounded, size: 18),
                                 SizedBox(width: 8),
                                 Text(
                                   'Save Family Member',
@@ -799,7 +800,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         color: primaryColor.withValues(alpha: isDark ? 0.25 : 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.family_restroom_rounded, color: primaryColor, size: 20),
+                      child: Icon(IosIcons.family_restroom_rounded, color: primaryColor, size: 20),
                     ),
                     const SizedBox(width: 10),
                     Column(
@@ -863,7 +864,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                   await _loadMemberImages();
                   if (mounted) setState(() {});
                 },
-                icon: const Icon(Icons.add_rounded, size: 16),
+                icon: const Icon(IosIcons.add_rounded, size: 16),
                 label: const Text(
                   'Add',
                   style: TextStyle(
@@ -920,7 +921,7 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                               color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.add_rounded, color: primaryColor, size: 20),
+                            child: Icon(IosIcons.add_rounded, color: primaryColor, size: 20),
                           ),
                           const SizedBox(height: 6),
                           Text(

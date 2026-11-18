@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -330,7 +331,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          Icons.sms_outlined,
+                                          IosIcons.sms_outlined,
                                           size: isTab ? 18 : 16,
                                           color: primaryColor,
                                         ),
@@ -364,6 +365,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                                         : Colors.black87,
                                                   ),
                                                 ),
+                                                if (context.read<LoginBloc>().channelFor(context.read<LoginBloc>().currentCountryCode) ==
+                                                    LoginBloc.otpChannelWhatsApp)
+                                                  const TextSpan(text: ' on WhatsApp'),
                                               ],
                                             ),
                                           ),
@@ -679,7 +683,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
                                                     MainAxisSize.min,
                                                 children: [
                                                   Icon(
-                                                    Icons.timer_outlined,
+                                                    IosIcons.timer_outlined,
                                                     size: 16,
                                                     color: isDark
                                                         ? Colors.white38
@@ -919,7 +923,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
             ? message
             : "User account is deleted. Please contact administrator or sign up for new user registration.",
         tone: AppDialogTone.danger,
-        icon: Icons.person_off_rounded,
+        icon: IosIcons.person_off_rounded,
         primaryLabel: "Sign Up",
         onPrimary: () {
           Navigator.pop(ctx);

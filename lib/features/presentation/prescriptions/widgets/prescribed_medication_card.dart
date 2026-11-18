@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -299,7 +300,7 @@ class _PrescribedPrescriptionCardState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.delete_outline_rounded,
+                        IosIcons.delete_outline_rounded,
                         size: 16,
                         color: Color(0xFFEF4444),
                       ),

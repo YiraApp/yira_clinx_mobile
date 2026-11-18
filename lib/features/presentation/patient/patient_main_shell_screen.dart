@@ -1,3 +1,5 @@
+import 'package:yiraclinics/core/colors/colors.dart';
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -85,7 +87,6 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
 
     final List<Widget> pages = [
       PatientDashboardScreen(onNavigateTab: _onTabSelected, isActive: _currentIndex == 0),
@@ -99,10 +100,10 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
     ];
 
     final navItems = [
-      {'label': 'Dashboard', 'icon': Icons.dashboard_rounded, 'outlined': Icons.dashboard_outlined},
-      {'label': 'Appointments', 'icon': Icons.calendar_month_rounded, 'outlined': Icons.calendar_month_outlined},
-      {'label': 'Packages', 'icon': Icons.science_rounded, 'outlined': Icons.science_outlined},
-      {'label': 'Profile', 'icon': Icons.person_rounded, 'outlined': Icons.person_outline_rounded},
+      {'label': 'Dashboard', 'icon': IosIcons.dashboard_rounded, 'outlined': IosIcons.dashboard_outlined},
+      {'label': 'Appointments', 'icon': IosIcons.calendar_month_rounded, 'outlined': IosIcons.calendar_month_outlined},
+      {'label': 'Packages', 'icon': IosIcons.science_rounded, 'outlined': IosIcons.science_outlined},
+      {'label': 'Profile', 'icon': IosIcons.person_rounded, 'outlined': IosIcons.person_outline_rounded},
     ];
 
     return MultiBlocProvider(
@@ -153,7 +154,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
                             (isSelected ? item['icon'] : item['outlined']) as IconData,
                             size: 22,
                             color: isSelected
-                                ? primaryColor
+                                ? (isDark ? accentBlueDark : accentBlue)
                                 : (isDark ? Colors.white54 : Colors.grey[500]),
                           ),
                           const SizedBox(height: 4),
@@ -166,7 +167,7 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                               fontSize: 10.5,
                               color: isSelected
-                                  ? primaryColor
+                                  ? (isDark ? accentBlueDark : accentBlue)
                                   : (isDark ? Colors.white54 : Colors.grey[500]),
                             ),
                           ),

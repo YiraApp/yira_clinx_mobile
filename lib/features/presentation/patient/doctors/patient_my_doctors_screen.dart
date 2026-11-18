@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -402,7 +403,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         title: 'Remove Doctor',
         message: 'Are you sure you want to remove $name from My Doctors?',
         tone: AppDialogTone.danger,
-        icon: Icons.person_remove_rounded,
+        icon: IosIcons.person_remove_rounded,
         primaryLabel: 'Remove',
         onPrimary: () {
           Navigator.pop(dialogCtx);
@@ -590,7 +591,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                 color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.qr_code_scanner_rounded, color: _primaryBlue, size: 18),
+              child: const Icon(IosIcons.qr_code_scanner_rounded, color: _primaryBlue, size: 18),
             ),
             tooltip: 'Scan Doctor QR Code',
             onPressed: () => ScanDoctorQrSheet.show(
@@ -627,7 +628,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         backgroundColor: _primaryBlue,
         foregroundColor: Colors.white,
         elevation: 3,
-        icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+        icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 20),
         label: const Text(
           'Add Doctor',
           style: TextStyle(
@@ -657,10 +658,10 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                             fontSize: 12.5,
                             color: isDark ? Colors.white38 : Colors.grey[400],
                           ),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                          prefixIcon: const Icon(IosIcons.search_rounded, size: 20),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon: const Icon(IosIcons.close_rounded, size: 18),
                                   onPressed: () => setState(() => _searchQuery = ''),
                                 )
                               : null,
@@ -863,7 +864,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
               // 3-Dots Popup Menu
               PopupMenuButton<String>(
                 icon: Icon(
-                  Icons.more_vert_rounded,
+                  IosIcons.more_vert_rounded,
                   size: 20,
                   color: isDark ? Colors.white60 : const Color(0xFF64748B),
                 ),
@@ -896,7 +897,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     value: 'book',
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryBlue),
+                        const Icon(IosIcons.calendar_today_rounded, size: 16, color: _primaryBlue),
                         const SizedBox(width: 10),
                         Text(
                           'Book Appointment',
@@ -914,7 +915,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     value: 'remove',
                     child: Row(
                       children: [
-                        Icon(Icons.person_remove_outlined, size: 16, color: Color(0xFFEF4444)),
+                        Icon(IosIcons.person_remove_outlined, size: 16, color: Color(0xFFEF4444)),
                         SizedBox(width: 10),
                         Text(
                           'Remove Doctor',
@@ -1020,7 +1021,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   },
                 );
               },
-              icon: const Icon(Icons.calendar_today_rounded, size: 14),
+              icon: const Icon(IosIcons.calendar_today_rounded, size: 14),
               label: const Text(
                 'Book Appointment',
                 style: TextStyle(
@@ -1053,7 +1054,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.person_search_rounded, size: 38, color: _primaryBlue),
+                  child: Icon(IosIcons.person_search_rounded, size: 38, color: _primaryBlue),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1102,7 +1103,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     _loadDoctors();
                   },
                 ),
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 18),
                 label: const Text(
                   'Scan Doctor QR Code',
                   style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13),

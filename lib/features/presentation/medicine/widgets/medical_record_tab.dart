@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -104,7 +105,7 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
                   child: _buildChildOption(
                     context,
                     label: "Add Medical Record",
-                    icon: Icons.note_add_outlined,
+                    icon: IosIcons.note_add_outlined,
                     color: theme.primaryColor,
                     onTap: widget.onAddRecordTapped,
                     isDark: isDark,
@@ -150,7 +151,7 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
           child: RotationTransition(
             turns: _iconRotation,
             child: Icon(
-              _isExpanded ? Icons.close_rounded : Icons.description_outlined,
+              _isExpanded ? IosIcons.close_rounded : IosIcons.description_outlined,
               color: Colors.white,
               size: isTab ? 28 : 24,
             ),
@@ -207,7 +208,7 @@ class _MedicalRecordFabState extends State<MedicalRecordFab> with SingleTickerPr
             ),
           ),
           SizedBox(width: isTab ? 14 : 12),
-          const Icon(Icons.keyboard_arrow_right, size: 18),
+          const Icon(IosIcons.keyboard_arrow_right, size: 18),
         ],
       ),
     );

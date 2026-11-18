@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -125,7 +126,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 Expanded(
                   child: _buildPickerOption(
                     context: context,
-                    icon: Icons.camera_alt_rounded,
+                    icon: IosIcons.camera_alt_rounded,
                     label: "Camera",
                     color: primaryColor,
                     isDark: isDark,
@@ -150,7 +151,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 Expanded(
                   child: _buildPickerOption(
                     context: context,
-                    icon: Icons.photo_library_rounded,
+                    icon: IosIcons.photo_library_rounded,
                     label: "Gallery",
                     color: const Color(0xFF10B981),
                     isDark: isDark,
@@ -248,7 +249,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.switch_account_rounded, size: 18, color: primaryColor),
+              child: Icon(IosIcons.switch_account_rounded, size: 18, color: primaryColor),
             ),
             onPressed: () => ProfileSwitcherSheet.show(context),
           ),
@@ -287,7 +288,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           color: Colors.red.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.error_outline_rounded, size: 48, color: Colors.red.shade400),
+                        child: Icon(IosIcons.error_outline_rounded, size: 48, color: Colors.red.shade400),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -318,7 +319,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                             orgId: widget.orgId,
                           ));
                         },
-                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        icon: const Icon(IosIcons.refresh_rounded, size: 18),
                         label: const Text("Retry"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
@@ -372,7 +373,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     // 3. Medical Credentials & Practice Card
                     DoctorProfileSectionCard(
                       title: "Medical Credentials & Practice",
-                      icon: Icons.medical_services_rounded,
+                      icon: IosIcons.medical_services_rounded,
                       iconColor: const Color(0xFF10B981), // Emerald
                       isTab: isTab,
                       onEdit: () => _openEditProfile(context, profile),
@@ -380,37 +381,37 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         DoctorProfileFieldItem(
                           label: "Specialty",
                           value: profile.specialty ?? "General Physician",
-                          icon: Icons.star_outline_rounded,
+                          icon: IosIcons.star_outline_rounded,
                         ),
                         if (profile.subSpecialty != null && profile.subSpecialty!.isNotEmpty)
                           DoctorProfileFieldItem(
                             label: "Sub-Specialty",
                             value: profile.subSpecialty!,
-                            icon: Icons.polyline_outlined,
+                            icon: IosIcons.polyline_outlined,
                           ),
                         DoctorProfileFieldItem(
                           label: "Department",
                           value: profile.department ?? "Clinical Care",
-                          icon: Icons.apartment_rounded,
+                          icon: IosIcons.apartment_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Qualification",
                           value: profile.qualification ?? "MBBS, MD",
-                          icon: Icons.school_outlined,
+                          icon: IosIcons.school_outlined,
                         ),
                         DoctorProfileFieldItem(
                           label: "Medical Council Reg. No.",
                           // Nothing checks this number against the medical council yet, so no
                           // "Verified" badge, and no made-up value when it's missing.
                           value: (profile.registrationNumber ?? '').trim().isEmpty ? "Not added" : profile.registrationNumber!,
-                          icon: Icons.verified_user_outlined,
+                          icon: IosIcons.verified_user_outlined,
                           isVerified: false,
                           isCopyable: (profile.registrationNumber ?? '').trim().isNotEmpty,
                         ),
                         DoctorProfileFieldItem(
                           label: "Clinical Experience",
                           value: profile.experience ?? "8+ Years",
-                          icon: Icons.timeline_rounded,
+                          icon: IosIcons.timeline_rounded,
                         ),
                       ],
                     ),
@@ -418,7 +419,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     // 4. Personal & Contact Information Card
                     DoctorProfileSectionCard(
                       title: "Personal & Contact Details",
-                      icon: Icons.person_rounded,
+                      icon: IosIcons.person_rounded,
                       iconColor: primaryColor,
                       isTab: isTab,
                       onEdit: () => _openEditProfile(context, profile),
@@ -426,39 +427,39 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         DoctorProfileFieldItem(
                           label: "Full Name",
                           value: profile.name ?? "${profile.firstName ?? ''} ${profile.lastName ?? ''}".trim(),
-                          icon: Icons.badge_outlined,
+                          icon: IosIcons.badge_outlined,
                           isCopyable: true,
                         ),
                         DoctorProfileFieldItem(
                           label: "Email Address",
                           value: profile.email ?? "Not Provided",
-                          icon: Icons.email_outlined,
+                          icon: IosIcons.email_outlined,
                           isVerified: profile.isEmailVerified == true,
                           isCopyable: true,
                         ),
                         DoctorProfileFieldItem(
                           label: "Phone Number",
                           value: profile.phoneNumber ?? "Not Provided",
-                          icon: Icons.phone_outlined,
+                          icon: IosIcons.phone_outlined,
                           isVerified: profile.isMobileVerified == true,
                           isCopyable: true,
                         ),
                         DoctorProfileFieldItem(
                           label: "Gender",
                           value: profile.gender ?? "Not Specified",
-                          icon: Icons.wc_outlined,
+                          icon: IosIcons.wc_outlined,
                         ),
                         if (profile.dob != null && profile.dob!.isNotEmpty)
                           DoctorProfileFieldItem(
                             label: "Date of Birth",
                             value: profile.dob!,
-                            icon: Icons.cake_outlined,
+                            icon: IosIcons.cake_outlined,
                           ),
                         if (profile.bloodGroup != null && profile.bloodGroup!.isNotEmpty)
                           DoctorProfileFieldItem(
                             label: "Blood Group",
                             value: profile.bloodGroup!,
-                            icon: Icons.bloodtype_outlined,
+                            icon: IosIcons.bloodtype_outlined,
                           ),
                       ],
                     ),
@@ -466,20 +467,20 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     // 5. Hospital & Facility Details Card
                     DoctorProfileSectionCard(
                       title: "Hospital & Practice Facility",
-                      icon: Icons.local_hospital_rounded,
+                      icon: IosIcons.local_hospital_rounded,
                       iconColor: const Color(0xFF6366F1), // Indigo
                       isTab: isTab,
                       fields: [
                         DoctorProfileFieldItem(
                           label: "Hospital Name",
                           value: profile.hospitalName ?? "Healthcare Facility",
-                          icon: Icons.local_hospital_outlined,
+                          icon: IosIcons.local_hospital_outlined,
                           isCopyable: true,
                         ),
                         DoctorProfileFieldItem(
                           label: "Facility Address",
                           value: profile.clinicAddress ?? "Main Facility Campus",
-                          icon: Icons.location_on_outlined,
+                          icon: IosIcons.location_on_outlined,
                           isCopyable: true,
                         ),
                       ],
@@ -532,7 +533,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.format_quote_rounded, color: primaryColor, size: 18),
+              Icon(IosIcons.format_quote_rounded, color: primaryColor, size: 18),
               const SizedBox(width: 8),
               Text(
                 "Clinical Bio & Statement",
@@ -579,7 +580,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       child: Column(
         children: [
           _buildSettingsTile(
-            icon: Icons.info_outline_rounded,
+            icon: IosIcons.info_outline_rounded,
             iconColor: const Color(0xFF0284C7),
             title: "Read About Us",
             subtitle: "Learn more about Yira Clinx platform",
@@ -599,7 +600,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.headset_mic_outlined,
+            icon: IosIcons.headset_mic_outlined,
             iconColor: const Color(0xFF10B981),
             title: "Contact Us",
             subtitle: "Technical support & provider assistance",
@@ -620,7 +621,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.description_outlined,
+            icon: IosIcons.description_outlined,
             iconColor: const Color(0xFF0284C7),
             title: "Terms & Conditions",
             subtitle: "Clinician terms & platform policies",
@@ -640,7 +641,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.privacy_tip_outlined,
+            icon: IosIcons.privacy_tip_outlined,
             iconColor: const Color(0xFFF59E0B),
             title: "Privacy Policy",
             subtitle: "Data privacy & clinician terms",
@@ -660,7 +661,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.receipt_long_outlined,
+            icon: IosIcons.receipt_long_outlined,
             iconColor: const Color(0xFF10B981),
             title: "Cancellation & Refund Policy",
             subtitle: "Cancellation rules & refund guidelines",
@@ -703,7 +704,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       child: Column(
         children: [
           _buildSettingsTile(
-            icon: Icons.lightbulb_circle_rounded,
+            icon: IosIcons.lightbulb_circle_rounded,
             iconColor: const Color(0xFF2563EB),
             title: "Spotlight Product Tour",
             subtitle: "Start live interactive spotlight tour across all tabs",
@@ -716,7 +717,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.switch_account_rounded,
+            icon: IosIcons.switch_account_rounded,
             iconColor: primaryColor,
             title: "Switch Workspace / Facility",
             subtitle: "Switch between assigned hospitals",
@@ -726,7 +727,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
           Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
           _buildSettingsTile(
-            icon: Icons.logout_rounded,
+            icon: IosIcons.logout_rounded,
             iconColor: Colors.red.shade500,
             title: "Sign Out",
             subtitle: "Log out of your clinical session",
@@ -783,7 +784,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           ),
         ),
         trailing: Icon(
-          Icons.chevron_right_rounded,
+          IosIcons.chevron_right_rounded,
           size: 18,
           color: isDark ? Colors.white38 : Colors.grey.shade400,
         ),

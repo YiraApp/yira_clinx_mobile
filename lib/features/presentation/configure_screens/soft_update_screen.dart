@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -76,7 +77,7 @@ class SoftUpdateView extends StatelessWidget {
                       height: displayHeight(context) * (isTab ? 0.28 : 0.22),
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.system_update_rounded,
+                        IosIcons.system_update_rounded,
                         size: 80,
                         color: theme.primaryColor,
                       ),

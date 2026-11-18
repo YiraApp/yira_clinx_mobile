@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import '../../../../../core/constants/constants.dart';
@@ -19,7 +20,7 @@ class DashboardQuickActions extends StatelessWidget {
     final actions = [
       _ActionItem(
         label: "+ Appt",
-        icon: Icons.add_circle_outline_rounded,
+        icon: IosIcons.add_circle_outline_rounded,
         color: const Color(0xFF2563EB),
         onTap: () {
           Navigator.pushNamed(context, AppRoutes.appointmentDashboardScreen);
@@ -27,7 +28,7 @@ class DashboardQuickActions extends StatelessWidget {
       ),
       _ActionItem(
         label: "Patients",
-        icon: Icons.people_alt_rounded,
+        icon: IosIcons.people_alt_rounded,
         color: const Color(0xFF0EA5E9),
         onTap: () {
           Navigator.pushNamed(context, AppRoutes.patientManagementScreen);
@@ -35,7 +36,7 @@ class DashboardQuickActions extends StatelessWidget {
       ),
       _ActionItem(
         label: "Slots",
-        icon: Icons.access_time_filled_rounded,
+        icon: IosIcons.access_time_filled_rounded,
         color: const Color(0xFF10B981),
         onTap: () {
           Navigator.pushNamed(context, AppRoutes.slotDashboard);
@@ -43,7 +44,7 @@ class DashboardQuickActions extends StatelessWidget {
       ),
       _ActionItem(
         label: "Rx List",
-        icon: Icons.medication_rounded,
+        icon: IosIcons.medication_rounded,
         color: const Color(0xFF8B5CF6),
         onTap: () {
           Navigator.pushNamed(context, AppRoutes.prescriptionListScreen);

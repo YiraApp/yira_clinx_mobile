@@ -11,6 +11,12 @@ const Color darkModeInnerCardColor = Color(0xff0D0D0D);
 const Color authScreenTitleColor = Color(0xFF1F1F1F);
 const Color secondaryColor = Color(0xFF0A0A0A);
 const Color primaryColor = Color(0xFF2563EB);
+/// Neutral icon grey: the home screen's service icons.
+const Color iconGrey = Color(0xFF474749);
+/// Brand blue for theme-level accents (selected tabs, switches, links, focus, progress).
+const Color accentBlue = Color(0xFF2563EB);
+/// The same accent on dark backgrounds.
+const Color accentBlueDark = Color(0xFF60A5FA);
 const Color lightGreenColor = Color(0xFF10B981);
 // i have finalized
 // const Color primaryColor = Color(0xFF29468C);
@@ -50,11 +56,11 @@ const Color darkModeFieldBgColor = Color(0xFF1E1E1E);
 
 // --- Text Field Borders ---
 const Color lightModeBorderColor = Color(0xFFD1D1D6);
-const Color lightModeBorderFocusedColor = Color(0xFF3B82F6);
+const Color lightModeBorderFocusedColor = Color(0xFF5C5C5E);
 const Color lightModeBorderDisabledColor = Color(0xFFE5E5EA);
 
 const Color darkModeBorderColor = Color(0x26FFFFFF);
-const Color darkModeBorderFocusedColor = Color(0xFF60A5FA);
+const Color darkModeBorderFocusedColor = Color(0xFFAEAEB2);
 const Color darkModeBorderDisabledColor = Color(0x0DFFFFFF);
 
 // --- Typography Colors ---

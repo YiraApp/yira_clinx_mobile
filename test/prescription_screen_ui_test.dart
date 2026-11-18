@@ -106,6 +106,31 @@ void main() {
     ),
   ];
 
+  // Only one way to add at a time: the empty page's button, or the floating button once there is a list.
+  for (final empty in [true, false]) {
+    testWidgets('one Add action on the prescriptions tab (${empty ? 'empty' : 'with prescriptions'})', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      MedicationReminderService.instance.remindersNotifier.value = const [];
+      tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final list = empty ? <Map<String, dynamic>>[] : prescriptions;
+      await tester.pumpWidget(MaterialApp(
+        home: PrescriptionManagementScreen(
+          bloc: _PresetBloc(MedicationState(
+            status: MedicationStatus.success,
+            allPrescriptions: list,
+            filteredPrescriptions: list,
+          )),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('Add a prescription'), empty ? findsOneWidget : findsNothing);
+      expect(find.byType(FloatingActionButton), empty ? findsNothing : findsOneWidget);
+      expect(find.text('Search doctor, medicine or diagnosis'), empty ? findsNothing : findsOneWidget);
+    });
+  }
+
   for (final size in [const Size(390, 844), const Size(320, 640)]) {
     final tag = size.width > 350 ? 'phone' : 'small';
     for (final tab in [0, 1]) {

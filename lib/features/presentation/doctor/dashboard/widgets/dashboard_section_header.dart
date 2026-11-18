@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -81,7 +82,7 @@ class DashboardSectionHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 2),
                 Icon(
-                  Icons.chevron_right_rounded,
+                  IosIcons.chevron_right_rounded,
                   size: isTab ? 16 : 15,
                   color: primaryColor,
                 ),

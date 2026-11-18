@@ -19,6 +19,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
     required String mobileNumber,
     required String countryCode,
     required bool isReSend,
+    String? channel,
   }) async {
     try {
       debugPrint('[SEND_OTP] Sending OTP to: $countryCode $mobileNumber (url: ${URLs.sendOtpUrl})');
@@ -26,6 +27,8 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         "identity": mobileNumber.trim(),
         "countryCode": countryCode.replaceAll('+', '').trim(),
         "isResend": isReSend,
+        // "whatsapp" or "sms"; only sent for numbers outside India.
+        if (channel != null) "channel": channel,
       };
 
       final dio = _apiClient.account(showSuccessSnack: true);
@@ -70,6 +73,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
     required String mobileNumber,
     required String countryCode,
     String? email,
+    String? channel,
   }) async {
     try {
       final Map<String, dynamic> requestBody = {
@@ -77,6 +81,7 @@ class SendOtpRepositoryImpl implements SendOtpRepo {
         "identity": mobileNumber.trim(),
         "countryCode": countryCode.replaceAll('+', '').trim(),
         if (email != null && email.trim().isNotEmpty) "email": email.trim(),
+        if (channel != null) "channel": channel,
       };
 
       final response = await _apiClient.account(showSuccessSnack: true).post(

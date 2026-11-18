@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -122,7 +123,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
                         child: _buildChildOption(
                           context,
                           label: "Prescription",
-                          icon: Icons.medication_outlined,
+                          icon: IosIcons.medication_outlined,
                           color: const Color(0xFFF97316),
                           onTap: widget.onPrescribeTapped,
                           isDark: isDark,
@@ -137,7 +138,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
                         child: _buildChildOption(
                           context,
                           label: "Schedule",
-                          icon: Icons.calendar_month_outlined,
+                          icon: IosIcons.calendar_month_outlined,
                           color: const Color(0xFF10B981),
                           onTap: widget.onScheduleTapped,
                           isDark: isDark,
@@ -152,7 +153,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
                         child: _buildChildOption(
                           context,
                           label: "Add Note",
-                          icon: Icons.edit_note_rounded,
+                          icon: IosIcons.edit_note_rounded,
                           color: theme.primaryColor,
                           onTap: widget.onAddNoteTapped,
                           isDark: isDark,
@@ -203,7 +204,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
           child: RotationTransition(
             turns: _iconRotation,
             child: Icon(
-              _isExpanded ? Icons.close_rounded : Icons.auto_awesome_rounded,
+              _isExpanded ? IosIcons.close_rounded : IosIcons.auto_awesome_rounded,
               color: Colors.white,
               size: isTab ? 28 : 24,
             ),
@@ -282,7 +283,7 @@ class _ClinicalSpeedDialFabState extends State<ClinicalSpeedDialFab>
           ),
           SizedBox(width: isTab ? 14 : 12),
 
-          Icon(Icons.keyboard_arrow_right,size: 18,),
+          Icon(IosIcons.keyboard_arrow_right,size: 18,),
         ],
       ),
     );

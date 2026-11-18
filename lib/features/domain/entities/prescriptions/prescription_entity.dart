@@ -18,6 +18,9 @@ class PrescriptionEntity extends Equatable {
   /// On a save, a list replaces the prescription's tests and null leaves them.
   final List<PrescribedLabTest>? labTests;
 
+  /// When it was first saved; it can be changed for an hour after that.
+  final DateTime? createdAt;
+
   const PrescriptionEntity({
     this.id,
     required this.patientId,
@@ -30,6 +33,7 @@ class PrescriptionEntity extends Equatable {
     required this.additionalNotes,
     this.pdfUrl,
     this.labTests,
+    this.createdAt,
   });
 
   PrescriptionEntity copyWith({
@@ -44,6 +48,7 @@ class PrescriptionEntity extends Equatable {
     String? additionalNotes,
     String? pdfUrl,
     List<PrescribedLabTest>? labTests,
+    DateTime? createdAt,
   }) {
     return PrescriptionEntity(
       id: id ?? this.id,
@@ -57,6 +62,7 @@ class PrescriptionEntity extends Equatable {
       additionalNotes: additionalNotes ?? this.additionalNotes,
       pdfUrl: pdfUrl ?? this.pdfUrl,
       labTests: labTests ?? this.labTests,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -73,5 +79,6 @@ class PrescriptionEntity extends Equatable {
         additionalNotes,
         pdfUrl,
         labTests,
+        createdAt,
       ];
 }

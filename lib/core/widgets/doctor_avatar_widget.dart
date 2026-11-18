@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -129,7 +130,7 @@ class DoctorAvatarWidget extends StatelessWidget {
         height: size * 0.84,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.medical_services_rounded,
+          IosIcons.medical_services_rounded,
           color: primaryColor,
           size: size * 0.55,
         ),

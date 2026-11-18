@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/phosphor_icons.dart';
@@ -154,7 +155,7 @@ class _Summary extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(waiting ? Icons.assignment_outlined : Icons.check_circle_outline_rounded, color: waiting ? QUi.blue : QUi.ink(isDark), size: 22),
+          Icon(waiting ? IosIcons.assignment_outlined : IosIcons.check_circle_outline_rounded, color: waiting ? QUi.blue : QUi.ink(isDark), size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -258,10 +259,10 @@ class QuestionnaireCardTile extends StatelessWidget {
             Text(q.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: QUi.text(13, FontWeight.w400, QUi.body(isDark), height: 1.4)),
           ],
           const SizedBox(height: 12),
-          if (from != null) _line(Icons.person_outline_rounded, from, QUi.body(isDark)),
-          if (dueText != null) _line(Icons.schedule_rounded, dueText.text, dueText.late ? amber : QUi.blue, bold: true),
+          if (from != null) _line(IosIcons.person_outline_rounded, from, QUi.body(isDark)),
+          if (dueText != null) _line(IosIcons.schedule_rounded, dueText.text, dueText.late ? amber : QUi.blue, bold: true),
           _line(
-            Icons.list_alt_rounded,
+            IosIcons.list_alt_rounded,
             '${q.questionCount} question${q.questionCount == 1 ? '' : 's'} · ${_minutes(q.questionCount)}'
             '${q.repeatAfterDays != null ? ' · every ${q.repeatAfterDays} days' : ''}',
             QUi.muted(isDark),
@@ -317,7 +318,7 @@ class QuestionnaireCardTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(color: QUi.sunken(isDark), borderRadius: BorderRadius.circular(12)),
-            child: Icon(Icons.task_alt_rounded, size: 21, color: QUi.ink(isDark)),
+            child: Icon(IosIcons.task_alt_rounded, size: 21, color: QUi.ink(isDark)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -334,7 +335,7 @@ class QuestionnaireCardTile extends StatelessWidget {
               ],
             ),
           ),
-          if (onHistory != null) Icon(Icons.chevron_right_rounded, color: QUi.muted(isDark)),
+          if (onHistory != null) Icon(IosIcons.chevron_right_rounded, color: QUi.muted(isDark)),
         ],
       ),
     );

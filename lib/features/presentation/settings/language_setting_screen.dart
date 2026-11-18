@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -245,7 +246,7 @@ class _LanguageCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.check,
+                    IosIcons.check,
                     color: Colors.white,
                     size: 18 * fontScale,
                   ),

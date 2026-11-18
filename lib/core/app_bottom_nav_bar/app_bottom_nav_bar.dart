@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -88,23 +89,23 @@ class AppBottomNavBar extends StatelessWidget {
     final items = [
       _BottomNavItem(
         title: 'Home',
-        icon: Icons.dashboard_outlined,
-        activeIcon: Icons.dashboard_rounded,
+        icon: IosIcons.dashboard_outlined,
+        activeIcon: IosIcons.dashboard_rounded,
       ),
       _BottomNavItem(
         title: 'Appointments',
-        icon: Icons.calendar_month_outlined,
-        activeIcon: Icons.calendar_month_rounded,
+        icon: IosIcons.calendar_month_outlined,
+        activeIcon: IosIcons.calendar_month_rounded,
       ),
       _BottomNavItem(
         title: 'Patients',
-        icon: Icons.people_outline_rounded,
-        activeIcon: Icons.people_alt_rounded,
+        icon: IosIcons.people_outline_rounded,
+        activeIcon: IosIcons.people_alt_rounded,
       ),
       _BottomNavItem(
         title: 'Slots',
-        icon: Icons.schedule_outlined,
-        activeIcon: Icons.schedule_rounded,
+        icon: IosIcons.schedule_outlined,
+        activeIcon: IosIcons.schedule_rounded,
       ),
     ];
 
@@ -155,14 +156,14 @@ class AppBottomNavBar extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? primaryColor.withValues(alpha: 0.12)
+                                ? (isDark ? accentBlueDark : accentBlue).withValues(alpha: 0.12)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             isSelected ? item.activeIcon : item.icon,
                             color: isSelected
-                                ? primaryColor
+                                ? (isDark ? accentBlueDark : accentBlue)
                                 : (isDark ? Colors.white60 : Colors.blueGrey.shade400),
                             size: isTab ? 24 : 20,
                           ),
@@ -182,7 +183,7 @@ class AppBottomNavBar extends StatelessWidget {
                                     : displayWidth(context) * 0.026,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                 color: isSelected
-                                    ? primaryColor
+                                    ? (isDark ? accentBlueDark : accentBlue)
                                     : (isDark ? Colors.white70 : Colors.blueGrey.shade600),
                               ),
                             ),

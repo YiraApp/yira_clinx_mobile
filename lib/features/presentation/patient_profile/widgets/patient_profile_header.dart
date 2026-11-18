@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +158,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                                 ),
                               )
                             : isCurrent
-                                ? Icon(Icons.check_circle, color: primaryColor)
+                                ? Icon(IosIcons.check_circle, color: primaryColor)
                                 : null,
                         onTap: isUpdating
                             ? null
@@ -319,7 +320,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                         ),
                       ),
                       child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
+                        IosIcons.arrow_back_ios_new_rounded,
                         color: Colors.white,
                         size: 16,
                       ),
@@ -361,7 +362,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                         ),
                         child: Row(
                           children: const [
-                            Icon(Icons.add_rounded, size: 15, color: primaryColor),
+                            Icon(IosIcons.add_rounded, size: 15, color: primaryColor),
                             SizedBox(width: 4),
                             Text(
                               'Book Appointment',
@@ -417,7 +418,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                                 if (!isPatient) ...[
                                   const SizedBox(width: 4),
                                   const Icon(
-                                    Icons.arrow_drop_down_rounded,
+                                    IosIcons.arrow_drop_down_rounded,
                                     color: Colors.white,
                                     size: 14,
                                   ),
@@ -454,7 +455,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                                 ),
                               ),
                               child: Icon(
-                                isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                                isFav ? IosIcons.star_rounded : IosIcons.star_outline_rounded,
                                 color: isFav ? const Color(0xFFD97706) : Colors.white,
                                 size: 17,
                               ),
@@ -527,7 +528,7 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.phone_android_rounded,
+                                IosIcons.phone_android_rounded,
                                 color: Colors.white.withValues(alpha: 0.9),
                                 size: 13,
                               ),

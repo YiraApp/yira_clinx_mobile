@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -187,7 +188,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 3,
-                  icon: const Icon(Icons.add_rounded, size: 20),
+                  icon: const Icon(IosIcons.add_rounded, size: 20),
                   label: const Text(
                     'Upload Document',
                     style: TextStyle(
@@ -218,10 +219,10 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                       fontSize: 12.5,
                       color: isDark ? Colors.white38 : Colors.grey[400],
                     ),
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                    prefixIcon: const Icon(IosIcons.search_rounded, size: 18),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 16),
+                            icon: const Icon(IosIcons.close_rounded, size: 16),
                             onPressed: () {
                               _searchController.clear();
                               context.read<UploadedBloc>().add(SearchQueryChanged(''));
@@ -328,7 +329,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 60),
             child: RecordEmptyState(
-              icon: Icons.folder_open_outlined,
+              icon: IosIcons.folder_open_outlined,
               title: state.searchQuery.isNotEmpty ? 'No Matching Documents' : 'No Documents Uploaded',
               message: state.searchQuery.isNotEmpty
                   ? 'Try clearing your search or category filter.'

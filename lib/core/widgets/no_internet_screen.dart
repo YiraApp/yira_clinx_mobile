@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -146,7 +147,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
                               ],
                             ),
                             child: Icon(
-                              Icons.wifi_off_rounded,
+                              IosIcons.wifi_off_rounded,
                               size: iconSize,
                               color: Colors.red.shade600,
                             ),
@@ -311,7 +312,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
                           : const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+                                Icon(IosIcons.refresh_rounded, size: 20, color: Colors.white),
                                 SizedBox(width: 8),
                                 Text(
                                   "Try Again",

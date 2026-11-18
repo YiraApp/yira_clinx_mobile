@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../yira_splash_screen.dart';
@@ -82,7 +83,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.replay_rounded,
+                          IosIcons.replay_rounded,
                           size: 16,
                           color: Color(0xFF2563EB),
                         ),
@@ -125,7 +126,7 @@ class _SplashPreviewScreenState extends State<SplashPreviewScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.close_rounded,
+                          IosIcons.close_rounded,
                           size: 16,
                           color: Color(0xFF4A4A4A),
                         ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Expanded(child: Text('Downloaded "$cleanTitle" successfully!')),
               ],
@@ -167,7 +168,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RecordCardHeader(
-              icon: Icons.description_outlined,
+              icon: IosIcons.description_outlined,
               title: fileName,
               subtitle: [category, ext].where((e) => e.trim().isNotEmpty).join(' · '),
               trailing: _isDownloading
@@ -181,7 +182,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                     )
                     : PopupMenuButton<String>(
                       icon: Icon(
-                        Icons.more_vert_rounded,
+                        IosIcons.more_vert_rounded,
                         size: 20,
                         color: isDark ? Colors.white60 : const Color(0xFF64748B),
                       ),
@@ -207,7 +208,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                           value: 'view',
                           child: Row(
                             children: [
-                              const Icon(Icons.visibility_outlined, size: 18, color: _primaryBlue),
+                              const Icon(IosIcons.visibility_outlined, size: 18, color: _primaryBlue),
                               const SizedBox(width: 10),
                               Text(
                                 'View Document',
@@ -226,7 +227,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                             value: 'edit',
                             child: Row(
                               children: [
-                                const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF10B981)),
+                                const Icon(IosIcons.edit_outlined, size: 18, color: Color(0xFF10B981)),
                                 const SizedBox(width: 10),
                                 Text(
                                   'Edit Document',
@@ -244,7 +245,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                           value: 'download',
                           child: Row(
                             children: [
-                              Icon(Icons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+                              Icon(IosIcons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                               const SizedBox(width: 10),
                               Text(
                                 'Download',
@@ -263,7 +264,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                             value: 'delete',
                             child: const Row(
                               children: [
-                                Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                                Icon(IosIcons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
                                 SizedBox(width: 10),
                                 Text(
                                   'Delete',
@@ -319,12 +320,12 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
               runSpacing: 6,
               children: [
                 RecordMeta(
-                  icon: Icons.calendar_today_outlined,
+                  icon: IosIcons.calendar_today_outlined,
                   text: DateFormat('MMM dd, yyyy').format(widget.record.uploadDate),
                 ),
-                if (fileSizeStr.isNotEmpty) RecordMeta(icon: Icons.data_usage_rounded, text: fileSizeStr),
-                if (hospitalName != null) RecordMeta(icon: Icons.local_hospital_outlined, text: hospitalName),
-                if (doctorName != null) RecordMeta(icon: Icons.person_outline_rounded, text: doctorName),
+                if (fileSizeStr.isNotEmpty) RecordMeta(icon: IosIcons.data_usage_rounded, text: fileSizeStr),
+                if (hospitalName != null) RecordMeta(icon: IosIcons.local_hospital_outlined, text: hospitalName),
+                if (doctorName != null) RecordMeta(icon: IosIcons.person_outline_rounded, text: doctorName),
               ],
             ),
             if (widget.onAiInsights != null && widget.record.aiStatus != null) ...[
@@ -339,10 +340,10 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
 
   Widget _aiRow(bool isDark) {
     final ({Color color, IconData icon, String label}) style = switch (reportStatusFrom(widget.record.aiStatus)) {
-      ReportStatus.normal => (color: DietUi.green, icon: Icons.verified_rounded, label: 'All clear'),
-      ReportStatus.attention => (color: DietUi.amber, icon: Icons.error_outline_rounded, label: 'Needs attention'),
-      ReportStatus.critical => (color: DietUi.red, icon: Icons.warning_amber_rounded, label: 'Critical findings'),
-      ReportStatus.unknown => (color: DietUi.slate, icon: Icons.help_outline_rounded, label: 'No health insights'),
+      ReportStatus.normal => (color: DietUi.green, icon: IosIcons.verified_rounded, label: 'All clear'),
+      ReportStatus.attention => (color: DietUi.amber, icon: IosIcons.error_outline_rounded, label: 'Needs attention'),
+      ReportStatus.critical => (color: DietUi.red, icon: IosIcons.warning_amber_rounded, label: 'Critical findings'),
+      ReportStatus.unknown => (color: DietUi.slate, icon: IosIcons.help_outline_rounded, label: 'No health insights'),
     };
     return InkWell(
       onTap: widget.onAiInsights,

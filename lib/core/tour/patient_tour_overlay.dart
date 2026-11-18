@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -298,7 +299,7 @@ class _PatientTourOverlayState extends State<PatientTourOverlay>
                               ),
                               const SizedBox(width: 4),
                               Icon(
-                                Icons.close_rounded,
+                                IosIcons.close_rounded,
                                 size: 15,
                                 color: isDark ? Colors.white60 : Colors.grey.shade600,
                               ),
@@ -449,7 +450,7 @@ class _PatientTourOverlayState extends State<PatientTourOverlay>
                               ),
                               const SizedBox(width: 5),
                               Icon(
-                                isLastStep ? Icons.check_circle_outline_rounded : Icons.arrow_forward_rounded,
+                                isLastStep ? IosIcons.check_circle_outline_rounded : IosIcons.arrow_forward_rounded,
                                 size: 14,
                                 color: Colors.white,
                               ),

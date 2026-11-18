@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -806,7 +807,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   tooltip: 'Choose a different food',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  icon: Icon(Icons.arrow_back_rounded, size: 20, color: _textPrimary(isDark)),
+                  icon: Icon(IosIcons.arrow_back_rounded, size: 20, color: _textPrimary(isDark)),
                   onPressed: _backToSearch,
                 ),
               Expanded(
@@ -840,7 +841,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ),
               IconButton(
                 tooltip: 'Close',
-                icon: Icon(Icons.close_rounded, color: _textSecondary(isDark)),
+                icon: Icon(IosIcons.close_rounded, color: _textSecondary(isDark)),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -867,11 +868,11 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             decoration: _decoration(
               isDark,
               hint: 'Search foods or type your own',
-              prefixIcon: Icon(Icons.search_rounded, size: 20, color: _textSecondary(isDark)),
+              prefixIcon: Icon(IosIcons.search_rounded, size: 20, color: _textSecondary(isDark)),
               suffixIcon: query.isEmpty
                   ? null
                   : IconButton(
-                      icon: Icon(Icons.clear_rounded, size: 18, color: _textSecondary(isDark)),
+                      icon: Icon(IosIcons.clear_rounded, size: 18, color: _textSecondary(isDark)),
                       onPressed: () {
                         _searchCtrl.clear();
                         _onSearchChanged('');
@@ -989,7 +990,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
         option(
           label: 'Add "$query" as custom food',
           subtitle: 'Use for this plan only',
-          icon: Icons.add_circle_outline_rounded,
+          icon: IosIcons.add_circle_outline_rounded,
           color: accent,
           onTap: () => _useCustomFood(query),
         ),
@@ -997,7 +998,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
         option(
           label: 'Add "$query" & save in my list',
           subtitle: 'Available in future plans too',
-          icon: Icons.bookmark_add_outlined,
+          icon: IosIcons.bookmark_add_outlined,
           color: saveColor,
           onTap: () => _useCustomFood(query, saveToList: true),
         ),
@@ -1037,7 +1038,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 20, color: _textSecondary(isDark)),
+            Icon(IosIcons.chevron_right_rounded, size: 20, color: _textSecondary(isDark)),
           ],
         ),
       ),
@@ -1194,7 +1195,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                       ),
                       IconButton(
                         tooltip: 'Rename',
-                        icon: Icon(Icons.edit_outlined, size: 18, color: _textSecondary(isDark)),
+                        icon: Icon(IosIcons.edit_outlined, size: 18, color: _textSecondary(isDark)),
                         onPressed: () => setState(() => _editingName = true),
                       ),
                     ],
@@ -1206,7 +1207,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           section('How much'),
           Row(
             children: [
-              stepButton(Icons.remove_rounded, -_qtyStep),
+              stepButton(IosIcons.remove_rounded, -_qtyStep),
               const SizedBox(width: 6),
               SizedBox(
                 width: 60,
@@ -1220,7 +1221,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ),
               ),
               const SizedBox(width: 6),
-              stepButton(Icons.add_rounded, _qtyStep),
+              stepButton(IosIcons.add_rounded, _qtyStep),
               const SizedBox(width: 10),
               Expanded(
                 child: DietOptionField(
@@ -1245,7 +1246,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   decoration: _decoration(
                     isDark,
                     hint: 'Weight (optional)',
-                    prefixIcon: Icon(Icons.scale_outlined, size: 18, color: _textSecondary(isDark)),
+                    prefixIcon: Icon(IosIcons.scale_outlined, size: 18, color: _textSecondary(isDark)),
                   ),
                 ),
               ),
@@ -1292,7 +1293,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             trailing: (hasNutrition || _showNutritionFields)
                 ? linkButton(
                     _showNutritionFields ? 'Done' : 'Edit',
-                    _showNutritionFields ? Icons.check_rounded : Icons.edit_outlined,
+                    _showNutritionFields ? IosIcons.check_rounded : IosIcons.edit_outlined,
                     () {
                       FocusScope.of(context).unfocus();
                       setState(() => _showNutritionFields = !_showNutritionFields);
@@ -1331,7 +1332,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           else
             Align(
               alignment: Alignment.centerLeft,
-              child: linkButton('Add calories & macros (optional)', Icons.add_rounded, () {
+              child: linkButton('Add calories & macros (optional)', IosIcons.add_rounded, () {
                 setState(() => _showNutritionFields = true);
               }),
             ),
@@ -1346,7 +1347,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   onPressed: _askingAi ? null : _askAiForValues,
                   icon: _askingAi
                       ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: accent))
-                      : const Icon(Icons.auto_awesome_rounded, size: 18),
+                      : const Icon(IosIcons.auto_awesome_rounded, size: 18),
                   label: Text(_askingAi ? 'Asking AI…' : (hasNutrition ? 'Check values with AI' : 'Ask AI to fill the values')),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: accent,
@@ -1365,7 +1366,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 15, color: _textSecondary(isDark)),
+                  Icon(IosIcons.info_outline_rounded, size: 15, color: _textSecondary(isDark)),
                   const SizedBox(width: 6),
                   Expanded(child: Text(_aiNote!, key: const Key('dietFood.aiNote'), style: _ts(11.5, FontWeight.w500, _textSecondary(isDark)))),
                 ],
@@ -1383,7 +1384,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.tips_and_updates_outlined, size: 18, color: accent),
+                  Icon(IosIcons.tips_and_updates_outlined, size: 18, color: accent),
                   const SizedBox(width: 8),
                   Expanded(child: Text(_aiTip!, style: _ts(12.5, FontWeight.w500, _textPrimary(isDark)))),
                   TextButton(
@@ -1411,13 +1412,13 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               decoration: _decoration(
                 isDark,
                 hint: 'Instruction, e.g. cook with ½ tsp oil, no sugar',
-                prefixIcon: Icon(Icons.sticky_note_2_outlined, size: 18, color: _textSecondary(isDark)),
+                prefixIcon: Icon(IosIcons.sticky_note_2_outlined, size: 18, color: _textSecondary(isDark)),
               ),
             )
           else
             Align(
               alignment: Alignment.centerLeft,
-              child: linkButton(widget.allowSaveToList ? 'Add instruction for the patient' : 'Add a note', Icons.sticky_note_2_outlined, () {
+              child: linkButton(widget.allowSaveToList ? 'Add instruction for the patient' : 'Add a note', IosIcons.sticky_note_2_outlined, () {
                 setState(() => _showNotes = true);
               }),
             ),
@@ -1435,7 +1436,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.bookmark_added_rounded, size: 16, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
+                  Icon(IosIcons.bookmark_added_rounded, size: 16, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1448,7 +1449,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.close_rounded, size: 14, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
+                      child: Icon(IosIcons.close_rounded, size: 14, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
                     ),
                   ),
                 ],
@@ -1489,7 +1490,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           ),
           if (!_isEditing)
             Center(
-              child: linkButton('Add and choose another food', Icons.playlist_add_rounded, () => _submit(addAnother: true)),
+              child: linkButton('Add and choose another food', IosIcons.playlist_add_rounded, () => _submit(addAnother: true)),
             ),
         ],
       ),

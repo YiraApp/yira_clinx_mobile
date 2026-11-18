@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -490,7 +491,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.cancel_outlined,
+                        IosIcons.cancel_outlined,
                         color: Color(0xFFDC2626),
                         size: 22,
                       ),
@@ -536,7 +537,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                            const Icon(IosIcons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -861,7 +862,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                                        const Icon(IosIcons.add_rounded, color: Colors.white, size: 18),
                                         const SizedBox(width: 5),
                                         Text(
                                           "Book Visit",
@@ -893,7 +894,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                   title: "Upcoming",
                                   count: "${effectiveUpcoming.length}",
                                   subtitle: "Today & Future",
-                                  icon: Icons.hourglass_top_rounded,
+                                  icon: IosIcons.hourglass_top_rounded,
                                   iconColor: const Color(0xFF2563EB),
                                   isActive: _activeTab == "upcoming",
                                   onTap: () => setState(() => _activeTab = "upcoming"),
@@ -908,7 +909,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                   title: "Past",
                                   count: "${effectiveCompleted.length}",
                                   subtitle: "Visits & cancellations",
-                                  icon: Icons.check_circle_outline_rounded,
+                                  icon: IosIcons.check_circle_outline_rounded,
                                   iconColor: const Color(0xFF059669),
                                   isActive: _activeTab == "completed",
                                   onTap: () => setState(() => _activeTab = "completed"),
@@ -953,10 +954,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                         fontSize: 12,
                                         color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                                       ),
-                                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
+                                      prefixIcon: const Icon(IosIcons.search_rounded, size: 18, color: Color(0xFF2563EB)),
                                       suffixIcon: _searchController.text.isNotEmpty
                                           ? IconButton(
-                                              icon: const Icon(Icons.clear_rounded, size: 16),
+                                              icon: const Icon(IosIcons.clear_rounded, size: 16),
                                               onPressed: () {
                                                 _searchController.clear();
                                                 setState(() {});
@@ -984,7 +985,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedStatus,
-                                    icon: const Icon(Icons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
+                                    icon: const Icon(IosIcons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
                                     dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
@@ -1399,7 +1400,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _activeTab == "upcoming" ? Icons.event_available_rounded : Icons.history_rounded,
+                _activeTab == "upcoming" ? IosIcons.event_available_rounded : IosIcons.history_rounded,
                 size: 40,
                 color: const Color(0xFF2563EB),
               ),
@@ -1437,7 +1438,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     onAppointmentBooked: _loadAppointments,
                   );
                 },
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: const Icon(IosIcons.add_rounded, size: 18),
                 label: const Text("Book Consultation", style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),

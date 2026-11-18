@@ -1,3 +1,6 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:intl/intl.dart';
+import 'package:yiraclinics/core/utils/edit_window.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -120,7 +123,7 @@ class PrescriptionListScreen extends StatelessWidget {
           } else {
             if (!hasPrescription) {
               bodyWidget = const RecordEmptyState(
-                icon: Icons.medication_outlined,
+                icon: IosIcons.medication_outlined,
                 title: 'No prescriptions yet',
               );
             } else {
@@ -131,8 +134,9 @@ class PrescriptionListScreen extends StatelessWidget {
                   SinglePrescriptionCard(
                     medications: validMeds,
                     labTests: state.labTests,
-                    date: 'Today • Clinical Consultation',
-                    onEdit: (isPatient || !allowAdd)
+                    date: _savedLabel(state.prescriptionCreatedAt),
+                    // Editable for an hour after it was saved; after that it stays as written.
+                    onEdit: (isPatient || !allowAdd || !editWindowFor(state.prescriptionCreatedAt).open)
                         ? null
                         : () {
                             Navigator.of(context).push(
@@ -243,7 +247,7 @@ class PrescriptionListScreen extends StatelessWidget {
                 ? null
                 : FloatingActionButton(
                     backgroundColor: primaryColor,
-                    child: const Icon(Icons.add, color: Colors.white),
+                    child: const Icon(IosIcons.add, color: Colors.white),
                     onPressed: () {
                       debugPrint("[PrescriptionListScreen] FAB clicked, dispatching AddPrescriptionRecordNavEvent...");
                       context.read<PrescriptionBloc>().add(
@@ -264,7 +268,7 @@ class PrescriptionListScreen extends StatelessWidget {
         title: "Delete Prescription?",
         message: "Are you sure you want to delete this prescription? This action is permanent and cannot be undone.",
         tone: AppDialogTone.danger,
-        icon: Icons.delete_forever_rounded,
+        icon: IosIcons.delete_forever_rounded,
         primaryLabel: "Delete",
         onPrimary: () {
           Navigator.pop(dialogContext);
@@ -280,3 +284,11 @@ class PrescriptionListScreen extends StatelessWidget {
   }
 }
 
+/// "Saved 18 Nov 2026, 11:20 AM"; once it can't be changed, "Saved 18 Nov, 11:20 AM • Can't edit"
+/// (shorter, so it fits on one line).
+String _savedLabel(DateTime? createdAt) {
+  if (createdAt == null) return 'Clinical Consultation';
+  final local = createdAt.toLocal();
+  if (editWindowFor(createdAt).open) return 'Saved ${DateFormat('d MMM yyyy, h:mm a').format(local)}';
+  return "Saved ${DateFormat('d MMM, h:mm a').format(local)} • Can't edit";
+}

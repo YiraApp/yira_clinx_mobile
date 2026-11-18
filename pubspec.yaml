@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.0.1+72
+version: 2.0.2+73
 
 environment:
   sdk: ^3.11.4
@@ -85,6 +85,7 @@ dependencies:
   share_plus: ^12.0.2
   geolocator: ^14.0.1
   geocoding: ^5.0.1
+  video_player: ^2.14.1
 dependency_overrides:
 
 dev_dependencies:
@@ -119,6 +120,8 @@ flutter:
     - assets/images/icons_3d/
     - assets/json/
     - assets/images/svgs/
+    - assets/images/splash_story/
+    - assets/videos/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -163,6 +166,10 @@ flutter:
     - family: PhosphorDuotone
       fonts:
         - asset: assets/fonts/phosphor/Phosphor-Duotone.ttf
+    # Hugeicons stroke rounded (MIT), the app's icon set: lib/core/widgets/huge_icons.dart.
+    - family: HugeiconsStrokeRounded
+      fonts:
+        - asset: assets/fonts/hugeicons/hugeicons-stroke-rounded.ttf
 
   #
   # For details regarding fonts from package dependencies,

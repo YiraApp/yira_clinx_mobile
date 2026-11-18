@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
@@ -93,7 +94,7 @@ class FamilyLinksSectionState extends State<FamilyLinksSection> {
                   key: const Key('familyCode.close'),
                   tooltip: 'Close',
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: Icon(Icons.close_rounded, color: FamilyPalette.of(dialogContext).text, size: 22),
+                  icon: Icon(IosIcons.close_rounded, color: FamilyPalette.of(dialogContext).text, size: 22),
                 ),
               ),
             ],

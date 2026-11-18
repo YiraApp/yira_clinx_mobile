@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -30,7 +31,7 @@ class LabTestsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(child: RecordSectionTitle(icon: Icons.biotech_outlined, title: 'Lab Tests')),
+            const Expanded(child: RecordSectionTitle(icon: IosIcons.biotech_outlined, title: 'Investigations')),
             if (tests.isNotEmpty) RecordPill('${tests.length} ${tests.length == 1 ? 'Test' : 'Tests'}'),
           ],
         ),
@@ -56,7 +57,7 @@ class LabTestsSection extends StatelessWidget {
         ],
         SizedBox(
           width: double.infinity,
-          child: RecordSecondaryButton(label: 'Add Lab Test', icon: Icons.add_rounded, onPressed: onAdd),
+          child: RecordSecondaryButton(label: 'Add Investigation', icon: IosIcons.add_rounded, onPressed: onAdd),
         ),
       ],
     );
@@ -119,7 +120,7 @@ class _LabTestRowState extends State<_LabTestRow> {
             ),
             const SizedBox(width: 8),
             RecordIconAction(
-              icon: Icons.close_rounded,
+              icon: IosIcons.close_rounded,
               tooltip: 'Remove ${widget.test.testName}',
               danger: true,
               onTap: widget.onRemove,

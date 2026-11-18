@@ -18,6 +18,8 @@ class PrescriptionState {
   final String? errorMessage;
   final String? pdfUrl;
   final String? prescriptionId;
+  /// When the loaded prescription was saved (null for a new one).
+  final DateTime? prescriptionCreatedAt;
 
   PrescriptionState({
     this.status = PrescriptionStatus.success,
@@ -31,6 +33,7 @@ class PrescriptionState {
     this.errorMessage,
     this.pdfUrl,
     this.prescriptionId,
+    this.prescriptionCreatedAt,
   }) : medications = medications ??
             [
               MedicationItem(
@@ -51,6 +54,7 @@ class PrescriptionState {
     String? errorMessage,
     String? pdfUrl,
     String? prescriptionId,
+    DateTime? prescriptionCreatedAt,
   }) {
     return PrescriptionState(
       status: status ?? this.status,
@@ -64,6 +68,7 @@ class PrescriptionState {
       errorMessage: errorMessage ?? this.errorMessage,
       pdfUrl: pdfUrl ?? this.pdfUrl,
       prescriptionId: prescriptionId ?? this.prescriptionId,
+      prescriptionCreatedAt: prescriptionCreatedAt ?? this.prescriptionCreatedAt,
     );
   }
 }

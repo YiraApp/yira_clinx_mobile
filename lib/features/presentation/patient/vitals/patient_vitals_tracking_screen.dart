@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -569,17 +570,17 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
   IconData _getMetricIcon(VitalMetricType metric) {
     switch (metric) {
       case VitalMetricType.all:
-        return Icons.dashboard_customize_outlined;
+        return IosIcons.dashboard_customize_outlined;
       case VitalMetricType.bloodPressure:
-        return Icons.favorite_outline_rounded;
+        return IosIcons.favorite_outline_rounded;
       case VitalMetricType.heartRate:
-        return Icons.monitor_heart_outlined;
+        return IosIcons.monitor_heart_outlined;
       case VitalMetricType.spO2:
-        return Icons.air_rounded;
+        return IosIcons.air_rounded;
       case VitalMetricType.temperature:
-        return Icons.thermostat_outlined;
+        return IosIcons.thermostat_outlined;
       case VitalMetricType.weight:
-        return Icons.scale_outlined;
+        return IosIcons.scale_outlined;
     }
   }
 
@@ -626,7 +627,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
           backgroundColor: theme.scaffoldBackgroundColor,
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               color: isDark ? Colors.white : const Color(0xFF121212),
               size: 20,
             ),
@@ -659,7 +660,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.open_in_full_rounded, size: 17, color: _primaryBlue),
+                  child: const Icon(IosIcons.open_in_full_rounded, size: 17, color: _primaryBlue),
                 ),
                 onPressed: _openFullScreenChart,
               ),
@@ -679,7 +680,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.add_rounded, size: 15, color: Colors.white),
+                          Icon(IosIcons.add_rounded, size: 15, color: Colors.white),
                           SizedBox(width: 3),
                           Text(
                             'Record',
@@ -741,7 +742,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                           : 'Custom',
                       range: VitalsTimeRange.dateRange,
                       isDark: isDark,
-                      icon: Icons.date_range_rounded,
+                      icon: IosIcons.date_range_rounded,
                     ),
                   ],
                 ),
@@ -809,7 +810,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                       const SizedBox(height: 18),
                       ElevatedButton.icon(
                         onPressed: _openUpdateVitals,
-                        icon: const Icon(Icons.add_chart_rounded, size: 16),
+                        icon: const Icon(IosIcons.add_chart_rounded, size: 16),
                         label: const Text(
                           'Record Vitals',
                           style: TextStyle(
@@ -992,7 +993,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                                     child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(Icons.open_in_full_rounded, size: 11, color: _primaryBlue),
+                                        Icon(IosIcons.open_in_full_rounded, size: 11, color: _primaryBlue),
                                         SizedBox(width: 3),
                                         Text(
                                           'Full Screen',
@@ -1105,7 +1106,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.calendar_today_rounded,
+              IosIcons.calendar_today_rounded,
               color: _primaryBlue,
               size: 16,
             ),
@@ -1167,7 +1168,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.add_rounded, size: 15, color: Colors.white),
+                    const Icon(IosIcons.add_rounded, size: 15, color: Colors.white),
                     const SizedBox(width: 3),
                     Text(
                       'Record Vitals',
@@ -1231,7 +1232,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Blood Pressure',
                 value: bp,
                 unit: bp != '--' ? 'mmHg' : '',
-                icon: Icons.favorite_rounded,
+                icon: IosIcons.favorite_rounded,
                 color: const Color(0xFF8B5CF6),
                 targetMetric: VitalMetricType.bloodPressure,
                 status: bp != '--' ? 'Normal' : 'Pending',
@@ -1245,7 +1246,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Heart Rate',
                 value: pulse,
                 unit: pulse != '--' ? 'BPM' : '',
-                icon: Icons.monitor_heart_rounded,
+                icon: IosIcons.monitor_heart_rounded,
                 color: const Color(0xFFE11D48),
                 targetMetric: VitalMetricType.heartRate,
                 status: pulse != '--' ? 'Normal' : 'Pending',
@@ -1263,7 +1264,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Oxygen (SpO2)',
                 value: spO2,
                 unit: spO2 != '--' ? '%' : '',
-                icon: Icons.air_rounded,
+                icon: IosIcons.air_rounded,
                 color: const Color(0xFF06B6D4),
                 targetMetric: VitalMetricType.spO2,
                 status: spO2 != '--' ? 'Optimal' : 'Pending',
@@ -1277,7 +1278,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Temperature',
                 value: temp,
                 unit: temp != '--' && !temp.endsWith('°F') && !temp.endsWith('°') ? '°F' : '',
-                icon: Icons.thermostat_rounded,
+                icon: IosIcons.thermostat_rounded,
                 color: const Color(0xFFF59E0B),
                 targetMetric: VitalMetricType.temperature,
                 status: temp != '--' ? 'Normal' : 'Pending',
@@ -1295,7 +1296,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Weight',
                 value: weight,
                 unit: weight != '--' ? 'kg' : '',
-                icon: Icons.scale_rounded,
+                icon: IosIcons.scale_rounded,
                 color: const Color(0xFF10B981),
                 targetMetric: VitalMetricType.weight,
                 status: weight != '--' ? 'Tracked' : 'Pending',
@@ -1309,7 +1310,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                 title: 'Height',
                 value: height,
                 unit: height != '--' ? 'cm' : '',
-                icon: Icons.height_rounded,
+                icon: IosIcons.height_rounded,
                 color: const Color(0xFF3B82F6),
                 targetMetric: VitalMetricType.weight,
                 status: height != '--' ? 'Tracked' : 'Pending',
@@ -1398,7 +1399,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
-                      Icons.open_in_full_rounded,
+                      IosIcons.open_in_full_rounded,
                       size: 11,
                       color: color,
                     ),
@@ -1899,7 +1900,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.history_rounded,
+                      IosIcons.history_rounded,
                       size: 28,
                       color: isDark ? Colors.white24 : Colors.grey[400],
                     ),
@@ -1966,7 +1967,7 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                           ),
                         ],
                       ),
-                      const Icon(Icons.check_circle_outline_rounded, size: 16, color: _primaryBlue),
+                      const Icon(IosIcons.check_circle_outline_rounded, size: 16, color: _primaryBlue),
                     ],
                   ),
                 );

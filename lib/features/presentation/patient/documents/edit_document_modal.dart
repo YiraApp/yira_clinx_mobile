@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -209,7 +210,7 @@ class EditDocumentModal {
                     color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF3B82F6), size: 22),
+                  child: const Icon(IosIcons.camera_alt_rounded, color: Color(0xFF3B82F6), size: 22),
                 ),
                 title: Text(
                   'Take Photo',
@@ -242,7 +243,7 @@ class EditDocumentModal {
                     color: _emerald.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: _emerald, size: 22),
+                  child: const Icon(IosIcons.photo_library_rounded, color: _emerald, size: 22),
                 ),
                 title: Text(
                   'Choose from Gallery',
@@ -275,7 +276,7 @@ class EditDocumentModal {
                     color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF8B5CF6), size: 22),
+                  child: const Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFF8B5CF6), size: 22),
                 ),
                 title: Text(
                   'Select PDF / Document',
@@ -360,7 +361,7 @@ class EditDocumentModal {
                           color: _emerald.withValues(alpha: isDark ? 0.2 : 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.edit_note_rounded, color: _emerald, size: 22),
+                        child: const Icon(IosIcons.edit_note_rounded, color: _emerald, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -388,7 +389,7 @@ class EditDocumentModal {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close_rounded, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                        icon: Icon(IosIcons.close_rounded, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -398,7 +399,7 @@ class EditDocumentModal {
                   // ─── 1. CURRENT DOCUMENT PREVIEW CARD ──────────────────────
                   Row(
                     children: [
-                      const Icon(Icons.visibility_outlined, size: 16, color: _primaryBlue),
+                      const Icon(IosIcons.visibility_outlined, size: 16, color: _primaryBlue),
                       const SizedBox(width: 6),
                       Text(
                         'Current Document',
@@ -437,17 +438,17 @@ class EditDocumentModal {
                                         ? Image.network(
                                             currentDocUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _primaryBlue),
+                                            errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _primaryBlue),
                                           )
                                         : (currentDocPath.isNotEmpty && File(currentDocPath).existsSync()
                                             ? Image.file(
                                                 File(currentDocPath),
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _primaryBlue),
+                                                errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _primaryBlue),
                                               )
-                                            : const Icon(Icons.image_outlined, color: _primaryBlue)))
+                                            : const Icon(IosIcons.image_outlined, color: _primaryBlue)))
                                     : const Center(
-                                        child: Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
+                                        child: Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
                                       ),
                           ),
                         ),
@@ -508,7 +509,7 @@ class EditDocumentModal {
                         // Preview Button
                         OutlinedButton.icon(
                           onPressed: openCurrentPreview,
-                          icon: const Icon(Icons.visibility_outlined, size: 15),
+                          icon: const Icon(IosIcons.visibility_outlined, size: 15),
                           label: const Text('Preview'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -532,7 +533,7 @@ class EditDocumentModal {
                   // ─── 2. REPLACE DOCUMENT / UPLOAD ANOTHER FILE ────────────
                   Row(
                     children: [
-                      const Icon(Icons.cloud_upload_outlined, size: 17, color: _emerald),
+                      const Icon(IosIcons.cloud_upload_outlined, size: 17, color: _emerald),
                       const SizedBox(width: 6),
                       Text(
                         'Replace Document File',
@@ -547,7 +548,7 @@ class EditDocumentModal {
                       if (replacementFile != null)
                         TextButton.icon(
                           onPressed: () => showSourceActionSheet(setModalState),
-                          icon: const Icon(Icons.sync_rounded, size: 14),
+                          icon: const Icon(IosIcons.sync_rounded, size: 14),
                           label: const Text('Change'),
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
@@ -588,7 +589,7 @@ class EditDocumentModal {
                                 color: _emerald.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.file_upload_outlined, color: _emerald, size: 18),
+                              child: const Icon(IosIcons.file_upload_outlined, color: _emerald, size: 18),
                             ),
                             const SizedBox(width: 10),
                             Column(
@@ -650,10 +651,10 @@ class EditDocumentModal {
                                       ? Image.file(
                                           replacementFile!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _emerald),
+                                          errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _emerald),
                                         )
                                       : const Center(
-                                          child: Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
+                                          child: Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
                                         ),
                                 ),
                               ),
@@ -713,13 +714,13 @@ class EditDocumentModal {
                               const SizedBox(width: 6),
                               // Preview Action for Replacement
                               IconButton(
-                                icon: const Icon(Icons.visibility_outlined, size: 20, color: _emerald),
+                                icon: const Icon(IosIcons.visibility_outlined, size: 20, color: _emerald),
                                 tooltip: 'Preview new replacement file',
                                 onPressed: openReplacementPreview,
                               ),
                               // Cancel / Remove replacement
                               IconButton(
-                                icon: Icon(Icons.cancel_outlined, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                icon: Icon(IosIcons.cancel_outlined, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                                 tooltip: 'Remove replacement',
                                 onPressed: () {
                                   setModalState(() {
@@ -758,7 +759,7 @@ class EditDocumentModal {
                       hintText: 'e.g. Blood Test Report',
                       filled: true,
                       fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
-                      prefixIcon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF64748B)),
+                      prefixIcon: const Icon(IosIcons.description_outlined, size: 18, color: Color(0xFF64748B)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1010,7 +1011,7 @@ class EditDocumentModal {
                                       const SnackBar(
                                         content: Row(
                                           children: [
-                                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                            Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                                             SizedBox(width: 8),
                                             Text('Document replaced & updated successfully'),
                                           ],
@@ -1060,7 +1061,7 @@ class EditDocumentModal {
                                       const SnackBar(
                                         content: Row(
                                           children: [
-                                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                            Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                                             SizedBox(width: 8),
                                             Text('Document updated successfully'),
                                           ],
@@ -1102,7 +1103,7 @@ class EditDocumentModal {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  replacementFile != null ? Icons.cloud_done_rounded : Icons.check_circle_outline_rounded,
+                                  replacementFile != null ? IosIcons.cloud_done_rounded : IosIcons.check_circle_outline_rounded,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),

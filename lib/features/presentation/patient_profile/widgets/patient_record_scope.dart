@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/features/presentation/consent/bloc/patient_access_consent_state.dart';
@@ -41,7 +42,7 @@ class ConsentHistoryBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.verified_user_rounded, size: 16, color: DietUi.green),
+          const Icon(IosIcons.verified_user_rounded, size: 16, color: DietUi.green),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -95,11 +96,11 @@ class PatientRecordScopeTab extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _segment(isDark, label: visitLabel, icon: Icons.event_note_rounded, selected: !showHistory, onTap: () => onChanged(false)),
+                _segment(isDark, label: visitLabel, icon: IosIcons.event_note_rounded, selected: !showHistory, onTap: () => onChanged(false)),
                 _segment(
                   isDark,
                   label: 'Full history',
-                  icon: hasAccess ? Icons.history_rounded : Icons.lock_outline_rounded,
+                  icon: hasAccess ? IosIcons.history_rounded : IosIcons.lock_outline_rounded,
                   selected: showHistory,
                   onTap: () => onChanged(true),
                 ),

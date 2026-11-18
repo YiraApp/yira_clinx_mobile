@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 // Renders the lab test picker, the prescribing form's lab section, and every
 // place a prescription shows its tests, in light and dark at phone sizes. Any
 // layout overflow fails the test. Run with DIET_SHOTS=<dir> and --update-goldens
@@ -62,6 +63,14 @@ class _Repo implements PrescriptionRepository {
 
   @override
   Future<List<HospitalLabTest>> getHospitalLabTests(String hospitalId) async => _catalog;
+
+  PrescriptionEntity? previewed;
+
+  @override
+  Future<Uint8List> previewPrescription(PrescriptionEntity prescription) async {
+    previewed = prescription;
+    return Uint8List.fromList('%PDF-1.4'.codeUnits);
+  }
 }
 
 class _NoMedRepo implements MedicationRepository {
@@ -233,7 +242,7 @@ void main() {
           ),
         ));
         await tester.pump();
-        expect(find.text('4 Lab Tests'), findsOneWidget);
+        expect(find.text('4 Investigations'), findsOneWidget);
         expect(find.text('+ 1 more test'), findsOneWidget);
         expect(find.text('0 Medicines'), findsNothing);
         await _shot(tester, 'doctor_card_$tag');
@@ -248,7 +257,7 @@ void main() {
         await tester.pumpWidget(_app(dark, const PrescriptionViewDetailsScreen(patientId: 'p1')));
         await tester.pump();
         await tester.pump();
-        expect(find.text('Lab Tests'), findsOneWidget);
+        expect(find.text('Investigations'), findsOneWidget);
         expect(find.text('No medications mapped.'), findsNothing);
         expect(find.text('Prescribed Medications'), findsNothing);
         await _shot(tester, 'doctor_details_$tag');
@@ -259,7 +268,7 @@ void main() {
         await tester.pumpWidget(_app(dark, Scaffold(body: PrescriptionHistoryTab(patientId: 'p1', dataSource: _History()))));
         await tester.pump();
         await tester.pump();
-        expect(find.text('Lab Tests'), findsOneWidget);
+        expect(find.text('Investigations'), findsOneWidget);
         expect(find.text('Urgent'), findsOneWidget);
         await _shot(tester, 'history_$tag');
       });
@@ -489,14 +498,14 @@ void main() {
   }
 
   Future<void> scrollToLabs(WidgetTester tester) async {
-    await tester.scrollUntilVisible(find.text('Add Lab Test'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.text('Add Investigation'), 200, scrollable: find.byType(Scrollable).first);
     await tester.pump();
   }
 
   testWidgets('a prescription of only lab tests can be issued from the form', (tester) async {
     final repo = await openForm(tester, sizes['393x852']!);
     await scrollToLabs(tester);
-    await tester.tap(find.text('Add Lab Test'));
+    await tester.tap(find.text('Add Investigation'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Lipid Profile'));
     await tester.pump();
@@ -523,7 +532,7 @@ void main() {
     final repo = await openForm(tester, sizes['393x852']!);
     await tester.tap(find.text('Issue Prescription'));
     await tester.pump();
-    expect(find.text('Please add at least one medication or lab test.'), findsOneWidget);
+    expect(find.text('Please add at least one medication or investigation.'), findsOneWidget);
     expect(repo.saved, isNull);
   });
 

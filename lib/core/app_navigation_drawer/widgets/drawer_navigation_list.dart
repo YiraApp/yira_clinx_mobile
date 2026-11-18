@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/app_navigation_drawer/widgets/custom_menu_title.dart';
@@ -18,16 +19,16 @@ class DrawerNavigationList extends StatelessWidget {
 
   IconData _getFallbackIconForTaskCode(String taskCode) {
     switch (taskCode) {
-      case "1": return Icons.grid_view_rounded;
-      case "2": return Icons.apartment_rounded;
-      case "3": return Icons.calendar_today_outlined;
-      case "4": return Icons.people_outline_rounded;
-      case "5": return Icons.access_time;
-      case "6": return Icons.info_outline_rounded;
-      case "7": return Icons.mail_outline_rounded;
-      case "8": return Icons.gpp_good_outlined;
-      case "9": return Icons.settings_outlined;
-      default: return Icons.link_rounded;
+      case "1": return IosIcons.grid_view_rounded;
+      case "2": return IosIcons.apartment_rounded;
+      case "3": return IosIcons.calendar_today_outlined;
+      case "4": return IosIcons.people_outline_rounded;
+      case "5": return IosIcons.access_time;
+      case "6": return IosIcons.info_outline_rounded;
+      case "7": return IosIcons.mail_outline_rounded;
+      case "8": return IosIcons.gpp_good_outlined;
+      case "9": return IosIcons.settings_outlined;
+      default: return IosIcons.link_rounded;
     }
   }
 
@@ -91,7 +92,7 @@ class DrawerNavigationList extends StatelessWidget {
         ),
         CustomIconMenuTile(
           title: "Logout",
-          icon: Icons.logout_rounded,
+          icon: IosIcons.logout_rounded,
           isSelected: false,
           customColor: Colors.red,
           onTap: () => context.read<NavigationDrawerBloc>().add(const LogoutNavEvent()),

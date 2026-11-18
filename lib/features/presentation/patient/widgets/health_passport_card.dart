@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -62,7 +63,7 @@ class HealthPassportCard extends StatelessWidget {
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
+                    child: const Icon(IosIcons.shield_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 10),
                   const Column(
@@ -142,7 +143,7 @@ class HealthPassportCard extends StatelessWidget {
                     // Quick Badges
                     Row(
                       children: [
-                        Icon(Icons.phone_in_talk_rounded, color: Colors.white70, size: 14),
+                        Icon(IosIcons.phone_in_talk_rounded, color: Colors.white70, size: 14),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -160,7 +161,7 @@ class HealthPassportCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.verified_user_rounded, color: Colors.white70, size: 14),
+                        Icon(IosIcons.verified_user_rounded, color: Colors.white70, size: 14),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -194,7 +195,7 @@ class HealthPassportCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
                     Icon(
-                      Icons.verified_user_rounded,
+                      IosIcons.verified_user_rounded,
                       color: Colors.white,
                       size: 26,
                     ),

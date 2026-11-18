@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -694,7 +695,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                Icons.close_rounded,
+                IosIcons.close_rounded,
                 size: 16,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
@@ -797,7 +798,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                         : 'Custom',
                     FullScreenTimeRange.custom,
                     isDark,
-                    icon: Icons.calendar_month_rounded,
+                    icon: IosIcons.calendar_month_rounded,
                     onTap: _pickCustomDateRange,
                   ),
                   if (high > 0) ...[
@@ -820,7 +821,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            icon: Icon(Icons.screen_rotation_rounded, size: 18, color: widget.metricColor),
+            icon: Icon(IosIcons.screen_rotation_rounded, size: 18, color: widget.metricColor),
             onPressed: () => _toggleOrientation(true),
           ),
           const SizedBox(width: 4),
@@ -869,7 +870,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    Icons.close_rounded,
+                    IosIcons.close_rounded,
                     size: 18,
                     color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
@@ -904,7 +905,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: Icon(Icons.screen_rotation_rounded, size: 18, color: widget.metricColor),
+                icon: Icon(IosIcons.screen_rotation_rounded, size: 18, color: widget.metricColor),
                 onPressed: () => _toggleOrientation(false),
               ),
             ],
@@ -992,10 +993,10 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
         padding: const EdgeInsets.symmetric(horizontal: 6.0),
         child: Icon(
           _chartStyle == FullScreenChartStyle.splineArea
-              ? Icons.area_chart_rounded
+              ? IosIcons.area_chart_rounded
               : _chartStyle == FullScreenChartStyle.splineLine
-                  ? Icons.show_chart_rounded
-                  : Icons.bar_chart_rounded,
+                  ? IosIcons.show_chart_rounded
+                  : IosIcons.bar_chart_rounded,
           size: 18,
           color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
         ),
@@ -1104,7 +1105,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _isInspectMode ? Icons.pin_drop_rounded : Icons.pan_tool_rounded,
+                _isInspectMode ? IosIcons.pin_drop_rounded : IosIcons.pan_tool_rounded,
                 size: 14,
                 color: _isInspectMode
                     ? Colors.white
@@ -1127,7 +1128,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
             child: Padding(
               padding: const EdgeInsets.all(5),
               child: Icon(
-                Icons.add_rounded,
+                IosIcons.add_rounded,
                 size: 16,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
@@ -1140,7 +1141,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
             child: Padding(
               padding: const EdgeInsets.all(5),
               child: Icon(
-                Icons.remove_rounded,
+                IosIcons.remove_rounded,
                 size: 16,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
@@ -1153,7 +1154,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
             child: Padding(
               padding: const EdgeInsets.all(5),
               child: Icon(
-                Icons.restart_alt_rounded,
+                IosIcons.restart_alt_rounded,
                 size: 16,
                 color: widget.metricColor,
               ),
@@ -1194,7 +1195,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
                         : 'Custom',
                     FullScreenTimeRange.custom,
                     isDark,
-                    icon: Icons.calendar_month_rounded,
+                    icon: IosIcons.calendar_month_rounded,
                     onTap: _pickCustomDateRange,
                   ),
                 ],
@@ -1551,7 +1552,7 @@ class _FullScreenVitalChartScreenState extends State<FullScreenVitalChartScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.query_builder_rounded, size: 36, color: widget.metricColor.withValues(alpha: 0.5)),
+          Icon(IosIcons.query_builder_rounded, size: 36, color: widget.metricColor.withValues(alpha: 0.5)),
           const SizedBox(height: 10),
           Text(
             'No readings in this timeframe',

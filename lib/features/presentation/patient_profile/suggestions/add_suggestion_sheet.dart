@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -189,7 +190,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
             SnackBar(
               content: const Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                  Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
                   SizedBox(width: 8),
                   Text("Suggestion sent to patient!"),
                 ],
@@ -274,7 +275,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.lightbulb_outline_rounded,
+                        IosIcons.lightbulb_outline_rounded,
                         color: Color(0xFF2563EB),
                         size: 22,
                       ),
@@ -312,7 +313,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         Navigator.pop(context);
                       },
                       icon: Icon(
-                        Icons.close_rounded,
+                        IosIcons.close_rounded,
                         color: isDark ? Colors.white60 : Colors.black54,
                       ),
                     ),
@@ -522,7 +523,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            Icons.attach_file_rounded,
+                            IosIcons.attach_file_rounded,
                             color: Color(0xFF2563EB),
                             size: 20,
                           ),
@@ -553,7 +554,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.description_rounded,
+                          IosIcons.description_rounded,
                           color: Color(0xFF2563EB),
                           size: 22,
                         ),
@@ -588,7 +589,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         IconButton(
                           onPressed: _removeFile,
                           icon: const Icon(
-                            Icons.close_rounded,
+                            IosIcons.close_rounded,
                             color: Colors.redAccent,
                             size: 20,
                           ),
@@ -654,7 +655,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                             : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.send_rounded, size: 16),
+                                  Icon(IosIcons.send_rounded, size: 16),
                                   SizedBox(width: 6),
                                   Text(
                                     "Send Suggestion",

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -73,7 +74,7 @@ class _PatientAppointmentListViewState
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.event_busy_outlined,
+                          IosIcons.event_busy_outlined,
                           size: displayWidth(context) * 0.18,
                           color: Theme.of(context).hintColor.withOpacity(0.3),
                         ),
@@ -103,7 +104,7 @@ class _PatientAppointmentListViewState
                           height: 40,
                           child: ElevatedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.add, size: 16),
+                            icon: const Icon(IosIcons.add, size: 16),
                             label: CommonText(
                               "Book Appointment",
                               style: TextStyle(

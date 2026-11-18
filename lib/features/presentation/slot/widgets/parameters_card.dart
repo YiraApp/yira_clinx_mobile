@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,7 +23,7 @@ class ParametersCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SectionCardWrapper(
-      icon: Icons.access_time_filled_rounded,
+      icon: IosIcons.access_time_filled_rounded,
       title: 'Consultation & Shift Timings',
       isTab: isTab,
       child: Column(
@@ -123,7 +124,7 @@ class ParametersCard extends StatelessWidget {
                 color: Colors.amber.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.coffee_rounded, size: 16, color: Colors.amber),
+              child: const Icon(IosIcons.coffee_rounded, size: 16, color: Colors.amber),
             ),
             const SizedBox(width: 8),
             _buildCardLabel(context, 'Break Timings (Optional)', isDark, isTab),
@@ -164,7 +165,7 @@ class ParametersCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.coffee_rounded, size: 13, color: primaryColor),
+                          Icon(IosIcons.coffee_rounded, size: 13, color: primaryColor),
                           const SizedBox(width: 4),
                           CommonText(
                             'Break 1',
@@ -261,7 +262,7 @@ class ParametersCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.coffee_rounded, size: 13, color: primaryColor),
+                                  Icon(IosIcons.coffee_rounded, size: 13, color: primaryColor),
                                   const SizedBox(width: 4),
                                   CommonText(
                                     'Break ${index + 1}',
@@ -309,7 +310,7 @@ class ParametersCard extends StatelessWidget {
                                 color: Colors.redAccent.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 16),
+                              child: const Icon(IosIcons.delete_outline_rounded, color: Colors.redAccent, size: 16),
                             ),
                           ),
                         ),
@@ -384,7 +385,7 @@ class ParametersCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                    Icon(IosIcons.add_rounded, size: 16, color: primaryColor),
                     const SizedBox(width: 6),
                     CommonText(
                       'Add Another Break',
@@ -472,7 +473,7 @@ class ParametersCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
-                      Icons.free_breakfast_rounded,
+                      IosIcons.free_breakfast_rounded,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -515,7 +516,7 @@ class ParametersCard extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 18),
+                            const Icon(IosIcons.error_outline_rounded, color: Colors.redAccent, size: 18),
                             const SizedBox(width: 8),
                             Expanded(
                               child: CommonText(
@@ -576,7 +577,7 @@ class ParametersCard extends StatelessWidget {
                                         formatTime(fromTime),
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
-                                      Icon(Icons.access_time_rounded, size: 16, color: primaryColor),
+                                      Icon(IosIcons.access_time_rounded, size: 16, color: primaryColor),
                                     ],
                                   ),
                                 ),
@@ -628,7 +629,7 @@ class ParametersCard extends StatelessWidget {
                                         formatTime(toTime),
                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
-                                      Icon(Icons.access_time_rounded, size: 16, color: primaryColor),
+                                      Icon(IosIcons.access_time_rounded, size: 16, color: primaryColor),
                                     ],
                                   ),
                                 ),
@@ -742,7 +743,7 @@ class ParametersCard extends StatelessWidget {
                           message:
                               '${overlappingSlots.length} timeslot(s) falling within ${formatTime(fromTime)} - ${formatTime(toTime)} will be removed.\n\nRemaining slots will be automatically reallocated around this break. Do you want to proceed?',
                           tone: AppDialogTone.warning,
-                          icon: Icons.auto_fix_high_rounded,
+                          icon: IosIcons.auto_fix_high_rounded,
                           primaryLabel: 'Remove & Re-align',
                           onPrimary: () {
                             Navigator.pop(confirmContext);
@@ -916,7 +917,7 @@ class ParametersCard extends StatelessWidget {
           message:
               'Break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).\n\nOverlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
           tone: AppDialogTone.warning,
-          icon: Icons.auto_fix_high_rounded,
+          icon: IosIcons.auto_fix_high_rounded,
           primaryLabel: 'Remove & Re-align',
           onPrimary: () {
             Navigator.pop(confirmContext);
@@ -1019,7 +1020,7 @@ class ParametersCard extends StatelessWidget {
           message:
               'Updated break ($from - $to) overlaps with ${overlappingSlots.length} timeslot(s).\n\nOverlapping slots will be removed, and all remaining slots will be automatically reallocated around this break. Do you want to proceed?',
           tone: AppDialogTone.warning,
-          icon: Icons.auto_fix_high_rounded,
+          icon: IosIcons.auto_fix_high_rounded,
           primaryLabel: 'Remove & Re-align',
           onPrimary: () {
             Navigator.pop(confirmContext);
@@ -1105,7 +1106,7 @@ class ParametersCard extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.access_time_rounded,
+                IosIcons.access_time_rounded,
                 size: 18,
                 color: primaryColor,
               ),

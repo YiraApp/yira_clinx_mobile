@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
@@ -84,7 +85,7 @@ class DietUi {
                 onTap: () => Navigator.maybePop(context),
                 child: Center(
                   child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
+                    IosIcons.arrow_back_ios_new_rounded,
                     size: 15,
                     color: strong(isDark),
                   ),
@@ -343,15 +344,15 @@ class DietUi {
   /// Icon and colour for a meal slot, so each meal is easy to spot.
   static ({IconData icon, Color color}) slotStyle(String slot) {
     final s = slot.toLowerCase();
-    if (s.contains('early')) return (icon: Icons.wb_twilight_rounded, color: amber);
-    if (s.contains('breakfast')) return (icon: Icons.free_breakfast_rounded, color: const Color(0xFFF97316));
-    if (s.contains('mid')) return (icon: Icons.eco_rounded, color: green);
-    if (s.contains('lunch')) return (icon: Icons.lunch_dining_rounded, color: blue);
+    if (s.contains('early')) return (icon: IosIcons.wb_twilight_rounded, color: amber);
+    if (s.contains('breakfast')) return (icon: IosIcons.free_breakfast_rounded, color: const Color(0xFFF97316));
+    if (s.contains('mid')) return (icon: IosIcons.eco_rounded, color: green);
+    if (s.contains('lunch')) return (icon: IosIcons.lunch_dining_rounded, color: blue);
     if (s.contains('snack') || s.contains('evening') || s.contains('tea')) {
-      return (icon: Icons.local_cafe_rounded, color: violet);
+      return (icon: IosIcons.local_cafe_rounded, color: violet);
     }
-    if (s.contains('dinner')) return (icon: Icons.dinner_dining_rounded, color: const Color(0xFF6366F1));
-    if (s.contains('bed') || s.contains('night')) return (icon: Icons.bedtime_rounded, color: const Color(0xFF0EA5E9));
-    return (icon: Icons.restaurant_rounded, color: blue);
+    if (s.contains('dinner')) return (icon: IosIcons.dinner_dining_rounded, color: const Color(0xFF6366F1));
+    if (s.contains('bed') || s.contains('night')) return (icon: IosIcons.bedtime_rounded, color: const Color(0xFF0EA5E9));
+    return (icon: IosIcons.restaurant_rounded, color: blue);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -153,7 +154,7 @@ class PatientAppointmentCard extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    Icons.local_hospital_rounded,
+                    IosIcons.local_hospital_rounded,
                     size: 14,
                     color: primaryColor,
                   ),
@@ -183,7 +184,7 @@ class PatientAppointmentCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isTeleconsultation ? Icons.videocam_rounded : Icons.location_on_rounded,
+                          isTeleconsultation ? IosIcons.videocam_rounded : IosIcons.location_on_rounded,
                           size: 10,
                           color: isTeleconsultation ? Colors.amber[800]! : primaryColor,
                         ),
@@ -214,7 +215,7 @@ class PatientAppointmentCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded, size: 14, color: primaryColor),
+                  Icon(IosIcons.calendar_today_rounded, size: 14, color: primaryColor),
                   const SizedBox(width: 6),
                   Text(
                     date,
@@ -226,7 +227,7 @@ class PatientAppointmentCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.access_time_rounded, size: 14, color: primaryColor),
+                  Icon(IosIcons.access_time_rounded, size: 14, color: primaryColor),
                   const SizedBox(width: 6),
                   Text(
                     time,
@@ -274,7 +275,7 @@ class PatientAppointmentCard extends StatelessWidget {
                       },
                     );
                   },
-                  icon: const Icon(Icons.video_call_rounded, color: Colors.white, size: 18),
+                  icon: const Icon(IosIcons.video_call_rounded, color: Colors.white, size: 18),
                   label: const Text(
                     'Join Video Teleconsultation',
                     style: TextStyle(

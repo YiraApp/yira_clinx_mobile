@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -34,7 +35,7 @@ class NotificationBadgeIcon extends StatelessWidget {
         final badgeText = count > 99 ? '99+' : '$count';
 
         Widget iconWidget = Icon(
-          count > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+          count > 0 ? IosIcons.notifications_active_rounded : IosIcons.notifications_none_rounded,
           size: size,
           color: count > 0 && !showCapsule ? effectiveIconColor : effectiveIconColor,
         );
@@ -47,7 +48,7 @@ class NotificationBadgeIcon extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              count > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+              count > 0 ? IosIcons.notifications_active_rounded : IosIcons.notifications_none_rounded,
               size: size,
               color: primaryColor,
             ),

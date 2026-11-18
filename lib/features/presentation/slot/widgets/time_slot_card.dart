@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/colors/colors.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -75,7 +76,7 @@ class TimeSlotCard extends StatelessWidget {
           ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))
           : Colors.redAccent;
       final tagText = isPastNotBlocked ? "Past Time" : "Blocked";
-      final icon = isPastNotBlocked ? Icons.history_toggle_off_rounded : Icons.block_rounded;
+      final icon = isPastNotBlocked ? IosIcons.history_toggle_off_rounded : IosIcons.block_rounded;
       final desc = isPastNotBlocked ? "Past Time • Closed" : "Slot Blocked • Tap to unblock";
 
       return Padding(
@@ -274,7 +275,7 @@ class TimeSlotCard extends StatelessWidget {
                             if (slot.isVerified) ...[
                               const SizedBox(width: 4),
                               Icon(
-                                Icons.verified_rounded,
+                                IosIcons.verified_rounded,
                                 color: primaryColor,
                                 size: 16,
                               ),
@@ -394,7 +395,7 @@ class TimeSlotCard extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          Icons.add_circle_outline_rounded,
+                          IosIcons.add_circle_outline_rounded,
                           color: greenColor,
                           size: 18,
                         ),
@@ -432,7 +433,7 @@ class TimeSlotCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.add_rounded, color: Colors.white, size: 15),
+                        const Icon(IosIcons.add_rounded, color: Colors.white, size: 15),
                         const SizedBox(width: 3),
                         CommonText(
                           "Book",

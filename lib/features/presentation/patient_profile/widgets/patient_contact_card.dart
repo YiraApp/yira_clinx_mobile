@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import 'metric_tile_item.dart';
@@ -20,21 +21,21 @@ class PatientContactCard extends StatelessWidget {
     return PatientInfoCard(
       isTab: isTab,
       title: 'Contact Information',
-      titleIcon: Icons.perm_contact_calendar_outlined,
+      titleIcon: IosIcons.perm_contact_calendar_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.phone_android_rounded,
+            icon: IosIcons.phone_android_rounded,
             label: 'Phone',
             value: patient.phone ?? '',
-            accentColor: Colors.blue,
+            accentColor: const Color(0xFF2563EB),
           ),
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.alternate_email_rounded,
+            icon: IosIcons.alternate_email_rounded,
             label: 'Email Address',
             value: patient.emailAddress ?? '',
             accentColor: Colors.teal,
@@ -42,7 +43,7 @@ class PatientContactCard extends StatelessWidget {
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.map_outlined,
+            icon: IosIcons.map_outlined,
             label: 'Residential Address',
             value: patient.residentialAddress ?? '',
             accentColor: Colors.indigo,
@@ -50,7 +51,7 @@ class PatientContactCard extends StatelessWidget {
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: hasContact ? Icons.phone_in_talk_outlined : Icons.person_off_outlined,
+            icon: hasContact ? IosIcons.phone_in_talk_outlined : IosIcons.person_off_outlined,
             label: 'Emergency Contact',
             value: hasContact ? [person, phone].where((e) => e.isNotEmpty).join(' · ') : 'Not added by the patient',
             accentColor: Colors.red,

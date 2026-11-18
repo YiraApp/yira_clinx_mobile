@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/phosphor_icons.dart';
@@ -136,7 +137,7 @@ class _DoctorPatientQuestionnairesTabState extends State<DoctorPatientQuestionna
           Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(color: QUi.blueSoft(isDark), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.send_rounded, size: 18, color: QUi.blue),
+            child: const Icon(IosIcons.send_rounded, size: 18, color: QUi.blue),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -149,7 +150,7 @@ class _DoctorPatientQuestionnairesTabState extends State<DoctorPatientQuestionna
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: QUi.muted(isDark)),
+          Icon(IosIcons.chevron_right_rounded, color: QUi.muted(isDark)),
         ],
       ),
     );
@@ -175,7 +176,7 @@ class _DoctorPatientQuestionnairesTabState extends State<DoctorPatientQuestionna
             icon: PhosphorIconsBold.fileText,
             title: g.title,
             subtitle: subtitle.isEmpty ? null : subtitle,
-            trailing: Icon(open ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: RecordUi.ink(isDark)),
+            trailing: Icon(open ? IosIcons.expand_less_rounded : IosIcons.expand_more_rounded, color: RecordUi.ink(isDark)),
           ),
           const SizedBox(height: 10),
           Wrap(spacing: 6, runSpacing: 6, children: [

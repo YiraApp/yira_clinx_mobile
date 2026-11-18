@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -150,8 +151,8 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
             child: Row(
               children: [
-                Expanded(child: Text('Add Lab Test', style: DietUi.text(15, FontWeight.w600, RecordUi.ink(isDark)))),
-                RecordIconAction(icon: Icons.close_rounded, tooltip: 'Close', onTap: () => Navigator.of(context).pop()),
+                Expanded(child: Text('Add Investigation', style: DietUi.text(15, FontWeight.w600, RecordUi.ink(isDark)))),
+                RecordIconAction(icon: IosIcons.close_rounded, tooltip: 'Close', onTap: () => Navigator.of(context).pop()),
               ],
             ),
           ),
@@ -185,7 +186,7 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
       decoration: InputDecoration(
         hintText: 'Search tests',
         hintStyle: DietUi.text(13, FontWeight.w400, DietUi.hint(isDark)),
-        prefixIcon: Icon(Icons.search_rounded, size: 19, color: DietUi.muted(isDark)),
+        prefixIcon: Icon(IosIcons.search_rounded, size: 19, color: DietUi.muted(isDark)),
         prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         isDense: true,
         filled: true,
@@ -257,7 +258,7 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
         else if (failed) ...[
           const SizedBox(height: 24),
           const RecordEmptyState(
-            icon: Icons.error_outline_rounded,
+            icon: IosIcons.error_outline_rounded,
             title: "Couldn't load this hospital's tests.",
             message: 'You can still type a test name above.',
           ),
@@ -268,7 +269,7 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
         ] else if (rows.isEmpty && !canType) ...[
           const SizedBox(height: 24),
           RecordEmptyState(
-            icon: Icons.biotech_outlined,
+            icon: IosIcons.biotech_outlined,
             title: widget.tests.isEmpty ? 'No tests listed yet.' : 'No matching tests.',
             message: 'Type a test name above to add it.',
           ),
@@ -286,7 +287,7 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.add_rounded, size: 19, color: DietUi.blue),
+            const Icon(IosIcons.add_rounded, size: 19, color: DietUi.blue),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -334,7 +335,7 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
               ),
               const SizedBox(width: 10),
               Icon(
-                selected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+                selected ? IosIcons.check_circle_rounded : IosIcons.radio_button_unchecked_rounded,
                 size: 21,
                 color: selected ? DietUi.blue : DietUi.hint(isDark),
               ),

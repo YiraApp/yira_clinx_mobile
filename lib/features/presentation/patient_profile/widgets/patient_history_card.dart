@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/time_line_segement_item.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
@@ -13,7 +14,7 @@ class PatientHistoryCard extends StatelessWidget {
     return PatientInfoCard(
       isTab: isTab,
       title: 'Visit History',
-      titleIcon: Icons.history,
+      titleIcon: IosIcons.history,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -21,21 +22,21 @@ class PatientHistoryCard extends StatelessWidget {
             isTab: isTab,
             label: 'Initial Registration',
             value: patient.initialRegistration ?? '',
-            icon: Icons.login_rounded,
+            icon: IosIcons.login_rounded,
             isLast: false,
           ),
           TimelineSegmentItem(
             isTab: isTab,
             label: 'Last Check-in Visit',
             value: patient.lastCheckInVisit ?? '',
-            icon: Icons.assignment_turned_in_outlined,
+            icon: IosIcons.assignment_turned_in_outlined,
             isLast: false,
           ),
           TimelineSegmentItem(
             isTab: isTab,
             label: 'Next Scheduled Appointment',
             value: patient.nextScheduledAppointment ?? 'None scheduled',
-            icon: Icons.event_repeat_outlined,
+            icon: IosIcons.event_repeat_outlined,
             isLast: true,
           ),
         ],

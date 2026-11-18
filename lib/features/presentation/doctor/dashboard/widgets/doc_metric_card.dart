@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
@@ -113,7 +114,7 @@ class DocMetricCard extends StatelessWidget {
                       )
                     else if (onTap != null)
                       Icon(
-                        Icons.arrow_forward_ios_rounded,
+                        IosIcons.arrow_forward_ios_rounded,
                         size: 13,
                         color: isDark ? Colors.white38 : Colors.grey.shade400,
                       ),

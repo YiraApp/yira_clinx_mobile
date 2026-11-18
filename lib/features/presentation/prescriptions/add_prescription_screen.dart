@@ -1,3 +1,9 @@
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
+import 'package:yiraclinics/core/utils/edit_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -47,7 +53,7 @@ String? prescriptionValidationError(List<MedicationItem> medications, List<Presc
           .every((field) => (field ?? '').trim().isEmpty);
 
   if (labTests.isEmpty && medications.every(untouched)) {
-    return "Please add at least one medication or lab test.";
+    return "Please add at least one medication or investigation.";
   }
 
   for (int i = 0; i < medications.length; i++) {
@@ -84,6 +90,7 @@ class _AddPrescriptionRecordScreenState
   // printed on its PDF.
   MedicalRecordBriefEntity? _record;
   bool _recordLoading = false;
+  bool _previewing = false;
 
   String? get _patientId => widget.patientId ?? widget.patient?.id;
 
@@ -137,6 +144,44 @@ class _AddPrescriptionRecordScreenState
     if (mounted) _loadRecord();
   }
 
+  /// Shows the PDF this prescription will get, drawn by the server from the form as it is; nothing
+  /// is saved. Back returns to the form with everything kept.
+  Future<void> _preview(BuildContext context, PrescriptionState state) async {
+    final problem = prescriptionValidationError(state.medications, state.labTests);
+    if (problem != null) {
+      _showValidationError(context, problem);
+      return;
+    }
+    final bloc = context.read<PrescriptionBloc>();
+    setState(() => _previewing = true);
+    try {
+      final draft = bloc.draftFor(
+        patientId: _patientId ?? '',
+        appointmentId: widget.appointmentId,
+        hospitalId: widget.hospitalId,
+        orgId: widget.orgId,
+        medicalRecordId: _record?.id,
+        additionalNotes: _notesController.text,
+      );
+      final bytes = await bloc.previewPdf(draft);
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/prescription_preview_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      if (!context.mounted) return;
+      InAppDocumentViewer.show(
+        context,
+        title: 'Preview prescription',
+        category: 'Prescription',
+        filePath: file.path,
+        fileType: 'PDF',
+      );
+    } catch (e) {
+      if (context.mounted) _showValidationError(context, e.toString().replaceAll('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _previewing = false);
+    }
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
@@ -186,7 +231,7 @@ class _AddPrescriptionRecordScreenState
               SnackBar(
                 content: const Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 18),
+                    Icon(IosIcons.check_circle, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -219,6 +264,9 @@ class _AddPrescriptionRecordScreenState
         builder: (context, state) {
           final medCount = state.medications.length;
           final bool isSubmitting = state.status == PrescriptionStatus.submitLoading;
+          // A saved prescription can be changed for an hour; after that it stays as saved.
+          final EditWindow? window = (state.prescriptionId ?? '').isEmpty ? null : editWindowFor(state.prescriptionCreatedAt);
+          final bool locked = window != null && !window.open;
 
           return Scaffold(
             backgroundColor:
@@ -230,7 +278,7 @@ class _AddPrescriptionRecordScreenState
               elevation: 0,
               leading: IconButton(
                 icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
+                  IosIcons.arrow_back_ios_new_rounded,
                   size: 20,
                   color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
@@ -286,15 +334,25 @@ class _AddPrescriptionRecordScreenState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: appPoppinFont,
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      onPressed: isSubmitting || _previewing ? null : () => _preview(context, state),
+                      child: _previewing
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(IosIcons.visibility_outlined, size: 17),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Preview',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -308,7 +366,7 @@ class _AddPrescriptionRecordScreenState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: isSubmitting
+                      onPressed: isSubmitting || locked
                           ? null
                           : () {
                               final problem = prescriptionValidationError(state.medications, state.labTests);
@@ -336,9 +394,9 @@ class _AddPrescriptionRecordScreenState
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Icon(Icons.check_circle_outline_rounded, size: 18),
+                          : const Icon(IosIcons.check_circle_outline_rounded, size: 18),
                       label: Text(
-                        isSubmitting ? "Saving..." : "Issue Prescription",
+                        isSubmitting ? "Saving..." : locked ? "Can't edit" : "Issue Prescription",
                         style: const TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 13.5,
@@ -364,6 +422,11 @@ class _AddPrescriptionRecordScreenState
                     const SizedBox(height: 14),
                   ],
 
+                  if (window != null) ...[
+                    _buildEditWindowNote(window, isDark),
+                    const SizedBox(height: 14),
+                  ],
+
                   if (_hasVisit) ...[
                     _buildMedicalRecordCard(isDark),
                     const SizedBox(height: 14),
@@ -375,7 +438,7 @@ class _AddPrescriptionRecordScreenState
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.medication_liquid_outlined, color: _primaryBlue, size: 18),
+                          const Icon(IosIcons.medication_liquid_outlined, color: _primaryBlue, size: 18),
                           const SizedBox(width: 6),
                           Text(
                             'Medications',
@@ -509,7 +572,7 @@ class _AddPrescriptionRecordScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.add_circle_outline_rounded,
+                            IosIcons.add_circle_outline_rounded,
                             size: 18,
                             color: _primaryBlue,
                           ),
@@ -575,7 +638,7 @@ class _AddPrescriptionRecordScreenState
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.notes_rounded, size: 16, color: _primaryBlue),
+                            const Icon(IosIcons.notes_rounded, size: 16, color: _primaryBlue),
                             const SizedBox(width: 6),
                             Text(
                               'Clinical Advice & Notes (Optional)',
@@ -776,11 +839,15 @@ class _AddPrescriptionRecordScreenState
             if (record.chiefComplaint.trim().isNotEmpty) 'C/O: ${record.chiefComplaint.trim()}',
             if ((record.allergies ?? '').trim().isNotEmpty) 'Allergies: ${record.allergies!.trim()}',
           ].join(' · ');
+    final recordWindow = record == null ? null : editWindowFor(record.createdAt);
+    final recordEditable = recordWindow?.open ?? true;
     final subtitle = _recordLoading && record == null
         ? 'Checking this visit for a record'
         : record == null
             ? 'Not added yet. It prints on the prescription PDF.'
-            : (summary.isEmpty ? 'Added for this visit' : summary);
+            : !recordEditable
+                ? '${summary.isEmpty ? 'Added for this visit' : summary}\nSaved over $editWindowMinutes minutes ago, so it can no longer be changed.'
+                : (summary.isEmpty ? 'Added for this visit' : summary);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
@@ -798,7 +865,7 @@ class _AddPrescriptionRecordScreenState
               color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.assignment_outlined, color: _primaryBlue, size: 20),
+            child: const Icon(IosIcons.assignment_outlined, color: _primaryBlue, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -828,8 +895,8 @@ class _AddPrescriptionRecordScreenState
           ),
           const SizedBox(width: 8),
           OutlinedButton.icon(
-            onPressed: _recordLoading ? null : _openRecordForm,
-            icon: Icon(record == null ? Icons.add_rounded : Icons.edit_outlined, size: 16),
+            onPressed: _recordLoading || !recordEditable ? null : _openRecordForm,
+            icon: Icon(record == null ? IosIcons.add_rounded : IosIcons.edit_outlined, size: 16),
             label: Text(
               record == null ? 'Add' : 'Edit',
               style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600),
@@ -846,12 +913,44 @@ class _AddPrescriptionRecordScreenState
     );
   }
 
+  /// For a saved prescription: how long it can still be changed, or that it can't any more.
+  Widget _buildEditWindowNote(EditWindow window, bool isDark) {
+    final locked = !window.open;
+    final color = locked ? const Color(0xFFB45309) : (isDark ? Colors.white70 : const Color(0xFF475569));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: locked
+            ? const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.1)
+            : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: locked ? const Color(0xFFF59E0B).withValues(alpha: 0.4) : Colors.transparent),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(locked ? IosIcons.lock_outline_rounded : IosIcons.schedule, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              locked
+                  ? 'This prescription was saved over $editWindowMinutes minutes ago, so it can no longer be changed. It shows as it was saved.'
+                  : 'You can change this prescription for ${window.minutesLeft} more min. After $editWindowMinutes minutes it stays as saved.',
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, height: 1.35, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showValidationError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+            const Icon(IosIcons.warning_amber_rounded, color: Colors.white, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

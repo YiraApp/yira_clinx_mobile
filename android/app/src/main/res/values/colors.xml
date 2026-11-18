@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the dark Flutter splash (YiraStorySplash) so launch has no white flash. -->
+    <color name="splash_background">#16171B</color>
+</resources>

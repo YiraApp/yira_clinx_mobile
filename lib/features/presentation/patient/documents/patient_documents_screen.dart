@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -194,7 +195,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Expanded(child: Text('Downloaded "$cleanTitle" successfully!')),
               ],
@@ -302,7 +303,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.hourglass_top_rounded, color: DietUi.blue, size: 32),
+        icon: const Icon(IosIcons.hourglass_top_rounded, color: DietUi.blue, size: 32),
         title: const Text('Report uploaded'),
         content: Text(message ?? "We're analysing your report. This usually takes 2-3 minutes. We'll notify you when it's ready."),
         actions: [
@@ -427,7 +428,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.sort_rounded, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+                    child: Icon(IosIcons.sort_rounded, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                   ),
                   tooltip: 'Sort Documents',
                   onSelected: (val) => setState(() => _sortBy = val),
@@ -446,7 +447,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.upload_file_rounded, size: 18, color: _primaryBlue),
+                    child: const Icon(IosIcons.upload_file_rounded, size: 18, color: _primaryBlue),
                   ),
                   onPressed: () => _openReportUpload(blocContext),
                 ),
@@ -458,7 +459,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
               backgroundColor: _primaryBlue,
               foregroundColor: Colors.white,
               elevation: 3,
-              icon: const Icon(Icons.add_rounded, size: 20),
+              icon: const Icon(IosIcons.add_rounded, size: 20),
               label: const Text(
                 'Upload Document',
                 style: TextStyle(
@@ -484,10 +485,10 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                           fontSize: 12.5,
                           color: isDark ? Colors.white38 : Colors.grey[400],
                         ),
-                        prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                        prefixIcon: const Icon(IosIcons.search_rounded, size: 20),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18),
+                                icon: const Icon(IosIcons.close_rounded, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
@@ -603,7 +604,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.beach_access_rounded, color: _primaryBlue, size: 20),
+                          const Icon(IosIcons.beach_access_rounded, color: _primaryBlue, size: 20),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -649,7 +650,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                   ),
                                 ),
                                 SizedBox(width: 2),
-                                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: _primaryBlue),
+                                Icon(IosIcons.arrow_forward_ios_rounded, size: 10, color: _primaryBlue),
                               ],
                             ),
                           ),
@@ -686,7 +687,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                             ),
                                             child: const Center(
                                               child: Icon(
-                                                Icons.folder_shared_rounded,
+                                                IosIcons.folder_shared_rounded,
                                                 size: 38,
                                                 color: _primaryBlue,
                                               ),
@@ -721,7 +722,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                           const SizedBox(height: 20),
                                           ElevatedButton.icon(
                                             onPressed: () => _openReportUpload(blocContext),
-                                            icon: const Icon(Icons.cloud_upload_rounded, size: 18),
+                                            icon: const Icon(IosIcons.cloud_upload_rounded, size: 18),
                                             label: const Text(
                                               "Upload First Document",
                                               style: TextStyle(
@@ -889,7 +890,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                     ),
                     child: Center(
                       child: Icon(
-                        Icons.description_outlined,
+                        IosIcons.description_outlined,
                         color: _primaryBlue,
                         size: isTab ? 22 : 20,
                       ),
@@ -953,7 +954,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.local_hospital_rounded, size: 10, color: _primaryBlue),
+                                    const Icon(IosIcons.local_hospital_rounded, size: 10, color: _primaryBlue),
                                     const SizedBox(width: 3.5),
                                     Text(
                                       hospitalName,
@@ -1005,7 +1006,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   else
                     PopupMenuButton<String>(
                       icon: Icon(
-                        Icons.more_vert_rounded,
+                        IosIcons.more_vert_rounded,
                         size: 20,
                         color: isDark ? Colors.white60 : const Color(0xFF64748B),
                       ),
@@ -1040,7 +1041,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                           value: 'view',
                           child: Row(
                             children: [
-                              const Icon(Icons.visibility_outlined, size: 18, color: _primaryBlue),
+                              const Icon(IosIcons.visibility_outlined, size: 18, color: _primaryBlue),
                               const SizedBox(width: 10),
                               Text(
                                 'View Document',
@@ -1058,7 +1059,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                           value: 'edit',
                           child: Row(
                             children: [
-                              const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF10B981)),
+                              const Icon(IosIcons.edit_outlined, size: 18, color: Color(0xFF10B981)),
                               const SizedBox(width: 10),
                               Text(
                                 'Edit Document',
@@ -1077,7 +1078,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                             value: 'insights',
                             child: Row(
                               children: [
-                                const Icon(Icons.auto_awesome_rounded, size: 18, color: DietUi.violet),
+                                const Icon(IosIcons.auto_awesome_rounded, size: 18, color: DietUi.violet),
                                 const SizedBox(width: 10),
                                 Text(
                                   doc.aiStatus != null ? 'AI insights' : doc.isAiAnalysing ? 'Analysing…' : 'Analyse with AI',
@@ -1095,7 +1096,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                           value: 'download',
                           child: Row(
                             children: [
-                              Icon(Icons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+                              Icon(IosIcons.file_download_outlined, size: 18, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                               const SizedBox(width: 10),
                               Text(
                                 'Download',
@@ -1114,7 +1115,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                             value: 'delete',
                             child: const Row(
                               children: [
-                                Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                                Icon(IosIcons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
                                 SizedBox(width: 10),
                                 Text(
                                   'Delete',
@@ -1200,14 +1201,14 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   children: [
                     if (fileSize.isNotEmpty)
                       _buildMetaChip(
-                        icon: Icons.data_usage_rounded,
+                        icon: IosIcons.data_usage_rounded,
                         label: 'Size',
                         value: fileSize,
                         isDark: isDark,
                       ),
                     if (isHospitalAdded && doctorName != null)
                       _buildMetaChip(
-                        icon: Icons.person_outline_rounded,
+                        icon: IosIcons.person_outline_rounded,
                         label: 'Doctor',
                         value: doctorName,
                         isDark: isDark,
@@ -1232,13 +1233,13 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
     final status = doc.aiStatus == null ? null : reportStatusFrom(doc.aiStatus);
     final analysing = status == null && doc.isAiAnalysing;
     final ({Color color, IconData icon, String label}) style = analysing
-        ? (color: DietUi.blue, icon: Icons.hourglass_top_rounded, label: 'Analysing your report…')
+        ? (color: DietUi.blue, icon: IosIcons.hourglass_top_rounded, label: 'Analysing your report…')
         : switch (status) {
-      null => (color: DietUi.violet, icon: Icons.auto_awesome_rounded, label: 'Analyse with Yira AI'),
-      ReportStatus.normal => (color: DietUi.green, icon: Icons.verified_rounded, label: 'All clear'),
-      ReportStatus.attention => (color: DietUi.amber, icon: Icons.error_outline_rounded, label: 'Needs attention'),
-      ReportStatus.critical => (color: DietUi.red, icon: Icons.warning_amber_rounded, label: 'Critical - see a doctor'),
-      ReportStatus.unknown => (color: DietUi.slate, icon: Icons.help_outline_rounded, label: 'No health insights'),
+      null => (color: DietUi.violet, icon: IosIcons.auto_awesome_rounded, label: 'Analyse with Yira AI'),
+      ReportStatus.normal => (color: DietUi.green, icon: IosIcons.verified_rounded, label: 'All clear'),
+      ReportStatus.attention => (color: DietUi.amber, icon: IosIcons.error_outline_rounded, label: 'Needs attention'),
+      ReportStatus.critical => (color: DietUi.red, icon: IosIcons.warning_amber_rounded, label: 'Critical - see a doctor'),
+      ReportStatus.unknown => (color: DietUi.slate, icon: IosIcons.help_outline_rounded, label: 'No health insights'),
     };
 
     return InkWell(
@@ -1268,7 +1269,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
               ),
             ),
             Text(analysing ? "We'll notify you" : status == null ? 'Get insights' : 'View insights', style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
-            const Icon(Icons.chevron_right_rounded, size: 18, color: DietUi.blue),
+            const Icon(IosIcons.chevron_right_rounded, size: 18, color: DietUi.blue),
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/gestures.dart';
@@ -18,6 +19,7 @@ import '../../../../core/common_widgets/custom_button.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/fcm_token/fcm_token_helper.dart';
 import '../../../core/utils/dismiss_key_board.dart';
+import 'package:yiraclinics/features/presentation/auth/widgets/otp_channel_choice.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -44,6 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final FocusNode _confirmPasswordFocus = FocusNode();
 
   String _selectedCountryCode = "+91";
+  String _otpChannel = LoginBloc.otpChannelWhatsApp;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _cachedFcmToken = '';
@@ -192,7 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
         content: Row(
           children: [
             Icon(
-              isError ? Icons.error_outline : Icons.check_circle_outline,
+              isError ? IosIcons.error_outline : IosIcons.check_circle_outline,
               color: Colors.white,
               size: 20,
             ),
@@ -226,7 +229,7 @@ class _SignupScreenState extends State<SignupScreen> {
         title: "Account Exists",
         message: message,
         tone: AppDialogTone.warning,
-        icon: Icons.info_outline_rounded,
+        icon: IosIcons.info_outline_rounded,
         primaryLabel: "Sign In",
         onPrimary: () {
           Navigator.pop(ctx);
@@ -295,7 +298,7 @@ class _SignupScreenState extends State<SignupScreen> {
           scrolledUnderElevation: 0,
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               size: 20,
               color: isDark ? Colors.white : Colors.black87,
             ),
@@ -458,7 +461,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Section 1: Personal Information
-                              _buildSectionHeader('Personal Details', Icons.person_outline_rounded, isDark),
+                              _buildSectionHeader('Personal Details', IosIcons.person_outline_rounded, isDark),
                               const SizedBox(height: 12),
 
                               // First Name
@@ -469,7 +472,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 focusNode: _firstNameFocus,
                                 nextFocusNode: _lastNameFocus,
                                 hintText: 'Enter your first name',
-                                prefixIcon: Icons.badge_outlined,
+                                prefixIcon: IosIcons.badge_outlined,
                                 isDark: isDark,
                                 textCapitalization: TextCapitalization.words,
                                 autocorrect: false,
@@ -495,7 +498,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 focusNode: _lastNameFocus,
                                 nextFocusNode: _mobileFocus,
                                 hintText: 'Enter your last name',
-                                prefixIcon: Icons.person_outline,
+                                prefixIcon: IosIcons.person_outline,
                                 isDark: isDark,
                                 textCapitalization: TextCapitalization.words,
                                 autocorrect: false,
@@ -514,6 +517,14 @@ class _SignupScreenState extends State<SignupScreen> {
                               _buildFieldLabel('Mobile Number', isRequired: true, isDark: isDark),
                               const SizedBox(height: 6),
                               _buildPhoneField(isDark),
+                              OtpChannelChoice(
+                                countryCode: _selectedCountryCode,
+                                channel: _otpChannel,
+                                onChanged: (channel) {
+                                  setState(() => _otpChannel = channel);
+                                  context.read<LoginBloc>().add(OnOtpChannelChanged(channel));
+                                },
+                              ),
 
                               const SizedBox(height: 14),
 
@@ -548,7 +559,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 focusNode: _emailFocus,
                                 nextFocusNode: _passwordFocus,
                                 hintText: 'e.g. name@example.com',
-                                prefixIcon: Icons.mail_outline_rounded,
+                                prefixIcon: IosIcons.mail_outline_rounded,
                                 keyboardType: TextInputType.emailAddress,
                                 isDark: isDark,
                                 errorText: _emailErrorText,
@@ -569,7 +580,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               const SizedBox(height: 20),
 
                               // Section 2: Security Details
-                              _buildSectionHeader('Security', Icons.lock_outline_rounded, isDark),
+                              _buildSectionHeader('Security', IosIcons.lock_outline_rounded, isDark),
                               const SizedBox(height: 12),
 
                               // Password Field
@@ -1093,13 +1104,13 @@ class _SignupScreenState extends State<SignupScreen> {
           color: isDark ? Colors.white30 : Colors.grey.shade400,
         ),
         prefixIcon: Icon(
-          Icons.lock_outline_rounded,
+          IosIcons.lock_outline_rounded,
           size: 17,
           color: isDark ? Colors.white54 : Colors.grey.shade600,
         ),
         suffixIcon: IconButton(
           icon: Icon(
-            obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            obscureText ? IosIcons.visibility_off_outlined : IosIcons.visibility_outlined,
             size: 17,
             color: isDark ? Colors.white54 : Colors.grey.shade600,
           ),
@@ -1243,7 +1254,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Row(
       children: [
         Icon(
-          isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+          isMet ? IosIcons.check_circle_rounded : IosIcons.radio_button_unchecked_rounded,
           size: 13,
           color: isMet
               ? Colors.green
@@ -1272,7 +1283,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Row(
       children: [
         Icon(
-          isMatch ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          isMatch ? IosIcons.check_circle_rounded : IosIcons.cancel_rounded,
           size: 13,
           color: isMatch ? Colors.green : Colors.redAccent,
         ),
@@ -1476,7 +1487,7 @@ class _SignupOtpVerificationSheetState
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.mark_email_read_outlined,
+                IosIcons.mark_email_read_outlined,
                 size: 28,
                 color: primaryColor,
               ),
@@ -1497,7 +1508,8 @@ class _SignupOtpVerificationSheetState
 
             // Subtitle
             Text(
-              "Enter the 6-digit verification code sent to\n${widget.countryCode} ${widget.mobileNumber}",
+              "Enter the 6-digit verification code sent to\n${widget.countryCode} ${widget.mobileNumber}"
+              "${context.read<LoginBloc>().channelFor(widget.countryCode) == LoginBloc.otpChannelWhatsApp ? ' on WhatsApp' : ''}",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -1550,7 +1562,7 @@ class _SignupOtpVerificationSheetState
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline_rounded, size: 14, color: Colors.redAccent),
+                  const Icon(IosIcons.error_outline_rounded, size: 14, color: Colors.redAccent),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(

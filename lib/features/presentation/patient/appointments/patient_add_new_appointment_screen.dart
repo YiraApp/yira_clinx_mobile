@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -648,7 +649,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.payment_rounded,
+                      IosIcons.payment_rounded,
                       color: Color(0xFFD97706),
                       size: 36,
                     ),
@@ -690,14 +691,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         _buildSummaryRow(
                           "Doctor",
                           _selectedDoctor?['name'] ?? 'Doctor',
-                          Icons.person_outline_rounded,
+                          IosIcons.person_outline_rounded,
                           isDark,
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           "Amount Due",
                           "₹${fee.toStringAsFixed(0)}",
-                          Icons.currency_rupee_rounded,
+                          IosIcons.currency_rupee_rounded,
                           isDark,
                           highlight: true,
                         ),
@@ -705,7 +706,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         _buildSummaryRow(
                           "Consultation",
                           "Online Video Call",
-                          Icons.videocam_rounded,
+                          IosIcons.videocam_rounded,
                           isDark,
                         ),
                       ],
@@ -895,7 +896,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.check_circle_rounded,
+                  IosIcons.check_circle_rounded,
                   color: Color(0xFF059669),
                   size: 40,
                 ),
@@ -936,28 +937,28 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                     _buildSummaryRow(
                       "Doctor",
                       _selectedDoctor?['name'] ?? 'Doctor',
-                      Icons.person_outline_rounded,
+                      IosIcons.person_outline_rounded,
                       isDark,
                     ),
                     const SizedBox(height: 8),
                     _buildSummaryRow(
                       "Hospital",
                       _selectedHospital?['name'] ?? 'Facility',
-                      Icons.local_hospital_outlined,
+                      IosIcons.local_hospital_outlined,
                       isDark,
                     ),
                     const SizedBox(height: 8),
                     _buildSummaryRow(
                       "Schedule",
                       "${DateFormat('dd MMM yyyy').format(_selectedDate)} • ${_selectedSlot?['label'] ?? ''}",
-                      Icons.event_available_rounded,
+                      IosIcons.event_available_rounded,
                       isDark,
                     ),
                     const SizedBox(height: 8),
                     _buildSummaryRow(
                       "Visit Mode",
                       _isTeleConsultation ? "Video Consultation (Zoom)" : "In-Clinic Visit",
-                      _isTeleConsultation ? Icons.videocam_rounded : Icons.storefront_rounded,
+                      _isTeleConsultation ? IosIcons.videocam_rounded : IosIcons.storefront_rounded,
                       isDark,
                       highlight: _isTeleConsultation,
                     ),
@@ -1062,7 +1063,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -1121,7 +1122,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
-                                    Icons.local_hospital_rounded,
+                                    IosIcons.local_hospital_rounded,
                                     color: Color(0xFF2563EB),
                                     size: 28,
                                   ),
@@ -1163,7 +1164,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                       },
                                     );
                                   },
-                                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 16, color: Colors.white),
+                                  icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 16, color: Colors.white),
                                   label: const Text(
                                     "Scan Doctor / Clinic QR",
                                     style: TextStyle(
@@ -1191,7 +1192,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF0284C7)),
+                                    const Icon(IosIcons.check_circle_rounded, size: 11, color: Color(0xFF0284C7)),
                                     const SizedBox(width: 4),
                                     Text(
                                       "Liked / Linked Only",
@@ -1236,7 +1237,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   child: DropdownButton<String>(
                                     value: selectedHospId,
                                     isExpanded: true,
-                                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
+                                    icon: const Icon(IosIcons.keyboard_arrow_down_rounded, color: Color(0xFF2563EB)),
                                     dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                     items: distinctHospitals.map((h) {
                                       final hId = (h['id'] ?? h['hospitalId'])?.toString().trim() ?? '';
@@ -1244,7 +1245,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         value: hId,
                                         child: Row(
                                           children: [
-                                            const Icon(Icons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
+                                            const Icon(IosIcons.local_hospital_rounded, color: Color(0xFF2563EB), size: 18),
                                             const SizedBox(width: 10),
                                             Expanded(
                                               child: Text(
@@ -1297,7 +1298,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.info_outline_rounded, size: 16, color: Colors.amber),
+                                  const Icon(IosIcons.info_outline_rounded, size: 16, color: Colors.amber),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -1470,7 +1471,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                      isSelected ? IosIcons.radio_button_checked : IosIcons.radio_button_off,
                                       size: 16,
                                       color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
                                     ),
@@ -1515,7 +1516,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF2563EB)),
+                                const Icon(IosIcons.calendar_today_outlined, size: 16, color: Color(0xFF2563EB)),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -1709,7 +1710,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     children: [
                                       if (isBooked) ...[
                                         Icon(
-                                          Icons.lock_outline_rounded,
+                                          IosIcons.lock_outline_rounded,
                                           size: 11,
                                           color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
                                         ),
@@ -1972,7 +1973,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.verified_user_rounded,
+                                      IosIcons.verified_user_rounded,
                                       size: 16,
                                       color: _shareRecords
                                           ? const Color(0xFF2563EB)
@@ -2089,7 +2090,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  _isTeleConsultation ? Icons.lock_outline_rounded : Icons.check_circle_outline_rounded,
+                                  _isTeleConsultation ? IosIcons.lock_outline_rounded : IosIcons.check_circle_outline_rounded,
                                   color: Colors.white,
                                   size: 16,
                                 ),
@@ -2106,7 +2107,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                                const Icon(IosIcons.arrow_forward_rounded, color: Colors.white, size: 16),
                               ],
                             );
                           },
@@ -2280,7 +2281,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
+                        const Icon(IosIcons.verified_rounded, size: 15, color: Color(0xFF2563EB)),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -2300,7 +2301,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                       Row(
                         children: [
                           Icon(
-                            Icons.local_hospital_rounded,
+                            IosIcons.local_hospital_rounded,
                             size: 12,
                             color: isDark ? Colors.white54 : const Color(0xFF64748B),
                           ),
@@ -2335,14 +2336,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
               children: [
                 if (subSpecialty.isNotEmpty && subSpecialty != specialty)
                   _buildDoctorDetailChip(
-                    icon: Icons.hub_rounded,
+                    icon: IosIcons.hub_rounded,
                     label: subSpecialty,
                     isDark: isDark,
                     color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 if (regNo.isNotEmpty)
                   _buildDoctorDetailChip(
-                    icon: Icons.badge_rounded,
+                    icon: IosIcons.badge_rounded,
                     label: "Reg: $regNo",
                     isDark: isDark,
                     color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
@@ -2368,7 +2369,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    Icons.info_outline_rounded,
+                    IosIcons.info_outline_rounded,
                     size: 14,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
@@ -2409,7 +2410,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.payments_rounded,
+                      IosIcons.payments_rounded,
                       size: 13,
                       color: Color(0xFF059669),
                     ),
@@ -2450,7 +2451,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (phoneNumber.isNotEmpty) ...[
-                        const Icon(Icons.phone_in_talk_rounded, size: 12, color: primaryColor),
+                        const Icon(IosIcons.phone_in_talk_rounded, size: 12, color: primaryColor),
                         const SizedBox(width: 3),
                         Flexible(
                           child: Text(
@@ -2466,7 +2467,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                           ),
                         ),
                       ] else if (email.isNotEmpty) ...[
-                        const Icon(Icons.mail_outline_rounded, size: 12, color: primaryColor),
+                        const Icon(IosIcons.mail_outline_rounded, size: 12, color: primaryColor),
                         const SizedBox(width: 3),
                         Flexible(
                           child: Text(

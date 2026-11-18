@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart';
 
@@ -51,7 +52,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  Icons.healing_outlined,
+                  IosIcons.healing_outlined,
                   size: 20,
                   color: Color(0xFF2563EB),
                 ),
@@ -93,7 +94,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Diagnosis Standard Text Input Field
           Row(
             children: [
-              const Icon(Icons.local_hospital_outlined, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.local_hospital_outlined, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Clinical Diagnosis",
@@ -140,7 +141,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Mandatory Doctor Clinical Notes
           Row(
             children: [
-              const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.edit_note_rounded, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Doctor Observations & Notes",
@@ -202,7 +203,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Treatment Plan & Recommendations
           Row(
             children: [
-              const Icon(Icons.medication_liquid_outlined, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.medication_liquid_outlined, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Treatment Plan & Recommendations",

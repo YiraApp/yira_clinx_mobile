@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -134,13 +135,13 @@ class AppDialog extends StatelessWidget {
   IconData get _defaultIcon {
     switch (tone) {
       case AppDialogTone.info:
-        return Icons.info_outline_rounded;
+        return IosIcons.info_outline_rounded;
       case AppDialogTone.success:
-        return Icons.check_circle_outline_rounded;
+        return IosIcons.check_circle_outline_rounded;
       case AppDialogTone.warning:
-        return Icons.warning_amber_rounded;
+        return IosIcons.warning_amber_rounded;
       case AppDialogTone.danger:
-        return Icons.error_outline_rounded;
+        return IosIcons.error_outline_rounded;
     }
   }
 

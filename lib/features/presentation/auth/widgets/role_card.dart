@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/yira_colors/yira_colors.dart'
     hide textLightModeColor, authFieldBorderColor;
@@ -84,7 +85,7 @@ final RoleEntity roleEntity;
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
                 boxShadow: const [],
               ),
-              child: Icon(Icons.person, color: iconColor, size: iconSize),
+              child: Icon(IosIcons.person, color: iconColor, size: iconSize),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -114,7 +115,7 @@ final RoleEntity roleEntity;
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: arrowColor, size: 16),
+            Icon(IosIcons.arrow_forward_ios_rounded, color: arrowColor, size: 16),
           ],
         ),
       ),

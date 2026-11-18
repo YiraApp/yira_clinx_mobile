@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -352,7 +353,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_rounded, color: Colors.white, size: 16),
+              child: const Icon(IosIcons.check_rounded, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -391,7 +392,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 color: Colors.white24,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+              child: const Icon(IosIcons.close_rounded, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -489,7 +490,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
               children: [
                 Expanded(
                   child: _buildPickerOption(
-                    icon: Icons.camera_alt_rounded,
+                    icon: IosIcons.camera_alt_rounded,
                     label: "Camera",
                     color: primaryColor,
                     isDark: isDark,
@@ -507,7 +508,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                 const SizedBox(width: 14),
                 Expanded(
                   child: _buildPickerOption(
-                    icon: Icons.photo_library_rounded,
+                    icon: IosIcons.photo_library_rounded,
                     label: "Gallery",
                     color: const Color(0xFF10B981),
                     isDark: isDark,
@@ -533,7 +534,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     foregroundColor: Colors.redAccent,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  icon: const Icon(IosIcons.delete_outline_rounded, size: 18),
                   label: const Text(
                     "Remove Photo",
                     style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600, fontSize: 13),
@@ -689,16 +690,16 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
           title: 'Delete Account',
           message: 'Are you sure you want to delete your account? This action will:',
           tone: AppDialogTone.danger,
-          icon: Icons.warning_amber_rounded,
+          icon: IosIcons.warning_amber_rounded,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _deleteInfoRow(Icons.person_off_rounded, 'Deactivate your account', isDark),
+              _deleteInfoRow(IosIcons.person_off_rounded, 'Deactivate your account', isDark),
               const SizedBox(height: 6),
-              _deleteInfoRow(Icons.family_restroom_rounded, 'Deactivate all linked dependents', isDark),
+              _deleteInfoRow(IosIcons.family_restroom_rounded, 'Deactivate all linked dependents', isDark),
               const SizedBox(height: 6),
-              _deleteInfoRow(Icons.block_rounded, 'Revoke all active sessions', isDark),
+              _deleteInfoRow(IosIcons.block_rounded, 'Revoke all active sessions', isDark),
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
@@ -1056,7 +1057,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             Navigator.pop(ctx);
                             _openPhotoPickerSheet();
                           },
-                          icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                          icon: const Icon(IosIcons.camera_alt_rounded, size: 16),
                           label: const Text("Photo", style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600)),
                         ),
                         const SizedBox(width: 8),
@@ -1067,7 +1068,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          icon: Icon(Icons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
+                          icon: Icon(IosIcons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
                           tooltip: 'Close',
                           onPressed: () {
                             FocusScope.of(ctx).unfocus();
@@ -1115,7 +1116,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.calendar_month_rounded, size: 14, color: primaryColor),
+                            Icon(IosIcons.calendar_month_rounded, size: 14, color: primaryColor),
                             const SizedBox(width: 4),
                             Text(
                               'Open Calendar',
@@ -1149,7 +1150,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       color: isDark ? Colors.white38 : Colors.grey,
                     ),
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.calendar_month_rounded, size: 20, color: primaryColor),
+                      icon: Icon(IosIcons.calendar_month_rounded, size: 20, color: primaryColor),
                       tooltip: 'Select date from calendar',
                       onPressed: pickDateFromCalendar,
                     ),
@@ -1171,7 +1172,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       isExpanded: true,
                       value: selectedGender.isEmpty ? null : selectedGender,
                       hint: Text('Select gender', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
-                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                      icon: Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
                       dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                       items: genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
@@ -1197,7 +1198,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                       isExpanded: true,
                       value: selectedBloodGroup.isEmpty ? null : selectedBloodGroup,
                       hint: Text('Select blood group', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: isDark ? Colors.white38 : Colors.grey)),
-                      icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                      icon: Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
                       dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                       items: bloodGroups.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
@@ -1224,7 +1225,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            Icon(IosIcons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
                             const SizedBox(width: 4),
                             Text(
                               "Locked",
@@ -1255,7 +1256,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: isPhoneAvailable ? null : "Add your mobile number",
                     suffixIcon: isPhoneAvailable
-                        ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                        ? Icon(IosIcons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
                         : null,
                   ),
                 ),
@@ -1276,7 +1277,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                            Icon(IosIcons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
                             const SizedBox(width: 4),
                             Text(
                               "Locked",
@@ -1307,7 +1308,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     hintText: isEmailAvailable ? null : "Add your email address",
                     suffixIcon: isEmailAvailable
-                        ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                        ? Icon(IosIcons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
                         : null,
                   ),
                 ),
@@ -1667,7 +1668,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          icon: Icon(Icons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
+                          icon: Icon(IosIcons.close_rounded, size: 18, color: isDark ? Colors.white70 : Colors.grey.shade700),
                           tooltip: 'Close',
                           onPressed: () {
                             FocusScope.of(ctx).unfocus();
@@ -1712,7 +1713,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               color: isDark ? Colors.white38 : Colors.grey,
                             ),
                           ),
-                          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+                          icon: Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
                           dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                           items: relationshipOptions.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
@@ -1934,7 +1935,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.switch_account_rounded, size: 18, color: primaryColor),
+                child: Icon(IosIcons.switch_account_rounded, size: 18, color: primaryColor),
               ),
               onPressed: () => _openProfileSwitcher(context),
             ),
@@ -2064,7 +2065,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     // 2. Personal Information Card
                     DoctorProfileSectionCard(
                       title: "Personal & Demographics",
-                      icon: Icons.person_rounded,
+                      icon: IosIcons.person_rounded,
                       iconColor: primaryColor,
                       isTab: isTab,
                       onEdit: () => _openEditProfileDialog(context, bloodGroup),
@@ -2072,25 +2073,25 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         DoctorProfileFieldItem(
                           label: "Full Name",
                           value: patientName,
-                          icon: Icons.badge_outlined,
+                          icon: IosIcons.badge_outlined,
                           isCopyable: true,
                         ),
                         DoctorProfileFieldItem(
                           label: "Date of Birth",
                           value: _formatDisplayDob(dob),
-                          icon: Icons.cake_outlined,
+                          icon: IosIcons.cake_outlined,
                         ),
                         DoctorProfileFieldItem(
                           label: "Gender",
                           value: gender.isNotEmpty ? gender : '-',
-                          icon: Icons.wc_outlined,
+                          icon: IosIcons.wc_outlined,
                         ),
                         DoctorProfileFieldItem(
                           label: "Blood Group",
                           value: bloodGroup.isNotEmpty
                               ? bloodGroup
                               : (_cachedBloodGroup?.isNotEmpty == true ? _cachedBloodGroup! : '-'),
-                          icon: Icons.bloodtype_outlined,
+                          icon: IosIcons.bloodtype_outlined,
                           customValueColor: (bloodGroup.isNotEmpty || _cachedBloodGroup?.isNotEmpty == true)
                               ? Colors.redAccent
                               : null,
@@ -2098,13 +2099,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         DoctorProfileFieldItem(
                           label: "Phone Number",
                           value: phone.isNotEmpty ? phone : '-',
-                          icon: Icons.phone_outlined,
+                          icon: IosIcons.phone_outlined,
                           isCopyable: phone.isNotEmpty,
                         ),
                         DoctorProfileFieldItem(
                           label: "Email Address",
                           value: email.isNotEmpty ? email : '-',
-                          icon: Icons.email_outlined,
+                          icon: IosIcons.email_outlined,
                           isCopyable: email.isNotEmpty,
                           isVerified: email.isNotEmpty,
                         ),
@@ -2117,7 +2118,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     else
                     DoctorProfileSectionCard(
                       title: "Emergency Contact",
-                      icon: Icons.contact_phone_rounded,
+                      icon: IosIcons.contact_phone_rounded,
                       iconColor: const Color(0xFF10B981),
                       isTab: isTab,
                       onEdit: () => _openEditEmergencyContactDialog(context, emergency),
@@ -2125,17 +2126,17 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         DoctorProfileFieldItem(
                           label: "Contact Name",
                           value: displayEmergencyName,
-                          icon: Icons.person_outline_rounded,
+                          icon: IosIcons.person_outline_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Relationship",
                           value: displayEmergencyRelation,
-                          icon: Icons.family_restroom_rounded,
+                          icon: IosIcons.family_restroom_rounded,
                         ),
                         DoctorProfileFieldItem(
                           label: "Phone Number",
                           value: displayEmergencyPhone,
-                          icon: Icons.phone_forwarded_rounded,
+                          icon: IosIcons.phone_forwarded_rounded,
                           isCopyable: displayEmergencyPhone != '-',
                         ),
                       ],
@@ -2206,7 +2207,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     const SizedBox(height: 16),
                     _buildSettingsGroup(isDark, 'APPEARANCE', [
                       _SettingsItem(
-                        icon: Icons.dark_mode_outlined,
+                        icon: IosIcons.dark_mode_outlined,
                         color: primaryColor,
                         title: 'Dark mode',
                         subtitle: isDark ? 'On' : 'Off',

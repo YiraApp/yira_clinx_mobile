@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
@@ -43,7 +44,7 @@ final bool isTab = isTablet(context);
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.palette_outlined,
+                        Icon(IosIcons.palette_outlined,
                             color: theme.primaryColor,
                             size: isTab?19 * fontScale: 28 * fontScale),
                         const SizedBox(width: 12),
@@ -104,7 +105,7 @@ class _ThemeSelectorRow extends StatelessWidget {
             _ThemeOptionCard(
               isTab: isTab,
               label: "Light",
-              icon: Icons.wb_sunny_outlined,
+              icon: IosIcons.wb_sunny_outlined,
               isSelected: state.themeMode == ThemeMode.light,
               onTap: () => context.read<ThemeBloc>().add(SetThemeEvent(ThemeMode.light)),
               iconColor: Colors.orange.shade400,
@@ -112,17 +113,17 @@ class _ThemeSelectorRow extends StatelessWidget {
             _ThemeOptionCard(
               isTab: isTab,
               label: "Dark",
-              icon: Icons.dark_mode_outlined,
+              icon: IosIcons.dark_mode_outlined,
               isSelected: state.themeMode == ThemeMode.dark,
               onTap: () => context.read<ThemeBloc>().add(SetThemeEvent(ThemeMode.dark)),
               iconColor: isDark ? Colors.white : const Color(0xFF303030),
             ),
             _ThemeOptionCard(
               label: "System",
-              icon: Icons.important_devices_outlined,
+              icon: IosIcons.important_devices_outlined,
               isSelected: state.themeMode == ThemeMode.system,
               onTap: () => context.read<ThemeBloc>().add(SetThemeEvent(ThemeMode.system)),
-              iconColor: Colors.blue.shade600, isTab: isTab,
+              iconColor: const Color(0xFF2563EB), isTab: isTab,
             ),
           ],
         );

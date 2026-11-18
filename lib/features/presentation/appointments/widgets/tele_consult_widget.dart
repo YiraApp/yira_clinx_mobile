@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 
@@ -45,7 +46,7 @@ class TeleconsultationCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(fieldBorderRadius),
               ),
               child: const Icon(
-                Icons.videocam_outlined,
+                IosIcons.videocam_outlined,
                 color: Colors.grey,
                 size: 24,
               ),
@@ -86,13 +87,13 @@ class TeleconsultationCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isSelected ? Colors.blue : const Color(0xFFCBD5E1),
+                  color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1),
                   width: 1.5,
                 ),
-                color: isSelected ? Colors.blue : Colors.transparent,
+                color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  ? const Icon(IosIcons.check, size: 14, color: Colors.white)
                   : null,
             ),
           ],

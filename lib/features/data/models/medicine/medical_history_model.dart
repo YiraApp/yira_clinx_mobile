@@ -1,4 +1,5 @@
 import '../../../domain/entities/medicine/medical_history_entity.dart';
+import '../../../../core/utils/edit_window.dart';
 
 class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
   const MedicalRecordBriefModel({
@@ -29,6 +30,7 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
     super.respiratoryExamination,
     super.abdomenExamination,
     super.cnsExamination,
+    super.createdAt,
   });
 
   factory MedicalRecordBriefModel.fromJson(Map<String, dynamic> json) {
@@ -95,6 +97,7 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
       respiratoryExamination: text('RespiratoryExamination', 'respiratoryExamination'),
       abdomenExamination: text('AbdomenExamination', 'abdomenExamination'),
       cnsExamination: text('CnsExamination', 'cnsExamination'),
+      createdAt: createdAtOf(json),
     );
   }
 }

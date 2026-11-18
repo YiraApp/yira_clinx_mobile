@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/colors/colors.dart';
@@ -94,7 +95,7 @@ class SlotConfigurationCard extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Icon(
-                          Icons.arrow_forward_rounded,
+                          IosIcons.arrow_forward_rounded,
                           size: 14,
                           color: isDark ? Colors.white30 : Colors.grey.shade400,
                         ),
@@ -137,7 +138,7 @@ class SlotConfigurationCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.timer_outlined,
+                              IosIcons.timer_outlined,
                               size: 12,
                               color: isDark ? Colors.white54 : Colors.grey.shade600,
                             ),
@@ -175,7 +176,7 @@ class SlotConfigurationCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.delete_outline_rounded,
+                              IosIcons.delete_outline_rounded,
                               size: 16,
                               color: Colors.redAccent,
                             ),
@@ -236,7 +237,7 @@ class _TimeChip extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.access_time_rounded,
+                IosIcons.access_time_rounded,
                 size: 13,
                 color: primaryColor,
               ),
@@ -282,13 +283,13 @@ class _StatusPill extends StatelessWidget {
     String text;
 
     if (isBooked) {
-      icon = Icons.event_available_rounded;
+      icon = IosIcons.event_available_rounded;
       text = "Booked";
     } else if (isBlocked) {
-      icon = Icons.block_rounded;
+      icon = IosIcons.block_rounded;
       text = "Blocked";
     } else {
-      icon = Icons.check_circle_outline_rounded;
+      icon = IosIcons.check_circle_outline_rounded;
       text = "Available";
     }
 

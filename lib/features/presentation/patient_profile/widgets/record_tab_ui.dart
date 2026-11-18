@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
@@ -198,7 +199,7 @@ class RecordCardLink extends StatelessWidget {
       children: [
         Text(label, style: DietUi.text(12, FontWeight.w600, DietUi.blue)),
         const SizedBox(width: 2),
-        const Icon(Icons.chevron_right_rounded, size: 17, color: DietUi.blue),
+        const Icon(IosIcons.chevron_right_rounded, size: 17, color: DietUi.blue),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -188,7 +189,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         SnackBar(
           content: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 18),
+              Icon(IosIcons.warning_amber_rounded, color: Colors.white, size: 18),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -252,7 +253,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
               SnackBar(
                 content: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                    const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       widget.recordToEdit != null
@@ -311,7 +312,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                           constraints: const BoxConstraints(),
                           onPressed: () => Navigator.pop(context),
                           icon: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
+                            IosIcons.arrow_back_ios_new_rounded,
                             size: 20,
                             color: Colors.white,
                           ),
@@ -358,7 +359,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.close_rounded,
+                              IosIcons.close_rounded,
                               size: 18,
                               color: Colors.white,
                             ),
@@ -403,7 +404,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                               Row(
                                 children: [
                                   Icon(
-                                    Icons.event_note_rounded,
+                                    IosIcons.event_note_rounded,
                                     size: 16,
                                     color: const Color(0xFF2563EB),
                                   ),
@@ -480,7 +481,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                               isExpanded: true,
                                               value: _selectedVisitType,
                                               dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
-                                              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF2563EB)),
+                                              icon: const Icon(IosIcons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF2563EB)),
                                               style: TextStyle(
                                                 fontFamily: appPoppinFont,
                                                 fontSize: isTab ? 13 : 12,
@@ -545,7 +546,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                           showExamination: false,
                           title: "Clinical History & Presentation",
                           subtitle: "Complaints, present illness and past history",
-                          icon: Icons.history_edu_outlined,
+                          icon: IosIcons.history_edu_outlined,
                           extraFields: historyNoteFields(
                             hpiController: _hpiController,
                             familyController: _familyHistoryController,
@@ -630,7 +631,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.visibility_outlined, color: Colors.white, size: 18),
+                                      const Icon(IosIcons.visibility_outlined, color: Colors.white, size: 18),
                                       const SizedBox(width: 8),
                                       Text(
                                         "Preview",
@@ -755,7 +756,7 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
         child: Row(
           children: [
             const Icon(
-              Icons.calendar_today_outlined,
+              IosIcons.calendar_today_outlined,
               size: 14,
               color: primaryColor,
             ),

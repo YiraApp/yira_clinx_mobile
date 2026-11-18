@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -311,7 +312,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
           backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
           foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 18),
             onPressed: _isSaving ? null : () => Navigator.pop(context),
           ),
         title: Text(
@@ -580,7 +581,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
               ),
             ),
             Icon(
-              Icons.calendar_today_rounded,
+              IosIcons.calendar_today_rounded,
               size: 16,
               color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
             ),
@@ -632,7 +633,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                           ? const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
+                                Icon(IosIcons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
                                 Text(
                                   'PDF',
                                   style: TextStyle(
@@ -650,7 +651,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                                   height: 44,
                                   fit: BoxFit.contain,
                                   filterQuality: FilterQuality.high,
-                                  errorBuilder: (ctx, err, stack) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                  errorBuilder: (ctx, err, stack) => const Icon(IosIcons.image_outlined, size: 22, color: Color(0xFF2563EB)),
                                 )
                               : (_existingDocumentUrl != null && _existingDocumentUrl!.isNotEmpty)
                                   ? CachedNetworkImage(
@@ -659,9 +660,9 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                                       height: 44,
                                       fit: BoxFit.contain,
                                       filterQuality: FilterQuality.high,
-                                      errorWidget: (ctx, url, err) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                      errorWidget: (ctx, url, err) => const Icon(IosIcons.image_outlined, size: 22, color: Color(0xFF2563EB)),
                                     )
-                                  : const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 22),
+                                  : const Icon(IosIcons.description_rounded, color: Color(0xFF2563EB), size: 22),
                     ),
                   ),
                 ),
@@ -714,7 +715,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(Icons.close_rounded, size: 16, color: Colors.red),
+                    child: const Icon(IosIcons.close_rounded, size: 16, color: Colors.red),
                   ),
                 ),
               ],
@@ -733,7 +734,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.cloud_upload_outlined,
+                        IosIcons.cloud_upload_outlined,
                         size: 20,
                         color: Color(0xFF2563EB),
                       ),

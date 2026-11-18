@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -225,7 +226,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(IosIcons.close),
                       onPressed: () => Navigator.pop(modalContext),
                     ),
                   ],
@@ -319,7 +320,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
           ? null
           : FloatingActionButton(
               backgroundColor: primaryColor,
-              child: const Icon(Icons.add, color: Colors.white),
+              child: const Icon(IosIcons.add, color: Colors.white),
               onPressed: () {
                 _showNoteOverlay(context);
               },
@@ -390,16 +391,16 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RecordCardHeader(
-            icon: Icons.sticky_note_2_outlined,
+            icon: IosIcons.sticky_note_2_outlined,
             title: 'Dr. $createdBy',
             subtitle: formattedDate,
             trailing: (!isPatient && widget.allowAdd)
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit note', onTap: () => _startEditing(noteItem)),
+                      RecordIconAction(icon: IosIcons.edit_outlined, tooltip: 'Edit note', onTap: () => _startEditing(noteItem)),
                       RecordIconAction(
-                        icon: Icons.delete_outline_rounded,
+                        icon: IosIcons.delete_outline_rounded,
                         tooltip: 'Delete note',
                         danger: true,
                         onTap: () => _deleteNote(noteId),
@@ -427,7 +428,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 40),
       child: RecordEmptyState(
-        icon: Icons.note_alt_outlined,
+        icon: IosIcons.note_alt_outlined,
         title: 'No Historical Clinical Notes Found',
         message: 'Enter notes above to record doctor clinical observations.',
       ),

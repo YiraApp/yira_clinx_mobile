@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -274,7 +275,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   )
                                 : isCurrent
                                     ? Icon(
-                                        Icons.check_circle_rounded,
+                                        IosIcons.check_circle_rounded,
                                         color: primaryColor,
                                         size: 22,
                                       )
@@ -416,7 +417,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.cancel_outlined,
+                        IosIcons.cancel_outlined,
                         color: Color(0xFFDC2626),
                         size: 22,
                       ),
@@ -609,21 +610,21 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
   IconData _statusIcon(String label) {
     switch (label.toLowerCase()) {
       case 'all status':
-        return Icons.grid_view_rounded;
+        return IosIcons.grid_view_rounded;
       case 'scheduled':
-        return Icons.event_outlined;
+        return IosIcons.event_outlined;
       case 'confirmed':
-        return Icons.check_circle_outline;
+        return IosIcons.check_circle_outline;
       case 'in progress':
-        return Icons.hourglass_top_rounded;
+        return IosIcons.hourglass_top_rounded;
       case 'completed':
-        return Icons.task_alt_rounded;
+        return IosIcons.task_alt_rounded;
       case 'pending':
-        return Icons.pending_outlined;
+        return IosIcons.pending_outlined;
       case 'cancelled':
-        return Icons.cancel_outlined;
+        return IosIcons.cancel_outlined;
       default:
-        return Icons.circle_outlined;
+        return IosIcons.circle_outlined;
     }
   }
 
@@ -762,7 +763,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                                const Icon(IosIcons.add_rounded, size: 20, color: Colors.white),
                                 const SizedBox(width: 6),
                                 Text(
                                   "New",
@@ -800,7 +801,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Total",
                                   count: "$totalCount",
                                   subtitle: "Appointments",
-                                  icon: Icons.calendar_month_outlined,
+                                  icon: IosIcons.calendar_month_outlined,
                                   iconColor: const Color(0xFF2563EB),
                                 ),
                               ),
@@ -811,7 +812,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Completed",
                                   count: "$completedCount",
                                   subtitle: "Today",
-                                  icon: Icons.check_circle_outline,
+                                  icon: IosIcons.check_circle_outline,
                                   iconColor: const Color(0xFF059669),
                                 ),
                               ),
@@ -822,7 +823,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Pending",
                                   count: "$pendingCount",
                                   subtitle: "Action Needed",
-                                  icon: Icons.hourglass_top_rounded,
+                                  icon: IosIcons.hourglass_top_rounded,
                                   iconColor: const Color(0xFFD97706),
                                 ),
                               ),
@@ -836,7 +837,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Total",
                                   count: "$totalCount",
                                   subtitle: "Appointments",
-                                  icon: Icons.calendar_month_outlined,
+                                  icon: IosIcons.calendar_month_outlined,
                                   iconColor: const Color(0xFF2563EB),
                                 ),
                               ),
@@ -847,7 +848,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Completed",
                                   count: "$completedCount",
                                   subtitle: "Today",
-                                  icon: Icons.check_circle_outline,
+                                  icon: IosIcons.check_circle_outline,
                                   iconColor: const Color(0xFF059669),
                                 ),
                               ),
@@ -858,7 +859,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                   title: "Pending",
                                   count: "$pendingCount",
                                   subtitle: "Action Needed",
-                                  icon: Icons.hourglass_top_rounded,
+                                  icon: IosIcons.hourglass_top_rounded,
                                   iconColor: const Color(0xFFD97706),
                                 ),
                               ),
@@ -900,7 +901,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             prefixIcon: Padding(
                               padding: const EdgeInsets.only(left: 14, right: 10),
                               child: Icon(
-                                Icons.search_rounded,
+                                IosIcons.search_rounded,
                                 color: isDark
                                     ? Colors.white38
                                     : theme.primaryColor.withOpacity(0.6),
@@ -977,8 +978,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                           ),
                           child: Icon(
                             _showFilters
-                                ? Icons.filter_alt_rounded
-                                : Icons.filter_alt_outlined,
+                                ? IosIcons.filter_alt_rounded
+                                : IosIcons.filter_alt_outlined,
                             size: 22,
                             color: _showFilters
                                 ? Colors.white
@@ -1058,7 +1059,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                                     children: [
                                       if (option == "Date Range") ...[
                                         Icon(
-                                          Icons.date_range_rounded,
+                                          IosIcons.date_range_rounded,
                                           size: 14,
                                           color: isActive
                                           ? primaryColor
@@ -1209,7 +1210,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
-                            Icons.calendar_today_rounded,
+                            IosIcons.calendar_today_rounded,
                             size: 12,
                             color:
                                 isDark ? Colors.white38 : Colors.grey.shade500,
@@ -1320,8 +1321,8 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
               statusTextColor = theme.primaryColor;
               statusLabel = 'Completed';
             } else if (rawLower.contains('progress')) {
-              statusColor = Colors.blue.withValues(alpha: 0.15);
-              statusTextColor = isDark ? Colors.blue[300]! : Colors.blue[700]!;
+              statusColor = const Color(0xFF2563EB).withValues(alpha: 0.15);
+              statusTextColor = isDark ? Colors.blue.shade300! : Colors.blue.shade700!;
               statusLabel = 'In Progress';
             } else if (rawLower.contains('confirm')) {
               statusColor = Colors.green.withValues(alpha: 0.15);
@@ -1468,7 +1469,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.error_outline_rounded,
+                  IosIcons.error_outline_rounded,
                   size: 40,
                   color: isDark ? Colors.red[300] : Colors.red[400],
                 ),
@@ -1498,7 +1499,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                 onPressed: () {
                   _loadWithDateFilter();
                 },
-                icon: const Icon(Icons.refresh_rounded, size: 18),
+                icon: const Icon(IosIcons.refresh_rounded, size: 18),
                 label: const Text("Try Again"),
                 style: TextButton.styleFrom(
                   foregroundColor: primaryColor,
@@ -1523,7 +1524,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.cloud_off_rounded, size: 40, color: isDark ? Colors.white38 : Colors.grey.shade400),
+              Icon(IosIcons.cloud_off_rounded, size: 40, color: isDark ? Colors.white38 : Colors.grey.shade400),
               const SizedBox(height: 12),
               Text(
                 "Couldn't load appointments",
@@ -1577,7 +1578,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.event_busy_outlined,
+                    IosIcons.event_busy_outlined,
                     size: 32,
                     color: isDark
                         ? primaryColor.withOpacity(0.6)
@@ -1651,7 +1652,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.add_rounded,
+                      const Icon(IosIcons.add_rounded,
                           size: 18, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(

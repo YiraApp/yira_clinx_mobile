@@ -30,6 +30,8 @@ class MedicalRecordBriefEntity extends Equatable {
   final String? respiratoryExamination;
   final String? abdomenExamination;
   final String? cnsExamination;
+  /// When the record was first saved; it can be changed for an hour after that.
+  final DateTime? createdAt;
 
   const MedicalRecordBriefEntity({
     required this.id,
@@ -59,6 +61,7 @@ class MedicalRecordBriefEntity extends Equatable {
     this.respiratoryExamination,
     this.abdomenExamination,
     this.cnsExamination,
+    this.createdAt,
   });
 
   @override
@@ -90,5 +93,6 @@ class MedicalRecordBriefEntity extends Equatable {
         respiratoryExamination,
         abdomenExamination,
         cnsExamination,
+        createdAt,
       ];
 }

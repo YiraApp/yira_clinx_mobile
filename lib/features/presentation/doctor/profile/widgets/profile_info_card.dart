@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -88,7 +89,7 @@ class ProfileInfoCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.edit_outlined,
+                            IosIcons.edit_outlined,
                             size: 14,
                             color: primaryColor,
                           ),
@@ -216,7 +217,7 @@ class ProfileInfoCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.check_circle_rounded,
+                            IosIcons.check_circle_rounded,
                             size: 11,
                             color: Color(0xFF10B981),
                           ),
@@ -237,7 +238,7 @@ class ProfileInfoCard extends StatelessWidget {
                   if (item.isCopyable == true) ...[
                     const SizedBox(width: 6),
                     Icon(
-                      Icons.copy_rounded,
+                      IosIcons.copy_rounded,
                       size: 12,
                       color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                     ),

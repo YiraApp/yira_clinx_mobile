@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -71,43 +72,43 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
       key: "1_HOUR",
       title: "1 Hour",
       subtitle: "Instant consultation & quick check",
-      icon: Icons.timer_outlined,
+      icon: IosIcons.timer_outlined,
     ),
     DurationOption(
       key: "5_HOURS",
       title: "5 Hours",
       subtitle: "Half-day clinical observation",
-      icon: Icons.timelapse_rounded,
+      icon: IosIcons.timelapse_rounded,
     ),
     DurationOption(
       key: "1_DAY",
       title: "1 Day",
       subtitle: "Full-day consultation & diagnosis",
-      icon: Icons.today_rounded,
+      icon: IosIcons.today_rounded,
     ),
     DurationOption(
       key: "3_DAYS",
       title: "3 Days",
       subtitle: "Short-term treatment & follow-up",
-      icon: Icons.date_range_rounded,
+      icon: IosIcons.date_range_rounded,
     ),
     DurationOption(
       key: "7_DAYS",
       title: "7 Days",
       subtitle: "Standard 1-week treatment course",
-      icon: Icons.calendar_view_week_rounded,
+      icon: IosIcons.calendar_view_week_rounded,
     ),
     DurationOption(
       key: "1_MONTH",
       title: "1 Month",
       subtitle: "Long-term ongoing clinical management",
-      icon: Icons.calendar_month_rounded,
+      icon: IosIcons.calendar_month_rounded,
     ),
     DurationOption(
       key: "NEVER",
       title: "Permanent",
       subtitle: "Active care until revoked by patient",
-      icon: Icons.all_inclusive_rounded,
+      icon: IosIcons.all_inclusive_rounded,
     ),
   ];
 
@@ -147,7 +148,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 20),
+            Icon(IosIcons.hourglass_top_rounded, color: Colors.white, size: 20),
             SizedBox(width: 10),
             Expanded(
               child: Text("Access request sent to patient for approval!"),
@@ -221,7 +222,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.vpn_key_rounded,
+                  IosIcons.vpn_key_rounded,
                   color: Color(0xFF0284C7),
                   size: 24,
                 ),
@@ -254,7 +255,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(IosIcons.close_rounded),
                 onPressed: () => Navigator.pop(context),
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
               ),
@@ -417,7 +418,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   : const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.send_rounded, size: 18),
+                        Icon(IosIcons.send_rounded, size: 18),
                         SizedBox(width: 8),
                         Text(
                           "Submit Access Request",

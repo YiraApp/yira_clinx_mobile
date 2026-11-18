@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -36,7 +37,7 @@ class PatientVitalsGrid extends StatelessWidget {
         'value': bp,
         'unit': 'mmHg',
         'status': bp != '--' ? 'Optimal' : 'Pending',
-        'icon': Icons.favorite_rounded,
+        'icon': IosIcons.favorite_rounded,
         'color': const Color(0xFFE11D48),
       },
       {
@@ -44,7 +45,7 @@ class PatientVitalsGrid extends StatelessWidget {
         'value': pulse != '--' ? '$pulse bpm' : '--',
         'unit': 'bpm',
         'status': pulse != '--' ? 'Normal' : 'Pending',
-        'icon': Icons.monitor_heart_rounded,
+        'icon': IosIcons.monitor_heart_rounded,
         'color': Colors.orange,
       },
       {
@@ -52,7 +53,7 @@ class PatientVitalsGrid extends StatelessWidget {
         'value': temp != '--' ? (temp.endsWith('°') ? temp : '$temp°F') : '--',
         'unit': 'Fahrenheit',
         'status': temp != '--' ? 'Normal' : 'Pending',
-        'icon': Icons.thermostat_rounded,
+        'icon': IosIcons.thermostat_rounded,
         'color': Colors.amber[700]!,
       },
       {
@@ -60,7 +61,7 @@ class PatientVitalsGrid extends StatelessWidget {
         'value': spO2 != '--' ? (spO2.endsWith('%') ? spO2 : '$spO2%') : '--',
         'unit': 'SpO2',
         'status': spO2 != '--' ? 'Healthy' : 'Pending',
-        'icon': Icons.air_rounded,
+        'icon': IosIcons.air_rounded,
         'color': Colors.teal,
       },
     ];
@@ -107,7 +108,7 @@ class PatientVitalsGrid extends StatelessWidget {
             ),
             TextButton.icon(
               onPressed: onUpdateVitals,
-              icon: Icon(Icons.edit_note_rounded, size: 18, color: primaryColor),
+              icon: Icon(IosIcons.edit_note_rounded, size: 18, color: primaryColor),
               label: Text(
                 'Update Vitals',
                 style: TextStyle(

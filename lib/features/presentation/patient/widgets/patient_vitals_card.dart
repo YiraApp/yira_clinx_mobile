@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../config/app_route/app_routes.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -105,7 +106,7 @@ class PatientVitalsCard extends StatelessWidget {
                         color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.favorite_outline_rounded, size: 16, color: _primaryBlue),
+                      child: const Icon(IosIcons.favorite_outline_rounded, size: 16, color: _primaryBlue),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -135,7 +136,7 @@ class PatientVitalsCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.show_chart_rounded, size: 14, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+                            Icon(IosIcons.show_chart_rounded, size: 14, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                             const SizedBox(width: 4),
                             Text(
                               'Graphs',
@@ -165,7 +166,7 @@ class PatientVitalsCard extends StatelessWidget {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.edit_note_rounded, size: 14, color: _primaryBlue),
+                            Icon(IosIcons.edit_note_rounded, size: 14, color: _primaryBlue),
                             SizedBox(width: 4),
                             Text(
                               'Update',
@@ -205,7 +206,7 @@ class PatientVitalsCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.speed_rounded, size: 14, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                      Icon(IosIcons.speed_rounded, size: 14, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                       const SizedBox(width: 6),
                       Text(
                         'BMI: ',
@@ -270,7 +271,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'Blood Pressure',
                         value: bp,
                         unit: bp != '--' ? 'mmHg' : '',
-                        icon: Icons.favorite_outline_rounded,
+                        icon: IosIcons.favorite_outline_rounded,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.bloodPressure),
@@ -283,7 +284,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'Heart Rate',
                         value: pulse,
                         unit: pulse != '--' ? 'BPM' : '',
-                        icon: Icons.monitor_heart_outlined,
+                        icon: IosIcons.monitor_heart_outlined,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.heartRate),
@@ -300,7 +301,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'SpO2 Oxygen',
                         value: spO2,
                         unit: spO2 != '--' ? '%' : '',
-                        icon: Icons.air_rounded,
+                        icon: IosIcons.air_rounded,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.spO2),
@@ -313,7 +314,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'Temperature',
                         value: temp,
                         unit: temp != '--' ? '°F' : '',
-                        icon: Icons.thermostat_outlined,
+                        icon: IosIcons.thermostat_outlined,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.temperature),
@@ -330,7 +331,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'Weight',
                         value: weight,
                         unit: weight != '--' ? 'kg' : '',
-                        icon: Icons.scale_outlined,
+                        icon: IosIcons.scale_outlined,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.weight),
@@ -343,7 +344,7 @@ class PatientVitalsCard extends StatelessWidget {
                         label: 'Height',
                         value: height,
                         unit: height != '--' ? 'cm' : '',
-                        icon: Icons.height_rounded,
+                        icon: IosIcons.height_rounded,
                         isDark: isDark,
                         isTab: isTab,
                         onTap: () => _openTracking(context, VitalMetricType.weight),

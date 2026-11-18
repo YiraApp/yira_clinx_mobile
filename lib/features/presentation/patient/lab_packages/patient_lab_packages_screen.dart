@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -409,7 +410,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                   style: const TextStyle(fontFamily: appPoppinFont, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Your pincode',
-                    prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                    prefixIcon: const Icon(IosIcons.location_on_outlined, size: 20),
                     suffixIcon: _locating
                         ? const Padding(
                             padding: EdgeInsets.all(12),
@@ -417,7 +418,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                           )
                         : IconButton(
                             tooltip: 'Use my current location',
-                            icon: const Icon(Icons.my_location, size: 20, color: _primary),
+                            icon: const Icon(IosIcons.my_location, size: 20, color: _primary),
                             onPressed: _loadingPackages ? null : _useCurrentLocation,
                           ),
                     isDense: true,
@@ -459,7 +460,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             padding: const EdgeInsets.fromLTRB(20, 6, 16, 0),
             child: Row(
               children: [
-                const Icon(Icons.near_me, size: 14, color: _accent),
+                const Icon(IosIcons.near_me, size: 14, color: _accent),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -493,12 +494,12 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                     ),
                   )
                 : _packagesError != null
-                ? _messageList(Icons.error_outline, _packagesError!, isDark)
+                ? _messageList(IosIcons.error_outline, _packagesError!, isDark)
                 : _packages.isEmpty && _fallbackPackages.isNotEmpty
                 ? _buildFallback(isDark)
                 : _packages.isEmpty
                 ? _messageList(
-                    Icons.science_outlined,
+                    IosIcons.science_outlined,
                     _pincodeController.text.trim().isEmpty
                         ? 'Enter your pincode to see lab packages available near you.'
                         : 'No lab packages are available for pincode ${_pincodeController.text.trim()} yet.',
@@ -523,9 +524,9 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       child: _loadingOrders && _orders.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : _ordersError != null
-          ? _messageList(Icons.error_outline, _ordersError!, isDark)
+          ? _messageList(IosIcons.error_outline, _ordersError!, isDark)
           : _orders.isEmpty
-          ? _messageList(Icons.receipt_long_outlined, 'You have no lab orders yet. Book a package from the Packages tab.', isDark)
+          ? _messageList(IosIcons.receipt_long_outlined, 'You have no lab orders yet. Book a package from the Packages tab.', isDark)
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
@@ -561,7 +562,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309)),
+              Icon(IosIcons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -577,7 +578,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Icon(Icons.local_hospital_outlined, size: 18, color: _primary),
+            const Icon(IosIcons.local_hospital_outlined, size: 18, color: _primary),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -701,6 +702,7 @@ class _PackageCard extends StatelessWidget {
                 child: LabPackageCover(
                   package: pkg,
                   height: 132,
+                  fitPhoto: true,
                   child: Stack(
                     children: [
                       if (off > 0) Positioned(top: 12, left: 12, child: _CoverPill(text: '$off% OFF', strong: true)),
@@ -723,7 +725,7 @@ class _PackageCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.biotech_outlined, size: 15, color: muted),
+                        Icon(IosIcons.biotech_outlined, size: 15, color: muted),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -741,13 +743,13 @@ class _PackageCard extends StatelessWidget {
                     if (prep.isNotEmpty || _num(pkg['benefitsValue']) > 0) const SizedBox(height: 10),
                     if (prep.isNotEmpty)
                       _infoLine(
-                        _prepIsEasy(prep) ? Icons.check_circle_outline : Icons.no_food_outlined,
+                        _prepIsEasy(prep) ? IosIcons.check_circle_outline : IosIcons.no_food_outlined,
                         'Preparation: $prep',
                         _prepIsEasy(prep) ? (isDark ? Colors.white70 : const Color(0xFF475569)) : (isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309)),
                       ),
                     if (_num(pkg['benefitsValue']) > 0)
                       _infoLine(
-                        Icons.workspace_premium_outlined,
+                        IosIcons.workspace_premium_outlined,
                         'Worth ${_rupees(_num(pkg['benefitsValue']))}${pkg['benefitsValuePlus'] == true ? '+' : ''} of care',
                         isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
                         bold: true,
@@ -804,7 +806,7 @@ class _PackageCard extends StatelessWidget {
                                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                               SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_rounded, size: 16),
+                              Icon(IosIcons.arrow_forward_rounded, size: 16),
                             ],
                           ),
                         ),
@@ -896,18 +898,18 @@ String _rupees(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹
 
 /// Icon and colours of a "why it is worth it" card; the same set as the web admin's picker
 const Map<String, IconData> _benefitIcons = {
-  'lab': Icons.science_outlined,
-  'doctor': Icons.medical_services_outlined,
-  'report': Icons.description_outlined,
-  'dental': Icons.sentiment_satisfied_alt_outlined,
-  'eye': Icons.visibility_outlined,
-  'insurance': Icons.health_and_safety_outlined,
-  'home': Icons.home_outlined,
-  'family': Icons.family_restroom_outlined,
-  'support': Icons.support_agent_outlined,
-  'heart': Icons.favorite_border,
-  'calendar': Icons.event_available_outlined,
-  'video': Icons.videocam_outlined,
+  'lab': IosIcons.science_outlined,
+  'doctor': IosIcons.medical_services_outlined,
+  'report': IosIcons.description_outlined,
+  'dental': IosIcons.sentiment_satisfied_alt_outlined,
+  'eye': IosIcons.visibility_outlined,
+  'insurance': IosIcons.health_and_safety_outlined,
+  'home': IosIcons.home_outlined,
+  'family': IosIcons.family_restroom_outlined,
+  'support': IosIcons.support_agent_outlined,
+  'heart': IosIcons.favorite_border,
+  'calendar': IosIcons.event_available_outlined,
+  'video': IosIcons.videocam_outlined,
 };
 
 /// Words in a benefit's title that name its icon, for benefits saved with the generic
@@ -1049,7 +1051,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                       ],
                     ),
                   ),
-                  if (canOpen) Icon(open ? Icons.remove : Icons.add, color: _accent, size: 22),
+                  if (canOpen) Icon(open ? IosIcons.remove : IosIcons.add, color: _accent, size: 22),
                 ],
               ),
             ),
@@ -1302,7 +1304,7 @@ class _OrderCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, size: 14, color: muted),
+                Icon(IosIcons.location_on_outlined, size: 14, color: muted),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -1325,7 +1327,7 @@ class _OrderCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(slot != null ? Icons.event_available : Icons.event_outlined, size: 20, color: slot != null ? _primary : const Color(0xFFD97706)),
+                  Icon(slot != null ? IosIcons.event_available : IosIcons.event_outlined, size: 20, color: slot != null ? _primary : const Color(0xFFD97706)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -1387,13 +1389,13 @@ class _OrderCard extends StatelessWidget {
                     title: 'Invoice ${order['invoiceNumber'] ?? order['orderNumber'] ?? ''}'.trim(),
                     category: 'Invoice',
                   ),
-                  icon: const Icon(Icons.receipt_long_outlined, size: 18),
+                  icon: const Icon(IosIcons.receipt_long_outlined, size: 18),
                   label: const Text('Invoice', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
                 ),
               if (hasReport)
                 TextButton.icon(
                   onPressed: openingReport ? null : onViewReport,
-                  icon: openingReport ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.description_outlined, size: 18),
+                  icon: openingReport ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(IosIcons.description_outlined, size: 18),
                   label: const Text(
                     'View report',
                     style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
@@ -1599,7 +1601,7 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.location_on_outlined, size: 20, color: a == null ? (isDark ? const Color(0xFF93B4FF) : _accent) : textColor),
+              Icon(IosIcons.location_on_outlined, size: 20, color: a == null ? (isDark ? const Color(0xFF93B4FF) : _accent) : textColor),
               const SizedBox(width: 10),
               Expanded(
                 child: a == null
@@ -1758,7 +1760,7 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: _paying ? null : _pickSlot,
-                icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),
+                icon: Icon(_slot == null ? IosIcons.event_outlined : IosIcons.event_available, size: 18),
                 label: Text(_slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}', style: const TextStyle(fontFamily: appPoppinFont)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: isDark ? const Color(0xFF93B4FF) : _accent,
@@ -1903,7 +1905,7 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
                 shape: const CircleBorder(),
                 child: IconButton(
                   tooltip: 'Back',
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                  icon: const Icon(IosIcons.arrow_back_rounded, color: Colors.white, size: 20),
                   onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
@@ -1999,11 +2001,11 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if ((pkg['sampleType'] ?? '').toString().isNotEmpty) _chip(Icons.water_drop_outlined, pkg['sampleType'].toString(), isDark),
-                    if (turnaround.isNotEmpty) _chip(Icons.schedule, 'Report in $turnaround', isDark),
+                    if ((pkg['sampleType'] ?? '').toString().isNotEmpty) _chip(IosIcons.water_drop_outlined, pkg['sampleType'].toString(), isDark),
+                    if (turnaround.isNotEmpty) _chip(IosIcons.schedule, 'Report in $turnaround', isDark),
                     if ((pkg['preparation'] ?? '').toString().isNotEmpty)
-                        _chip(_prepIsEasy(pkg['preparation'].toString()) ? Icons.check_circle_outline : Icons.no_food_outlined, 'Preparation: ${pkg['preparation']}', isDark),
-                    _chip(Icons.home_outlined, 'Sample collected at home', isDark),
+                        _chip(_prepIsEasy(pkg['preparation'].toString()) ? IosIcons.check_circle_outline : IosIcons.no_food_outlined, 'Preparation: ${pkg['preparation']}', isDark),
+                    _chip(IosIcons.home_outlined, 'Sample collected at home', isDark),
                   ],
                 ),
                 if (pkg['benefits'] is List && (pkg['benefits'] as List).isNotEmpty)

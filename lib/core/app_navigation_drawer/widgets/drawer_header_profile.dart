@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -89,7 +90,7 @@ class DrawerHeaderProfile extends StatelessWidget {
                       backgroundColor: isDark ? const Color(0xFF262626) : const Color(0xFFE9ECEF),
                       backgroundImage: avatarImage,
                       child: avatarImage == null
-                          ? Icon(Icons.person_rounded, size: currentDrawerWidth * 0.115, color: theme.primaryColor.withValues(alpha: 0.7))
+                          ? Icon(IosIcons.person_rounded, size: currentDrawerWidth * 0.115, color: theme.primaryColor.withValues(alpha: 0.7))
                           : null,
                     ),
                   ),
@@ -111,7 +112,7 @@ class DrawerHeaderProfile extends StatelessWidget {
                       ),
                     ),
                     Icon(
-                      Icons.chevron_right_rounded,
+                      IosIcons.chevron_right_rounded,
                       size: 18,
                       color: isDark ? Colors.white38 : Colors.grey.shade400,
                     ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -37,7 +38,7 @@ class TermsAndPrivacyCheckbox extends StatelessWidget {
               ),
             ),
             child: isChecked
-                ? const Icon(Icons.check, color: Colors.white, size: 14)
+                ? const Icon(IosIcons.check, color: Colors.white, size: 14)
                 : null,
           ),
           const SizedBox(width: 12),

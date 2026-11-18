@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -119,12 +120,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                     return null;
                                   },
                                   showPasswordWidget: Icon(
-                                    Icons.visibility,
+                                    IosIcons.visibility,
                                     color: isDark ? textDarkModeSecondaryColor : Colors.grey[600],
                                     size: isTablet ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045, // Screen independent sizing scaling
                                   ),
                                   hidePasswordWidget: Icon(
-                                    Icons.visibility_off,
+                                    IosIcons.visibility_off,
                                     color: isDark ? textDarkModeSecondaryColor : Colors.grey[600],
                                     size: isTablet ? displayWidth(context) * 0.022 : displayWidth(context) * 0.045,
                                   ),
@@ -203,7 +204,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                           child: Row(
                                             children: [
                                               Icon(
-                                                isValid ? Icons.check_circle_rounded : Icons.cancel_rounded, // Styled to look cleaner for a clinic application
+                                                isValid ? IosIcons.check_circle_rounded : IosIcons.cancel_rounded, // Styled to look cleaner for a clinic application
                                                 color: isValid ? const Color(0xFF10B981) : const Color(0xFFEF4444), // Emerald green / Ruby red
                                                 size: isTablet ? displayWidth(context) * 0.02 : displayWidth(context) * 0.045,
                                               ),
@@ -248,7 +249,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                                   ],
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _isConfirmPasswordObscured ? Icons.visibility_off : Icons.visibility,
+                                      _isConfirmPasswordObscured ? IosIcons.visibility_off : IosIcons.visibility,
                                       color: Colors.grey,
                                       size:isTablet? 18: screenHeight * 0.025,
                                     ),

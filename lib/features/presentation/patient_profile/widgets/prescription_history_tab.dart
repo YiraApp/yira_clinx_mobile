@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,14 +39,14 @@ class _PrescriptionHistoryTabState extends State<PrescriptionHistoryTab> {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const RecordEmptyState(icon: Icons.error_outline_rounded, title: "Couldn't load prescriptions."),
+              const RecordEmptyState(icon: IosIcons.error_outline_rounded, title: "Couldn't load prescriptions."),
               const SizedBox(height: 12),
               RecordSecondaryButton(label: 'Try again', onPressed: () => setState(() => _future = _load())),
             ],
           );
         }
         final list = [...records.prescriptions]..sort((a, b) => (b.date ?? DateTime(0)).compareTo(a.date ?? DateTime(0)));
-        if (list.isEmpty) return const RecordEmptyState(icon: Icons.medication_outlined, title: 'No prescriptions yet.');
+        if (list.isEmpty) return const RecordEmptyState(icon: IosIcons.medication_outlined, title: 'No prescriptions yet.');
 
         return RefreshIndicator(
           onRefresh: () async => setState(() => _future = _load()),
@@ -61,13 +62,13 @@ class _PrescriptionHistoryTabState extends State<PrescriptionHistoryTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     RecordCardHeader(
-                      icon: Icons.medication_outlined,
+                      icon: IosIcons.medication_outlined,
                       title: p.date == null ? 'Prescription' : DateFormat('d MMM yyyy').format(p.date!),
                       subtitle: by,
                       trailing: p.pdfUrl == null
                           ? null
                           : RecordIconAction(
-                              icon: Icons.picture_as_pdf_outlined,
+                              icon: IosIcons.picture_as_pdf_outlined,
                               tooltip: 'PDF',
                               onTap: () => launchUrl(Uri.parse(p.pdfUrl!), mode: LaunchMode.externalApplication),
                             ),
@@ -85,7 +86,7 @@ class _PrescriptionHistoryTabState extends State<PrescriptionHistoryTab> {
                     ],
                     if (p.labTests.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      const RecordSectionTitle(icon: Icons.biotech_outlined, title: 'Lab Tests'),
+                      const RecordSectionTitle(icon: IosIcons.biotech_outlined, title: 'Investigations'),
                       const SizedBox(height: 8),
                       RecordLabTestLines(tests: p.labTests),
                     ],

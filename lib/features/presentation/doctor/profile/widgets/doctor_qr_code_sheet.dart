@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +94,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      Icons.qr_code_2_rounded,
+                      IosIcons.qr_code_2_rounded,
                       size: 20,
                       color: primaryColor,
                     ),
@@ -111,7 +112,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(IosIcons.close_rounded),
                 visualDensity: VisualDensity.compact,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -270,7 +271,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  icon: const Icon(IosIcons.copy_rounded, size: 16),
                   label: const Text("Copy Link"),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
@@ -297,7 +298,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.share_rounded, size: 16),
+                  icon: const Icon(IosIcons.share_rounded, size: 16),
                   label: const Text("Share Profile"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,

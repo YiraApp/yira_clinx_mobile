@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -56,7 +57,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
               child: _paymentSuccess
                   ? Column(
                       children: [
-                        const Icon(Icons.task_alt_rounded, color: Colors.green, size: 64),
+                        const Icon(IosIcons.task_alt_rounded, color: Colors.green, size: 64),
                         const SizedBox(height: 16),
                         const Text('Payment Successful!', style: TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
@@ -71,7 +72,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
                               const SnackBar(content: Text('Downloading digital receipt PDF...')),
                             );
                           },
-                          icon: const Icon(Icons.download_rounded, color: Colors.white),
+                          icon: const Icon(IosIcons.download_rounded, color: Colors.white),
                           label: const Text('Download Digital Receipt', style: TextStyle(fontFamily: appPoppinFont, color: Colors.white)),
                         ),
                       ],

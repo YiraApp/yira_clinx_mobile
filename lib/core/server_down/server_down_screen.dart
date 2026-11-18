@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_route/app_routes.dart';
@@ -22,7 +23,7 @@ class ServerDownScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
         ),
         child: const Icon(
-          Icons.warning_amber_rounded,
+          IosIcons.warning_amber_rounded,
           size: 48,
           color: Color(0xFFD92D20),
         ),
@@ -33,7 +34,7 @@ class ServerDownScreen extends StatelessWidget {
         CustomElevatedButton(
           height: 50,
           text: 'Try again',
-          icon: const Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+          icon: const Icon(IosIcons.refresh_rounded, size: 20, color: Colors.white),
           backgroundColor: theme.colorScheme.primary,
           textColor: Colors.white,
           noElevation: true,
@@ -53,7 +54,7 @@ class ServerDownScreen extends StatelessWidget {
         const SizedBox(height: 12),
         CommonBorderButton(
           text: 'Contact Us',
-          icon: Icons.mail_outline_rounded,
+          icon: IosIcons.mail_outline_rounded,
           height: 50.0,
           borderColor: theme.colorScheme.primary,
           textColor: theme.colorScheme.primary,

@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
@@ -35,7 +36,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: showBackButton
           ? (leading ??
               IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
+                icon: const Icon(IosIcons.arrow_back, size: 20),
                 onPressed: onBackPressed ?? () => Navigator.pop(context),
               ))
           : leading,
