@@ -19,6 +19,8 @@ import 'package:yiraclinics/features/data/models/login/login_model.dart';
 import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
+import '../documents/patient_documents_screen.dart';
+import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import 'family_link_api.dart';
 import 'family_links_section.dart';
 import 'family_add_options_sheet.dart';
@@ -1521,6 +1523,20 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     );
   }
 
+  /// Records belong to the person they're for, so this switches to [profile] first
+  /// (unless it's already the one in use) and then opens their records to upload.
+  Future<void> _uploadRecordsFor(ProfileEntity profile) async {
+    final id = (profile.id ?? '').trim();
+    final currentId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim();
+    if (id.isEmpty || id.toLowerCase() == currentId.toLowerCase()) {
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => const PatientDocumentsScreen(startUpload: true)));
+      return;
+    }
+    PatientDocumentsScreen.openAfterProfileSwitch();
+    final switched = await ProfileSwitcherSheet.switchToFamilyProfile(context, id);
+    if (!switched) PatientDocumentsScreen.cancelOpenAfterProfileSwitch();
+  }
+
   Widget _buildMemberCard(ProfileEntity profile, bool isDark, bool isTab, String primaryPhone) {
     final pId = (profile.id ?? '').trim();
     final bool isPrimary = profile.isPrimary == true;
@@ -1560,7 +1576,10 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
         border: Border.all(color: isPrimary ? _primaryBlue.withValues(alpha: 0.35) : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0))),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.035), blurRadius: 12, offset: const Offset(0, 3))],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+      Row(
         children: [
           Semantics(
             label: 'Change photo of $pName',
@@ -1625,25 +1644,65 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
             ),
             const SizedBox(width: 2),
           ],
-          FilledButton.tonalIcon(
-            onPressed: () => PatientBookAppointmentSheet.show(
-              context,
-              targetProfile: profile,
-              patientName: pName,
-              patientPhone: profile.phoneNumber,
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: _primaryBlue.withValues(alpha: isDark ? 0.22 : 0.1),
-              foregroundColor: _primaryBlue,
-              minimumSize: const Size(0, 38),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: const PhosphorIcon(PhosphorIconsBold.calendarPlus, size: 16, color: _primaryBlue),
-            label: const Text('Book', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _memberAction(
+                  isDark: isDark,
+                  icon: PhosphorIconsBold.calendarPlus,
+                  label: 'Book',
+                  semantics: 'Book an appointment for $pName',
+                  onPressed: () => PatientBookAppointmentSheet.show(
+                    context,
+                    targetProfile: profile,
+                    patientName: pName,
+                    patientPhone: profile.phoneNumber,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _memberAction(
+                  isDark: isDark,
+                  icon: PhosphorIconsBold.cloudArrowUp,
+                  label: 'Upload records',
+                  semantics: isPrimaryMember ? 'Upload your records' : 'Switch to $pName and upload their records',
+                  onPressed: () => _uploadRecordsFor(profile),
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _memberAction({
+    required bool isDark,
+    required IconData icon,
+    required String label,
+    required String semantics,
+    required VoidCallback onPressed,
+  }) {
+    return Semantics(
+      label: semantics,
+      button: true,
+      excludeSemantics: true,
+      child: FilledButton.tonalIcon(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: _primaryBlue.withValues(alpha: isDark ? 0.22 : 0.1),
+          foregroundColor: _primaryBlue,
+          minimumSize: const Size(0, 40),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        icon: PhosphorIcon(icon, size: 16, color: _primaryBlue),
+        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700)),
       ),
     );
   }

@@ -146,6 +146,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     NotificationBadgeService.instance.syncUnreadCount();
     FitnessSyncService.instance.init();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Arrived here from My Family's "Upload records": go straight to this person's records.
+      if (PatientDocumentsScreen.takeOpenAfterProfileSwitch()) {
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PatientDocumentsScreen(startUpload: true)));
+        return;
+      }
       PatientTourController().startDashboardTour(context: context);
       OfferPopupAdDialog.showIfAvailable(context);
     });

@@ -151,6 +151,8 @@ class RecordsRepositoryImpl implements RecordsRepository {
         stackTrace: stackTrace,
         name: "RecordsRepositoryImpl",
       );
+      // A failed fetch is not "no records": the screen keeps what it shows and says it couldn't load.
+      rethrow;
     }
 
     return [];

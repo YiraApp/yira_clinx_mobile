@@ -341,12 +341,10 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
       isUploading = true;
     });
 
+    var saved = 0;
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
       for (int i = 0; i < stagedFiles.length; i++) {
         final file = stagedFiles[i];
-        final rawSize = file['size'] as int?;
-        final sizeInKb = rawSize != null ? (rawSize / 1024).round() : 2048;
         final String filePath = file['path'] ?? '';
         final String fileName = file['name'] ?? 'Document';
 
@@ -363,16 +361,11 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           );
         }
 
-        final recordToAdd = uploaded ?? UploadedRecord(
-          id: '${timestamp}_$i',
-          fileName: fileName,
-          category: selectedCategory,
-          uploadDate: DateTime.now(),
-          fileSizeKB: sizeInKb,
-          filePath: filePath,
-        );
-
-        bloc.add(AddUploadedRecord(recordToAdd));
+        // Only what the server saved is shown. A made-up local record looked uploaded
+        // and then vanished on the next refresh.
+        if (uploaded == null) continue;
+        saved++;
+        bloc.add(AddUploadedRecord(uploaded));
       }
 
       bloc.add(FetchUploadedRecords(
@@ -383,16 +376,23 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
       ));
 
       if (context.mounted) {
+        final failed = stagedFiles.length - saved;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                Icon(failed == 0 ? Icons.check_circle : Icons.error_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Text("${stagedFiles.length} document(s) uploaded successfully!"),
+                Expanded(
+                  child: Text(failed == 0
+                      ? "$saved document(s) uploaded successfully!"
+                      : saved == 0
+                          ? "Couldn't upload. Please check your connection and try again."
+                          : "$saved of ${stagedFiles.length} uploaded. $failed couldn't be saved, please try again."),
+                ),
               ],
             ),
-            backgroundColor: Colors.green.shade600,
+            backgroundColor: failed == 0 ? Colors.green.shade600 : Colors.red.shade600,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -405,7 +405,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         setState(() {
           isUploading = false;
         });
-        navigator.pop();
+        if (saved > 0) navigator.pop();
       }
     }
   }

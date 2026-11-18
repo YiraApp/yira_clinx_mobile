@@ -22,7 +22,24 @@ import 'report_upload_sheet.dart';
 import 'edit_document_modal.dart';
 
 class PatientDocumentsScreen extends StatefulWidget {
-  const PatientDocumentsScreen({super.key});
+  const PatientDocumentsScreen({super.key, this.startUpload = false});
+
+  /// Opens the upload sheet as soon as the screen shows.
+  final bool startUpload;
+
+  static DateTime? _openAfterSwitchAt;
+
+  /// My Family's "Upload records": after switching to that person's profile the app
+  /// restarts on the dashboard, which then opens this screen with the upload sheet.
+  static void openAfterProfileSwitch() => _openAfterSwitchAt = DateTime.now();
+  static void cancelOpenAfterProfileSwitch() => _openAfterSwitchAt = null;
+
+  /// True once, shortly after [openAfterProfileSwitch]; a stale request is dropped.
+  static bool takeOpenAfterProfileSwitch() {
+    final at = _openAfterSwitchAt;
+    _openAfterSwitchAt = null;
+    return at != null && DateTime.now().difference(at) < const Duration(minutes: 2);
+  }
 
   @override
   State<PatientDocumentsScreen> createState() => _PatientDocumentsScreenState();
@@ -34,6 +51,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
 
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  bool _startedUpload = false;
   String _sortBy = 'newest';
   final Set<String> _expandedDocIds = <String>{};
   final Set<String> _downloadingDocIds = <String>{};
@@ -327,8 +345,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
 
     final currentUser = GlobalSession.instance.userNotifier.value;
     final userId = currentUser?.data?.id ?? '';
-    final orgId = (currentUser?.data?.latestOrgId?.toString() ?? '1');
-    final hospitalId = (currentUser?.data?.latestHospitalId?.toString() ?? '1');
 
     return BlocProvider<UploadedBloc>(
       create: (_) => sl<UploadedBloc>()
@@ -337,8 +353,21 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
           limit: 20,
           page: 1,
         )),
-      child: Builder(
+      child: BlocListener<UploadedBloc, UploadedBlocState>(
+        listenWhen: (prev, next) => prev.status != next.status && next.status == UploadedStatus.failure,
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Couldn't load your records. Check your connection and pull down to try again.")),
+          );
+        },
+        child: Builder(
         builder: (blocContext) {
+          if (widget.startUpload && !_startedUpload) {
+            _startedUpload = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _openReportUpload(blocContext);
+            });
+          }
           final uploadedState = blocContext.watch<UploadedBloc>().state;
           final allDocs = uploadedState.allRecords;
 
@@ -632,13 +661,9 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: () async {
-                        blocContext.read<UploadedBloc>().add(FetchUploadedRecords(
-                              patientId: userId,
-                              orgId: orgId,
-                              hospitalId: hospitalId,
-                              limit: 20,
-                              page: 1,
-                            ));
+                        // The same records the screen opened with: the patient's own, from every
+                        // hospital. Passing the latest hospital here emptied the list on refresh.
+                        _refresh(blocContext);
                         await Future.delayed(const Duration(milliseconds: 600));
                       },
                       child: showShimmer
@@ -790,6 +815,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
             ),
           );
         },
+      ),
       ),
     );
   }

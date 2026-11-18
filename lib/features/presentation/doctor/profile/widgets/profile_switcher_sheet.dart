@@ -27,21 +27,22 @@ class ProfileSwitcherSheet extends StatefulWidget {
   }
 
   /// Switches straight to one of the account's family profiles, as tapping it
-  /// in the sheet would. Shows a message if the switch fails.
-  static Future<void> switchToFamilyProfile(BuildContext context, String profileUserId) async {
+  /// in the sheet would. Shows a message if the switch fails. True when it switched.
+  static Future<bool> switchToFamilyProfile(BuildContext context, String profileUserId) async {
     final user = GlobalSession.instance.userNotifier.value;
     final profiles = user?.data?.profiles ?? [];
     final primaryUserId = (profiles.isNotEmpty && (profiles.first.id ?? '').isNotEmpty) ? profiles.first.id! : (user?.data?.id ?? '');
     final items = _buildFamilyItems(user, primaryUserId, (_, image) => image);
     final target = items.where((i) => (i.profileUserId ?? '').toLowerCase() == profileUserId.toLowerCase()).firstOrNull;
-    if (target == null) return;
+    if (target == null) return false;
     final messenger = ScaffoldMessenger.maybeOf(context);
     final error = await _performSwitch(target);
     if (error == null) {
       NavigationService.navigateTo(AppRoutes.userConfiguration);
-    } else {
-      messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+      return true;
     }
+    messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+    return false;
   }
 
   @override
