@@ -1,4 +1,5 @@
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/core/widgets/medical_loader.dart';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -213,7 +214,7 @@ class _LabAddressPickerSheetState extends State<LabAddressPickerSheet> {
               Text('Where should the lab collect your sample?', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: muted)),
               const SizedBox(height: 16),
               if (saved == null)
-                const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
+                const Padding(padding: EdgeInsets.all(24), child: Center(child: MedicalLoader(size: 0.8)))
               else ...[
                 for (final a in saved) ...[
                   Material(

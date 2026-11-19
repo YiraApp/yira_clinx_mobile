@@ -6,6 +6,7 @@ import 'package:yiraclinics/features/data/data_sources/diet/diet_api_error.dart'
 import 'package:yiraclinics/features/data/data_sources/diet/patient_diet_remote_data_source.dart';
 import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_preview_sheet.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_pdf.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_edit_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plan_screen.dart';
@@ -399,6 +400,29 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
     );
   }
 
+  /// Opens the plan's PDF (the same one the clinic prints).
+  Widget _pdfButton(PatientDietPlanSummary plan, {required double height}) {
+    return SizedBox(
+      height: height,
+      child: OutlinedButton.icon(
+        onPressed: () => openDietPlanPdf(
+          context,
+          planId: plan.id,
+          planName: plan.planName,
+          download: () => _dataSource.downloadPlanPdf(plan.id),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: DietUi.blue,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          side: BorderSide(color: DietUi.blue.withValues(alpha: 0.45)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        icon: const Icon(IosIcons.picture_as_pdf_outlined, size: 17),
+        label: Text('PDF', style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
+      ),
+    );
+  }
+
   Widget _buildActiveCard(PatientDietPlanSummary plan, bool isDark) {
     final daysLeft = _daysLeft(plan);
     final busy = _busyPlanId == plan.id;
@@ -517,26 +541,35 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => _open(plan),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DietUi.blue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () => _open(plan),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: DietUi.blue,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(IosIcons.visibility_outlined, size: 17),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text('View Diet Plan', maxLines: 1, style: DietUi.text(13, FontWeight.w600, Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(IosIcons.visibility_outlined, size: 17),
-                        const SizedBox(width: 6),
-                        Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, Colors.white)),
-                      ],
-                    ),
-                  ),
+                    const SizedBox(width: 10),
+                    _pdfButton(plan, height: 44),
+                  ],
                 ),
               ],
             ),
@@ -676,19 +709,26 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                 const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 42,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _open(plan),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DietUi.blue,
-                        side: BorderSide(color: DietUi.blue.withValues(alpha: 0.45)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 42,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _open(plan),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: DietUi.blue,
+                              side: BorderSide(color: DietUi.blue.withValues(alpha: 0.45)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            icon: const Icon(IosIcons.visibility_outlined, size: 17),
+                            label: Text('View Diet Plan', maxLines: 1, style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
+                          ),
+                        ),
                       ),
-                      icon: const Icon(IosIcons.visibility_outlined, size: 17),
-                      label: Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
-                    ),
+                      const SizedBox(width: 10),
+                      _pdfButton(plan, height: 42),
+                    ],
                   ),
                 ),
               ],

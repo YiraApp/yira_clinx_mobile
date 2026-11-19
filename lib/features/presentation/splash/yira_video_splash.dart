@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -32,6 +33,30 @@ class YiraVideoSplash extends StatefulWidget {
 
   static const Color background = Color(0xFF16171B);
 
+  /// The video's own top and bottom edge colours. On phones narrower than the 9:16 video the
+  /// logo scene is fitted to the width, so its ring of icons isn't cut off at the sides, and
+  /// this fills the space above and below without a visible seam.
+  /// Fades the top and bottom of the fitted frame into [backdrop], so no seam shows
+  /// whatever the frame's edge colour is at that moment.
+  static Widget fadeEdges(Widget child) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (rect) => const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
+          stops: [0, 0.08, 0.92, 1],
+        ).createShader(rect),
+        child: child,
+      );
+
+  static const BoxDecoration backdrop = BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF222529), Color(0xFF1E2225)],
+    ),
+  );
+
   @override
   State<YiraVideoSplash> createState() => _YiraVideoSplashState();
 }
@@ -47,6 +72,9 @@ class _YiraVideoSplashState extends State<YiraVideoSplash> {
   bool _done = false;
   bool _skipped = false;
   Timer? _startTimeout;
+
+  /// The logo scene is showing: the whole frame width must stay on screen.
+  late bool _logoScene = !widget.fullVideo;
 
   @override
   void initState() {
@@ -83,6 +111,9 @@ class _YiraVideoSplashState extends State<YiraVideoSplash> {
     final duration = value.duration;
     final ended = value.isCompleted ||
         (duration > Duration.zero && value.position >= duration - const Duration(milliseconds: 50));
+    if (!_logoScene && value.position >= YiraVideoSplash.logoSceneStart && mounted) {
+      setState(() => _logoScene = true);
+    }
     if (ended) _finish();
   }
 
@@ -95,7 +126,10 @@ class _YiraVideoSplashState extends State<YiraVideoSplash> {
 
   void _skip() {
     if (_skipped || !_ready) return;
-    setState(() => _skipped = true);
+    setState(() {
+      _skipped = true;
+      _logoScene = true;
+    });
     if (_controller.value.position < YiraVideoSplash.logoSceneStart) {
       _controller.seekTo(YiraVideoSplash.logoSceneStart);
     }
@@ -123,17 +157,35 @@ class _YiraVideoSplashState extends State<YiraVideoSplash> {
     }
     final size = _controller.value.size;
     final showSkip = widget.fullVideo && _ready && !_skipped;
-    return ColoredBox(
-      color: YiraVideoSplash.background,
+    return DecoratedBox(
+      decoration: YiraVideoSplash.backdrop,
       child: Stack(
         fit: StackFit.expand,
         children: [
           if (_ready && size.width > 0 && size.height > 0)
-            // Fills the screen like the native launch screen; the sides crop on wider screens.
-            FittedBox(
-              fit: BoxFit.cover,
-              clipBehavior: Clip.hardEdge,
-              child: SizedBox(width: size.width, height: size.height, child: VideoPlayer(_controller)),
+            LayoutBuilder(
+              builder: (context, box) {
+                // The stories fill the screen (their photos may lose a little at the sides);
+                // the logo scene fits the width so no icon is cut off, easing out at the cut.
+                final fitWidth = box.maxWidth / size.width;
+                final cover = math.max(fitWidth, box.maxHeight / size.height);
+                return ClipRect(
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(end: _logoScene ? fitWidth : cover),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
+                    // Free of the screen's size both ways, so the frame keeps its 9:16 shape.
+                    builder: (context, scale, child) => OverflowBox(
+                      minWidth: 0,
+                      minHeight: 0,
+                      maxWidth: double.infinity,
+                      maxHeight: double.infinity,
+                      child: SizedBox(width: size.width * scale, height: size.height * scale, child: child),
+                    ),
+                    child: _logoScene ? YiraVideoSplash.fadeEdges(VideoPlayer(_controller)) : VideoPlayer(_controller),
+                  ),
+                );
+              },
             ),
           if (showSkip)
             Positioned(
@@ -174,13 +226,24 @@ class YiraSplashEndFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
-      color: YiraVideoSplash.background,
-      child: SizedBox.expand(
-        child: Image(
-          image: AssetImage(YiraVideoSplash.endFrameAsset),
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
+    // Fitted to the width like the video's logo scene, so the icons at the sides stay whole.
+    return DecoratedBox(
+      decoration: YiraVideoSplash.backdrop,
+      child: LayoutBuilder(
+        builder: (context, box) => ClipRect(
+          child: OverflowBox(
+            minWidth: 0,
+            minHeight: 0,
+            maxWidth: double.infinity,
+            maxHeight: double.infinity,
+            child: SizedBox(
+              width: box.maxWidth,
+              height: box.maxWidth * 16 / 9,
+              child: YiraVideoSplash.fadeEdges(
+                const Image(image: AssetImage(YiraVideoSplash.endFrameAsset), fit: BoxFit.fill, gaplessPlayback: true),
+              ),
+            ),
+          ),
         ),
       ),
     );

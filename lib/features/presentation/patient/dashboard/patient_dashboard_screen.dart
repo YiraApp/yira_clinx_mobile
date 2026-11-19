@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
@@ -1840,83 +1841,120 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   }
 
   Widget _buildServiceGrid({required bool isTab, required bool isDark, required List<_DashboardService> services}) {
+    final labelStyle = TextStyle(
+      fontFamily: appPoppinFont,
+      fontSize: isTab ? 12.5 : 11,
+      fontWeight: FontWeight.w600,
+      color: isDark ? Colors.white : const Color(0xFF121212),
+    );
+    final textScaler = MediaQuery.textScalerOf(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Phones: two full rows of 3 for six services, 4 a row beyond that
         final perRow = constraints.maxWidth > 560
             ? services.length.clamp(4, 8)
             : (services.length <= 6 || services.length == 9 ? 3 : 4);
-        final width = constraints.maxWidth / perRow;
-        return Wrap(
-          runSpacing: 2,
+        final iconSize = isTab ? 62.0 : (perRow == 3 ? 54.0 : 50.0);
+
+        // Each column is as wide as its widest icon or label. The columns are then spread
+        // with equal gaps, so the outer columns line up with the Appointments row below
+        // (the first starts at its left edge, the last ends at "View All").
+        final columnWidths = List<double>.filled(perRow, iconSize);
+        for (var i = 0; i < services.length; i++) {
+          final painter = TextPainter(
+            text: TextSpan(text: services[i].title, style: labelStyle),
+            maxLines: 1,
+            textDirection: TextDirection.ltr,
+            textScaler: textScaler,
+          )..layout();
+          final column = i % perRow;
+          columnWidths[column] = math.max(columnWidths[column], painter.width + 4);
+        }
+        // Icon centres evenly spaced between the two outer columns, so every gap is the same.
+        final width = constraints.maxWidth;
+        final step = perRow > 1 ? (width - columnWidths.first / 2 - columnWidths.last / 2) / (perRow - 1) : 0.0;
+        var gaps = [for (var c = 0; c + 1 < perRow; c++) step - (columnWidths[c] + columnWidths[c + 1]) / 2];
+        // Labels too long to fit side by side: fall back to equal columns (labels shrink).
+        if (gaps.any((g) => g < 4)) {
+          columnWidths.fillRange(0, perRow, width / perRow);
+          gaps = List.filled(perRow - 1, 0);
+        }
+
+        final rows = <List<_DashboardService>>[
+          for (var i = 0; i < services.length; i += perRow) services.sublist(i, math.min(i + perRow, services.length)),
+        ];
+        return Column(
           children: [
-            for (final service in services)
-              SizedBox(
-                width: width,
-                child: _PressableCard(
-                  onTap: service.onTap,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            _ServiceIconTile(
-                              icon: service.icon,
-                              badgeIcon: service.badgeIcon,
-                              isDark: isDark,
-                              size: isTab ? 62 : (perRow == 3 ? 54 : 50),
-                            ),
-                            if (service.badge > 0)
-                              Positioned(
-                                top: -5,
-                                right: -7,
-                                child: Container(
-                                  constraints: const BoxConstraints(minWidth: 20),
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEF4444),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F8), width: 2),
-                                  ),
-                                  child: Text(
-                                    service.badge > 9 ? '9+' : '${service.badge}',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 7),
-                        // One line per label, all the same size; only an unusually long one shrinks.
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              service.title,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: isTab ? 12.5 : 11,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : const Color(0xFF121212),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+            for (final (r, row) in rows.indexed) ...[
+              if (r > 0) const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var c = 0; c < perRow; c++) ...[
+                    if (c > 0) SizedBox(width: gaps[c - 1]),
+                    SizedBox(
+                      width: columnWidths[c],
+                      child: c < row.length
+                          ? _serviceTile(row[c], isDark: isDark, iconSize: iconSize, labelStyle: labelStyle)
+                          : null,
                     ),
-                  ),
-                ),
+                  ],
+                ],
               ),
+            ],
           ],
         );
       },
+    );
+  }
+
+  Widget _serviceTile(_DashboardService service, {required bool isDark, required double iconSize, required TextStyle labelStyle}) {
+    return _PressableCard(
+      onTap: service.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                _ServiceIconTile(
+                  icon: service.icon,
+                  badgeIcon: service.badgeIcon,
+                  isDark: isDark,
+                  size: iconSize,
+                ),
+                if (service.badge > 0)
+                  Positioned(
+                    top: -5,
+                    right: -7,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: isDark ? const Color(0xFF121212) : const Color(0xFFF8F8F8), width: 2),
+                      ),
+                      child: Text(
+                        service.badge > 9 ? '9+' : '${service.badge}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 7),
+            // One line per label, all the same size; only an unusually long one shrinks.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(service.title, textAlign: TextAlign.center, maxLines: 1, style: labelStyle),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

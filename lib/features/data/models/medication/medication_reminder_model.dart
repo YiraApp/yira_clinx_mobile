@@ -127,6 +127,24 @@ class MedicationReminder {
     };
   }
 
+  /// The calendar day of a date from the server or storage. The server sends a date
+  /// column as local midnight in UTC ("2026-11-24T18:30:00.000Z" for 25 Nov), so a
+  /// UTC value is read in local time; otherwise every course ended a day early.
+  static DateTime? _day(dynamic value) {
+    if (value == null) return null;
+    final parsed = DateTime.tryParse(value.toString());
+    if (parsed == null) return null;
+    final local = parsed.isUtc ? parsed.toLocal() : parsed;
+    return DateTime(local.year, local.month, local.day);
+  }
+
+  /// A fixed-length course whose last day has passed. Continuous ones never end.
+  bool get hasEnded {
+    if (isContinuous) return false;
+    final now = DateTime.now();
+    return DateTime(endDate.year, endDate.month, endDate.day).isBefore(DateTime(now.year, now.month, now.day));
+  }
+
   factory MedicationReminder.fromMap(Map<String, dynamic> map) {
     final timesList = List<String>.from(map['times'] ?? []);
     return MedicationReminder(
@@ -137,8 +155,8 @@ class MedicationReminder {
       instructions: map['instructions'] ?? '',
       durationDays: map['durationDays'] ?? 7,
       isContinuous: map['isContinuous'] ?? false,
-      startDate: DateTime.tryParse(map['startDate'] ?? '') ?? DateTime.now(),
-      endDate: DateTime.tryParse(map['endDate'] ?? '') ?? DateTime.now().add(const Duration(days: 7)),
+      startDate: _day(map['startDate']) ?? DateTime.now(),
+      endDate: _day(map['endDate']) ?? DateTime.now().add(const Duration(days: 7)),
       timingSlots: List<String>.from(map['timingSlots'] ?? timesList),
       times: timesList,
       mealRelation: map['mealRelation'] ?? 'After Food',

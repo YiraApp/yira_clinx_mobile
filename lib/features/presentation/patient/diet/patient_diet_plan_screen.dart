@@ -8,6 +8,7 @@ import 'package:yiraclinics/features/data/data_sources/diet/diet_api_error.dart'
 import 'package:yiraclinics/features/data/data_sources/diet/patient_diet_remote_data_source.dart';
 import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.dart';
 import 'package:yiraclinics/features/presentation/doctor/diet/diet_food_image.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_pdf.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_edit_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plans_screen.dart';
 
@@ -608,6 +609,18 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     if (saved == true && mounted) _load(showLoader: false);
   }
 
+  void _openPdf() {
+    final plan = _plan;
+    if (plan == null) return;
+    openDietPlanPdf(
+      context,
+      planId: plan.id,
+      planName: plan.planName,
+      doctorName: plan.createdByPatient ? null : plan.doctorName,
+      download: () => _dataSource.downloadPlanPdf(plan.id),
+    );
+  }
+
   // --- Build ---
 
   @override
@@ -650,6 +663,8 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                 ),
               ),
         actions: [
+          if (plan != null && !_isLoading)
+            DietUi.actionIcon(IosIcons.picture_as_pdf_outlined, isDark, _openPdf, tooltip: 'View PDF'),
           if (plan != null && !_isLoading)
             DietUi.actionIcon(IosIcons.calendar_month_rounded, isDark, _pickMonthDate, tooltip: 'Jump to a date'),
           if (plan != null && plan.canEdit && plan.createdByPatient && !_isLoading)
