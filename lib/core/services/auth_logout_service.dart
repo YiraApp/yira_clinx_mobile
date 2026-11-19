@@ -44,6 +44,16 @@ class AuthLogoutService {
         userId = GlobalSession.instance.rootPrimaryUserId;
       }
 
+      // Mark the user signed out first. Token sync only runs for a signed-in
+      // user, and until now that stayed true until the very end of logout, so
+      // a push-token refresh during logout (deleting the token below can
+      // trigger one) registered this device with the server again and pushes
+      // kept arriving after logout. It also stops a 401 from a request still
+      // in flight opening the session-expired screen halfway through logout.
+      try {
+        await sl<SharedPrefsService>().setValue<bool>(ClinxStorageKeys.isUserLoggedIn, false);
+      } catch (_) {}
+
       // 1. Retrieve current FCM token and device ID for targeted server deactivation
       String currentFcmToken = '';
       try {

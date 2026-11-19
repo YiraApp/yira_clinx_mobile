@@ -9,6 +9,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/fcm_token/fcm_token_helper.dart';
@@ -24,6 +25,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   DartPluginRegistrant.ensureInitialized();
   await Firebase.initializeApp();
   debugPrint("[NotificationService] Background message received: ${message.messageId}");
+  // A signed-out user must not get a medicine popup showing their details.
+  // This runs in its own isolate, so re-read what the app last saved.
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.reload();
+  if (!(prefs.getBool(ClinxStorageKeys.isUserLoggedIn) ?? false)) return;
   // Android: a medicine reminder can also open the floating popup over other
   // apps, if the patient switched it on. The system shows the notification.
   await MedicationPopupService.handlePush(message.data);

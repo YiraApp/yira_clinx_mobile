@@ -50,6 +50,78 @@ Options _auth() {
   return Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'});
 }
 
+/// The places at the device's position, or null with a message through [tell] when location is
+/// off, not allowed or not found. [purpose] says what location is for ("find packages near you"),
+/// [fallback] what to do without it ("type your pincode").
+Future<List<geo.Placemark>?> _currentPlaces({
+  required void Function(String message, {SnackBarAction? action}) tell,
+  required String purpose,
+  required String fallback,
+}) async {
+  final instead = '${fallback[0].toUpperCase()}${fallback.substring(1)} instead.';
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      tell('Turn on location to $purpose.', action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openLocationSettings()));
+      return null;
+    }
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever) {
+      tell('Location access is off for this app. Allow it in settings, or $fallback.',
+          action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openAppSettings()));
+      return null;
+    }
+    if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
+      tell('Allow location access to $purpose, or $fallback.');
+      return null;
+    }
+
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
+      );
+    } catch (_) {
+      // no fix in time (indoors, GPS warming up): the last known position is close enough
+      position = await Geolocator.getLastKnownPosition();
+    }
+    if (position == null) {
+      tell('Could not find your location. $instead');
+      return null;
+    }
+    return await geo.Geocoding()
+        .placemarkFromCoordinates(position.latitude, position.longitude)
+        .timeout(const Duration(seconds: 10));
+  } catch (_) {
+    tell('Could not find your location. $instead');
+    return null;
+  }
+}
+
+/// A 6-digit Indian pincode from a place, or null.
+String? _placePincode(geo.Placemark place) {
+  final pin = (place.postalCode ?? '').replaceAll(RegExp(r'\s'), '');
+  return RegExp(r'^[1-9]\d{5}$').hasMatch(pin) ? pin : null;
+}
+
+/// A collection address as the server sends and takes it: line1, line2, landmark, city, state, pincode.
+typedef _Address = Map<String, String>;
+
+_Address? _addressOf(dynamic raw) {
+  if (raw is! Map) return null;
+  String f(String k) => (raw[k] ?? '').toString().trim();
+  final a = {'line1': f('line1'), 'line2': f('line2'), 'landmark': f('landmark'), 'city': f('city'), 'state': f('state'), 'pincode': f('pincode')};
+  return a['line1']!.isEmpty || a['city']!.isEmpty || a['pincode']!.length != 6 ? null : a;
+}
+
+/// "12 MG Road, Indiranagar, Bengaluru, Karnataka 560038"
+String _addressText(_Address a) {
+  final place = [a['city'], a['state']].where((s) => (s ?? '').isNotEmpty).join(', ');
+  return [a['line1'], a['line2'], a['landmark'], '$place ${a['pincode']}'.trim()].where((s) => (s ?? '').isNotEmpty).join(', ');
+}
+
 /// Patient tab: lab packages offered in the patient's pincode, bought at a hospital of their
 /// choice with Razorpay (the hospital's own account), and their lab orders with reports.
 class PatientLabPackagesScreen extends StatefulWidget {
@@ -217,45 +289,11 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     }
 
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        tell('Turn on location to find packages near you.',
-            action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openLocationSettings()));
-        return null;
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.deniedForever) {
-        tell('Location access is off for this app. Allow it in settings, or type your pincode.',
-            action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openAppSettings()));
-        return null;
-      }
-      if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
-        tell('Allow location access to find your pincode, or type it.');
-        return null;
-      }
-
-      Position? position;
-      try {
-        position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
-        );
-      } catch (_) {
-        // no fix in time (indoors, GPS warming up): the last known position is close enough for a pincode
-        position = await Geolocator.getLastKnownPosition();
-      }
-      if (position == null) {
-        tell('Could not find your location. Type your pincode instead.');
-        return null;
-      }
-
-      final places = await geo.Geocoding()
-          .placemarkFromCoordinates(position.latitude, position.longitude)
-          .timeout(const Duration(seconds: 10));
+      final places = await _currentPlaces(tell: tell, purpose: 'find packages near you', fallback: 'type your pincode');
+      if (places == null) return null;
       for (final place in places) {
-        final pin = (place.postalCode ?? '').replaceAll(RegExp(r'\s'), '');
-        if (RegExp(r'^[1-9]\d{5}$').hasMatch(pin)) {
+        final pin = _placePincode(place);
+        if (pin != null) {
           final label = {place.subLocality, place.locality}
               .map((s) => (s ?? '').trim())
               .where((s) => s.isNotEmpty)
@@ -264,9 +302,6 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         }
       }
       tell('Could not find the pincode for your location. Type it instead.');
-      return null;
-    } catch (_) {
-      tell('Could not find your location. Type your pincode instead.');
       return null;
     } finally {
       if (mounted) setState(() => _locating = false);
@@ -318,6 +353,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         orderId: order['id']?.toString(),
         currentDate: slot?['date']?.toString(),
         currentStart: slot?['start']?.toString(),
+        rescheduleEnabled: order['rescheduleEnabled'] != false,
       ),
     );
     if (updated == null || !mounted) return;
@@ -1047,8 +1083,12 @@ class _OrderCard extends StatelessWidget {
     final canChangeSlot = order['canChangeSlot'] == true;
     final changeUntil = DateTime.tryParse(order['slotChangeUntil']?.toString() ?? '')?.toLocal();
     final lockedReason = order['slotLockedReason']?.toString();
+    // Off at the hospital (Lab Packages → Settings): the hospital fixes the visit time with the patient
+    final slotsEnabled = order['slotsEnabled'] != false;
     final showSlot = slot != null || status == 'Paid';
+    final address = _addressOf(order['collectionAddress']);
     final muted = isDark ? Colors.white54 : Colors.grey.shade600;
+    final waitingColor = slotsEnabled ? const Color(0xFFD97706) : const Color(0xFF64748B);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1086,19 +1126,22 @@ class _OrderCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
               decoration: BoxDecoration(
-                color: slot != null ? _primary.withValues(alpha: isDark ? 0.15 : 0.06) : const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.08),
+                color: slot != null ? _primary.withValues(alpha: isDark ? 0.15 : 0.06) : waitingColor.withValues(alpha: isDark ? 0.15 : 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(slot != null ? Icons.event_available : Icons.event_outlined, size: 20, color: slot != null ? _primary : const Color(0xFFD97706)),
+                  Icon(slot != null ? Icons.event_available : (slotsEnabled ? Icons.event_outlined : Icons.phone_in_talk_outlined),
+                      size: 20, color: slot != null ? _primary : waitingColor),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          slot != null ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}' : 'No visit slot chosen yet',
+                          slot != null
+                              ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}'
+                              : (slotsEnabled ? 'No visit slot chosen yet' : 'Visit time to be fixed by the hospital'),
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                         ),
                         if (slot != null && canChangeSlot && changeUntil != null)
@@ -1118,6 +1161,20 @@ class _OrderCard extends StatelessWidget {
                     ),
                 ],
               ),
+            ),
+          ],
+          if (address != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.location_on_outlined, size: 16, color: muted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text('Sample collection: ${_addressText(address)}',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF475569))),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 10),
@@ -1169,9 +1226,34 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   int? _hospitalId;
   /// Optional at checkout; it can also be chosen from My Orders after paying
   _SlotChoice? _slot;
+  /// Where the sample is collected; required when the hospital asks for it
+  _Address? _address;
   final TextEditingController _notesController = TextEditingController();
   bool _paying = false;
   String? _payError;
+
+  /// The hospital the order goes to (the first the server lists) and its app options from Settings
+  Map<String, dynamic>? get _hospital => _hospitals.isEmpty ? null : _hospitals.first;
+  bool get _slotsEnabled => _hospital?['slotsEnabled'] != false;
+  bool get _rescheduleEnabled => _hospital?['rescheduleEnabled'] != false;
+  bool get _collectAddress => _hospital?['collectAddress'] == true;
+  int get _cutoffHours => int.tryParse('${_hospital?['cutoffHours'] ?? ''}') ?? 5;
+
+  Future<void> _pickAddress() async {
+    final chosen = await showModalBottomSheet<_Address>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddressPickerSheet(current: _address),
+    );
+    if (chosen != null && mounted) {
+      setState(() {
+        _address = chosen;
+        _payError = null;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -1218,7 +1300,12 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _SlotPickerSheet(hospitalId: _hospitalId, currentDate: _slot?.date, currentStart: _slot?.start),
+      builder: (_) => _SlotPickerSheet(
+        hospitalId: _hospitalId,
+        currentDate: _slot?.date,
+        currentStart: _slot?.start,
+        rescheduleEnabled: _rescheduleEnabled,
+      ),
     );
     if (choice != null && mounted) {
       setState(() {
@@ -1233,17 +1320,24 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       setState(() => _payError = 'Choose the hospital where you will give your sample.');
       return;
     }
+    if (_collectAddress && _address == null) {
+      setState(() => _payError = 'Choose the address where the sample will be collected.');
+      return;
+    }
     setState(() {
       _paying = true;
       _payError = null;
     });
     final user = GlobalSession.instance.userNotifier.value?.data;
+    final address = _collectAddress ? _address : null;
     final result = await RazorpayPaymentService.instance.processLabPackagePayment(
       packageId: int.tryParse(widget.package['id'].toString()) ?? 0,
       hospitalId: _hospitalId!,
-      pincode: widget.pincode,
-      preferredDate: _slot?.date,
-      slotStart: _slot?.start,
+      // a home collection is checked against the address's own pincode
+      pincode: address?['pincode'] ?? widget.pincode,
+      preferredDate: _slotsEnabled ? _slot?.date : null,
+      slotStart: _slotsEnabled ? _slot?.start : null,
+      address: address,
       notes: _notesController.text,
       patientName: user?.firstName?.toString(),
       patientPhone: user?.phoneNumber?.toString(),
@@ -1318,20 +1412,60 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
                     Text('This package cannot be booked online right now.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
                     const SizedBox(height: 10),
                   ],
-                  OutlinedButton.icon(
-                    onPressed: _paying ? null : _pickSlot,
-                    icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),
-                    label: Text(
-                      _slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}',
-                      style: const TextStyle(fontFamily: appPoppinFont),
+                  if (_collectAddress) ...[
+                    OutlinedButton.icon(
+                      onPressed: _paying ? null : _pickAddress,
+                      icon: Icon(_address == null ? Icons.add_location_alt_outlined : Icons.location_on, size: 18),
+                      label: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _address == null ? 'Choose sample collection address' : _addressText(_address!),
+                          style: const TextStyle(fontFamily: appPoppinFont),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        alignment: Alignment.centerLeft,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                      ),
                     ),
-                    style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 4),
-                    child: Text('You can also choose or change it later in My Orders, until 5 hours before the slot.',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor)),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 4),
+                      child: Text(_address == null ? 'Required: the lab collects your sample at this address.' : 'Tap to change the address.',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor)),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (_slotsEnabled) ...[
+                    OutlinedButton.icon(
+                      onPressed: _paying ? null : _pickSlot,
+                      icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),
+                      label: Text(
+                        _slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}',
+                        style: const TextStyle(fontFamily: appPoppinFont),
+                      ),
+                      style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 4),
+                      child: Text(
+                        _rescheduleEnabled
+                            ? 'You can also choose or change it later in My Orders, until $_cutoffHours hours before the slot.'
+                            : 'You can also choose it later in My Orders. Once chosen, call the hospital to change it.',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor),
+                      ),
+                    ),
+                  ] else if (_hospital != null)
+                    Row(children: [
+                      Icon(Icons.phone_in_talk_outlined, size: 16, color: subColor),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text('After you pay, the hospital will call you to fix the visit time.',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: subColor)),
+                      ),
+                    ]),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _notesController,
@@ -1440,7 +1574,9 @@ class _SlotPickerSheet extends StatefulWidget {
   final int? hospitalId;
   final String? currentDate;
   final String? currentStart;
-  const _SlotPickerSheet({this.orderId, this.hospitalId, this.currentDate, this.currentStart});
+  /// Off at the hospital: a chosen slot cannot be moved in the app afterwards
+  final bool rescheduleEnabled;
+  const _SlotPickerSheet({this.orderId, this.hospitalId, this.currentDate, this.currentStart, this.rescheduleEnabled = true});
 
   @override
   State<_SlotPickerSheet> createState() => _SlotPickerSheetState();
@@ -1558,7 +1694,12 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
               Text(rescheduling ? 'Reschedule your visit' : 'Choose a visit slot',
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
               const SizedBox(height: 4),
-              Text('You can change it until $_cutoffHours hours before the slot.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+              Text(
+                widget.rescheduleEnabled
+                    ? 'You can change it until $_cutoffHours hours before the slot.'
+                    : 'Once chosen, the slot can only be changed by calling the hospital.',
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+              ),
               const SizedBox(height: 16),
               if (_loading)
                 const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
@@ -1661,6 +1802,315 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Where the lab collects the sample: one of the patient's saved addresses (profile, earlier lab
+/// orders) or a new one, which the device's location can fill in. Pops with the chosen address.
+class _AddressPickerSheet extends StatefulWidget {
+  final _Address? current;
+  const _AddressPickerSheet({this.current});
+
+  @override
+  State<_AddressPickerSheet> createState() => _AddressPickerSheetState();
+}
+
+class _AddressPickerSheetState extends State<_AddressPickerSheet> {
+  bool _loading = true;
+  List<({String label, _Address address})> _saved = [];
+  /// An index into [_saved], or -1 for the new address below
+  int _selected = -1;
+  final _formKey = GlobalKey<FormState>();
+  final Map<String, TextEditingController> _fields = {
+    for (final k in const ['line1', 'line2', 'landmark', 'city', 'state', 'pincode']) k: TextEditingController(),
+  };
+  bool _locating = false;
+  String? _locateMessage;
+  SnackBarAction? _locateAction;
+
+  @override
+  void initState() {
+    super.initState();
+    final current = widget.current;
+    if (current != null) {
+      for (final k in _fields.keys) {
+        _fields[k]!.text = current[k] ?? '';
+      }
+    }
+    _load();
+  }
+
+  @override
+  void dispose() {
+    for (final c in _fields.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String _key(_Address a) => _addressText(a).toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  Future<void> _load() async {
+    try {
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(URLs.labPackageAddressesUrl, data: const {}, options: _auth());
+      final data = (res.data is Map) ? res.data['data'] : null;
+      final saved = <({String label, _Address address})>[];
+      for (final raw in (data is List ? data : const [])) {
+        final address = _addressOf(raw);
+        if (address != null) saved.add((label: (raw['label'] ?? 'Saved').toString(), address: address));
+      }
+      if (!mounted) return;
+      final current = widget.current;
+      setState(() {
+        _saved = saved;
+        _selected = current != null
+            ? saved.indexWhere((s) => _key(s.address) == _key(current))
+            : (saved.isNotEmpty ? 0 : -1);
+      });
+    } catch (_) {
+      // no saved addresses to offer: the patient types one
+      if (mounted) setState(() => _selected = -1);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Fills the new address from the device's location; the house number usually needs a check.
+  Future<void> _useLocation() async {
+    if (_locating) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _locating = true;
+      _selected = -1;
+      _locateMessage = null;
+      _locateAction = null;
+    });
+    void tell(String message, {SnackBarAction? action}) {
+      if (!mounted) return;
+      setState(() {
+        _locateMessage = message;
+        _locateAction = action;
+      });
+    }
+
+    try {
+      final places = await _currentPlaces(tell: tell, purpose: 'fill in your address', fallback: 'type the address');
+      if (places == null || !mounted) return;
+      geo.Placemark? place;
+      for (final p in places) {
+        if (_placePincode(p) != null) {
+          place = p;
+          break;
+        }
+      }
+      if (place == null) {
+        tell('Could not find the address for your location. Type it instead.');
+        return;
+      }
+      String clean(String? s) => (s ?? '').trim();
+      final street = [clean(place.subThoroughfare), clean(place.thoroughfare)].where((s) => s.isNotEmpty).join(' ');
+      final line1 = street.isNotEmpty ? street : (clean(place.street).isNotEmpty ? clean(place.street) : clean(place.name));
+      final city = clean(place.locality).isNotEmpty ? clean(place.locality) : clean(place.subAdministrativeArea);
+      final pin = _placePincode(place)!;
+      setState(() {
+        _fields['line1']!.text = line1;
+        _fields['line2']!.text = clean(place!.subLocality);
+        _fields['city']!.text = city;
+        _fields['state']!.text = clean(place.administrativeArea);
+        _fields['pincode']!.text = pin;
+        _locateMessage = 'Filled from your location. Check the house or flat number before you continue.';
+        _locateAction = null;
+      });
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  void _confirm() {
+    if (_selected >= 0 && _selected < _saved.length) {
+      Navigator.of(context).pop(_saved[_selected].address);
+      return;
+    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop(<String, String>{
+      for (final e in _fields.entries) e.key: e.value.text.trim().replaceAll(RegExp(r'\s+'), ' '),
+    });
+  }
+
+  Widget _field(String key, String label, {bool required = false, TextInputType? type, String? Function(String value)? check}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: _fields[key],
+        keyboardType: type,
+        textCapitalization: type == null ? TextCapitalization.words : TextCapitalization.none,
+        inputFormatters: key == 'pincode' ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)] : null,
+        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
+        decoration: InputDecoration(
+          labelText: required ? '$label *' : label,
+          isDense: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) {
+          final value = (v ?? '').trim();
+          if (required && value.isEmpty) return 'Required';
+          return check?.call(value);
+        },
+      ),
+    );
+  }
+
+  Widget _choice({required bool selected, required VoidCallback onTap, required Widget child, required bool isDark, required Color subColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? _primary : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)), width: selected ? 1.6 : 1),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, size: 20, color: selected ? _primary : subColor),
+              const SizedBox(width: 10),
+              Expanded(child: child),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final typingNew = _selected == -1;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2))),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sample collection address',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+                      const SizedBox(height: 4),
+                      Text('The lab collects your sample here.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                      const SizedBox(height: 14),
+                      if (_loading)
+                        const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
+                      else ...[
+                        for (var i = 0; i < _saved.length; i++)
+                          _choice(
+                            selected: _selected == i,
+                            onTap: () => setState(() => _selected = i),
+                            isDark: isDark,
+                            subColor: subColor,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_saved[i].label,
+                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700, color: textColor)),
+                                const SizedBox(height: 2),
+                                Text(_addressText(_saved[i].address), style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                              ],
+                            ),
+                          ),
+                        _choice(
+                          selected: typingNew,
+                          onTap: () => setState(() => _selected = -1),
+                          isDark: isDark,
+                          subColor: subColor,
+                          child: Text(_saved.isEmpty ? 'Enter the address' : 'Use a new address',
+                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                        ),
+                        if (typingNew) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: _locating ? null : _useLocation,
+                              icon: _locating
+                                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Icon(Icons.my_location, size: 16),
+                              label: const Text('Use my current location', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5)),
+                            ),
+                          ),
+                          if (_locateMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(children: [
+                                Expanded(child: Text(_locateMessage!, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: subColor))),
+                                if (_locateAction != null)
+                                  TextButton(
+                                    onPressed: _locateAction!.onPressed,
+                                    child: Text(_locateAction!.label, style: const TextStyle(fontFamily: appPoppinFont)),
+                                  ),
+                              ]),
+                            ),
+                          const SizedBox(height: 4),
+                          _field('line1', 'House / flat no. and street', required: true),
+                          _field('line2', 'Area / locality'),
+                          _field('landmark', 'Landmark'),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _field('city', 'City', required: true)),
+                              const SizedBox(width: 10),
+                              Expanded(child: _field('state', 'State')),
+                            ],
+                          ),
+                          _field('pincode', 'Pincode', required: true, type: TextInputType.number,
+                              check: (v) => RegExp(r'^[1-9]\d{5}$').hasMatch(v) ? null : 'Enter a 6-digit pincode'),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _confirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('Use this address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

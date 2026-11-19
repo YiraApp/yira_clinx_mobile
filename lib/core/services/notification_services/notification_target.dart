@@ -35,6 +35,18 @@ const _knownRoutes = {
   AppRoutes.appointmentDashboardScreen,
 };
 
+/// Screens only a doctor can use.
+const _doctorOnlyRoutes = {
+  AppRoutes.doctorDashboard,
+  AppRoutes.appointmentDashboardScreen,
+};
+
+/// Whether [route] is a doctor's screen while a patient is signed in. The
+/// server sends doctor routes to patients too (a patient's appointment
+/// reminder carries "/appointmentDashboardScreen"), so never open these as-is.
+bool isDoctorRouteForPatient(String? route, {bool? isDoctor}) =>
+    !(isDoctor ?? _isDoctorSession()) && _doctorOnlyRoutes.contains((route ?? '').trim());
+
 bool _isDoctorSession() {
   final data = GlobalSession.instance.userNotifier.value?.data;
   final role = (data?.latestUserRole ?? '').toLowerCase();
@@ -90,6 +102,11 @@ NotificationTarget? notificationTargetFor({required String type, String? route, 
 
   // The server's own route, when it names a screen this app has.
   final normalised = switch (r) {
+    // Doctors and patients each have their own appointments and home screens,
+    // and the server may name the other role's one.
+    AppRoutes.appointmentDashboardScreen || AppRoutes.patientAppointments =>
+      doctor ? AppRoutes.appointmentDashboardScreen : AppRoutes.patientAppointments,
+    AppRoutes.doctorDashboard || AppRoutes.patientDashboard => doctor ? AppRoutes.doctorDashboard : AppRoutes.patientDashboard,
     '/prescriptions' || '/prescriptionListScreen' => doctor ? null : AppRoutes.userPrescriptionManagement,
     '/diet-plan' => AppRoutes.patientDietPlan,
     '/userTestResultScreen' => doctor ? null : AppRoutes.patientDocuments,

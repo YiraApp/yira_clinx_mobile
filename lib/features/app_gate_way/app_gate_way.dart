@@ -32,6 +32,15 @@ class AppGateway extends StatelessWidget {
   static String? _lastHandledNotificationPayload;
   static DateTime? _lastHandledNotificationTime;
 
+  /// Returns once the splash screen has navigated away (to sign-in or home),
+  /// or after a time limit. Returns at once when the app is already running.
+  static Future<void> _waitForSplashToFinish() async {
+    final deadline = DateTime.now().add(const Duration(seconds: 20));
+    while (NavigationService.currentRoute == AppRoutes.initial && DateTime.now().isBefore(deadline)) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -237,6 +246,13 @@ class AppGateway extends StatelessWidget {
                           return; // User requested external link; do NOT navigate to internal app routes
                         }
 
+                        // A tap that started the app arrives while the splash
+                        // screen is still choosing between sign-in and home.
+                        // Wait for it, so the session check below sees where
+                        // it landed and the screen opened here isn't wiped
+                        // when the splash screen navigates.
+                        await _waitForSplashToFinish();
+
                         // In-app navigation: verify user session
                         final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
                             (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
@@ -302,7 +318,10 @@ class AppGateway extends StatelessWidget {
                           return;
                         }
 
-                        if (targetRoute != null && targetRoute.isNotEmpty && targetRoute.startsWith('/')) {
+                        if (targetRoute != null &&
+                            targetRoute.isNotEmpty &&
+                            targetRoute.startsWith('/') &&
+                            !isDoctorRouteForPatient(targetRoute)) {
                           NavigationService.navigatorKey.currentState?.pushNamed(
                             targetRoute,
                             arguments: itemId,

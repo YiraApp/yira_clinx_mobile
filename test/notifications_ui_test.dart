@@ -117,6 +117,20 @@ void main() {
       expect(patient('HEALTH_TIPS'), isNull);
       expect(patient('OFFER_PROMOTION', 'www.yira.ai/offer')?.url, 'https://www.yira.ai/offer');
     });
+
+    test("a patient never lands on a doctor's screen", () {
+      // The server sends patients the doctor's appointments route with their reminder.
+      expect(patient('APPOINTMENT_REMINDER_10MIN', '/appointmentDashboardScreen')?.route, AppRoutes.patientAppointments);
+      expect(patient('SYSTEM', '/appointmentDashboardScreen')?.route, AppRoutes.patientAppointments);
+      expect(patient('SYSTEM', '/doctorDashboard'), isNull);
+      expect(notificationTargetFor(type: 'SYSTEM', route: '/patientAppointments', isDoctor: true)?.route,
+          AppRoutes.appointmentDashboardScreen);
+
+      expect(isDoctorRouteForPatient('/appointmentDashboardScreen', isDoctor: false), isTrue);
+      expect(isDoctorRouteForPatient('/doctorDashboard', isDoctor: false), isTrue);
+      expect(isDoctorRouteForPatient('/appointmentDashboardScreen', isDoctor: true), isFalse);
+      expect(isDoctorRouteForPatient('/patientAppointments', isDoctor: false), isFalse);
+    });
   });
 
   test('the list loads the next page and stops at the end', () async {

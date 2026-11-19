@@ -9,6 +9,14 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity: FlutterFragmentActivity() {
     private val INTENT_CHANNEL = "com.paccore.yiralife/native_intent"
 
+    // Tapping a push while the app is closed starts this activity with the
+    // push's data as intent extras. Flutter reads an extra named "route" as
+    // the first screen to open, and our pushes carry one (for example
+    // "/appointmentDashboardScreen"). That skipped the splash screen and the
+    // app's own push routing, and opened a doctor's screen for patients.
+    // Always start at the splash screen; the app routes the tapped push itself.
+    override fun getInitialRoute(): String = "/"
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, INTENT_CHANNEL).setMethodCallHandler { call, result ->

@@ -1,4 +1,4 @@
-pluginManagement {
+apluginManagement {
     val flutterSdkPath =
         run {
             val properties = java.util.Properties()
