@@ -18,7 +18,7 @@ void main() {
 
   testWidgets('on by default text names the doctor and the 7 days', (tester) async {
     await tester.pumpWidget(host(value: true, duration: RecordShareConsentCard.defaultDuration));
-    expect(find.text('Give Dr. Asha Rao access to my health data'), findsOneWidget);
+    expect(find.text('Give Dr. Asha Rao access to my profile'), findsOneWidget);
     expect(find.textContaining('for 7 days'), findsOneWidget);
     expect(find.textContaining(r'${'), findsNothing);
     expect(find.text('1 day'), findsOneWidget);
@@ -38,6 +38,6 @@ void main() {
   testWidgets('when off, no durations and the hospital-only note', (tester) async {
     await tester.pumpWidget(host(value: false, duration: '7_DAYS'));
     expect(find.text('7 days'), findsNothing);
-    expect(find.text('They will only see records from their own hospital.'), findsOneWidget);
+    expect(find.text('They will only see their own consultations with you.'), findsOneWidget);
   });
 }

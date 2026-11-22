@@ -230,7 +230,7 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
           PhosphorIcon(icon, size: 15, color: color),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13, FontWeight.w600, _strong)),
+            child: Text(text, style: _ts(13, FontWeight.w600, _strong)),
           ),
         ],
       ),
@@ -334,8 +334,6 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
                           const SizedBox(height: 2),
                           Text(
                             data.medicineName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                             style: _ts(19, FontWeight.w700, _strong, height: 1.25),
                           ),
                         ],
@@ -401,7 +399,7 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
                                   ),
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: Text('Not now', maxLines: 1, style: _ts(15, FontWeight.w600, _strong)),
+                                    child: Text('Not now', style: _ts(15, FontWeight.w600, _strong)),
                                   ),
                                 ),
                               ),
@@ -426,7 +424,7 @@ class _MedicationPopupOverlayState extends State<MedicationPopupOverlay> with Wi
                                       : const PhosphorIcon(PhosphorIconsBold.check, size: 20),
                                   label: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: Text('Mark as taken', maxLines: 1, style: _ts(15, FontWeight.w600, Colors.white)),
+                                    child: Text('Mark as taken', style: _ts(15, FontWeight.w600, Colors.white)),
                                   ),
                                 ),
                               ),

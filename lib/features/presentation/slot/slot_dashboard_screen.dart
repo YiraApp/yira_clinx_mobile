@@ -76,22 +76,9 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 ? ProviderTourMockData.demoSlotDataState
                 : (state is SlotDataState ? state : null);
 
+            // No floating button: it sat on top of the slots' Book buttons. "Set slots" is in the
+            // Consultation Slots heading instead.
             return Scaffold(
-              floatingActionButton: FloatingActionButton(
-                key: (widget.isShellChild && isTourActive) ? ProviderTourController().slotsFabKey : null,
-                backgroundColor: primaryColor,
-                shape: const CircleBorder(),
-                onPressed: () async {
-                  await Navigator.pushNamed(
-                    context,
-                    AppRoutes.smartSlotSchedulerScreen,
-                  );
-                  if (context.mounted) {
-                    context.read<SlotBloc>().add(InitializeSlotsEvent());
-                  }
-                },
-                child: const Icon(IosIcons.event, color: Colors.white),
-              ),
               bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               body: SafeArea(
@@ -388,7 +375,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                 },
               ),
               const SizedBox(height: fieldSpace),
-              _buildTimeSlotHeaderRow(Theme.of(context), isTab),
+              _buildTimeSlotHeaderRow(Theme.of(context), isTab, isTourActive: isTourActive),
               const SizedBox(height: 12),
             ],
           ),
@@ -482,12 +469,11 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                   : ListView.builder(
                       controller: _scrollController,
                       physics: const BouncingScrollPhysics(),
-                      // Bottom room so the floating calendar button never covers the last slot's Book button.
                       padding: const EdgeInsets.fromLTRB(
                         screenHorizontalSpacePadding,
                         0,
                         screenHorizontalSpacePadding,
-                        88,
+                        24,
                       ),
                       itemCount: visibleItems.length,
                       itemBuilder: (context, index) {
@@ -667,17 +653,36 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
     );
   }
 
-  Widget _buildTimeSlotHeaderRow(ThemeData theme, bool isTab) {
+  Widget _buildTimeSlotHeaderRow(ThemeData theme, bool isTab, {bool isTourActive = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        CommonText(
-          "Consultation Slots",
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.038,
-            fontWeight: FontWeight.w600,
+        Expanded(
+          child: CommonText(
+            "Consultation Slots",
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.038,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+        ),
+        const SizedBox(width: 8),
+        // Opens the smart scheduler (weekly shifts, slot length, breaks)
+        TextButton.icon(
+          key: (widget.isShellChild && isTourActive) ? ProviderTourController().slotsFabKey : null,
+          onPressed: () async {
+            await Navigator.pushNamed(context, AppRoutes.smartSlotSchedulerScreen);
+            if (mounted) context.read<SlotBloc>().add(InitializeSlotsEvent());
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: theme.primaryColor,
+            backgroundColor: theme.primaryColor.withValues(alpha: 0.08),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          icon: const Icon(IosIcons.event, size: 18),
+          label: const Text('Set slots', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600)),
         ),
       ],
     );

@@ -68,18 +68,22 @@ class MedicalHistoryRepositoryImpl implements MedicalHistoryRepository {
   }
 
   @override
-  Future<void> createMedicalRecord(Map<String, dynamic> data) async {
+  Future<String?> createMedicalRecord(Map<String, dynamic> data) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final token = currentUser?.data?.accessToken ?? '';
 
-      await _apiClient.account(showSuccessSnack: true).post(
+      final response = await _apiClient.account(showSuccessSnack: true).post(
         URLs.medicalRecordsUrl,
         data: data,
         options: Options(
           headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
         ),
       );
+      final body = response.data;
+      final saved = body is Map ? (body['data'] is Map ? body['data'] as Map : body) : null;
+      final id = (saved?['Id'] ?? saved?['id'])?.toString().trim();
+      return (id == null || id.isEmpty) ? null : id;
     } catch (e, stackTrace) {
       developer.log(
         "Error creating medical record",

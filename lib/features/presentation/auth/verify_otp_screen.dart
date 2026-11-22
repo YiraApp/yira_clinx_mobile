@@ -907,10 +907,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen>
     if (lower.contains('delete')) {
       return raw;
     }
-    // Truncate very long messages
-    if (raw.length > 60) {
-      return '${raw.substring(0, 57)}...';
-    }
     return raw;
   }
 

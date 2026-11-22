@@ -75,14 +75,10 @@ class RecordCardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: DietUi.text(14, FontWeight.w600, RecordUi.ink(isDark), height: 1.25)),
               if ((subtitle ?? '').trim().isNotEmpty) ...[
                 const SizedBox(height: 2),
                 Text(subtitle!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark))),
               ],
             ],
@@ -310,8 +306,6 @@ class RecordMeta extends StatelessWidget {
         const SizedBox(width: 5),
         Flexible(
           child: Text(text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark))),
         ),
       ],
@@ -335,8 +329,6 @@ class RecordSectionTitle extends StatelessWidget {
         const SizedBox(width: 6),
         Expanded(
           child: Text(title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: DietUi.text(13, FontWeight.w600, RecordUi.ink(isDark))),
         ),
       ],

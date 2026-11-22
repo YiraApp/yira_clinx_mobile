@@ -82,13 +82,15 @@ class PatientDietRemoteDataSource {
   }
 
   /// Fetch full plan with all days and meals
-  Future<Map<String, dynamic>?> getPlanDetails(int planId) async {
+  /// [patientId] reads a family member's plan instead of the signed-in patient's.
+  Future<Map<String, dynamic>?> getPlanDetails(int planId, {String? patientId}) async {
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final token = currentUser?.data?.accessToken ?? '';
 
       final response = await _apiClient.account(showSuccessSnack: false).get(
         '${URLs.patientDietPlanDetailsUrl}/$planId',
+        queryParameters: _forPatient(patientId),
         options: Options(
           headers: {
             if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
@@ -108,9 +110,10 @@ class PatientDietRemoteDataSource {
 
   /// The plan's PDF (the same one the doctor's portal prints), as bytes.
   /// Throws on failure; use [dietApiErrorMessage] to show why.
-  Future<List<int>> downloadPlanPdf(int planId) async {
+  Future<List<int>> downloadPlanPdf(int planId, {String? patientId}) async {
     final response = await _apiClient.account(showSuccessSnack: false).get(
           '${URLs.patientDietPlanDetailsUrl}/$planId/pdf',
+          queryParameters: _forPatient(patientId),
           options: _quietOptions().copyWith(responseType: ResponseType.bytes),
         );
     return response.data as List<int>;
@@ -137,6 +140,11 @@ class PatientDietRemoteDataSource {
     throw Exception('Unexpected response while saving the diet plan.');
   }
 
+  Map<String, dynamic>? _forPatient(String? patientId) {
+    final id = (patientId ?? '').trim();
+    return id.isEmpty ? null : {'patientId': id};
+  }
+
   Options _quietOptions() {
     final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
     return Options(
@@ -147,11 +155,13 @@ class PatientDietRemoteDataSource {
     );
   }
 
-  /// Every plan prescribed to the signed-in patient, the active one first.
+  /// Every plan prescribed to the signed-in patient (or to the family member
+  /// [patientId]), the active one first.
   /// Throws on failure; use [dietApiErrorMessage] to show why.
-  Future<List<PatientDietPlanSummary>> getMyPlans() async {
+  Future<List<PatientDietPlanSummary>> getMyPlans({String? patientId}) async {
     final response = await _apiClient.account(showSuccessSnack: false).get(
           URLs.patientDietMyPlansUrl,
+          queryParameters: _forPatient(patientId),
           options: _quietOptions(),
         );
     final data = response.data;

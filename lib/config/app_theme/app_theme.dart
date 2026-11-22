@@ -284,6 +284,8 @@ class AppTheme {
       InputDecorationTheme(
         filled: true,
         fillColor: fill,
+        // A long hint wraps onto more lines instead of ending in "…".
+        hintMaxLines: 3,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(fieldBorderRadius),
           borderSide: BorderSide(color: border),

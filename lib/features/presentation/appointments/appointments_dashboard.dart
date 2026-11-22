@@ -889,7 +889,7 @@ class _AppointmentDashboardScreenState extends State<AppointmentDashboardScreen>
                             color: theme.colorScheme.onSurface,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Search patients...",
+                            hintText: "Search patients",
                             hintStyle: TextStyle(
                               decoration: TextDecoration.none,
                               fontFamily: appPoppinFont,

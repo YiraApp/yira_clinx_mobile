@@ -17,7 +17,10 @@ class _FakeRecords implements MedicalHistoryRepository {
   final updated = <String, Map<String, dynamic>>{};
 
   @override
-  Future<void> createMedicalRecord(Map<String, dynamic> data) async => created.add(data);
+  Future<String?> createMedicalRecord(Map<String, dynamic> data) async {
+    created.add(data);
+    return null;
+  }
   @override
   Future<void> updateMedicalRecord(String id, Map<String, dynamic> data) async => updated[id] = data;
   @override

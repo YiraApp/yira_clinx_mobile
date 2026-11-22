@@ -73,7 +73,7 @@ Map<String, dynamic> _planDetails() {
 
 class _FakePatientDiet extends PatientDietRemoteDataSource {
   @override
-  Future<List<PatientDietPlanSummary>> getMyPlans() async => [
+  Future<List<PatientDietPlanSummary>> getMyPlans({String? patientId}) async => [
         PatientDietPlanSummary.fromJson({
           'id': 7,
           'planName': 'Diabetes Friendly Vegetarian Plan',
@@ -127,7 +127,7 @@ class _FakePatientDiet extends PatientDietRemoteDataSource {
       ];
 
   @override
-  Future<Map<String, dynamic>?> getPlanDetails(int planId) async => _planDetails();
+  Future<Map<String, dynamic>?> getPlanDetails(int planId, {String? patientId}) async => _planDetails();
 
   @override
   Future<List<DietMealLog>> getMealLogs(int planId, DateTime from, DateTime to) async => [

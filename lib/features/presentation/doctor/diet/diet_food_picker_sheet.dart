@@ -820,8 +820,6 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                     ),
                     Text(
                       subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: _ts(11.5, FontWeight.w500, _textSecondary(isDark)),
                     ),
                   ],
@@ -965,13 +963,11 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   children: [
                     Text(
                       label,
-                      maxLines: 2,
                       softWrap: true,
                       style: _ts(13, FontWeight.w600, color),
                     ),
                     Text(
                       subtitle,
-                      maxLines: 2,
                       softWrap: true,
                       style: _ts(11, FontWeight.w400, color.withValues(alpha: 0.7)),
                     ),
@@ -1457,9 +1453,8 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             ),
 
           // 6. Actions
-          SizedBox(
-            width: double.infinity,
-            height: 50,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: double.infinity, minHeight: 50),
             child: ElevatedButton(
               onPressed: _isSaving ? null : () => _submit(addAnother: false),
               style: ElevatedButton.styleFrom(
@@ -1482,8 +1477,6 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                           : _saveToMyList
                               ? 'Add & Save to My List'
                               : 'Add to ${widget.slotName}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontFamily: appPoppinFont, fontSize: 14.5, fontWeight: FontWeight.w700),
                     ),
             ),

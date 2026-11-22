@@ -93,7 +93,6 @@ class PermissionsScreen extends StatelessWidget {
                                   fontFamily: appPoppinFont,
                                   fontSize: referenceWidth * 0.04,
                                 ),
-                                maxLines: 1,
                               ),
                               const SizedBox(height: 10),
                               CommonText(
@@ -106,7 +105,6 @@ class PermissionsScreen extends StatelessWidget {
                                       ?.withOpacity(0.65),
                                   height: 1.4,
                                 ),
-                                maxLines: 4,
                                 softWrap: true,
                               ),
 

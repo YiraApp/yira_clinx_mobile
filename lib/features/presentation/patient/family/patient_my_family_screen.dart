@@ -1,4 +1,6 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -21,6 +23,7 @@ import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/use_cases/config_use_case.dart';
 import '../appointments/patient_book_appointment_sheet.dart';
 import '../documents/patient_documents_screen.dart';
+import '../documents/report_upload_sheet.dart';
 import '../../doctor/profile/widgets/profile_switcher_sheet.dart';
 import 'family_link_api.dart';
 import 'family_links_section.dart';
@@ -982,8 +985,6 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                                                     fontSize: 12,
                                                     color: selectedDob != null ? textColor : (isDark ? Colors.white38 : Colors.grey[400]),
                                                   ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ),
                                             ],
@@ -1382,9 +1383,10 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
           icon: PhosphorIcon(PhosphorIconsBold.caretLeft, color: textColor, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: FitText(
           'My Family',
           style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 19 : 17, fontWeight: FontWeight.w700, color: textColor),
+          maxLines: 2,
         ),
       ),
       // One button for everything: add a member, link a Yira user, or show the family code
@@ -1524,18 +1526,28 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
     );
   }
 
-  /// Records belong to the person they're for, so this switches to [profile] first
-  /// (unless it's already the one in use) and then opens their records to upload.
-  Future<void> _uploadRecordsFor(ProfileEntity profile) async {
+  /// Your own records open with the upload sheet. For a family member the report is
+  /// uploaded straight to their records: the profile in use does not change.
+  Future<void> _uploadRecordsFor(ProfileEntity profile, String name) async {
     final id = (profile.id ?? '').trim();
     final currentId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim();
     if (id.isEmpty || id.toLowerCase() == currentId.toLowerCase()) {
       await Navigator.push(context, MaterialPageRoute(builder: (_) => const PatientDocumentsScreen(startUpload: true)));
       return;
     }
-    PatientDocumentsScreen.openAfterProfileSwitch();
-    final switched = await ProfileSwitcherSheet.switchToFamilyProfile(context, id);
-    if (!switched) PatientDocumentsScreen.cancelOpenAfterProfileSwitch();
+    final result = await ReportUploadSheet.show(context, forPatientId: id, forName: name);
+    if (result == null || !mounted) return;
+    final aiNote = result.analysisError != null
+        ? ' ${result.analysisError!.message}'
+        : (result.analysisPending || result.analysis != null)
+            ? ' Switch to $name to see the AI insights.'
+            : '';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('"${result.fileName}" saved to $name\'s records.$aiNote'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget _buildMemberCard(ProfileEntity profile, bool isDark, bool isTab, String primaryPhone) {
@@ -1603,8 +1615,6 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                     Flexible(
                       child: Text(
                         pName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 15.5 : 14.5, fontWeight: FontWeight.w700, color: textColor),
                       ),
                     ),
@@ -1620,7 +1630,7 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
                 ),
                 if (meta.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(meta.join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted)),
+                  Text(meta.join(' · '), style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted)),
                 ],
                 if (showPhone) ...[
                   const SizedBox(height: 2),
@@ -1635,75 +1645,59 @@ class _PatientMyFamilyScreenState extends State<PatientMyFamilyScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          if (linked != null && _canManageLinks) ...[
-            IconButton(
-              tooltip: 'Remove from family',
-              onPressed: () => _confirmRemoveLink(linked, pName),
-              icon: PhosphorIcon(PhosphorIconsBold.linkBreak, size: 17, color: muted),
-              visualDensity: VisualDensity.compact,
-            ),
-            const SizedBox(width: 2),
-          ],
-        ],
-      ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _memberAction(
-                  isDark: isDark,
-                  icon: PhosphorIconsBold.calendarPlus,
-                  label: 'Book',
-                  semantics: 'Book an appointment for $pName',
-                  onPressed: () => PatientBookAppointmentSheet.show(
+          const SizedBox(width: 4),
+          PopupMenuButton<String>(
+            icon: Icon(IosIcons.more_vert_rounded, size: 22, color: muted),
+            tooltip: 'Options for $pName',
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            color: isDark ? const Color(0xFF232323) : Colors.white,
+            elevation: 6,
+            onSelected: (action) {
+              switch (action) {
+                case 'book':
+                  PatientBookAppointmentSheet.show(
                     context,
                     targetProfile: profile,
                     patientName: pName,
                     patientPhone: profile.phoneNumber,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _memberAction(
-                  isDark: isDark,
-                  icon: PhosphorIconsBold.cloudArrowUp,
-                  label: 'Upload records',
-                  semantics: isPrimaryMember ? 'Upload your records' : 'Switch to $pName and upload their records',
-                  onPressed: () => _uploadRecordsFor(profile),
-                ),
-              ),
+                  );
+                case 'upload':
+                  _uploadRecordsFor(profile, pName);
+                case 'switch':
+                  ProfileSwitcherSheet.switchToFamilyProfile(context, pId);
+                case 'unlink':
+                  if (linked != null) _confirmRemoveLink(linked, pName);
+              }
+            },
+            itemBuilder: (_) => [
+              _menuItem('book', PhosphorIconsBold.calendarPlus, 'Book appointment', isDark),
+              _menuItem('upload', PhosphorIconsBold.cloudArrowUp, 'Upload records', isDark),
+              // Every profile except the one in use can be switched to.
+              if (pId.isNotEmpty && pId.toLowerCase() != currentUserId)
+                _menuItem('switch', HugeIcons.userSwitch, 'Switch profile', isDark),
+              if (linked != null && _canManageLinks)
+                _menuItem('unlink', PhosphorIconsBold.linkBreak, 'Remove from family', isDark, color: const Color(0xFFDC2626)),
             ],
           ),
+        ],
+      ),
         ],
       ),
     );
   }
 
-  Widget _memberAction({
-    required bool isDark,
-    required IconData icon,
-    required String label,
-    required String semantics,
-    required VoidCallback onPressed,
-  }) {
-    return Semantics(
-      label: semantics,
-      button: true,
-      excludeSemantics: true,
-      child: FilledButton.tonalIcon(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: _primaryBlue.withValues(alpha: isDark ? 0.22 : 0.1),
-          foregroundColor: _primaryBlue,
-          minimumSize: const Size(0, 40),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        icon: PhosphorIcon(icon, size: 16, color: _primaryBlue),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700)),
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label, bool isDark, {Color? color}) {
+    final fg = color ?? (isDark ? Colors.white : const Color(0xFF121212));
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          PhosphorIcon(icon, size: 18, color: color ?? _primaryBlue),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w500, color: fg)),
+          ),
+        ],
       ),
     );
   }

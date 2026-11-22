@@ -229,8 +229,6 @@ class AppointmentCard extends StatelessWidget {
                                              fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.031,
                                              color: theme.primaryColor,
                                            ),
-                                           maxLines: 1,
-                                           overflow: TextOverflow.ellipsis,
                                          ),
                                        ),
                                      ],

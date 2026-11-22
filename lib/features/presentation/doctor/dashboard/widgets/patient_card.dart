@@ -100,8 +100,6 @@ class PatientCard extends StatelessWidget {
                               children: [
                                 Text(
                                   patient.name.isNotEmpty ? patient.name : "Unnamed Patient",
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontWeight: FontWeight.w600,
@@ -116,8 +114,6 @@ class PatientCard extends StatelessWidget {
                                     Flexible(
                                       child: Text(
                                         "${patient.id.isNotEmpty ? patient.id : 'PT-ID'} • ${patient.age > 0 ? '${patient.age}y' : 'N/A'} • ${patient.gender.isNotEmpty ? patient.gender : 'Gender N/A'}",
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: isTab ? 12.5 : 11.5,
@@ -269,8 +265,6 @@ class PatientCard extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 11.5 : 10.5,
@@ -307,8 +301,6 @@ class PatientCard extends StatelessWidget {
           Flexible(
             child: Text(
               allergy,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 11 : 10,

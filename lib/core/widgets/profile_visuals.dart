@@ -180,8 +180,6 @@ class ProfileInfoItem extends StatelessWidget {
         Flexible(
           child: Text(
             text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 12.5 : 11.5, fontWeight: FontWeight.w500, color: color),
           ),
         ),

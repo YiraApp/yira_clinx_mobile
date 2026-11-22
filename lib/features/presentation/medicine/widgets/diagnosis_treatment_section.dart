@@ -125,7 +125,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
-                hintText: "Enter clinical diagnosis...",
+                hintText: "Clinical diagnosis",
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
@@ -187,7 +187,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
-                hintText: "Enter clinical consultation notes, findings, and observations...",
+                hintText: "Consultation notes, findings and observations",
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
@@ -235,7 +235,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
-                hintText: "Enter recommended treatment, lifestyle care, or follow-up plans...",
+                hintText: "Treatment, lifestyle care or follow-up plan",
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,

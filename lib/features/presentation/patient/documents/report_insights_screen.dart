@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:math' as math;
@@ -381,8 +382,6 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                                     Flexible(
                                       child: Text(
                                         m.$2,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                         style: DietUi.text(10.5, FontWeight.w600, Colors.white),
                                       ),
                                     ),
@@ -489,7 +488,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                 ],
               ),
               const SizedBox(height: 2),
-              Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
+              Text(label, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
             ],
           ),
         ),
@@ -526,10 +525,9 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                 Icon(icon, size: 15, color: selected ? DietUi.blue : DietUi.muted(isDark)),
                 const SizedBox(width: 5),
                 Flexible(
-                  child: Text(
+                  child: FitText(
                     label,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: DietUi.text(12, selected ? FontWeight.w700 : FontWeight.w500, selected ? DietUi.strong(isDark) : DietUi.muted(isDark)),
                   ),
                 ),
@@ -736,7 +734,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
               if (c.timeframe.isNotEmpty && c.timeframe.toLowerCase() != urgency.label.toLowerCase()) ...[
                 Text('  ·  ', style: DietUi.text(12, FontWeight.w500, DietUi.hint(isDark))),
                 Flexible(
-                  child: Text(c.timeframe, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(12, FontWeight.w500, DietUi.muted(isDark))),
+                  child: Text(c.timeframe, style: DietUi.text(12, FontWeight.w500, DietUi.muted(isDark))),
                 ),
               ],
             ],
@@ -1470,7 +1468,7 @@ class _ReportInsightsScreenState extends State<ReportInsightsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => PatientBookAppointmentSheet.show(context),
                       icon: const Icon(IosIcons.calendar_month_rounded, size: 18),
-                      label: Text('Book appointment', maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(13, FontWeight.w700, Colors.white)),
+                      label: Text('Book appointment', style: DietUi.text(13, FontWeight.w700, Colors.white)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: bookColor,
                         foregroundColor: Colors.white,

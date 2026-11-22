@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/features/presentation/patient/wallet/patient_policies_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -265,6 +266,7 @@ class AppRouter {
             child: AddNewAppointmentScreen(
               initialPatientName: (appointmentArgs?['patientName'] ?? appointmentArgs?['name'])?.toString(),
               initialPatientPhone: (appointmentArgs?['patientPhone'] ?? appointmentArgs?['phone'] ?? appointmentArgs?['phoneNumber'])?.toString(),
+              initialPatientCountryCode: appointmentArgs?['countryCode']?.toString(),
               initialPatientId: (appointmentArgs?['patientId'] ?? appointmentArgs?['patientUserId'] ?? appointmentArgs?['id'])?.toString(),
               initialDoctorId: (appointmentArgs?['doctorId'] ?? appointmentArgs?['doctor']?['doctorId'] ?? appointmentArgs?['doctor']?['id'])?.toString(),
               initialDoctorName: (appointmentArgs?['doctorName'] ?? appointmentArgs?['doctor']?['name'])?.toString(),
@@ -566,7 +568,7 @@ class AppRouter {
           return _guardedRoute(
             settings: settings,
             builder: (_) => Scaffold(
-              appBar: AppBar(title: const Text('My Family'), leading: const BackButton()),
+              appBar: AppBar(title: const FitText('My Family', maxLines: 2), leading: const BackButton()),
               body: const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24.0),

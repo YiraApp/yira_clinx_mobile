@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -493,8 +494,6 @@ class _PatientDoctorSuggestionsScreenState
                               fontWeight: FontWeight.w600,
                               color: _primaryBlue,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const Icon(
@@ -605,7 +604,7 @@ class _PatientDoctorSuggestionsScreenState
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            FitText(
               "Doctor Suggestions",
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -613,8 +612,9 @@ class _PatientDoctorSuggestionsScreenState
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
+              maxLines: 2,
             ),
-            Text(
+            FitText(
               "Personalized advice & lifestyle guidance",
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -622,6 +622,7 @@ class _PatientDoctorSuggestionsScreenState
                 fontWeight: FontWeight.normal,
                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
               ),
+              maxLines: 2,
             ),
           ],
         ),
@@ -690,7 +691,7 @@ class _PatientDoctorSuggestionsScreenState
                         color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       decoration: InputDecoration(
-                        hintText: "Search suggestions or doctor...",
+                        hintText: "Search suggestions or doctor",
                         hintStyle: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 13,
@@ -994,8 +995,6 @@ class _PatientDoctorSuggestionsScreenState
                 // Description
                 Text(
                   description,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
@@ -1047,8 +1046,6 @@ class _PatientDoctorSuggestionsScreenState
                                 fontWeight: FontWeight.w600,
                                 color: _primaryBlue,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 4),

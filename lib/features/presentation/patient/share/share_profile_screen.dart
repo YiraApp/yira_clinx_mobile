@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -133,7 +134,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
     if (doctor.consentId == null) return;
     final ok = await _confirm(
       title: 'Stop sharing with ${doctor.name}?',
-      message: 'They will only see records from their own hospital, as for any patient who visits.',
+      message: 'They will only see their own consultations with you, not your other visits, fitness or vitals.',
       confirm: 'Stop sharing',
     );
     if (!ok || !mounted) return;
@@ -438,7 +439,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
           icon: PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20, color: _text(isDark)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Share my profile', style: _ts(17, FontWeight.w700, _text(isDark))),
+        title: FitText('Share my profile', style: _ts(17, FontWeight.w700, _text(isDark)), maxLines: 2),
       ),
       body: RefreshIndicator(
         color: _blue,
@@ -553,7 +554,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
         _note(
           isDark,
           PhosphorIconsBold.info,
-          "Doctors at a hospital you've visited can already see the records made there. Share your profile so a doctor can also see your history from other hospitals.",
+          "Doctors see only their own consultations with you. Share your profile so a doctor can also see your history from other doctors and hospitals.",
         ),
         const SizedBox(height: 12),
         Material(
@@ -636,9 +637,9 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(14, FontWeight.w700, _text(isDark))),
+                Text(d.name, style: _ts(14, FontWeight.w700, _text(isDark))),
                 if (sub.isNotEmpty)
-                  Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  Text(sub,
                       style: _ts(11.5, FontWeight.w500, d.hasAccess ? _green : _muted(isDark))),
               ],
             ),
@@ -758,8 +759,7 @@ class _ShareProfileScreenState extends State<ShareProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l.label ?? 'Web link · made ${l.createdAt == null ? '' : _date.format(l.createdAt!)}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13.5, FontWeight.w700, _text(isDark))),
+                  Text(l.label ?? 'Web link · made ${l.createdAt == null ? '' : _date.format(l.createdAt!)}', style: _ts(13.5, FontWeight.w700, _text(isDark))),
                   Text(state, style: _ts(11.5, FontWeight.w600, l.isActive ? _green : _muted(isDark))),
                   Text(opened, style: _ts(11.5, FontWeight.w400, _muted(isDark))),
                 ],

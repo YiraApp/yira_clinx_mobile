@@ -303,8 +303,6 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF2563EB),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const Icon(
@@ -495,8 +493,6 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                                 fontWeight: FontWeight.w700,
                                 color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -529,8 +525,6 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                           height: 1.35,
                           color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (filePath != null && filePath.isNotEmpty) ...[
                         const SizedBox(height: 6),

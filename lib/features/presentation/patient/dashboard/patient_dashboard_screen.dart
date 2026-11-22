@@ -27,6 +27,7 @@ import '../../../../core/utils/utils.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import '../documents/patient_documents_screen.dart';
+import '../share/share_profile_screen.dart';
 import '../offers/widgets/offer_banner_carousel.dart';
 import '../offers/widgets/offer_popup_ad_dialog.dart';
 import '../../../../core/widgets/notification_badge_icon.dart';
@@ -148,11 +149,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     NotificationBadgeService.instance.syncUnreadCount();
     FitnessSyncService.instance.init();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Arrived here from My Family's "Upload records": go straight to this person's records.
-      if (PatientDocumentsScreen.takeOpenAfterProfileSwitch()) {
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const PatientDocumentsScreen(startUpload: true)));
-        return;
-      }
       PatientTourController().startDashboardTour(context: context);
       OfferPopupAdDialog.showIfAvailable(context);
     });
@@ -595,7 +591,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Quick services, each in its own soft tile. My Vitals lives on My Profile.
+                                  // Quick services, each in its own soft tile.
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(0, 4, 0, 4),
                                     child: _buildServiceGrid(
@@ -632,6 +628,16 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                             context,
                                             MaterialPageRoute(builder: (_) => const PatientDocumentsScreen()),
                                           ),
+                                        ),
+                                        _DashboardService(
+                                          title: 'My Vitals',
+                                          icon: HugeIcons.cardiogram02,
+                                          onTap: () async {
+                                            await Navigator.pushNamed(context, AppRoutes.patientVitalsTracking);
+                                            if (mounted) {
+                                              _overviewBloc?.add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId));
+                                            }
+                                          },
                                         ),
                                           // Family members sharing the main number have no fitness of their own
                                           if (GlobalSession.instance.currentProfileHasOwnNumber)
@@ -685,6 +691,20 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                             await Navigator.pushNamed(context, AppRoutes.patientQuestionnaires);
                                             _loadQuestionnairesDue();
                                           },
+                                        ),
+                                        _DashboardService(
+                                          title: 'Suggestions',
+                                          icon: HugeIcons.doctor01,
+                                          badgeIcon: HugeIcons.bubbleChat,
+                                          onTap: () => Navigator.pushNamed(context, AppRoutes.patientDoctorSuggestions),
+                                        ),
+                                        _DashboardService(
+                                          title: 'Share Profile',
+                                          icon: HugeIcons.share08,
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (_) => const ShareProfileScreen()),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -1261,8 +1281,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   ? (isDark ? const Color(0xFF34D399) : const Color(0xFF059669))
                                   : (isDark ? Colors.white60 : const Color(0xFF64748B)),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -1294,8 +1312,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                         color: isDark ? Colors.white : const Color(0xFF121212),
                                         letterSpacing: -0.2,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
@@ -1468,8 +1484,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                             fontWeight: FontWeight.w500,
                             color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 3),
 
@@ -1491,8 +1505,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                                   fontWeight: FontWeight.w500,
                                   color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -1508,8 +1520,6 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
                               fontWeight: FontWeight.w600,
                               color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ],
@@ -1841,7 +1851,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
   }
 
   Widget _buildServiceGrid({required bool isTab, required bool isDark, required List<_DashboardService> services}) {
-    final labelStyle = TextStyle(
+    final baseLabelStyle = TextStyle(
       fontFamily: appPoppinFont,
       fontSize: isTab ? 12.5 : 11,
       fontWeight: FontWeight.w600,
@@ -1855,11 +1865,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             ? services.length.clamp(4, 8)
             : (services.length <= 6 || services.length == 9 ? 3 : 4);
         final iconSize = isTab ? 62.0 : (perRow == 3 ? 54.0 : 50.0);
+        var labelStyle = baseLabelStyle;
 
         // Each column is as wide as its widest icon or label. The columns are then spread
         // with equal gaps, so the outer columns line up with the Appointments row below
         // (the first starts at its left edge, the last ends at "View All").
         final columnWidths = List<double>.filled(perRow, iconSize);
+        var widestLabel = 0.0;
         for (var i = 0; i < services.length; i++) {
           final painter = TextPainter(
             text: TextSpan(text: services[i].title, style: labelStyle),
@@ -1869,15 +1881,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
           )..layout();
           final column = i % perRow;
           columnWidths[column] = math.max(columnWidths[column], painter.width + 4);
+          widestLabel = math.max(widestLabel, painter.width);
         }
         // Icon centres evenly spaced between the two outer columns, so every gap is the same.
         final width = constraints.maxWidth;
         final step = perRow > 1 ? (width - columnWidths.first / 2 - columnWidths.last / 2) / (perRow - 1) : 0.0;
         var gaps = [for (var c = 0; c + 1 < perRow; c++) step - (columnWidths[c] + columnWidths[c + 1]) / 2];
-        // Labels too long to fit side by side: fall back to equal columns (labels shrink).
+        // Labels too long to fit side by side: equal columns, and every label shrinks to the
+        // same size so the widest one fits (one label smaller than the rest looks off).
         if (gaps.any((g) => g < 4)) {
           columnWidths.fillRange(0, perRow, width / perRow);
           gaps = List.filled(perRow - 1, 0);
+          final scale = widestLabel > 0 ? math.min(1.0, (width / perRow - 4) / widestLabel) : 1.0;
+          if (scale < 1) labelStyle = labelStyle.copyWith(fontSize: labelStyle.fontSize! * scale);
         }
 
         final rows = <List<_DashboardService>>[
@@ -1950,7 +1966,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
             // One line per label, all the same size; only an unusually long one shrinks.
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(service.title, textAlign: TextAlign.center, maxLines: 1, style: labelStyle),
+              child: Text(service.title, textAlign: TextAlign.center, style: labelStyle),
             ),
           ],
         ),

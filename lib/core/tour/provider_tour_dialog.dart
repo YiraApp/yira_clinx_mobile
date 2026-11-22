@@ -1231,8 +1231,6 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             ),
             Text(
               title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 10.5 : 9.5,
@@ -1242,8 +1240,6 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             ),
             Text(
               sub,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 9.5 : 8.5,

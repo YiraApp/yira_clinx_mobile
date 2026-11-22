@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
@@ -135,8 +136,6 @@ class _SnomedSearchPickerState extends State<SnomedSearchPicker> {
                           ? (isDark ? Colors.white : Colors.black87)
                           : Colors.grey.shade400,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (_controller.text.isNotEmpty)
@@ -285,7 +284,7 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
               color: isDark ? Colors.white : Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: FitText(
           widget.title,
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -293,6 +292,7 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : Colors.black87,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -315,7 +315,7 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                 color: isDark ? Colors.white : Colors.black87,
               ),
               decoration: InputDecoration(
-                hintText: 'Search (e.g. Paracetamol, Headache)...',
+                hintText: 'Search, e.g. Paracetamol',
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 13,
@@ -405,8 +405,6 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                                 fontWeight: FontWeight.w600,
                                 color: theme.primaryColor,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -546,8 +544,6 @@ class _ResultTile extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (item.semanticTag != null) ...[
                         const SizedBox(height: 4),
@@ -928,7 +924,7 @@ class _SnomedMultiFullScreenSearchState
               size: 20, color: isDark ? Colors.white : Colors.black87),
           onPressed: () => Navigator.pop(context, _selectedSet.toList()),
         ),
-        title: Text(
+        title: FitText(
           "Select ${widget.title}",
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -936,6 +932,7 @@ class _SnomedMultiFullScreenSearchState
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : Colors.black87,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -958,7 +955,7 @@ class _SnomedMultiFullScreenSearchState
                 color: isDark ? Colors.white : Colors.black87,
               ),
               decoration: InputDecoration(
-                hintText: 'Search ${widget.title.toLowerCase()} (SNOMED CT)...',
+                hintText: 'Search ${widget.title.toLowerCase()}',
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 13,

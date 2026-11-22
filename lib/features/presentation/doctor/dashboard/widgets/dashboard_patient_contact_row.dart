@@ -28,7 +28,6 @@ class DashBoardPatientContactRow extends StatelessWidget {
             style:  TextStyle(fontFamily: appPoppinFont,
               fontWeight: FontWeight.w500,
               fontSize: isTab? displayWidth(context) * 0.018:displayWidth(context)*0.032,),
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

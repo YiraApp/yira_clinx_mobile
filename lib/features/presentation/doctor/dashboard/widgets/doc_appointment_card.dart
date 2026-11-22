@@ -165,88 +165,32 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
+                        // Name, with the consultation mode flowing after it (or under it when long)
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Flexible(
-                              child: Text(
-                                widget.name,
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: widget.isTab
-                                      ? width * 0.017
-                                      : width * 0.035,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white
-                                      : const Color(0xFF121212),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            Text(
+                              widget.name,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: widget.isTab ? width * 0.017 : width * 0.035,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
-                            const SizedBox(width: 6),
                             _buildConsultationModeBadge(isDark, width),
                           ],
                         ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Icon(
-                              IosIcons.schedule_rounded,
-                              size: 12,
-                              color: isDark
-                                  ? Colors.white38
-                                  : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.timeOrDate,
-                              style: TextStyle(
-                                fontFamily: appPoppinFont,
-                                fontSize: widget.isTab
-                                    ? width * 0.013
-                                    : width * 0.026,
-                                fontWeight: FontWeight.w500,
-                                color: isDark
-                                    ? Colors.white54
-                                    : const Color(0xFF64748B),
-                              ),
-                            ),
-                            if (widget.subtitle.isNotEmpty) ...[
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 6),
-                                child: Container(
-                                  width: 3,
-                                  height: 3,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white24
-                                        : const Color(0xFFCBD5E1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  widget.subtitle,
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: widget.isTab
-                                        ? width * 0.013
-                                        : width * 0.026,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? Colors.white54
-                                        : const Color(0xFF64748B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                        const SizedBox(height: 4),
+                        // When, then where, each on its own line: side by side the hospital got a
+                        // sliver of space and its name broke mid-word ("Hosp ital").
+                        _metaLine(isDark, width, IosIcons.schedule_rounded, widget.timeOrDate),
+                        if (widget.subtitle.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          _metaLine(isDark, width, IosIcons.location_on_outlined, widget.subtitle),
+                        ],
                       ],
                     ),
                   ),
@@ -388,8 +332,6 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                 ? Colors.white60
                                 : const Color(0xFF64748B),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -568,8 +510,6 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                           fontWeight: FontWeight.w600,
                                           color: badgeText,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -687,6 +627,32 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
           ),
         ),
       ),
+    );
+  }
+
+  /// One line of the card's details (time, hospital): a small icon and text that wraps by word.
+  Widget _metaLine(bool isDark, double width, IconData icon, String text) {
+    final color = isDark ? Colors.white54 : const Color(0xFF64748B);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 12, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontFamily: appPoppinFont,
+              fontSize: widget.isTab ? width * 0.013 : width * 0.028,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -82,8 +82,6 @@ class WelcomeCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         specialty,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: fontFamily,
                           fontSize: isTab ? textWidth * 0.013 : 12,

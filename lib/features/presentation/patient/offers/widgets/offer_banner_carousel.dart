@@ -439,8 +439,6 @@ class _BannerCardState extends State<_BannerCard> {
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -549,8 +547,6 @@ class _BannerCardState extends State<_BannerCard> {
                                     ),
                                   ],
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             if (banner.showDescription && banner.description.trim().isNotEmpty) ...[
                               if (banner.showTitle && banner.title.trim().isNotEmpty)
@@ -571,8 +567,6 @@ class _BannerCardState extends State<_BannerCard> {
                                     ),
                                   ],
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ],

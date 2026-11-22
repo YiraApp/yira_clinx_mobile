@@ -140,7 +140,6 @@ class LanguageSettingsScreen extends StatelessWidget {
                           fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.032,
                           height: 1.4,
                         ),
-                        maxLines: 5,
                         softWrap: true,
                       ),
                     ],

@@ -211,10 +211,12 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
         }
       }
     } catch (e) {
+      final body = e is DioException ? e.response?.data : null;
+      final reason = body is Map ? body['message']?.toString() : null;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error: $e"),
+            content: Text(reason ?? "Couldn't send the suggestion. Please try again."),
             backgroundColor: Colors.red,
           ),
         );
@@ -571,8 +573,6 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                                   fontWeight: FontWeight.w600,
                                   color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               if (_selectedFileSize != null)
                                 Text(

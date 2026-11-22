@@ -91,8 +91,6 @@ class ActiveProfileChip extends StatelessWidget {
                     children: [
                       Text(
                         name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 15 : 14,
@@ -112,8 +110,6 @@ class ActiveProfileChip extends StatelessWidget {
                             if (profileCount > 1) TextSpan(text: '  ·  $profileCount profiles') else if (note != null) TextSpan(text: '  ·  $note'),
                           ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 11 : 10.5, height: 1.25, color: muted),
                       ),
                     ],

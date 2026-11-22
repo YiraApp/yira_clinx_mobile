@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -139,10 +140,9 @@ class DocMetricCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    FitText(
                       title,
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 14 : 12.5,
@@ -165,10 +165,9 @@ class DocMetricCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2.0),
                     ] else
-                      Text(
+                      FitText(
                         subtext,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 12 : 10.5,

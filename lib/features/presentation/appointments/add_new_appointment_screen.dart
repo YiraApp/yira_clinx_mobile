@@ -1,8 +1,10 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
@@ -44,6 +46,9 @@ class PatientOption {
   final int pastAppointmentsCount;
   final String? lastVisitDate;
 
+  /// Country calling code of [phone], digits only ("91", "61"); null when the server didn't say.
+  final String? countryCode;
+
   const PatientOption({
     required this.id,
     this.userId = '',
@@ -58,6 +63,7 @@ class PatientOption {
     this.accountType = "Independent",
     this.pastAppointmentsCount = 0,
     this.lastVisitDate,
+    this.countryCode,
   });
 
   String get displayAge {
@@ -203,6 +209,9 @@ class TreatmentPlanOption {
 class AddNewAppointmentScreen extends StatefulWidget {
   final String? initialPatientName;
   final String? initialPatientPhone;
+
+  /// Country calling code of [initialPatientPhone], digits only; India when not given.
+  final String? initialPatientCountryCode;
   final String? initialPatientId;
   final String? initialDoctorId;
   final String? initialDoctorName;
@@ -215,6 +224,7 @@ class AddNewAppointmentScreen extends StatefulWidget {
     super.key,
     this.initialPatientName,
     this.initialPatientPhone,
+    this.initialPatientCountryCode,
     this.initialPatientId,
     this.initialDoctorId,
     this.initialDoctorName,
@@ -242,6 +252,15 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   // Matching Accounts by Phone
   List<PatientOption> _matchingAccountsList = [];
+
+  /// Country calling code of the number in the phone box, digits only. Yira is used outside
+  /// India too, so the box takes any country: India keeps its 10-digit rule, other countries
+  /// 6 to 14 digits (an Australian mobile is 9).
+  String _countryCode = '91';
+  bool get _isIndianNumber => _countryCode == '91';
+  int get _maxPhoneDigits => _isIndianNumber ? 10 : 14;
+  bool _isFullPhone(String digits) =>
+      _isIndianNumber ? digits.length == 10 : (digits.length >= 6 && digits.length <= 14);
   bool _isLoadingAccounts = false;
   bool _hasSearchedPhone = false;
 
@@ -303,7 +322,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   Map<String, dynamic>? _selectedDoctorMap;
   bool _isLoadingDoctors = false;
   bool _isLoadingInitial = true;
-  bool _shareRecords = true;
+  // Access only when the patient ticks the box
+  bool _shareRecords = false;
   String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   Future<void> _initPatientHospitalsAndDoctors() async {
@@ -598,6 +618,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       _isChangingPatient = false;
       _patientSearchController.text = account.name;
       _phoneController.text = account.phone;
+      if ((account.countryCode ?? '').isNotEmpty) _countryCode = account.countryCode!;
       _selectedGender = account.gender.isNotEmpty ? account.gender : "Male";
       _showPatientDropdown = false;
       _nameError = null;
@@ -608,18 +629,24 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   Future<void> _lookupAccountsByPhone(String rawPhone) async {
     final cleanPhone = rawPhone.replaceAll(RegExp(r'\D'), '');
-    if (cleanPhone.length < 10) {
+    if (!_isFullPhone(cleanPhone)) {
       setState(() {
         _matchingAccountsList = [];
         _hasSearchedPhone = false;
       });
       return;
     }
+    final lookupCountryCode = _countryCode;
 
     setState(() {
       _isLoadingAccounts = true;
       _hasSearchedPhone = true;
     });
+
+    // The number in the box may change while this lookup runs; only the latest one's
+    // answer is shown (an older answer would list another number's family).
+    bool isStale() =>
+        _phoneController.text.replaceAll(RegExp(r'\D'), '') != cleanPhone || _countryCode != lookupCountryCode;
 
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
@@ -631,6 +658,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         URLs.patientAccountsByPhoneUrl,
         data: {
           "phone": cleanPhone,
+          "countryCode": lookupCountryCode,
           "orgId": orgId,
           "hospitalId": hospitalId,
         },
@@ -642,6 +670,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       if (response.data != null && response.data is Map<String, dynamic>) {
         final rawData = response.data as Map<String, dynamic>;
         final data = rawData['data'];
+        if (rawData['status'] == false) throw StateError((rawData['message'] ?? '').toString());
         if (data is Map<String, dynamic>) {
           final List<dynamic> accountsRaw = data['matchingAccounts'] ?? [];
           final List<PatientOption> accounts = [];
@@ -663,19 +692,29 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 accountType: (item['accountType'] ?? (item['isPrimary'] == true ? 'Independent' : 'Dependent')).toString(),
                 pastAppointmentsCount: int.tryParse((item['pastAppointmentsCount'] ?? '0').toString()) ?? 0,
                 lastVisitDate: item['lastVisitDate']?.toString(),
+                countryCode: _digitsOrNull(item['countryCode']) ?? lookupCountryCode,
               ));
             }
           }
 
-          // Replicate exact ProfileSwitcherSheet user profile mapping
+          // A patient booking with their own number picks from their own family profiles, the
+          // same list as the profile switcher. Only then: a doctor searching a patient's number
+          // must see that number's accounts, and a number with no account is a new patient.
+          // (Swapping an empty answer for the signed-in user's own family booked a new
+          // patient's visit under the doctor's child.)
           final userProfiles = currentUser?.data?.profiles ?? [];
           final String fallbackPrimaryName = '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim().isNotEmpty
               ? '${currentUser?.data?.firstName ?? ''} ${currentUser?.data?.lastName ?? ''}'.trim()
               : 'Primary Account';
           final String sessionUserId = (currentUser?.data?.id ?? '').trim();
-          final String userPhone = (currentUser?.data?.phoneNumber ?? '').replaceAll(RegExp(r'\D'), '');
+          final String userPhone = _last10(currentUser?.data?.phoneNumber ?? '');
+          final String userCountry = (currentUser?.data?.countryCode ?? '').replaceAll(RegExp(r'\D'), '');
 
-          if (userProfiles.isNotEmpty && (cleanPhone == userPhone || accounts.isEmpty)) {
+          if (_isPatientUser &&
+              userProfiles.isNotEmpty &&
+              userPhone.isNotEmpty &&
+              _last10(cleanPhone) == userPhone &&
+              (userCountry.isEmpty ? '91' : userCountry) == lookupCountryCode) {
             accounts.clear();
 
             int primaryIndex = userProfiles.indexWhere((p) {
@@ -775,6 +814,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   accountType: 'Independent',
                   pastAppointmentsCount: a.pastAppointmentsCount,
                   lastVisitDate: a.lastVisitDate,
+                  countryCode: a.countryCode,
                 );
               } else {
                 final r = a.relation.toLowerCase();
@@ -795,14 +835,21 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   accountType: 'Dependent',
                   pastAppointmentsCount: a.pastAppointmentsCount,
                   lastVisitDate: a.lastVisitDate,
+                  countryCode: a.countryCode,
                 );
               }
             }
           }
 
-          if (mounted) {
+          if (mounted && !isStale()) {
             setState(() {
               _matchingAccountsList = accounts;
+              // No account on this number: it's a new patient, so drop a patient picked for an
+              // earlier number (the booking would otherwise go to that person).
+              if (accounts.isEmpty && _selectedPatient != null) {
+                _selectedPatient = null;
+                _patientSearchController.clear();
+              }
               if (accounts.isNotEmpty) {
                 if (_selectedPatient == null || !_matchingAccountsList.any((a) => _isSamePatient(a, _selectedPatient!))) {
                   // Try to match by initialPatientId first (for dependent patient navigation)
@@ -836,9 +883,27 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               }
             });
           }
+          return;
         }
       }
-    } catch (_) {
+      throw StateError('');
+    } catch (e) {
+      // Unknown is not "no account": showing New Patient Registration here could create a
+      // second account for a number that already has one.
+      String message = '';
+      if (e is DioException && e.response?.data is Map) {
+        message = ((e.response!.data as Map)['message'] ?? '').toString().trim();
+      } else if (e is StateError) {
+        message = e.message.trim();
+      }
+      if (message.isEmpty) message = "Couldn't check this number. Please check your connection and try again.";
+      if (mounted && !isStale()) {
+        setState(() {
+          _matchingAccountsList = [];
+          _hasSearchedPhone = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -848,6 +913,18 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
     }
   }
 
+  /// A country code from the server as digits ("+61" -> "61"), or null when missing.
+  static String? _digitsOrNull(Object? value) {
+    final digits = (value ?? '').toString().replaceAll(RegExp(r'\D'), '');
+    return digits.isEmpty ? null : digits;
+  }
+
+  /// The last 10 digits of a phone number, so "+91 80994 21902" and "8099421902" compare equal.
+  static String _last10(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+  }
+
   void _onPhoneChanged(String val) {
     if (_phoneError != null) {
       setState(() => _phoneError = null);
@@ -855,11 +932,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     final digits = val.replaceAll(RegExp(r'\D'), '');
 
-    // Reset selected patient if phone number is being changed
-    if (digits.length != 10 && _selectedPatient != null) {
+    // Reset selected patient if phone number is being changed. The name box was filled from that
+    // pick, so it is cleared too: a new number's patient must not be registered under the old name.
+    if (!_isFullPhone(digits) && _selectedPatient != null) {
+      final pickedName = _selectedPatient!.name.trim();
       setState(() {
         _selectedPatient = null;
         _isChangingPatient = false;
+        if (_patientSearchController.text.trim() == pickedName) _patientSearchController.clear();
       });
     }
 
@@ -867,8 +947,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     if (_phoneDebounce?.isActive ?? false) _phoneDebounce!.cancel();
 
-    if (digits.length == 10) {
-      _phoneDebounce = Timer(const Duration(milliseconds: 300), () {
+    if (_isFullPhone(digits)) {
+      // Other countries' numbers have no fixed length, so wait for typing to pause
+      _phoneDebounce = Timer(Duration(milliseconds: _isIndianNumber ? 300 : 800), () {
         if (mounted) {
           _lookupAccountsByPhone(digits);
         }
@@ -1265,6 +1346,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             relation: relation,
             isPrimary: isPrimary,
             parentUserId: map['parentUserId']?.toString(),
+            countryCode: _digitsOrNull(map['countryCode']),
           );
         }).where((p) => p.name.trim().isNotEmpty && (p.name != 'Patient' || p.phone.isNotEmpty)).toList();
 
@@ -1294,6 +1376,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         URLs.addDependentPatientUrl,
         data: {
           "primaryPhone": _phoneController.text.trim(),
+          "countryCode": _countryCode,
           "parentUserId": parentUserId,
           "name": name,
           "relation": relation,
@@ -1377,7 +1460,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         if (found.isNotEmpty) {
           match = found.first;
         }
-      } else if (activeUserId.isNotEmpty) {
+      } else if (_isPatientUser && activeUserId.isNotEmpty) {
+        // A patient booking from their own number means themselves; a doctor never does.
         final idMatches = _matchingAccountsList.where((a) => a.id == activeUserId || a.userId == activeUserId).toList();
         if (idMatches.isNotEmpty) {
           match = idMatches.first;
@@ -1416,7 +1500,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       if (args is Map<String, dynamic>) {
         final phone = (args['patientPhone'] ?? args['phone'] ?? args['phoneNumber'] ?? '').toString().replaceAll(RegExp(r'\D'), '');
         final name = (args['patientName'] ?? args['name'] ?? '').toString().trim();
-        if (phone.length >= 10 && _selectedPatient == null) {
+        final argCode = _digitsOrNull(args['countryCode']);
+        if (argCode != null) _countryCode = argCode;
+        if (_isFullPhone(phone) && _selectedPatient == null) {
           setState(() {
             _patientSearchMode = PatientSearchMode.byPhone;
             _phoneController.text = phone;
@@ -1458,14 +1544,17 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
       _selectedDoctor = widget.initialDoctorName!;
     }
     final initialPhone = widget.initialPatientPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+    final initialCode = _digitsOrNull(widget.initialPatientCountryCode);
+    if (initialCode != null) _countryCode = initialCode;
 
-    if (initialPhone.length >= 10) {
+    if (_isFullPhone(initialPhone)) {
       _patientSearchMode = PatientSearchMode.byPhone;
       _phoneController.text = initialPhone;
       _hasSearchedPhone = true;
     } else if (isPatient && (currentUser?.phoneNumber ?? '').isNotEmpty) {
       final phone = currentUser!.phoneNumber!.replaceAll(RegExp(r'\D'), '');
-      if (phone.length >= 10) {
+      _countryCode = _digitsOrNull(currentUser.countryCode) ?? '91';
+      if (_isFullPhone(phone)) {
         _patientSearchMode = PatientSearchMode.byPhone;
         _phoneController.text = phone;
         _hasSearchedPhone = true;
@@ -1486,7 +1575,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         _fetchTreatmentPlans();
         if (_phoneController.text.trim().isNotEmpty) {
           final phone = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
-          if (phone.length >= 10) {
+          if (_isFullPhone(phone)) {
             _lookupAndAutoSelectPatient(phone, preferredName: widget.initialPatientName);
           }
         }
@@ -1510,14 +1599,24 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     final name = _selectedPatient != null ? _selectedPatient!.name : _patientSearchController.text.trim();
     final rawPhone = _selectedPatient != null ? _selectedPatient!.phone : _phoneController.text.trim();
-    final digitsPhone = rawPhone.replaceAll(RegExp(r'\D'), '');
+    final bookingCountryCode = (_selectedPatient?.countryCode ?? '').isNotEmpty ? _selectedPatient!.countryCode! : _countryCode;
+    final bool indianNumber = bookingCountryCode == '91';
+    var digitsPhone = rawPhone.replaceAll(RegExp(r'\D'), '');
+    // A saved Indian number can carry its code (918099421902); the check is on the 10-digit number
+    if (indianNumber && digitsPhone.length > 10) digitsPhone = _last10(digitsPhone);
+    if (!indianNumber) digitsPhone = digitsPhone.replaceFirst(RegExp(r'^0+'), '');
     final reason = _reasonController.text.trim();
 
     bool hasError = false;
 
     if (digitsPhone.isEmpty) {
-      setState(() => _phoneError = "Please enter a valid 10-digit mobile number");
+      setState(() => _phoneError = "Please enter the patient's mobile number");
       hasError = true;
+    } else if (!indianNumber) {
+      if (digitsPhone.length < 6 || digitsPhone.length > 14) {
+        setState(() => _phoneError = "Enter the mobile number without the country code (6 to 14 digits)");
+        hasError = true;
+      }
     } else if (digitsPhone.length != 10) {
       setState(() => _phoneError = "Mobile number must contain exactly 10 digits");
       hasError = true;
@@ -1608,14 +1707,23 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         patientUserId: _isUserId(_selectedPatient?.userId)
             ? _selectedPatient!.userId
             : (_isUserId(_selectedPatient?.id) ? _selectedPatient!.id : null),
+        // A family member without a known parent belongs to the primary account on the number
+        // being booked: the patient's own account when a patient books, but for a doctor the
+        // searched number's primary, never the doctor's own account.
         parentUserId: _selectedPatient?.parentUserId ??
             ((_selectedPatient != null && !_selectedPatient!.isPrimary)
-                ? (GlobalSession.instance.rootPrimaryUserId ?? currentUser?.data?.id)
+                ? (isPatient
+                    ? (GlobalSession.instance.rootPrimaryUserId ?? currentUser?.data?.id)
+                    : _matchingAccountsList
+                        .where((a) => a.isPrimary && _isUserId(a.userId))
+                        .map((a) => a.userId)
+                        .firstOrNull)
                 : null),
         relation: _selectedPatient?.relation ?? "Self",
         isPrimary: _selectedPatient?.isPrimary ?? (_selectedPatient == null ? true : _selectedPatient!.relation.toLowerCase() == "self"),
         patientName: name,
         phoneNumber: digitsPhone,
+        countryCode: bookingCountryCode,
         patientEmail: _selectedPatient?.email,
         gender: _selectedPatient?.gender.isNotEmpty == true ? _selectedPatient!.gender : _selectedGender,
         dob: _selectedPatient?.dob.isNotEmpty == true ? _selectedPatient!.dob : null,
@@ -2250,13 +2358,14 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             elevation: 0,
             backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
             foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
-            title: Text(
+            title: FitText(
               isPatient ? "Book appointment" : "New Appointment",
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w700,
                 fontSize: isTab ? 20 : 17,
               ),
+              maxLines: 2,
             ),
             centerTitle: true,
             leading: IconButton(
@@ -2392,7 +2501,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
+                              LengthLimitingTextInputFormatter(_maxPhoneDigits),
                             ],
                             onChanged: _onPhoneChanged,
                             style: TextStyle(
@@ -2402,8 +2511,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: _inputDecoration(
-                              hintText: "Enter 10-digit mobile number...",
-                              prefixText: "+91  ",
+                              hintText: _isIndianNumber ? "10-digit mobile number" : "Mobile number",
+                              prefix: _buildCountryCodePicker(isDark),
                               prefixIcon: IosIcons.phone_iphone_rounded,
                               isDark: isDark,
                               errorText: _phoneError,
@@ -2416,9 +2525,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
                                       ),
                                     )
-                                  : (_phoneController.text.length == 10
+                                  : (_isFullPhone(_phoneController.text)
                                       ? const Icon(IosIcons.check_circle_rounded, color: Color(0xFF10B981), size: 18)
-                                      : (_phoneController.text.isNotEmpty
+                                      : (_phoneController.text.isNotEmpty && _isIndianNumber
                                           ? Padding(
                                               padding: const EdgeInsets.only(right: 12, top: 12),
                                               child: Text(
@@ -2457,7 +2566,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               color: isDark ? Colors.white : Colors.black87,
                             ),
                             decoration: _inputDecoration(
-                              hintText: "Type patient name (e.g. Rahul Sharma)...",
+                              hintText: "Type patient name",
                               prefixIcon: IosIcons.person_search_rounded,
                               isDark: isDark,
                               errorText: _nameError,
@@ -2522,7 +2631,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                         ),
                                       ),
                                       subtitle: Text(
-                                        "${patient.phone.isNotEmpty ? '+91 ${patient.phone}' : 'ID: ${patient.id}'} • ${patient.gender}",
+                                        "${patient.phone.isNotEmpty ? '+${patient.countryCode ?? '91'} ${patient.phone}' : 'ID: ${patient.id}'} • ${patient.gender}",
                                         style: TextStyle(
                                           fontFamily: appPoppinFont,
                                           fontSize: 11,
@@ -2593,6 +2702,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      // The next days at a tap, as on the patient's booking screen
+                      _buildDateStrip(isDark),
                       const SizedBox(height: 14),
 
                       Row(
@@ -2634,7 +2746,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         )
                       else
-                        _buildGroupedSlotsView(isDark, isTab),
+                        // Open times grouped by morning, afternoon and evening, as the patient sees them
+                        _buildPatientSlots(isDark, isTab),
 
                       if (_slotError != null) ...[
                         const SizedBox(height: 6),
@@ -3349,9 +3462,10 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         backgroundColor: _pCard(isDark),
         foregroundColor: _pText(isDark),
         centerTitle: true,
-        title: Text(
+        title: FitText(
           "Book appointment",
           style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: isTab ? 19 : 17),
+          maxLines: 2,
         ),
         leading: IconButton(
           icon: const PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20),
@@ -3477,8 +3591,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: _pText(isDark))),
-                        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w500, color: _pMuted(isDark))),
+                        Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: _pText(isDark))),
+                        Text(subtitle, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w500, color: _pMuted(isDark))),
                       ],
                     ),
                   ),
@@ -3726,8 +3840,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     children: [
                       Text(
                         patient.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 14.5, fontWeight: FontWeight.w700, color: _pText(isDark)),
                       ),
                       Text(
@@ -3853,15 +3965,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   children: [
                     Text(
                       when,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: hasSlot ? _pText(isDark) : _pMuted(isDark)),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       feeLine,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w500, color: fee <= 0 ? const Color(0xFF059669) : _pMuted(isDark)),
                     ),
                   ],
@@ -4063,22 +4171,16 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                           ),
                         ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 16 : 15, fontWeight: FontWeight.w700, color: strong, height: 1.25),
                     ),
                     if (specialty.isNotEmpty)
                       Text(
                         specialty,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
                       ),
                     if (qualification.isNotEmpty)
                       Text(
                         qualification,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
                       ),
                   ],
@@ -4113,15 +4215,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                     children: [
                       Text(
                         hospitalName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: strong),
                       ),
                       if (hospitalPlace.isNotEmpty)
                         Text(
                           hospitalPlace,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
                         ),
                     ],
@@ -4410,8 +4508,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -4612,8 +4708,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -4629,8 +4723,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         fontWeight: FontWeight.w600,
                         color: primaryColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     if (hospitalName.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -4650,8 +4742,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 fontSize: 11,
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -4720,8 +4810,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                         height: 1.35,
                         color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -4798,8 +4886,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ] else if (email.isNotEmpty) ...[
@@ -4814,8 +4900,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -4865,233 +4949,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   }
 
   // ── Grouped Slots View ──
-  Widget _buildGroupedSlotsView(bool isDark, bool isTab) {
-    final bool patientView = _isPatientUser;
-    final List<DoctorSlotItem> source =
-        patientView ? _allDoctorSlots.where((s) => !s.isPastForDate(_selectedDate)).toList() : _allDoctorSlots;
-    if (patientView && !source.any((s) => s.isSelectableForDate(_selectedDate))) {
-      return _buildNoSlotsNotice(isDark);
-    }
-    final morningSlots = source.where((s) => s.startHour < 12).toList();
-    final afternoonSlots = source.where((s) => s.startHour >= 12 && s.startHour < 17).toList();
-    final eveningSlots = source.where((s) => s.startHour >= 17).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (morningSlots.isNotEmpty)
-          _buildSlotTimePeriodSection(
-            isDark: isDark,
-            isTab: isTab,
-            label: "Morning",
-            count: morningSlots.where((s) => s.isSelectableForDate(_selectedDate)).length,
-            slots: morningSlots,
-          ),
-        if (morningSlots.isNotEmpty && (afternoonSlots.isNotEmpty || eveningSlots.isNotEmpty))
-          const SizedBox(height: 12),
-        if (afternoonSlots.isNotEmpty)
-          _buildSlotTimePeriodSection(
-            isDark: isDark,
-            isTab: isTab,
-            label: "Afternoon",
-            count: afternoonSlots.where((s) => s.isSelectableForDate(_selectedDate)).length,
-            slots: afternoonSlots,
-          ),
-        if (afternoonSlots.isNotEmpty && eveningSlots.isNotEmpty)
-          const SizedBox(height: 12),
-        if (eveningSlots.isNotEmpty)
-          _buildSlotTimePeriodSection(
-            isDark: isDark,
-            isTab: isTab,
-            label: "Evening",
-            count: eveningSlots.where((s) => s.isSelectableForDate(_selectedDate)).length,
-            slots: eveningSlots,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSlotTimePeriodSection({
-    required bool isDark,
-    required bool isTab,
-    required String label,
-    required int count,
-    required List<DoctorSlotItem> slots,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
-              ),
-            ),
-            Text(
-              count > 0 ? "$count open" : "Full",
-              style: TextStyle(
-                fontFamily: appPoppinFont,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: count > 0 ? const Color(0xFF059669) : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isTab ? 4 : 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: isTab ? 2.8 : 2.2,
-          ),
-          itemCount: slots.length,
-          itemBuilder: (context, index) {
-            return _buildSlotCard(slots[index], isDark);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSlotCard(DoctorSlotItem slot, bool isDark) {
-    final bool isSelectable = slot.isSelectableForDate(_selectedDate);
-    final bool isPast = slot.isPastForDate(_selectedDate);
-    final bool isSelected = _selectedSlot == slot.label && isSelectable;
-    String displayTime = slot.startTime.length >= 5 ? slot.startTime.substring(0, 5) : slot.startTime;
-    if (_isPatientUser) {
-      final parsed = DoctorSlotItem.parseSlotDateTime(_selectedDate, slot.startTime);
-      if (parsed != null) displayTime = DateFormat('h:mm a').format(parsed);
-    }
-
-    if (!isSelectable) {
-      final bool isBooked = slot.isBooked;
-      final String statusLabel = isPast
-          ? "Passed"
-          : isBooked
-              ? "Booked"
-              : "Blocked";
-
-      return InkWell(
-        onTap: () {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isPast
-                    ? "This slot has already passed."
-                    : (isBooked
-                        ? "This slot is already booked. Please select an available slot."
-                        : "This slot is currently blocked by the doctor."),
-                style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12),
-              ),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isBooked
-                  ? (isDark ? Colors.redAccent.withValues(alpha: 0.25) : Colors.red.withValues(alpha: 0.2))
-                  : (isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0)),
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  displayTime,
-                  style: TextStyle(
-                    fontFamily: appPoppinFont,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white30 : const Color(0xFF94A3B8),
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: isDark ? Colors.white30 : const Color(0xFF94A3B8),
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isBooked) ...[
-                      Icon(
-                        IosIcons.lock_outline_rounded,
-                        size: 9.5,
-                        color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
-                      ),
-                      const SizedBox(width: 2),
-                    ],
-                    Text(
-                      statusLabel,
-                      style: TextStyle(
-                        fontFamily: appPoppinFont,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w600,
-                        color: isBooked
-                            ? (isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red.shade500)
-                            : (isDark ? Colors.white30 : const Color(0xFF94A3B8)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedSlot = slot.label;
-          if (_slotError != null) _slotError = null;
-        });
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor
-              : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? primaryColor : (isDark ? Colors.white12 : const Color(0xFFCBD5E1)),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            displayTime,
-            style: TextStyle(
-              fontFamily: appPoppinFont,
-              fontSize: 12.5,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-              color: isSelected
-                  ? Colors.white
-                  : (isDark ? Colors.white : const Color(0xFF232323)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildInputLabel(String text, bool isDark, bool isTab) {
     return Text(
       text,
@@ -5101,6 +4958,43 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         fontWeight: FontWeight.w600,
         color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
       ),
+    );
+  }
+
+  /// The country code in front of the patient's number. Changing it looks the number up again.
+  Widget _buildCountryCodePicker(bool isDark) {
+    return CountryCodePicker(
+      key: ValueKey(_countryCode),
+      initialSelection: '+$_countryCode',
+      favorite: const ['IN', 'AU', 'AE', 'US', 'GB'],
+      showFlag: false,
+      showFlagDialog: true,
+      padding: const EdgeInsets.only(left: 8),
+      textStyle: TextStyle(
+        fontFamily: appPoppinFont,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w600,
+        color: isDark ? Colors.white : const Color(0xFF232323),
+      ),
+      dialogBackgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      dialogTextStyle: TextStyle(fontFamily: appPoppinFont, color: isDark ? Colors.white : Colors.black),
+      searchStyle: TextStyle(fontFamily: appPoppinFont, color: isDark ? Colors.white : Colors.black),
+      searchDecoration: const InputDecoration(hintText: 'Search country'),
+      onChanged: (country) {
+        final code = (country.dialCode ?? '').replaceAll(RegExp(r'\D'), '');
+        if (code.isEmpty || code == _countryCode) return;
+        setState(() {
+          _countryCode = code;
+          _selectedPatient = null;
+          _matchingAccountsList = [];
+          _hasSearchedPhone = false;
+          _phoneError = null;
+          // An Indian number is at most 10 digits
+          final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+          if (digits.length > _maxPhoneDigits) _phoneController.text = digits.substring(0, _maxPhoneDigits);
+        });
+        _onPhoneChanged(_phoneController.text);
+      },
     );
   }
 
@@ -5505,8 +5399,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                   Flexible(
                                     child: Text(
                                       patient.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: isTab ? 16 : 14.5,
@@ -5695,7 +5587,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   Widget _buildMatchingAccountsList(bool isDark, bool isTab) {
     final cleanPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
 
-    if (cleanPhone.length < 10) {
+    if (!_isFullPhone(cleanPhone)) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
@@ -5710,7 +5602,9 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                "Enter 10-digit mobile number to find independent and dependent patient accounts.",
+                _isIndianNumber
+                    ? "Enter the 10-digit mobile number to find the patient and their family accounts."
+                    : "Enter the mobile number without the country code to find the patient and their family accounts.",
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 12,
@@ -5744,7 +5638,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             Flexible(
               child: Text(
                 "Searching matching accounts...",
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 12.5,
@@ -5850,7 +5743,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       color: isDark ? Colors.white : Colors.black87,
                     ),
                     decoration: _inputDecoration(
-                      hintText: "Enter full name (e.g. Rahul Sharma)",
+                      hintText: "Full name, e.g. Rahul Sharma",
                       prefixIcon: IosIcons.person_outline_rounded,
                       isDark: isDark,
                       errorText: _nameError,
@@ -5972,7 +5865,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
               Expanded(
                 child: Text(
                   _isPatientUser ? "Your family profiles (${_matchingAccountsList.length})" : "Matching Accounts (${_matchingAccountsList.length})",
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 13,
@@ -6023,145 +5915,102 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _matchingAccountsList.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final account = _matchingAccountsList[index];
-              final bool isPrimaryItem = index == 0;
-              final bool isSelected = _selectedPatient != null && _isSamePatient(_selectedPatient!, account);
-
-              // Uniform blue theme and same icon for all matching accounts per user request
-              const Color tileAccent = Color(0xFF2563EB);
-              const IconData relationIcon = IosIcons.person_rounded;
-
-              final String badgeText = isPrimaryItem ? "Primary" : account.relation;
-
-              return InkWell(
-                onTap: () => _selectPatientAccount(account),
-                borderRadius: BorderRadius.circular(14),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? tileAccent.withValues(alpha: isDark ? 0.2 : 0.08)
-                        : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected
-                          ? tileAccent
-                          : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
-                      width: isSelected ? 1.6 : 1,
+          // Same look as the patient's own booking: one chip per account (radio, name, relation),
+          // and the picked person's details on one line underneath.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final (index, account) in _matchingAccountsList.indexed)
+                Builder(builder: (context) {
+                  final bool isSelected = _selectedPatient != null && _isSamePatient(_selectedPatient!, account);
+                  final String relation = index == 0 ? 'Primary' : account.relation;
+                  return GestureDetector(
+                    onTap: () => _selectPatientAccount(account),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isDark ? const Color(0xFF2563EB).withValues(alpha: 0.22) : const Color(0xFFE0F2FE))
+                            : (isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC)),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF2563EB)
+                              : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isSelected ? IosIcons.radio_button_checked : IosIcons.radio_button_off,
+                            size: 16,
+                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text.rich(
+                              TextSpan(children: [
+                                TextSpan(text: account.name),
+                                TextSpan(
+                                  text: '  ·  $relation',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: isSelected
+                                        ? const Color(0xFF2563EB)
+                                        : (isDark ? Colors.white54 : const Color(0xFF64748B)),
+                                  ),
+                                ),
+                              ]),
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontSize: 12.5,
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                color: isSelected
+                                    ? const Color(0xFF2563EB)
+                                    : (isDark ? Colors.white : const Color(0xFF121212)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+            ],
+          ),
+          if (_selectedPatient != null && _matchingAccountsList.any((a) => _isSamePatient(a, _selectedPatient!))) ...[
+            const SizedBox(height: 10),
+            Builder(builder: (context) {
+              final picked = _selectedPatient!;
+              final facts = [
+                if (picked.gender.isNotEmpty) picked.gender,
+                if (picked.displayAge.isNotEmpty) picked.displayAge,
+                if (picked.pastAppointmentsCount > 0)
+                  '${picked.pastAppointmentsCount} earlier ${picked.pastAppointmentsCount == 1 ? 'visit' : 'visits'}',
+              ];
+              if (facts.isEmpty) return const SizedBox.shrink();
+              return Row(
+                children: [
+                  Icon(IosIcons.person_rounded, size: 14, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      facts.join('  ·  '),
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      // ─ Role / Profile Avatar ─
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? tileAccent
-                              : tileAccent.withValues(alpha: isDark ? 0.22 : 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            relationIcon,
-                            size: 19,
-                            color: isSelected ? Colors.white : tileAccent,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    isPrimaryItem ? "${account.name} (Primary)" : "${account.name} (${account.relation})",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 13.5,
-                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF121212),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: tileAccent.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Text(
-                                    badgeText,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: tileAccent,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                Icon(
-                                  account.gender.toLowerCase() == 'male'
-                                      ? IosIcons.male_rounded
-                                      : account.gender.toLowerCase() == 'female'
-                                          ? IosIcons.female_rounded
-                                          : IosIcons.person_rounded,
-                                  size: 13,
-                                  color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    "${account.gender}${account.displayAge.isNotEmpty ? ' • ${account.displayAge}' : ''}",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: appPoppinFont,
-                                      fontSize: 11,
-                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          isSelected ? IosIcons.check_circle_rounded : IosIcons.radio_button_unchecked_rounded,
-                          key: ValueKey(isSelected),
-                          size: 22,
-                          color: isSelected ? tileAccent : const Color(0xFFCBD5E1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               );
-            },
-          ),
+            }),
+          ],
           // ─ Quick Book for Family Member Section ─
           const SizedBox(height: 12),
           Container(
@@ -6700,7 +6549,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
             color: isDark ? Colors.white : const Color(0xFF232323),
           ),
           decoration: _inputDecoration(
-            hintText: "Search clinical procedures / packages...",
+            hintText: "Search procedures or packages",
             prefixIcon: IosIcons.search_rounded,
             isDark: isDark,
             suffixIcon: _treatmentPlanSearchController.text.isNotEmpty
@@ -6879,8 +6728,6 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                                 if (plan.description.isNotEmpty)
                                   Text(
                                     plan.description,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 10.5,

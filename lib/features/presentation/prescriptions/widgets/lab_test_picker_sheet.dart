@@ -325,8 +325,6 @@ class _LabTestPickerSheetState extends State<LabTestPickerSheet> {
                       const SizedBox(height: 2),
                       Text(
                         preparation,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                         style: DietUi.text(11, FontWeight.w400, DietUi.hint(isDark), height: 1.3),
                       ),
                     ],

@@ -308,9 +308,11 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
     super.doctorName,
     List<AppointmentMedicationModel> super.medications = const [],
     List<AppointmentDiagnosisModel> super.diagnoses = const [],
+    super.labTests,
   });
 
   factory AppointmentPrescriptionModel.fromJson(Map<String, dynamic> json) {
+    final rawTests = json['lab_tests'] ?? json['labTests'] ?? json['LabTests'];
     return AppointmentPrescriptionModel(
       id: (json['id'] ?? json['Id'] ?? '').toString(),
       date: (json['date'] ?? json['Date'] ?? json['createdAt'] ?? json['CreatedAt'] ?? '').toString(),
@@ -339,6 +341,13 @@ class AppointmentPrescriptionModel extends AppointmentPrescriptionEntity {
                   .map((d) => AppointmentDiagnosisModel.fromJson(Map<String, dynamic>.from(d)))
                   .toList()
               : const []),
+      labTests: rawTests is List
+          ? rawTests
+              .whereType<Map>()
+              .map((t) => AppointmentLabTestEntity.fromJson(Map<String, dynamic>.from(t)))
+              .where((t) => t.name.isNotEmpty)
+              .toList()
+          : const [],
     );
   }
 

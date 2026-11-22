@@ -122,6 +122,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           isPrimary: event.isPrimary,
           patientName: event.patientName,
           patientPhone: event.phoneNumber,
+          countryCode: event.countryCode,
           patientEmail: event.patientEmail,
           gender: event.gender,
           dob: event.dob,

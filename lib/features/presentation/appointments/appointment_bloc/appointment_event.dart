@@ -18,6 +18,9 @@ class OnAddAppointmentEvent extends AppointmentEvent {}
 class SubmitBookAppointmentEvent extends AppointmentEvent {
   final String patientName;
   final String phoneNumber;
+
+  /// Country calling code of [phoneNumber], digits only; India when not given.
+  final String? countryCode;
   final String? doctorId;
   final int? hospitalId;
   final int? orgId;
@@ -47,6 +50,7 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   SubmitBookAppointmentEvent({
     required this.patientName,
     required this.phoneNumber,
+    this.countryCode,
     this.doctorId,
     this.hospitalId,
     this.orgId,
@@ -68,7 +72,7 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.discountAmount,
     this.includeConsultationFee,
     this.consultationFee,
-    this.grantRecordAccess = true,
+    this.grantRecordAccess = false,
     this.shareRecordsDuration = '7_DAYS',
   });
 }

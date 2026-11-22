@@ -82,8 +82,6 @@ class SlotFilterTabs extends StatelessWidget {
           child: Text(
             label,
             textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.026,

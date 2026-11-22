@@ -182,10 +182,11 @@ void main() {
       expect(opened, [AppRoutes.patientAppointments]);
     });
 
-    testWidgets('a tip has nowhere to go, so a tap shows all of its text', (tester) async {
+    testWidgets('a tip shows all of its text, never cut with "…"', (tester) async {
       await pump(tester);
       final tip = find.textContaining('Stay hydrated');
-      expect(tester.widget<Text>(tip).maxLines, 3);
+      expect(tester.widget<Text>(tip).maxLines, isNull);
+      expect(tester.widget<Text>(tip).overflow, isNot(TextOverflow.ellipsis));
       await tester.tap(find.text('Daily Health Tip'));
       await tester.pumpAndSettle();
       expect(tester.widget<Text>(tip).maxLines, isNull);

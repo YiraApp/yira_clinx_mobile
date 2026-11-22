@@ -7,7 +7,8 @@ abstract class MedicalHistoryRepository {
     String? hospitalId,
     String? orgId,
   });
-  Future<void> createMedicalRecord(Map<String, dynamic> data);
+  /// Saves a new record and returns its id (null when the server didn't send one).
+  Future<String?> createMedicalRecord(Map<String, dynamic> data);
   Future<void> updateMedicalRecord(String id, Map<String, dynamic> data);
   Future<void> deleteMedicalRecord(String id);
 }

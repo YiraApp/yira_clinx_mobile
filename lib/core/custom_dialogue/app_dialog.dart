@@ -275,7 +275,6 @@ class AppDialog extends StatelessWidget {
       fit: BoxFit.scaleDown,
       child: Text(
         text,
-        maxLines: 1,
         style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: weight),
       ),
     );

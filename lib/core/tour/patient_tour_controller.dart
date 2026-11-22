@@ -65,7 +65,7 @@ class PatientTourController {
         PatientTourStep(
           id: 'step_quick_services',
           title: 'Quick Services & Medical Records',
-          description: 'Instant access to appointments, prescriptions, health records, fitness, diet and family profiles.',
+          description: 'Instant access to appointments, prescriptions, health records, vitals, fitness, diet, family, doctor suggestions and Share Profile.',
           targetKey: quickServicesKey,
           icon: IosIcons.grid_view_rounded,
           position: TourCardPosition.top,
@@ -101,8 +101,8 @@ class PatientTourController {
         // Step 7: Bottom Navigation - Profile Tab
         PatientTourStep(
           id: 'step_nav_profile',
-          title: '3. Profile & sharing',
-          description: 'Your medical profile, and Share my profile: give a doctor access or send a secure web link.',
+          title: '3. Profile',
+          description: 'Your medical profile, family profiles and settings. Share Profile on Home gives a doctor access or a secure web link.',
           targetKey: profileNavKey,
           icon: IosIcons.person_rounded,
           position: TourCardPosition.top,

@@ -354,8 +354,6 @@ class DashboardMetricsGrid extends StatelessWidget {
                   Flexible(
                     child: Text(
                       title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 13 : 12,
@@ -369,8 +367,6 @@ class DashboardMetricsGrid extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtext,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 11.5 : 10.5,

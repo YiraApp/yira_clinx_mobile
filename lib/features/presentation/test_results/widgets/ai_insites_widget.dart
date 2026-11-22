@@ -91,7 +91,6 @@ class AIInsightItem extends StatelessWidget {
           const SizedBox(height: 12),
           CommonText(
             desc,
-            maxLines: 4,
             softWrap: true,
             style: TextStyle(
               fontFamily: appPoppinFont,

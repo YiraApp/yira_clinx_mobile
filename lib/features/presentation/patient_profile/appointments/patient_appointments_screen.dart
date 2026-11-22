@@ -23,6 +23,9 @@ class PatientAppointmentsScreen extends StatefulWidget {
   final bool isTab;
   final bool hasAccess;
 
+  /// Opens the request-access flow (OTP or the patient's approval) when the doctor has no consent.
+  final VoidCallback? onRequestAccess;
+
   const PatientAppointmentsScreen({
     super.key,
     required this.patient,
@@ -33,7 +36,8 @@ class PatientAppointmentsScreen extends StatefulWidget {
     required this.onPrescribeTap,
     required this.onNoteTap,
     required this.isTab,
-    this.hasAccess = true,
+    this.hasAccess = false,
+    this.onRequestAccess,
   });
 
   @override
@@ -77,38 +81,15 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
         roleName == 'user' ||
         roleId == '4FC67429-28AE-4106-93EF-436228282ED0';
 
-    // When viewed by a doctor/provider: ONLY show appointments belonging to THAT hospital!
-    List<PatientAppointmentEntity> hospitalFiltered = all;
-    if (!isPatient) {
-      final effectiveHospitalId = (widget.hospitalId != null &&
-              widget.hospitalId!.trim().isNotEmpty &&
-              widget.hospitalId != '0')
-          ? widget.hospitalId!.trim()
-          : (currentUser?.data?.latestHospitalId?.toString().trim() ?? '');
+    if (isPatient) return all;
 
-      if (effectiveHospitalId.isNotEmpty) {
-        hospitalFiltered = all.where((a) {
-          final aHospId = a.hospitalId.trim();
-          return aHospId == effectiveHospitalId;
-        }).toList();
-      }
-    }
-
-    if (widget.hasAccess) {
-      return hospitalFiltered;
-    }
-    // Without consent: only show treated / completed appointments or appointments belonging to this doctor
-    final currentDoctorId = currentUser?.data?.id?.toString().trim() ?? '';
-
-    return hospitalFiltered.where((a) {
-      final s = a.status.toLowerCase().trim();
-      final isTreated = s == 'completed' || s == 'treated';
-      final isThisDoctor = currentDoctorId.isNotEmpty && a.doctorId.trim() == currentDoctorId;
-      final hasClinicalRecords = a.prescriptions.isNotEmpty ||
-          a.medicalRecords.isNotEmpty ||
-          a.clinicalNotes.isNotEmpty;
-      return isTreated || isThisDoctor || hasClinicalRecords;
-    }).toList();
+    // A doctor sees the patient's visits with every doctor and hospital only once the patient has
+    // shared access with him (OTP, approving his request, or sharing from their app). Until then,
+    // only his own consultations. The server applies the same rule; this keeps a stale screen honest.
+    if (widget.hasAccess) return all;
+    final currentDoctorId = (currentUser?.data?.id?.toString() ?? '').trim().toLowerCase();
+    if (currentDoctorId.isEmpty) return const [];
+    return all.where((a) => a.doctorId.trim().toLowerCase() == currentDoctorId).toList();
   }
 
   List<PatientAppointmentEntity> _filterAppointments(List<PatientAppointmentEntity> baseList) {
@@ -175,11 +156,11 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Consent Restricted Notice Banner
+                  // Only this doctor's consultations until the patient shares access
                   if (!widget.hasAccess)
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
                       decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
@@ -187,10 +168,19 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              "Showing treated appointments only. Patient consent is required to view complete appointment history.",
+                              "Showing only your consultations. Ask the patient for access to see their visits with other doctors and hospitals.",
                               style: DietUi.text(11.5, FontWeight.w500, DietUi.body(isDark), height: 1.35),
                             ),
                           ),
+                          if (widget.onRequestAccess != null) ...[
+                            const SizedBox(width: 8),
+                            RecordPrimaryButton(
+                              label: 'Ask access',
+                              icon: IosIcons.lock_open_rounded,
+                              compact: true,
+                              onPressed: widget.onRequestAccess!,
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -247,9 +237,9 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 48),
                       child: RecordEmptyState(
                         icon: IosIcons.event_busy_outlined,
-                        title: !widget.hasAccess ? "No Treated Appointments Found" : "No Appointments Found",
+                        title: !widget.hasAccess ? "No consultations with you yet" : "No Appointments Found",
                         message: !widget.hasAccess
-                            ? "No treated records available for this patient. Patient consent is required to access full appointment history."
+                            ? "You haven't seen this patient yet. Their visits with other doctors show once they give you access."
                             : "There are no appointments registered for this patient.",
                       ),
                     )

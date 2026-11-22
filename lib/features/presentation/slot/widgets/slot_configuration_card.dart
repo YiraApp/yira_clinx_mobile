@@ -245,7 +245,6 @@ class _TimeChip extends StatelessWidget {
               Expanded(
                 child: CommonText(
                   time,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,

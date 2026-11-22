@@ -906,7 +906,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     fontWeight: FontWeight.w700,
                     color: _primaryBlue,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               InkWell(

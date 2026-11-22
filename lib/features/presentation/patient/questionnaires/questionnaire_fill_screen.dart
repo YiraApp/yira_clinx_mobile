@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -151,8 +152,7 @@ class _QuestionnaireFillScreenState extends State<QuestionnaireFillScreen> {
           elevation: 0,
           backgroundColor: Colors.transparent,
           iconTheme: IconThemeData(color: QUi.ink(isDark)),
-          title: Text(form?.info.title ?? widget.title,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: QUi.text(17, FontWeight.w700, QUi.ink(isDark))),
+          title: FitText(form?.info.title ?? widget.title, style: QUi.text(17, FontWeight.w700, QUi.ink(isDark)), maxLines: 2),
           bottom: form == null
               ? null
               : PreferredSize(
@@ -364,12 +364,14 @@ class _QuestionCard extends StatelessWidget {
         ]);
       case QuestionType.dropdown:
         return DropdownButtonFormField<int>(
+          // Long options wrap onto more lines instead of being cut.
+          itemHeight: null,
           initialValue: value is int ? value as int : null,
           isExpanded: true,
           style: style,
           dropdownColor: QUi.card(isDark),
           decoration: _decoration(isDark, 'Choose one'),
-          items: [for (final o in q.options) DropdownMenuItem(value: o.id, child: Text(o.label, overflow: TextOverflow.ellipsis))],
+          items: [for (final o in q.options) DropdownMenuItem(value: o.id, child: Text(o.label))],
           onChanged: (v) => onChanged(v),
         );
       case QuestionType.date:

@@ -56,12 +56,14 @@ class MedicalRecordBloc extends Bloc<MedicalRecordEvent, MedicalRecordState> {
         for (final field in event.clinicalNote.entries) field.key: field.value.trim(),
       };
 
+      String? savedId;
       if (event.recordId != null && event.recordId!.trim().isNotEmpty) {
         await repository.updateMedicalRecord(event.recordId!.trim(), payload);
+        savedId = event.recordId!.trim();
       } else {
-        await repository.createMedicalRecord(payload);
+        savedId = await repository.createMedicalRecord(payload);
       }
-      emit(MedicalRecordSuccess(selectedDate: currentRecordDate));
+      emit(MedicalRecordSuccess(selectedDate: currentRecordDate, recordId: savedId));
     } catch (error) {
       emit(MedicalRecordFailure(
         error.toString().replaceAll('Exception:', '').trim(),

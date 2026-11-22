@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -72,6 +73,8 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
       case 'diet':
       case 'diet plan':
         return IosIcons.restaurant_menu_rounded;
+      case 'fitness':
+        return HugeIcons.workoutRun;
       case 'suggestions':
       case 'suggestion':
       case 'doctor suggestions':

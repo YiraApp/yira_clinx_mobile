@@ -240,7 +240,7 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
                     fontSize: 14,
                   ),
                   decoration: InputDecoration(
-                    hintText: 'Enter clinical observations, examination notes, recommendations...',
+                    hintText: 'Clinical observations, examination notes, recommendations',
                     hintStyle: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade400,
@@ -425,12 +425,14 @@ class _ClinicalNotesScreenState extends State<ClinicalNotesScreen> {
   }
 
   Widget _buildEmptyStateView(BuildContext context, bool isWideScreen) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 40),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
       child: RecordEmptyState(
         icon: IosIcons.note_alt_outlined,
         title: 'No Historical Clinical Notes Found',
-        message: 'Enter notes above to record doctor clinical observations.',
+        message: widget.allowAdd
+            ? 'Enter notes above to record doctor clinical observations.'
+            : 'Notes added at a visit will appear here.',
       ),
     );
   }

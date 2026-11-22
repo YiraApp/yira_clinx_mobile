@@ -347,8 +347,6 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                                   fontWeight: FontWeight.w500,
                                   color: isDark ? Colors.white60 : const Color(0xFF64748B),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],

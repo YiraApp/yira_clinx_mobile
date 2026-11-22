@@ -25,10 +25,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     defaultConfig {
         applicationId = "com.paccore.yiralife"
         minSdk = 26
@@ -46,6 +42,12 @@ android {
         }
     }
 
+    // Android's lint check needs Java 21 since AGP 9; this Mac builds with Java 17.
+    // Lint only reports warnings, so it is skipped for release builds.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release {
             signingConfig = if (keystorePropertiesFile.exists() && keystoreProperties["storeFile"] != null) {
@@ -54,6 +56,12 @@ android {
                 signingConfigs.getByName("debug")
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

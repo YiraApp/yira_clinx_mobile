@@ -1,3 +1,5 @@
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_pdf.dart';
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
@@ -453,16 +455,64 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
 
     setState(() => _isSubmitting = true);
     try {
-      await _doctorDiet.updatePlan(widget.editPlanId!, payload, orgId: widget.orgId);
+      final updated = await _doctorDiet.updatePlan(widget.editPlanId!, payload, orgId: widget.orgId);
       if (!mounted) return;
-      _showInfo('Diet plan updated. ${widget.patientName ?? 'The patient'} will see the changes.', color: _emeraldGreen);
-      Navigator.pop(context, true);
+      await _closeWithDocument(
+        {'Id': widget.editPlanId, ...updated},
+        'Diet plan updated. ${widget.patientName ?? 'The patient'} will see the changes.',
+      );
     } catch (e) {
       if (!mounted) return;
       _showInfo(dietApiErrorMessage(e, "Couldn't save the plan. Please try again."), color: _roseRed);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  /// Closes the sheet after a save and says where the plan's PDF is. Saving a plan files its PDF
+  /// in the patient's documents on the server; when that didn't happen it is filed now (as the web
+  /// does), so every prescribed diet has a document. "View PDF" opens it straight away.
+  Future<void> _closeWithDocument(dynamic saved, String message) async {
+    final plan = saved is Map ? saved : const {};
+    final planId = int.tryParse('${plan['Id'] ?? plan['id'] ?? ''}');
+    Object? documentId = plan['DocumentId'] ?? plan['documentId'];
+    if (planId != null && documentId == null) {
+      try {
+        documentId = (await _doctorDiet.savePlanPdf(planId, orgId: widget.orgId))['documentId'];
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
+    final planName = (plan['PlanName'] ?? plan['planName'] ?? 'Diet plan').toString();
+    final orgId = widget.orgId;
+    Navigator.pop(context, true);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          documentId != null
+              ? "$message The PDF is saved in the patient's documents."
+              : "$message The PDF couldn't be saved to the documents yet; open it from the plan card.",
+          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5),
+        ),
+        backgroundColor: _emeraldGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        action: planId == null
+            ? null
+            : SnackBarAction(
+                label: 'View PDF',
+                textColor: Colors.white,
+                onPressed: () => openDietPlanPdf(
+                  rootContext,
+                  planId: planId,
+                  planName: planName,
+                  download: () => DoctorDietRemoteDataSource().downloadPlanPdf(planId, orgId: orgId),
+                ),
+              ),
+      ),
+    );
   }
 
   @override
@@ -2076,26 +2126,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       if (!mounted) return;
 
       if (assignRes.statusCode == 200 || assignRes.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Diet prescribed for ${_formatDate(_startDate)} to ${_formatDate(_endDate)} (${_validityDaysCount} Days)!',
-                    style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: _emeraldGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
+        await _closeWithDocument(
+          assignRes.data,
+          'Diet prescribed for ${_formatDate(_startDate)} to ${_formatDate(_endDate)} ($_validityDaysCount days).',
         );
-        Navigator.pop(context, true);
       }
     } catch (e) {
       if (!mounted) return;
@@ -2653,26 +2687,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       if (!mounted) return;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Diet prescribed for ${_formatDate(_startDate)} to ${_formatDate(_endDate)} (${_validityDaysCount} Days)!',
-                    style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: _emeraldGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
+        await _closeWithDocument(
+          response.data,
+          'Diet prescribed for ${_formatDate(_startDate)} to ${_formatDate(_endDate)} ($_validityDaysCount days).',
         );
-        Navigator.pop(context, true);
       } else {
         throw Exception("Server returned ${response.statusCode}");
       }
@@ -2760,10 +2778,10 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            FitText(
               _isTemplateMode ? 'Edit Template' : (_isPlanEditMode ? 'Edit Diet Plan' : 'Prescribe Diet Plan'),
-              maxLines: 2,
-              softWrap: true,
+              maxLines: 1,
+              minFontSize: 13,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: 17,
@@ -2775,10 +2793,9 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             ),
             if (_isTemplateMode || widget.patientName != null) ...[
               const SizedBox(height: 2),
-              Text(
+              FitText(
                 _isTemplateMode ? 'My Templates' : 'Patient: ${widget.patientName}',
-                maxLines: 2,
-                softWrap: true,
+                maxLines: 1,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 11.5,
@@ -2901,8 +2918,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       const Flexible(
                         child: Text(
                           'Templates',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (_templates.isNotEmpty) ...[
@@ -2936,8 +2951,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       Flexible(
                         child: Text(
                           'Custom Plan',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -3040,7 +3053,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             ),
             decoration: InputDecoration(
               isDense: true,
-              hintText: 'Search templates by condition, name, diet...',
+              hintText: 'Search by condition or name',
               hintStyle: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: 12,
@@ -3215,8 +3228,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       Flexible(
                         child: Text(
                           '${g.label} (${g.count})',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
@@ -3464,8 +3475,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 14.5,
@@ -3509,8 +3518,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     const SizedBox(height: 6),
                     Text(
                       description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, height: 1.35, color: _mutedText(isDark)),
                     ),
                   ],
@@ -3530,8 +3537,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         Expanded(
                           child: Text(
                             stats,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 11.5,
@@ -3700,8 +3705,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       const SizedBox(height: 6),
                       Text(
                         '${i + 1}. ${labels[i]}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 12,
@@ -3990,8 +3993,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     _isMine(template)
                         ? 'Based on your template: ${_templateName(template)}'
                         : 'Based on template: ${_templateName(template)}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 12,
@@ -4785,7 +4786,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     children: [
                       Text(
                         slotName,
-                        maxLines: 2,
                         softWrap: true,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
@@ -5123,8 +5123,6 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         _isTemplateMode
                             ? '$items food ${items == 1 ? 'item' : 'items'} · $_rotationLabel'
                             : '$items food ${items == 1 ? 'item' : 'items'} · $_rotationLabel · $_validityDaysCount days',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 11.5,
@@ -5849,7 +5847,6 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                 children: [
                   Text(
                     title,
-                    maxLines: 2,
                     softWrap: true,
                     style: TextStyle(
                       fontFamily: appPoppinFont,

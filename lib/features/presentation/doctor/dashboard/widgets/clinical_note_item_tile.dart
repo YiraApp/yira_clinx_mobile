@@ -65,7 +65,6 @@ class ClinicalNoteItemTile extends StatelessWidget {
                 fontSize: isTab?displayWidth(context) * 0.018:displayWidth(context)*0.03,
                 fontFamily: appPoppinFont
             ),
-            maxLines: 3,
             softWrap: true,
           ),
         ],

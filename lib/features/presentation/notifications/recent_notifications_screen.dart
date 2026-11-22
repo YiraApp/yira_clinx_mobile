@@ -31,7 +31,6 @@ class RecentNotificationsScreen extends StatefulWidget {
 class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   late final NotificationsBloc _bloc;
   bool _filterOnlyUnread = false;
-  final Set<String> _expandedNotificationIds = {};
 
   /// Kind filter under All / Unread; null shows every kind.
   String? _category;
@@ -239,13 +238,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     }
     if (target != null) {
       await Navigator.pushNamed(context, target.route, arguments: target.arguments);
-      return;
     }
-    setState(() {
-      if (!_expandedNotificationIds.remove(notification.id)) {
-        _expandedNotificationIds.add(notification.id);
-      }
-    });
   }
 
   bool _isValidImageUrl(String? url) {
@@ -1084,7 +1077,6 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final typeIcon = _getIconForType(notification.type, notification.title);
     final relativeTime = _formatRelativeTime(notification.createdAt);
     final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
-    final expanded = _expandedNotificationIds.contains(notification.id);
 
     return Material(
       color: Colors.transparent,
@@ -1162,7 +1154,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     ),
                     const SizedBox(height: 4),
 
-                    // Body with Read more at last of text if longer
+                    // Full body, never cut
                     Builder(
                       builder: (context) {
                         final String bodyText = notification.body.trim();
@@ -1172,8 +1164,6 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           children: [
                             Text(
                               bodyText,
-                              maxLines: expanded || target != null ? null : 3,
-                              overflow: expanded || target != null ? null : TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 12.5,

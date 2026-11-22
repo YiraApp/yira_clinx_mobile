@@ -97,8 +97,6 @@ class _SpendingDonutState extends State<SpendingDonut> {
                       children: [
                         Text(selected?.$1 ?? widget.centerLabel,
                             textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: c.muted)),
                         FittedBox(
                           fit: BoxFit.scaleDown,

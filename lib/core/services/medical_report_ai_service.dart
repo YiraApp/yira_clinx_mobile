@@ -108,15 +108,18 @@ class MedicalReportAiService {
 
   /// Uploads one report: a single PDF (up to 10 pages) or 1-10 page photos,
   /// which the server joins into one PDF. Reads it with AI when [analyze].
+  /// [patientId] files it under a family member; by default it is the profile in use.
   static Future<ReportUploadResult> uploadReport({
     required List<File> files,
     required String title,
     required String category,
     String? notes,
     bool analyze = true,
+    String? patientId,
   }) async {
     final user = GlobalSession.instance.userNotifier.value?.data;
     final userId = user?.id ?? '';
+    final forId = (patientId ?? '').trim().isNotEmpty ? patientId!.trim() : userId;
 
     final parts = <MultipartFile>[];
     for (var i = 0; i < files.length; i++) {
@@ -136,7 +139,7 @@ class MedicalReportAiService {
       'category': category,
       'documentCategory': category,
       if (notes != null && notes.trim().isNotEmpty) 'description': notes.trim(),
-      'patientId': userId,
+      'patientId': forId,
       'hospitalId': user?.latestHospitalId?.toString() ?? '1',
       'organizationId': user?.latestOrgId?.toString() ?? '1',
       if (userId.isNotEmpty) 'uploadedByUserId': userId,

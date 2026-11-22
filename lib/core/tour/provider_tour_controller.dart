@@ -291,11 +291,11 @@ class ProviderTourController {
       // Step 15: Smart Slot Scheduler FAB (+)
       ProviderTourStep(
         id: 'step_slots_fab',
-        title: 'Smart Slot Scheduler (+)',
-        description: 'Tap this floating button to auto-generate weekly shifts, set custom slot intervals, and configure lunch breaks in seconds!',
+        title: 'Smart Slot Scheduler',
+        description: 'Tap Set slots to create weekly shifts, set the slot length and add lunch breaks in seconds.',
         targetKey: slotsFabKey,
         icon: IosIcons.add_circle_outline_rounded,
-        position: TourCardPosition.top,
+        position: TourCardPosition.bottom,
         tabIndex: 3,
       ),
 

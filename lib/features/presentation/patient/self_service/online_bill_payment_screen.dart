@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -37,7 +38,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
-        title: const Text('Online Bill Payment', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
+        title: const FitText('Online Bill Payment', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold), maxLines: 2),
       ),
       body: Center(
         child: SingleChildScrollView(

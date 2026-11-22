@@ -82,9 +82,7 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                       children: [
                         CommonText(
                           widget.item.name,
-                          maxLines: 3,
                           softWrap: true,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: displayWidth(context) * (isTab ? 0.02 : 0.035),
@@ -96,7 +94,6 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                         CommonText(
                           visualSummary,
                           softWrap: true,
-                          maxLines: 3,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: displayWidth(context) * (isTab ? 0.016 : 0.03),
@@ -149,7 +146,6 @@ class _DetailedPrescriptionExpandableCardState extends State<DetailedPrescriptio
                   CommonText(
                     (widget.item.route != null && widget.item.route!.trim().isNotEmpty) ? widget.item.route! : 'N/A',
                     softWrap: true,
-                    maxLines: 3,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: displayWidth(context) * (isTab ? 0.018 : 0.034),

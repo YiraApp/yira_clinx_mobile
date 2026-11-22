@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/phosphor_icons.dart';
@@ -50,8 +51,7 @@ class _QuestionnaireHistoryScreenState extends State<QuestionnaireHistoryScreen>
         elevation: 0,
         backgroundColor: Colors.transparent,
         iconTheme: IconThemeData(color: QUi.ink(isDark)),
-        title: Text(widget.questionnaire.title,
-            maxLines: 1, overflow: TextOverflow.ellipsis, style: QUi.text(17, FontWeight.w700, QUi.ink(isDark))),
+        title: FitText(widget.questionnaire.title, style: QUi.text(17, FontWeight.w700, QUi.ink(isDark)), maxLines: 2),
       ),
       body: _error != null
           ? Center(child: QMessage(icon: PhosphorIconsBold.warningCircle, title: "Couldn't load", message: _error, actionLabel: 'Try again', onAction: _load))

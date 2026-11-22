@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -59,7 +60,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   bool _isTeleConsultation = false;
   final TextEditingController _reasonController = TextEditingController();
   String? _slotError;
-  bool _shareRecords = true;
+  // Access only when the patient ticks the box
+  bool _shareRecords = false;
   String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
@@ -498,6 +500,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "isPrimary": profile['isPrimary'] ?? true,
       "patientName": profile['name'] ?? "Patient",
       "patientPhone": profile['phone'] ?? currentUser?.data?.phoneNumber ?? "",
+      // The family shares the account holder's number, so it has their country code
+      if ((currentUser?.data?.countryCode ?? '').replaceAll(RegExp(r'\D'), '').isNotEmpty)
+        "countryCode": currentUser!.data!.countryCode!.replaceAll(RegExp(r'\D'), ''),
       "gender": profile['gender'] ?? "Male",
       "appointmentDate": appointmentDate,
       "startTime": startTime,
@@ -1055,13 +1060,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
-        title: Text(
+        title: FitText(
           "New Appointment",
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: isTab ? 20 : 17,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         leading: IconButton(
@@ -1336,7 +1342,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             ),
                           ] else ...[
                             SizedBox(
-                              height: 88,
+                              height: 92,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _filteredDoctors.length,
@@ -1390,10 +1396,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                Text(
+                                                FitText(
                                                   docName,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 2,
                                                   style: TextStyle(
                                                     fontFamily: appPoppinFont,
                                                     fontWeight: FontWeight.bold,
@@ -1401,10 +1406,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                                     color: isDark ? Colors.white : const Color(0xFF121212),
                                                   ),
                                                 ),
-                                                Text(
+                                                FitText(
                                                   doc['specialty'] ?? 'General Physician',
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     fontFamily: appPoppinFont,
                                                     fontSize: 10,
@@ -1880,7 +1884,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             color: isDark ? Colors.white : Colors.black87,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Enter primary complaint or purpose of visit...",
+                            hintText: "Main complaint or reason for the visit",
                             hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                             filled: true,
                             fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
@@ -2212,8 +2216,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -2229,8 +2231,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         fontWeight: FontWeight.w600,
                         color: primaryColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     if (hospitalName.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -2250,8 +2250,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 fontSize: 11,
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -2320,8 +2318,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         height: 1.35,
                         color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -2398,8 +2394,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ] else if (email.isNotEmpty) ...[
@@ -2414,8 +2408,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

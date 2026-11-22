@@ -112,8 +112,6 @@ class WalletAttachmentField extends StatelessWidget {
             Expanded(
               child: Text(
                 name ?? emptyLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 13,

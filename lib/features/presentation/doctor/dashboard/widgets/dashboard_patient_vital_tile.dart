@@ -54,7 +54,6 @@ class DashBoardPatientVitalTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize:isTab? displayWidth(context) * 0.018: displayWidth(context) * 0.029,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -28,20 +29,6 @@ class PatientDocumentsScreen extends StatefulWidget {
   /// Opens the upload sheet as soon as the screen shows.
   final bool startUpload;
 
-  static DateTime? _openAfterSwitchAt;
-
-  /// My Family's "Upload records": after switching to that person's profile the app
-  /// restarts on the dashboard, which then opens this screen with the upload sheet.
-  static void openAfterProfileSwitch() => _openAfterSwitchAt = DateTime.now();
-  static void cancelOpenAfterProfileSwitch() => _openAfterSwitchAt = null;
-
-  /// True once, shortly after [openAfterProfileSwitch]; a stale request is dropped.
-  static bool takeOpenAfterProfileSwitch() {
-    final at = _openAfterSwitchAt;
-    _openAfterSwitchAt = null;
-    return at != null && DateTime.now().difference(at) < const Duration(minutes: 2);
-  }
-
   @override
   State<PatientDocumentsScreen> createState() => _PatientDocumentsScreenState();
 }
@@ -54,7 +41,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
   String _selectedCategory = 'All';
   bool _startedUpload = false;
   String _sortBy = 'newest';
-  final Set<String> _expandedDocIds = <String>{};
   final Set<String> _downloadingDocIds = <String>{};
 
   /// Analyses seen in this session, so reopening insights is instant.
@@ -412,13 +398,14 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
             appBar: AppBar(
               elevation: 0,
               backgroundColor: theme.scaffoldBackgroundColor,
-              title: const Text(
+              title: const FitText(
                 'Medical Documents',
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
+                maxLines: 2,
               ),
               actions: [
                 PopupMenuButton<String>(
@@ -479,7 +466,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Search medical documents, lab tests, reports...',
+                        hintText: 'Search documents and reports',
                         hintStyle: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 12.5,
@@ -850,7 +837,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
 
     final hasDescription = doc.description != null && doc.description!.trim().isNotEmpty;
     final description = doc.description?.trim() ?? '';
-    final isExpanded = _expandedDocIds.contains(docId);
 
     return Material(
       color: Colors.transparent,
@@ -911,8 +897,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                             fontWeight: FontWeight.w600,
                             color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Wrap(
@@ -935,8 +919,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             // Hospital Name Tag (ONLY added when hospital uploaded the record)
@@ -964,8 +946,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                                         fontWeight: FontWeight.w600,
                                         color: _primaryBlue,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -1134,20 +1114,10 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                 ],
               ),
 
-              // YouTube-style Expandable Description Render
+              // Full description, never cut
               if (hasDescription) ...[
                 const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (isExpanded) {
-                        _expandedDocIds.remove(docId);
-                      } else {
-                        _expandedDocIds.add(docId);
-                      }
-                    });
-                  },
-                  child: Container(
+                Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
@@ -1165,8 +1135,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                       children: [
                         Text(
                           description,
-                          maxLines: isExpanded ? 20 : 2,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
@@ -1174,21 +1142,8 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
                             color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                           ),
                         ),
-                        if (description.length > 70) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            isExpanded ? 'Show less' : '...more',
-                            style: const TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _primaryBlue,
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                  ),
                 ),
               ],
 
@@ -1263,8 +1218,6 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
             Expanded(
               child: Text(
                 style.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: DietUi.text(12, FontWeight.w700, style.color),
               ),
             ),

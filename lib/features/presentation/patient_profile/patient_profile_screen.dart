@@ -1,3 +1,6 @@
+import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plans_screen.dart';
+import 'package:yiraclinics/features/presentation/patient/questionnaires/patient_questionnaires_screen.dart';
+import 'package:yiraclinics/features/presentation/doctor/fitness/doctor_patient_fitness_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
@@ -15,6 +18,7 @@ import 'package:yiraclinics/features/presentation/patient_profile/widgets/patien
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_profile_tab_bar.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_access_gate.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_record_scope.dart';
+import 'package:yiraclinics/features/presentation/patient_profile/widgets/request_access_duration_modal.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_list_screen.dart';
 import 'package:yiraclinics/features/presentation/upload_documnets/uploaded_bloc/uploaded_bloc.dart';
@@ -118,7 +122,8 @@ class _DoctorPatientProfileScreenState
       }),
       // Records added anywhere in this hospital are open to its staff once the
       // patient has visited; other hospitals' records need the patient's consent.
-      visitLabel: (widget.appointmentId != null && !_hasHospital) ? 'This visit' : 'This hospital',
+      // Without the patient's consent a doctor sees only his own records here.
+      visitLabel: (widget.appointmentId != null && !_hasHospital) ? 'This visit' : (_isPatient() ? 'This hospital' : 'My records'),
       hasAccess: hasAccess,
       accessStatus: accessStatus,
       visit: () => build(false),
@@ -147,7 +152,9 @@ class _DoctorPatientProfileScreenState
             'Appointments',
             'Medical Record',
             'Prescription',
+            'Diet',
             'Documents',
+            'Questionnaires',
           ]
         : [
             'Info',
@@ -155,6 +162,7 @@ class _DoctorPatientProfileScreenState
             'Medical Record',
             'Prescribe',
             'Diet',
+            'Fitness',
             'Notes',
             'Documents',
             'Questionnaires',
@@ -369,7 +377,17 @@ class _DoctorPatientProfileScreenState
             hospitalId: effectiveHospitalId,
             orgId: widget.orgId,
             isTab: isTab,
-            hasAccess: accessStatus?.hasAccess ?? true,
+            // Unknown (still loading) is not access: only the doctor's own consultations meanwhile
+            hasAccess: _isPatient() || (accessStatus?.hasAccess ?? false),
+            onRequestAccess: _isPatient()
+                ? null
+                : () => RequestAccessDurationModal.show(
+                      context: context,
+                      patient: patient,
+                      patientId: widget.patientId ?? patient.id,
+                      hospitalId: int.tryParse(widget.hospitalId ?? ''),
+                      consentBloc: _consentBloc,
+                    ),
             onPrescribeTap: () {
               final idx = _tabs.contains('Prescription') ? _tabs.indexOf('Prescription') : _tabs.indexOf('Prescribe');
               if (idx != -1) context.read<PatientProfileBloc>().add(TabChanged(idx));
@@ -458,10 +476,20 @@ class _DoctorPatientProfileScreenState
               hospitalId: full ? null : widget.hospitalId,
               orgId: full ? null : widget.orgId,
               allowAdd: !full,
+              allowWhatsAppShare: !_isPatient(),
+              patientName: widget.patientName ?? patient.name,
             ),
           ),
         );
       case 'Questionnaires':
+        // The patient's own questionnaires: fill in what's due, see past answers
+        if (_isPatient()) {
+          return PatientQuestionnairesScreen(
+            key: const ValueKey('PatientQuestionnairesTabFrame'),
+            patientId: widget.patientId ?? patient.id,
+            embedded: true,
+          );
+        }
         // Questionnaires the patient filled in, every attempt
         return _scoped(
           tabName,
@@ -476,7 +504,30 @@ class _DoctorPatientProfileScreenState
             fullHistory: full,
           ),
         );
+      case 'Fitness':
+        // The patient's synced fitness, once they have shared access with this doctor
+        return DoctorPatientFitnessTab(
+          key: ValueKey('FitnessTabFrame${accessStatus?.hasAccess ?? false}'),
+          patientId: widget.patientId ?? patient.id,
+          patientName: patient.name,
+          hasAccess: accessStatus?.hasAccess ?? false,
+          onRequestAccess: () => RequestAccessDurationModal.show(
+            context: context,
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            consentBloc: _consentBloc,
+          ),
+        );
       case 'Diet':
+        // The patient's own diet plans (a family member's are read-only)
+        if (_isPatient()) {
+          return PatientDietPlansScreen(
+            key: const ValueKey('PatientDietTabFrame'),
+            patientId: widget.patientId ?? patient.id,
+            embedded: true,
+          );
+        }
         // Diet Tab (Plans prescribed to this patient, and prescribing a new one)
         return _scoped(
           tabName,

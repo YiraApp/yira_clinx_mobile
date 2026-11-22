@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
@@ -174,7 +175,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
           icon: const PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: FitText(
           "Book an appointment",
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -183,6 +184,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
             color: isDark ? Colors.white : const Color(0xFF121212),
             letterSpacing: -0.3,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         actions: [
@@ -435,8 +437,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                           fontWeight: FontWeight.w400,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -578,8 +578,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                           ),
                         Text(
                           hospName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 16 : 15,
@@ -592,8 +590,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                           const SizedBox(height: 2),
                           Text(
                             subtitleParts.join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w500, color: muted),
                           ),
                         ],
@@ -610,8 +606,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                               Expanded(
                                 child: Text(
                                   locationStr,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: 11.5,
@@ -656,8 +650,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                               Flexible(
                                 child: Text(
                                   helplineStr,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: muted),
                                 ),
                               ),

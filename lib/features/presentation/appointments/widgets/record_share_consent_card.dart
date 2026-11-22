@@ -77,7 +77,7 @@ class RecordShareConsentCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Give $who access to my health data',
+                                'Give $who access to my profile',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 13.5 : 12.5,
@@ -91,8 +91,8 @@ class RecordShareConsentCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           value
-                              ? 'They can see all your records (visits, prescriptions, reports and documents from every hospital) for ${labelFor(duration)}. You can stop it anytime in Approvals.'
-                              : 'They will only see records from their own hospital.',
+                              ? 'They can see your whole profile for ${labelFor(duration)}: visits, prescriptions, reports and documents from every hospital, plus your fitness and vitals. You can stop it anytime in Approvals.'
+                              : 'They will only see their own consultations with you.',
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 12 : 11, height: 1.35, color: muted),
                         ),
                       ],

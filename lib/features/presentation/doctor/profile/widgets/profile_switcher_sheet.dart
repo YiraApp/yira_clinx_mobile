@@ -35,8 +35,14 @@ class ProfileSwitcherSheet extends StatefulWidget {
     final primaryUserId = (profiles.isNotEmpty && (profiles.first.id ?? '').isNotEmpty) ? profiles.first.id! : (user?.data?.id ?? '');
     final items = _buildFamilyItems(user, primaryUserId, (_, image) => image);
     final target = items.where((i) => (i.profileUserId ?? '').toLowerCase() == profileUserId.toLowerCase()).firstOrNull;
-    if (target == null) return false;
     final messenger = ScaffoldMessenger.maybeOf(context);
+    if (target == null) {
+      messenger?.showSnackBar(const SnackBar(
+        content: Text("This profile can't be opened from this account."),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return false;
+    }
     final error = await _performSwitch(target);
     if (error == null) {
       NavigationService.navigateTo(AppRoutes.userConfiguration);
@@ -513,11 +519,9 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
             item.roleId.toUpperCase() == activeRoleIdStr &&
             item.hospitalId.toString() == activeHospitalId.toString());
 
-    final bool isActive = isPatientItem
-        ? (targetProfileId.isNotEmpty && targetProfileId == currentUserId)
-        : (!isSessionPatient &&
-            item.roleId.toUpperCase() == activeRoleIdStr &&
-            item.hospitalId.toString() == activeHospitalId.toString());
+    // "Current" follows the mode you're signed in to: in a workspace only that workspace is
+    // current, not your own patient profile (same user ID, different mode).
+    final bool isActive = isActuallyCurrentModeAndItem;
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
     final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final Color cardColor = isDark ? const Color(0xFF121212) : Colors.white;
@@ -596,8 +600,6 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                               Flexible(
                                 child: Text(
                                   title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: isTab ? 15.5 : 14.5,

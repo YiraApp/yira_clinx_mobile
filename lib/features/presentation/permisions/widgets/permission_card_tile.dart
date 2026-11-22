@@ -58,7 +58,6 @@ class PermissionCardTile extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       fontFamily: appPoppinFont,
                       fontSize:isTab?  displayWidth(context)*0.024: displayWidth(context)*0.035),
-                  maxLines: 1,
                 ),
                 const SizedBox(height: 4),
                 CommonText(
@@ -68,7 +67,6 @@ class PermissionCardTile extends StatelessWidget {
                       fontFamily: appPoppinFont,
                       fontSize: isTab?  displayWidth(context)*0.018:displayWidth(context)*0.032
                   ),
-                  maxLines: 2,
                   softWrap: true,
                 ),
               ],

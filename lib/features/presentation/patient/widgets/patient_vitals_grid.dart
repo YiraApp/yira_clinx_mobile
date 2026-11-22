@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -194,8 +195,9 @@ class PatientVitalsGrid extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      FitText(
                         item['value'] as String,
+                        maxLines: 1,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 16 : 14,
@@ -203,15 +205,15 @@ class PatientVitalsGrid extends StatelessWidget {
                           color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
-                      Text(
+                      FitText(
                         '${item['title']} (${item['unit']})',
+                        maxLines: 1,
+                        minFontSize: 7.5,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 9.5,
                           color: isDark ? Colors.white60 : Colors.grey[600],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
