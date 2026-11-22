@@ -9,7 +9,9 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/features/domain/entities/notifications/app_notification_entity.dart';
+import 'package:yiraclinics/features/presentation/doctor/profile/widgets/profile_switcher_sheet.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_bloc.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_event.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_state.dart';
@@ -231,12 +233,21 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     if (!notification.isRead) {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
+    // A notification for another family profile opens that profile first, so the tap lands in
+    // the right account's data instead of whichever profile happens to be active.
+    final activeId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim();
+    final ownerId = notification.userId.trim();
+    if (ownerId.isNotEmpty && ownerId.toLowerCase() != activeId.toLowerCase()) {
+      // Opens that profile (or explains why it can't); either way, don't route in the wrong one.
+      await ProfileSwitcherSheet.switchToFamilyProfile(context, ownerId);
+      return;
+    }
     final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
     if (target?.url != null) {
       await Utils.launchURL(target!.url!);
       return;
     }
-    if (target != null) {
+    if (target != null && mounted) {
       await Navigator.pushNamed(context, target.route, arguments: target.arguments);
     }
   }

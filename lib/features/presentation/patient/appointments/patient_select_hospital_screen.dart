@@ -485,7 +485,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     final hospType = (hosp['hospitalType'] ?? '').toString().trim();
     final locationStr = _formatHospitalLocation(hosp);
     final helplineStr = _formatHospitalHelpline(hosp);
-    final logoUrl = (hosp['logo'] ?? hosp['logoUrl'] ?? hosp['imageUrl'] ?? hosp['hospitalLogo'] ?? hosp['image'])?.toString();
+    final logoUrl = (hosp['logo'] ?? hosp['logoUrl'] ?? hosp['imageUrl'] ?? hosp['ImageUrl'] ?? hosp['hospitalLogo'] ?? hosp['image'])?.toString();
     final isDefault = _isDefaultHospital(hosp);
 
     // "General · YIRA" adds nothing when the organisation is the hospital itself.
@@ -554,28 +554,6 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isDefault)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: primaryBlue.withValues(alpha: isDark ? 0.22 : 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  PhosphorIcon(PhosphorIconsFill.sealCheck, size: 11, color: primaryBlue),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "Your default clinic",
-                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 10, fontWeight: FontWeight.w700, color: primaryBlue),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                         Text(
                           hospName,
                           style: TextStyle(

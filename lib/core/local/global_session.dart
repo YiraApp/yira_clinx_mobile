@@ -7,6 +7,7 @@ import '../../features/domain/entities/login/login_entity.dart';
 import '../constants/clinx_storage_keys.dart';
 import '../package/domain/plat_form_info_entity.dart';
 import '../services/notification_services/notification_services.dart';
+import '../services/notification_services/notification_badge_service.dart';
 import '../use_cases/get_plat_form_info_usecase.dart';
 import 'shared_preferences.dart';
 
@@ -189,6 +190,10 @@ class GlobalSession {
       await _secureStorage.writeSecureValue<String>(SecureCacheKey.userData, userJson);
       // Automatically register FCM token for the newly authenticated session
       NotificationService.instance.syncFcmTokenWithBackend();
+      // Each profile has its own notification feed. Drop the previous profile's count right away
+      // and re-fetch this profile's, so the bell never shows a stale number after a switch.
+      NotificationBadgeService.instance.clear();
+      NotificationBadgeService.instance.syncUnreadCount();
     } catch (e, stackTrace) {
       debugPrint("CRITICAL (GlobalSession): Error saving session payload to SecureStorage: $e");
       debugPrint("Stacktrace: $stackTrace");

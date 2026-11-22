@@ -132,16 +132,20 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final savedNetworkUrl = prefs.getString('patient_profile_network_image_$userId');
 
       final activeProfile = _openProfile(currentUser);
-      final sessionImage = (currentUser?.data?.imagePath?.isNotEmpty == true)
-          ? currentUser!.data!.imagePath
-          : activeProfile?.imagePath;
+      // The open profile's OWN photo. data.imagePath can still hold the account holder's image
+      // while a dependent profile is open, so never prefer it over the open profile's own.
+      final sessionImage = (activeProfile != null)
+          ? activeProfile.imagePath
+          : currentUser?.data?.imagePath;
 
       if (mounted) {
         setState(() {
           _photoRemovedExplicitly = false;
-          if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
-            _localProfileImage = File(savedPath);
-          }
+          // Each profile has its own photo: clear the previous profile's local file when the one
+          // now open has none of its own, so switching never carries a picture across profiles.
+          _localProfileImage = (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync())
+              ? File(savedPath)
+              : null;
           _networkProfileImageUrl = (savedNetworkUrl != null && savedNetworkUrl.isNotEmpty)
               ? savedNetworkUrl
               : sessionImage;
@@ -2257,12 +2261,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     Widget? stats,
   }) {
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
-    final activeProfile = profiles.isNotEmpty ? profiles.first : null;
+    final activeProfile = _openProfile(currentUser);
     final bool hasLocalImage = !_photoRemovedExplicitly && _localProfileImage != null && _localProfileImage!.existsSync();
-    final String activeSessionImage = !_photoRemovedExplicitly
-        ? (currentUser?.data?.imagePath?.isNotEmpty == true ? currentUser!.data!.imagePath!.trim() : (activeProfile?.imagePath ?? '').trim())
-        : '';
+    // The OPEN profile's own photo (empty -> initials). Never fall back to the account holder's
+    // image, so a dependent with no photo shows its monogram, not the primary's picture.
+    final String activeSessionImage = (!_photoRemovedExplicitly && activeProfile != null)
+        ? (activeProfile.imagePath ?? '').trim()
+        : (!_photoRemovedExplicitly ? (currentUser?.data?.imagePath ?? '').trim() : '');
     final String networkUrl = !_photoRemovedExplicitly ? ((_networkProfileImageUrl ?? activeSessionImage).trim()) : '';
     final double avatar = isTab ? 76 : 66;
     final meta = [

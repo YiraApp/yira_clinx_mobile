@@ -1860,41 +1860,32 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
     final textScaler = MediaQuery.textScalerOf(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Phones: two full rows of 3 for six services, 4 a row beyond that
+        // Phones: always 3 a row. Wider tablets fit more.
         final perRow = constraints.maxWidth > 560
             ? services.length.clamp(4, 8)
-            : (services.length <= 6 || services.length == 9 ? 3 : 4);
+            : 3;
         final iconSize = isTab ? 62.0 : (perRow == 3 ? 54.0 : 50.0);
         var labelStyle = baseLabelStyle;
 
-        // Each column is as wide as its widest icon or label. The columns are then spread
-        // with equal gaps, so the outer columns line up with the Appointments row below
-        // (the first starts at its left edge, the last ends at "View All").
-        final columnWidths = List<double>.filled(perRow, iconSize);
+        // Equal columns, each tile centred in its own column — a balanced, centred grid with even
+        // side margins, instead of the outer tiles hugging the screen edges.
+        final width = constraints.maxWidth;
+        final colWidth = width / perRow;
+        final columnWidths = List<double>.filled(perRow, colWidth);
+        final gaps = List<double>.filled(perRow > 1 ? perRow - 1 : 0, 0);
+        // Shrink every label to the same size only if the widest one won't fit a column.
         var widestLabel = 0.0;
-        for (var i = 0; i < services.length; i++) {
+        for (final s in services) {
           final painter = TextPainter(
-            text: TextSpan(text: services[i].title, style: labelStyle),
+            text: TextSpan(text: s.title, style: labelStyle),
             maxLines: 1,
             textDirection: TextDirection.ltr,
             textScaler: textScaler,
           )..layout();
-          final column = i % perRow;
-          columnWidths[column] = math.max(columnWidths[column], painter.width + 4);
           widestLabel = math.max(widestLabel, painter.width);
         }
-        // Icon centres evenly spaced between the two outer columns, so every gap is the same.
-        final width = constraints.maxWidth;
-        final step = perRow > 1 ? (width - columnWidths.first / 2 - columnWidths.last / 2) / (perRow - 1) : 0.0;
-        var gaps = [for (var c = 0; c + 1 < perRow; c++) step - (columnWidths[c] + columnWidths[c + 1]) / 2];
-        // Labels too long to fit side by side: equal columns, and every label shrinks to the
-        // same size so the widest one fits (one label smaller than the rest looks off).
-        if (gaps.any((g) => g < 4)) {
-          columnWidths.fillRange(0, perRow, width / perRow);
-          gaps = List.filled(perRow - 1, 0);
-          final scale = widestLabel > 0 ? math.min(1.0, (width / perRow - 4) / widestLabel) : 1.0;
-          if (scale < 1) labelStyle = labelStyle.copyWith(fontSize: labelStyle.fontSize! * scale);
-        }
+        final scale = widestLabel > 0 ? math.min(1.0, (colWidth - 4) / widestLabel) : 1.0;
+        if (scale < 1) labelStyle = labelStyle.copyWith(fontSize: labelStyle.fontSize! * scale);
 
         final rows = <List<_DashboardService>>[
           for (var i = 0; i < services.length; i += perRow) services.sublist(i, math.min(i + perRow, services.length)),
