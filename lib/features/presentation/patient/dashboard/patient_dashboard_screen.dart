@@ -457,17 +457,29 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> with Wi
               final data = overViewEntity?.data;
 
               final List<PatientAppointmentEntity> allAppointments = List.from(data?.appointments ?? []);
-              if (allAppointments.isEmpty) {
+              // Always merge the globally-resolved upcoming/next appointment(s), not just when
+              // the hospital-filtered 'appointments' list is empty. The overview 'appointments'
+              // list is scoped to the account's latest hospital, so an upcoming appointment booked
+              // at a different hospital was hidden on the dashboard even though the appointments
+              // screen (which is global) showed it. next_appointment/upcoming_appointments come
+              // from the patient's appointments across all hospitals, so merging them here keeps
+              // the dashboard in sync with the appointments screen.
+              {
                 final nextList = <NextAppointmentEntity>[];
                 if (data?.upcomingAppointments != null && data!.upcomingAppointments!.isNotEmpty) {
                   nextList.addAll(data.upcomingAppointments!);
-                } else if (data?.nextAppointment != null) {
+                }
+                if (data?.nextAppointment != null) {
                   nextList.add(data!.nextAppointment!);
                 }
+                final existingIds = allAppointments.map((a) => a.id).toSet();
                 for (final na in nextList) {
+                  final naId = na.id?.toString() ?? na.appointmentId ?? '';
+                  if (naId.isNotEmpty && existingIds.contains(naId)) continue;
+                  if (naId.isNotEmpty) existingIds.add(naId);
                   allAppointments.add(
                     PatientAppointmentEntity(
-                      id: na.id?.toString() ?? na.appointmentId ?? '',
+                      id: naId,
                       appointmentNumber: na.appointmentId ?? '',
                       appointmentDate: na.appointmentDate ?? na.formattedDate ?? '',
                       rawDate: na.appointmentDate,
