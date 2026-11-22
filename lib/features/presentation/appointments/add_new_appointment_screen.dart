@@ -485,6 +485,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         setState(() {
           _hospitals = hospitals;
           _selectedHospital = targetHospital;
+          _enforceConsultationConstraints();
         });
         if (_selectedHospital != null) {
           await _filterDoctorsForHospital(_selectedHospital!['id'], preferredDoctor: targetDoctor);
@@ -550,6 +551,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
   final List<String> _genderOptions = const ["Male", "Female", "Other"];
+
+  /// The default org (Yira) offers online video consultation only; for patients, in-clinic visit
+  /// types are blocked there, leaving just the video (Tele-Consult) option.
+  bool get _isDefaultOrgHospital =>
+      _selectedHospital != null && LikedHospitalsService.isDefaultHospital(_selectedHospital!);
+
+  bool get _blockInClinicAtDefaultOrg => _isPatientUser && _isDefaultOrgHospital;
+
+  void _enforceConsultationConstraints() {
+    if (_blockInClinicAtDefaultOrg) {
+      _isTeleConsultation = true;
+      _selectedVisitType = "Tele-Consult";
+    }
+  }
 
   bool _isSamePatient(PatientOption a, PatientOption b) {
     if (identical(a, b)) return true;
@@ -2775,7 +2790,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: _visitTypes.map((type) {
+                        children: (_blockInClinicAtDefaultOrg ? const ["Tele-Consult"] : _visitTypes).map((type) {
                           final isSelected = _selectedVisitType == type;
                           return InkWell(
                             onTap: () {
@@ -3606,17 +3621,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
 
     return Row(
       children: [
-        option(
-          selected: !_isTeleConsultation,
-          icon: PhosphorIconsBold.hospital,
-          title: "Clinic visit",
-          subtitle: feeText,
-          onTap: () => setState(() {
-            _isTeleConsultation = false;
-            if (_selectedVisitType == "Tele-Consult") _selectedVisitType = "Consultation";
-          }),
-        ),
-        const SizedBox(width: 10),
+        // The default org (Yira) offers online video consultation only; hide the in-clinic option.
+        if (!_blockInClinicAtDefaultOrg) ...[
+          option(
+            selected: !_isTeleConsultation,
+            icon: PhosphorIconsBold.hospital,
+            title: "Clinic visit",
+            subtitle: feeText,
+            onTap: () => setState(() {
+              _isTeleConsultation = false;
+              if (_selectedVisitType == "Tele-Consult") _selectedVisitType = "Consultation";
+            }),
+          ),
+          const SizedBox(width: 10),
+        ],
         option(
           selected: _isTeleConsultation,
           icon: PhosphorIconsBold.videoCamera,
@@ -4394,6 +4412,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                       setState(() {
                         _selectedHospital = h;
                         _selectedTreatmentPlanIds.clear();
+                        _enforceConsultationConstraints();
                       });
                       await _filterDoctorsForHospital(h['id']);
                     }

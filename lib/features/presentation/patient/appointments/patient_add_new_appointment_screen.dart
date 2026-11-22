@@ -65,6 +65,18 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
+
+  /// The default org (Yira) offers online video consultation only; in-clinic visits are blocked
+  /// there, so only the Tele-Consult visit type is offered and teleconsultation stays on.
+  bool get _isDefaultOrgHospital =>
+      _selectedHospital != null && LikedHospitalsService.isDefaultHospital(_selectedHospital!);
+
+  void _enforceConsultationConstraints() {
+    if (_isDefaultOrgHospital) {
+      _isTeleConsultation = true;
+      _selectedVisitType = "Tele-Consult";
+    }
+  }
   final List<String> _quickReasons = const [
     "General Checkup",
     "Follow-up",
@@ -257,6 +269,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     } else {
       _selectedHospital = hospitals.isNotEmpty ? hospitals.first : null;
     }
+    _enforceConsultationConstraints();
 
     if (_selectedHospital != null) {
       _filterDoctorsForHospital(_selectedHospital!['id']);
@@ -1278,6 +1291,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         );
                                         setState(() {
                                           _selectedHospital = h;
+                                          _enforceConsultationConstraints();
                                         });
                                         _filterDoctorsForHospital(h['id']);
                                       }
@@ -1771,7 +1785,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _visitTypes.map((type) {
+                          children: (_isDefaultOrgHospital ? const ["Tele-Consult"] : _visitTypes).map((type) {
                             final isSelected = _selectedVisitType == type;
                             return InkWell(
                               onTap: () {
@@ -1834,7 +1848,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     ),
                                   ),
                                   Text(
-                                    "Automatically generate video link & send WhatsApp invite",
+                                    _isDefaultOrgHospital
+                                        ? "This clinic offers online video consultation only"
+                                        : "Automatically generate video link & send WhatsApp invite",
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 11,
@@ -1848,16 +1864,18 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               value: _isTeleConsultation,
                               activeTrackColor: const Color(0xFF2563EB),
                               activeThumbColor: Colors.white,
-                              onChanged: (val) {
-                                setState(() {
-                                  _isTeleConsultation = val;
-                                  if (val && _selectedVisitType != "Tele-Consult") {
-                                    _selectedVisitType = "Tele-Consult";
-                                  } else if (!val && _selectedVisitType == "Tele-Consult") {
-                                    _selectedVisitType = "Consultation";
-                                  }
-                                });
-                              },
+                              onChanged: _isDefaultOrgHospital
+                                  ? null
+                                  : (val) {
+                                      setState(() {
+                                        _isTeleConsultation = val;
+                                        if (val && _selectedVisitType != "Tele-Consult") {
+                                          _selectedVisitType = "Tele-Consult";
+                                        } else if (!val && _selectedVisitType == "Tele-Consult") {
+                                          _selectedVisitType = "Consultation";
+                                        }
+                                      });
+                                    },
                             ),
                           ],
                         ),
