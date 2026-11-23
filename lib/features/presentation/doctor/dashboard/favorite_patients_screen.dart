@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -96,9 +97,9 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
         backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
+            IosIcons.arrow_back_ios_new_rounded,
             size: 20,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -111,7 +112,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 20 : 18,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.3,
               ),
             ),
@@ -137,7 +138,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, size: 20),
+            icon: const Icon(IosIcons.refresh_rounded, size: 20),
             color: isDark ? Colors.white70 : Colors.grey.shade700,
             tooltip: "Refresh Favorites",
             onPressed: _fetchFavorites,
@@ -170,7 +171,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 14 : 13,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: "Search in favorite patients...",
@@ -180,13 +181,13 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                       color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                     ),
                     prefixIcon: Icon(
-                      Icons.search_rounded,
+                      IosIcons.search_rounded,
                       size: 20,
                       color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
+                            icon: const Icon(IosIcons.close_rounded, size: 18),
                             onPressed: () {
                               _searchController.clear();
                               _applySearch("");
@@ -276,7 +277,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.star_outline_rounded,
+                IosIcons.star_outline_rounded,
                 size: 48,
                 color: Color(0xFFD97706),
               ),
@@ -288,7 +289,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 18 : 16,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 6),
@@ -310,7 +311,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                   _searchController.clear();
                   _applySearch("");
                 },
-                icon: const Icon(Icons.clear_rounded, size: 18),
+                icon: const Icon(IosIcons.clear_rounded, size: 18),
                 label: const Text("Clear Search"),
                 style: TextButton.styleFrom(
                   foregroundColor: primaryColor,
@@ -322,7 +323,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                   Navigator.pop(context);
                   sl<NavigationDrawerBloc>().add(const PatientsNav());
                 },
-                icon: const Icon(Icons.people_outline_rounded, size: 18),
+                icon: const Icon(IosIcons.people_outline_rounded, size: 18),
                 label: const Text("Browse Patients"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,

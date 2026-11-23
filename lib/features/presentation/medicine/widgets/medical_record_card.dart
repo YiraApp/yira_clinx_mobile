@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../patient_profile/widgets/record_tab_ui.dart';
@@ -40,7 +41,7 @@ class MedicalRecordCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RecordCardHeader(
-            icon: Icons.description_outlined,
+            icon: IosIcons.description_outlined,
             title: title,
             subtitle: doctorName.trim().isEmpty ? formattedDate : '$formattedDate · $doctorName',
             trailing: RecordStatusPill(status),
@@ -61,10 +62,10 @@ class MedicalRecordCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              if (hasEdit) RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit record', onTap: onEditPressed!),
+              if (hasEdit) RecordIconAction(icon: IosIcons.edit_outlined, tooltip: 'Edit record', onTap: onEditPressed!),
               if (hasDelete)
                 RecordIconAction(
-                  icon: Icons.delete_outline_rounded,
+                  icon: IosIcons.delete_outline_rounded,
                   tooltip: 'Delete record',
                   danger: true,
                   onTap: onDeletePressed!,

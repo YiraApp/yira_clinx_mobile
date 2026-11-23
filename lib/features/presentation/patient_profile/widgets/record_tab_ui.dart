@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/lab_test_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
@@ -8,7 +9,7 @@ import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 class RecordUi {
   RecordUi._();
 
-  static Color ink(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  static Color ink(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
   static Color line(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
   static Color soft(bool isDark) => isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9);
   static const Color urgent = Color(0xFFD97706);
@@ -198,7 +199,7 @@ class RecordCardLink extends StatelessWidget {
       children: [
         Text(label, style: DietUi.text(12, FontWeight.w600, DietUi.blue)),
         const SizedBox(width: 2),
-        const Icon(Icons.chevron_right_rounded, size: 17, color: DietUi.blue),
+        const Icon(IosIcons.chevron_right_rounded, size: 17, color: DietUi.blue),
       ],
     );
   }

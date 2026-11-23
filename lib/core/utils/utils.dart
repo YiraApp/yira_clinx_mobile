@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:developer';
 import 'dart:io';
 
@@ -317,7 +318,7 @@ class Utils {
           title: title,
           message: reason,
           tone: AppDialogTone.warning,
-          icon: Icons.lock_outline_rounded,
+          icon: IosIcons.lock_outline_rounded,
           primaryLabel: 'Open Settings',
           onPrimary: () {
             Navigator.of(dialogContext).pop();
@@ -349,7 +350,7 @@ class Utils {
       content: Row(
         children: [
           Icon(
-            status ? Icons.check_circle : Icons.info_outline,
+            status ? IosIcons.check_circle : IosIcons.info_outline,
             color: Colors.white,
             size: iconSize,
           ),

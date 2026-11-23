@@ -1,4 +1,5 @@
 
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 class MaintenanceIllustration extends StatelessWidget {
@@ -29,7 +30,7 @@ class MaintenanceIllustration extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.handyman_rounded,
+          IosIcons.handyman_rounded,
           size: containerSize * 0.45,
           color: theme.primaryColor,
         ),

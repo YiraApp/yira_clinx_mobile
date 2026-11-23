@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:io';
@@ -625,7 +626,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       confirmLabel: actionLabel,
       cancelLabel: cancelLabel,
       tone: AppDialogTone.danger,
-      icon: Icons.warning_amber_rounded,
+      icon: IosIcons.warning_amber_rounded,
     );
   }
 
@@ -1170,7 +1171,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     fontFamily: appPoppinFont,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1185,14 +1186,14 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           dense: true,
-                          leading: const Icon(Icons.calendar_today_rounded, size: 18, color: _primaryBlue),
+                          leading: const Icon(IosIcons.calendar_today_rounded, size: 18, color: _primaryBlue),
                           title: Text(
                             'Day $d',
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           subtitle: Text(
@@ -1238,6 +1239,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       existingItem: existingItem,
       authToken: _authToken,
       orgId: _orgId,
+      dietType: _selectedDietType,
       onSubmit: (item) {
         if (!mounted) return;
         item.dayNumber = day;
@@ -1320,7 +1322,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_view_week_rounded, color: _primaryBlue, size: 22),
+                        const Icon(IosIcons.calendar_view_week_rounded, color: _primaryBlue, size: 22),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -1346,7 +1348,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(IosIcons.close_rounded),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -1410,7 +1412,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                             fontFamily: appPoppinFont,
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
-                                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                            color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                                           ),
                                         ),
                                       ],
@@ -1461,7 +1463,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                                 fontFamily: appPoppinFont,
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w700,
-                                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                                color: isDark ? Colors.white : const Color(0xFF121212),
                                               ),
                                             ),
                                           ],
@@ -1474,7 +1476,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                                 style: TextStyle(
                                                   fontFamily: appPoppinFont,
                                                   fontSize: 11.5,
-                                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                                                 ),
                                               ),
                                             )),
@@ -1779,11 +1781,11 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             fontFamily: appPoppinFont,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
+                          icon: const Icon(IosIcons.close_rounded, size: 20),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -1795,7 +1797,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1814,7 +1816,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontWeight: FontWeight.w600,
                               color: alreadyAdded
                                   ? (isDark ? Colors.white38 : Colors.black38)
-                                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                  : (isDark ? Colors.white : const Color(0xFF232323)),
                             ),
                           ),
                           backgroundColor: alreadyAdded
@@ -1838,7 +1840,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontFamily: appPoppinFont,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1878,7 +1880,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.access_time_rounded, size: 16, color: _primaryBlue),
+                                const Icon(IosIcons.access_time_rounded, size: 16, color: _primaryBlue),
                                 const SizedBox(width: 6),
                                 Text(
                                   selectedTime.format(context),
@@ -1901,7 +1903,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        icon: const Icon(Icons.add_rounded, size: 18),
+                        icon: const Icon(IosIcons.add_rounded, size: 18),
                         label: const Text('Add Custom Slot', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700)),
                         onPressed: () {
                           final name = nameCtrl.text.trim();
@@ -1960,7 +1962,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           title: 'Remove $slotName?',
           message: 'This will delete $totalItems food item(s) from $slotName on every day of the plan.',
           tone: AppDialogTone.danger,
-          icon: Icons.delete_outline_rounded,
+          icon: IosIcons.delete_outline_rounded,
           primaryLabel: 'Remove Slot',
           onPrimary: () {
             Navigator.pop(ctx);
@@ -1997,7 +1999,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           'Assign "$templateName" to ${widget.patientName ?? 'this patient'} for $_validityDaysCount days (${_formatDate(_startDate)} to ${_formatDate(_endDate)})?\n\nThis replaces any diet plan the patient is currently following.',
       confirmLabel: 'Assign As-Is',
       tone: AppDialogTone.success,
-      icon: Icons.assignment_turned_in_rounded,
+      icon: IosIcons.assignment_turned_in_rounded,
     );
 
     if (confirmed != true) return;
@@ -2078,7 +2080,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2197,7 +2199,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                 fontFamily: appPoppinFont,
                                 fontSize: 16.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -2253,7 +2255,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded),
+                        icon: const Icon(IosIcons.close_rounded),
                         onPressed: () => Navigator.pop(ctx),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -2343,7 +2345,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 13,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -2399,7 +2401,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.edit_rounded, size: 16),
+                          icon: const Icon(IosIcons.edit_rounded, size: 16),
                           label: const Text(
                             'Customize',
                             style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
@@ -2422,7 +2424,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.send_rounded, size: 16),
+                          icon: const Icon(IosIcons.send_rounded, size: 16),
                           label: const Text(
                             'Assign As-Is',
                             style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
@@ -2450,7 +2452,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       context: context,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final primaryText = isDark ? Colors.white : const Color(0xFF0F172A);
+        final primaryText = isDark ? Colors.white : const Color(0xFF121212);
         final secondaryText = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
         Widget detailRow(String label, String value) {
@@ -2503,7 +2505,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,
                       height: 1.4,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 ),
@@ -2515,7 +2517,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         return AppDialog(
           title: 'Review & Prescribe',
           tone: AppDialogTone.success,
-          icon: Icons.fact_check_outlined,
+          icon: IosIcons.fact_check_outlined,
           primaryLabel: 'Prescribe',
           secondaryLabel: 'Keep Editing',
           content: Column(
@@ -2562,18 +2564,18 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 }),
                 if (_foodsToPrefer.isEmpty && _foodsToAvoid.isEmpty)
                   notice(
-                    Icons.rule_rounded,
+                    IosIcons.rule_rounded,
                     _amberOrange,
                     "No do's & don'ts added. $patient will only see general tips. Go back to add them.",
                   ),
                 if (emptyDays.isNotEmpty)
                   notice(
-                    Icons.warning_amber_rounded,
+                    IosIcons.warning_amber_rounded,
                     _amberOrange,
                     '${emptyDays.length == 1 ? 'Day' : 'Days'} ${emptyDays.join(', ')} ${emptyDays.length == 1 ? 'has' : 'have'} no meals. $patient will see an empty schedule on ${emptyDays.length == 1 ? 'that day' : 'those days'}.',
                   ),
                 notice(
-                  Icons.info_outline_rounded,
+                  IosIcons.info_outline_rounded,
                   _primaryBlue,
                   'This replaces any diet plan $patient is currently following and sends them a notification.',
                 ),
@@ -2655,7 +2657,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2744,9 +2746,9 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   onTap: () => Navigator.maybePop(context),
                   child: Center(
                     child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
+                      IosIcons.arrow_back_ios_new_rounded,
                       size: 15,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                 ),
@@ -2766,7 +2768,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.2,
                 height: 1.25,
               ),
@@ -2827,7 +2829,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               shape: BoxShape.circle,
                             ),
                             child: const Center(
-                              child: Icon(Icons.add_rounded, size: 13, color: Colors.white),
+                              child: Icon(IosIcons.add_rounded, size: 13, color: Colors.white),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -2894,7 +2896,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.auto_stories_rounded, size: 16),
+                      const Icon(IosIcons.auto_stories_rounded, size: 16),
                       const SizedBox(width: 6),
                       const Flexible(
                         child: Text(
@@ -2929,7 +2931,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.edit_note_rounded, size: 18),
+                      Icon(IosIcons.edit_note_rounded, size: 18),
                       SizedBox(width: 6),
                       Flexible(
                         child: Text(
@@ -2990,7 +2992,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
               ),
             ),
             const SizedBox(height: 4),
@@ -3034,7 +3036,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontSize: 12.5,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
             decoration: InputDecoration(
               isDense: true,
@@ -3045,13 +3047,13 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),
               prefixIcon: Icon(
-                Icons.search_rounded,
+                IosIcons.search_rounded,
                 size: 19,
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),
               suffixIcon: _templateSearchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
+                      icon: const Icon(IosIcons.close_rounded, size: 16),
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       onPressed: () {
                         _templateSearchController.clear();
@@ -3104,7 +3106,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                              : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A)),
                         ),
                       ),
                     ),
@@ -3130,7 +3132,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Row(
           children: [
-            const Icon(Icons.bookmark_rounded, size: 16, color: _primaryBlue),
+            const Icon(IosIcons.bookmark_rounded, size: 16, color: _primaryBlue),
             const SizedBox(width: 6),
             Text(
               'MY SAVED TEMPLATES',
@@ -3165,8 +3167,8 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
     }
 
     final groups = [
-      (key: 'mine', label: 'My Templates', count: _myTemplates.length, icon: Icons.bookmark_rounded),
-      (key: 'shared', label: 'Shared with Me', count: _sharedTemplates.length, icon: Icons.groups_rounded),
+      (key: 'mine', label: 'My Templates', count: _myTemplates.length, icon: IosIcons.bookmark_rounded),
+      (key: 'shared', label: 'Shared with Me', count: _sharedTemplates.length, icon: IosIcons.groups_rounded),
     ];
 
     return Container(
@@ -3284,7 +3286,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 ),
                 child: Center(
                   child: Icon(
-                    isFiltering ? Icons.search_off_rounded : Icons.bookmark_border_rounded,
+                    isFiltering ? IosIcons.search_off_rounded : IosIcons.bookmark_border_rounded,
                     size: 28,
                     color: _mutedText(isDark),
                   ),
@@ -3324,7 +3326,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     _templateSearchController.clear();
                     setState(() => _selectedTemplateCondition = 'All');
                   },
-                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  icon: const Icon(IosIcons.refresh_rounded, size: 16),
                   label: const Text(
                     'Clear Filters',
                     style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
@@ -3523,7 +3525,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.local_fire_department_outlined, size: 15, color: _mutedText(isDark)),
+                        Icon(IosIcons.local_fire_department_outlined, size: 15, color: _mutedText(isDark)),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -3534,7 +3536,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ),
@@ -3558,7 +3560,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             side: BorderSide(color: _lineColor(isDark)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          icon: const Icon(Icons.visibility_outlined, size: 16),
+                          icon: const Icon(IosIcons.visibility_outlined, size: 16),
                           label: const Text(
                             'Preview',
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600),
@@ -3576,7 +3578,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                          icon: const Icon(IosIcons.arrow_forward_rounded, size: 16),
                           label: const Text(
                             'Use for patient',
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700),
@@ -3597,7 +3599,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
   Widget _buildTemplateMenu(dynamic t, bool isMine, bool isDark) {
     return PopupMenuButton<String>(
       tooltip: 'More',
-      icon: Icon(Icons.more_vert_rounded, size: 20, color: _mutedText(isDark)),
+      icon: Icon(IosIcons.more_vert_rounded, size: 20, color: _mutedText(isDark)),
       padding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: (action) {
@@ -3629,11 +3631,11 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         }
 
         return [
-          item('preview', Icons.visibility_outlined, 'Preview meals'),
-          item('assign', Icons.send_rounded, 'Assign as-is', color: _emeraldGreen),
-          if (isMine) item('edit', Icons.edit_outlined, 'Edit template'),
-          item('duplicate', Icons.copy_rounded, isMine ? 'Duplicate' : 'Copy to My Templates'),
-          if (isMine) item('delete', Icons.delete_outline_rounded, 'Delete', color: _roseRed),
+          item('preview', IosIcons.visibility_outlined, 'Preview meals'),
+          item('assign', IosIcons.send_rounded, 'Assign as-is', color: _emeraldGreen),
+          if (isMine) item('edit', IosIcons.edit_outlined, 'Edit template'),
+          item('duplicate', IosIcons.copy_rounded, isMine ? 'Duplicate' : 'Copy to My Templates'),
+          if (isMine) item('delete', IosIcons.delete_outline_rounded, 'Delete', color: _roseRed),
         ];
       },
     );
@@ -3643,7 +3645,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
   // ==========================================
   // TAB 2: CUSTOM PLAN BUILDER
   // ==========================================
-  Color _strongText(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _strongText(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
 
   Color _mutedText(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
@@ -3729,7 +3731,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           fontFamily: appPoppinFont,
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
-          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
         ),
       ),
     );
@@ -3744,7 +3746,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
   }) {
     final Color foreground = isSelected
         ? (isDark ? const Color(0xFF93C5FD) : _primaryBlue)
-        : (isDark ? Colors.white70 : const Color(0xFF334155));
+        : (isDark ? Colors.white70 : const Color(0xFF3A3A3A));
 
     return InkWell(
       onTap: onTap,
@@ -3794,7 +3796,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.cloud_off_rounded, size: 36, color: _mutedText(isDark)),
+              Icon(IosIcons.cloud_off_rounded, size: 36, color: _mutedText(isDark)),
               const SizedBox(height: 10),
               Text(
                 _planLoadError!,
@@ -3820,7 +3822,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       ),
       child: Row(
         children: [
-          const Icon(Icons.edit_note_rounded, size: 18, color: _amberOrange),
+          const Icon(IosIcons.edit_note_rounded, size: 18, color: _amberOrange),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -3830,7 +3832,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 fontFamily: appPoppinFont,
                 fontSize: 11.5,
                 height: 1.4,
-                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
               ),
             ),
           ),
@@ -3850,7 +3852,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
       ),
       child: Row(
         children: [
-          Icon(Icons.bookmark_rounded, size: 18, color: isDark ? const Color(0xFFC4B5FD) : accent),
+          Icon(IosIcons.bookmark_rounded, size: 18, color: isDark ? const Color(0xFFC4B5FD) : accent),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -3904,7 +3906,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.bookmark_add_rounded, color: Color(0xFF7C3AED), size: 20),
+            child: const Icon(IosIcons.bookmark_add_rounded, color: Color(0xFF7C3AED), size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -3978,7 +3980,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             child: Row(
               children: [
                 Icon(
-                  Icons.auto_stories_rounded,
+                  IosIcons.auto_stories_rounded,
                   size: 16,
                   color: isDark ? const Color(0xFF93C5FD) : _primaryBlue,
                 ),
@@ -4071,7 +4073,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryBlue),
+                const Icon(IosIcons.calendar_today_rounded, size: 16, color: _primaryBlue),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -4125,7 +4127,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               ),
             _buildChoiceChip(
               label: isCustomDuration ? 'Custom · $_validityDaysCount days' : 'Custom end date',
-              icon: Icons.edit_calendar_rounded,
+              icon: IosIcons.edit_calendar_rounded,
               isSelected: isCustomDuration,
               isDark: isDark,
               onTap: _pickEndDate,
@@ -4148,7 +4150,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           const SizedBox(height: 14),
           TextButton.icon(
             onPressed: _confirmStartBlank,
-            icon: const Icon(Icons.restart_alt_rounded, size: 16),
+            icon: const Icon(IosIcons.restart_alt_rounded, size: 16),
             label: const Text('Start over with a blank plan'),
             style: TextButton.styleFrom(
               foregroundColor: _roseRed,
@@ -4233,7 +4235,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 12,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 ),
@@ -4267,7 +4269,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
 
         OutlinedButton.icon(
           onPressed: _showAddSlotDialog,
-          icon: const Icon(Icons.add_rounded, size: 18),
+          icon: const Icon(IosIcons.add_rounded, size: 18),
           label: const Text('Add meal slot'),
           style: OutlinedButton.styleFrom(
             foregroundColor: isDark ? const Color(0xFF93C5FD) : _primaryBlue,
@@ -4356,7 +4358,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      Icons.calendar_today_rounded,
+                                      IosIcons.calendar_today_rounded,
                                       size: 12,
                                       color: isSelected
                                           ? Colors.white.withValues(alpha: 0.9)
@@ -4436,7 +4438,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
-                                      Icons.close_rounded,
+                                      IosIcons.close_rounded,
                                       size: 13,
                                       color: isSelected ? Colors.white : _roseRed,
                                     ),
@@ -4479,7 +4481,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.add_rounded,
+                          IosIcons.add_rounded,
                           size: 14,
                           color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
                         ),
@@ -4580,7 +4582,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
               fontFamily: appPoppinFont,
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ],
@@ -4596,13 +4598,13 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
 
     final actions = <PopupMenuEntry<String>>[
       if (hasItems && _dayCount < _maxDays)
-        _menuItem('duplicate', Icons.content_copy_rounded, 'Duplicate as Day ${_dayCount + 1}'),
-      if (multiDay) _menuItem('copyFrom', Icons.download_rounded, 'Copy from another day'),
+        _menuItem('duplicate', IosIcons.content_copy_rounded, 'Duplicate as Day ${_dayCount + 1}'),
+      if (multiDay) _menuItem('copyFrom', IosIcons.download_rounded, 'Copy from another day'),
       if (multiDay && hasItems)
-        _menuItem('copyAll', Icons.copy_all_rounded, 'Copy this day to all days'),
-      if (hasItems) _menuItem('clear', Icons.clear_all_rounded, 'Clear this day'),
+        _menuItem('copyAll', IosIcons.copy_all_rounded, 'Copy this day to all days'),
+      if (hasItems) _menuItem('clear', IosIcons.clear_all_rounded, 'Clear this day'),
       if (multiDay)
-        _menuItem('remove', Icons.delete_outline_rounded, 'Remove Day $day', color: _roseRed),
+        _menuItem('remove', IosIcons.delete_outline_rounded, 'Remove Day $day', color: _roseRed),
     ];
 
     return Container(
@@ -4662,7 +4664,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.delete_outline_rounded, size: 14, color: _roseRed),
+                        const Icon(IosIcons.delete_outline_rounded, size: 14, color: _roseRed),
                         const SizedBox(width: 4),
                         Text(
                           'Remove Day $day',
@@ -4681,7 +4683,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 const SizedBox(width: 4),
                 PopupMenuButton<String>(
                   tooltip: 'More Day options',
-                  icon: Icon(Icons.more_horiz_rounded, color: _mutedText(isDark)),
+                  icon: Icon(IosIcons.more_horiz_rounded, color: _mutedText(isDark)),
                   color: isDark ? darkModeCardColor : Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   onSelected: (value) {
@@ -4798,7 +4800,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.schedule_rounded, size: 12, color: _mutedText(isDark)),
+                            Icon(IosIcons.schedule_rounded, size: 12, color: _mutedText(isDark)),
                             const SizedBox(width: 4),
                             Text(
                               time,
@@ -4822,12 +4824,12 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                 PopupMenuButton<String>(
                   tooltip: '$slotName options',
-                  icon: Icon(Icons.more_vert_rounded, size: 20, color: _mutedText(isDark)),
+                  icon: Icon(IosIcons.more_vert_rounded, size: 20, color: _mutedText(isDark)),
                   color: isDark ? darkModeCardColor : Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   onSelected: (value) {
@@ -4838,9 +4840,9 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     }
                   },
                   itemBuilder: (_) => [
-                    _menuItem('time', Icons.schedule_rounded, 'Change time'),
+                    _menuItem('time', IosIcons.schedule_rounded, 'Change time'),
                     if (_slots.length > 1)
-                      _menuItem('remove', Icons.delete_outline_rounded, 'Remove meal slot', color: _roseRed),
+                      _menuItem('remove', IosIcons.delete_outline_rounded, 'Remove meal slot', color: _roseRed),
                   ],
                 ),
               ],
@@ -4869,7 +4871,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.add_circle_outline_rounded,
+                    IosIcons.add_circle_outline_rounded,
                     size: 16,
                     color: isDark ? const Color(0xFF93C5FD) : _primaryBlue,
                   ),
@@ -4959,7 +4961,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            weight == null ? Icons.add_rounded : Icons.scale_outlined,
+                            weight == null ? IosIcons.add_rounded : IosIcons.scale_outlined,
                             size: 13,
                             color: isDark ? const Color(0xFF93C5FD) : _primaryBlue,
                           ),
@@ -4975,7 +4977,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           ),
                           if (weight != null) ...[
                             const SizedBox(width: 4),
-                            Icon(Icons.edit_outlined, size: 12, color: isDark ? const Color(0xFF93C5FD) : _primaryBlue),
+                            Icon(IosIcons.edit_outlined, size: 12, color: isDark ? const Color(0xFF93C5FD) : _primaryBlue),
                           ],
                         ],
                       ),
@@ -4990,7 +4992,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                         fontSize: 11,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
-                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                       ),
                     ),
                   ],
@@ -4999,7 +5001,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             ),
             IconButton(
               tooltip: 'Remove ${item.foodName}',
-              icon: Icon(Icons.close_rounded, size: 18, color: _mutedText(isDark)),
+              icon: Icon(IosIcons.close_rounded, size: 18, color: _mutedText(isDark)),
               onPressed: () => _removeMealItem(day, slotName, index),
             ),
           ],
@@ -5034,7 +5036,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
         if (!_isTemplateMode) ...[
         _buildChipSection(
           title: "Do's · foods & habits to follow",
-          icon: Icons.check_circle_rounded,
+          icon: IosIcons.check_circle_rounded,
           color: _emeraldGreen,
           chips: _foodsToPrefer,
           suggestions: _guidanceSuggestions(dos: true),
@@ -5051,7 +5053,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
 
         _buildChipSection(
           title: "Don'ts · foods & habits to avoid",
-          icon: Icons.cancel_rounded,
+          icon: IosIcons.cancel_rounded,
           color: _roseRed,
           chips: _foodsToAvoid,
           suggestions: _guidanceSuggestions(dos: false),
@@ -5151,7 +5153,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.bookmark_add_outlined,
+                              IosIcons.bookmark_add_outlined,
                               size: 15,
                               color: isDark ? const Color(0xFFC4B5FD) : const Color(0xFF7C3AED),
                             ),
@@ -5181,7 +5183,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                   child: OutlinedButton(
                     onPressed: busy ? null : () => _goToStep(_builderStep - 1),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+                      foregroundColor: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                       side: BorderSide(
                         color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
                       ),
@@ -5261,7 +5263,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
             fontFamily: appPoppinFont,
             fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
           ),
         ),
         const SizedBox(height: 6),
@@ -5272,7 +5274,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: 13,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -5392,7 +5394,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   backgroundColor: color.withOpacity(isDark ? 0.2 : 0.08),
@@ -5425,7 +5427,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.add_rounded, size: 13, color: color),
+                          Icon(IosIcons.add_rounded, size: 13, color: color),
                           const SizedBox(width: 3),
                           Text(
                             sug,
@@ -5433,7 +5435,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ],
@@ -5502,7 +5504,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
                     inputController.clear();
                   }
                 },
-                icon: const Icon(Icons.add, size: 16),
+                icon: const Icon(IosIcons.add, size: 16),
                 style: IconButton.styleFrom(
                   backgroundColor: color,
                   foregroundColor: Colors.white,
@@ -5524,7 +5526,7 @@ class _DoctorPrescribeDietSheetState extends State<DoctorPrescribeDietSheet>
     if (s.contains('lunch')) return const Color(0xFF2563EB);
     if (s.contains('snack') || s.contains('evening')) return const Color(0xFF8B5CF6);
     if (s.contains('dinner')) return const Color(0xFF6366F1);
-    if (s.contains('bed')) return const Color(0xFF475569);
+    if (s.contains('bed')) return const Color(0xFF4A4A4A);
     return _primaryBlue;
   }
 
@@ -5585,7 +5587,7 @@ class _PortionWeightDialogState extends State<_PortionWeightDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final presets = dietWeightPresets(_unit);
     final old = widget.item.weightAmount;
@@ -5594,7 +5596,7 @@ class _PortionWeightDialogState extends State<_PortionWeightDialog> {
     return AppDialog(
       title: 'Portion weight',
       message: widget.item.foodName,
-      icon: Icons.scale_outlined,
+      icon: IosIcons.scale_outlined,
       primaryLabel: 'Save',
       onPrimary: _save,
       secondaryLabel: 'Cancel',
@@ -5836,7 +5838,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
         child: Row(
           children: [
             Icon(
-              selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+              selected ? IosIcons.radio_button_checked_rounded : IosIcons.radio_button_off_rounded,
               size: 20,
               color: selected ? _accent : (isDark ? Colors.white54 : const Color(0xFF94A3B8)),
             ),
@@ -5853,7 +5855,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   Text(
@@ -5876,13 +5878,13 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final labelStyle = TextStyle(
       fontFamily: appPoppinFont,
       fontSize: 11.5,
       fontWeight: FontWeight.w600,
-      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
     );
 
     return Padding(
@@ -5920,7 +5922,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                         color: _accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.bookmark_add_rounded, color: _accent, size: 20),
+                      child: const Icon(IosIcons.bookmark_add_rounded, color: _accent, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -6000,7 +6002,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline_rounded, size: 16, color: _roseRed),
+                        const Icon(IosIcons.error_outline_rounded, size: 16, color: _roseRed),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -6021,7 +6023,7 @@ class _SaveTemplateSheetState extends State<_SaveTemplateSheet> {
                         child: OutlinedButton(
                           onPressed: _saving ? null : () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: isDark ? Colors.white70 : const Color(0xFF334155),
+                            foregroundColor: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             side: BorderSide(color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1)),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),

@@ -50,7 +50,7 @@ class DashboardChartCard extends StatelessWidget {
                   fontFamily: fontFamily,
                   fontSize: isTab ? displayWidth(context) * 0.02 : 15.5,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                   letterSpacing: -0.2,
                 ),
               ),

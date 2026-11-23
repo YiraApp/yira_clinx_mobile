@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -143,8 +144,8 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             ),
             child: Icon(
               widget.slot.hasAppointment
-                  ? Icons.calendar_today_rounded
-                  : (widget.slot.label == 'Blocked' ? Icons.block_rounded : Icons.person_add_alt_1_rounded),
+                  ? IosIcons.calendar_today_rounded
+                  : (widget.slot.label == 'Blocked' ? IosIcons.block_rounded : IosIcons.person_add_alt_1_rounded),
               color: widget.slot.label == 'Blocked' ? Colors.redAccent : primaryColor,
               size: 22,
             ),
@@ -162,7 +163,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                     fontSize: headlineSize,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -179,7 +180,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.close_rounded, color: Colors.grey.shade400, size: 22),
+            icon: Icon(IosIcons.close_rounded, color: Colors.grey.shade400, size: 22),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -294,7 +295,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                   color: primaryColor,
                   borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
-                child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 24),
+                child: const Icon(IosIcons.person_outline_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -318,7 +319,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                         fontFamily: appPoppinFont,
                         fontSize:isTab? displayWidth(context) * 0.022: displayWidth(context) * 0.035,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                   ],
@@ -410,7 +411,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.close_rounded, color: Colors.redAccent, size: 18),
+                    const Icon(IosIcons.close_rounded, color: Colors.redAccent, size: 18),
                     const SizedBox(width: 8),
                     CommonText(
                       'Cancel Appointment',
@@ -450,7 +451,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.block_rounded, color: Colors.redAccent, size: 22),
+                const Icon(IosIcons.block_rounded, color: Colors.redAccent, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: CommonText(
@@ -474,7 +475,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
               );
               Navigator.of(context).pop();
             },
-            icon: const Icon(Icons.check_circle_outline_rounded, size: 20),
+            icon: const Icon(IosIcons.check_circle_outline_rounded, size: 20),
             label: CommonText(
               'Unblock This Slot',
               style: TextStyle(
@@ -534,7 +535,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.person_add_alt_1_rounded,
+                          IosIcons.person_add_alt_1_rounded,
                           size: 18,
                           color: _isBookingMode
                               ? (isDark ? Colors.white : primaryColor)
@@ -583,7 +584,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.block_rounded,
+                          IosIcons.block_rounded,
                           size: 16,
                           color: !_isBookingMode
                               ? (isDark ? Colors.white : Colors.redAccent)
@@ -618,7 +619,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           _buildTextField(
             controller: _patientNameController,
             hintText: 'e.g. Ramesh Kumar',
-            icon: Icons.person_outline_rounded,
+            icon: IosIcons.person_outline_rounded,
             isDark: isDark,
           ),
           const SizedBox(height: 14),
@@ -629,7 +630,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           _buildTextField(
             controller: _phoneController,
             hintText: 'e.g. 9876543210',
-            icon: Icons.phone_outlined,
+            icon: IosIcons.phone_outlined,
             keyboardType: TextInputType.phone,
             isDark: isDark,
           ),
@@ -665,7 +666,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isSelected) ...[
-                        Icon(Icons.check_circle_rounded, size: 14, color: primaryColor),
+                        Icon(IosIcons.check_circle_rounded, size: 14, color: primaryColor),
                         const SizedBox(width: 4),
                       ],
                       CommonText(
@@ -693,7 +694,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
           _buildTextField(
             controller: _reasonController,
             hintText: 'e.g. Fever, Follow-up checkup',
-            icon: Icons.medical_services_outlined,
+            icon: IosIcons.medical_services_outlined,
             isDark: isDark,
           ),
           const SizedBox(height: 20),
@@ -707,7 +708,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Icon(Icons.check_circle_rounded, size: 20),
+                : const Icon(IosIcons.check_circle_rounded, size: 20),
             label: CommonText(
               _isSubmitting ? 'Booking Appointment...' : 'Confirm & Book Appointment',
               style: TextStyle(
@@ -737,7 +738,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline_rounded, color: Colors.redAccent, size: 22),
+                const Icon(IosIcons.info_outline_rounded, color: Colors.redAccent, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: CommonText(
@@ -761,7 +762,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
               );
               Navigator.of(context).pop();
             },
-            icon: const Icon(Icons.block_rounded, size: 18),
+            icon: const Icon(IosIcons.block_rounded, size: 18),
             label: CommonText(
               'Block This Slot',
               style: TextStyle(
@@ -790,7 +791,7 @@ class _SlotDetailsDialogState extends State<SlotDetailsDialog> {
         fontFamily: appPoppinFont,
         fontSize: isTab ? displayWidth(context) * 0.016 : displayWidth(context) * 0.028,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
       ),
     );
   }

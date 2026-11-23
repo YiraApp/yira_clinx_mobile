@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -189,7 +190,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
             SnackBar(
               content: const Row(
                 children: [
-                  Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                  Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
                   SizedBox(width: 8),
                   Text("Suggestion sent to patient!"),
                 ],
@@ -274,7 +275,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
-                        Icons.lightbulb_outline_rounded,
+                        IosIcons.lightbulb_outline_rounded,
                         color: Color(0xFF2563EB),
                         size: 22,
                       ),
@@ -290,7 +291,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 18 : 16,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           if (widget.patientName != null &&
@@ -312,7 +313,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         Navigator.pop(context);
                       },
                       icon: Icon(
-                        Icons.close_rounded,
+                        IosIcons.close_rounded,
                         color: isDark ? Colors.white60 : Colors.black54,
                       ),
                     ),
@@ -327,7 +328,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -354,7 +355,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                                 isSelected ? FontWeight.bold : FontWeight.w500,
                             color: isSelected
                                 ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
                           ),
                           selectedColor: const Color(0xFF2563EB),
                           backgroundColor: isDark
@@ -382,7 +383,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -393,7 +394,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: "e.g. Low Sodium Diet & Morning Walk",
@@ -438,7 +439,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -451,7 +452,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText:
@@ -497,7 +498,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -522,7 +523,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
-                            Icons.attach_file_rounded,
+                            IosIcons.attach_file_rounded,
                             color: Color(0xFF2563EB),
                             size: 20,
                           ),
@@ -533,7 +534,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                               fontFamily: appPoppinFont,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: isDark ? Colors.white70 : const Color(0xFF475569),
+                              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                             ),
                           ),
                         ],
@@ -553,7 +554,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.description_rounded,
+                          IosIcons.description_rounded,
                           color: Color(0xFF2563EB),
                           size: 22,
                         ),
@@ -568,7 +569,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -588,7 +589,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                         IconButton(
                           onPressed: _removeFile,
                           icon: const Icon(
-                            Icons.close_rounded,
+                            IosIcons.close_rounded,
                             color: Colors.redAccent,
                             size: 20,
                           ),
@@ -654,7 +655,7 @@ class _AddDoctorSuggestionSheetState extends State<AddDoctorSuggestionSheet> {
                             : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.send_rounded, size: 16),
+                                  Icon(IosIcons.send_rounded, size: 16),
                                   SizedBox(width: 6),
                                   Text(
                                     "Send Suggestion",

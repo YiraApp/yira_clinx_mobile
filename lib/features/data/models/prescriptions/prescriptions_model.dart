@@ -1,6 +1,7 @@
 import '../../../domain/entities/prescriptions/prescription_entity.dart';
 import '../../../domain/entities/prescriptions/prescription_item.dart';
 import 'lab_test_model.dart';
+import '../../../../core/utils/edit_window.dart';
 
 class PrescriptionModel extends PrescriptionEntity {
   const PrescriptionModel({
@@ -14,6 +15,7 @@ class PrescriptionModel extends PrescriptionEntity {
     required super.additionalNotes,
     super.pdfUrl,
     super.labTests,
+    super.createdAt,
   });
 
   factory PrescriptionModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +54,7 @@ class PrescriptionModel extends PrescriptionEntity {
       additionalNotes: (json['additionalNotes'] ?? json['additional_notes'] ?? json['Notes'] ?? '').toString(),
       pdfUrl: (json['pdfUrl'] ?? json['PdfUrl'] ?? json['pdf_url'])?.toString(),
       labTests: PrescribedLabTestModel.listFromJson(json['LabTests'] ?? json['labTests']),
+      createdAt: createdAtOf(json),
     );
   }
 

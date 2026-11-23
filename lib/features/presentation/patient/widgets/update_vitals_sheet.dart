@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart';
 
@@ -220,7 +221,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
     final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     return Container(
       decoration: BoxDecoration(
@@ -257,7 +258,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                     color: primaryColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.favorite_rounded, color: primaryColor, size: 24),
+                  child: Icon(IosIcons.favorite_rounded, color: primaryColor, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -306,7 +307,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                   child: _buildInputField(
                     controller: _bpSystolicController,
                     label: 'Systolic (e.g. 120)',
-                    icon: Icons.compress_rounded,
+                    icon: IosIcons.compress_rounded,
                     isDark: isDark,
                     errorText: _errors['sys'],
                     helperText: 'Max: 260 mmHg',
@@ -320,7 +321,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                   child: _buildInputField(
                     controller: _bpDiastolicController,
                     label: 'Diastolic (e.g. 80)',
-                    icon: Icons.expand_rounded,
+                    icon: IosIcons.expand_rounded,
                     isDark: isDark,
                     errorText: _errors['dia'],
                     helperText: 'Max: 160 mmHg',
@@ -343,7 +344,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       _buildInputField(
                         controller: _pulseController,
                         label: 'e.g. 72',
-                        icon: Icons.monitor_heart_rounded,
+                        icon: IosIcons.monitor_heart_rounded,
                         isDark: isDark,
                         errorText: _errors['pulse'],
                         helperText: 'Max: 250 bpm',
@@ -361,7 +362,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       _buildInputField(
                         controller: _tempController,
                         label: 'e.g. 98.6',
-                        icon: Icons.thermostat_rounded,
+                        icon: IosIcons.thermostat_rounded,
                         isDark: isDark,
                         errorText: _errors['temp'],
                         helperText: 'Max: 108°F / 43°C',
@@ -386,7 +387,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       _buildInputField(
                         controller: _spO2Controller,
                         label: 'e.g. 98',
-                        icon: Icons.air_rounded,
+                        icon: IosIcons.air_rounded,
                         isDark: isDark,
                         errorText: _errors['spO2'],
                         helperText: 'Max: 100%',
@@ -404,7 +405,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
                       _buildInputField(
                         controller: _weightController,
                         label: 'e.g. 68',
-                        icon: Icons.scale_rounded,
+                        icon: IosIcons.scale_rounded,
                         isDark: isDark,
                         errorText: _errors['weight'],
                         helperText: 'Max: 350 kg',
@@ -422,7 +423,7 @@ class _UpdateVitalsSheetState extends State<UpdateVitalsSheet> {
             _buildInputField(
               controller: _heightController,
               label: 'e.g. 172',
-              icon: Icons.height_rounded,
+              icon: IosIcons.height_rounded,
               isDark: isDark,
               errorText: _errors['height'],
               helperText: 'Max: 260 cm',

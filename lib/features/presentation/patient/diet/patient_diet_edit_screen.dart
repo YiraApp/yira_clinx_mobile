@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
@@ -282,7 +283,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
             : 'You will have no meals planned.',
         confirmLabel: 'Remove',
         tone: AppDialogTone.danger,
-        icon: Icons.delete_outline_rounded,
+        icon: IosIcons.delete_outline_rounded,
       );
       if (!proceed || !mounted) return;
     }
@@ -319,6 +320,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       authToken: _authToken,
       orgId: _orgId,
       allowSaveToList: false,
+      dietType: _dietType,
       onSubmit: (item) {
         if (!mounted) return;
         item.dayNumber = day;
@@ -413,7 +415,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
         confirmLabel: 'Save Anyway',
         cancelLabel: 'Keep Editing',
         tone: AppDialogTone.warning,
-        icon: Icons.warning_amber_rounded,
+        icon: IosIcons.warning_amber_rounded,
       );
       if (!proceed || !mounted) return;
     }
@@ -472,7 +474,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       confirmLabel: 'Discard',
       cancelLabel: 'Keep Editing',
       tone: AppDialogTone.danger,
-      icon: Icons.warning_amber_rounded,
+      icon: IosIcons.warning_amber_rounded,
     );
   }
 
@@ -494,7 +496,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
 
   Color _cardColor(bool isDark) => isDark ? const Color(0xFF232323) : Colors.white;
   Color _borderColor(bool isDark) => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
-  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
   TextStyle _ts(double size, FontWeight weight, Color color, {double? height}) =>
@@ -544,7 +546,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                     borderRadius: BorderRadius.circular(19),
                     onTap: () => Navigator.maybePop(context),
                     child: Center(
-                      child: Icon(Icons.close_rounded, size: 18, color: _textPrimary(isDark)),
+                      child: Icon(IosIcons.close_rounded, size: 18, color: _textPrimary(isDark)),
                     ),
                   ),
                 ),
@@ -618,7 +620,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, size: 18, color: isDark ? const Color(0xFF93C5FD) : _primaryBlue),
+          Icon(IosIcons.info_outline_rounded, size: 18, color: isDark ? const Color(0xFF93C5FD) : _primaryBlue),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -652,6 +654,21 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
       helpText: 'Plan starts on',
     );
     if (picked != null) setState(() => _startDate = DateTime(picked.year, picked.month, picked.day));
+  }
+
+  /// Any end date on or after the start; the plan then runs start..end inclusive.
+  Future<void> _pickEndDate() async {
+    final current = _durationDays == null ? _startDate.add(const Duration(days: 29)) : _startDate.add(Duration(days: _durationDays! - 1));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: _startDate,
+      lastDate: _startDate.add(const Duration(days: 365)),
+      helpText: 'Plan ends on',
+    );
+    if (picked == null) return;
+    final end = DateTime(picked.year, picked.month, picked.day);
+    setState(() => _durationDays = end.difference(_startDate).inDays + 1);
   }
 
   Widget _chip(String label, bool selected, bool isDark, VoidCallback onTap) {
@@ -748,7 +765,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryBlue),
+                  const Icon(IosIcons.calendar_today_rounded, size: 16, color: _primaryBlue),
                   const SizedBox(width: 10),
                   Expanded(child: Text(_fmtDate(_startDate), style: _ts(13.5, FontWeight.w600, _textPrimary(isDark)))),
                   Text('Change', style: _ts(12, FontWeight.w700, _primaryBlue)),
@@ -764,10 +781,31 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
               for (final d in _durations) _chip(d.label, _durationDays == d.days, isDark, () => setState(() => _durationDays = d.days)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            end == null ? 'No end date. Pause it any time.' : 'Ends on ${_fmtDate(end)}',
-            style: _ts(11.5, FontWeight.w500, _textSecondary(isDark)),
+          label('Ends on'),
+          InkWell(
+            onTap: _pickEndDate,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _borderColor(isDark)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(IosIcons.event_rounded, size: 16, color: _primaryBlue),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      end == null ? 'No end date. Pause it any time.' : '${_fmtDate(end)} ($_durationDays days)',
+                      style: _ts(13.5, FontWeight.w600, _textPrimary(isDark)),
+                    ),
+                  ),
+                  Text(end == null ? 'Set' : 'Change', style: _ts(12, FontWeight.w700, _primaryBlue)),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -787,7 +825,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
             message: 'Its $dropped food(s) will be removed.',
             confirmLabel: 'Remove',
             tone: AppDialogTone.danger,
-            icon: Icons.delete_outline_rounded,
+            icon: IosIcons.delete_outline_rounded,
           );
           if (!proceed || !mounted) return;
         }
@@ -840,12 +878,12 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
               ],
             ),
           ),
-          stepButton(Icons.remove_rounded, _totalDays > 1 ? () => change(_totalDays - 1) : null),
+          stepButton(IosIcons.remove_rounded, _totalDays > 1 ? () => change(_totalDays - 1) : null),
           SizedBox(
             width: 34,
             child: Text('$_totalDays', textAlign: TextAlign.center, style: _ts(15, FontWeight.w800, _textPrimary(isDark))),
           ),
-          stepButton(Icons.add_rounded, _totalDays < _maxCreateDays ? () => change(_totalDays + 1) : null),
+          stepButton(IosIcons.add_rounded, _totalDays < _maxCreateDays ? () => change(_totalDays + 1) : null),
         ],
       ),
     );
@@ -959,7 +997,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
           ),
           child: Column(
             children: [
-              Icon(Icons.no_meals_rounded, size: 32, color: _textSecondary(isDark)),
+              Icon(IosIcons.no_meals_rounded, size: 32, color: _textSecondary(isDark)),
               const SizedBox(height: 8),
               Text(
                 'No meals planned for this day. Add a meal below.',
@@ -993,7 +1031,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                     Expanded(
                       child: Text(slot.name, style: _ts(13.5, FontWeight.w700, _textPrimary(isDark))),
                     ),
-                    Icon(Icons.schedule_rounded, size: 13, color: _textSecondary(isDark)),
+                    Icon(IosIcons.schedule_rounded, size: 13, color: _textSecondary(isDark)),
                     const SizedBox(width: 4),
                     Text(slot.time, style: _ts(11.5, FontWeight.w600, _textSecondary(isDark))),
                   ],
@@ -1016,7 +1054,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add_rounded, size: 17, color: _primaryBlue),
+                      const Icon(IosIcons.add_rounded, size: 17, color: _primaryBlue),
                       const SizedBox(width: 4),
                       Text('Add food', style: _ts(12.5, FontWeight.w700, _primaryBlue)),
                     ],
@@ -1082,7 +1120,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                 IconButton(
                   tooltip: 'Remove ${item.foodName}',
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20, color: _roseRed),
+                  icon: const Icon(IosIcons.delete_outline_rounded, size: 20, color: _roseRed),
                   onPressed: () => _removeItem(item),
                 ),
               ],
@@ -1127,7 +1165,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           button(
-            Icons.remove_rounded,
+            IosIcons.remove_rounded,
             item.quantity > 0.5 ? () => _setQuantity(item, item.quantity - 0.5) : null,
             'Less',
           ),
@@ -1140,7 +1178,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
             ),
           ),
           button(
-            Icons.add_rounded,
+            IosIcons.add_rounded,
             item.quantity < _maxQuantity ? () => _setQuantity(item, item.quantity + 0.5) : null,
             'More',
           ),
@@ -1165,7 +1203,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
           children: [
             for (final slot in available)
               ActionChip(
-                avatar: const Icon(Icons.add_rounded, size: 16, color: _primaryBlue),
+                avatar: const Icon(IosIcons.add_rounded, size: 16, color: _primaryBlue),
                 label: Text(slot.name, style: _ts(11.5, FontWeight.w600, _textPrimary(isDark))),
                 backgroundColor: _cardColor(isDark),
                 side: BorderSide(color: _borderColor(isDark)),
@@ -1218,7 +1256,7 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Icon(Icons.check_rounded, size: 18),
+                  : const Icon(IosIcons.check_rounded, size: 18),
               label: Text(_isCreate ? 'Create Plan' : 'Save Changes', style: _ts(13.5, FontWeight.w700, Colors.white)),
             ),
           ),

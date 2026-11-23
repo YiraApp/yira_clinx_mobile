@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -371,7 +372,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -403,7 +404,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
               ? ThemeData.dark().copyWith(
                   colorScheme: const ColorScheme.dark(
                     primary: Color(0xFF2563EB),
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                   ),
                 )
               : ThemeData.light().copyWith(
@@ -484,7 +485,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
-                              Icons.edit_calendar_rounded,
+                              IosIcons.edit_calendar_rounded,
                               color: Color(0xFFD97706),
                               size: 22,
                             ),
@@ -499,7 +500,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                   fontFamily: appPoppinFont,
                                   fontWeight: FontWeight.w700,
                                   fontSize: isTab ? 20 : 17,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(
@@ -517,7 +518,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: Icon(
-                          Icons.close_rounded,
+                          IosIcons.close_rounded,
                           color: isDark ? Colors.white60 : const Color(0xFF64748B),
                           size: 22,
                         ),
@@ -577,7 +578,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                               fontFamily: appPoppinFont,
                                               fontWeight: FontWeight.w700,
                                               fontSize: isTab ? 15 : 13.5,
-                                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                              color: isDark ? Colors.white : const Color(0xFF121212),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -635,7 +636,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w700,
                                 fontSize: isTab ? 16 : 14,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             InkWell(
@@ -646,7 +647,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                 child: Row(
                                   children: [
                                     const Icon(
-                                      Icons.calendar_month_rounded,
+                                      IosIcons.calendar_month_rounded,
                                       size: 15,
                                       color: Color(0xFF2563EB),
                                     ),
@@ -743,7 +744,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                             fontSize: 17,
                                             color: isSelected
                                                 ? Colors.white
-                                                : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                                                : (isDark ? Colors.white : const Color(0xFF121212)),
                                           ),
                                         ),
                                         Text(
@@ -778,7 +779,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                                 fontFamily: appPoppinFont,
                                 fontWeight: FontWeight.w700,
                                 fontSize: isTab ? 16 : 14,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             Text(
@@ -820,7 +821,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 18),
+                                const Icon(IosIcons.check_circle_rounded, color: Color(0xFF059669), size: 18),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -879,7 +880,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.event_available_rounded, size: 20),
+                                const Icon(IosIcons.event_available_rounded, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
                                   "Confirm Reschedule",
@@ -945,7 +946,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
           _buildSessionSection(
             title: "Morning Sessions",
             timeRange: "09:00 AM - 12:00 PM",
-            icon: Icons.wb_sunny_outlined,
+            icon: IosIcons.wb_sunny_outlined,
             iconColor: const Color(0xFFD97706),
             slots: morningSlots,
             isDark: isDark,
@@ -959,7 +960,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
           _buildSessionSection(
             title: "Afternoon Sessions",
             timeRange: "12:00 PM - 05:00 PM",
-            icon: Icons.wb_sunny_rounded,
+            icon: IosIcons.wb_sunny_rounded,
             iconColor: const Color(0xFFEA580C),
             slots: afternoonSlots,
             isDark: isDark,
@@ -973,7 +974,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
           _buildSessionSection(
             title: "Evening Sessions",
             timeRange: "05:00 PM onwards",
-            icon: Icons.nights_stay_outlined,
+            icon: IosIcons.nights_stay_outlined,
             iconColor: const Color(0xFF6366F1),
             slots: eveningSlots,
             isDark: isDark,
@@ -1002,11 +1003,11 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
         children: [
           _buildSessionChip("All", totalOpen, isDark),
           const SizedBox(width: 6),
-          _buildSessionChip("Morning", morningOpen, isDark, icon: Icons.wb_sunny_outlined),
+          _buildSessionChip("Morning", morningOpen, isDark, icon: IosIcons.wb_sunny_outlined),
           const SizedBox(width: 6),
-          _buildSessionChip("Afternoon", afternoonOpen, isDark, icon: Icons.wb_sunny_rounded),
+          _buildSessionChip("Afternoon", afternoonOpen, isDark, icon: IosIcons.wb_sunny_rounded),
           const SizedBox(width: 6),
-          _buildSessionChip("Evening", eveningOpen, isDark, icon: Icons.nights_stay_outlined),
+          _buildSessionChip("Evening", eveningOpen, isDark, icon: IosIcons.nights_stay_outlined),
         ],
       ),
     );
@@ -1054,7 +1055,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected
                     ? Colors.white
-                    : (isDark ? Colors.white : const Color(0xFF334155)),
+                    : (isDark ? Colors.white : const Color(0xFF3A3A3A)),
               ),
             ),
             const SizedBox(width: 5),
@@ -1131,7 +1132,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: isTab ? 14 : 12.5,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -1232,7 +1233,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2633) : const Color(0xFFF1F5F9),
+            color: isDark ? const Color(0xFF262626) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isBooked
@@ -1261,7 +1262,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                   children: [
                     if (isBooked) ...[
                       Icon(
-                        Icons.lock_outline_rounded,
+                        IosIcons.lock_outline_rounded,
                         size: 9.5,
                         color: isDark ? Colors.redAccent.withValues(alpha: 0.7) : Colors.red.shade400,
                       ),
@@ -1323,7 +1324,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
             children: [
               if (isSelected) ...[
                 const Icon(
-                  Icons.check_circle_rounded,
+                  IosIcons.check_circle_rounded,
                   size: 11,
                   color: Colors.white,
                 ),
@@ -1337,7 +1338,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected
                       ? Colors.white
-                      : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                      : (isDark ? Colors.white : const Color(0xFF232323)),
                 ),
               ),
             ],
@@ -1420,7 +1421,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
       child: Column(
         children: [
           const Icon(
-            Icons.event_busy_rounded,
+            IosIcons.event_busy_rounded,
             color: Color(0xFFD97706),
             size: 34,
           ),
@@ -1431,7 +1432,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.w700,
               fontSize: 14,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
           const SizedBox(height: 4),
@@ -1452,7 +1453,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
               });
               _loadDoctorSlots();
             },
-            icon: const Icon(Icons.arrow_forward_rounded, size: 15),
+            icon: const Icon(IosIcons.arrow_forward_rounded, size: 15),
             label: const Text("Next Day"),
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF2563EB),
@@ -1478,7 +1479,7 @@ class _RescheduleAppointmentSheetState extends State<RescheduleAppointmentSheet>
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 24),
+          const Icon(IosIcons.error_outline_rounded, color: Color(0xFFEF4444), size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

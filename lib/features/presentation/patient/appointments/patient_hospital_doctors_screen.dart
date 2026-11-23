@@ -104,7 +104,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
         title: Text(
           "Choose a doctor",
           style: TextStyle(
@@ -165,7 +165,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 13,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       decoration: InputDecoration(
                         hintText: "Search by name or specialty",
@@ -265,7 +265,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 if (type.isNotEmpty || place.isNotEmpty)
@@ -331,7 +331,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
     final rawFee = doc['consultationFee'];
     final fee = rawFee == null ? 0 : (num.tryParse(rawFee.toString()) ?? 0);
 
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
     final showDepartment = department.isNotEmpty &&
         department.toLowerCase() != specialty.toLowerCase() &&
@@ -408,7 +408,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                             runSpacing: 6,
                             children: [
                               if (specialty.isNotEmpty) _tag(PhosphorIconsBold.stethoscope, specialty, primaryColor, isDark),
-                              if (showDepartment) _tag(PhosphorIconsBold.buildings, department, const Color(0xFF475569), isDark),
+                              if (showDepartment) _tag(PhosphorIconsBold.buildings, department, const Color(0xFF4A4A4A), isDark),
                               if (experience.isNotEmpty) _tag(PhosphorIconsBold.briefcase, experience, const Color(0xFF0D9488), isDark),
                             ],
                           ),
@@ -515,7 +515,7 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
               fontFamily: appPoppinFont,
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
           const SizedBox(height: 6),

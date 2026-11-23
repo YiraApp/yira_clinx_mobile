@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/constants.dart';
 import '../../../../../core/services/favorite_patients_service.dart';
@@ -84,7 +85,7 @@ class PatientCard extends StatelessWidget {
                               fontFamily: appPoppinFont,
                               fontWeight: FontWeight.w700,
                               fontSize: isTab ? 16 : 14,
-                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                              color: isDark ? Colors.white : const Color(0xFF232323),
                             ),
                           ),
                         ),
@@ -105,7 +106,7 @@ class PatientCard extends StatelessWidget {
                                     fontFamily: appPoppinFont,
                                     fontWeight: FontWeight.w600,
                                     fontSize: isTab ? 16 : 14.5,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                     letterSpacing: -0.2,
                                   ),
                                 ),
@@ -148,7 +149,7 @@ class PatientCard extends StatelessWidget {
                     children: [
                       // Visits
                       _buildMetaChip(
-                        icon: Icons.history_rounded,
+                        icon: IosIcons.history_rounded,
                         label: "${patient.visits} ${patient.visits == 1 ? 'visit' : 'visits'}",
                         isDark: isDark,
                         isTab: isTab,
@@ -157,7 +158,7 @@ class PatientCard extends StatelessWidget {
                       // Last visit
                       if (patient.lastVisit.isNotEmpty)
                         _buildMetaChip(
-                          icon: Icons.calendar_today_outlined,
+                          icon: IosIcons.calendar_today_outlined,
                           label: patient.lastVisit,
                           isDark: isDark,
                           isTab: isTab,
@@ -183,7 +184,7 @@ class PatientCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Icons.chevron_right_rounded,
+                    IosIcons.chevron_right_rounded,
                     size: 16,
                     color: isDark ? Colors.white54 : const Color(0xFF64748B),
                   ),
@@ -226,7 +227,7 @@ class PatientCard extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    isFav ? Icons.star_rounded : Icons.star_outline_rounded,
+                    isFav ? IosIcons.star_rounded : IosIcons.star_outline_rounded,
                     size: isTab ? 20 : 18,
                     color: isFav
                         ? const Color(0xFFD97706) // Amber 600
@@ -301,7 +302,7 @@ class PatientCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.warning_amber_rounded, size: 11, color: Color(0xFFEF4444)),
+          const Icon(IosIcons.warning_amber_rounded, size: 11, color: Color(0xFFEF4444)),
           const SizedBox(width: 3),
           Flexible(
             child: Text(

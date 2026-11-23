@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,7 +26,7 @@ class ExecutionCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return SectionCardWrapper(
-      icon: Icons.calendar_month_rounded,
+      icon: IosIcons.calendar_month_rounded,
       title: 'Schedule Dates',
       isTab: isTab,
       child: Column(
@@ -48,7 +49,7 @@ class ExecutionCard extends StatelessWidget {
         fontFamily: appPoppinFont,
         fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,
         fontWeight: FontWeight.w600,
-        color: isDark ? Colors.white70 : const Color(0xFF334155),
+        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
         letterSpacing: 0.3,
       ),
     );
@@ -74,7 +75,7 @@ class ExecutionCard extends StatelessWidget {
           Expanded(
             child: _ToggleSegment(
               label: 'Single Day',
-              icon: Icons.today_rounded,
+              icon: IosIcons.today_rounded,
               isSelected: dataState.isSingleDay,
               onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(true)),
               isTab: isTab,
@@ -85,7 +86,7 @@ class ExecutionCard extends StatelessWidget {
           Expanded(
             child: _ToggleSegment(
               label: 'Multiple Days',
-              icon: Icons.date_range_rounded,
+              icon: IosIcons.date_range_rounded,
               isSelected: !dataState.isSingleDay,
               onTap: () => context.read<SlotBloc>().add(ChangeExecutionModeEvent(false)),
               isTab: isTab,

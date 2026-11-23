@@ -40,6 +40,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
   String _statusText = 'Reading your prescription...';
   String? _errorMessage;
   bool _isPdf = false;
+  File? _lastFile;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -169,6 +170,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
 
   Future<void> _analyzeFile(File file) async {
     if (!mounted) return;
+    _lastFile = file;
 
     setState(() {
       _state = _SheetState.analyzing;
@@ -218,7 +220,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF131722) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF171717) : Colors.white;
 
     return Container(
       decoration: BoxDecoration(
@@ -316,7 +318,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                           fontFamily: appPoppinFont,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -417,7 +419,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1B2232) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF222222) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
@@ -461,7 +463,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
     required VoidCallback onTap,
   }) {
     final borderColor = isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFE2E8F0);
-    final cardBg = isDark ? const Color(0xFF1B2232) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF222222) : Colors.white;
     final effectiveBadgeColor = badgeColor ?? gradientColors.first;
 
     return Material(
@@ -522,7 +524,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                               fontFamily: appPoppinFont,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -638,7 +640,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                 width: 68,
                 height: 68,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2638) : Colors.white,
+                  color: isDark ? const Color(0xFF262626) : Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -669,7 +671,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
             fontFamily: appPoppinFont,
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
         ),
         const SizedBox(height: 6),
@@ -730,7 +732,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
               fontFamily: appPoppinFont,
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white70 : const Color(0xFF475569),
+              color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
             ),
           ),
         ),
@@ -795,7 +797,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
             fontFamily: appPoppinFont,
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
         ),
         const SizedBox(height: 8),
@@ -818,7 +820,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1B2232) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF222222) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0),
@@ -833,7 +835,7 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
                   fontFamily: appPoppinFont,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+                  color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                 ),
               ),
               const SizedBox(height: 4),
@@ -851,9 +853,11 @@ class _ScanPrescriptionSheetState extends State<ScanPrescriptionSheet>
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
+                // Keep the chosen file attached so the user only fills the details.
+                onPressed: () => Navigator.of(context)
+                    .pop(_lastFile == null ? null : ScanResult(result: null, scannedFile: _lastFile!)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: isDark ? Colors.white70 : const Color(0xFF475569),
+                  foregroundColor: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   side: BorderSide(
                     color: isDark ? Colors.white12 : const Color(0xFFCBD5E1),
                   ),
@@ -942,7 +946,8 @@ enum _SheetState { pickSource, analyzing, error }
 /// Result returned by the scan sheet containing both the AI extraction
 /// and the physical file (to attach with the prescription).
 class ScanResult {
-  final PrescriptionAnalysisResult result;
+  /// Null when the AI could not read it and the user chose to enter details manually.
+  final PrescriptionAnalysisResult? result;
   final File scannedFile;
 
   const ScanResult({required this.result, required this.scannedFile});

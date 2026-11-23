@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -77,17 +78,17 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library, color: primaryColor),
+                leading: const Icon(IosIcons.photo_library, color: primaryColor),
                 title: const Text('Upload Photo from Gallery'),
                 onTap: () => Navigator.pop(context, 'gallery'),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: primaryColor),
+                leading: const Icon(IosIcons.camera_alt, color: primaryColor),
                 title: const Text('Take Photo with Camera'),
                 onTap: () => Navigator.pop(context, 'camera'),
               ),
               ListTile(
-                leading: const Icon(Icons.folder, color: primaryColor),
+                leading: const Icon(IosIcons.folder, color: primaryColor),
                 title: const Text('Upload Document from Files'),
                 onTap: () => Navigator.pop(context, 'files'),
               ),
@@ -130,7 +131,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                 child: CircleAvatar(
                   backgroundColor: Colors.black54,
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(IosIcons.close, color: Colors.white),
                     onPressed: () => Navigator.pop(dialogContext),
                   ),
                 ),
@@ -341,12 +342,10 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
       isUploading = true;
     });
 
+    var saved = 0;
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
       for (int i = 0; i < stagedFiles.length; i++) {
         final file = stagedFiles[i];
-        final rawSize = file['size'] as int?;
-        final sizeInKb = rawSize != null ? (rawSize / 1024).round() : 2048;
         final String filePath = file['path'] ?? '';
         final String fileName = file['name'] ?? 'Document';
 
@@ -363,16 +362,11 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
           );
         }
 
-        final recordToAdd = uploaded ?? UploadedRecord(
-          id: '${timestamp}_$i',
-          fileName: fileName,
-          category: selectedCategory,
-          uploadDate: DateTime.now(),
-          fileSizeKB: sizeInKb,
-          filePath: filePath,
-        );
-
-        bloc.add(AddUploadedRecord(recordToAdd));
+        // Only what the server saved is shown. A made-up local record looked uploaded
+        // and then vanished on the next refresh.
+        if (uploaded == null) continue;
+        saved++;
+        bloc.add(AddUploadedRecord(uploaded));
       }
 
       bloc.add(FetchUploadedRecords(
@@ -383,16 +377,23 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
       ));
 
       if (context.mounted) {
+        final failed = stagedFiles.length - saved;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                Icon(failed == 0 ? IosIcons.check_circle : IosIcons.error_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Text("${stagedFiles.length} document(s) uploaded successfully!"),
+                Expanded(
+                  child: Text(failed == 0
+                      ? "$saved document(s) uploaded successfully!"
+                      : saved == 0
+                          ? "Couldn't upload. Please check your connection and try again."
+                          : "$saved of ${stagedFiles.length} uploaded. $failed couldn't be saved, please try again."),
+                ),
               ],
             ),
-            backgroundColor: Colors.green.shade600,
+            backgroundColor: failed == 0 ? Colors.green.shade600 : Colors.red.shade600,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -405,7 +406,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         setState(() {
           isUploading = false;
         });
-        navigator.pop();
+        if (saved > 0) navigator.pop();
       }
     }
   }
@@ -427,7 +428,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
         ),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 20, color: Colors.white),
+          icon: const Icon(IosIcons.arrow_back, size: 20, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: const [],
@@ -582,7 +583,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                 ),
                               ),
                               child: const Icon(
-                                Icons.note_add_rounded,
+                                IosIcons.note_add_rounded,
                                 color: Color(0xFF0066FF),
                                 size: 26,
                               ),
@@ -707,7 +708,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
-                                          Icons.description_outlined,
+                                          IosIcons.description_outlined,
                                           color: isDark
                                               ? primaryColor.withOpacity(0.9)
                                               : primaryColor,
@@ -753,7 +754,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                 constraints: const BoxConstraints(),
                                 padding: EdgeInsets.zero,
                                 icon: const Icon(
-                                  Icons.cancel_rounded,
+                                  IosIcons.cancel_rounded,
                                   color: Colors.redAccent,
                                   size: 20,
                                 ),
@@ -790,7 +791,7 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                             ),
                             onPressed: _handleBrowseTap, // Updated Tap Handler
                             icon: const Icon(
-                              Icons.add_circle_outline_rounded,
+                              IosIcons.add_circle_outline_rounded,
                               color: primaryColor,
                               size: 18,
                             ),

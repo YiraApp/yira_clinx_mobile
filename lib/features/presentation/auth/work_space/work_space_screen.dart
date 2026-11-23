@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -58,7 +59,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final isDarkMode = theme.brightness == Brightness.dark;
     final bool isTab = isTablet(context);
 
-    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF121212);
     final paragraphColor = isDarkMode ? Colors.white60 : const Color(0xFF64748B);
     final panelBg = isDarkMode ? theme.cardColor : Colors.white;
     final bool currentIsInApp = widget.roleEntity?.inApp ?? false;
@@ -70,7 +71,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         appBar: AppBar(
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               color: mainHeadingColor,
               size: 20,
             ),
@@ -94,7 +95,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     children: [
                       currentIsInApp
                           ? Icon(
-                        Icons.admin_panel_settings_rounded,
+                        IosIcons.admin_panel_settings_rounded,
                         color: primaryColor,
                         size: isTab ? 65 : 55,
                       )
@@ -142,7 +143,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontFamily: appPoppinFont,
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                color: isDarkMode ? Colors.white : const Color(0xFF121212),
                                 fontSize: displayWidth(context) * (isTab ? 0.025 : 0.065),
                               ),
                             ),
@@ -212,7 +213,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                         borderRadius: BorderRadius.circular(fieldBorderRadius),
                                       ),
                                       child: Icon(
-                                        currentIsInApp ? Icons.lan_rounded : Icons.domain_rounded,
+                                        currentIsInApp ? IosIcons.lan_rounded : IosIcons.domain_rounded,
                                         color: theme.primaryColor,
                                         size: isTab ? 26 : 22,
                                       ),
@@ -270,7 +271,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              Icons.error_outline_rounded,
+                                              IosIcons.error_outline_rounded,
                                               color: theme.colorScheme.error,
                                               size: 40,
                                             ),
@@ -342,7 +343,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ),
                     child: TextButton.icon(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.logout_rounded, size: 18),
+                      icon: const Icon(IosIcons.logout_rounded, size: 18),
                       label: const Text('Cancel Login'),
                       style: TextButton.styleFrom(
                         foregroundColor: paragraphColor,

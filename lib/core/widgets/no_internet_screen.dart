@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -80,7 +81,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
     final isTablet = mediaQuery.size.shortestSide >= 600;
 
     final Color bgColor = isDarkMode ? const Color(0xff121316) : Colors.white;
-    final Color titleColor = isDarkMode ? Colors.white : const Color(0xff1E293B);
+    final Color titleColor = isDarkMode ? Colors.white : const Color(0xFF232323);
     final Color bodyColor = isDarkMode ? const Color(0xff94A3B8) : const Color(0xff64748B);
 
     final double iconContainerSize = isTablet ? 140.0 : 108.0;
@@ -146,7 +147,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
                               ],
                             ),
                             child: Icon(
-                              Icons.wifi_off_rounded,
+                              IosIcons.wifi_off_rounded,
                               size: iconSize,
                               color: Colors.red.shade600,
                             ),
@@ -311,7 +312,7 @@ class _NoInternetScreenState extends State<NoInternetScreen>
                           : const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
+                                Icon(IosIcons.refresh_rounded, size: 20, color: Colors.white),
                                 SizedBox(width: 8),
                                 Text(
                                   "Try Again",

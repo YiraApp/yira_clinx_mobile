@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -299,7 +300,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
@@ -309,7 +310,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 color: _primaryBlue.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.file_download_outlined, color: _primaryBlue, size: 22),
+              child: const Icon(IosIcons.file_download_outlined, color: _primaryBlue, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -319,7 +320,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
             ),
@@ -330,7 +331,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontSize: 13,
-            color: isDark ? Colors.white70 : const Color(0xFF475569),
+            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
           ),
         ),
         actions: [
@@ -469,7 +470,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -540,7 +541,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
@@ -552,7 +553,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 fontFamily: appPoppinFont,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -598,8 +599,8 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: _primaryBlue),
                   )
                 : Icon(
-                    Icons.file_download_outlined,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    IosIcons.file_download_outlined,
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                     size: 22,
                   ),
             onPressed: _isDownloading ? null : _downloadDocument,
@@ -607,7 +608,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           IconButton(
             tooltip: 'Document Info',
             icon: Icon(
-              _showInfo ? Icons.info_rounded : Icons.info_outline_rounded,
+              _showInfo ? IosIcons.info_rounded : IosIcons.info_outline_rounded,
               color: _showInfo ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF64748B)),
             ),
             onPressed: () => setState(() => _showInfo = !_showInfo),
@@ -615,7 +616,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
           if (_hasRemoteUrl)
             IconButton(
               tooltip: 'Open in Browser',
-              icon: Icon(Icons.open_in_new_rounded, color: isDark ? Colors.white70 : const Color(0xFF64748B), size: 20),
+              icon: Icon(IosIcons.open_in_new_rounded, color: isDark ? Colors.white70 : const Color(0xFF64748B), size: 20),
               onPressed: _openFile,
             ),
         ],
@@ -685,13 +686,13 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.hospitalName != null && widget.hospitalName!.isNotEmpty)
-            _buildMetaRow('Hospital', widget.hospitalName!, Icons.local_hospital_rounded, isDark),
+            _buildMetaRow('Hospital', widget.hospitalName!, IosIcons.local_hospital_rounded, isDark),
           if (widget.doctorName != null && widget.doctorName!.isNotEmpty)
-            _buildMetaRow('Doctor', widget.doctorName!, Icons.person_rounded, isDark),
+            _buildMetaRow('Doctor', widget.doctorName!, IosIcons.person_rounded, isDark),
           if (widget.date != null && widget.date!.isNotEmpty)
-            _buildMetaRow('Date', widget.date!, Icons.calendar_today_rounded, isDark),
+            _buildMetaRow('Date', widget.date!, IosIcons.calendar_today_rounded, isDark),
           if (widget.fileSize != null && widget.fileSize!.isNotEmpty)
-            _buildMetaRow('File Size', widget.fileSize!, Icons.data_usage_rounded, isDark),
+            _buildMetaRow('File Size', widget.fileSize!, IosIcons.data_usage_rounded, isDark),
         ],
       ),
     );
@@ -720,7 +721,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 fontFamily: appPoppinFont,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -864,7 +865,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.insert_drive_file_rounded,
+                  IosIcons.insert_drive_file_rounded,
                   size: 48,
                   color: _primaryBlue,
                 ),
@@ -877,7 +878,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 8),
@@ -904,7 +905,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                       });
                       _loadDocumentData();
                     },
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    icon: const Icon(IosIcons.refresh_rounded, size: 18),
                     label: const Text(
                       'Retry Preview',
                       style: TextStyle(
@@ -922,7 +923,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                   ),
                   ElevatedButton.icon(
                     onPressed: _downloadDocument,
-                    icon: const Icon(Icons.file_download_outlined, size: 18),
+                    icon: const Icon(IosIcons.file_download_outlined, size: 18),
                     label: const Text(
                       'Download File',
                       style: TextStyle(

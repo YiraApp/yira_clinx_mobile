@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 
@@ -98,7 +99,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
         title: "Delete Medical Record?",
         message: "Are you sure you want to delete this medical record? This action is permanent and cannot be undone.",
         tone: AppDialogTone.danger,
-        icon: Icons.delete_forever_rounded,
+        icon: IosIcons.delete_forever_rounded,
         primaryLabel: "Delete",
         onPrimary: () {
           Navigator.pop(dialogContext);
@@ -145,7 +146,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
               ? null
               : FloatingActionButton(
                   backgroundColor: primaryColor,
-                  child: const Icon(Icons.add, color: Colors.white),
+                  child: const Icon(IosIcons.add, color: Colors.white),
                   onPressed: () {
                     context.read<MedicalHistoryBloc>().add(
                           AddMedicalRecordNavEvent(),
@@ -170,7 +171,7 @@ class _MedicalRecordsListScreenState extends State<MedicalRecordsListScreen> {
     if (state is MedicalHistoryLoaded) {
       if (state.records.isEmpty) {
         return const RecordEmptyState(
-          icon: Icons.assignment_outlined,
+          icon: IosIcons.assignment_outlined,
           title: 'No medical records yet',
           message: 'Records added at a visit will appear here.',
         );

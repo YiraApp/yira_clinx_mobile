@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/prescriptions/lab_test_entity.dart';
 import '../../../domain/entities/prescriptions/prescription_item.dart';
@@ -45,7 +46,7 @@ class SinglePrescriptionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RecordCardHeader(
-              icon: Icons.medication_outlined,
+              icon: IosIcons.medication_outlined,
               title: "Prescription Record",
               subtitle: date,
             ),
@@ -70,7 +71,7 @@ class SinglePrescriptionCard extends StatelessWidget {
             if (labTests.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(
-                "${labTests.length} ${labTests.length == 1 ? 'Lab Test' : 'Lab Tests'}",
+                "${labTests.length} ${labTests.length == 1 ? 'Investigation' : 'Investigations'}",
                 style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
               ),
               const SizedBox(height: 8),
@@ -79,10 +80,10 @@ class SinglePrescriptionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                if (onEdit != null) RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit prescription', onTap: onEdit!),
+                if (onEdit != null) RecordIconAction(icon: IosIcons.edit_outlined, tooltip: 'Edit prescription', onTap: onEdit!),
                 if (onDelete != null)
                   RecordIconAction(
-                    icon: Icons.delete_outline_rounded,
+                    icon: IosIcons.delete_outline_rounded,
                     tooltip: 'Delete prescription',
                     danger: true,
                     onTap: onDelete!,

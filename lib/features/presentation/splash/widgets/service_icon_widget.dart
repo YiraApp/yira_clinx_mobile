@@ -1,88 +1,97 @@
 import 'package:flutter/material.dart';
 
-/// Static visual card for a healthcare service node.
-/// Can be pre-built and cached to prevent rebuilds on every animation tick.
+import '../../../../core/widgets/phosphor_icons.dart';
+
+/// Card for one healthcare service in the splash: a frosted white tile holding a glossy gradient
+/// chip with a crisp two-tone glyph, and the service name underneath.
+/// Built once and cached, so animation ticks don't rebuild it.
 class ServiceCardVisual extends StatelessWidget {
   final HealthcareService service;
 
-  const ServiceCardVisual({super.key, required this.service});
+  /// Dark glass tile and label for the dark splash.
+  final bool dark;
+
+  const ServiceCardVisual({super.key, required this.service, this.dark = false});
 
   @override
   Widget build(BuildContext context) {
+    final (light, dark) = service.gradient;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 3D Elevated Card (Enlarged Size: 70x70)
         Container(
           width: 70,
           height: 70,
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            color: Colors.white,
-            border: Border.all(
-              color: Colors.white,
-              width: 2.0,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: this.dark ? const [Color(0xFF2A2A2F), Color(0xFF1A1A1D)] : const [Colors.white, Color(0xFFF4F7FC)],
             ),
+            border: Border.all(color: this.dark ? Colors.white.withValues(alpha: 0.10) : Colors.white, width: 1.5),
             boxShadow: [
-              // Soft ambient shadow
-              const BoxShadow(
-                color: Color(0x12000000), // black with 0.07 alpha
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-              // Rich vibrant color glow
-              BoxShadow(
-                color: service.glowColor.withValues(alpha: 0.25),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
+              BoxShadow(color: this.dark ? const Color(0x66000000) : const Color(0x14000000), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(color: dark.withValues(alpha: this.dark ? 0.35 : 0.22), blurRadius: 18, offset: const Offset(0, 8)),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(7.0),
-                child: Image.asset(
-                  service.assetPath,
-                  width: 54,
-                  height: 54,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.medium,
-                  gaplessPlayback: true,
-                ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [light, dark],
               ),
+              boxShadow: [BoxShadow(color: dark.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 3))],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Glossy highlight across the top of the chip
+                Positioned(
+                  top: 2,
+                  left: 4,
+                  right: 4,
+                  height: 18,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.white.withValues(alpha: 0.38), Colors.white.withValues(alpha: 0)],
+                      ),
+                    ),
+                  ),
+                ),
+                PhosphorIcon(service.icon, size: 26, color: Colors.white, duotoneSecondaryOpacity: 0.32),
+              ],
             ),
           ),
         ),
-
-        const SizedBox(height: 5),
-
-        // High-Contrast Bold Text Label
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0D000000), // black with 0.05 alpha
-                blurRadius: 4,
-                offset: Offset(0, 1),
-              ),
-            ],
+            color: this.dark ? const Color(0xFF1E1E22).withValues(alpha: 0.94) : Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: this.dark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE6EBF3)),
+            boxShadow: [BoxShadow(color: this.dark ? const Color(0x55000000) : const Color(0x0F000000), blurRadius: 6, offset: const Offset(0, 2))],
           ),
           child: Text(
             service.label,
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Inter',
-              color: Color(0xFF0F172A), // Crisp dark slate
-              letterSpacing: 0.2,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+              color: this.dark ? Colors.white : const Color(0xFF111111),
+              letterSpacing: 0.1,
+              height: 1.2,
             ),
           ),
         ),
@@ -91,7 +100,7 @@ class ServiceCardVisual extends StatelessWidget {
   }
 }
 
-/// An attractive, vibrant 3D PNG healthcare service node widget for Light Mode.
+/// A service node with its current opacity and scale.
 class ServiceIconWidget extends StatelessWidget {
   final HealthcareService service;
   final double opacity;
@@ -120,74 +129,64 @@ class ServiceIconWidget extends StatelessWidget {
   }
 }
 
-/// Data class representing a healthcare ecosystem node with PNG illustration.
+/// One healthcare service shown around the hand: its glyph, name and chip gradient.
 class HealthcareService {
-  final String assetPath;
+  final IconData icon;
   final String label;
-  final Color glowColor;
+
+  /// Chip gradient, (light, dark).
+  final (Color, Color) gradient;
 
   const HealthcareService({
-    required this.assetPath,
+    required this.icon,
     required this.label,
-    required this.glowColor,
+    required this.gradient,
   });
+
+  /// The colour of the glow and connecting accents for this service.
+  Color get glowColor => gradient.$2;
 }
 
-/// The 8 primary healthcare services with vivid 3D PNG illustrations.
+/// The 8 services, in orbit order (starting at the top, clockwise).
 const List<HealthcareService> splashHealthcareServices = [
-  // 1. Diet & Food: Fresh salad bowl + apple + chicken combined illustration!
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_diet.png',
+    icon: PhosphorIconsDuotone.bowlFood,
     label: 'Diet & Food',
-    glowColor: Color(0xFF10B981), // Emerald Green
+    gradient: (Color(0xFF34D399), Color(0xFF059669)),
   ),
-
-  // 2. Doctor & Specialists: Friendly 3D doctor with stethoscope
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_doctor.png',
+    icon: PhosphorIconsDuotone.stethoscope,
     label: 'Specialists',
-    glowColor: Color(0xFF2563EB), // Royal Blue
+    gradient: (Color(0xFF60A5FA), Color(0xFF1D4ED8)),
   ),
-
-  // 3. Heart & Vitals: 3D glossy red beating heart with acoustic pulse
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_vitals.png',
+    icon: PhosphorIconsDuotone.heartbeat,
     label: 'Heart & Vitals',
-    glowColor: Color(0xFFEF4444), // Ruby Red
+    gradient: (Color(0xFFFB7185), Color(0xFFE11D48)),
   ),
-
-  // 4. Fitness & Gym: 3D athletic strength
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_fitness.png',
-    label: 'Fitness & Gym',
-    glowColor: Color(0xFFF97316), // Flame Orange
+    icon: PhosphorIconsFill.footprints,
+    label: 'Fitness',
+    gradient: (Color(0xFFFDBA74), Color(0xFFEA580C)),
   ),
-
-  // 5. Appointments & Scheduling: 3D calendar
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_calendar.png',
+    icon: PhosphorIconsDuotone.calendarCheck,
     label: 'Appointments',
-    glowColor: Color(0xFFF59E0B), // Golden Amber
+    gradient: (Color(0xFF818CF8), Color(0xFF4338CA)),
   ),
-
-  // 6. AI Diagnosis: 3D vibrant brain
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_ai.png',
+    icon: PhosphorIconsDuotone.sparkle,
     label: 'AI Diagnosis',
-    glowColor: Color(0xFF8B5CF6), // Violet Purple
+    gradient: (Color(0xFFC4B5FD), Color(0xFF7C3AED)),
   ),
-
-  // 7. Video Consultation: 3D smartphone live doctor call + 3D video camera + stethoscope
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_teleconsult.png',
+    icon: PhosphorIconsDuotone.videoCamera,
     label: 'Video Consult',
-    glowColor: Color(0xFF06B6D4), // Cyan
+    gradient: (Color(0xFF67E8F9), Color(0xFF0891B2)),
   ),
-
-  // 8. Health Records: 3D medical records clipboard
   HealthcareService(
-    assetPath: 'assets/images/ic_3d_records.png',
+    icon: PhosphorIconsDuotone.fileText,
     label: 'Health Records',
-    glowColor: Color(0xFF4F46E5), // Indigo
+    gradient: (Color(0xFF93C5FD), Color(0xFF2563EB)),
   ),
 ];

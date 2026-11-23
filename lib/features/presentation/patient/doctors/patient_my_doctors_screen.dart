@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -113,15 +114,24 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       }
 
       if (token.isNotEmpty) {
+        // Steps 2 and 3 don't depend on each other, so both requests go out at once;
+        // their answers are read in the same order as before.
+        final apptRequest = sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientAppointmentsUrl,
+          data: {'userId': patientId},
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        ).then<Response?>((res) => res, onError: (_) => null);
+        final consentRequest = sl<ApiClient>().account(showSuccessSnack: false).get(
+          URLs.patientConsentsListUrl,
+          queryParameters: {'patientId': patientId},
+          options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+        ).then<Response?>((res) => res, onError: (_) => null);
+
         // 2. Fetch doctors from appointment history (who actually treated the patient)
         try {
-          final apptRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            URLs.patientAppointmentsUrl,
-            data: {'userId': patientId},
-            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-          );
+          final apptRes = await apptRequest;
 
-          if (apptRes.data != null && apptRes.data['data'] is List) {
+          if (apptRes != null && apptRes.data != null && apptRes.data['data'] is List) {
             apptList = apptRes.data['data'] as List;
             for (final appt in apptList) {
               if (appt is! Map<String, dynamic>) continue;
@@ -135,13 +145,9 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
         // 3. Fetch doctors connected via QR scan (consent records)
         try {
-          final consentRes = await sl<ApiClient>().account(showSuccessSnack: false).get(
-            URLs.patientConsentsListUrl,
-            queryParameters: {'patientId': patientId},
-            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-          );
+          final consentRes = await consentRequest;
 
-          if (consentRes.data != null && consentRes.data['data'] is List) {
+          if (consentRes != null && consentRes.data != null && consentRes.data['data'] is List) {
             consentList = consentRes.data['data'] as List;
             for (final consent in consentList) {
               if (consent is! Map<String, dynamic>) continue;
@@ -153,16 +159,21 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           }
         } catch (_) {}
 
-        // 4. Enrich doctor details from their linked hospital(s)
+        // 4. Enrich doctor details from their linked hospital(s). Every hospital is
+        // asked at once; the answers are merged in the same order as before.
         final Map<String, Map<String, dynamic>> doctorProfileMap = {};
-        for (final hId in hospitalIdsToFetch) {
-          try {
-            final docRes = await sl<ApiClient>().account(showSuccessSnack: false).post(
+        final hospitalDoctorRequests = [
+          for (final hId in hospitalIdsToFetch)
+            sl<ApiClient>().account(showSuccessSnack: false).post(
               URLs.hospitalDoctorsUrl,
               data: {'hospitalId': hId},
               options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-            );
-            if (docRes.data != null && docRes.data['data'] is List) {
+            ).then<Response?>((res) => res, onError: (_) => null),
+        ];
+        for (final request in hospitalDoctorRequests) {
+          try {
+            final docRes = await request;
+            if (docRes != null && docRes.data != null && docRes.data['data'] is List) {
               for (final d in docRes.data['data']) {
                 if (d is! Map<String, dynamic>) continue;
                 final docMap = Map<String, dynamic>.from(d);
@@ -392,7 +403,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         title: 'Remove Doctor',
         message: 'Are you sure you want to remove $name from My Doctors?',
         tone: AppDialogTone.danger,
-        icon: Icons.person_remove_rounded,
+        icon: IosIcons.person_remove_rounded,
         primaryLabel: 'Remove',
         onPrimary: () {
           Navigator.pop(dialogCtx);
@@ -526,7 +537,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isTab = isTablet(context);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
 
     // Filter doctors by search query and category
     final filteredDoctors = _doctors.where((d) {
@@ -580,7 +591,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                 color: _primaryBlue.withValues(alpha: isDark ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.qr_code_scanner_rounded, color: _primaryBlue, size: 18),
+              child: const Icon(IosIcons.qr_code_scanner_rounded, color: _primaryBlue, size: 18),
             ),
             tooltip: 'Scan Doctor QR Code',
             onPressed: () => ScanDoctorQrSheet.show(
@@ -617,7 +628,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
         backgroundColor: _primaryBlue,
         foregroundColor: Colors.white,
         elevation: 3,
-        icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
+        icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 20),
         label: const Text(
           'Add Doctor',
           style: TextStyle(
@@ -647,10 +658,10 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                             fontSize: 12.5,
                             color: isDark ? Colors.white38 : Colors.grey[400],
                           ),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                          prefixIcon: const Icon(IosIcons.search_rounded, size: 20),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon: const Icon(IosIcons.close_rounded, size: 18),
                                   onPressed: () => setState(() => _searchQuery = ''),
                                 )
                               : null,
@@ -697,7 +708,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                 ),
                                 selectedColor: _primaryBlue,
                                 backgroundColor: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
@@ -802,7 +813,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 15 : 14,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -853,7 +864,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
               // 3-Dots Popup Menu
               PopupMenuButton<String>(
                 icon: Icon(
-                  Icons.more_vert_rounded,
+                  IosIcons.more_vert_rounded,
                   size: 20,
                   color: isDark ? Colors.white60 : const Color(0xFF64748B),
                 ),
@@ -886,7 +897,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     value: 'book',
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, size: 16, color: _primaryBlue),
+                        const Icon(IosIcons.calendar_today_rounded, size: 16, color: _primaryBlue),
                         const SizedBox(width: 10),
                         Text(
                           'Book Appointment',
@@ -894,7 +905,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                             fontFamily: appPoppinFont,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                       ],
@@ -904,7 +915,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     value: 'remove',
                     child: Row(
                       children: [
-                        Icon(Icons.person_remove_outlined, size: 16, color: Color(0xFFEF4444)),
+                        Icon(IosIcons.person_remove_outlined, size: 16, color: Color(0xFFEF4444)),
                         SizedBox(width: 10),
                         Text(
                           'Remove Doctor',
@@ -942,7 +953,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -959,7 +970,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -976,7 +987,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                       fontFamily: appPoppinFont,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                 ),
@@ -1010,7 +1021,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   },
                 );
               },
-              icon: const Icon(Icons.calendar_today_rounded, size: 14),
+              icon: const Icon(IosIcons.calendar_today_rounded, size: 14),
               label: const Text(
                 'Book Appointment',
                 style: TextStyle(
@@ -1043,7 +1054,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.person_search_rounded, size: 38, color: _primaryBlue),
+                  child: Icon(IosIcons.person_search_rounded, size: 38, color: _primaryBlue),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1053,7 +1064,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1092,7 +1103,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                     _loadDoctors();
                   },
                 ),
-                icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 18),
                 label: const Text(
                   'Scan Doctor QR Code',
                   style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 13),

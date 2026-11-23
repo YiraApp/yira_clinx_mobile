@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -403,13 +404,13 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                 type: MaterialType.transparency,
                 child: Column(
                   children: [
-                    if (log?.photoUrl != null) _sheetOption(ctx, isDark, 'view', Icons.photo_outlined, 'View photo'),
+                    if (log?.photoUrl != null) _sheetOption(ctx, isDark, 'view', IosIcons.photo_outlined, 'View photo'),
                     if (blocked == null) ...[
-                      _sheetOption(ctx, isDark, 'camera', Icons.photo_camera_outlined, 'Take a photo'),
-                      _sheetOption(ctx, isDark, 'gallery', Icons.photo_library_outlined, 'Choose from gallery'),
+                      _sheetOption(ctx, isDark, 'camera', IosIcons.photo_camera_outlined, 'Take a photo'),
+                      _sheetOption(ctx, isDark, 'gallery', IosIcons.photo_library_outlined, 'Choose from gallery'),
                     ],
                     if (log?.photoUrl != null && blocked == null)
-                      _sheetOption(ctx, isDark, 'remove', Icons.delete_outline_rounded, 'Remove photo', color: DietUi.red),
+                      _sheetOption(ctx, isDark, 'remove', IosIcons.delete_outline_rounded, 'Remove photo', color: DietUi.red),
                   ],
                 ),
               ),
@@ -508,7 +509,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                 ),
                 errorWidget: (_, _, _) => const SizedBox(
                   height: 280,
-                  child: Center(child: Icon(Icons.broken_image_outlined, color: Colors.white54, size: 40)),
+                  child: Center(child: Icon(IosIcons.broken_image_outlined, color: Colors.white54, size: 40)),
                 ),
               ),
             ),
@@ -517,7 +518,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               right: 8,
               child: IconButton.filled(
                 style: IconButton.styleFrom(backgroundColor: Colors.black54),
-                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                icon: const Icon(IosIcons.close_rounded, color: Colors.white),
                 onPressed: () => Navigator.pop(ctx),
               ),
             ),
@@ -543,7 +544,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
       message: 'You follow one plan at a time. Any other active plan will be paused.',
       confirmLabel: 'Start Plan',
       tone: AppDialogTone.success,
-      icon: Icons.play_circle_outline_rounded,
+      icon: IosIcons.play_circle_outline_rounded,
     );
     if (!proceed || !mounted) return;
 
@@ -569,7 +570,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
       message: "You won't see daily meals or reminders for it until you turn it back on.",
       confirmLabel: 'Pause Plan',
       tone: AppDialogTone.warning,
-      icon: Icons.pause_circle_outline_rounded,
+      icon: IosIcons.pause_circle_outline_rounded,
     );
     if (!proceed || !mounted) return;
 
@@ -632,7 +633,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       plan.createdByPatient ? 'Self-made' : 'Prescribed',
                       plan.createdByPatient ? DietUi.violet : DietUi.blue,
                       isDark,
-                      icon: plan.createdByPatient ? Icons.person_rounded : Icons.verified_user_rounded,
+                      icon: plan.createdByPatient ? IosIcons.person_rounded : IosIcons.verified_user_rounded,
                     ),
                     const SizedBox(width: 6),
                     Flexible(
@@ -650,11 +651,11 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               ),
         actions: [
           if (plan != null && !_isLoading)
-            DietUi.actionIcon(Icons.calendar_month_rounded, isDark, _pickMonthDate, tooltip: 'Jump to a date'),
+            DietUi.actionIcon(IosIcons.calendar_month_rounded, isDark, _pickMonthDate, tooltip: 'Jump to a date'),
           if (plan != null && plan.canEdit && plan.createdByPatient && !_isLoading)
-            DietUi.actionIcon(Icons.edit_note_rounded, isDark, _openEditor, tooltip: 'Edit my plan'),
+            DietUi.actionIcon(IosIcons.edit_note_rounded, isDark, _openEditor, tooltip: 'Edit my plan'),
           if (plan != null && isActive && !_isLoading)
-            DietUi.actionIcon(Icons.pause_circle_outline_rounded, isDark, _pausePlan, tooltip: 'Pause this plan'),
+            DietUi.actionIcon(IosIcons.pause_circle_outline_rounded, isDark, _pausePlan, tooltip: 'Pause this plan'),
         ],
       ),
       body: _buildBody(isDark),
@@ -666,7 +667,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     if (_noActivePlan) {
       return _buildMessage(
         isDark,
-        icon: Icons.restaurant_menu_rounded,
+        icon: IosIcons.restaurant_menu_rounded,
         title: 'No active diet plan',
         message: 'Turn on one of your plans to see your daily meals here.',
         action: ElevatedButton(
@@ -687,7 +688,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     if (_error != null || _plan == null) {
       return _buildMessage(
         isDark,
-        icon: Icons.cloud_off_rounded,
+        icon: IosIcons.cloud_off_rounded,
         title: "Couldn't load the plan",
         message: _error ?? 'Please try again.',
         action: TextButton(onPressed: _load, child: const Text('Try again')),
@@ -777,7 +778,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.today_rounded, size: 12, color: DietUi.blue),
+                            const Icon(IosIcons.today_rounded, size: 12, color: DietUi.blue),
                             const SizedBox(width: 4),
                             Text('Today', style: DietUi.text(10.5, FontWeight.w700, DietUi.blue)),
                           ],
@@ -864,7 +865,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     return DietUi.notice(
       message,
       DietUi.amber,
-      Icons.info_outline_rounded,
+      IosIcons.info_outline_rounded,
       isDark,
       action: canStart
           ? TextButton(
@@ -939,7 +940,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                 '${eatenItems.length}/${items.length} eaten',
                 eatenItems.isNotEmpty ? DietUi.green : DietUi.slate,
                 isDark,
-                icon: Icons.check_circle_rounded,
+                icon: IosIcons.check_circle_rounded,
               ),
             ],
           ),
@@ -976,14 +977,14 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline_rounded, size: 13, color: DietUi.blue),
+                  const Icon(IosIcons.lock_outline_rounded, size: 13, color: DietUi.blue),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Prescribed by Dr. ${plan.doctorName} · Clinical diet plan (view only)',
                       maxLines: 2,
                       softWrap: true,
-                      style: DietUi.text(10.5, FontWeight.w500, isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF)),
+                      style: DietUi.text(10.5, FontWeight.w500, isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8)),
                     ),
                   ),
                 ],
@@ -996,7 +997,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 14, color: DietUi.hint(isDark)),
+                  Icon(IosIcons.info_outline_rounded, size: 14, color: DietUi.hint(isDark)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -1062,7 +1063,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                     AnimatedRotation(
                       turns: expanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
-                      child: Icon(Icons.keyboard_arrow_down_rounded, color: DietUi.muted(isDark)),
+                      child: Icon(IosIcons.keyboard_arrow_down_rounded, color: DietUi.muted(isDark)),
                     ),
                   ],
                 ),
@@ -1119,7 +1120,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                   bottom: -4,
                   child: Container(
                     decoration: BoxDecoration(color: DietUi.card(isDark), shape: BoxShape.circle),
-                    child: const Icon(Icons.check_circle_rounded, color: DietUi.green, size: 18),
+                    child: const Icon(IosIcons.check_circle_rounded, color: DietUi.green, size: 18),
                   ),
                 ),
             ],
@@ -1180,7 +1181,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       ),
                       child: busy
                           ? const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator(strokeWidth: 2))
-                          : Icon(Icons.check_rounded, size: 20, color: eaten ? Colors.white : DietUi.hint(isDark)),
+                          : Icon(IosIcons.check_rounded, size: 20, color: eaten ? Colors.white : DietUi.hint(isDark)),
                     ),
                   ),
                 ),
@@ -1218,7 +1219,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               width: 40,
               height: 40,
               color: DietUi.line(isDark),
-              child: Icon(Icons.image_not_supported_outlined, size: 18, color: DietUi.muted(isDark)),
+              child: Icon(IosIcons.image_not_supported_outlined, size: 18, color: DietUi.muted(isDark)),
             ),
           ),
         ),
@@ -1228,7 +1229,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
     return TextButton.icon(
       onPressed: () => _photoActions(meal),
       style: TextButton.styleFrom(foregroundColor: DietUi.muted(isDark), visualDensity: VisualDensity.compact),
-      icon: const Icon(Icons.upload_rounded, size: 14),
+      icon: const Icon(IosIcons.upload_rounded, size: 14),
       label: Text('Upload', style: DietUi.text(10.5, FontWeight.w600, DietUi.muted(isDark))),
     );
   }
@@ -1240,7 +1241,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
       decoration: DietUi.cardDecoration(isDark),
       child: Column(
         children: [
-          DietUi.iconBadge(Icons.no_meals_rounded, DietUi.slate, isDark, size: 52, iconSize: 26),
+          DietUi.iconBadge(IosIcons.no_meals_rounded, DietUi.slate, isDark, size: 52, iconSize: 26),
           const SizedBox(height: 10),
           Text(
             beforeStart ? 'This plan has not started yet' : 'No meals planned for this day',
@@ -1299,7 +1300,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isDo ? Icons.check_rounded : Icons.close_rounded,
+                isDo ? IosIcons.check_rounded : IosIcons.close_rounded,
                 size: 11,
                 color: isDo ? DietUi.green : DietUi.red,
               ),
@@ -1400,7 +1401,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
         children: [
           Row(
             children: [
-              DietUi.iconBadge(Icons.health_and_safety_rounded, DietUi.blue, isDark, size: 34, iconSize: 18),
+              DietUi.iconBadge(IosIcons.health_and_safety_rounded, DietUi.blue, isDark, size: 34, iconSize: 18),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -1419,7 +1420,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               if (!hasOwn)
                 DietUi.pill('General', DietUi.slate, isDark)
               else if (!plan.createdByPatient)
-                DietUi.pill('Prescribed', DietUi.blue, isDark, icon: Icons.verified_user_rounded),
+                DietUi.pill('Prescribed', DietUi.blue, isDark, icon: IosIcons.verified_user_rounded),
             ],
           ),
           if (notes.isNotEmpty) ...[
@@ -1435,7 +1436,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.format_quote_rounded, size: 16, color: DietUi.blue),
+                  const Icon(IosIcons.format_quote_rounded, size: 16, color: DietUi.blue),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -1470,7 +1471,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       color: DietUi.green,
                       items: shownDos,
                       isDo: true,
-                      icon: Icons.thumb_up_alt_rounded,
+                      icon: IosIcons.thumb_up_alt_rounded,
                     ),
                     const SizedBox(height: 10),
                     group(
@@ -1479,7 +1480,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       color: DietUi.red,
                       items: shownDonts,
                       isDo: false,
-                      icon: Icons.thumb_down_alt_rounded,
+                      icon: IosIcons.thumb_down_alt_rounded,
                     ),
                   ],
                 );
@@ -1495,7 +1496,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                         color: DietUi.green,
                         items: shownDos,
                         isDo: true,
-                        icon: Icons.thumb_up_alt_rounded,
+                        icon: IosIcons.thumb_up_alt_rounded,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1506,7 +1507,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                         color: DietUi.red,
                         items: shownDonts,
                         isDo: false,
-                        icon: Icons.thumb_down_alt_rounded,
+                        icon: IosIcons.thumb_down_alt_rounded,
                       ),
                     ),
                   ],
@@ -1535,7 +1536,7 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        _showAllGuidance ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        _showAllGuidance ? IosIcons.keyboard_arrow_up_rounded : IosIcons.keyboard_arrow_down_rounded,
                         size: 16,
                         color: DietUi.blue,
                       ),

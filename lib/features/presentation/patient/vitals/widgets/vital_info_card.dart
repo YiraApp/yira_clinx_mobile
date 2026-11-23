@@ -48,7 +48,7 @@ class VitalInfoCard extends StatelessWidget {
             color: isDark
                 ? (isSelected
                     ? accentColor.withValues(alpha: 0.22)
-                    : const Color(0xFF1E293B).withValues(alpha: 0.88))
+                    : const Color(0xFF232323).withValues(alpha: 0.88))
                 : (isSelected
                     ? accentColor.withValues(alpha: 0.12)
                     : Colors.white.withValues(alpha: 0.94)),
@@ -114,7 +114,7 @@ class VitalInfoCard extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: hasValue
-                              ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                              ? (isDark ? Colors.white : const Color(0xFF121212))
                               : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                         ),
                       ),

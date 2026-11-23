@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -59,7 +60,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
         SnackBar(
           content: const Row(
             children: [
-              Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+              Icon(IosIcons.check_circle_outline, color: Colors.white, size: 18),
               SizedBox(width: 8),
               Text("Access status updated"),
             ],
@@ -98,7 +99,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                 ? Colors.grey.withValues(alpha: 0.12)
                 : const Color(0xFF0284C7).withValues(alpha: 0.12)));
 
-    final Color cardBg = isDark ? const Color(0xFF1E2638) : Colors.white;
+    final Color cardBg = isDark ? const Color(0xFF262626) : Colors.white;
     final Color borderColor = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     return Center(
@@ -144,10 +145,10 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                 child: Center(
                   child: Icon(
                     isPending
-                        ? Icons.hourglass_top_rounded
+                        ? IosIcons.hourglass_top_rounded
                         : (isRejected
-                            ? Icons.lock_person_outlined
-                            : Icons.lock_outline_rounded),
+                            ? IosIcons.lock_person_outlined
+                            : IosIcons.lock_outline_rounded),
                     size: 28,
                     color: statusColor,
                   ),
@@ -163,7 +164,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 19 : 17,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 6),
@@ -211,7 +212,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                         ),
                       ),
                     ] else if (isRejected) ...[
-                      Icon(Icons.cancel_outlined, size: 14, color: statusColor),
+                      Icon(IosIcons.cancel_outlined, size: 14, color: statusColor),
                       const SizedBox(width: 6),
                       Text(
                         "Request Declined",
@@ -223,7 +224,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                         ),
                       ),
                     ] else if (isExpired) ...[
-                      Icon(Icons.history_toggle_off_rounded, size: 14, color: statusColor),
+                      Icon(IosIcons.history_toggle_off_rounded, size: 14, color: statusColor),
                       const SizedBox(width: 6),
                       Text(
                         "Access Expired",
@@ -235,7 +236,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                         ),
                       ),
                     ] else ...[
-                      Icon(Icons.shield_outlined, size: 14, color: statusColor),
+                      Icon(IosIcons.shield_outlined, size: 14, color: statusColor),
                       const SizedBox(width: 6),
                       Text(
                         "Not Requested Yet",
@@ -266,7 +267,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                       consentBloc: widget.consentBloc,
                     );
                   },
-                  icon: const Icon(Icons.vpn_key_rounded, size: 16),
+                  icon: const Icon(IosIcons.vpn_key_rounded, size: 16),
                   label: Text(
                     isPending ? "Update Access Duration" : "Request Access",
                     style: const TextStyle(
@@ -300,7 +301,7 @@ class _PatientRecordAccessGateState extends State<PatientRecordAccessGate> {
                           height: 12,
                           child: CircularProgressIndicator(strokeWidth: 1.5),
                         )
-                      : const Icon(Icons.refresh_rounded, size: 16),
+                      : const Icon(IosIcons.refresh_rounded, size: 16),
                   label: Text(
                     _isRefreshing ? "Checking..." : "Check Status",
                     style: const TextStyle(

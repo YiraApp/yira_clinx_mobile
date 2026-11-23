@@ -7,11 +7,13 @@ class HeartbeatPainter extends CustomPainter {
   final double revealProgress;
   final double opacity;
   final double loopValue;
+  final bool dark;
 
   HeartbeatPainter({
     required this.revealProgress,
     required this.opacity,
     required this.loopValue,
+    this.dark = false,
   });
 
   @override
@@ -57,7 +59,7 @@ class HeartbeatPainter extends CustomPainter {
 
     // Core crisp line (Royal Blue)
     final linePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: opacity * 0.95)
+      ..color = (dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)).withValues(alpha: opacity * 0.95)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round
@@ -71,7 +73,7 @@ class HeartbeatPainter extends CustomPainter {
       canvas.drawCircle(tipPoint, 4.5, tipGlow);
 
       final tipCore = Paint()
-        ..color = const Color(0xFF2563EB).withValues(alpha: opacity);
+        ..color = (dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)).withValues(alpha: opacity);
       canvas.drawCircle(tipPoint, 2.2, tipCore);
     }
   }
@@ -125,6 +127,7 @@ class HeartbeatPainter extends CustomPainter {
   bool shouldRepaint(HeartbeatPainter oldDelegate) {
     return oldDelegate.revealProgress != revealProgress ||
         oldDelegate.opacity != opacity ||
-        oldDelegate.loopValue != loopValue;
+        oldDelegate.loopValue != loopValue ||
+        oldDelegate.dark != dark;
   }
 }

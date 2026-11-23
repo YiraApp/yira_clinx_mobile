@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -88,7 +89,7 @@ class _OfflineBottomBanner extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.wifi_off_rounded,
+            IosIcons.wifi_off_rounded,
             color: Colors.white,
             size: iconSize,
           ),

@@ -62,6 +62,8 @@ class URLs {
 
   /*Prescriptions*/
   static const prescriptionsUrl = "/v1/api/auth/prescriptions";
+  // The PDF an unsaved prescription would get (web API route; nothing is stored).
+  static const String prescriptionPreviewUrl = "/api/prescriptions/preview";
 
   /*Provider Profile*/
   static const providerProfileUrl = "/v1/api/auth/provider/profile";
@@ -124,7 +126,7 @@ class URLs {
   static const labPackageMyOrdersUrl = "/v1/api/auth/lab-packages/my-orders";
   static const labPackageOrdersUrl = "/v1/api/auth/lab-packages/orders"; // + /:id/report, /:id/slot
   static const labPackageSlotsUrl = "/v1/api/auth/lab-packages/slots";
-  static const labPackageAddressesUrl = "/v1/api/auth/lab-packages/addresses"; // saved addresses for sample collection
+  static const labPackageAddressesUrl = "/v1/api/auth/lab-packages/addresses";
 
   /*Account Management*/
   static const accountDeactivateUrl = "/v1/api/auth/account/deactivate";
@@ -144,6 +146,16 @@ class URLs {
   static const doctorDietTemplatesUrl = "/v1/api/diet/templates";
   static const doctorDietAssignUrl = "/v1/api/diet/assign";
   static const doctorDietFoodsUrl = "/v1/api/diet/foods";
+  static const dietFoodAskAiUrl = "/v1/api/diet/foods/ask-ai";
   static const doctorDietFoodRecommendationsUrl = "/v1/api/diet/foods/recommendations";
+
+  /*Family links (people with their own Yira account)*/
+  static const familyCodeUrl = "/v1/api/auth/family/code";
+  static const familyCodeRefreshUrl = "/v1/api/auth/family/code/refresh";
+  static const familyLookupUrl = "/v1/api/auth/family/lookup";
+  static const familyLinkWithCodeUrl = "/v1/api/auth/family/link-with-code";
+  static const familyRequestsUrl = "/v1/api/auth/family/requests"; // + /:id/accept, /:id/decline, /:id/cancel
+  static const familyMembersUrl = "/v1/api/auth/family/members";
+  static const familyLinksUrl = "/v1/api/auth/family/links"; // + /:id/remove
 }
 

@@ -67,7 +67,7 @@ class HealthOverviewCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: state.overallPercentage,
               backgroundColor: isDark ? Colors.white10 : Colors.grey.shade100,
-              color: Colors.blue.shade600,
+              color: const Color(0xFF2563EB),
               minHeight: 8,
             ),
           ),

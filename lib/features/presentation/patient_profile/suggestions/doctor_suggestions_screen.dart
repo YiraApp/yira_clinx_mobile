@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:developer' as developer;
 import 'dart:io';
@@ -103,7 +104,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
       message: "Are you sure you want to delete this suggestion? This action cannot be undone.",
       confirmLabel: "Delete",
       tone: AppDialogTone.danger,
-      icon: Icons.delete_outline_rounded,
+      icon: IosIcons.delete_outline_rounded,
     );
 
     if (confirmed != true) return;
@@ -206,7 +207,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
               onPressed: _openAddSuggestion,
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(IosIcons.add_rounded),
               label: const Text(
                 "Add Suggestion",
                 style: TextStyle(
@@ -250,7 +251,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.lightbulb_outline_rounded,
+                              IosIcons.lightbulb_outline_rounded,
                               size: 48,
                               color: Color(0xFF2563EB),
                             ),
@@ -262,7 +263,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 18 : 16,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -287,7 +288,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                               ),
                             ),
                             onPressed: _openAddSuggestion,
-                            icon: const Icon(Icons.add_rounded, size: 18),
+                            icon: const Icon(IosIcons.add_rounded, size: 18),
                             label: const Text(
                               "Add First Suggestion",
                               style: TextStyle(
@@ -363,7 +364,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
-                                    Icons.lightbulb_outline_rounded,
+                                    IosIcons.lightbulb_outline_rounded,
                                     color: Color(0xFF2563EB),
                                     size: 18,
                                   ),
@@ -381,7 +382,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                           fontWeight: FontWeight.bold,
                                           color: isDark
                                               ? Colors.white
-                                              : const Color(0xFF0F172A),
+                                              : const Color(0xFF121212),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -401,7 +402,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                 if (id > 0 && canDelete)
                                   IconButton(
                                     icon: Icon(
-                                      Icons.delete_outline_rounded,
+                                      IosIcons.delete_outline_rounded,
                                       size: 20,
                                       color: isDark
                                           ? Colors.white38
@@ -425,7 +426,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                 height: 1.45,
                                 color: isDark
                                     ? Colors.white.withValues(alpha: 0.9)
-                                    : const Color(0xFF334155),
+                                    : const Color(0xFF3A3A3A),
                               ),
                             ),
 
@@ -457,7 +458,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Icon(
-                                        Icons.attach_file_rounded,
+                                        IosIcons.attach_file_rounded,
                                         size: 16,
                                         color: Color(0xFF2563EB),
                                       ),
@@ -477,7 +478,7 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                       ),
                                       const SizedBox(width: 4),
                                       const Icon(
-                                        Icons.open_in_new_rounded,
+                                        IosIcons.open_in_new_rounded,
                                         size: 14,
                                         color: Color(0xFF2563EB),
                                       ),

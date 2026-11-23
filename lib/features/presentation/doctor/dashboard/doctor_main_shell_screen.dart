@@ -49,7 +49,8 @@ class _DoctorMainShellScreenState extends State<DoctorMainShellScreen> {
     sl<NavigationDrawerBloc>().add(const InitializeDrawerData());
     _doctorDashboardBloc.add(FetchDoctorDashboardData());
     _appointmentBloc.add(LoadAppointmentsEvent(date: todayStr));
-    sl<DashboardBloc>().add(const GetDashboardData());
+    // No GetDashboardData here: the Patients tab loads its own bloc on open, and nothing
+    // shows this shared one, so asking here only sent a second patient-list request.
     sl<SlotBloc>().add(InitializeSlotsEvent());
   }
 

@@ -1,6 +1,7 @@
 // Renders the fitness dashboard with sample data at phone sizes. Any layout
 // overflow fails the test. Run with DIET_SHOTS=<dir> and --update-goldens to
 // also save screenshots.
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -59,6 +60,16 @@ PatientFitnessSummaryResponse _summary({bool empty = false}) {
   });
 }
 
+/// 30 days, every one with steps, so it's easy to tell apart from the 7-day summary.
+PatientFitnessSummaryResponse _monthSummary() => PatientFitnessSummaryResponse.fromJson({
+      'patientId': 'p',
+      'period': 'month',
+      'analytics': {'steps': {'average': 9000}},
+      'chartPoints': [
+        for (var i = 0; i < 30; i++) {'date': _day(29 - i), 'steps': 9000},
+      ],
+    });
+
 TodayFitnessData _today() => TodayFitnessData.fromJson({
       'date': _day(0),
       'steps': 4870,
@@ -82,16 +93,28 @@ void main() {
   setUpAll(_loadFonts);
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  Future<void> pump(WidgetTester tester, Size size, {bool dark = false, bool empty = false}) async {
+  Future<void> pump(
+    WidgetTester tester,
+    Size size, {
+    bool dark = false,
+    bool empty = false,
+    double textScale = 1,
+    Future<PatientFitnessSummaryResponse?> Function(String period)? loader,
+  }) async {
     tester.view.physicalSize = Size(size.width * 3, size.height * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins', brightness: dark ? Brightness.dark : Brightness.light),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: PatientFitnessDashboardScreen(
-        previewSummary: _summary(empty: empty),
+        previewSummary: loader == null ? _summary(empty: empty) : null,
         previewToday: empty ? TodayFitnessData(date: _day(0)) : _today(),
+        summaryLoader: loader,
       ),
     ));
     await tester.pump();
@@ -138,9 +161,67 @@ void main() {
     }
   });
 
-  testWidgets('dark mode renders', (tester) async {
+  testWidgets('a small phone with large text does not overflow', (tester) async {
+    await pump(tester, const Size(320, 2400), textScale: 1.3);
+    expect(find.text('4,870'), findsOneWidget);
+    await tester.tap(find.text('Resting HR'));
+    await tester.pumpAndSettle();
+    expect(find.text('6 of 7 days have a reading'), findsOneWidget);
+  });
+
+  testWidgets('history that fails to load offers a retry, not "no readings"', (tester) async {
+    var fail = true;
+    await pump(tester, const Size(390, 1900), loader: (_) async => fail ? null : _summary());
+    expect(find.text('Couldn\'t load your fitness history'), findsOneWidget);
+    expect(find.textContaining('No steps readings'), findsNothing);
+    expect(find.textContaining('days have a reading'), findsNothing);
+    // Today's numbers come from the phone and still show.
+    expect(find.text('4,870'), findsOneWidget);
+
+    fail = false;
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Couldn\'t load your fitness history'), findsNothing);
+    expect(find.text('6 of 7 days have a reading · dashed line is your goal'), findsOneWidget);
+  });
+
+  testWidgets('a slow 30-day reply never replaces the 7-day view picked after it', (tester) async {
+    final pending = <String, Completer<PatientFitnessSummaryResponse?>>{};
+    var calls = 0;
+    Future<PatientFitnessSummaryResponse?> loader(String period) {
+      calls++;
+      if (calls == 1) return Future.value(_summary());
+      return (pending[period] = Completer<PatientFitnessSummaryResponse?>()).future;
+    }
+
+    await pump(tester, const Size(390, 1900), loader: loader);
+    expect(find.text('6 of 7 days have a reading · dashed line is your goal'), findsOneWidget);
+
+    await tester.tap(find.text('30 days'));
+    await tester.pump();
+    await tester.tap(find.text('7 days'));
+    await tester.pump();
+
+    pending['week']!.complete(_summary());
+    await tester.pump();
+    pending['month']!.complete(_monthSummary());
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('6 of 7 days have a reading · dashed line is your goal'), findsOneWidget);
+    expect(find.textContaining('of 30 days'), findsNothing);
+  });
+
+  testWidgets('dark mode uses the app\'s charcoal cards', (tester) async {
     await pump(tester, const Size(390, 1900), dark: true);
     expect(find.text('Trends'), findsOneWidget);
+    final fills = tester
+        .widgetList<Container>(find.byType(Container))
+        .map((c) => c.decoration is BoxDecoration ? (c.decoration as BoxDecoration).color : null)
+        .whereType<Color>()
+        .toSet();
+    expect(fills, contains(const Color(0xFF232323)));
+    expect(fills, isNot(contains(const Color(0xFF161616))));
     if (_shotsDir != null) {
       await expectLater(find.byType(MaterialApp), matchesGoldenFile(Uri.file('$_shotsDir/fitness_dark.png')));
     }

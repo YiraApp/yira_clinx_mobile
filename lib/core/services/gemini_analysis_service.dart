@@ -1,149 +1,89 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:yiraclinics/core/api/base_api_configuration.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/domain/entities/prescriptions/prescription_analysis_result.dart';
 
-/// Service that sends prescription images/PDFs to Google's Gemini AI
-/// and returns a structured [PrescriptionAnalysisResult].
+/// Reads a prescription photo or PDF for "Scan prescription" and returns a structured
+/// [PrescriptionAnalysisResult]. The server reads it with Gemini using its own key, so no AI key
+/// ships inside the app.
 class GeminiAnalysisService {
   GeminiAnalysisService._();
 
-  static String get _apiKey => EnvironmentService.geminiApiKey;
-  static String get _model => EnvironmentService.geminiModel;
-  static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
-
-  static final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
-
-  /// The structured prompt that instructs Gemini to extract prescription data.
-  static const String _systemPrompt = '''
-You are an expert medical prescription analysis assistant. Analyze this prescription image or PDF document (supporting up to 2 pages) and extract the information as JSON. Return ONLY the JSON object, no extra text.
-
-{
-  "doctorName": "string - doctor's full name as written on the prescription",
-  "hospitalName": "string - clinic/hospital/healthcare center name if visible, empty string if not",
-  "specialty": "string - medical specialty if mentioned (e.g., General Medicine, Cardiology, Dermatology, Pediatrics, Orthopedics, ENT, Gynecology, Dental). Default to General Medicine if unclear",
-  "consultationDate": "string - date in YYYY-MM-DD format if visible, empty string if not",
-  "diagnosis": "string - condition/diagnosis/symptoms/reason for visit. Combine multiple if present",
-  "doctorNotes": "string - general advice, follow-up instructions, dietary instructions, or precautions",
-  "medications": [
-    {
-      "name": "string - full medicine name with strength and formulation if visible (e.g., Tab Paracetamol 650mg, Cap Amoxicillin 500mg, Syp Corex 100ml)",
-      "frequency": "string - one of: 1-0-1, 1-0-0, 0-0-1, 1-1-1, SOS. Map BD to 1-0-1, OD to 1-0-0, TDS/TID to 1-1-1, HS/ON to 0-0-1, SOS/PRN to SOS",
-      "mealTiming": "string - one of: After Food, Before Food. Default to After Food if not specified",
-      "durationDays": "number - duration in days. Convert weeks to days (e.g. 1 week = 7). Use 0 if continuous or unclear",
-      "isContinuous": "boolean - true if medicine is marked as ongoing/continuous/lifelong",
-      "notes": "string - any specific instructions for this medicine (e.g., Take with warm water)"
-    }
-  ],
-  "confidence": "number 0-100 - your confidence in the extraction accuracy based on image clarity and handwriting legibility"
-}
-
-IMPORTANT RULES:
-- FOR PDF DOCUMENTS (UP TO 2 PAGES): Carefully examine and extract details from BOTH Page 1 and Page 2 (if present). Combine all medications, dosages, and notes found across both pages into a single unified JSON response. Do not omit medications from either page. If more than 2 pages exist, analyze only the first 2 pages.
-- Extract EVERY SINGLE medication visible in the prescription.
-- If you see Rx or ℞ symbols, all items listed below are medications.
-- If a field is not visible or unclear, use empty string for strings, 5 for durationDays, false for booleans.
-- Map common abbreviations: Tab=Tablet, Cap=Capsule, Syp=Syrup, Inj=Injection, OD=1-0-0, BD=1-0-1, TDS/TID=1-1-1, HS=0-0-1, SOS=SOS, AC=Before Food, PC=After Food.
-- Translate any non-English text to English.
-- Return ONLY valid JSON, no markdown backticks, no explanation text.
-''';
+  static Dio get _dio => sl<ApiClient>().account(showSuccessSnack: false);
 
   /// Analyzes a prescription [file] (image or PDF) and returns structured data.
   ///
   /// Throws [GeminiAnalysisException] on any failure.
   static Future<PrescriptionAnalysisResult> analyze(File file) async {
-    if (_apiKey.trim().isEmpty) {
-      throw const GeminiAnalysisException(
-        'Gemini API key is not configured in the environment. Please configure GEMINI_API_KEY.',
-        code: GeminiErrorCode.apiError,
-      );
-    }
     try {
       final String mimeType = _getMimeType(file.path);
-      final Uint8List bytes;
+      // Photos are shrunk first so they upload quickly; PDFs go as they are.
+      final Uint8List bytes = mimeType.startsWith('image/') ? await _compressImage(file) : await file.readAsBytes();
+      final String fileName = mimeType.startsWith('image/') ? 'prescription.jpg' : 'prescription.pdf';
+      final String sendType = mimeType.startsWith('image/') ? 'image/jpeg' : mimeType;
+      debugPrint('[PrescriptionScan] Sending ${(bytes.length / 1024).toStringAsFixed(0)} KB ($sendType)');
 
-      if (mimeType.startsWith('image/')) {
-        bytes = await _compressImage(file);
-      } else {
-        // PDF — send as-is (Gemini supports inline PDF data)
-        bytes = await file.readAsBytes();
-      }
-
-      final String base64Data = base64Encode(bytes);
-      debugPrint('[GeminiAnalysis] Sending ${(bytes.length / 1024).toStringAsFixed(0)} KB to $mimeType analysis...');
-
+      final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
       final response = await _dio.post(
-        '$_baseUrl/$_model:generateContent?key=$_apiKey',
-        data: {
-          'contents': [
-            {
-              'parts': [
-                {'text': _systemPrompt},
-                {
-                  'inlineData': {
-                    'mimeType': mimeType,
-                    'data': base64Data,
-                  }
-                },
-              ]
-            }
-          ],
-          'generationConfig': {
-            'temperature': 0.1,
-            'maxOutputTokens': 4096,
-            'responseMimeType': 'application/json',
-          },
-        },
+        '${URLs.prescriptionsUrl}/scan',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromBytes(bytes, filename: fileName, contentType: DioMediaType.parse(sendType)),
+        }),
+        options: Options(
+          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          extra: const {'suppressErrorSnack': true},
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 100),
+        ),
       );
 
-      if (response.statusCode != 200) {
-        throw GeminiAnalysisException(
-          'Gemini API returned status ${response.statusCode}',
-          code: GeminiErrorCode.apiError,
-        );
+      final body = response.data;
+      final data = body is Map ? body['data'] : null;
+      if (data is! Map) {
+        throw const GeminiAnalysisException('No analysis results returned. Please try again.', code: GeminiErrorCode.emptyResponse);
       }
-
-      return _parseResponse(response.data);
+      final result = PrescriptionAnalysisResult.fromJson(Map<String, dynamic>.from(data));
+      debugPrint('[PrescriptionScan] Extracted ${result.medications.length} medications, confidence ${result.confidence}%');
+      return result;
     } on DioException catch (e) {
-      debugPrint('[GeminiAnalysis] Dio error: ${e.message}');
+      debugPrint('[PrescriptionScan] Dio error: ${e.message}');
       if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         throw const GeminiAnalysisException(
           'Analysis is taking too long. Please try with a clearer image.',
           code: GeminiErrorCode.timeout,
         );
       }
-      if (e.response?.statusCode == 429) {
-        throw const GeminiAnalysisException(
-          'Service is busy right now. Please try again in a moment.',
-          code: GeminiErrorCode.rateLimited,
-        );
+      final body = e.response?.data;
+      final message = body is Map && body['message'] != null ? body['message'].toString() : null;
+      final status = e.response?.statusCode;
+      if (status == 429) {
+        throw GeminiAnalysisException(message ?? 'Service is busy right now. Please try again in a moment.',
+            code: GeminiErrorCode.rateLimited);
       }
-      if (e.response?.statusCode == 400) {
-        throw const GeminiAnalysisException(
-          'Could not process this image. Please try a clearer photo.',
-          code: GeminiErrorCode.badRequest,
-        );
+      if (status == 400 || status == 422) {
+        throw GeminiAnalysisException(message ?? 'Could not process this image. Please try a clearer photo.',
+            code: GeminiErrorCode.badRequest);
       }
-      throw GeminiAnalysisException(
+      if (status != null) {
+        throw GeminiAnalysisException(message ?? 'Something went wrong while analyzing. Please try again.',
+            code: GeminiErrorCode.apiError);
+      }
+      throw const GeminiAnalysisException(
         'Connection failed. Please check your internet.',
         code: GeminiErrorCode.networkError,
       );
     } catch (e) {
       if (e is GeminiAnalysisException) rethrow;
-      debugPrint('[GeminiAnalysis] Unexpected error: $e');
-      throw GeminiAnalysisException(
+      debugPrint('[PrescriptionScan] Unexpected error: $e');
+      throw const GeminiAnalysisException(
         'Something went wrong while analyzing. Please try again.',
         code: GeminiErrorCode.unknown,
       );
@@ -161,88 +101,13 @@ IMPORTANT RULES:
         format: CompressFormat.jpeg,
       );
       if (result != null && result.isNotEmpty) {
-        debugPrint('[GeminiAnalysis] Compressed: ${(file.lengthSync() / 1024).toStringAsFixed(0)} KB → ${(result.length / 1024).toStringAsFixed(0)} KB');
+        debugPrint('[PrescriptionScan] Compressed: ${(file.lengthSync() / 1024).toStringAsFixed(0)} KB → ${(result.length / 1024).toStringAsFixed(0)} KB');
         return result;
       }
     } catch (e) {
-      debugPrint('[GeminiAnalysis] Compression failed, using original: $e');
+      debugPrint('[PrescriptionScan] Compression failed, using original: $e');
     }
     return file.readAsBytesSync();
-  }
-
-  /// Parses the Gemini API response and extracts the JSON content.
-  static PrescriptionAnalysisResult _parseResponse(dynamic data) {
-    try {
-      if (data == null) {
-        throw const GeminiAnalysisException(
-          'Empty response from analysis service.',
-          code: GeminiErrorCode.emptyResponse,
-        );
-      }
-
-      final Map<String, dynamic> responseMap =
-          data is Map<String, dynamic> ? data : jsonDecode(data.toString());
-
-      // Navigate: candidates[0].content.parts[0].text
-      final candidates = responseMap['candidates'];
-      if (candidates == null || candidates is! List || candidates.isEmpty) {
-        // Check for prompt-level block
-        final blockReason = responseMap['promptFeedback']?['blockReason'];
-        if (blockReason != null) {
-          throw GeminiAnalysisException(
-            'Image was blocked by safety filters. Please try a different image.',
-            code: GeminiErrorCode.blocked,
-          );
-        }
-        throw const GeminiAnalysisException(
-          'No analysis results returned. Please try again.',
-          code: GeminiErrorCode.emptyResponse,
-        );
-      }
-
-      final content = candidates[0]['content'];
-      if (content == null) {
-        throw const GeminiAnalysisException(
-          'No content in analysis response.',
-          code: GeminiErrorCode.emptyResponse,
-        );
-      }
-
-      final parts = content['parts'];
-      if (parts == null || parts is! List || parts.isEmpty) {
-        throw const GeminiAnalysisException(
-          'No data extracted from the prescription.',
-          code: GeminiErrorCode.emptyResponse,
-        );
-      }
-
-      final text = (parts[0]['text'] ?? '').toString().trim();
-      if (text.isEmpty) {
-        throw const GeminiAnalysisException(
-          'Empty extraction result.',
-          code: GeminiErrorCode.emptyResponse,
-        );
-      }
-
-      // Clean any potential markdown fences
-      String cleanedJson = text;
-      if (cleanedJson.startsWith('```')) {
-        cleanedJson = cleanedJson.replaceFirst(RegExp(r'^```\w*\n?'), '');
-        cleanedJson = cleanedJson.replaceFirst(RegExp(r'\n?```$'), '');
-      }
-
-      final Map<String, dynamic> parsed = jsonDecode(cleanedJson.trim());
-      final result = PrescriptionAnalysisResult.fromJson(parsed);
-
-      debugPrint('[GeminiAnalysis] ✅ Extracted: ${result.medications.length} medications, confidence: ${result.confidence}%');
-      return result;
-    } on FormatException catch (e) {
-      debugPrint('[GeminiAnalysis] JSON parse error: $e');
-      throw const GeminiAnalysisException(
-        'Could not understand the prescription. Please try a clearer image.',
-        code: GeminiErrorCode.parseError,
-      );
-    }
   }
 
   /// Returns the MIME type based on file extension.

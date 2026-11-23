@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -64,7 +65,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        Icons.analytics_outlined,
+                        IosIcons.analytics_outlined,
                         size: 16,
                         color: primaryColor,
                       ),
@@ -76,7 +77,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 16 : 14.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -142,7 +143,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                       title: "Appointments",
                       value: "$todayCount",
                       subtext: metrics.today?.subtext ?? "Today",
-                      icon: Icons.calendar_month_rounded,
+                      icon: IosIcons.calendar_month_rounded,
                       accentColor: const Color(0xFF4F46E5), // Indigo
                       onTap: () => context.read<DoctorDashboardBloc>().add(ViewCalendarEvent()),
                     ),
@@ -156,7 +157,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                       title: "Total Patients",
                       value: "$totalPatients",
                       subtext: metrics.patients?.subtext ?? "All Time",
-                      icon: Icons.groups_rounded,
+                      icon: IosIcons.groups_rounded,
                       accentColor: const Color(0xFF0284C7), // Sky Blue
                       onTap: () => context.read<DoctorDashboardBloc>().add(ViewPatientsEvent()),
                     ),
@@ -170,7 +171,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                       title: "Completed",
                       value: "$doneCount",
                       subtext: metrics.done?.subtext ?? "Today",
-                      icon: Icons.task_alt_rounded,
+                      icon: IosIcons.task_alt_rounded,
                       accentColor: const Color(0xFF10B981), // Emerald
                     ),
                   ),
@@ -186,7 +187,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           title: "Favorites",
                           value: "${FavoritePatientsService().favoriteCount}",
                           subtext: "⭐ Saved",
-                          icon: Icons.star_rounded,
+                          icon: IosIcons.star_rounded,
                           accentColor: const Color(0xFFD97706), // Amber
                           onTap: () => Navigator.pushNamed(context, AppRoutes.favoritePatientsScreen),
                         );
@@ -211,7 +212,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           title: "Appointments",
                           value: "$todayCount",
                           subtext: metrics.today?.subtext ?? "Today",
-                          icon: Icons.calendar_month_rounded,
+                          icon: IosIcons.calendar_month_rounded,
                           accentColor: const Color(0xFF4F46E5), // Indigo
                           onTap: () => context.read<DoctorDashboardBloc>().add(ViewCalendarEvent()),
                         ),
@@ -225,7 +226,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           title: "Total Patients",
                           value: "$totalPatients",
                           subtext: metrics.patients?.subtext ?? "All Time",
-                          icon: Icons.groups_rounded,
+                          icon: IosIcons.groups_rounded,
                           accentColor: const Color(0xFF0284C7), // Sky Blue
                           onTap: () => context.read<DoctorDashboardBloc>().add(ViewPatientsEvent()),
                         ),
@@ -249,7 +250,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                           title: "Completed",
                           value: "$doneCount",
                           subtext: metrics.done?.subtext ?? "Today",
-                          icon: Icons.task_alt_rounded,
+                          icon: IosIcons.task_alt_rounded,
                           accentColor: const Color(0xFF10B981), // Emerald
                         ),
                       ),
@@ -265,7 +266,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                               title: "Favorites",
                               value: "${FavoritePatientsService().favoriteCount}",
                               subtext: "⭐ Saved",
-                              icon: Icons.star_rounded,
+                              icon: IosIcons.star_rounded,
                               accentColor: const Color(0xFFD97706), // Amber
                               onTap: () => Navigator.pushNamed(context, AppRoutes.favoritePatientsScreen),
                             );
@@ -325,7 +326,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                   ),
                   if (onTap != null)
                     Icon(
-                      Icons.chevron_right_rounded,
+                      IosIcons.chevron_right_rounded,
                       size: 16,
                       color: isDark ? Colors.white30 : Colors.grey.shade400,
                     ),
@@ -340,7 +341,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 26 : 22,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                   letterSpacing: -0.5,
                   height: 1.1,
                 ),
@@ -359,7 +360,7 @@ class DashboardMetricsGrid extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 13 : 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF334155),
+                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF3A3A3A),
                       ),
                     ),
                   ),

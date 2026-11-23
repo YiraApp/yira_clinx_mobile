@@ -7,11 +7,13 @@ abstract class SendOtpRepo {
     required String mobileNumber,
     required String countryCode,
     required bool isReSend,
+    String? channel,
   });
 
   Future<SendOtpEntity?> sendSignupOtp({
     required String mobileNumber,
     required String countryCode,
     String? email,
+    String? channel,
   });
 }

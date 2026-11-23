@@ -1,4 +1,5 @@
 import '../../../domain/entities/medicine/medical_history_entity.dart';
+import '../../../../core/utils/edit_window.dart';
 
 class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
   const MedicalRecordBriefModel({
@@ -18,6 +19,18 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
     super.temperature,
     super.weight,
     super.height,
+    super.spo2,
+    super.respiratoryRate,
+    super.allergies,
+    super.historyOfPresentIllness,
+    super.familyHistory,
+    super.pastHistory,
+    super.currentMedications,
+    super.cvsExamination,
+    super.respiratoryExamination,
+    super.abdomenExamination,
+    super.cnsExamination,
+    super.createdAt,
   });
 
   factory MedicalRecordBriefModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +56,9 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
     final temp = json['Temperature'] ?? json['temperature'];
     final weight = json['Weight'] ?? json['weight'];
     final height = json['Height'] ?? json['height'];
+
+    // A note field from either key spelling; '' when the record has none.
+    String text(String pascal, String camel) => (json[pascal] ?? json[camel] ?? '').toString();
 
     String vitals = (json['vitalsSummary'] ?? json['vitals_summary'] ?? '').toString();
     if (vitals.isEmpty && (bp != null || hr != null || temp != null)) {
@@ -70,6 +86,18 @@ class MedicalRecordBriefModel extends MedicalRecordBriefEntity {
       temperature: temp?.toString() ?? '',
       weight: weight?.toString() ?? '',
       height: height?.toString() ?? '',
+      spo2: text('SpO2', 'spo2'),
+      respiratoryRate: text('RespiratoryRate', 'respiratoryRate'),
+      allergies: text('Allergies', 'allergies'),
+      historyOfPresentIllness: text('HistoryOfPresentIllness', 'historyOfPresentIllness'),
+      familyHistory: text('FamilyHistory', 'familyHistory'),
+      pastHistory: text('PastHistory', 'pastHistory'),
+      currentMedications: text('CurrentMedications', 'currentMedications'),
+      cvsExamination: text('CvsExamination', 'cvsExamination'),
+      respiratoryExamination: text('RespiratoryExamination', 'respiratoryExamination'),
+      abdomenExamination: text('AbdomenExamination', 'abdomenExamination'),
+      cnsExamination: text('CnsExamination', 'cnsExamination'),
+      createdAt: createdAtOf(json),
     );
   }
 }

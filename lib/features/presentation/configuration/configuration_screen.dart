@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import '../../../core/services/network_services/network_listener/network_listener.dart';
-import '../splash/yira_splash_screen.dart';
+import '../splash/yira_video_splash.dart';
 import 'config_bloc.dart';
 
 class UserConfigurationScreen extends StatefulWidget {
@@ -144,11 +144,11 @@ class _UserConfigurationScreenState extends State<UserConfigurationScreen> {
         listenWhen: (previous, current) =>
             current is GetDataSuccessState || current is GetDataFailureState,
         builder: (context, state) {
-          return const Scaffold(
-            backgroundColor: Color(0xFFF8FAFC),
+          return Scaffold(
+            backgroundColor: const Color(0xFF16171B),
             extendBodyBehindAppBar: true,
             extendBody: true,
-            body: YiraSplashScreen(),
+            body: const YiraSplashEndFrame(),
           );
         },
       ),

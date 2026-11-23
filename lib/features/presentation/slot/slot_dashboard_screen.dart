@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -89,7 +90,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                     context.read<SlotBloc>().add(InitializeSlotsEvent());
                   }
                 },
-                child: const Icon(Icons.event, color: Colors.white),
+                child: const Icon(IosIcons.event, color: Colors.white),
               ),
               bottomNavigationBar: widget.isShellChild ? null : const AppBottomNavBar(currentIndex: 3),
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -411,7 +412,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                Icons.event_note_rounded,
+                                IosIcons.event_note_rounded,
                                 size: 48,
                                 color: isDark ? Colors.white38 : Colors.grey.shade400,
                               ),
@@ -453,7 +454,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                                     context.read<SlotBloc>().add(InitializeSlotsEvent(targetDate: state.targetDate));
                                   }
                                 },
-                                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                                icon: const Icon(IosIcons.add_rounded, color: Colors.white, size: 20),
                                 label: const CommonText(
                                   "Add Slots",
                                   style: TextStyle(
@@ -510,7 +511,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
                                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 13),
                                     ),
                                     behavior: SnackBarBehavior.floating,
-                                    backgroundColor: const Color(0xFF334155),
+                                    backgroundColor: const Color(0xFF3A3A3A),
                                     duration: const Duration(seconds: 2),
                                   ),
                                 );
@@ -610,7 +611,7 @@ class _SlotDashBoardScreenState extends State<SlotDashBoardScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.coffee_rounded,
+              IosIcons.coffee_rounded,
               color: Colors.amber,
               size: 22,
             ),

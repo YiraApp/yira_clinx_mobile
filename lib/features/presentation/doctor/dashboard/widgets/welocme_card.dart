@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -53,7 +54,7 @@ class WelcomeCard extends StatelessWidget {
                 fontFamily: fontFamily,
                 fontSize: isTab ? textWidth * 0.022 : 18.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.3,
               ),
             ),
@@ -73,7 +74,7 @@ class WelcomeCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.medical_services_outlined,
+                      IosIcons.medical_services_outlined,
                       size: isTab ? 14 : 12.5,
                       color: primaryColor,
                     ),
@@ -87,7 +88,7 @@ class WelcomeCard extends StatelessWidget {
                           fontFamily: fontFamily,
                           fontSize: isTab ? textWidth * 0.013 : 12,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
                         ),
                       ),
                     ),

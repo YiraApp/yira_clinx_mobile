@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -20,36 +21,36 @@ class DietFoodImage extends StatelessWidget {
   static ({IconData icon, Color color}) _categoryStyle(String category) {
     switch (category.toLowerCase()) {
       case 'breakfast':
-        return (icon: Icons.brunch_dining_rounded, color: const Color(0xFFF59E0B));
+        return (icon: IosIcons.brunch_dining_rounded, color: const Color(0xFFF59E0B));
       case 'grain':
       case 'cereal':
-        return (icon: Icons.rice_bowl_rounded, color: const Color(0xFFD97706));
+        return (icon: IosIcons.rice_bowl_rounded, color: const Color(0xFFD97706));
       case 'protein':
       case 'meat':
       case 'egg':
-        return (icon: Icons.egg_rounded, color: const Color(0xFFEF4444));
+        return (icon: IosIcons.egg_rounded, color: const Color(0xFFEF4444));
       case 'vegetable':
-        return (icon: Icons.eco_rounded, color: const Color(0xFF10B981));
+        return (icon: IosIcons.eco_rounded, color: const Color(0xFF10B981));
       case 'fruit':
-        return (icon: Icons.apple_rounded, color: const Color(0xFFE11D48));
+        return (icon: IosIcons.apple_rounded, color: const Color(0xFFE11D48));
       case 'dairy':
       case 'milk':
-        return (icon: Icons.water_drop_rounded, color: const Color(0xFF0EA5E9));
+        return (icon: IosIcons.water_drop_rounded, color: const Color(0xFF0EA5E9));
       case 'beverage':
       case 'drink':
-        return (icon: Icons.local_cafe_rounded, color: const Color(0xFF8B5CF6));
+        return (icon: IosIcons.local_cafe_rounded, color: const Color(0xFF8B5CF6));
       case 'snack':
-        return (icon: Icons.cookie_rounded, color: const Color(0xFFF97316));
+        return (icon: IosIcons.cookie_rounded, color: const Color(0xFFF97316));
       case 'oil':
       case 'fat':
       case 'spice':
       case 'condiment':
-        return (icon: Icons.opacity_rounded, color: const Color(0xFF78716C));
+        return (icon: IosIcons.opacity_rounded, color: const Color(0xFF78716C));
       case 'sweet':
       case 'dessert':
-        return (icon: Icons.cake_rounded, color: const Color(0xFFEC4899));
+        return (icon: IosIcons.cake_rounded, color: const Color(0xFFEC4899));
       default:
-        return (icon: Icons.restaurant_rounded, color: const Color(0xFF64748B));
+        return (icon: IosIcons.restaurant_rounded, color: const Color(0xFF64748B));
     }
   }
 

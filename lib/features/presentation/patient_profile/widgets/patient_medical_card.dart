@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import 'metric_tile_item.dart';
@@ -16,12 +17,12 @@ class PatientMedicalCard extends StatelessWidget {
     return PatientInfoCard(
       isTab: isTab,
       title: 'Medical Information',
-      titleIcon: Icons.medical_services_outlined,
+      titleIcon: IosIcons.medical_services_outlined,
       child: Column(
         children: [
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.warning_amber_rounded,
+            icon: IosIcons.warning_amber_rounded,
             label: 'Allergies',
             value: (patient.allergies?.isNotEmpty == true && patient.allergies != 'None') ? patient.allergies! : 'None Reported',
             accentColor: Colors.red,
@@ -32,7 +33,7 @@ class PatientMedicalCard extends StatelessWidget {
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.bloodtype_outlined,
+            icon: IosIcons.bloodtype_outlined,
             label: 'Blood Group',
             value: patient.bloodGroup ?? 'Not Set',
             accentColor: Colors.red,
@@ -40,7 +41,7 @@ class PatientMedicalCard extends StatelessWidget {
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.calendar_today_outlined,
+            icon: IosIcons.calendar_today_outlined,
             label: 'Total Visits',
             value: '${patient.totalVisits ?? 0}',
             accentColor: Colors.purple,

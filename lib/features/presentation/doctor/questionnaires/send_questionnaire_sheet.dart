@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/phosphor_icons.dart';
@@ -143,7 +144,7 @@ class _SendQuestionnaireSheetState extends State<SendQuestionnaireSheet> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close_rounded, color: QUi.muted(isDark)),
+                    icon: Icon(IosIcons.close_rounded, color: QUi.muted(isDark)),
                     tooltip: 'Close',
                   ),
                 ],
@@ -203,7 +204,7 @@ class _SendQuestionnaireSheetState extends State<SendQuestionnaireSheet> {
                   ),
                   icon: _sending
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                      : const Icon(IosIcons.send_rounded, size: 18, color: Colors.white),
                   label: Text(
                     chosen == null ? 'Choose a questionnaire' : 'Send "${chosen.title}"',
                     maxLines: 1,
@@ -238,7 +239,7 @@ class _SendQuestionnaireSheetState extends State<SendQuestionnaireSheet> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Icon(
-                active ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                active ? IosIcons.radio_button_checked_rounded : IosIcons.radio_button_unchecked_rounded,
                 size: 20,
                 color: active ? QUi.blue : QUi.muted(isDark),
               ),

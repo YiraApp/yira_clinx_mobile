@@ -30,7 +30,7 @@ class WalletColors {
 
   Color get card => isDark ? const Color(0xFF232323) : Colors.white;
   Color get line => isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
-  Color get ink => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get ink => isDark ? Colors.white : const Color(0xFF121212);
   Color get muted => isDark ? Colors.white60 : const Color(0xFF64748B);
   Color get faint => isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9);
   static const paid = Color(0xFF059669);

@@ -1,11 +1,44 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health/health.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/fitness/fitness_service.dart';
+import 'package:yiraclinics/core/services/fitness/fitness_sync_service.dart';
 import 'package:yiraclinics/features/data/models/fitness/patient_fitness_model.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 
 DateTime t(int day, int hour, [int minute = 0]) => DateTime(2026, 10, day, hour, minute);
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('connection', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({
+        'fitness_connected_u1': true,
+        'fitness_device_owner': 'u1',
+      });
+      GlobalSession.instance.userNotifier.value = LoginEntity(status: true, data: DataEntity(id: 'u1', firstName: 'Asha'));
+      FitnessSyncService.instance.reset();
+    });
+    tearDown(() => GlobalSession.instance.userNotifier.value = null);
+
+    test('no phone access hides the dashboard but keeps the link for when access returns', () async {
+      // The test host has no Health Connect, like a phone mid-update or with access switched off.
+      expect(await FitnessSyncService.instance.checkIsConnected(), isFalse);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('fitness_connected_u1'), isTrue);
+      expect(prefs.getString('fitness_device_owner'), 'u1');
+    });
+
+    test('a profile the phone is not linked to is not connected', () async {
+      GlobalSession.instance.userNotifier.value = LoginEntity(status: true, data: DataEntity(id: 'u2', firstName: 'Ravi'));
+      expect(await FitnessSyncService.instance.checkIsConnected(), isFalse);
+      final other = await FitnessSyncService.instance.otherLinkedProfile();
+      expect(other?.id, 'u1');
+    });
+  });
+
   group('sleep by wake date', () {
     test('a night across midnight counts on the morning you woke up', () {
       final r = FitnessService.sleepByWakeDate([

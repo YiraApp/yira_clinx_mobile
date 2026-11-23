@@ -2,18 +2,18 @@
 import 'package:flutter/material.dart';
 
 
-const Color authScreenTitleColor = Color(0xff1F2A37);
+const Color authScreenTitleColor = Color(0xFF1F1F1F);
 
 const Color authFieldBorderColor = Color(0xffCBD5E1);
 const Color searchFieldBg = Color(0x88f1f1f1);
 const Color doctorTitleColor = Color(0xff29282C);
 const Color searchBorderColor = Color(0xffE0E0E0);
 const Color recordBorderColor = Color(0xffc3c3c3);
-const Color recordDarkBgColor = Color(0xff16171A);
+const Color recordDarkBgColor = Color(0xFF1A1A1A);
 const Color recordLightBgColor = Color(0xffFEFEFE);
 const Color dividerColor = Color(0xffececec);
 
-const Color cardPopUpMenuColor = Color(0xff1E293B);
+const Color cardPopUpMenuColor = Color(0xFF232323);
 const Color popUpLightColor = Color(0xffE0E0E0);
 const Color textFieldDarkModeColor = Color(0x4f58606c);
 const Color textFieldNewLightModeColor = Color(0xffF1F1F1);
@@ -36,11 +36,11 @@ const Color lightModeTextFieldFillColor = Color(0xffD9D9D9);
 const Color darkModeTitleColor = Color(0xff8B98A8);
 const Color darkModeNewTextFieldColor = Color(0xffc5c4c4);
 const Color lightModerTextColor = Color(0xffe4e8ef);
-const Color darkModerTextColor = Color(0xff242A2F);
+const Color darkModerTextColor = Color(0xFF282828);
 const Color tabBgColor = Color(0xff858B97);
 const Color textColorDarkMode = Color(0xff858B97);
 const Color backgroundColor = Color(0xffFCFCFC);
-const Color textLightModeColor = Color(0xff0F172A);
+const Color textLightModeColor = Color(0xFF121212);
 const Color headingsDarkColor = Color(0xff64748B);
 const Color lightGreenColor = Color(0xff38e738);
 const Color darkGreenColor = Color(0xff008000);
@@ -53,7 +53,7 @@ const Color shimmerDarkModeBaseColor = Color(0xff444444);
 const Color shimmerDarkModeHighLightColor = Color(0xff777777);
 const Color newDarkModeBgColor = Color(0xff121212);
 
-const Color darkModeBgColor = Color(0xff25242B);
+const Color darkModeBgColor = Color(0xFF252525);
 const Color answerColor = Color(0xff64748B);
 const Color sideMenuTitleColor = Color(0xff000000);
 const Color sideMenuDividerColor = Color(0xffF1F5F9);
@@ -61,10 +61,10 @@ const Color appPrimaryColor = Color(0xff4D86F9);
 const Color hintTextColor = Colors.grey;
 const Color labelTextColor = Colors.black;
 const Color errorTextStyleColor = Color(0xffD03D3D);
-const Color enterChatBotTitleColor = Color(0xff1D2730);
+const Color enterChatBotTitleColor = Color(0xFF222222);
 const Color enterChatBotTextBgColor = Color(0xffF8F8F8);
 const Color actionDisabledColor = Color(0xff61000000);
-const Color dialogueSubTextColor = Color(0xff475569);
+const Color dialogueSubTextColor = Color(0xFF4A4A4A);
 const Color noInternetTextColor = Color(0xff333333);
 const Color iosKeyBoardColor = Color(0xffCED3DB);
 const Color downloadProgressIndicatorColor = Color(0xff3C3D37);
@@ -73,7 +73,7 @@ const Color tryAgainButtonColor =  Color(0xffEB2A2B);
 const Color notificationSwitchColor = Color(0xffCBD5E1);
 const Color dialogueTextColor = Color(0xff64748B);
 const Color passwordChangeBg = Color(0xffF4F4F4);
-const Color passwordTitleColor = Color(0xff475569);
+const Color passwordTitleColor = Color(0xFF4A4A4A);
 const Color changePasswordHeaderColor = Color(0xff3A3A3A);
 
 const Color cardShimmerMainColor = Color(0xffb6bdc3);

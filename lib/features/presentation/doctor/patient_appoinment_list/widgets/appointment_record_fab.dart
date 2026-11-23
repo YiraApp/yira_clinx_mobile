@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -104,7 +105,7 @@ class _AppointmentRecordFabState extends State<AppointmentRecordFab> with Single
                   child: _buildChildOption(
                     context,
                     label: "New Appointment",
-                    icon: Icons.event,
+                    icon: IosIcons.event,
                     color: theme.primaryColor,
                     onTap: widget.OnAppointmentBook,
                     isDark: isDark,
@@ -150,7 +151,7 @@ class _AppointmentRecordFabState extends State<AppointmentRecordFab> with Single
           child: RotationTransition(
             turns: _iconRotation,
             child: Icon(
-              _isExpanded ? Icons.close_rounded : Icons.description_outlined,
+              _isExpanded ? IosIcons.close_rounded : IosIcons.description_outlined,
               color: Colors.white,
               size: isTab ? 28 : 24,
             ),
@@ -207,7 +208,7 @@ class _AppointmentRecordFabState extends State<AppointmentRecordFab> with Single
             ),
           ),
           SizedBox(width: isTab ? 14 : 12),
-          const Icon(Icons.keyboard_arrow_right, size: 18),
+          const Icon(IosIcons.keyboard_arrow_right, size: 18),
         ],
       ),
     );

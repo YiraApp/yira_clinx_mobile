@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
               padding: EdgeInsets.only(left: isTab ? 8 : 8.0),
               child: IconButton(
                 icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
+                  IosIcons.arrow_back_ios_new_rounded,
                   color: isDarkMode ? Colors.white : Colors.black87,
                   size: 20,
                 ),
@@ -156,11 +157,11 @@ class GenderAgeSelectionScreen extends StatelessWidget {
   Widget _buildGenderSelector(BuildContext context, String currentGender, bool isDark, double referenceWidth,bool isTab) {
     return Row(
       children: [
-        _genderCard(context, "Male", Icons.male_rounded, currentGender == "Male", isDark, referenceWidth,isTab),
+        _genderCard(context, "Male", IosIcons.male_rounded, currentGender == "Male", isDark, referenceWidth,isTab),
         const SizedBox(width: 12),
-        _genderCard(context, "Female", Icons.female_rounded, currentGender == "Female", isDark, referenceWidth,isTab),
+        _genderCard(context, "Female", IosIcons.female_rounded, currentGender == "Female", isDark, referenceWidth,isTab),
         const SizedBox(width: 12),
-        _genderCard(context, "Other", Icons.transgender_rounded, currentGender == "Other", isDark, referenceWidth,isTab),
+        _genderCard(context, "Other", IosIcons.transgender_rounded, currentGender == "Other", isDark, referenceWidth,isTab),
       ],
     );
   }
@@ -331,7 +332,7 @@ class GenderAgeSelectionScreen extends StatelessWidget {
                 color: theme.primaryColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.calendar_month_rounded, color: theme.primaryColor, size: 22),
+              child: Icon(IosIcons.calendar_month_rounded, color: theme.primaryColor, size: 22),
             ),
             const SizedBox(width: 14),
             Column(
@@ -389,18 +390,18 @@ class GenderAgeSelectionScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [Colors.blue.withOpacity(0.06), Colors.purple.withOpacity(0.06)]
+              ? [const Color(0xFF2563EB).withOpacity(0.06), Colors.purple.withOpacity(0.06)]
               : [const Color(0xFFF4F7FF), const Color(0xFFFAFBFF)],
         ),
         borderRadius: BorderRadius.circular(fieldBorderRadius ?? 14),
         border: Border.all(
-          color: isDark ? Colors.blue.withOpacity(0.1) : Colors.blue.withOpacity(0.05),
+          color: isDark ? const Color(0xFF2563EB).withOpacity(0.1) : const Color(0xFF2563EB).withOpacity(0.05),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.auto_awesome_rounded, color: theme.primaryColor, size: 20),
+          Icon(IosIcons.auto_awesome_rounded, color: theme.primaryColor, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

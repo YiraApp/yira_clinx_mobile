@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -192,7 +193,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.tour_rounded, size: 14, color: primaryColor),
+                    const Icon(IosIcons.tour_rounded, size: 14, color: primaryColor),
                     const SizedBox(width: 6),
                     Text(
                       "PROVIDER TOUR",
@@ -220,7 +221,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 12 : 11,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
               ),
@@ -232,7 +233,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             child: Padding(
               padding: const EdgeInsets.all(6),
               child: Icon(
-                Icons.close_rounded,
+                IosIcons.close_rounded,
                 size: 20,
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
               ),
@@ -333,7 +334,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 13 : 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                   ),
                 ),
               ),
@@ -358,7 +359,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isLast ? Icons.check_circle_rounded : Icons.arrow_forward_rounded,
+                    isLast ? IosIcons.check_circle_rounded : IosIcons.arrow_forward_rounded,
                     size: 16,
                     color: Colors.white,
                   ),
@@ -386,7 +387,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter1Dashboard(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.dashboard_customize_rounded,
+      icon: IosIcons.dashboard_customize_rounded,
       iconColor: const Color(0xFF3B82F6),
       title: "Provider Command Center",
       subtitle: "Your real-time practice dashboard with live operational metrics & patient inflow tracking.",
@@ -412,7 +413,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                     color: primaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.local_hospital_rounded, color: primaryColor, size: 20),
+                  child: const Icon(IosIcons.local_hospital_rounded, color: primaryColor, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -425,7 +426,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 13 : 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -485,7 +486,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter2Teleconsult(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.video_camera_front_rounded,
+      icon: IosIcons.video_camera_front_rounded,
       iconColor: const Color(0xFFF59E0B),
       title: "Teleconsultation & Video Calling",
       subtitle: "Connect with remote patients securely via integrated 1-tap live HD video calls.",
@@ -529,7 +530,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: isTab ? 13 : 12,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -582,7 +583,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.videocam_rounded, size: 14, color: Colors.white),
+                      Icon(IosIcons.videocam_rounded, size: 14, color: Colors.white),
                       SizedBox(width: 4),
                       Text(
                         "Join Call",
@@ -614,7 +615,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter3Patients(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.people_alt_rounded,
+      icon: IosIcons.people_alt_rounded,
       iconColor: const Color(0xFF10B981),
       title: "Smart Patient Directory & Favorites",
       subtitle: "Find patients by name, phone, or MRN with smooth continuous scrolling and 1-tap bookmarks.",
@@ -671,7 +672,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: isTab ? 13 : 12,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -695,7 +696,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                   child: Padding(
                     padding: const EdgeInsets.all(6),
                     child: Icon(
-                      _isDemoFavStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+                      _isDemoFavStarred ? IosIcons.star_rounded : IosIcons.star_outline_rounded,
                       color: _isDemoFavStarred ? const Color(0xFFF59E0B) : Colors.grey,
                       size: 24,
                     ),
@@ -719,7 +720,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter4Slots(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.calendar_month_rounded,
+      icon: IosIcons.calendar_month_rounded,
       iconColor: const Color(0xFF8B5CF6),
       title: "Real-Time Slots & Protected Breaks",
       subtitle: "Inspect daily capacity, available openings, booked visits, and protected break intervals.",
@@ -737,7 +738,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 const SizedBox(width: 6),
                 _buildDemoSlotTab("Available (10)", false, Colors.green, isDark),
                 const SizedBox(width: 6),
-                _buildDemoSlotTab("Booked (4)", false, Colors.blue, isDark),
+                _buildDemoSlotTab("Booked (4)", false, const Color(0xFF2563EB), isDark),
                 const SizedBox(width: 6),
                 _buildDemoSlotTab("Breaks (2)", false, Colors.orange, isDark),
               ],
@@ -767,7 +768,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                     fontSize: isTab ? 12 : 11,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const Spacer(),
@@ -803,7 +804,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.coffee_rounded, size: 16, color: Color(0xFFD97706)),
+                const Icon(IosIcons.coffee_rounded, size: 16, color: Color(0xFFD97706)),
                 const SizedBox(width: 8),
                 Text(
                   "01:00 PM - 02:00 PM • Lunch Break",
@@ -841,7 +842,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter5Scheduler(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.auto_awesome_rounded,
+      icon: IosIcons.auto_awesome_rounded,
       iconColor: const Color(0xFFEC4899),
       title: "Smart Shift Scheduler (FAB '+')",
       subtitle: "Automate weeks of consultation schedules with customizable durations, buffers & shifts.",
@@ -859,7 +860,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           children: [
             Row(
               children: [
-                const Icon(Icons.schedule_rounded, size: 16, color: primaryColor),
+                const Icon(IosIcons.schedule_rounded, size: 16, color: primaryColor),
                 const SizedBox(width: 6),
                 Text(
                   "Shift Hours: 09:00 AM - 05:00 PM",
@@ -867,7 +868,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w700,
                     fontSize: isTab ? 12 : 11,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
               ],
@@ -901,7 +902,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 11 : 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                     ),
                   ),
                   Container(
@@ -931,7 +932,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter6Clinical(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.assignment_rounded,
+      icon: IosIcons.assignment_rounded,
       iconColor: const Color(0xFF06B6D4),
       title: "Clinical Records & Patient Vitals",
       subtitle: "Access complete longitudinal patient health histories, vitals trends, and diagnoses.",
@@ -945,7 +946,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
               const SizedBox(width: 6),
               _buildDemoVitalTile("Pulse", "72", "bpm", Colors.pink, isDark, isTab),
               const SizedBox(width: 6),
-              _buildDemoVitalTile("SpO2", "98%", "Normal", Colors.blue, isDark, isTab),
+              _buildDemoVitalTile("SpO2", "98%", "Normal", const Color(0xFF2563EB), isDark, isTab),
               const SizedBox(width: 6),
               _buildDemoVitalTile("Temp", "98.6", "°F", Colors.amber, isDark, isTab),
             ],
@@ -959,7 +960,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.notes_rounded, size: 16, color: Color(0xFF06B6D4)),
+                const Icon(IosIcons.notes_rounded, size: 16, color: Color(0xFF06B6D4)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -968,7 +969,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 11.5 : 10.5,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
                   ),
                 ),
@@ -990,7 +991,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
   // -------------------------------------------------------------
   Widget _buildChapter7Settings(bool isDark, bool isTab) {
     return _buildChapterScaffold(
-      icon: Icons.check_circle_outline_rounded,
+      icon: IosIcons.check_circle_outline_rounded,
       iconColor: const Color(0xFF10B981),
       title: "You Are Ready to Practice!",
       subtitle: "You have completed the walkthrough. You can restart this tour anytime from Settings or Profile.",
@@ -1017,7 +1018,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 color: primaryColor,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.verified_rounded, color: Colors.white, size: 20),
+              child: const Icon(IosIcons.verified_rounded, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1030,7 +1031,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                       fontFamily: appPoppinFont,
                       fontWeight: FontWeight.w700,
                       fontSize: isTab ? 13.5 : 12.5,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   Text(
@@ -1100,7 +1101,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 18 : 15.5,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -1189,7 +1190,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 12.5 : 11.5,
                           height: 1.35,
-                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1236,7 +1237,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 10.5 : 9.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             Text(
@@ -1269,7 +1270,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           fontFamily: appPoppinFont,
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+          color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
         ),
       ),
     );
@@ -1289,7 +1290,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           fontFamily: appPoppinFont,
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
-          color: isSelected ? color : (isDark ? Colors.white70 : const Color(0xFF475569)),
+          color: isSelected ? color : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
         ),
       ),
     );
@@ -1309,7 +1310,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           fontFamily: appPoppinFont,
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+          color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
         ),
       ),
     );
@@ -1328,7 +1329,7 @@ class _ProviderTourDialogState extends State<ProviderTourDialog> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 9.5, fontWeight: FontWeight.w700, color: color)),
-            Text(value, style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 13 : 11.5, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+            Text(value, style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 13 : 11.5, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF121212))),
             Text(unit, style: TextStyle(fontFamily: appPoppinFont, fontSize: 8, color: isDark ? Colors.white54 : Colors.grey.shade500)),
           ],
         ),

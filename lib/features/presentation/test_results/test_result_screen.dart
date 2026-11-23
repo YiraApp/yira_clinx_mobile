@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_appbar/common_app_bar.dart';
@@ -59,7 +60,7 @@ class TestResultsScreen extends StatelessWidget {
               ),
               CommonBorderButton(
                 height: 35,
-                icon: Icons.file_download_outlined,
+                icon: IosIcons.file_download_outlined,
                 text: 'Download All',
                 onPressed: () {},
               ),
@@ -104,7 +105,7 @@ class TestResultsScreen extends StatelessWidget {
                       ),
                       hintText: "Search test results...",
                       prefixIcon: const Icon(
-                        Icons.search,
+                        IosIcons.search,
                         color: Colors.blueGrey,
                         size: 18,
                       ),
@@ -171,7 +172,7 @@ class TestResultsScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Icon(
-                      Icons.biotech_outlined,
+                      IosIcons.biotech_outlined,
                       size: 60,
                       color: Colors.grey.withOpacity(0.35),
                     ),
@@ -234,7 +235,7 @@ class _AIPoweredAnalysisSection extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.auto_awesome, color: Colors.blue),
+            leading: const Icon(IosIcons.auto_awesome, color: const Color(0xFF2563EB)),
             title: CommonText(
               "AI Lab Analysis",
               style: TextStyle(
@@ -246,7 +247,7 @@ class _AIPoweredAnalysisSection extends StatelessWidget {
             trailing: Wrap(
               spacing: 4,
               children: [
-                TestBadge(text: "AI-Powered", color: Colors.blue),
+                TestBadge(text: "AI-Powered", color: const Color(0xFF2563EB)),
                 TestBadge(text: "2 Urgent", color: Colors.red),
               ],
             ),
@@ -268,7 +269,7 @@ class _AIPoweredAnalysisSection extends StatelessWidget {
             padding: EdgeInsets.all(12),
             child: CommonText(
               "Ask MedAssist AI for more details",
-              style: TextStyle(color: Colors.blue, fontSize: displayWidth(context)*0.028,fontFamily: appPoppinFont),
+              style: TextStyle(color: const Color(0xFF2563EB), fontSize: displayWidth(context)*0.028,fontFamily: appPoppinFont),
             ),
           ),
         ],

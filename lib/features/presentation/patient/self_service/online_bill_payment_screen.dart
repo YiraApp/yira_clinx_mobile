@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -56,7 +57,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
               child: _paymentSuccess
                   ? Column(
                       children: [
-                        const Icon(Icons.task_alt_rounded, color: Colors.green, size: 64),
+                        const Icon(IosIcons.task_alt_rounded, color: Colors.green, size: 64),
                         const SizedBox(height: 16),
                         const Text('Payment Successful!', style: TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
@@ -71,7 +72,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
                               const SnackBar(content: Text('Downloading digital receipt PDF...')),
                             );
                           },
-                          icon: const Icon(Icons.download_rounded, color: Colors.white),
+                          icon: const Icon(IosIcons.download_rounded, color: Colors.white),
                           label: const Text('Download Digital Receipt', style: TextStyle(fontFamily: appPoppinFont, color: Colors.white)),
                         ),
                       ],
@@ -82,7 +83,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Invoice Breakdown', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                            Text('Invoice Breakdown', style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(color: Colors.amber.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
@@ -131,7 +132,7 @@ class _OnlineBillPaymentScreenState extends State<OnlineBillPaymentScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white70 : Colors.grey[700])),
-          Text(amount, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+          Text(amount, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212))),
         ],
       ),
     );

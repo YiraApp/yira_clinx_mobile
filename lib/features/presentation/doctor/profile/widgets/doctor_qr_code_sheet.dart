@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +94,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      Icons.qr_code_2_rounded,
+                      IosIcons.qr_code_2_rounded,
                       size: 20,
                       color: primaryColor,
                     ),
@@ -105,13 +106,13 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       fontFamily: appPoppinFont,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(IosIcons.close_rounded),
                 visualDensity: VisualDensity.compact,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -186,7 +187,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 16 : 14.5,
                               fontWeight: FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -229,11 +230,11 @@ class DoctorQrCodeSheet extends StatelessWidget {
                     size: isTab ? 220.0 : 190.0,
                     eyeStyle: const QrEyeStyle(
                       eyeShape: QrEyeShape.square,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF121212),
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
                       dataModuleShape: QrDataModuleShape.square,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFF121212),
                     ),
                   ),
                 ),
@@ -270,10 +271,10 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  icon: const Icon(IosIcons.copy_rounded, size: 16),
                   label: const Text("Copy Link"),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+                    foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
                     side: BorderSide(
                       color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                     ),
@@ -297,7 +298,7 @@ class DoctorQrCodeSheet extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.share_rounded, size: 16),
+                  icon: const Icon(IosIcons.share_rounded, size: 16),
                   label: const Text("Share Profile"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../../../../core/utils/edit_window.dart';
+
 /// Formats a food quantity for display, e.g. "2 bowl".
 ///
 /// Database foods use their serving size as the unit. A single-unit serving
@@ -94,6 +96,8 @@ class TodayDietPlanInfo {
   final int? appointmentId;
   /// The doctor who prescribed it (the patient, for a self-made plan).
   final String? assignedByDoctorId;
+  /// When it was first saved; a doctor can change it for an hour after that.
+  final DateTime? createdAt;
 
   TodayDietPlanInfo({
     required this.id,
@@ -120,6 +124,7 @@ class TodayDietPlanInfo {
     this.createdByPatient = false,
     this.appointmentId,
     this.assignedByDoctorId,
+    this.createdAt,
   });
 
   /// "Dr. Asha Rao", or "You" for a plan the patient made.
@@ -186,6 +191,7 @@ class TodayDietPlanInfo {
       createdByPatient: selfMade,
       appointmentId: _toDouble(json['AppointmentId'])?.toInt(),
       assignedByDoctorId: json['AssignedByDoctorId']?.toString(),
+      createdAt: createdAtOf(json),
     );
   }
 
@@ -224,6 +230,7 @@ class TodayDietPlanInfo {
       canEdit: json['canEdit'] == true && isSelfMade && status == 'active',
       status: status,
       createdByPatient: isSelfMade,
+      createdAt: createdAtOf(json),
     );
   }
 }

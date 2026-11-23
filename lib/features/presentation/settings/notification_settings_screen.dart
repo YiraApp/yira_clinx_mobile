@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
@@ -52,7 +53,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: primaryColor, size: 20),
+                          const Icon(IosIcons.info_outline, color: primaryColor, size: 20),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -60,7 +61,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 11.5,
-                                color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                               ),
                             ),
                           ),
@@ -72,7 +73,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                       width: double.infinity,
                       height: 46,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
+                        icon: const Icon(IosIcons.notifications_active_rounded, color: Colors.white, size: 18),
                         label: const Text(
                           "Send Test Notification (3s)",
                           style: TextStyle(
@@ -265,7 +266,7 @@ class _NotificationTile extends StatelessWidget {
               thumbIcon: WidgetStateProperty.resolveWith<Icon?>(
                     (Set<WidgetState> states) {
                   if (states.contains(WidgetState.selected)) {
-                    return const Icon(Icons.check, color: Colors.white);
+                    return const Icon(IosIcons.check, color: Colors.white);
                   }
                   return null;
                 },

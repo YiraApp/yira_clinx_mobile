@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -277,7 +278,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 content: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: Colors.white),
+                    const Icon(IosIcons.check_circle_rounded, color: Colors.white),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -483,7 +484,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.black.withValues(alpha: 0.5),
                     ),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    icon: const Icon(IosIcons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Text(
@@ -501,7 +502,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                         backgroundColor: _isTorchOn ? primaryColor : Colors.black.withValues(alpha: 0.5),
                       ),
                       icon: Icon(
-                        _isTorchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                        _isTorchOn ? IosIcons.flash_on_rounded : IosIcons.flash_off_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
@@ -582,7 +583,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         onPressed: _pickFromGallery,
-                        icon: const Icon(Icons.photo_library_rounded, size: 18, color: Colors.white),
+                        icon: const Icon(IosIcons.photo_library_rounded, size: 18, color: Colors.white),
                         label: const Text(
                           'Upload QR from Gallery',
                           style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white),
@@ -604,7 +605,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: const Color(0xFF232323),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Column(
@@ -639,7 +640,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                 color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.camera_alt_outlined, color: Colors.white, size: 54),
+              child: const Icon(IosIcons.camera_alt_outlined, color: Colors.white, size: 54),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -679,7 +680,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                   await openAppSettings();
                 }
               },
-              icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 18),
+              icon: const Icon(IosIcons.settings_rounded, color: Colors.white, size: 18),
               label: const Text(
                 'Open Settings / Allow Camera',
                 style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, color: Colors.white),
@@ -694,7 +695,7 @@ class _ScanDoctorQrSheetState extends State<ScanDoctorQrSheet> with SingleTicker
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: _pickFromGallery,
-              icon: const Icon(Icons.photo_library_rounded, size: 18),
+              icon: const Icon(IosIcons.photo_library_rounded, size: 18),
               label: const Text(
                 'Upload QR from Gallery',
                 style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),

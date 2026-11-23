@@ -54,7 +54,7 @@ class _FamilyProfilesStripState extends State<FamilyProfilesStrip> {
     final currentId = (user?.data?.id ?? '').toLowerCase();
     final isDark = widget.isDark;
     final primary = Theme.of(context).primaryColor;
-    final ink = isDark ? Colors.white : const Color(0xFF0F172A);
+    final ink = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
     // Staff roles on this account, such as provider. The sheet lists each facility.
     final workspaceCount = (user?.data?.roles ?? const <RoleEntity>[]).where((r) {

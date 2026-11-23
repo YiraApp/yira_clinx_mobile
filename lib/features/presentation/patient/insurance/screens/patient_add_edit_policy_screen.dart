@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -113,7 +114,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             colorScheme: isDark
                 ? const ColorScheme.dark(
                     primary: Color(0xFF2563EB),
-                    surface: Color(0xFF1E293B),
+                    surface: Color(0xFF232323),
                   )
                 : const ColorScheme.light(
                     primary: Color(0xFF2563EB),
@@ -296,22 +297,22 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryBlue = const Color(0xFF2563EB);
 
-    final inputFill = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final inputBorder = isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1);
-    final labelColor = isDark ? Colors.white70 : const Color(0xFF475569);
+    final inputFill = isDark ? const Color(0xFF232323) : Colors.white;
+    final inputBorder = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1);
+    final labelColor = isDark ? Colors.white70 : const Color(0xFF4A4A4A);
 
     final DateFormat formatter = DateFormat('dd/MM/yyyy');
 
     return PopScope(
       canPop: !_isSaving,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-          foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+          backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+          foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+            icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 18),
             onPressed: _isSaving ? null : () => Navigator.pop(context),
           ),
         title: Text(
@@ -320,7 +321,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: 16.5,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
         ),
         centerTitle: true,
@@ -517,7 +518,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       style: TextStyle(
         fontFamily: appPoppinFont,
         fontSize: 13.5,
-        color: isDark ? Colors.white : const Color(0xFF0F172A),
+        color: isDark ? Colors.white : const Color(0xFF121212),
       ),
       decoration: InputDecoration(
         hintText: hintText,
@@ -574,13 +575,13 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                   fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected
-                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDark ? Colors.white : const Color(0xFF121212))
                       : (isDark ? Colors.white30 : const Color(0xFF94A3B8)),
                 ),
               ),
             ),
             Icon(
-              Icons.calendar_today_rounded,
+              IosIcons.calendar_today_rounded,
               size: 16,
               color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
             ),
@@ -600,10 +601,10 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+          color: isDark ? const Color(0xFF4A4A4A) : const Color(0xFFCBD5E1),
           width: 1.1,
         ),
       ),
@@ -619,7 +620,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                     height: 50,
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: const Color(0xFF2563EB).withValues(alpha: 0.35),
@@ -632,7 +633,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                           ? const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
+                                Icon(IosIcons.picture_as_pdf_rounded, color: Colors.redAccent, size: 22),
                                 Text(
                                   'PDF',
                                   style: TextStyle(
@@ -650,7 +651,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                                   height: 44,
                                   fit: BoxFit.contain,
                                   filterQuality: FilterQuality.high,
-                                  errorBuilder: (ctx, err, stack) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                  errorBuilder: (ctx, err, stack) => const Icon(IosIcons.image_outlined, size: 22, color: Color(0xFF2563EB)),
                                 )
                               : (_existingDocumentUrl != null && _existingDocumentUrl!.isNotEmpty)
                                   ? CachedNetworkImage(
@@ -659,9 +660,9 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                                       height: 44,
                                       fit: BoxFit.contain,
                                       filterQuality: FilterQuality.high,
-                                      errorWidget: (ctx, url, err) => const Icon(Icons.image_outlined, size: 22, color: Color(0xFF2563EB)),
+                                      errorWidget: (ctx, url, err) => const Icon(IosIcons.image_outlined, size: 22, color: Color(0xFF2563EB)),
                                     )
-                                  : const Icon(Icons.description_rounded, color: Color(0xFF2563EB), size: 22),
+                                  : const Icon(IosIcons.description_rounded, color: Color(0xFF2563EB), size: 22),
                     ),
                   ),
                 ),
@@ -677,7 +678,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                           fontFamily: appPoppinFont,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -714,7 +715,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                       color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(Icons.close_rounded, size: 16, color: Colors.red),
+                    child: const Icon(IosIcons.close_rounded, size: 16, color: Colors.red),
                   ),
                 ),
               ],
@@ -733,7 +734,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.cloud_upload_outlined,
+                        IosIcons.cloud_upload_outlined,
                         size: 20,
                         color: Color(0xFF2563EB),
                       ),
@@ -750,7 +751,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                               fontFamily: appPoppinFont,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                           ),
                           Text(

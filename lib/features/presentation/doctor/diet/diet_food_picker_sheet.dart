@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -105,6 +106,24 @@ class _FoodOption {
 /// The doctor picks a food from the master database (suggestions for the slot
 /// are shown before they type) or enters a custom one. Nutrition follows the
 /// quantity until the doctor overrides a value.
+/// Whether a food of [foodType] (Veg, Vegan, Egg, Non-Veg) fits a plan of [dietType].
+/// Unknown types are allowed, so nothing is hidden by a missing label.
+bool dietAllowsFood(String? dietType, String? foodType) {
+  final food = (foodType ?? '').trim().toLowerCase();
+  if (food.isEmpty) return true;
+  switch ((dietType ?? '').trim().toLowerCase()) {
+    case 'vegan':
+      return food == 'vegan';
+    case 'veg':
+    case 'vegetarian':
+      return food == 'veg' || food == 'vegan';
+    case 'eggetarian':
+      return food == 'veg' || food == 'vegan' || food == 'egg';
+    default:
+      return true;
+  }
+}
+
 class DietFoodPickerSheet extends StatefulWidget {
   final String slotName;
   final String slotTime;
@@ -115,6 +134,8 @@ class DietFoodPickerSheet extends StatefulWidget {
   final ValueChanged<DoctorMealItemInput> onSubmit;
   /// Offers saving a custom food to the doctor's own food list. Off for patients.
   final bool allowSaveToList;
+  /// The plan's diet type (Veg, Eggetarian, Vegan, Non-Veg): suggestions leave out foods it rules out.
+  final String? dietType;
 
   const DietFoodPickerSheet({
     super.key,
@@ -126,6 +147,7 @@ class DietFoodPickerSheet extends StatefulWidget {
     required this.orgId,
     required this.onSubmit,
     this.allowSaveToList = true,
+    this.dietType,
   });
 
   static Future<void> show(
@@ -138,6 +160,7 @@ class DietFoodPickerSheet extends StatefulWidget {
     required String orgId,
     required ValueChanged<DoctorMealItemInput> onSubmit,
     bool allowSaveToList = true,
+    String? dietType,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -152,6 +175,7 @@ class DietFoodPickerSheet extends StatefulWidget {
         orgId: orgId,
         onSubmit: onSubmit,
         allowSaveToList: allowSaveToList,
+        dietType: dietType,
       ),
     );
   }
@@ -222,6 +246,10 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
   // Optional parts of the form stay folded away until the doctor asks for them.
   bool _editingName = false;
   bool _showNutritionFields = false;
+  /// "Ask AI": filling the values, where they came from, and a suggested instruction
+  bool _askingAi = false;
+  String? _aiNote;
+  String? _aiTip;
   bool _showNotes = false;
 
   // Nutrition for a quantity of 1. The fields show these multiplied by the
@@ -291,6 +319,75 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
 
   double get _qty => double.tryParse(_qtyCtrl.text.trim()) ?? 0;
 
+  /// "Ask AI": fills calories and macros for the food and amount on screen when they aren't
+  /// known. The server answers from the food list when it can, else with an AI estimate.
+  Future<void> _askAiForValues() async {
+    final name = _nameCtrl.text.trim();
+    if (name.length < 2 || _askingAi) return;
+    FocusScope.of(context).unfocus();
+    final qty = _qty > 0 ? _qty : 1.0;
+    final grams = double.tryParse(_weightCtrl.text.trim());
+    setState(() {
+      _askingAi = true;
+      _aiNote = null;
+      _aiTip = null;
+    });
+    try {
+      final res = await ApiClient().account(showSuccessSnack: false).post(
+        URLs.dietFoodAskAiUrl,
+        data: {
+          'name': name,
+          'quantity': qty,
+          'unit': _unitCtrl.text.trim(),
+          if (grams != null && grams > 0 && _weightUnit == 'g') 'grams': grams,
+          if (_foodType.isNotEmpty) 'foodType': _foodType,
+          'slot': widget.slotName,
+          if ((widget.dietType ?? '').isNotEmpty) 'dietType': widget.dietType,
+        },
+        options: Options(headers: {
+          if (widget.authToken.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer ${widget.authToken}',
+          'x-org-id': widget.orgId,
+        }, extra: const {'suppressErrorSnack': true}),
+      );
+      final data = res.data is Map ? res.data['data'] : null;
+      if (data is! Map || !mounted) return;
+      double v(String key) => double.tryParse('${data[key] ?? ''}') ?? 0;
+      setState(() {
+        _calCtrl.text = v('calories').round().toString();
+        _proteinCtrl.text = _fmt(v('protein'));
+        _carbsCtrl.text = _fmt(v('carbs'));
+        _fatCtrl.text = _fmt(v('fat'));
+        if (_weightCtrl.text.trim().isEmpty && v('grams') > 0) {
+          _weightUnit = 'g';
+          _weightCtrl.text = _fmt(v('grams'));
+          _baseWeight = _toBase(_weightCtrl.text);
+        }
+        // keep the values in step when the quantity changes later
+        _baseCal = _toBase(_calCtrl.text);
+        _baseProtein = _toBase(_proteinCtrl.text);
+        _baseCarbs = _toBase(_carbsCtrl.text);
+        _baseFat = _toBase(_fatCtrl.text);
+        _showNutritionFields = false;
+        final fromList = data['source'] == 'database';
+        _aiNote = fromList
+            ? 'Filled from the food list${data['matchedName'] != null ? ' (${data['matchedName']})' : ''}. Check before saving.'
+            : 'AI estimate${data['confidence'] == 'low' ? ' (low confidence)' : ''}. Check before saving.';
+        final tip = '${data['instruction'] ?? ''}'.trim();
+        _aiTip = tip.isNotEmpty && _notesCtrl.text.trim().isEmpty ? tip : null;
+      });
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final body = e.response?.data;
+      final message = body is Map && body['message'] != null ? body['message'].toString() : 'Could not get the values right now. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not get the values right now. Please try again.')));
+    } finally {
+      if (mounted) setState(() => _askingAi = false);
+    }
+  }
+
   /// With no query this lists foods that suit the slot; with a query it
   /// searches every food, since a slot filter would hide valid matches.
   Future<void> _loadFoods(String query) async {
@@ -323,6 +420,8 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               .whereType<Map>()
               .map((m) => _FoodOption.fromJson(Map<String, dynamic>.from(m)))
               .where((f) => f.name.isNotEmpty)
+              // Suggestions follow the plan's diet type; a search still finds everything.
+              .where((f) => query.isNotEmpty || dietAllowsFood(widget.dietType, f.foodType))
               .toList()
           : const <_FoodOption>[];
       setState(() {
@@ -588,7 +687,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
 
   // --- Styling helpers ---
 
-  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF0F172A);
+  Color _textPrimary(bool isDark) => isDark ? Colors.white : const Color(0xFF121212);
 
   Color _textSecondary(bool isDark) => isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
@@ -708,7 +807,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   tooltip: 'Choose a different food',
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                  icon: Icon(Icons.arrow_back_rounded, size: 20, color: _textPrimary(isDark)),
+                  icon: Icon(IosIcons.arrow_back_rounded, size: 20, color: _textPrimary(isDark)),
                   onPressed: _backToSearch,
                 ),
               Expanded(
@@ -742,7 +841,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ),
               IconButton(
                 tooltip: 'Close',
-                icon: Icon(Icons.close_rounded, color: _textSecondary(isDark)),
+                icon: Icon(IosIcons.close_rounded, color: _textSecondary(isDark)),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
@@ -769,11 +868,11 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             decoration: _decoration(
               isDark,
               hint: 'Search foods or type your own',
-              prefixIcon: Icon(Icons.search_rounded, size: 20, color: _textSecondary(isDark)),
+              prefixIcon: Icon(IosIcons.search_rounded, size: 20, color: _textSecondary(isDark)),
               suffixIcon: query.isEmpty
                   ? null
                   : IconButton(
-                      icon: Icon(Icons.clear_rounded, size: 18, color: _textSecondary(isDark)),
+                      icon: Icon(IosIcons.clear_rounded, size: 18, color: _textSecondary(isDark)),
                       onPressed: () {
                         _searchCtrl.clear();
                         _onSearchChanged('');
@@ -891,7 +990,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
         option(
           label: 'Add "$query" as custom food',
           subtitle: 'Use for this plan only',
-          icon: Icons.add_circle_outline_rounded,
+          icon: IosIcons.add_circle_outline_rounded,
           color: accent,
           onTap: () => _useCustomFood(query),
         ),
@@ -899,7 +998,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
         option(
           label: 'Add "$query" & save in my list',
           subtitle: 'Available in future plans too',
-          icon: Icons.bookmark_add_outlined,
+          icon: IosIcons.bookmark_add_outlined,
           color: saveColor,
           onTap: () => _useCustomFood(query, saveToList: true),
         ),
@@ -939,7 +1038,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, size: 20, color: _textSecondary(isDark)),
+            Icon(IosIcons.chevron_right_rounded, size: 20, color: _textSecondary(isDark)),
           ],
         ),
       ),
@@ -1096,7 +1195,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                       ),
                       IconButton(
                         tooltip: 'Rename',
-                        icon: Icon(Icons.edit_outlined, size: 18, color: _textSecondary(isDark)),
+                        icon: Icon(IosIcons.edit_outlined, size: 18, color: _textSecondary(isDark)),
                         onPressed: () => setState(() => _editingName = true),
                       ),
                     ],
@@ -1108,7 +1207,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           section('How much'),
           Row(
             children: [
-              stepButton(Icons.remove_rounded, -_qtyStep),
+              stepButton(IosIcons.remove_rounded, -_qtyStep),
               const SizedBox(width: 6),
               SizedBox(
                 width: 60,
@@ -1122,7 +1221,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                 ),
               ),
               const SizedBox(width: 6),
-              stepButton(Icons.add_rounded, _qtyStep),
+              stepButton(IosIcons.add_rounded, _qtyStep),
               const SizedBox(width: 10),
               Expanded(
                 child: DietOptionField(
@@ -1147,7 +1246,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                   decoration: _decoration(
                     isDark,
                     hint: 'Weight (optional)',
-                    prefixIcon: Icon(Icons.scale_outlined, size: 18, color: _textSecondary(isDark)),
+                    prefixIcon: Icon(IosIcons.scale_outlined, size: 18, color: _textSecondary(isDark)),
                   ),
                 ),
               ),
@@ -1194,7 +1293,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
             trailing: (hasNutrition || _showNutritionFields)
                 ? linkButton(
                     _showNutritionFields ? 'Done' : 'Edit',
-                    _showNutritionFields ? Icons.check_rounded : Icons.edit_outlined,
+                    _showNutritionFields ? IosIcons.check_rounded : IosIcons.edit_outlined,
                     () {
                       FocusScope.of(context).unfocus();
                       setState(() => _showNutritionFields = !_showNutritionFields);
@@ -1233,9 +1332,71 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           else
             Align(
               alignment: Alignment.centerLeft,
-              child: linkButton('Add calories & macros (optional)', Icons.add_rounded, () {
+              child: linkButton('Add calories & macros (optional)', IosIcons.add_rounded, () {
                 setState(() => _showNutritionFields = true);
               }),
+            ),
+          // Ask AI: fills the values when they aren't known
+          if (_nameCtrl.text.trim().length >= 2)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('dietFood.askAi'),
+                  onPressed: _askingAi ? null : _askAiForValues,
+                  icon: _askingAi
+                      ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: accent))
+                      : const Icon(IosIcons.auto_awesome_rounded, size: 18),
+                  label: Text(_askingAi ? 'Asking AI…' : (hasNutrition ? 'Check values with AI' : 'Ask AI to fill the values')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: accent,
+                    side: BorderSide(color: accent.withValues(alpha: 0.4)),
+                    backgroundColor: accent.withValues(alpha: isDark ? 0.12 : 0.05),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    textStyle: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+          if (_aiNote != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(IosIcons.info_outline_rounded, size: 15, color: _textSecondary(isDark)),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(_aiNote!, key: const Key('dietFood.aiNote'), style: _ts(11.5, FontWeight.w500, _textSecondary(isDark)))),
+                ],
+              ),
+            ),
+          if (_aiTip != null)
+            Container(
+              key: const Key('dietFood.aiTip'),
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.12 : 0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accent.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  Icon(IosIcons.tips_and_updates_outlined, size: 18, color: accent),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_aiTip!, style: _ts(12.5, FontWeight.w500, _textPrimary(isDark)))),
+                  TextButton(
+                    onPressed: () => setState(() {
+                      _notesCtrl.text = _aiTip!;
+                      _showNotes = true;
+                      _aiTip = null;
+                    }),
+                    child: Text(widget.allowSaveToList ? 'Use as instruction' : 'Use as note', style: _ts(12, FontWeight.w700, accent)),
+                  ),
+                ],
+              ),
             ),
           const SizedBox(height: 14),
 
@@ -1251,13 +1412,13 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               decoration: _decoration(
                 isDark,
                 hint: 'Instruction, e.g. cook with ½ tsp oil, no sugar',
-                prefixIcon: Icon(Icons.sticky_note_2_outlined, size: 18, color: _textSecondary(isDark)),
+                prefixIcon: Icon(IosIcons.sticky_note_2_outlined, size: 18, color: _textSecondary(isDark)),
               ),
             )
           else
             Align(
               alignment: Alignment.centerLeft,
-              child: linkButton('Add instruction for the patient', Icons.sticky_note_2_outlined, () {
+              child: linkButton(widget.allowSaveToList ? 'Add instruction for the patient' : 'Add a note', IosIcons.sticky_note_2_outlined, () {
                 setState(() => _showNotes = true);
               }),
             ),
@@ -1275,7 +1436,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.bookmark_added_rounded, size: 16, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
+                  Icon(IosIcons.bookmark_added_rounded, size: 16, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1288,7 +1449,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
                     borderRadius: BorderRadius.circular(6),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Icon(Icons.close_rounded, size: 14, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
+                      child: Icon(IosIcons.close_rounded, size: 14, color: isDark ? const Color(0xFF6EE7B7) : _emeraldGreen),
                     ),
                   ),
                 ],
@@ -1329,7 +1490,7 @@ class _DietFoodPickerSheetState extends State<DietFoodPickerSheet> {
           ),
           if (!_isEditing)
             Center(
-              child: linkButton('Add and choose another food', Icons.playlist_add_rounded, () => _submit(addAnother: true)),
+              child: linkButton('Add and choose another food', IosIcons.playlist_add_rounded, () => _submit(addAnother: true)),
             ),
         ],
       ),

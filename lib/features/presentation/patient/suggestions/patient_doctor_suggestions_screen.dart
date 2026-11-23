@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -223,17 +224,17 @@ class _PatientDoctorSuggestionsScreenState
   IconData _getCategoryIcon(String category) {
     switch (category) {
       case 'Diet & Nutrition':
-        return Icons.restaurant_rounded;
+        return IosIcons.restaurant_rounded;
       case 'Medication':
-        return Icons.medication_rounded;
+        return IosIcons.medication_rounded;
       case 'Exercise':
-        return Icons.directions_run_rounded;
+        return IosIcons.directions_run_rounded;
       case 'Lifestyle':
-        return Icons.spa_rounded;
+        return IosIcons.spa_rounded;
       case 'Follow-up':
-        return Icons.event_repeat_rounded;
+        return IosIcons.event_repeat_rounded;
       default:
-        return Icons.lightbulb_rounded;
+        return IosIcons.lightbulb_rounded;
     }
   }
 
@@ -383,7 +384,7 @@ class _PatientDoctorSuggestionsScreenState
                             fontWeight: FontWeight.bold,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF0F172A),
+                                : const Color(0xFF121212),
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -403,7 +404,7 @@ class _PatientDoctorSuggestionsScreenState
                   IconButton(
                     onPressed: () => Navigator.pop(ctx),
                     icon: Icon(
-                      Icons.close_rounded,
+                      IosIcons.close_rounded,
                       color: isDark ? Colors.white60 : Colors.black54,
                     ),
                   ),
@@ -416,7 +417,7 @@ class _PatientDoctorSuggestionsScreenState
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
               const SizedBox(height: 8),
@@ -440,7 +441,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
                     height: 1.6,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
               ),
@@ -452,7 +453,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -478,7 +479,7 @@ class _PatientDoctorSuggestionsScreenState
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.attach_file_rounded,
+                          IosIcons.attach_file_rounded,
                           color: _primaryBlue,
                           size: 20,
                         ),
@@ -497,7 +498,7 @@ class _PatientDoctorSuggestionsScreenState
                           ),
                         ),
                         const Icon(
-                          Icons.open_in_new_rounded,
+                          IosIcons.open_in_new_rounded,
                           color: _primaryBlue,
                           size: 16,
                         ),
@@ -523,7 +524,7 @@ class _PatientDoctorSuggestionsScreenState
                         ),
                       ),
                       onPressed: () => Navigator.pop(ctx),
-                      icon: const Icon(Icons.check_circle_outline_rounded,
+                      icon: const Icon(IosIcons.check_circle_outline_rounded,
                           size: 18),
                       label: const Text(
                         "Got It",
@@ -558,7 +559,7 @@ class _PatientDoctorSuggestionsScreenState
                             ),
                           );
                         },
-                        icon: const Icon(Icons.calendar_month_rounded,
+                        icon: const Icon(IosIcons.calendar_month_rounded,
                             size: 18),
                         label: const Text(
                           "Consult Doctor",
@@ -595,9 +596,9 @@ class _PatientDoctorSuggestionsScreenState
         titleSpacing: 0,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
+            IosIcons.arrow_back_ios_new_rounded,
             size: 20,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -610,7 +611,7 @@ class _PatientDoctorSuggestionsScreenState
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 19 : 17,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             Text(
@@ -686,7 +687,7 @@ class _PatientDoctorSuggestionsScreenState
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       decoration: InputDecoration(
                         hintText: "Search suggestions or doctor...",
@@ -697,13 +698,13 @@ class _PatientDoctorSuggestionsScreenState
                               isDark ? Colors.white38 : const Color(0xFF94A3B8),
                         ),
                         prefixIcon: const Icon(
-                          Icons.search_rounded,
+                          IosIcons.search_rounded,
                           color: Color(0xFF64748B),
                           size: 20,
                         ),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear_rounded,
+                                icon: const Icon(IosIcons.clear_rounded,
                                     size: 18, color: Color(0xFF64748B)),
                                 onPressed: () {
                                   _searchController.clear();
@@ -787,7 +788,7 @@ class _PatientDoctorSuggestionsScreenState
                                         ? Colors.white
                                         : (isDark
                                             ? Colors.white70
-                                            : const Color(0xFF475569)),
+                                            : const Color(0xFF4A4A4A)),
                                   ),
                                 ),
                               ],
@@ -926,7 +927,7 @@ class _PatientDoctorSuggestionsScreenState
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF0F172A),
+                                  : const Color(0xFF121212),
                             ),
                           ),
                           if (doctorSpecialty != null &&
@@ -985,7 +986,7 @@ class _PatientDoctorSuggestionsScreenState
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 16 : 14.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1001,7 +1002,7 @@ class _PatientDoctorSuggestionsScreenState
                     height: 1.5,
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.75)
-                        : const Color(0xFF475569),
+                        : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1032,7 +1033,7 @@ class _PatientDoctorSuggestionsScreenState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.attachment_rounded,
+                            IosIcons.attachment_rounded,
                             size: 15,
                             color: _primaryBlue,
                           ),
@@ -1052,7 +1053,7 @@ class _PatientDoctorSuggestionsScreenState
                           ),
                           const SizedBox(width: 4),
                           const Icon(
-                            Icons.open_in_new_rounded,
+                            IosIcons.open_in_new_rounded,
                             size: 13,
                             color: _primaryBlue,
                           ),
@@ -1075,7 +1076,7 @@ class _PatientDoctorSuggestionsScreenState
                     Row(
                       children: [
                         Icon(
-                          Icons.access_time_rounded,
+                          IosIcons.access_time_rounded,
                           size: 14,
                           color:
                               isDark ? Colors.white38 : const Color(0xFF94A3B8),
@@ -1106,7 +1107,7 @@ class _PatientDoctorSuggestionsScreenState
                         ),
                         const SizedBox(width: 4),
                         const Icon(
-                          Icons.arrow_forward_ios_rounded,
+                          IosIcons.arrow_forward_ios_rounded,
                           size: 11,
                           color: _primaryBlue,
                         ),
@@ -1138,7 +1139,7 @@ class _PatientDoctorSuggestionsScreenState
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.lightbulb_outline_rounded,
+                IosIcons.lightbulb_outline_rounded,
                 size: 46,
                 color: Color(0xFF8B5CF6),
               ),
@@ -1152,7 +1153,7 @@ class _PatientDoctorSuggestionsScreenState
                 fontFamily: appPoppinFont,
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 8),
@@ -1185,7 +1186,7 @@ class _PatientDoctorSuggestionsScreenState
                 _selectedCategory = 'All';
                 _fetchSuggestions();
               },
-              icon: const Icon(Icons.refresh_rounded, size: 18),
+              icon: const Icon(IosIcons.refresh_rounded, size: 18),
               label: const Text(
                 "Refresh",
                 style: TextStyle(

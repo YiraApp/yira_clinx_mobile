@@ -77,7 +77,16 @@ class ApiClient {
   factory ApiClient() => _instance;
 
   ApiClient._internal();
-  Dio _createDio(String baseUrl, bool showSuccessSnack) {
+
+  /// One Dio per base URL and snack setting. A new Dio per call opened a new
+  /// connection (TCP + TLS handshake) for every request; reusing one keeps the
+  /// connection alive between calls. The token is still read on each request.
+  final Map<String, Dio> _dios = {};
+
+  Dio _createDio(String baseUrl, bool showSuccessSnack) =>
+      _dios.putIfAbsent('$showSuccessSnack|${baseUrl.trim()}', () => _buildDio(baseUrl, showSuccessSnack));
+
+  Dio _buildDio(String baseUrl, bool showSuccessSnack) {
     String formattedUrl = baseUrl.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
       if (formattedUrl.contains("192.168.") ||

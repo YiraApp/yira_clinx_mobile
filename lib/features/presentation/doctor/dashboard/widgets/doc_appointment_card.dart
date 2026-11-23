@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -124,7 +125,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
             boxShadow: [
               if (!isDark)
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  color: const Color(0xFF121212).withValues(alpha: 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -177,7 +178,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                   fontWeight: FontWeight.w600,
                                   color: isDark
                                       ? Colors.white
-                                      : const Color(0xFF0F172A),
+                                      : const Color(0xFF121212),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -191,7 +192,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                         Row(
                           children: [
                             Icon(
-                              Icons.schedule_rounded,
+                              IosIcons.schedule_rounded,
                               size: 12,
                               color: isDark
                                   ? Colors.white38
@@ -253,7 +254,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                   if (hasMenuOptions)
                     PopupMenuButton<String>(
                       icon: Icon(
-                        Icons.more_vert_rounded,
+                        IosIcons.more_vert_rounded,
                         color: isDark ? Colors.white60 : const Color(0xFF64748B),
                         size: 20,
                       ),
@@ -286,7 +287,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Icon(
-                                    Icons.edit_calendar_rounded,
+                                    IosIcons.edit_calendar_rounded,
                                     size: 15,
                                     color: Color(0xFFD97706),
                                   ),
@@ -298,7 +299,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                     fontFamily: appPoppinFont,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                               ],
@@ -317,7 +318,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Icon(
-                                    Icons.cancel_outlined,
+                                    IosIcons.cancel_outlined,
                                     size: 15,
                                     color: Color(0xFFDC2626),
                                   ),
@@ -339,7 +340,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                     )
                   else
                     Icon(
-                      Icons.chevron_right_rounded,
+                      IosIcons.chevron_right_rounded,
                       color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
                       size: 18.0,
                     ),
@@ -367,7 +368,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                   child: Row(
                     children: [
                       Icon(
-                        Icons.notes_rounded,
+                        IosIcons.notes_rounded,
                         size: 13,
                         color: isDark
                             ? Colors.white30
@@ -454,7 +455,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        isPending ? Icons.payment_rounded : Icons.videocam_rounded,
+                                        isPending ? IosIcons.payment_rounded : IosIcons.videocam_rounded,
                                         size: widget.isTab ? 16 : 14,
                                         color: Colors.white,
                                       ),
@@ -497,7 +498,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.medication_rounded,
+                                    IosIcons.medication_rounded,
                                     size: widget.isTab ? 14 : 12,
                                     color: primaryColor,
                                   ),
@@ -530,7 +531,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                   : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9));
                               final badgeText = isForFamily
                                   ? (isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8))
-                                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569));
+                                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A));
                               final badgeBorder = isForFamily
                                   ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFBFDBFE))
                                   : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
@@ -551,7 +552,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      isForFamily ? Icons.family_restroom_rounded : Icons.medical_services_outlined,
+                                      isForFamily ? IosIcons.family_restroom_rounded : IosIcons.medical_services_outlined,
                                       size: 11,
                                       color: badgeText,
                                     ),
@@ -600,7 +601,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                       } else if (s.contains('complet')) {
                         bg = isDark ? const Color(0xFF172554) : const Color(0xFFDBEAFE);
                         txt = isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB);
-                        border = isDark ? const Color(0xFF1E40AF) : const Color(0xFFBFDBFE);
+                        border = isDark ? const Color(0xFF1D4ED8) : const Color(0xFFBFDBFE);
                       } else {
                         // Scheduled / Confirmed / Active
                         bg = isDark ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7);
@@ -668,7 +669,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
                                 if (widget.onStatusTap != null) ...[
                                   const SizedBox(width: 2),
                                   Icon(
-                                    Icons.arrow_drop_down,
+                                    IosIcons.arrow_drop_down,
                                     size: 13,
                                     color: txt,
                                   ),
@@ -715,7 +716,7 @@ class _DocAppointmentCardState extends State<DocAppointmentCard>
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isVideo ? Icons.videocam_rounded : Icons.storefront_rounded,
+            isVideo ? IosIcons.videocam_rounded : IosIcons.storefront_rounded,
             size: widget.isTab ? 13 : 11,
             color: textCol,
           ),

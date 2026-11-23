@@ -35,7 +35,7 @@ class _LoginEmail implements LoginEmailUseCase {
 
 class _SendOtp implements SendOtpUseCase {
   @override
-  Future<SendOtpEntity?> call({required String mobileNumber, required String countryCode, required bool isReSend}) async =>
+  Future<SendOtpEntity?> call({required String mobileNumber, required String countryCode, required bool isReSend, String? channel}) async =>
       SendOtpEntity(
         status: true,
         data: SendOtpDataEntity(otpSent: true, sessionId: isReSend ? 'session-2' : 'session-1', contact: mobileNumber),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/colors/colors.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -114,7 +115,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final media = MediaQuery.of(context);
     final query = _searchCtrl.text.trim();
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final mutedColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final borderColor = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
 
@@ -156,7 +157,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
                     ),
                     IconButton(
                       tooltip: 'Close',
-                      icon: Icon(Icons.close_rounded, color: mutedColor),
+                      icon: Icon(IosIcons.close_rounded, color: mutedColor),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -175,7 +176,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor),
                   decoration: InputDecoration(
                     hintText: widget.hint,
-                    prefixIcon: Icon(Icons.search_rounded, size: 20, color: mutedColor),
+                    prefixIcon: Icon(IosIcons.search_rounded, size: 20, color: mutedColor),
                     isDense: true,
                     filled: true,
                     fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
@@ -200,7 +201,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
                     if (query.isNotEmpty && !exactMatch)
                       ListTile(
                         dense: true,
-                        leading: const Icon(Icons.add_circle_outline_rounded, color: _primaryBlue),
+                        leading: const Icon(IosIcons.add_circle_outline_rounded, color: _primaryBlue),
                         title: Text(
                           'Add "$query" as custom',
                           style: const TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: _primaryBlue),
@@ -212,7 +213,7 @@ class _DietOptionPickerSheetState extends State<_DietOptionPickerSheet> {
                         dense: true,
                         title: Text(option, style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: textColor)),
                         trailing: option.toLowerCase() == widget.selected?.toLowerCase()
-                            ? const Icon(Icons.check_rounded, color: _primaryBlue, size: 20)
+                            ? const Icon(IosIcons.check_rounded, color: _primaryBlue, size: 20)
                             : null,
                         onTap: () => _choose(option),
                       ),
@@ -281,12 +282,12 @@ class DietOptionField extends StatelessWidget {
                   fontSize: 13.5,
                   fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                   color: hasValue
-                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDark ? Colors.white : const Color(0xFF121212))
                       : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                 ),
               ),
             ),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+            Icon(IosIcons.keyboard_arrow_down_rounded, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
           ],
         ),
       ),

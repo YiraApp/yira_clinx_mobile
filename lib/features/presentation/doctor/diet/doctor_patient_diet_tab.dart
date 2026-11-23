@@ -1,3 +1,5 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/core/utils/edit_window.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -88,9 +90,11 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
     }
   }
 
-  /// In the full history a doctor may only change plans they prescribed.
+  /// In the full history a doctor may only change plans they prescribed, and any plan only within an
+  /// hour of prescribing it (the server refuses later changes too).
   bool _canEdit(TodayDietPlanInfo p) {
     if (p.createdByPatient) return false;
+    if (!editWindowFor(p.createdAt).open) return false;
     if (widget.fullHistory) {
       final me = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').toLowerCase();
       if (me.isEmpty || (p.assignedByDoctorId ?? '').toLowerCase() != me) return false;
@@ -177,13 +181,13 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
             )
           else if (_error != null)
             _buildMessage(
-              Icons.cloud_off_rounded,
+              IosIcons.cloud_off_rounded,
               _error!,
               action: TextButton(onPressed: _load, child: const Text('Try again')),
             )
           else if (_plans.isEmpty)
             _buildMessage(
-              Icons.restaurant_menu_outlined,
+              IosIcons.restaurant_menu_outlined,
               'No diet plan yet',
               message: 'No diet plan has been prescribed to this patient yet. Tap Prescribe to create one.',
             )
@@ -208,14 +212,14 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
 
     return RecordCard(
       child: RecordCardHeader(
-        icon: Icons.restaurant_menu_outlined,
+        icon: IosIcons.restaurant_menu_outlined,
         title: 'Diet plan',
         subtitle: _isLoading
             ? 'Loading plans…'
             : active != null
                 ? 'Following: ${active.planName}'
                 : 'No active plan for ${widget.patientName ?? 'this patient'}',
-        trailing: RecordPrimaryButton(label: 'Prescribe', icon: Icons.add_rounded, compact: true, onPressed: _prescribe),
+        trailing: RecordPrimaryButton(label: 'Prescribe', icon: IosIcons.add_rounded, compact: true, onPressed: _prescribe),
       ),
     );
   }
@@ -239,7 +243,7 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RecordCardHeader(
-              icon: Icons.restaurant_menu_outlined,
+              icon: IosIcons.restaurant_menu_outlined,
               title: plan.planName,
               subtitle: plan.condition?.trim(),
               trailing: RecordPill(status.label, color: status.color),
@@ -249,13 +253,13 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
               const RecordPill('Prescribed in this appointment', color: DietUi.blue),
             ],
             const SizedBox(height: 10),
-            _infoLine(Icons.event_outlined, _dates(plan)),
-            _infoLine(Icons.local_fire_department_outlined, facts),
-            _infoLine(Icons.person_outline_rounded, plan.prescribedByLabelForDoctor),
+            _infoLine(IosIcons.event_outlined, _dates(plan)),
+            _infoLine(IosIcons.local_fire_department_outlined, facts),
+            _infoLine(IosIcons.person_outline_rounded, plan.prescribedByLabelForDoctor),
             const SizedBox(height: 4),
             Row(
               children: [
-                if (canEdit) RecordIconAction(icon: Icons.edit_outlined, tooltip: 'Edit plan', onTap: () => _editPlan(plan)),
+                if (canEdit) RecordIconAction(icon: IosIcons.edit_outlined, tooltip: 'Edit plan', onTap: () => _editPlan(plan)),
                 const Expanded(child: RecordCardLink(label: 'View diet')),
               ],
             ),
@@ -376,7 +380,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final plan = widget.plan;
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     TextStyle ts(double size, FontWeight w, Color c) =>
         TextStyle(fontFamily: appPoppinFont, fontSize: size, fontWeight: w, color: c);
@@ -424,7 +428,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                       ],
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                  IconButton(icon: const Icon(IosIcons.close_rounded), onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
@@ -452,7 +456,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                  ? RecordEmptyState(icon: Icons.cloud_off_rounded, title: _error!)
+                  ? RecordEmptyState(icon: IosIcons.cloud_off_rounded, title: _error!)
                   : ListView(
                       controller: controller,
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -465,7 +469,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                         if (bySlot.isEmpty)
                           const Padding(
                             padding: EdgeInsets.only(top: 24),
-                            child: RecordEmptyState(icon: Icons.no_meals_outlined, title: 'No meals on this day.'),
+                            child: RecordEmptyState(icon: IosIcons.no_meals_outlined, title: 'No meals on this day.'),
                           ),
                         for (final entry in bySlot.entries) ...[
                           Padding(
@@ -527,7 +531,7 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                     width: double.infinity,
                     child: RecordPrimaryButton(
                       label: 'Edit Plan',
-                      icon: Icons.edit_outlined,
+                      icon: IosIcons.edit_outlined,
                       onPressed: () => Navigator.pop(context, 'edit'),
                     ),
                   ),

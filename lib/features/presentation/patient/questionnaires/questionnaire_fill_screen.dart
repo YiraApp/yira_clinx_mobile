@@ -238,7 +238,7 @@ class _QuestionnaireFillScreenState extends State<QuestionnaireFillScreen> {
         ],
         const SizedBox(height: 10),
         Wrap(spacing: 6, runSpacing: 6, children: [
-          QChip('${form.questions.length} questions'),
+          QChip(form.questions.length == 1 ? '1 question' : '${form.questions.length} questions'),
           if (_requiredCount > 0) QChip('* $_requiredCount required'),
           if (info.attempts > 0) QChip('Attempt ${info.attempts + 1}', accent: true),
         ]),

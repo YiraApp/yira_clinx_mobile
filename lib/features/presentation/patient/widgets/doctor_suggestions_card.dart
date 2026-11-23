@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -182,7 +183,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
-                      Icons.lightbulb_outline_rounded,
+                      IosIcons.lightbulb_outline_rounded,
                       color: Color(0xFF2563EB),
                       size: 24,
                     ),
@@ -198,7 +199,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 18 : 16,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                         ),
                         const SizedBox(height: 3),
@@ -216,7 +217,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                   IconButton(
                     onPressed: () => Navigator.pop(ctx),
                     icon: Icon(
-                      Icons.close_rounded,
+                      IosIcons.close_rounded,
                       color: isDark ? Colors.white60 : Colors.black54,
                     ),
                   ),
@@ -229,7 +230,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
               const SizedBox(height: 8),
@@ -251,7 +252,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                     fontFamily: appPoppinFont,
                     fontSize: 13.5,
                     height: 1.55,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF232323),
                   ),
                 ),
               ),
@@ -263,7 +264,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -288,7 +289,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.attach_file_rounded,
+                          IosIcons.attach_file_rounded,
                           color: Color(0xFF2563EB),
                           size: 20,
                         ),
@@ -307,7 +308,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                           ),
                         ),
                         const Icon(
-                          Icons.open_in_new_rounded,
+                          IosIcons.open_in_new_rounded,
                           color: Color(0xFF2563EB),
                           size: 16,
                         ),
@@ -385,7 +386,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
-                        Icons.lightbulb_outline_rounded,
+                        IosIcons.lightbulb_outline_rounded,
                         color: Color(0xFF2563EB),
                         size: 20,
                       ),
@@ -397,7 +398,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                         fontFamily: appPoppinFont,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                   ],
@@ -405,7 +406,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                 IconButton(
                   onPressed: () => Navigator.pop(ctx),
                   icon: Icon(
-                    Icons.close_rounded,
+                    IosIcons.close_rounded,
                     color: isDark ? Colors.white60 : Colors.black54,
                   ),
                 ),
@@ -472,7 +473,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.tips_and_updates_rounded,
+                    IosIcons.tips_and_updates_rounded,
                     color: Color(0xFF2563EB),
                     size: 16,
                   ),
@@ -492,7 +493,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 14.5 : 13.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -526,7 +527,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                           fontFamily: appPoppinFont,
                           fontSize: 12,
                           height: 1.35,
-                          color: isDark ? Colors.white70 : const Color(0xFF475569),
+                          color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -536,7 +537,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                         Row(
                           children: [
                             Icon(
-                              Icons.attach_file_rounded,
+                              IosIcons.attach_file_rounded,
                               size: 13,
                               color: const Color(0xFF2563EB),
                             ),
@@ -558,7 +559,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                 ),
                 const SizedBox(width: 6),
                 Icon(
-                  Icons.chevron_right_rounded,
+                  IosIcons.chevron_right_rounded,
                   color: isDark ? Colors.white24 : Colors.black26,
                   size: 20,
                 ),
@@ -631,7 +632,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.lightbulb_outline_rounded,
+                      IosIcons.lightbulb_outline_rounded,
                       color: Color(0xFF2563EB),
                       size: 20,
                     ),
@@ -643,7 +644,7 @@ class _DoctorSuggestionsCardState extends State<DoctorSuggestionsCard> {
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 18 : 15,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                   ),
                   const SizedBox(width: 6),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart';
 
@@ -8,6 +9,8 @@ class VitalSignsSection extends StatefulWidget {
   final TextEditingController weightController;
   final TextEditingController heightController;
   final TextEditingController oxygenSaturationController;
+  /// Respiratory rate; the tile shows only when this is given.
+  final TextEditingController? respiratoryRateController;
   final bool isTab;
 
   const VitalSignsSection({
@@ -18,6 +21,7 @@ class VitalSignsSection extends StatefulWidget {
     required this.weightController,
     required this.heightController,
     required this.oxygenSaturationController,
+    this.respiratoryRateController,
     required this.isTab,
   });
 
@@ -89,7 +93,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                 fontFamily: appPoppinFont,
                 fontSize: widget.isTab ? 13 : 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
               ),
             ),
           ],
@@ -114,7 +118,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     fontFamily: appPoppinFont,
                     fontSize: widget.isTab ? 14 : 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
                     hintText: hintText,
@@ -183,7 +187,9 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              // Shrinks, so the BMI pill fits beside the title on a phone.
+              Expanded(
+                child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -192,13 +198,14 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.monitor_heart_outlined,
+                      IosIcons.monitor_heart_outlined,
                       size: 20,
                       color: Color(0xFF2563EB),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
+                  Expanded(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -207,7 +214,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                           fontFamily: appPoppinFont,
                           fontSize: widget.isTab ? 17 : 15,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -220,8 +227,11 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                       ),
                     ],
                   ),
+                  ),
                 ],
               ),
+              ),
+              if (bmi != null) const SizedBox(width: 8),
               if (bmi != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -243,7 +253,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.speed_rounded,
+                        IosIcons.speed_rounded,
                         size: 13,
                         color: bmi < 18.5
                             ? Colors.orange
@@ -282,7 +292,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Blood Pressure",
                   unit: "mmHg",
                   hintText: "120/80",
-                  icon: Icons.favorite_outline,
+                  icon: IosIcons.favorite_outline,
                   iconColor: const Color(0xFFEF4444),
                   controller: widget.bpController,
                 ),
@@ -294,7 +304,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Heart Rate",
                   unit: "bpm",
                   hintText: "72",
-                  icon: Icons.timeline,
+                  icon: IosIcons.timeline,
                   iconColor: const Color(0xFFE11D48),
                   controller: widget.hrController,
                   keyboardType: TextInputType.number,
@@ -312,7 +322,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Temperature",
                   unit: "°F",
                   hintText: "98.6",
-                  icon: Icons.thermostat_outlined,
+                  icon: IosIcons.thermostat_outlined,
                   iconColor: const Color(0xFFF59E0B),
                   controller: widget.tempController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -325,7 +335,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Oxygen (SpO2)",
                   unit: "%",
                   hintText: "98",
-                  icon: Icons.air_rounded,
+                  icon: IosIcons.air_rounded,
                   iconColor: const Color(0xFF0284C7),
                   controller: widget.oxygenSaturationController,
                   keyboardType: TextInputType.number,
@@ -343,7 +353,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Weight",
                   unit: "kg",
                   hintText: "70.5",
-                  icon: Icons.scale_outlined,
+                  icon: IosIcons.scale_outlined,
                   iconColor: const Color(0xFF8B5CF6),
                   controller: widget.weightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -356,7 +366,7 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
                   label: "Height",
                   unit: "cm",
                   hintText: "175",
-                  icon: Icons.straighten_outlined,
+                  icon: IosIcons.straighten_outlined,
                   iconColor: const Color(0xFF059669),
                   controller: widget.heightController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -364,6 +374,27 @@ class _VitalSignsSectionState extends State<VitalSignsSection> {
               ),
             ],
           ),
+          if (widget.respiratoryRateController != null) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildVitalTile(
+                    context: context,
+                    label: "Respiratory Rate",
+                    unit: "/min",
+                    hintText: "18",
+                    icon: IosIcons.air_rounded,
+                    iconColor: const Color(0xFF0EA5E9),
+                    controller: widget.respiratoryRateController!,
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ],
         ],
       ),
     );

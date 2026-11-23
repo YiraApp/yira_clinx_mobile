@@ -145,4 +145,13 @@ void main() {
       {'questionId': 4, 'value': 4},
     ]);
   });
+
+  test('a date answer reads as 1 Oct 2026, other answers as sent', () {
+    SubmittedAnswer a(String type, String display) =>
+        SubmittedAnswer.fromJson({'questionId': 1, 'questionText': 'Q', 'typeCode': type, 'display': display});
+    expect(a('DATE', '2026-10-01').display, '1 Oct 2026');
+    expect(a('DATE', '').display, '');
+    expect(a('SHORT_TEXT', '2026-10-01').display, '2026-10-01');
+    expect(a('NUMBER', '72.5').display, '72.5');
+  });
 }

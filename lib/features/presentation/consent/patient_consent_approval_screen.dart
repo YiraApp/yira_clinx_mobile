@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -98,7 +99,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         title: "Grant Record Access",
         message: "Are you sure you want to authorize $doctorName to access your medical records?",
         tone: AppDialogTone.success,
-        icon: Icons.verified_user_rounded,
+        icon: IosIcons.verified_user_rounded,
         content: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -108,7 +109,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           ),
           child: Row(
             children: [
-              const Icon(Icons.timer_outlined, size: 18, color: Color(0xFF059669)),
+              const Icon(IosIcons.timer_outlined, size: 18, color: Color(0xFF059669)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -144,7 +145,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         title: "Deny Access Request",
         message: "Are you sure you want to decline $doctorName's request to view your medical history? The doctor will not be able to view past records.",
         tone: AppDialogTone.danger,
-        icon: Icons.block_rounded,
+        icon: IosIcons.block_rounded,
         primaryLabel: "Deny Request",
         onPrimary: () {
           Navigator.pop(dialogCtx);
@@ -170,7 +171,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
         title: "Revoke Record Access",
         message: "Are you sure you want to revoke medical record access for $doctorName? They will immediately lose access to your past medical history.",
         tone: AppDialogTone.danger,
-        icon: Icons.lock_reset_rounded,
+        icon: IosIcons.lock_reset_rounded,
         primaryLabel: "Revoke Access",
         onPrimary: () {
           Navigator.pop(dialogCtx);
@@ -203,7 +204,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
           actions: [
             IconButton(
               icon: Icon(
-                Icons.refresh_rounded,
+                IosIcons.refresh_rounded,
                 color: isDark ? Colors.white : Colors.black87,
               ),
               tooltip: "Refresh Approvals",
@@ -276,14 +277,14 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                     child: TextField(
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF121212)),
                       decoration: InputDecoration(
                         hintText: 'Search doctor, hospital, or specialty...',
                         hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey.shade400),
-                        prefixIcon: Icon(Icons.search_rounded, color: isDark ? Colors.white54 : Colors.grey.shade500),
+                        prefixIcon: Icon(IosIcons.search_rounded, color: isDark ? Colors.white54 : Colors.grey.shade500),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                icon: const Icon(IosIcons.clear_rounded, size: 18),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() => _searchQuery = '');
@@ -353,7 +354,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
-                                          Icons.verified_user_outlined,
+                                          IosIcons.verified_user_outlined,
                                           size: isTab ? 64 : 52,
                                           color: primaryColor,
                                         ),
@@ -365,7 +366,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                                           fontFamily: appPoppinFont,
                                           fontWeight: FontWeight.bold,
                                           fontSize: isTab ? 18 : 16,
-                                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                          color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -439,7 +440,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                 fontFamily: appPoppinFont,
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
               ),
             ),
             if (count > 0) ...[
@@ -582,7 +583,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 15.5 : 14.5,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -646,7 +647,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
             ),
             child: Row(
               children: [
-                Icon(Icons.local_hospital_rounded, size: 15, color: primaryColor),
+                Icon(IosIcons.local_hospital_rounded, size: 15, color: primaryColor),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -655,7 +656,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                       fontFamily: appPoppinFont,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -690,7 +691,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.access_time_rounded, size: 13, color: isDark ? Colors.white38 : Colors.grey.shade500),
+                    Icon(IosIcons.access_time_rounded, size: 13, color: isDark ? Colors.white38 : Colors.grey.shade500),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -736,7 +737,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 11.5,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                 ),
               ),
             ),
@@ -819,7 +820,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent),
                       )
-                    : const Icon(Icons.block_rounded, size: 16),
+                    : const Icon(IosIcons.block_rounded, size: 16),
                 label: Text(
                   (isThisItemProcessing && _processingAction == 'REVOKE') ? 'Revoking Access...' : 'Revoke Doctor Access',
                   style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold, fontSize: 12.5),

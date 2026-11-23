@@ -63,6 +63,12 @@ class OnCountryCodeChanged extends LogInEvent {
   final String countryCode;
   const OnCountryCodeChanged(this.countryCode);
 }
+
+/// "whatsapp" or "sms"; only used for numbers outside India.
+class OnOtpChannelChanged extends LogInEvent {
+  final String channel;
+  const OnOtpChannelChanged(this.channel);
+}
 class OnTapEmailSignInEvent extends LogInEvent{
   final String email;
   final String password;

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -167,7 +168,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: const Icon(IosIcons.close, color: Colors.white),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -192,7 +193,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.access_time,
+                                  IosIcons.access_time,
                                   color: isDark ? Colors.white70 : Colors.grey.shade600,
                                   size: 14,
                                 ),
@@ -213,9 +214,9 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             DashBoardPatientActionHubItem(
-                              icon: Icons.calendar_month,
+                              icon: IosIcons.calendar_month,
                               label: "Schedule",
-                              iconColor: Colors.blue,
+                              iconColor: const Color(0xFF2563EB),
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
@@ -234,7 +235,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             ),
                             DashBoardPatientActionHubItem(
                               isTab: isTab,
-                              icon: Icons.science_outlined,
+                              icon: IosIcons.science_outlined,
                               label: "Prescription",
                               iconColor: Colors.green,
                               onTap: () {
@@ -254,7 +255,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             ),
                             DashBoardPatientActionHubItem(
                               isTab: isTab,
-                              icon: Icons.assignment_outlined,
+                              icon: IosIcons.assignment_outlined,
                               label: "Records",
                               iconColor: Colors.teal,
                               onTap: () {
@@ -274,7 +275,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             ),
                             DashBoardPatientActionHubItem(
                               isTab: isTab,
-                              icon: Icons.cloud_upload_outlined,
+                              icon: IosIcons.cloud_upload_outlined,
                               label: "Documents",
                               iconColor: Colors.orange,
                               onTap: () {
@@ -294,7 +295,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             ),
                             DashBoardPatientActionHubItem(
                               isTab: isTab,
-                              icon: Icons.restaurant_menu_rounded,
+                              icon: IosIcons.restaurant_menu_rounded,
                               label: "Diet",
                               iconColor: const Color(0xFF10B981),
                               onTap: () {
@@ -325,11 +326,11 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                     isTab: isTab,
                     child: Column(
                       children: [
-                        DashBoardPatientContactRow(icon: Icons.phone_outlined, value: contact?.phone ?? '', isTab: isTab),
+                        DashBoardPatientContactRow(icon: IosIcons.phone_outlined, value: contact?.phone ?? '', isTab: isTab),
                         Divider(height: 30, thickness: 0.5, color: Colors.grey.withOpacity(0.2)),
-                        DashBoardPatientContactRow(icon: Icons.mail_outline, value: contact?.email ?? '', isTab: isTab),
+                        DashBoardPatientContactRow(icon: IosIcons.mail_outline, value: contact?.email ?? '', isTab: isTab),
                         Divider(height: 30, thickness: 0.5, color: Colors.grey.withOpacity(0.2)),
-                        DashBoardPatientContactRow(icon: Icons.location_on_outlined, value: contact?.location ?? "No location provided", isTab: isTab),
+                        DashBoardPatientContactRow(icon: IosIcons.location_on_outlined, value: contact?.location ?? "No location provided", isTab: isTab),
                       ],
                     ),
                   ),
@@ -449,7 +450,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "Blood Pressure",
         value: vitals?.bloodPressure?.value,
         unit: vitals?.bloodPressure?.unit ?? "mmHg",
-        icon: Icons.favorite,
+        icon: IosIcons.favorite,
         themeColor: Colors.pink.shade400,
       ),
       DashBoardPatientVitalTile(
@@ -457,7 +458,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "Pulse",
         value: vitals?.pulse?.value,
         unit: vitals?.pulse?.unit ?? "bpm",
-        icon: Icons.bolt,
+        icon: IosIcons.bolt,
         themeColor: Colors.pink.shade300,
       ),
       DashBoardPatientVitalTile(
@@ -465,7 +466,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "Temperature",
         value: vitals?.temperature?.value,
         unit: vitals?.temperature?.unit ?? "°F",
-        icon: Icons.thermostat,
+        icon: IosIcons.thermostat,
         themeColor: Colors.amber.shade600,
       ),
       DashBoardPatientVitalTile(
@@ -473,7 +474,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "SpO2",
         value: vitals?.spo2?.value,
         unit: vitals?.spo2?.unit ?? "%",
-        icon: Icons.opacity,
+        icon: IosIcons.opacity,
         themeColor: Colors.blue.shade400,
       ),
       DashBoardPatientVitalTile(
@@ -481,7 +482,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "Weight",
         value: vitals?.weight?.value,
         unit: vitals?.weight?.unit ?? "kg",
-        icon: Icons.scale,
+        icon: IosIcons.scale,
         themeColor: Colors.green.shade400,
       ),
       DashBoardPatientVitalTile(
@@ -489,7 +490,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
         label: "Height",
         value: vitals?.height?.value,
         unit: vitals?.height?.unit ?? "cm",
-        icon: Icons.straighten,
+        icon: IosIcons.straighten,
         themeColor: Colors.purple.shade300,
       ),
     ];

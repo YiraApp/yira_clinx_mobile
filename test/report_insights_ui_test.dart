@@ -1,6 +1,7 @@
 // Renders the AI report insights screen and the report upload sheet with real
 // AI output (test/fixtures) at phone sizes. Any layout overflow fails the
 // test. Run with DIET_SHOTS=<dir> and --update-goldens to save screenshots.
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -114,7 +115,7 @@ void main() {
       ));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Book appointment'), findsNothing);
-      expect(find.byIcon(Icons.refresh_rounded), findsNothing);
+      expect(find.byIcon(IosIcons.refresh_rounded), findsNothing);
     });
 
     testWidgets('insights top of page ($tag)', (tester) async {

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -37,7 +38,7 @@ class DashboardSectionHeader extends StatelessWidget {
                 fontFamily: fontFamily,
                 fontSize: isTab ? displayWidth(context) * 0.02 : 16.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.3,
               ),
             ),
@@ -81,7 +82,7 @@ class DashboardSectionHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 2),
                 Icon(
-                  Icons.chevron_right_rounded,
+                  IosIcons.chevron_right_rounded,
                   size: isTab ? 16 : 15,
                   color: primaryColor,
                 ),

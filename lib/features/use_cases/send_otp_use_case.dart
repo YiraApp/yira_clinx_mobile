@@ -9,7 +9,8 @@ class SendOtpUseCase {
   Future<SendOtpEntity?> call({
     required String mobileNumber,
     required String countryCode,
-    required bool isReSend
+    required bool isReSend,
+    String? channel,
   }) async {
     if (mobileNumber.trim().isEmpty || countryCode.trim().isEmpty) {
       return null;
@@ -17,7 +18,7 @@ class SendOtpUseCase {
 
     return await _repository.sendOtp(
       mobileNumber: mobileNumber.trim(),
-      countryCode: countryCode.trim(), isReSend: isReSend,
+      countryCode: countryCode.trim(), isReSend: isReSend, channel: channel,
     );
   }
 }

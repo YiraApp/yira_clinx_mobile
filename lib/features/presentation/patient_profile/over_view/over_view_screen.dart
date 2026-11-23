@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/patient_contact_card.dart';
@@ -82,9 +83,9 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RecordEmptyState(icon: Icons.error_outline_rounded, title: state.error),
+                  RecordEmptyState(icon: IosIcons.error_outline_rounded, title: state.error),
                   const SizedBox(height: 16),
-                  RecordPrimaryButton(label: 'Retry', icon: Icons.refresh, compact: true, onPressed: _loadPatientData),
+                  RecordPrimaryButton(label: 'Retry', icon: IosIcons.refresh, compact: true, onPressed: _loadPatientData),
                 ],
               ),
             );
@@ -94,7 +95,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             final fetchedData = state.patientOverViewEntity.data;
 
             if (fetchedData == null) {
-              return const RecordEmptyState(icon: Icons.folder_open_outlined, title: 'No data details found.');
+              return const RecordEmptyState(icon: IosIcons.folder_open_outlined, title: 'No data details found.');
             }
 
             return RefreshIndicator.adaptive(

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 
@@ -15,7 +16,7 @@ class PatientSummaryCard extends StatelessWidget {
     return PatientInfoCard(
       isTab: isTab,
       title: 'Summary',
-      titleIcon: Icons.description_outlined,
+      titleIcon: IosIcons.description_outlined,
       child: Text(summary, style: DietUi.text(13, FontWeight.w400, DietUi.body(isDark), height: 1.45)),
     );
   }

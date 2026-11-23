@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -48,7 +49,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
               SnackBar(
                 content: const Row(
                   children: [
-                    Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                    Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -167,7 +168,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
               color: primaryColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.view_timeline_rounded, size: 18, color: primaryColor),
+            child: Icon(IosIcons.view_timeline_rounded, size: 18, color: primaryColor),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -204,7 +205,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.calendar_today_rounded, size: 12, color: primaryColor),
+                Icon(IosIcons.calendar_today_rounded, size: 12, color: primaryColor),
                 const SizedBox(width: 4),
                 CommonText(
                   dataState.isSingleDay
@@ -249,7 +250,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(Icons.add_rounded, size: 16, color: primaryColor),
+                child: Icon(IosIcons.add_rounded, size: 16, color: primaryColor),
               ),
               const SizedBox(width: 10),
               CommonText(
@@ -290,7 +291,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   : Colors.grey.shade100,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.event_busy_rounded, color: Colors.grey.shade400, size: 36),
+            child: Icon(IosIcons.event_busy_rounded, color: Colors.grey.shade400, size: 36),
           ),
           const SizedBox(height: 16),
           CommonText(
@@ -315,7 +316,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
           const SizedBox(height: 20),
           OutlinedButton.icon(
             onPressed: () => _showAddCustomSlotDialog(context, dataState),
-            icon: Icon(Icons.add_rounded, size: 18, color: primaryColor),
+            icon: Icon(IosIcons.add_rounded, size: 18, color: primaryColor),
             label: CommonText(
               'Add Custom Slot',
               style: TextStyle(
@@ -368,7 +369,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                 children: [
                   _summaryChip(
                     context,
-                    Icons.event_rounded,
+                    IosIcons.event_rounded,
                     '${dataState.slots.length} Slots',
                     primaryColor,
                     isDark,
@@ -378,7 +379,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                     const SizedBox(width: 10),
                     _summaryChip(
                       context,
-                      Icons.coffee_rounded,
+                      IosIcons.coffee_rounded,
                       '${dataState.breakTimes.length} Break${dataState.breakTimes.length > 1 ? 's' : ''}',
                       Colors.amber.shade700,
                       isDark,
@@ -574,7 +575,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.add_alarm_rounded, color: Colors.white, size: 20),
+                    child: const Icon(IosIcons.add_alarm_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -653,7 +654,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                       Expanded(
                         child: _StatusChoiceChip(
                           label: 'Available',
-                          icon: Icons.check_circle_outline_rounded,
+                          icon: IosIcons.check_circle_outline_rounded,
                           isSelected: status == 'Available',
                           color: const Color(0xFF10B981),
                           isDark: isDark,
@@ -664,7 +665,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                       Expanded(
                         child: _StatusChoiceChip(
                           label: 'Blocked',
-                          icon: Icons.block_rounded,
+                          icon: IosIcons.block_rounded,
                           isSelected: status == 'Blocked',
                           color: Colors.redAccent,
                           isDark: isDark,
@@ -790,7 +791,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   value,
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
-                Icon(Icons.access_time_rounded, size: 16, color: primaryColor),
+                Icon(IosIcons.access_time_rounded, size: 16, color: primaryColor),
               ],
             ),
           ),
@@ -893,7 +894,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
-              Icons.free_breakfast_rounded,
+              IosIcons.free_breakfast_rounded,
               color: Colors.amber,
               size: 18,
             ),
@@ -959,7 +960,7 @@ class _SmartSchedulerScreenState extends State<SmartSchedulerScreen> {
                   color: Colors.redAccent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                child: const Icon(IosIcons.delete_outline_rounded, color: Colors.redAccent, size: 18),
               ),
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
@@ -86,7 +87,7 @@ class CustomMenuTile extends StatelessWidget {
                           ),
                         ),
                         errorWidget: (context, url, error) => Icon(
-                          fallbackIcon ?? Icons.broken_image,
+                          fallbackIcon ?? IosIcons.broken_image,
                           size: iconSize * 0.8,
                           color: resolvedColor,
                         ),

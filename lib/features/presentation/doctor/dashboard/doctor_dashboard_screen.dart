@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'package:yiraclinics/core/widgets/active_profile_chip.dart';
 import 'dart:io';
@@ -60,7 +61,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       shared = context.read<DoctorDashboardBloc>();
     } catch (_) {}
     _ownsDashboardBloc = shared == null;
-    _dashboardBloc = (shared ?? sl<DoctorDashboardBloc>())..add(FetchDoctorDashboardData());
+    _dashboardBloc = shared ?? sl<DoctorDashboardBloc>();
+    // The shell already asked for the dashboard of the bloc it shares (on open and on
+    // each tab tap); asking again here sent the same request twice on every open.
+    if (_ownsDashboardBloc) _dashboardBloc.add(FetchDoctorDashboardData());
     _fetchUnreadNotificationsCount();
     NotificationService.instance.syncFcmTokenWithBackend();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -547,7 +551,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Icon(
-                                                Icons.calendar_month_rounded,
+                                                IosIcons.calendar_month_rounded,
                                                 size: 16,
                                                 color: primaryColor,
                                               ),
@@ -563,7 +567,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                                               ),
                                               const SizedBox(width: 4),
                                               Icon(
-                                                Icons.arrow_forward_ios_rounded,
+                                                IosIcons.arrow_forward_ios_rounded,
                                                 size: 11,
                                                 color: primaryColor,
                                               ),
@@ -677,7 +681,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.event_available_rounded, size: 24, color: primaryColor),
+              child: Icon(IosIcons.event_available_rounded, size: 24, color: primaryColor),
             ),
             const SizedBox(height: 10),
             Text(
@@ -704,7 +708,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.bar_chart_rounded,
+            IosIcons.bar_chart_rounded,
             size: 36,
             color: Colors.grey.withValues(alpha: 0.4),
           ),
@@ -791,7 +795,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   Widget _buildDoctorAvatarImage(String? photoUrl, double size, Color primaryColor, bool isTabletDevice) {
     final defaultIcon = Icon(
-      Icons.person_rounded,
+      IosIcons.person_rounded,
       color: primaryColor,
       size: isTabletDevice ? 20 : 18,
     );

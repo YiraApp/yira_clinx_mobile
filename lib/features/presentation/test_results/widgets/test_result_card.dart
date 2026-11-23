@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/common_text.dart';
@@ -65,7 +66,7 @@ class ReusableTestCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(fieldBorderRadius),
                 ),
                 child: Icon(
-                  Icons.science_outlined,
+                  IosIcons.science_outlined,
                   color: theme.colorScheme.primary,
                   size: 24,
                 ),
@@ -146,7 +147,7 @@ class ReusableTestCard extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    isAbnormal ? Icons.error_outline : Icons.check_circle_outline,
+                    isAbnormal ? IosIcons.error_outline : IosIcons.check_circle_outline,
                     color: statusColor,
                     size: 16,
                   ),
@@ -166,7 +167,7 @@ class ReusableTestCard extends StatelessWidget {
                 children: [
                   CommonBorderButton(
                     height: 35,
-                    icon:  Icons.file_download_outlined,
+                    icon:  IosIcons.file_download_outlined,
                     text: 'Download', onPressed: () {  },
                   ),
                   const SizedBox(width: 8),

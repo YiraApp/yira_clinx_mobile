@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -171,7 +172,7 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: c.isDark ? [Color.alphaBlend(primary.withValues(alpha: 0.22), c.card), c.card] : [const Color(0xFFE8F0FF), Colors.white],
+          colors: c.isDark ? [Color.alphaBlend(primary.withValues(alpha: 0.10), c.card), c.card] : [const Color(0xFFE8F0FF), Colors.white],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: c.line),
@@ -481,7 +482,7 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
         message: '${b.title}, ${formatRupees(b.total)}. This can\'t be undone.',
         confirmLabel: 'Delete',
         tone: AppDialogTone.danger,
-        icon: Icons.delete_outline_rounded,
+        icon: IosIcons.delete_outline_rounded,
       );
       if (!ok || !mounted) return;
       try {
@@ -699,7 +700,7 @@ class BillDetailSheet extends StatelessWidget {
             if (b.fileUrl != null) ...[
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => openWalletFile(context, b.fileUrl!),
+                onPressed: () => openWalletFile(context, b.fileUrl!, title: b.fileName ?? b.title, category: b.category),
                 icon: PhosphorIcon(PhosphorIconsBold.fileText, size: 16, color: Theme.of(context).primaryColor),
                 label: Text(b.fileName ?? 'View attached bill', overflow: TextOverflow.ellipsis),
               ),

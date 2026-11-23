@@ -1,7 +1,13 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 
 import '../../../../core/constants/constants.dart';
 import '../../../../core/custom_dialogue/app_dialog.dart';
@@ -32,7 +38,57 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    _moveLocalPolicies().whenComplete(() {
+      if (mounted) _load();
+    });
+  }
+
+  /// The older My Policies screen kept policies only on this phone (its server address never
+  /// existed), so they never reached the web or another phone. Send them to the server once.
+  Future<void> _moveLocalPolicies() async {
+    if (widget.dataSource != null) return; // tests
+    final userId = GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+    if (userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'patient_insurance_policies_$userId';
+      final raw = prefs.getString(key);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+      String? day(Object? v) {
+        final d = DateTime.tryParse('${v ?? ''}');
+        return d == null ? null : DateFormat('yyyy-MM-dd').format(d);
+      }
+
+      final left = <Map>[];
+      for (final item in decoded.whereType<Map>()) {
+        if (item['isDeleted'] == true) continue;
+        final insurer = '${item['insuranceProvider'] ?? ''}'.trim();
+        final number = '${item['policyNumber'] ?? ''}'.trim();
+        if (insurer.isEmpty || number.isEmpty) continue; // the server needs both; nothing usable to keep
+        final path = '${item['localFilePath'] ?? ''}';
+        try {
+          await _source.savePolicy({
+            'policyType': 'Health',
+            'insurer': insurer,
+            'policyName': '${item['policyName'] ?? ''}'.trim(),
+            'policyNumber': number,
+            'startDate': day(item['startDate']),
+            'endDate': day(item['endDate']),
+          }, filePath: path.isNotEmpty && File(path).existsSync() ? path : null);
+        } catch (_) {
+          left.add(item); // offline or refused: try again next time
+        }
+      }
+      if (left.isEmpty) {
+        await prefs.remove(key);
+      } else {
+        await prefs.setString(key, jsonEncode(left));
+      }
+    } catch (_) {
+      // never block the screen on this
+    }
   }
 
   Future<void> _load() async {
@@ -85,7 +141,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
         message: '${p.insurer}, ${p.policyNumber}. This can\'t be undone.',
         confirmLabel: 'Delete',
         tone: AppDialogTone.danger,
-        icon: Icons.delete_outline_rounded,
+        icon: IosIcons.delete_outline_rounded,
       );
       if (!ok || !mounted) return;
       try {
@@ -168,7 +224,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: c.isDark
-              ? [Color.alphaBlend(Theme.of(context).primaryColor.withValues(alpha: 0.22), c.card), c.card]
+              ? [Color.alphaBlend(Theme.of(context).primaryColor.withValues(alpha: 0.10), c.card), c.card]
               : [const Color(0xFFE8F0FF), Colors.white],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -383,7 +439,7 @@ class PolicyDetailSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: OutlinedButton.icon(
-                  onPressed: () => openWalletFile(context, p.fileUrl!),
+                  onPressed: () => openWalletFile(context, p.fileUrl!, title: p.fileName ?? 'Policy document', category: 'Policy'),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
                   icon: PhosphorIcon(PhosphorIconsBold.fileText, size: 16, color: primary),
                   label: Text(p.fileName ?? 'View policy document', overflow: TextOverflow.ellipsis),

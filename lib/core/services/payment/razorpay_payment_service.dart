@@ -338,8 +338,8 @@ class RazorpayPaymentService {
     /// "HH:mm" of the chosen visit slot on [preferredDate]; optional, it can be chosen after paying
     String? slotStart,
     String? notes,
-    /// Where the sample is collected (line1, line2, landmark, city, state, pincode), when the hospital asks for it
-    Map<String, String>? address,
+    /// Where the sample is collected: line1, line2, landmark, city, state, pincode
+    Map<String, dynamic>? address,
     String? patientName,
     String? patientPhone,
     String? patientEmail,

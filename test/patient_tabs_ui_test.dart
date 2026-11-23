@@ -160,7 +160,7 @@ void main() {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins', brightness: dark ? Brightness.dark : Brightness.light),
       home: Scaffold(
-        backgroundColor: dark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: dark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
         body: scroll ? SingleChildScrollView(padding: const EdgeInsets.all(16), child: child) : child,
       ),
     ));

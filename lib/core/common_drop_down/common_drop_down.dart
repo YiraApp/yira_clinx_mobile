@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -81,7 +82,7 @@ class CommonDropdown extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.keyboard_arrow_down,
+              IosIcons.keyboard_arrow_down,
               size: 20,
               color: isDark ? Colors.white54 : Colors.grey[600],
             ),

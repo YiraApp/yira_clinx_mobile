@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/over_view/over_view_entity.dart';
 import 'metric_tile_item.dart';
@@ -14,21 +15,21 @@ class PatientInsuranceCard extends StatelessWidget {
     return PatientInfoCard(
       isTab: isTab,
       title: 'Insurance',
-      titleIcon: Icons.shield_outlined,
+      titleIcon: IosIcons.shield_outlined,
       child: (patient.policyName != null && patient.policyNumber != null)
           ? Column(
         children: [
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.verified_user_outlined,
+            icon: IosIcons.verified_user_outlined,
             label: 'Policy Name',
             value: patient.policyName ?? 'N/A',
-            accentColor: Colors.blue,
+            accentColor: const Color(0xFF2563EB),
           ),
           const RecordDivider(indent: 30),
           MetricTileItem(
             isTab: isTab,
-            icon: Icons.tag,
+            icon: IosIcons.tag,
             label: 'Policy Number',
             value: patient.policyNumber ?? 'N/A',
             accentColor: Colors.blueGrey,
@@ -37,7 +38,7 @@ class PatientInsuranceCard extends StatelessWidget {
       )
           : const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: RecordEmptyState(icon: Icons.verified_user_outlined, title: 'No insurance details linked.'),
+              child: RecordEmptyState(icon: IosIcons.verified_user_outlined, title: 'No insurance details linked.'),
             ),
     );
   }

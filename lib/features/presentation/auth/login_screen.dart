@@ -1,3 +1,5 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/features/presentation/auth/widgets/otp_channel_choice.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
@@ -48,9 +50,14 @@ class _LoginScreenState extends State<LoginScreen> {
   // 0 = Mobile Login, 1 = Email Login
   int _selectedTab = 0;
 
+  // Numbers outside India can choose WhatsApp or SMS for the code.
+  String _countryCode = '+91';
+  String _otpChannel = LoginBloc.otpChannelWhatsApp;
+
   @override
   void initState() {
     super.initState();
+    _otpChannel = context.read<LoginBloc>().otpChannel;
     _loadDeviceToken();
   }
 
@@ -508,7 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   searchDecoration: InputDecoration(
                     prefixIcon: Icon(
-                      Icons.search,
+                      IosIcons.search,
                       color: isDarkMode ? Colors.white70 : Colors.grey,
                     ),
                     hintText: "Search Country",
@@ -523,6 +530,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   onChanged: (country) {
                     if (country.dialCode != null) {
+                      setState(() => _countryCode = country.dialCode!);
                       context.read<LoginBloc>().add(
                         OnCountryCodeChanged(country.dialCode!),
                       );
@@ -545,6 +553,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 LengthLimitingTextInputFormatter(10),
                 FilteringTextInputFormatter.digitsOnly,
               ],
+            ),
+            OtpChannelChoice(
+              countryCode: _countryCode,
+              channel: _otpChannel,
+              onChanged: (channel) {
+                setState(() => _otpChannel = channel);
+                context.read<LoginBloc>().add(OnOtpChannelChanged(channel));
+              },
             ),
             const SizedBox(height: 30),
             state is SendOtpLoading
@@ -732,7 +748,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ? message
             : "User account is deleted. Please contact administrator or sign up for new user registration.",
         tone: AppDialogTone.danger,
-        icon: Icons.person_off_rounded,
+        icon: IosIcons.person_off_rounded,
         primaryLabel: "Sign Up",
         onPrimary: () {
           Navigator.pop(ctx);

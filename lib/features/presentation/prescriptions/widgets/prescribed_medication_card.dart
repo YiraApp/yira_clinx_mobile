@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -281,7 +282,7 @@ class _PrescribedPrescriptionCardState
                       fontSize: isTab ? 14.5 : 13.5,
                       fontWeight: FontWeight.bold,
                       color: hasDrugName
-                          ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                          ? (isDark ? Colors.white : const Color(0xFF121212))
                           : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -299,7 +300,7 @@ class _PrescribedPrescriptionCardState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.delete_outline_rounded,
+                        IosIcons.delete_outline_rounded,
                         size: 16,
                         color: Color(0xFFEF4444),
                       ),
@@ -344,7 +345,7 @@ class _PrescribedPrescriptionCardState
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 13.5 : 13,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: _fieldDecoration(
                     'e.g. 500mg, 10ml, 1 tablet',
@@ -386,7 +387,7 @@ class _PrescribedPrescriptionCardState
                             fontFamily: appPoppinFont,
                             fontSize: 10.5,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                            color: isSelected ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                           ),
                         ),
                       ),
@@ -425,7 +426,7 @@ class _PrescribedPrescriptionCardState
                             fontFamily: appPoppinFont,
                             fontSize: 11.5,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF1E293B)),
+                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF232323)),
                           ),
                         ),
                       ),
@@ -471,7 +472,7 @@ class _PrescribedPrescriptionCardState
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 13 : 13,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
                             decoration: _fieldDecoration(
                               'e.g. 5',
@@ -513,7 +514,7 @@ class _PrescribedPrescriptionCardState
                                       fontFamily: appPoppinFont,
                                       fontSize: 10,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                      color: isSelected ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      color: isSelected ? _primaryBlue : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                     ),
                                   ),
                                 ),
@@ -566,7 +567,7 @@ class _PrescribedPrescriptionCardState
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 13 : 13,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: _fieldDecoration(
                     'e.g. Take after meals, with warm water (Optional)',
@@ -632,7 +633,7 @@ class _FieldLabel extends StatelessWidget {
             fontFamily: appPoppinFont,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white70 : const Color(0xFF334155),
+            color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
           ),
         ),
         if (isRequired)

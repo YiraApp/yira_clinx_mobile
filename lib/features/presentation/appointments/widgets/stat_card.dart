@@ -41,7 +41,7 @@ class StatCard extends StatelessWidget {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: const Color(0xFF0F172A).withOpacity(0.03),
+              color: const Color(0xFF121212).withOpacity(0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -78,7 +78,7 @@ class StatCard extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w700,
                   fontSize: isTab ? width * 0.022 : width * 0.048,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                   height: 1.0,
                 ),
               ),
@@ -97,7 +97,7 @@ class StatCard extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontWeight: FontWeight.w600,
                   fontSize: isTab ? width * 0.014 : width * 0.028,
-                  color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF334155),
+                  color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF3A3A3A),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

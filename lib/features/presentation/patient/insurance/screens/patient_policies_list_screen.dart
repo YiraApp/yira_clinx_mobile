@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -136,13 +137,13 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
     final primaryBlue = const Color(0xFF2563EB);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+        backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -155,7 +156,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
-                Icons.shield_outlined,
+                IosIcons.shield_outlined,
                 color: Color(0xFF2563EB),
                 size: 18,
               ),
@@ -167,7 +168,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.w700,
                 fontSize: 16.5,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
           ],
@@ -227,7 +228,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF232323) : Colors.white,
           border: Border(
             top: BorderSide(
               color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -259,7 +260,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_rounded, size: 20),
+                  Icon(IosIcons.add_rounded, size: 20),
                   SizedBox(width: 8),
                   Text(
                     'Add New Policy',
@@ -289,10 +290,10 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
           width: 1.1,
         ),
         boxShadow: [
@@ -325,7 +326,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   ),
                   child: const Center(
                     child: Icon(
-                      Icons.beach_access_rounded, // Umbrella icon matching reference app
+                      IosIcons.beach_access_rounded, // Umbrella icon matching reference app
                       color: Color(0xFF2563EB),
                       size: 22,
                     ),
@@ -344,7 +345,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                           fontFamily: appPoppinFont,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -370,7 +371,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 // Edit Button
                 IconButton(
                   tooltip: 'Edit Policy',
-                  icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF2563EB)),
+                  icon: const Icon(IosIcons.edit_outlined, size: 20, color: Color(0xFF2563EB)),
                   onPressed: () => _onEditPolicy(policy),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -379,7 +380,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 // Delete Button
                 IconButton(
                   tooltip: 'Delete Policy',
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Color(0xFFEF4444)),
+                  icon: const Icon(IosIcons.delete_outline_rounded, size: 20, color: Color(0xFFEF4444)),
                   onPressed: () => _onDeletePolicy(policy),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -388,7 +389,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
             ),
           ),
 
-          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
 
           // Body Meta Fields (Full Width & Clean)
           Padding(
@@ -408,7 +409,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
 
           // Expandable section for document preview (revealed when arrow is clicked)
           if (isExpanded) ...[
-            Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+            Divider(height: 1, color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFF1F5F9)),
             Padding(
               padding: const EdgeInsets.all(14),
               child: ((policy.localFilePath != null && policy.localFilePath!.isNotEmpty) ||
@@ -416,7 +417,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   ? Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -443,7 +444,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -451,7 +452,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                                   const SizedBox(height: 3),
                                   Row(
                                     children: [
-                                      const Icon(Icons.touch_app_outlined, size: 13, color: Color(0xFF2563EB)),
+                                      const Icon(IosIcons.touch_app_outlined, size: 13, color: Color(0xFF2563EB)),
                                       const SizedBox(width: 4),
                                       Text(
                                         'Tap to view full screen',
@@ -474,7 +475,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   : Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
@@ -482,7 +483,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.description_outlined,
+                          Icon(IosIcons.description_outlined,
                               size: 18, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
                           const SizedBox(width: 8),
                           Text(
@@ -508,7 +509,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               padding: const EdgeInsets.symmetric(vertical: 4),
               alignment: Alignment.center,
               child: Icon(
-                isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                isExpanded ? IosIcons.keyboard_arrow_up_rounded : IosIcons.keyboard_arrow_down_rounded,
                 color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                 size: 20,
               ),
@@ -543,7 +544,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
         width: 68,
         height: 68,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: const Color(0xFF2563EB).withValues(alpha: 0.25),
@@ -565,7 +566,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 28),
+                  const Icon(IosIcons.picture_as_pdf_rounded, color: Colors.redAccent, size: 28),
                   const SizedBox(height: 3),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
@@ -594,7 +595,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                   height: 68,
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.high,
-                  errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+                  errorBuilder: (ctx, err, stack) => const Icon(IosIcons.broken_image_rounded, size: 24, color: Colors.grey),
                 ),
               )
             else
@@ -613,7 +614,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2563EB)),
                     ),
                   ),
-                  errorWidget: (ctx, url, err) => const Icon(Icons.broken_image_rounded, size: 24, color: Colors.grey),
+                  errorWidget: (ctx, url, err) => const Icon(IosIcons.broken_image_rounded, size: 24, color: Colors.grey),
                 ),
               ),
           ],
@@ -645,7 +646,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               fontFamily: appPoppinFont,
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ),
@@ -671,7 +672,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.beach_access_rounded,
+                IosIcons.beach_access_rounded,
                 size: 40,
                 color: Color(0xFF2563EB),
               ),
@@ -683,7 +684,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: 16.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 8),
@@ -700,7 +701,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
             const SizedBox(height: 24),
             OutlinedButton.icon(
               onPressed: _onAddPolicy,
-              icon: const Icon(Icons.add_rounded, size: 18),
+              icon: const Icon(IosIcons.add_rounded, size: 18),
               label: const Text('Add Your First Policy'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF2563EB),

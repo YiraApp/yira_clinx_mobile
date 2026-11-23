@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -51,7 +52,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.person_outline_rounded,
+                    icon: IosIcons.person_outline_rounded,
                     title: "Doctor Profile",
                     subtitle: "View credentials & clinic details",
                     showDivider: true,
@@ -61,7 +62,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.vpn_key_outlined,
+                    icon: IosIcons.vpn_key_outlined,
                     title: "Medical Record Consents",
                     subtitle: "Manage doctor access requests & approvals",
                     showDivider: true,
@@ -71,7 +72,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.lock_outline_rounded,
+                    icon: IosIcons.lock_outline_rounded,
                     title: "Password and security",
                     subtitle: "Manage passwords",
                     onTap: () {
@@ -91,7 +92,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.notifications_none_rounded,
+                    icon: IosIcons.notifications_none_rounded,
                     title: "Notification settings",
                     subtitle: "Push, email, and alert triggers",
                     onTap: () {
@@ -109,7 +110,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.language_rounded,
+                    icon: IosIcons.language_rounded,
                     title: "Language settings",
                     subtitle: activeLanguageString,
                     showDivider: true,
@@ -119,7 +120,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.palette_outlined,
+                    icon: IosIcons.palette_outlined,
                     title: "Theme settings",
                     subtitle: activeThemeModeString,
                     showDivider: true,
@@ -129,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.play_circle_outline_rounded,
+                    icon: IosIcons.play_circle_outline_rounded,
                     title: "Preview Splash Animation",
                     subtitle: "Test the Yira splash screen",
                     onTap: () {
@@ -161,7 +162,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.description_outlined,
+                    icon: IosIcons.description_outlined,
                     title: "Terms & Conditions",
                     subtitle: "Usage policies & terms of service",
                     showDivider: true,
@@ -179,7 +180,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.privacy_tip_outlined,
+                    icon: IosIcons.privacy_tip_outlined,
                     title: "Privacy Policy",
                     subtitle: "Data privacy & personal health record protection",
                     showDivider: true,
@@ -197,7 +198,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.receipt_long_outlined,
+                    icon: IosIcons.receipt_long_outlined,
                     title: "Cancellation & Refund Policy",
                     subtitle: "Appointment cancellation rules & refund guidelines",
                     onTap: () {
@@ -223,7 +224,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   CustomSettingTile(
                     isTab: isTab,
-                    icon: Icons.delete_forever_rounded,
+                    icon: IosIcons.delete_forever_rounded,
                     title: "Delete Account",
                     subtitle: "Permanently erase your data",
                     onTap: () {

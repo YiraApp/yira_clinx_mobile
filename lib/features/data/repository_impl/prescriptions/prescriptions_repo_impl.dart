@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
@@ -39,13 +41,13 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
 
       final url = '${URLs.prescriptionsUrl}/patient/$patientId';
 
-      final response = await _apiClient.account(showSuccessSnack: false).get(
-        url,
-        queryParameters: queryParams,
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
+      final response = await _apiClient
+          .account(showSuccessSnack: false)
+          .get(
+            url,
+            queryParameters: queryParams,
+            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          );
 
       if (response.data != null && response.data is Map<String, dynamic>) {
         final mapData = response.data as Map<String, dynamic>;
@@ -58,20 +60,55 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
         }
       }
     } catch (e, stackTrace) {
-      developer.log(
-        "Prescription fetch API call error",
-        error: e,
-        stackTrace: stackTrace,
-        name: "PrescriptionRepositoryImpl",
-      );
+      developer.log("Prescription fetch API call error", error: e, stackTrace: stackTrace, name: "PrescriptionRepositoryImpl");
     }
 
-    return const PrescriptionEntity(
-      patientId: '',
-      diagnoses: [],
-      medications: [],
-      additionalNotes: '',
-    );
+    return const PrescriptionEntity(patientId: '', diagnoses: [], medications: [], additionalNotes: '');
+  }
+
+  /// The request body for a save, and for a preview of the same draft.
+  Map<String, dynamic> _requestBody(PrescriptionEntity prescription) {
+    final currentUser = GlobalSession.instance.userNotifier.value;
+    return {
+      if (prescription.id != null && prescription.id!.trim().isNotEmpty) ...{'id': prescription.id!.trim(), 'Id': prescription.id!.trim()},
+      'patientId': prescription.patientId,
+      'doctorId': currentUser?.data?.id ?? '',
+      if (prescription.appointmentId != null && prescription.appointmentId!.trim().isNotEmpty)
+        'appointmentId': prescription.appointmentId!.trim(),
+      if (prescription.hospitalId != null && prescription.hospitalId!.trim().isNotEmpty) ...{
+        'hospitalId': prescription.hospitalId!.trim(),
+        'HospitalId': prescription.hospitalId!.trim(),
+      },
+      if (prescription.orgId != null && prescription.orgId!.trim().isNotEmpty) ...{
+        'orgId': prescription.orgId!.trim(),
+        'organizationId': prescription.orgId!.trim(),
+        'OrganizationId': prescription.orgId!.trim(),
+      },
+      if (prescription.medicalRecordId != null && prescription.medicalRecordId!.trim().isNotEmpty)
+        'medicalRecordId': prescription.medicalRecordId!.trim(),
+      'notes': prescription.additionalNotes,
+      'diagnoses': prescription.diagnoses,
+      'medications': prescription.medications.map((m) {
+        int? durationVal;
+        if (m.duration != null && m.duration!.isNotEmpty) {
+          final match = RegExp(r'(\d+)').firstMatch(m.duration!);
+          if (match != null) {
+            durationVal = int.tryParse(match.group(1)!);
+          }
+        }
+        return {
+          'medication': m.name,
+          'dosage': m.dosage ?? '',
+          'frequency': m.frequency ?? '',
+          if (durationVal != null) ...{'durationValue': durationVal, 'durationUnit': 'Days'},
+          'duration': m.duration ?? (durationVal != null ? '$durationVal Days' : ''),
+          'route': m.route ?? '',
+          'instructions': m.instructions ?? '',
+          'note': m.instructions ?? '',
+        };
+      }).toList(),
+      if (prescription.labTests != null) 'labTests': prescription.labTests!.map(PrescribedLabTestModel.toJson).toList(),
+    };
   }
 
   @override
@@ -80,59 +117,15 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
       final currentUser = GlobalSession.instance.userNotifier.value;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      final Map<String, dynamic> payload = {
-        if (prescription.id != null && prescription.id!.trim().isNotEmpty) ...{
-          'id': prescription.id!.trim(),
-          'Id': prescription.id!.trim(),
-        },
-        'patientId': prescription.patientId,
-        'doctorId': currentUser?.data?.id ?? '',
-        if (prescription.appointmentId != null && prescription.appointmentId!.trim().isNotEmpty)
-          'appointmentId': prescription.appointmentId!.trim(),
-        if (prescription.hospitalId != null && prescription.hospitalId!.trim().isNotEmpty) ...{
-          'hospitalId': prescription.hospitalId!.trim(),
-          'HospitalId': prescription.hospitalId!.trim(),
-        },
-        if (prescription.orgId != null && prescription.orgId!.trim().isNotEmpty) ...{
-          'orgId': prescription.orgId!.trim(),
-          'organizationId': prescription.orgId!.trim(),
-          'OrganizationId': prescription.orgId!.trim(),
-        },
-        'notes': prescription.additionalNotes,
-        'diagnoses': prescription.diagnoses,
-        'medications': prescription.medications.map((m) {
-          int? durationVal;
-          if (m.duration != null && m.duration!.isNotEmpty) {
-            final match = RegExp(r'(\d+)').firstMatch(m.duration!);
-            if (match != null) {
-              durationVal = int.tryParse(match.group(1)!);
-            }
-          }
-          return {
-            'medication': m.name,
-            'dosage': m.dosage ?? '',
-            'frequency': m.frequency ?? '',
-            if (durationVal != null) ...{
-              'durationValue': durationVal,
-              'durationUnit': 'Days',
-            },
-            'duration': m.duration ?? (durationVal != null ? '$durationVal Days' : ''),
-            'route': m.route ?? '',
-            'instructions': m.instructions ?? '',
-            'note': m.instructions ?? '',
-          };
-        }).toList(),
-        if (prescription.labTests != null)
-          'labTests': prescription.labTests!.map(PrescribedLabTestModel.toJson).toList(),
-      };
+      final Map<String, dynamic> payload = _requestBody(prescription);
 
-      final response = await _apiClient.account(showSuccessSnack: true).post(
-        URLs.prescriptionsUrl,
-        data: payload,
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        ),
-      );
+      final response = await _apiClient
+          .account(showSuccessSnack: true)
+          .post(
+            URLs.prescriptionsUrl,
+            data: payload,
+            options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception("Server returned status code ${response.statusCode}");
@@ -153,27 +146,60 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
 
       return prescription;
     } catch (e, stackTrace) {
-      developer.log(
-        "Prescription save API call error",
-        error: e,
-        stackTrace: stackTrace,
-        name: "PrescriptionRepositoryImpl",
-      );
+      developer.log("Prescription save API call error", error: e, stackTrace: stackTrace, name: "PrescriptionRepositoryImpl");
       rethrow;
+    }
+  }
+
+  @override
+  Future<Uint8List> previewPrescription(PrescriptionEntity prescription) async {
+    final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+    try {
+      final response = await _apiClient
+          .account(showSuccessSnack: false)
+          .post(
+            URLs.prescriptionPreviewUrl,
+            data: _requestBody(prescription),
+            options: Options(responseType: ResponseType.bytes, headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+          );
+      final data = response.data;
+      final bytes = data is Uint8List ? data : Uint8List.fromList((data as List).cast<int>());
+      // A PDF starts with "%PDF"; anything else is an error message.
+      if (bytes.length < 4 || String.fromCharCodes(bytes.take(4)) != '%PDF') {
+        throw Exception(_messageIn(bytes) ?? "Couldn't draw the preview.");
+      }
+      return bytes;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is List<int> ? _messageIn(Uint8List.fromList(data)) : null;
+      throw Exception(message ?? "Couldn't draw the preview. Please try again.");
+    }
+  }
+
+  /// The "message" of a JSON error body sent back as bytes.
+  String? _messageIn(Uint8List bytes) {
+    try {
+      final decoded = jsonDecode(utf8.decode(bytes));
+      final message = decoded is Map ? decoded['message']?.toString() : null;
+      return (message ?? '').trim().isEmpty ? null : message;
+    } catch (_) {
+      return null;
     }
   }
 
   @override
   Future<List<HospitalLabTest>> getHospitalLabTests(String hospitalId) async {
     final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
-    final response = await _apiClient.account(showSuccessSnack: false).get(
-      URLs.hospitalLabTestsUrl(hospitalId),
-      options: Options(
-        headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-        // The picker shows its own error with a retry.
-        extra: {'suppressErrorSnack': true},
-      ),
-    );
+    final response = await _apiClient
+        .account(showSuccessSnack: false)
+        .get(
+          URLs.hospitalLabTestsUrl(hospitalId),
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            // The picker shows its own error with a retry.
+            extra: {'suppressErrorSnack': true},
+          ),
+        );
     final body = response.data;
     if (body is! Map || body['data'] is! List) {
       throw Exception('Unexpected lab tests response');

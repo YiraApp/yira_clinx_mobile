@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -71,43 +72,43 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
       key: "1_HOUR",
       title: "1 Hour",
       subtitle: "Instant consultation & quick check",
-      icon: Icons.timer_outlined,
+      icon: IosIcons.timer_outlined,
     ),
     DurationOption(
       key: "5_HOURS",
       title: "5 Hours",
       subtitle: "Half-day clinical observation",
-      icon: Icons.timelapse_rounded,
+      icon: IosIcons.timelapse_rounded,
     ),
     DurationOption(
       key: "1_DAY",
       title: "1 Day",
       subtitle: "Full-day consultation & diagnosis",
-      icon: Icons.today_rounded,
+      icon: IosIcons.today_rounded,
     ),
     DurationOption(
       key: "3_DAYS",
       title: "3 Days",
       subtitle: "Short-term treatment & follow-up",
-      icon: Icons.date_range_rounded,
+      icon: IosIcons.date_range_rounded,
     ),
     DurationOption(
       key: "7_DAYS",
       title: "7 Days",
       subtitle: "Standard 1-week treatment course",
-      icon: Icons.calendar_view_week_rounded,
+      icon: IosIcons.calendar_view_week_rounded,
     ),
     DurationOption(
       key: "1_MONTH",
       title: "1 Month",
       subtitle: "Long-term ongoing clinical management",
-      icon: Icons.calendar_month_rounded,
+      icon: IosIcons.calendar_month_rounded,
     ),
     DurationOption(
       key: "NEVER",
       title: "Permanent",
       subtitle: "Active care until revoked by patient",
-      icon: Icons.all_inclusive_rounded,
+      icon: IosIcons.all_inclusive_rounded,
     ),
   ];
 
@@ -147,7 +148,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
       SnackBar(
         content: const Row(
           children: [
-            Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 20),
+            Icon(IosIcons.hourglass_top_rounded, color: Colors.white, size: 20),
             SizedBox(width: 10),
             Expanded(
               child: Text("Access request sent to patient for approval!"),
@@ -180,7 +181,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1B2234) : Colors.white,
+        color: isDark ? const Color(0xFF222222) : Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -221,7 +222,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
-                  Icons.vpn_key_rounded,
+                  IosIcons.vpn_key_rounded,
                   color: Color(0xFF0284C7),
                   size: 24,
                 ),
@@ -237,7 +238,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 19 : 17,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0A2540),
+                        color: isDark ? Colors.white : const Color(0xFF151515),
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -254,7 +255,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(IosIcons.close_rounded),
                 onPressed: () => Navigator.pop(context),
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
               ),
@@ -282,7 +283,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? primaryColor.withValues(alpha: isDark ? 0.2 : 0.08)
-                          : (isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC)),
+                          : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
@@ -306,7 +307,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                             size: 18,
                             color: isSelected
                                 ? Colors.white
-                                : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -320,7 +321,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 14.5 : 13.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(
@@ -375,7 +376,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                 color: isDark ? Colors.white38 : Colors.grey.shade500,
               ),
               filled: true,
-              fillColor: isDark ? const Color(0xFF232B40) : const Color(0xFFF8FAFC),
+              fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF8FAFC),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -417,7 +418,7 @@ class _RequestAccessDurationModalState extends State<RequestAccessDurationModal>
                   : const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.send_rounded, size: 18),
+                        Icon(IosIcons.send_rounded, size: 18),
                         SizedBox(width: 8),
                         Text(
                           "Submit Access Request",

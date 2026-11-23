@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -421,7 +422,7 @@ class _BannerCardState extends State<_BannerCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.local_offer_rounded,
+                                IosIcons.local_offer_rounded,
                                 color: Colors.white,
                                 size: 36,
                               ),
@@ -501,7 +502,7 @@ class _BannerCardState extends State<_BannerCard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.local_fire_department_rounded,
+                                IosIcons.local_fire_department_rounded,
                                 size: 12,
                                 color: Colors.white,
                               ),

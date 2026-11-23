@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:fancy_password_field/fancy_password_field.dart';
 import 'package:flutter/material.dart';
@@ -344,7 +345,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 ),
                 child: Center(
                   child: isDone
-                      ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
+                      ? const Icon(IosIcons.check_rounded, size: 15, color: Colors.white)
                       : Text(
                           '$stepNum',
                           style: TextStyle(
@@ -366,7 +367,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontSize: 12,
                   fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
                   color: isCurrent
-                      ? (isDarkMode ? Colors.white : const Color(0xFF0F172A))
+                      ? (isDarkMode ? Colors.white : const Color(0xFF121212))
                       : (isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                 ),
               ),
@@ -393,17 +394,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     String subtitleText;
 
     if (isPasswordStep) {
-      headerIcon = Icons.lock_open_rounded;
+      headerIcon = IosIcons.lock_open_rounded;
       gradientColors = const [Color(0xFF10B981), Color(0xFF059669)];
       titleText = 'Create New Password';
       subtitleText = 'Your identity is verified. Enter a secure new password for your account.';
     } else if (isOtpStep) {
-      headerIcon = Icons.shield_outlined;
+      headerIcon = IosIcons.shield_outlined;
       gradientColors = const [Color(0xFF2563EB), Color(0xFF06B6D4)];
       titleText = 'Verify Security Code';
       subtitleText = 'Enter the 6-digit OTP sent to your registered contact to continue.';
     } else {
-      headerIcon = Icons.lock_reset_rounded;
+      headerIcon = IosIcons.lock_reset_rounded;
       gradientColors = const [Color(0xFF2563EB), Color(0xFF1D4ED8)];
       titleText = 'Forgot Password?';
       subtitleText = 'No worries! Select a recovery method below to receive a secure verification code.';
@@ -446,7 +447,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             fontSize: isTabletDevice ? 24 : 22,
             fontWeight: FontWeight.bold,
             letterSpacing: -0.3,
-            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+            color: isDarkMode ? Colors.white : const Color(0xFF121212),
           ),
         ),
         const SizedBox(height: 6),
@@ -548,7 +549,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.phone_iphone_rounded, size: 16),
+                      Icon(IosIcons.phone_iphone_rounded, size: 16),
                       SizedBox(width: 6),
                       Text("Mobile OTP"),
                     ],
@@ -558,7 +559,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.alternate_email_rounded, size: 16),
+                      Icon(IosIcons.alternate_email_rounded, size: 16),
                       SizedBox(width: 6),
                       Text("Email OTP"),
                     ],
@@ -595,7 +596,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.phone_android_rounded, size: 16, color: _primaryBlue),
+              const Icon(IosIcons.phone_android_rounded, size: 16, color: _primaryBlue),
               const SizedBox(width: 6),
               Text(
                 'Registered Mobile Number *',
@@ -603,7 +604,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -636,16 +637,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    color: isDarkMode ? Colors.white : const Color(0xFF121212),
                   ),
                   dialogBackgroundColor:
                       isDarkMode ? const Color(0xFF232323) : Colors.white,
                   dialogTextStyle: TextStyle(
                     fontFamily: appPoppinFont,
-                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    color: isDarkMode ? Colors.white : const Color(0xFF121212),
                   ),
                   searchDecoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search, color: _primaryBlue),
+                    prefixIcon: const Icon(IosIcons.search, color: _primaryBlue),
                     hintText: "Search Country",
                     hintStyle: TextStyle(
                       fontFamily: appPoppinFont,
@@ -676,7 +677,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       fontFamily: appPoppinFont,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                      color: isDarkMode ? Colors.white : const Color(0xFF121212),
                     ),
                     inputFormatters: [
                       LengthLimitingTextInputFormatter(10),
@@ -758,7 +759,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.mail_outline_rounded, size: 16, color: _primaryBlue),
+              const Icon(IosIcons.mail_outline_rounded, size: 16, color: _primaryBlue),
               const SizedBox(width: 6),
               Text(
                 'Registered Email Address *',
@@ -766,7 +767,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                  color: isDarkMode ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -790,10 +791,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 14.5,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                color: isDarkMode ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.email_outlined, size: 20, color: _primaryBlue),
+                prefixIcon: const Icon(IosIcons.email_outlined, size: 20, color: _primaryBlue),
                 hintText: "e.g. yourname@gmail.com",
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
@@ -889,7 +890,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           child: Row(
             children: [
               Icon(
-                isEmailTarget ? Icons.email_rounded : Icons.phone_android_rounded,
+                isEmailTarget ? IosIcons.email_rounded : IosIcons.phone_android_rounded,
                 color: _primaryBlue,
                 size: 18,
               ),
@@ -927,7 +928,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         ),
                       ),
                       SizedBox(width: 2),
-                      Icon(Icons.edit_rounded, size: 13, color: _primaryBlue),
+                      Icon(IosIcons.edit_rounded, size: 13, color: _primaryBlue),
                     ],
                   ),
                 ),
@@ -944,7 +945,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               fontFamily: appPoppinFont,
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
-              color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+              color: isDarkMode ? Colors.white : const Color(0xFF232323),
             ),
           ),
         ),
@@ -996,7 +997,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                color: isDarkMode ? Colors.white : const Color(0xFF121212),
               ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1021,7 +1022,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                           ResendOtpRequested(target: recoveryTarget),
                         );
                   },
-                  icon: const Icon(Icons.refresh_rounded, size: 16, color: _primaryBlue),
+                  icon: const Icon(IosIcons.refresh_rounded, size: 16, color: _primaryBlue),
                   label: const Text(
                     "Resend Verification Code",
                     style: TextStyle(
@@ -1048,7 +1049,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.timer_outlined, size: 15, color: _primaryBlue),
+                      const Icon(IosIcons.timer_outlined, size: 15, color: _primaryBlue),
                       const SizedBox(width: 6),
                       Text(
                         "Resend available in ",
@@ -1117,7 +1118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         children: [
           Row(
             children: [
-              const Icon(Icons.lock_outline_rounded, size: 16, color: _primaryBlue),
+              const Icon(IosIcons.lock_outline_rounded, size: 16, color: _primaryBlue),
               const SizedBox(width: 6),
               Text(
                 'New Password *',
@@ -1125,7 +1126,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -1143,7 +1144,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               fontFamily: appPoppinFont,
               fontSize: 14.5,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -1152,12 +1153,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               return null;
             },
             showPasswordWidget: Icon(
-              Icons.visibility_rounded,
+              IosIcons.visibility_rounded,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               size: 20,
             ),
             hidePasswordWidget: Icon(
-              Icons.visibility_off_rounded,
+              IosIcons.visibility_off_rounded,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               size: 20,
             ),
@@ -1231,8 +1232,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         children: [
                           Icon(
                             isValid
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
+                                ? IosIcons.check_circle_rounded
+                                : IosIcons.radio_button_unchecked_rounded,
                             color: isValid ? _successEmerald : (isDark ? Colors.white38 : Colors.black26),
                             size: 16,
                           ),
@@ -1244,7 +1245,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               fontSize: 12,
                               fontWeight: isValid ? FontWeight.w600 : FontWeight.w400,
                               color: isValid
-                                  ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                  ? (isDark ? Colors.white : const Color(0xFF121212))
                                   : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                             ),
                           ),
@@ -1260,7 +1261,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
           Row(
             children: [
-              const Icon(Icons.lock_reset_rounded, size: 16, color: _primaryBlue),
+              const Icon(IosIcons.lock_reset_rounded, size: 16, color: _primaryBlue),
               const SizedBox(width: 6),
               Text(
                 'Confirm New Password *',
@@ -1268,7 +1269,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   fontFamily: appPoppinFont,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF232323),
                 ),
               ),
             ],
@@ -1292,7 +1293,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 fontFamily: appPoppinFont,
                 fontSize: 14.5,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Re-enter new password",
@@ -1309,8 +1310,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscureConfirmPassword
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
+                        ? IosIcons.visibility_off_rounded
+                        : IosIcons.visibility_rounded,
                     color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     size: 20,
                   ),

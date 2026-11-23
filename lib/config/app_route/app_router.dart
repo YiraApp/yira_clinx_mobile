@@ -1,3 +1,4 @@
+import 'package:yiraclinics/features/presentation/patient/wallet/patient_policies_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -40,7 +41,6 @@ import 'package:yiraclinics/features/presentation/patient/suggestions/patient_do
 import 'package:yiraclinics/features/presentation/patient/fitness/patient_connect_fitness_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/fitness/patient_fitness_dashboard_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/patient_diet_plans_screen.dart';
-import 'package:yiraclinics/features/presentation/patient/insurance/screens/patient_policies_list_screen.dart';
 import 'package:yiraclinics/features/presentation/patient/insurance/screens/patient_add_edit_policy_screen.dart';
 import 'package:yiraclinics/features/data/models/insurance/patient_insurance_policy_model.dart';
 import 'package:yiraclinics/features/presentation/patient/wallet/patient_billing_screen.dart';
@@ -590,7 +590,7 @@ class AppRouter {
       case AppRoutes.patientDietPlan:
         return _guardedRoute(settings: settings, builder: (_) => const PatientDietPlansScreen());
       case AppRoutes.patientPolicies:
-        return _guardedRoute(settings: settings, builder: (_) => const PatientPoliciesListScreen());
+        return _guardedRoute(settings: settings, builder: (_) => const PatientPoliciesScreen());
       case AppRoutes.patientAddEditPolicy:
         final policy = settings.arguments is PatientInsurancePolicyModel
             ? settings.arguments as PatientInsurancePolicyModel
@@ -603,7 +603,7 @@ class AppRouter {
       default:
         final lower = (settings.name ?? '').toLowerCase().replaceAll('/', '').replaceAll('_', '').trim();
         if (lower == 'patientpolicies' || lower == 'policies' || lower == 'insurance' || lower == 'insurances') {
-          return _guardedRoute(settings: settings, builder: (_) => const PatientPoliciesListScreen());
+          return _guardedRoute(settings: settings, builder: (_) => const PatientPoliciesScreen());
         }
         if (lower == 'patientbookappointment' || lower == 'bookappointment' || lower == 'patientselecthospitalscreen') {
           final initialHospitals = settings.arguments is List<Map<String, dynamic>>

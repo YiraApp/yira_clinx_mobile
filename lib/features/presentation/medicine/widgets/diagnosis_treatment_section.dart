@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart';
 
@@ -51,7 +52,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  Icons.healing_outlined,
+                  IosIcons.healing_outlined,
                   size: 20,
                   color: Color(0xFF2563EB),
                 ),
@@ -67,7 +68,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 17 : 15,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                     Text(
@@ -93,7 +94,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Diagnosis Standard Text Input Field
           Row(
             children: [
-              const Icon(Icons.local_hospital_outlined, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.local_hospital_outlined, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Clinical Diagnosis",
@@ -101,7 +102,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
             ],
@@ -121,7 +122,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter clinical diagnosis...",
@@ -140,7 +141,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Mandatory Doctor Clinical Notes
           Row(
             children: [
-              const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.edit_note_rounded, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Doctor Observations & Notes",
@@ -148,7 +149,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
               const SizedBox(width: 4),
@@ -183,7 +184,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter clinical consultation notes, findings, and observations...",
@@ -202,7 +203,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
           // Treatment Plan & Recommendations
           Row(
             children: [
-              const Icon(Icons.medication_liquid_outlined, size: 16, color: Color(0xFF2563EB)),
+              const Icon(IosIcons.medication_liquid_outlined, size: 16, color: Color(0xFF2563EB)),
               const SizedBox(width: 6),
               Text(
                 "Treatment Plan & Recommendations",
@@ -210,7 +211,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13 : 12,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade300 : const Color(0xFF3A3A3A),
                 ),
               ),
             ],
@@ -231,7 +232,7 @@ class DiagnosisTreatmentSection extends StatelessWidget {
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab ? 14 : 13,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
                 hintText: "Enter recommended treatment, lifestyle care, or follow-up plans...",

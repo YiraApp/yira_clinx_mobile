@@ -9,9 +9,20 @@ class EnvironmentService {
   // - 127.0.0.1:5000 with `adb reverse tcp:5000 tcp:5000` enables stable connection over USB
   static const String localHostIp = String.fromEnvironment('BACKEND_IP', defaultValue: "192.168.0.4");
   static const String localPort = String.fromEnvironment('BACKEND_PORT', defaultValue: "5000");
-  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
-  static const String geminiModel = String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-3.8-flash');
   static String? _customBaseUrl;
+
+  /// The API that release builds (TestFlight and the stores) talk to.
+  static const String productionBaseUrl = "https://clinicsapi-fegha0fkfrcnfufu.centralindia-01.azurewebsites.net";
+
+  /// Release builds use production; debug runs use the local backend.
+  /// Override with --dart-define=APP_ENV=local|dev|qa|production.
+  static Environment get buildEnvironment {
+    const name = String.fromEnvironment('APP_ENV');
+    for (final env in Environment.values) {
+      if (env.name == name) return env;
+    }
+    return kReleaseMode ? Environment.production : Environment.local;
+  }
 
   static void setCustomBaseUrl(String? url) => _customBaseUrl = url;
 
@@ -37,8 +48,9 @@ class EnvironmentService {
 
     for (final host in candidates) {
       try {
-        final socket = await Socket.connect(host, port, timeout: const Duration(milliseconds: 800));
-        socket.destroy();
+        // An open port 5000 isn't enough: other Macs on the Wi-Fi answer on it with AirPlay
+        // ("AirTunes", 403), and the app then talked to them instead of the API.
+        if (!await _isClinicxApi(host, port)) continue;
         _customBaseUrl = "http://$host:$localPort";
         if (host == '127.0.0.1') {
           debugPrint('[Environment] 🚀 Connected via USB adb reverse: $_customBaseUrl');
@@ -51,6 +63,22 @@ class EnvironmentService {
 
     _customBaseUrl = "http://127.0.0.1:$localPort";
     debugPrint('[Environment] ⚠️ Using local fallback URL: $_customBaseUrl');
+  }
+
+  /// Whether [host]:[port] is the Clinicx API: it answers in JSON (even a 401 for no token),
+  /// unlike AirPlay or other services that happen to listen on the same port.
+  static Future<bool> _isClinicxApi(String host, int port) async {
+    final client = HttpClient()..connectionTimeout = const Duration(milliseconds: 800);
+    try {
+      final request = await client.getUrl(Uri(scheme: 'http', host: host, port: port, path: '/'));
+      final response = await request.close().timeout(const Duration(milliseconds: 1500));
+      await response.drain<void>();
+      return response.headers.contentType?.mimeType == 'application/json';
+    } catch (_) {
+      return false;
+    } finally {
+      client.close(force: true);
+    }
   }
 
   static String get _localHostUrl {
@@ -81,8 +109,8 @@ class EnvironmentService {
         );
       case Environment.production:
         return const EnvironmentConfig(
-          accountBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
-          healthCampBaseUrl: "https://clinicx-api-qa.azurewebsites.net",
+          accountBaseUrl: productionBaseUrl,
+          healthCampBaseUrl: productionBaseUrl,
         );
     }
   }

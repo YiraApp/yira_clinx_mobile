@@ -178,8 +178,20 @@ class SubmittedAnswer {
         questionId: _int(j['questionId']),
         questionText: _str(j['questionText']) ?? '',
         typeCode: _str(j['typeCode']) ?? QuestionType.shortText,
-        display: j['display']?.toString() ?? '',
+        display: _answerDisplay(_str(j['typeCode']), j['display']?.toString() ?? ''),
       );
+}
+
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/// A date answer reads like the other dates in the app ("1 Oct 2026"), not as stored ("2026-10-01").
+String _answerDisplay(String? typeCode, String display) {
+  if (typeCode != QuestionType.date) return display;
+  final m = RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(display);
+  if (m == null) return display;
+  final month = int.parse(m.group(2)!);
+  if (month < 1 || month > 12) return display;
+  return '${int.parse(m.group(3)!)} ${_months[month - 1]} ${m.group(1)}';
 }
 
 class QuestionnaireSubmission {

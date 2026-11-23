@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -448,18 +449,18 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     if (lower.contains('doctor') ||
         lower.contains('provider') ||
         lower.contains('physician')) {
-      return Icons.medical_services_rounded;
+      return IosIcons.medical_services_rounded;
     }
     if (lower.contains('patient') || lower.contains('user')) {
-      return Icons.person_rounded;
+      return IosIcons.person_rounded;
     }
     if (lower.contains('admin') || lower.contains('manager')) {
-      return Icons.admin_panel_settings_rounded;
+      return IosIcons.admin_panel_settings_rounded;
     }
     if (lower.contains('nurse')) {
-      return Icons.health_and_safety_rounded;
+      return IosIcons.health_and_safety_rounded;
     }
-    return Icons.local_hospital_rounded;
+    return IosIcons.local_hospital_rounded;
   }
 
   Color _getRoleColor(String roleName, Color fallback) {
@@ -505,7 +506,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     final bool isTab = isTablet(context);
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final mainHeadingColor = isDarkMode ? Colors.white : const Color(0xFF121212);
     final primaryColor = theme.primaryColor;
 
     return PopScope(
@@ -519,7 +520,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
         appBar: AppBar(
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               color: mainHeadingColor,
               size: 20,
             ),
@@ -588,7 +589,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                     (isTab ? 0.032 : 0.06),
                                 fontWeight: FontWeight.w700,
                                 fontFamily: appPoppinFont,
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                color: isDarkMode ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -630,7 +631,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.swap_horiz_rounded,
+                                        IosIcons.swap_horiz_rounded,
                                         size: 14,
                                         color: primaryColor,
                                       ),
@@ -675,7 +676,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.verified_user_outlined,
+                                  IosIcons.verified_user_outlined,
                                   size: 14,
                                   color: isDarkMode
                                       ? Colors.white24
@@ -781,10 +782,10 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
     final bool showPhone = phone.isNotEmpty && (isPrimaryCard || phone != primaryPhone);
     final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final IconData genderIcon = gender.toLowerCase().startsWith('f')
-        ? Icons.female_rounded
+        ? IosIcons.female_rounded
         : gender.toLowerCase().startsWith('m')
-            ? Icons.male_rounded
-            : Icons.person_outline_rounded;
+            ? IosIcons.male_rounded
+            : IosIcons.person_outline_rounded;
 
     final bool isThisProfileSwitching =
         _switchingKey != null && _selectedProfile?.id == profile.id;
@@ -882,7 +883,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                       ? (isTab ? 17 : 15.5)
                                       : (isTab ? 16 : 14.5),
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ),
@@ -912,8 +913,8 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             runSpacing: 4,
                             children: [
                               if (gender.isNotEmpty) ProfileInfoItem(icon: genderIcon, text: gender, color: infoColor, isTab: isTab),
-                              if (age != null) ProfileInfoItem(icon: Icons.cake_outlined, text: age, color: infoColor, isTab: isTab),
-                              if (showPhone) ProfileInfoItem(icon: Icons.phone_outlined, text: phone, color: infoColor, isTab: isTab),
+                              if (age != null) ProfileInfoItem(icon: IosIcons.cake_outlined, text: age, color: infoColor, isTab: isTab),
+                              if (showPhone) ProfileInfoItem(icon: IosIcons.phone_outlined, text: phone, color: infoColor, isTab: isTab),
                             ],
                           ),
                         ],
@@ -940,7 +941,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.arrow_forward_ios_rounded,
+                            IosIcons.arrow_forward_ios_rounded,
                             size: 13,
                             color: isPrimaryCard
                                 ? Colors.white
@@ -990,7 +991,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
           padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 24),
           child: Column(
             children: [
-              Icon(Icons.error_outline_rounded, size: 40, color: Colors.amber.shade600),
+              Icon(IosIcons.error_outline_rounded, size: 40, color: Colors.amber.shade600),
               const SizedBox(height: 12),
               Text(
                 _workspaceErrorMessage!,
@@ -1004,7 +1005,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
               const SizedBox(height: 12),
               TextButton.icon(
                 onPressed: _loadAllRolesAndWorkspaces,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
+                icon: const Icon(IosIcons.refresh_rounded, size: 16),
                 label: const Text("Retry"),
               ),
             ],
@@ -1146,7 +1147,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                       ],
                     ),
                     child: Icon(
-                      isPatient ? Icons.favorite_rounded : _getRoleIcon(item.roleName),
+                      isPatient ? IosIcons.favorite_rounded : _getRoleIcon(item.roleName),
                       size: isTab ? 24 : 22,
                       color: Colors.white,
                     ),
@@ -1167,7 +1168,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 16 : 14.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ),
@@ -1192,16 +1193,16 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                         ),
                         const SizedBox(height: 6),
                         if (isPatient)
-                          ProfileInfoItem(icon: Icons.folder_shared_outlined, text: 'Your health records & appointments', color: infoColor, isTab: isTab)
+                          ProfileInfoItem(icon: IosIcons.folder_shared_outlined, text: 'Your health records & appointments', color: infoColor, isTab: isTab)
                         else
                           Wrap(
                             spacing: 12,
                             runSpacing: 4,
                             children: [
                               if (item.orgName.isNotEmpty)
-                                ProfileInfoItem(icon: Icons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
+                                ProfileInfoItem(icon: IosIcons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
                               if (location != null)
-                                ProfileInfoItem(icon: Icons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
+                                ProfileInfoItem(icon: IosIcons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
                             ],
                           ),
                       ],
@@ -1240,7 +1241,7 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.arrow_forward_ios_rounded,
+                        IosIcons.arrow_forward_ios_rounded,
                         size: 13,
                         color: isDark ? Colors.white54 : Colors.grey.shade600,
                       ),

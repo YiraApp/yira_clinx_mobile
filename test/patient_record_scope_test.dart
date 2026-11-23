@@ -1,6 +1,7 @@
 // The "This visit | Full history" switch on a doctor's record tabs: the visit
 // view by default, the full history only with consent (with a banner saying
 // so), and the access gate otherwise.
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yiraclinics/features/domain/entities/consent/patient_access_consent_entity.dart';
@@ -58,7 +59,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('ALL RECORDS'), findsOneWidget);
     expect(find.textContaining('Full history from all hospitals'), findsOneWidget);
-    expect(find.byIcon(Icons.history_rounded), findsOneWidget);
+    expect(find.byIcon(IosIcons.history_rounded), findsOneWidget);
 
     await tester.tap(find.text('This visit'));
     await tester.pump(const Duration(milliseconds: 300));
@@ -70,7 +71,7 @@ void main() {
       hasAccess: false,
       status: DoctorAccessStatusLoaded(hasAccess: false, status: 'NO_REQUEST'),
     ));
-    expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+    expect(find.byIcon(IosIcons.lock_outline_rounded), findsOneWidget);
 
     await tester.tap(find.text('Full history'));
     await tester.pump(const Duration(milliseconds: 300));

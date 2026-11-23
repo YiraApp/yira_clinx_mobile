@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -153,7 +154,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
       SnackBar(
         content: Row(
           children: const [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
             SizedBox(width: 10),
             Text("Profile updated successfully!"),
           ],
@@ -183,7 +184,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           actions: [
             TextButton.icon(
               onPressed: _saveProfile,
-              icon: const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+              icon: const Icon(IosIcons.check_rounded, size: 18, color: Colors.white),
               label: const Text(
                 "Save",
                 style: TextStyle(
@@ -212,7 +213,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2538) : const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark ? Colors.white.withOpacity(0.08) : Colors.grey.shade200,
@@ -251,7 +252,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Icon(Icons.person_rounded, size: 16),
+                          Icon(IosIcons.person_rounded, size: 16),
                           SizedBox(width: 6),
                           Text("Personal Details"),
                         ],
@@ -261,7 +262,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Icon(Icons.medical_services_rounded, size: 16),
+                          Icon(IosIcons.medical_services_rounded, size: 16),
                           SizedBox(width: 6),
                           Text("Specialization"),
                         ],
@@ -296,7 +297,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                   MediaQuery.of(context).viewInsets.bottom > 0 ? 12 : 16,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1B2234) : Colors.white,
+                  color: isDark ? const Color(0xFF222222) : Colors.white,
                   border: Border(
                     top: BorderSide(
                       color: isDark ? Colors.white10 : Colors.grey.shade200,
@@ -331,7 +332,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 15 : 14,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                           ),
                         ),
                       ),
@@ -354,7 +355,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.check_circle_rounded, size: 18),
+                            Icon(IosIcons.check_circle_rounded, size: 18),
                             SizedBox(width: 8),
                             Text(
                               "Save Changes",
@@ -382,7 +383,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _buildSectionHeader("Doctor Identity", Icons.badge_outlined, primaryColor, isDark),
+        _buildSectionHeader("Doctor Identity", IosIcons.badge_outlined, primaryColor, isDark),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -390,7 +391,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "First Name *",
                 controller: _firstNameController,
-                icon: Icons.person_outline_rounded,
+                icon: IosIcons.person_outline_rounded,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. Rahul",
@@ -402,7 +403,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "Last Name",
                 controller: _lastNameController,
-                icon: Icons.person_outline_rounded,
+                icon: IosIcons.person_outline_rounded,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. Sharma",
@@ -411,7 +412,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           ],
         ),
         const SizedBox(height: 18),
-        _buildSectionHeader("Contact Information", Icons.contact_phone_outlined, primaryColor, isDark),
+        _buildSectionHeader("Contact Information", IosIcons.contact_phone_outlined, primaryColor, isDark),
         const SizedBox(height: 12),
         Builder(
           builder: (context) {
@@ -422,7 +423,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 _buildTextField(
                   label: "Email Address *",
                   controller: _emailController,
-                  icon: Icons.email_outlined,
+                  icon: IosIcons.email_outlined,
                   isDark: isDark,
                   primaryColor: primaryColor,
                   keyboardType: TextInputType.emailAddress,
@@ -441,7 +442,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 _buildTextField(
                   label: "Phone Number *",
                   controller: _phoneController,
-                  icon: Icons.phone_outlined,
+                  icon: IosIcons.phone_outlined,
                   isDark: isDark,
                   primaryColor: primaryColor,
                   keyboardType: TextInputType.phone,
@@ -460,7 +461,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           },
         ),
         const SizedBox(height: 18),
-        _buildSectionHeader("Personal Demographics", Icons.accessibility_new_rounded, primaryColor, isDark),
+        _buildSectionHeader("Personal Demographics", IosIcons.accessibility_new_rounded, primaryColor, isDark),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -471,7 +472,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                   child: _buildTextField(
                     label: "Date of Birth",
                     controller: _dobController,
-                    icon: Icons.cake_outlined,
+                    icon: IosIcons.cake_outlined,
                     isDark: isDark,
                     primaryColor: primaryColor,
                     hint: "YYYY-MM-DD",
@@ -485,7 +486,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 label: "Blood Group",
                 value: _selectedBloodGroup,
                 items: _bloodGroups,
-                icon: Icons.bloodtype_outlined,
+                icon: IosIcons.bloodtype_outlined,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 onChanged: (val) => setState(() => _selectedBloodGroup = val),
@@ -498,7 +499,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           label: "Gender",
           value: _selectedGender,
           items: _genders,
-          icon: Icons.wc_rounded,
+          icon: IosIcons.wc_rounded,
           isDark: isDark,
           primaryColor: primaryColor,
           onChanged: (val) => setState(() => _selectedGender = val),
@@ -511,12 +512,12 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        _buildSectionHeader("Clinical Specialty", Icons.medical_services_outlined, const Color(0xFF10B981), isDark),
+        _buildSectionHeader("Clinical Specialty", IosIcons.medical_services_outlined, const Color(0xFF10B981), isDark),
         const SizedBox(height: 12),
         _buildTextField(
           label: "Specialty / Designation *",
           controller: _specialtyController,
-          icon: Icons.medical_services_outlined,
+          icon: IosIcons.medical_services_outlined,
           isDark: isDark,
           primaryColor: primaryColor,
           hint: "e.g. Senior Cardiologist, Dentist",
@@ -529,7 +530,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "Sub-Specialty",
                 controller: _subSpecialtyController,
-                icon: Icons.local_hospital_outlined,
+                icon: IosIcons.local_hospital_outlined,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. Interventional",
@@ -540,7 +541,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "Department",
                 controller: _departmentController,
-                icon: Icons.apartment_rounded,
+                icon: IosIcons.apartment_rounded,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. Cardiology",
@@ -549,7 +550,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
           ],
         ),
         const SizedBox(height: 18),
-        _buildSectionHeader("Medical Registration & Credentials", Icons.verified_user_outlined, const Color(0xFF6366F1), isDark),
+        _buildSectionHeader("Medical Registration & Credentials", IosIcons.verified_user_outlined, const Color(0xFF6366F1), isDark),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -557,7 +558,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "Qualification",
                 controller: _qualificationController,
-                icon: Icons.school_outlined,
+                icon: IosIcons.school_outlined,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. MBBS, MD",
@@ -568,7 +569,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
               child: _buildTextField(
                 label: "Registration No.",
                 controller: _regNumberController,
-                icon: Icons.badge_outlined,
+                icon: IosIcons.badge_outlined,
                 isDark: isDark,
                 primaryColor: primaryColor,
                 hint: "e.g. REG-12345",
@@ -580,18 +581,18 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
         _buildTextField(
           label: "Experience",
           controller: _experienceController,
-          icon: Icons.timeline_rounded,
+          icon: IosIcons.timeline_rounded,
           isDark: isDark,
           primaryColor: primaryColor,
           hint: "e.g. 10+ Years",
         ),
         const SizedBox(height: 18),
-        _buildSectionHeader("About & Clinical Bio", Icons.description_outlined, Colors.orange, isDark),
+        _buildSectionHeader("About & Clinical Bio", IosIcons.description_outlined, Colors.orange, isDark),
         const SizedBox(height: 12),
         _buildTextField(
           label: "Doctor Summary",
           controller: _bioController,
-          icon: Icons.description_outlined,
+          icon: IosIcons.description_outlined,
           isDark: isDark,
           primaryColor: primaryColor,
           maxLines: 4,
@@ -619,7 +620,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             fontFamily: appPoppinFont,
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
+            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF232323),
             letterSpacing: -0.2,
           ),
         ),
@@ -653,7 +654,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 fontFamily: appPoppinFont,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
               ),
             ),
             if (readOnly)
@@ -666,7 +667,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
+                    Icon(IosIcons.lock_outline_rounded, size: 12, color: isDark ? Colors.white60 : Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
                       "Registered (Locked)",
@@ -703,7 +704,7 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
                 ? Icon(icon, size: 19, color: primaryColor.withValues(alpha: readOnly ? 0.4 : 0.8))
                 : null,
             suffixIcon: suffixIcon ?? (readOnly
-                ? Icon(Icons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
+                ? Icon(IosIcons.lock_rounded, size: 16, color: isDark ? Colors.white38 : Colors.grey[500])
                 : null),
             helperText: helperText,
             helperStyle: TextStyle(
@@ -713,8 +714,8 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             ),
             filled: true,
             fillColor: readOnly
-                ? (isDark ? const Color(0xFF161F30) : Colors.grey.shade200)
-                : (isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC)),
+                ? (isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade200)
+                : (isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -760,14 +761,14 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             fontFamily: appPoppinFont,
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+            color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
           ),
         ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E2538) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark ? Colors.white12 : Colors.grey.shade200,
@@ -777,8 +778,8 @@ class _EditProviderProfileScreenState extends State<EditProviderProfileScreen> w
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
-              dropdownColor: isDark ? const Color(0xFF1E2538) : Colors.white,
+              icon: Icon(IosIcons.keyboard_arrow_down_rounded, color: primaryColor),
+              dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
               items: items.map((e) {
                 return DropdownMenuItem<String>(
                   value: e,

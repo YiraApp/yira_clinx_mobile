@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_widgets/snomed_search_picker.dart';
 import '../../../../core/constants/constants.dart';
@@ -10,6 +11,13 @@ class ClinicalInfoSection extends StatelessWidget {
   final Function(String term, String? code)? onChiefComplaintConceptSelected;
   final Function(String term, String? code)? onSymptomConceptSelected;
   final Function(String term, String? code)? onExamConceptSelected;
+  /// The examination picker can be left out when the form shows it elsewhere.
+  final bool showExamination;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  /// More fields shown at the end of the card.
+  final List<Widget> extraFields;
 
   const ClinicalInfoSection({
     super.key,
@@ -20,6 +28,11 @@ class ClinicalInfoSection extends StatelessWidget {
     this.onChiefComplaintConceptSelected,
     this.onSymptomConceptSelected,
     this.onExamConceptSelected,
+    this.showExamination = true,
+    this.title = "Clinical Assessment",
+    this.subtitle = "Chief complaints, symptoms & findings",
+    this.icon = IosIcons.medical_information_outlined,
+    this.extraFields = const [],
   });
 
   @override
@@ -55,10 +68,10 @@ class ClinicalInfoSection extends StatelessWidget {
                   color: const Color(0xFF2563EB).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.medical_information_outlined,
+                child: Icon(
+                  icon,
                   size: 20,
-                  color: Color(0xFF2563EB),
+                  color: const Color(0xFF2563EB),
                 ),
               ),
               const SizedBox(width: 12),
@@ -67,16 +80,16 @@ class ClinicalInfoSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Clinical Assessment",
+                      title,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 17 : 15,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
                     ),
                     Text(
-                      "Chief complaints, symptoms & findings",
+                      subtitle,
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 12 : 11,
@@ -114,7 +127,7 @@ class ClinicalInfoSection extends StatelessWidget {
 
           // Symptoms
           SnomedMultiSearchPicker(
-            label: "Symptoms & History",
+            label: showExamination ? "Symptoms & History" : "Symptoms",
             hintText: "Search symptoms & observations (SNOMED CT)...",
             initialValue: symptomsController.text,
             snomedType: "finding",
@@ -126,6 +139,7 @@ class ClinicalInfoSection extends StatelessWidget {
             },
           ),
 
+          if (showExamination) ...[
           const SizedBox(height: 16),
 
           // Physical Exam
@@ -141,6 +155,8 @@ class ClinicalInfoSection extends StatelessWidget {
               }
             },
           ),
+          ],
+          ...extraFields,
         ],
       ),
     );

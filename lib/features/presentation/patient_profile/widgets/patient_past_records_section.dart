@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -63,7 +64,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
           ));
         }
         if (snap.hasError) {
-          return _card(isDark, child: _message(isDark, Icons.error_outline_rounded, 'Couldn\'t load past records.',
+          return _card(isDark, child: _message(isDark, IosIcons.error_outline_rounded, 'Couldn\'t load past records.',
               action: TextButton(onPressed: _retry, child: const Text('Retry'))));
         }
         final result = snap.data!;
@@ -86,7 +87,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
 
   Widget _header({required String scope, required Color scopeColor}) => Row(
         children: [
-          const Expanded(child: RecordSectionTitle(icon: Icons.history_rounded, title: 'Past records')),
+          const Expanded(child: RecordSectionTitle(icon: IosIcons.history_rounded, title: 'Past records')),
           const SizedBox(width: 8),
           RecordPill(scope, color: scopeColor),
         ],
@@ -118,7 +119,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
           ),
           if (!pending) ...[
             const SizedBox(height: 12),
-            RecordSecondaryButton(label: 'Ask for access', icon: Icons.lock_open_outlined, onPressed: widget.onRequestAccess),
+            RecordSecondaryButton(label: 'Ask for access', icon: IosIcons.lock_open_outlined, onPressed: widget.onRequestAccess),
           ],
         ],
       ),
@@ -149,7 +150,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
           if (r.isEmpty && fitness == null)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
-              child: RecordEmptyState(icon: Icons.history_rounded, title: 'No earlier visits or records yet.'),
+              child: RecordEmptyState(icon: IosIcons.history_rounded, title: 'No earlier visits or records yet.'),
             )
           else ...[
             _counts(isDark, r),
@@ -165,7 +166,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Earlier visits', tab: 'Appointments'),
               for (final v in r.visits.take(3))
                 _row(isDark,
-                    icon: Icons.event_available_outlined,
+                    icon: IosIcons.event_available_outlined,
                     title: v.reason ?? v.type ?? 'Consultation',
                     subtitle: [v.doctor, v.hospital].whereType<String>().join(' · '),
                     trailing: v.date == null ? null : fmt.format(v.date!)),
@@ -174,7 +175,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Diagnoses & records', tab: 'Medical Record'),
               for (final m in r.records.take(3))
                 _row(isDark,
-                    icon: Icons.medical_services_outlined,
+                    icon: IosIcons.medical_services_outlined,
                     title: m.diagnosis ?? m.complaint ?? m.type ?? 'Medical record',
                     subtitle: [m.doctor, m.hospital].whereType<String>().join(' · '),
                     trailing: m.date == null ? null : fmt.format(m.date!)),
@@ -183,7 +184,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Prescriptions', tab: 'Prescribe'),
               for (final p in r.prescriptions.take(3))
                 _row(isDark,
-                    icon: Icons.medication_outlined,
+                    icon: IosIcons.medication_outlined,
                     title: p.medicines.isEmpty ? (p.diagnoses.isEmpty ? 'Prescription' : p.diagnoses.join(', ')) : p.medicines.take(3).join(', ') + (p.medicines.length > 3 ? ' +${p.medicines.length - 3}' : ''),
                     subtitle: [if (p.diagnoses.isNotEmpty && p.medicines.isNotEmpty) p.diagnoses.join(', '), p.doctor, p.hospital].whereType<String>().join(' · '),
                     trailing: p.date == null ? null : fmt.format(p.date!),
@@ -193,7 +194,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
               _subhead(isDark, 'Documents', tab: 'Documents'),
               for (final d in r.documents.take(3))
                 _row(isDark,
-                    icon: Icons.description_outlined,
+                    icon: IosIcons.description_outlined,
                     title: d.name,
                     subtitle: [d.category, d.hospital].whereType<String>().join(' · '),
                     trailing: d.date == null ? null : fmt.format(d.date!),
@@ -303,7 +304,7 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
             ],
             if (canOpen) ...[
               const SizedBox(width: 4),
-              Icon(Icons.open_in_new_rounded, size: 14, color: _muted(isDark)),
+              Icon(IosIcons.open_in_new_rounded, size: 14, color: _muted(isDark)),
             ],
           ],
         ),

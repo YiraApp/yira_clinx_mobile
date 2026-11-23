@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
 class UpdateIllustration extends StatelessWidget {
@@ -25,7 +26,7 @@ class UpdateIllustration extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.rocket_launch_rounded,
+          IosIcons.rocket_launch_rounded,
           size: 60,
           color: theme.primaryColor,
         ),

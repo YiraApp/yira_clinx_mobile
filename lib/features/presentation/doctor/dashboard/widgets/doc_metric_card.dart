@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 
@@ -113,7 +114,7 @@ class DocMetricCard extends StatelessWidget {
                       )
                     else if (onTap != null)
                       Icon(
-                        Icons.arrow_forward_ios_rounded,
+                        IosIcons.arrow_forward_ios_rounded,
                         size: 13,
                         color: isDark ? Colors.white38 : Colors.grey.shade400,
                       ),
@@ -127,7 +128,7 @@ class DocMetricCard extends StatelessWidget {
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 28 : 24,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                     letterSpacing: -0.5,
                     height: 1.1,
                   ),
@@ -146,7 +147,7 @@ class DocMetricCard extends StatelessWidget {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 14 : 12.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                        color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF232323),
                         height: 1.1,
                       ),
                     ),

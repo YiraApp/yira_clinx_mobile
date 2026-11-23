@@ -16,6 +16,7 @@ import 'package:yiraclinics/core/widgets/doctor_avatar_widget.dart';
 import 'add_user_prescription_screen.dart';
 import 'widgets/reminder_alert_settings_sheet.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 
 /// Prescriptions from doctors (and ones the patient added), plus the daily
 /// medication reminders made from them.
@@ -103,17 +104,28 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           ),
         ],
       ),
-      // Adding a prescription belongs to the Prescriptions tab; on My Medicines it would cover the list.
-      floatingActionButton: _tabController.index != 0 ? null : Builder(
-        builder: (ctx) => FloatingActionButton.extended(
-          onPressed: () => _navigateToAddPrescription(ctx),
-          backgroundColor: primaryColor,
-          elevation: 3,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          icon: const PhosphorIcon(PhosphorIconsBold.plus, color: Colors.white, size: 20),
-          label: Text('Add Prescription', style: DietUi.text(13, FontWeight.w700, Colors.white)),
-        ),
-      ),
+      // One Add action at a time: the floating button only once there is a list.
+      // With no prescriptions the empty page carries the single Add button.
+      // On My Medicines it would cover the list, so it is hidden there.
+      floatingActionButton: _tabController.index != 0
+          ? null
+          : BlocBuilder<MedicationBloc, MedicationState>(
+              buildWhen: (a, b) =>
+                  a.status != b.status || a.allPrescriptions.isEmpty != b.allPrescriptions.isEmpty,
+              builder: (ctx, state) {
+                if (state.status == MedicationStatus.loading || state.allPrescriptions.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return FloatingActionButton.extended(
+                  onPressed: () => _navigateToAddPrescription(ctx),
+                  backgroundColor: primaryColor,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  icon: const Icon(HugeIcons.add01, color: Colors.white, size: 20),
+                  label: Text('Add prescription', style: DietUi.text(13, FontWeight.w600, Colors.white)),
+                );
+              },
+            ),
       body: Column(
         children: [
           _buildTabStrip(isDark),
@@ -171,15 +183,13 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
       );
     }
 
-    return Container(
-      color: DietUi.card(isDark),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFEDEFF3),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: DietUi.line(isDark)),
         ),
         child: BlocBuilder<MedicationBloc, MedicationState>(
           builder: (context, state) => ValueListenableBuilder<List<MedicationReminder>>(
@@ -189,10 +199,10 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: DietUi.card(isDark),
-                borderRadius: BorderRadius.circular(9),
+                color: isDark ? const Color(0xFF2E2E30) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 1)),
+                  BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08), blurRadius: 6, offset: const Offset(0, 2)),
                 ],
               ),
               labelColor: primaryColor,
@@ -270,8 +280,10 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildNextDoseBanner(isDark),
-                      _buildSearchField(isDark),
-                      const SizedBox(height: 18),
+                      if (state.allPrescriptions.isNotEmpty) ...[
+                        _buildSearchField(isDark),
+                        const SizedBox(height: 18),
+                      ],
                     ],
                   ),
                 ),
@@ -328,7 +340,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   ),
                 ],
               // Room for the floating Add button.
-              const SliverToBoxAdapter(child: SizedBox(height: 96)),
+              SliverToBoxAdapter(child: SizedBox(height: displayedItems.isEmpty ? 24 : 96)),
             ],
           ),
         );
@@ -477,51 +489,127 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   }
 
   Widget _buildPrescriptionsEmpty(BuildContext context, bool isDark) {
-    final searching = _searchQuery.isNotEmpty;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-        decoration: DietUi.cardDecoration(isDark),
+    if (_searchQuery.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
         child: Column(
           children: [
-            DietUi.iconBadge(
-              searching ? PhosphorIconsDuotone.magnifyingGlass : PhosphorIconsDuotone.prescription,
-              primaryColor,
-              isDark,
-              size: 60,
-              iconSize: 28,
-            ),
-            const SizedBox(height: 14),
+            Icon(HugeIcons.search01, size: 30, color: DietUi.hint(isDark)),
+            const SizedBox(height: 10),
+            Text('No matching prescriptions', style: DietUi.text(15, FontWeight.w700, DietUi.strong(isDark))),
+            const SizedBox(height: 4),
             Text(
-              searching ? 'No matching prescriptions' : 'No prescriptions yet',
-              style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark)),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              searching
-                  ? 'Try a different medicine or doctor name.'
-                  : 'Prescriptions from your consultations appear here. You can also add one from another doctor.',
+              'Try a different medicine, doctor or diagnosis.',
               textAlign: TextAlign.center,
-              style: DietUi.text(12.5, FontWeight.w400, DietUi.muted(isDark), height: 1.45),
+              style: DietUi.text(12.5, FontWeight.w400, DietUi.muted(isDark)),
             ),
-            if (!searching) ...[
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => _navigateToAddPrescription(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                icon: const PhosphorIcon(PhosphorIconsBold.plus, size: 18),
-                label: Text('Add a prescription', style: DietUi.text(13, FontWeight.w600, Colors.white)),
-              ),
-            ],
           ],
         ),
+      );
+    }
+
+    Widget source(IconData icon, String title, String body) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: isDark ? 0.18 : 0.08),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, size: 19, color: isDark ? accentBlueDark : primaryColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: DietUi.text(13.5, FontWeight.w600, DietUi.strong(isDark))),
+                  const SizedBox(height: 2),
+                  Text(body, style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark), height: 1.4)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+      child: Column(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark ? const [Color(0xFF2C2F36), Color(0xFF1F2126)] : const [Colors.white, Color(0xFFF6F7FA)],
+              ),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.07) : const Color(0xFFECEDF2)),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? Colors.black.withValues(alpha: 0.4) : const Color(0xFF4F5B93).withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(HugeIcons.prescription, size: 34, color: isDark ? accentBlueDark : primaryColor),
+          ),
+          const SizedBox(height: 18),
+          Text('No prescriptions yet', style: DietUi.text(17, FontWeight.w700, DietUi.strong(isDark))),
+          const SizedBox(height: 6),
+          Text(
+            'Keep every prescription in one place and get reminders for your medicines.',
+            textAlign: TextAlign.center,
+            style: DietUi.text(12.5, FontWeight.w400, DietUi.muted(isDark), height: 1.45),
+          ),
+          const SizedBox(height: 22),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+            decoration: DietUi.cardDecoration(isDark),
+            child: Column(
+              children: [
+                source(
+                  HugeIcons.stethoscope,
+                  'From your Yira doctor',
+                  'Added here automatically after your consultation.',
+                ),
+                Divider(height: 1, color: DietUi.line(isDark)),
+                source(
+                  HugeIcons.scanImage,
+                  'From any other doctor',
+                  'Upload a photo or PDF. AI fills in the details for you to check.',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => _navigateToAddPrescription(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: const Icon(HugeIcons.add01, size: 20),
+              label: Text('Add a prescription', style: DietUi.text(14, FontWeight.w600, Colors.white)),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -59,19 +59,23 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final int hospitalId = currentUser?.data?.latestHospitalId ?? 1;
       final String token = currentUser?.data?.accessToken ?? '';
 
-      await FavoritePatientsService().loadFavorites(doctorId);
-
-      final response = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.patientsListUrl,
-        data: {
-          "doctorId": doctorId,
-          "orgId": orgId,
-          "hospitalId": hospitalId,
-        },
-        options: Options(
-          headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+      // Favourites and the patient list don't depend on each other, so both are asked
+      // for at once; favourites are still in place before the list is marked up below.
+      final results = await Future.wait<dynamic>([
+        FavoritePatientsService().loadFavorites(doctorId),
+        sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientsListUrl,
+          data: {
+            "doctorId": doctorId,
+            "orgId": orgId,
+            "hospitalId": hospitalId,
+          },
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+          ),
         ),
-      );
+      ]);
+      final response = results[1] as Response;
 
       List<PatientEntity> patients = [];
       if (response.data != null && response.data is Map<String, dynamic>) {

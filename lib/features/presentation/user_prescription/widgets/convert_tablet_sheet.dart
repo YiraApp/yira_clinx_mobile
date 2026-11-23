@@ -114,7 +114,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
             colorScheme: const ColorScheme.light(
               primary: primaryColor,
               onPrimary: Colors.white,
-              onSurface: Color(0xFF0F172A),
+              onSurface: Color(0xFF121212),
             ),
           ),
           child: child!,
@@ -275,7 +275,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                           fontFamily: appPoppinFont,
                           fontSize: 16.5,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -337,7 +337,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                 fontFamily: appPoppinFont,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF232323),
               ),
             ),
             const SizedBox(height: 10),
@@ -387,7 +387,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                               fontWeight: FontWeight.w700,
                               color: _isContinuous
                                   ? Colors.white
-                                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                  : (isDark ? Colors.white : const Color(0xFF232323)),
                             ),
                           ),
                         ],
@@ -439,7 +439,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                               fontWeight: FontWeight.w700,
                               color: (_isCustomDays && !_isContinuous)
                                   ? Colors.white
-                                  : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                  : (isDark ? Colors.white : const Color(0xFF232323)),
                             ),
                           ),
                         ],
@@ -468,7 +468,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                     fontFamily: appPoppinFont,
                     fontSize: 11.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                   onSelected: (val) {
@@ -502,7 +502,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       style: TextStyle(
                         fontFamily: appPoppinFont,
                         fontSize: 12,
-                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                        color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                       ),
                     ),
                     const Spacer(),
@@ -581,7 +581,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF232323),
                       ),
                     ),
                     Text(
@@ -684,7 +684,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                 fontFamily: appPoppinFont,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF232323),
               ),
             ),
             const SizedBox(height: 8),
@@ -704,7 +704,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
                       fontFamily: appPoppinFont,
                       fontSize: 11.5,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                     onSelected: (val) {

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/utils/display_format.dart';
 import 'package:flutter/services.dart';
@@ -83,7 +84,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   RecordCardHeader(
-                    icon: Icons.medication_outlined,
+                    icon: IosIcons.medication_outlined,
                     title: "Prescription Details",
                     subtitle: [
                       _formatPrescriptionDateTime(pres),
@@ -102,7 +103,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (pres.diagnoses.isNotEmpty) ...[
-                      const RecordSectionTitle(icon: Icons.medical_information_outlined, title: "Diagnoses"),
+                      const RecordSectionTitle(icon: IosIcons.medical_information_outlined, title: "Diagnoses"),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -111,7 +112,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                     ],
-                    RecordSectionTitle(icon: Icons.medication_outlined, title: "Medications (${pres.medications.length})"),
+                    RecordSectionTitle(icon: IosIcons.medication_outlined, title: "Medications (${pres.medications.length})"),
                     const SizedBox(height: 10),
                     if (pres.medications.isNotEmpty)
                       ...pres.medications.map((m) => Padding(
@@ -133,8 +134,8 @@ class PatientAppointmentsCard extends StatelessWidget {
                                     spacing: 12,
                                     runSpacing: 4,
                                     children: [
-                                      if (m.frequency.isNotEmpty) RecordMeta(icon: Icons.schedule, text: m.frequency),
-                                      if (m.duration.isNotEmpty) RecordMeta(icon: Icons.timelapse, text: m.duration),
+                                      if (m.frequency.isNotEmpty) RecordMeta(icon: IosIcons.schedule, text: m.frequency),
+                                      if (m.duration.isNotEmpty) RecordMeta(icon: IosIcons.timelapse, text: m.duration),
                                     ],
                                   ),
                                 ],
@@ -160,7 +161,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       height: 46,
                       child: RecordPrimaryButton(
                         label: "View Full Prescription (PDF)",
-                        icon: Icons.picture_as_pdf_outlined,
+                        icon: IosIcons.picture_as_pdf_outlined,
                         onPressed: () {
                           final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
                           final baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'https://$rawBaseUrl';
@@ -184,7 +185,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         height: 46,
                         child: RecordSecondaryButton(
                           label: "Open in Prescriptions Tab",
-                          icon: Icons.arrow_forward_rounded,
+                          icon: IosIcons.arrow_forward_rounded,
                           onPressed: () {
                             Navigator.pop(ctx);
                             onPrescribeTap?.call();
@@ -237,11 +238,11 @@ class PatientAppointmentsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             RecordCardHeader(
-              icon: Icons.edit_note_rounded,
+              icon: IosIcons.edit_note_rounded,
               title: note.doctorName.isNotEmpty ? note.doctorName : "Clinical Note",
               subtitle: note.createdAt.isNotEmpty ? "Recorded on: ${note.createdAt}" : null,
               trailing: RecordIconAction(
-                icon: Icons.copy_rounded,
+                icon: IosIcons.copy_rounded,
                 tooltip: "Copy Note",
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: note.notes));
@@ -267,7 +268,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 height: 46,
                 child: RecordSecondaryButton(
                   label: "Open in Notes Tab",
-                  icon: Icons.arrow_forward_rounded,
+                  icon: IosIcons.arrow_forward_rounded,
                   onPressed: () {
                     Navigator.pop(ctx);
                     onNoteTap?.call();
@@ -345,7 +346,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                                   fontFamily: appPoppinFont,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                               Text(
@@ -360,7 +361,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 20),
+                          icon: const Icon(IosIcons.close_rounded, size: 20),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           onPressed: () => Navigator.pop(dialogCtx),
@@ -395,7 +396,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.broken_image_rounded, size: 48, color: Colors.grey),
+                                  const Icon(IosIcons.broken_image_rounded, size: 48, color: Colors.grey),
                                   const SizedBox(height: 12),
                                   const Text(
                                     "Could not load image preview",
@@ -430,7 +431,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                         ),
                         TextButton.icon(
                           onPressed: () => Utils.launchURL(url),
-                          icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                          icon: const Icon(IosIcons.open_in_new_rounded, size: 14),
                           label: const Text("Open External"),
                         ),
                       ],
@@ -478,7 +479,7 @@ class PatientAppointmentsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             RecordCardHeader(
-              icon: Icons.description_outlined,
+              icon: IosIcons.description_outlined,
               title: doc.fileName.isNotEmpty ? doc.fileName : "Medical Document",
               subtitle: "${doc.category} · ${doc.type}",
             ),
@@ -502,7 +503,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 height: 48,
                 child: RecordPrimaryButton(
                   label: "View Document",
-                  icon: Icons.visibility_outlined,
+                  icon: IosIcons.visibility_outlined,
                   onPressed: () {
                     Navigator.pop(ctx);
                     InAppDocumentViewer.show(
@@ -571,7 +572,7 @@ class PatientAppointmentsCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             RecordCardHeader(
-              icon: Icons.assignment_outlined,
+              icon: IosIcons.assignment_outlined,
               title: rec.recordType.isNotEmpty ? rec.recordType : "Medical Record",
               subtitle: rec.createdAt.isNotEmpty ? "Recorded on: ${rec.createdAt}" : null,
             ),
@@ -582,7 +583,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 height: 48,
                 child: RecordPrimaryButton(
                   label: "View Medical Record",
-                  icon: Icons.visibility_outlined,
+                  icon: IosIcons.visibility_outlined,
                   onPressed: () {
                     Navigator.pop(ctx);
                     InAppDocumentViewer.show(
@@ -651,7 +652,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     RecordCardHeader(
-                      icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.calendar_month_outlined,
+                      icon: appt.isTeleConsultation ? IosIcons.videocam_outlined : IosIcons.calendar_month_outlined,
                       title: "Appointment Details",
                       subtitle: appt.tokenNumber.isNotEmpty
                           ? "Token #${appt.tokenNumber} · ID: ${appt.id}"
@@ -676,7 +677,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1️⃣ SCHEDULE & TIMING
-                      RecordSectionTitle(icon: Icons.access_time_rounded, title: "Schedule & Timing"),
+                      RecordSectionTitle(icon: IosIcons.access_time_rounded, title: "Schedule & Timing"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
                         children: [
@@ -720,7 +721,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 2️⃣ CLINICAL CONDITION & REASON
-                      RecordSectionTitle(icon: Icons.healing_rounded, title: "Clinical Condition & Reason"),
+                      RecordSectionTitle(icon: IosIcons.healing_rounded, title: "Clinical Condition & Reason"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
                         children: [
@@ -741,7 +742,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // 3️⃣ PRESCRIPTIONS
-                      RecordSectionTitle(icon: Icons.medication_liquid_rounded, title: "Prescriptions (${appt.prescriptions.length})"),
+                      RecordSectionTitle(icon: IosIcons.medication_liquid_rounded, title: "Prescriptions (${appt.prescriptions.length})"),
                       const SizedBox(height: 10),
                       if (appt.prescriptions.isNotEmpty)
                         ...appt.prescriptions.map((p) => _buildPrescriptionCard(
@@ -751,13 +752,13 @@ class PatientAppointmentsCard extends StatelessWidget {
                               primaryColor,
                             ))
                       else
-                        _buildEmptyTile("No prescriptions issued for this appointment", Icons.medication_outlined, isDark),
+                        _buildEmptyTile("No prescriptions issued for this appointment", IosIcons.medication_outlined, isDark),
 
                       const SizedBox(height: 18),
 
                       // 4️⃣ CLINICAL NOTES (Visible to Doctors only; hidden for Patients)
                       if (!_isPatient()) ...[
-                        RecordSectionTitle(icon: Icons.edit_note_rounded, title: "Clinical Notes (${appt.clinicalNotes.length})"),
+                        RecordSectionTitle(icon: IosIcons.edit_note_rounded, title: "Clinical Notes (${appt.clinicalNotes.length})"),
                         const SizedBox(height: 10),
                         if (appt.clinicalNotes.isNotEmpty)
                           ...appt.clinicalNotes.map((n) => _buildClinicalNoteCard(
@@ -776,12 +777,12 @@ class PatientAppointmentsCard extends StatelessWidget {
                             ],
                           )
                         else
-                          _buildEmptyTile("No clinical notes recorded for this appointment", Icons.edit_note_outlined, isDark),
+                          _buildEmptyTile("No clinical notes recorded for this appointment", IosIcons.edit_note_outlined, isDark),
                         const SizedBox(height: 18),
                       ],
 
                       // 5️⃣ DOCUMENTS & LAB REPORTS
-                      RecordSectionTitle(icon: Icons.folder_shared_outlined, title: "Documents & Reports (${appt.documents.length})"),
+                      RecordSectionTitle(icon: IosIcons.folder_shared_outlined, title: "Documents & Reports (${appt.documents.length})"),
                       const SizedBox(height: 10),
                       if (appt.documents.isNotEmpty)
                         ...appt.documents.map((d) => _buildDocumentCard(
@@ -791,12 +792,12 @@ class PatientAppointmentsCard extends StatelessWidget {
                               primaryColor,
                             ))
                       else
-                        _buildEmptyTile("No medical documents attached to this appointment", Icons.file_present_outlined, isDark),
+                        _buildEmptyTile("No medical documents attached to this appointment", IosIcons.file_present_outlined, isDark),
 
                       const SizedBox(height: 18),
 
                       // 6️⃣ MEDICAL RECORDS
-                      RecordSectionTitle(icon: Icons.assignment_outlined, title: "Medical Records & Diagnoses (${appt.medicalRecords.length})"),
+                      RecordSectionTitle(icon: IosIcons.assignment_outlined, title: "Medical Records & Diagnoses (${appt.medicalRecords.length})"),
                       const SizedBox(height: 10),
                       if (appt.medicalRecords.isNotEmpty)
                         ...appt.medicalRecords.map((r) => _buildMedicalRecordCard(
@@ -806,12 +807,12 @@ class PatientAppointmentsCard extends StatelessWidget {
                               primaryColor,
                             ))
                       else
-                        _buildEmptyTile("No separate medical records linked to this appointment", Icons.assignment_turned_in_outlined, isDark),
+                        _buildEmptyTile("No separate medical records linked to this appointment", IosIcons.assignment_turned_in_outlined, isDark),
 
                       const SizedBox(height: 18),
 
                       // 7️⃣ PROVIDER & FACILITY DETAILS
-                      RecordSectionTitle(icon: Icons.local_hospital_outlined, title: "Provider & Facility"),
+                      RecordSectionTitle(icon: IosIcons.local_hospital_outlined, title: "Provider & Facility"),
                       const SizedBox(height: 10),
                       _buildInfoContainer(
                         children: [
@@ -917,13 +918,13 @@ class PatientAppointmentsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RecordCardHeader(
-            icon: Icons.medication_outlined,
+            icon: IosIcons.medication_outlined,
             title: pres.doctorName.isNotEmpty
                 ? "Dr. ${pres.doctorName.replaceFirst('Dr. ', '')}"
                 : _formatPrescriptionDateTime(pres),
             subtitle: pres.doctorName.isNotEmpty ? _formatPrescriptionDateTime(pres) : null,
             trailing: RecordIconAction(
-              icon: Icons.picture_as_pdf_outlined,
+              icon: IosIcons.picture_as_pdf_outlined,
               tooltip: "View PDF",
               onTap: () {
                 final rawBaseUrl = EnvironmentService.config.accountBaseUrl;
@@ -982,7 +983,7 @@ class PatientAppointmentsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RecordSectionTitle(
-            icon: Icons.edit_note_rounded,
+            icon: IosIcons.edit_note_rounded,
             title: note.doctorName.isNotEmpty ? note.doctorName : "Doctor's Note",
           ),
           const SizedBox(height: 8),
@@ -1010,7 +1011,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       child: Column(
         children: [
           RecordCardHeader(
-            icon: Icons.description_outlined,
+            icon: IosIcons.description_outlined,
             title: doc.fileName,
             subtitle: "${doc.category} · ${doc.type}${doc.createdAt.isNotEmpty ? ' · ${doc.createdAt}' : ''}",
           ),
@@ -1031,7 +1032,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       child: Column(
         children: [
           RecordCardHeader(
-            icon: Icons.assignment_outlined,
+            icon: IosIcons.assignment_outlined,
             title: rec.recordType,
             subtitle: rec.createdAt.isNotEmpty ? "Recorded on: ${rec.createdAt}" : null,
           ),
@@ -1102,7 +1103,7 @@ class PatientAppointmentsCard extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 48),
         child: RecordEmptyState(
-          icon: Icons.event_busy_outlined,
+          icon: IosIcons.event_busy_outlined,
           title: "No Appointments Found",
           message: "No past or upcoming appointments\nrecorded for this patient.",
         ),
@@ -1131,7 +1132,7 @@ class PatientAppointmentsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               RecordCardHeader(
-                icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.calendar_month_outlined,
+                icon: appt.isTeleConsultation ? IosIcons.videocam_outlined : IosIcons.calendar_month_outlined,
                 title: appt.appointmentDate.isNotEmpty ? appt.appointmentDate : "Appointment #${index + 1}",
                 subtitle: [
                   if (appt.tokenNumber.isNotEmpty) "Token #${appt.tokenNumber}",
@@ -1152,13 +1153,13 @@ class PatientAppointmentsCard extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   RecordMeta(
-                    icon: appt.isTeleConsultation ? Icons.videocam_outlined : Icons.location_on_outlined,
+                    icon: appt.isTeleConsultation ? IosIcons.videocam_outlined : IosIcons.location_on_outlined,
                     text: [
                       if (appt.appointmentType.isNotEmpty) appt.appointmentType,
                       appt.isTeleConsultation ? "Paid Online" : "Pay at Clinic",
                     ].join(' · '),
                   ),
-                  if (appt.doctorName.isNotEmpty) RecordMeta(icon: Icons.person_outline_rounded, text: appt.doctorName),
+                  if (appt.doctorName.isNotEmpty) RecordMeta(icon: IosIcons.person_outline_rounded, text: appt.doctorName),
                 ],
               ),
               const SizedBox(height: 8),
@@ -1166,7 +1167,7 @@ class PatientAppointmentsCard extends StatelessWidget {
                 children: [
                   if (totalRecords > 0)
                     RecordMeta(
-                      icon: Icons.folder_outlined,
+                      icon: IosIcons.folder_outlined,
                       text: "$totalRecords ${totalRecords == 1 ? 'record' : 'records'}",
                     ),
                   const Expanded(child: RecordCardLink()),

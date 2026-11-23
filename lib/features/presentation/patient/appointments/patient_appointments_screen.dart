@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -114,18 +115,31 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
 
     List<Map<String, dynamic>> loadedList = [];
 
-    // 1. Fetch from patient-appointments API
+    // 1. Fetch from patient-appointments API. The family requests below are sent at
+    // the same time; their answers are still read after this one, in order.
+    final selfRequest = sl<ApiClient>().account(showSuccessSnack: false).post(
+      URLs.patientAppointmentsUrl,
+      data: {
+        // By profile only: family members share a phone, so a number here
+        // would bring back the main account's appointments on their profiles.
+        "userId": userId,
+        "onlySelf": true,
+      },
+      options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
+    );
+    final familyRequests = [
+      for (final familyId in GlobalSession.instance.familyProfileIdsOnMainAccount)
+        sl<ApiClient>().account(showSuccessSnack: false).post(
+          URLs.patientAppointmentsUrl,
+          data: {"userId": familyId},
+          options: Options(
+            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
+            extra: const {'suppressErrorSnack': true},
+          ),
+        ).then<Response?>((res) => res, onError: (_) => null),
+    ];
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-        URLs.patientAppointmentsUrl,
-        data: {
-          // By profile only: family members share a phone, so a number here
-          // would bring back the main account's appointments on their profiles.
-          "userId": userId,
-          "onlySelf": true,
-        },
-        options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-      );
+      final res = await selfRequest;
 
       if (res.data != null && res.data['data'] is List) {
         final list = res.data['data'] as List;
@@ -143,17 +157,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
     // The main account also sees its family's appointments. Asked per person so
     // this works on servers that return only one person's list.
     final seenIds = {for (final a in loadedList) '${a['id']}'};
-    for (final familyId in GlobalSession.instance.familyProfileIdsOnMainAccount) {
+    for (final request in familyRequests) {
       try {
-        final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-          URLs.patientAppointmentsUrl,
-          data: {"userId": familyId},
-          options: Options(
-            headers: {HttpHeaders.authorizationHeader: 'Bearer $token'},
-            extra: const {'suppressErrorSnack': true},
-          ),
-        );
-        if (res.data != null && res.data['data'] is List) {
+        final res = await request;
+        if (res != null && res.data != null && res.data['data'] is List) {
           for (final a in res.data['data'] as List) {
             if (seenIds.add('${a['id']}')) loadedList.add(Map<String, dynamic>.from(a));
           }
@@ -484,7 +491,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.cancel_outlined,
+                        IosIcons.cancel_outlined,
                         color: Color(0xFFDC2626),
                         size: 22,
                       ),
@@ -497,7 +504,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           fontFamily: appPoppinFont,
                           fontWeight: FontWeight.w700,
                           fontSize: 17,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                     ),
@@ -513,7 +520,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: 13.5,
                         height: 1.45,
-                        color: isDark ? Colors.white70 : const Color(0xFF475569),
+                        color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
                     ),
                     if (timeStr.isNotEmpty) ...[
@@ -530,7 +537,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
+                            const Icon(IosIcons.access_time_rounded, size: 14, color: Color(0xFF64748B)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -759,7 +766,8 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
       if (!matchesSearch) return false;
 
       if (_selectedStatus != "All Status") {
-        if (!status.contains(_selectedStatus.toLowerCase())) {
+        // Spaces ignored: the server saves "InProgress" (the web's name) for "In Progress"
+        if (!status.replaceAll(' ', '').contains(_selectedStatus.toLowerCase().replaceAll(' ', ''))) {
           return false;
         }
       }
@@ -817,7 +825,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                         fontFamily: appPoppinFont,
                                         fontWeight: FontWeight.w700,
                                         fontSize: isTab ? width * 0.028 : width * 0.058,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                     Text(
@@ -854,7 +862,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                                        const Icon(IosIcons.add_rounded, color: Colors.white, size: 18),
                                         const SizedBox(width: 5),
                                         Text(
                                           "Book Visit",
@@ -886,7 +894,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                   title: "Upcoming",
                                   count: "${effectiveUpcoming.length}",
                                   subtitle: "Today & Future",
-                                  icon: Icons.hourglass_top_rounded,
+                                  icon: IosIcons.hourglass_top_rounded,
                                   iconColor: const Color(0xFF2563EB),
                                   isActive: _activeTab == "upcoming",
                                   onTap: () => setState(() => _activeTab = "upcoming"),
@@ -901,7 +909,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                   title: "Past",
                                   count: "${effectiveCompleted.length}",
                                   subtitle: "Visits & cancellations",
-                                  icon: Icons.check_circle_outline_rounded,
+                                  icon: IosIcons.check_circle_outline_rounded,
                                   iconColor: const Color(0xFF059669),
                                   isActive: _activeTab == "completed",
                                   onTap: () => setState(() => _activeTab = "completed"),
@@ -937,7 +945,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 13,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     decoration: InputDecoration(
                                       hintText: "Search doctor, hospital, condition...",
@@ -946,10 +954,10 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                         fontSize: 12,
                                         color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                                       ),
-                                      prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
+                                      prefixIcon: const Icon(IosIcons.search_rounded, size: 18, color: Color(0xFF2563EB)),
                                       suffixIcon: _searchController.text.isNotEmpty
                                           ? IconButton(
-                                              icon: const Icon(Icons.clear_rounded, size: 16),
+                                              icon: const Icon(IosIcons.clear_rounded, size: 16),
                                               onPressed: () {
                                                 _searchController.clear();
                                                 setState(() {});
@@ -977,13 +985,13 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedStatus,
-                                    icon: const Icon(Icons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
+                                    icon: const Icon(IosIcons.tune_rounded, size: 16, color: Color(0xFF2563EB)),
                                     dropdownColor: isDark ? const Color(0xFF232323) : Colors.white,
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     items: _statusOptions.map((s) {
                                       return DropdownMenuItem(value: s, child: Text(s));
@@ -1054,7 +1062,9 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                           final isCompleted = statusLabel.toLowerCase().contains('complete');
                           final isCancelled = statusLabel.toLowerCase().contains('cancel');
 
-                          final displayStatusLabel = isPaymentPending ? "Pending Payment" : statusLabel;
+                          final displayStatusLabel = isPaymentPending
+                              ? "Pending Payment"
+                              : (statusLabel.toLowerCase().replaceAll(' ', '') == 'inprogress' ? "In Progress" : statusLabel);
                           final statusColor = isCompleted
                               ? const Color(0xFF059669)
                               : (isCancelled
@@ -1390,7 +1400,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                _activeTab == "upcoming" ? Icons.event_available_rounded : Icons.history_rounded,
+                _activeTab == "upcoming" ? IosIcons.event_available_rounded : IosIcons.history_rounded,
                 size: 40,
                 color: const Color(0xFF2563EB),
               ),
@@ -1404,7 +1414,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                 fontFamily: appPoppinFont,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 6),
@@ -1428,7 +1438,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     onAppointmentBooked: _loadAppointments,
                   );
                 },
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: const Icon(IosIcons.add_rounded, size: 18),
                 label: const Text("Book Consultation", style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -51,32 +52,32 @@ class _PatientProfileTabBarState extends State<PatientProfileTabBar> {
   IconData _getTabIcon(String tabName) {
     switch (tabName.toLowerCase()) {
       case 'info':
-        return Icons.info_outline_rounded;
+        return IosIcons.info_outline_rounded;
       case 'appointments':
       case 'appointment':
-        return Icons.calendar_month_outlined;
+        return IosIcons.calendar_month_outlined;
       case 'medical record':
       case 'medical records':
-        return Icons.medical_services_outlined;
+        return IosIcons.medical_services_outlined;
       case 'prescribe':
       case 'prescription':
       case 'prescriptions':
-        return Icons.medication_outlined;
+        return IosIcons.medication_outlined;
       case 'notes':
       case 'clinical notes':
-        return Icons.sticky_note_2_outlined;
+        return IosIcons.sticky_note_2_outlined;
       case 'documents':
       case 'records':
-        return Icons.folder_open_rounded;
+        return IosIcons.folder_open_rounded;
       case 'diet':
       case 'diet plan':
-        return Icons.restaurant_menu_rounded;
+        return IosIcons.restaurant_menu_rounded;
       case 'suggestions':
       case 'suggestion':
       case 'doctor suggestions':
-        return Icons.lightbulb_outline_rounded;
+        return IosIcons.lightbulb_outline_rounded;
       default:
-        return Icons.tab_rounded;
+        return IosIcons.tab_rounded;
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
@@ -26,7 +27,7 @@ class OrganizationCard extends StatelessWidget {
     final expandedSubTileBg = isDarkMode
         ? Colors.white.withOpacity(0.02)
         : const Color(0xFFFAFAFA);
-    final mainText = isDarkMode ? Colors.white : const Color(0xFF1E293B);
+    final mainText = isDarkMode ? Colors.white : const Color(0xFF232323);
     final subText = isDarkMode ? Colors.white60 : const Color(0xFF94A3B8);
 
     final double widthFactor = displayWidth(context);
@@ -90,7 +91,7 @@ class OrganizationCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Icon(
-                          Icons.business_rounded,
+                          IosIcons.business_rounded,
                           color: theme.primaryColor,
                           size: isTab ? 28 : 24,
                         ),
@@ -125,8 +126,8 @@ class OrganizationCard extends StatelessWidget {
                       ),
                       Icon(
                         isExpanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
+                            ? IosIcons.keyboard_arrow_up_rounded
+                            : IosIcons.keyboard_arrow_down_rounded,
                         color: subText,
                         size: isTab ? 28 : 24,
                       ),
@@ -162,7 +163,7 @@ class OrganizationCard extends StatelessWidget {
                                   vertical: isTab ? 8 : 4,
                                 ),
                               leading: Icon(
-                                Icons.wb_sunny_outlined,
+                                IosIcons.wb_sunny_outlined,
                                 color: theme.primaryColor,
                                 size: isTab ? 18 : 16,
                               ),
@@ -179,7 +180,7 @@ class OrganizationCard extends StatelessWidget {
                                 ),
                               ),
                               trailing: Icon(
-                                Icons.chevron_right_rounded,
+                                IosIcons.chevron_right_rounded,
                                 color: subText,
                                 size: isTab ? 24 : 20,
                               ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/constants.dart';
@@ -78,7 +79,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'temp',
       title: 'Temperature',
       unit: '°F',
-      icon: Icons.thermostat_rounded,
+      icon: IosIcons.thermostat_rounded,
       color: Color(0xFFF59E0B), // amber
       bodyPos: Offset(0.5000, 0.0833), // Forehead
       isLeft: true,
@@ -87,7 +88,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'bp',
       title: 'Blood Pressure',
       unit: 'mmHg',
-      icon: Icons.favorite_rounded,
+      icon: IosIcons.favorite_rounded,
       color: Color(0xFF8B5CF6), // violet
       bodyPos: Offset(0.3683, 0.2792), // Right brachial arm
       isLeft: true,
@@ -96,7 +97,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'pulse',
       title: 'Heart Rate',
       unit: 'BPM',
-      icon: Icons.monitor_heart_rounded,
+      icon: IosIcons.monitor_heart_rounded,
       color: Color(0xFFE11D48), // rose
       bodyPos: Offset(0.5357, 0.2750), // Heart
       isLeft: false,
@@ -105,7 +106,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'weight',
       title: 'Weight',
       unit: 'kg',
-      icon: Icons.scale_rounded,
+      icon: IosIcons.scale_rounded,
       color: Color(0xFF10B981), // emerald
       bodyPos: Offset(0.5000, 0.4417), // Core / abdomen
       isLeft: true,
@@ -114,7 +115,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'spO2',
       title: 'Blood Oxygen',
       unit: '%',
-      icon: Icons.air_rounded,
+      icon: IosIcons.air_rounded,
       color: Color(0xFF06B6D4), // cyan
       bodyPos: Offset(0.7087, 0.5167), // Left wrist / hand
       isLeft: false,
@@ -123,7 +124,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
       key: 'height',
       title: 'Height',
       unit: 'cm',
-      icon: Icons.height_rounded,
+      icon: IosIcons.height_rounded,
       color: Color(0xFF3B82F6), // blue
       bodyPos: Offset(0.4632, 0.7000), // Stature / legs
       isLeft: false,
@@ -322,7 +323,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
-                          Icons.accessibility_new_rounded,
+                          IosIcons.accessibility_new_rounded,
                           size: 16,
                           color: _primaryBlue,
                         ),
@@ -339,7 +340,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
                               fontWeight: FontWeight.bold,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF0F172A),
+                                  : const Color(0xFF121212),
                             ),
                           ),
                           Text(
@@ -570,7 +571,7 @@ class _HumanBodyVitalsWidgetState extends State<HumanBodyVitalsWidget>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.touch_app_rounded,
+                        IosIcons.touch_app_rounded,
                         size: 13,
                         color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
                       ),

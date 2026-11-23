@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -89,7 +90,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 15.5 : 14,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -104,7 +105,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.edit_outlined,
+                            IosIcons.edit_outlined,
                             size: 14,
                             color: primaryColor,
                           ),
@@ -194,7 +195,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
                     fontFamily: appPoppinFont,
                     fontSize: isTab ? 13.5 : 12.5,
                     fontWeight: FontWeight.w600,
-                    color: field.customValueColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
+                    color: field.customValueColor ?? (isDark ? Colors.white : const Color(0xFF121212)),
                   ),
                 ),
               ],
@@ -212,7 +213,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: const [
-                  Icon(Icons.check_circle_rounded, size: 11, color: Color(0xFF10B981)),
+                  Icon(IosIcons.check_circle_rounded, size: 11, color: Color(0xFF10B981)),
                   SizedBox(width: 3),
                   Text(
                     "Verified",
@@ -233,7 +234,7 @@ class DoctorProfileSectionCard extends StatelessWidget {
           if (field.isCopyable && field.value.isNotEmpty && field.value != "Not Provided")
             IconButton(
               icon: Icon(
-                Icons.copy_rounded,
+                IosIcons.copy_rounded,
                 size: 15,
                 color: isDark ? Colors.white54 : Colors.grey.shade500,
               ),

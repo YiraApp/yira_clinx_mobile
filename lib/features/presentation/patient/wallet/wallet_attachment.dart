@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/common_widgets/in_app_document_viewer.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -49,7 +50,22 @@ Future<String?> pickWalletAttachment(BuildContext context) async {
   return photo?.path;
 }
 
-Future<void> openWalletFile(BuildContext context, String url) async {
+/// Opens a bill, invoice or policy file inside the app (PDF or photo), like Health Records do;
+/// other file types go to whatever app on the phone opens them.
+Future<void> openWalletFile(BuildContext context, String url, {String? title, String category = 'Bill'}) async {
+  final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
+  final ext = path.contains('.') ? path.split('.').last : '';
+  final type = switch (ext) {
+    'pdf' => 'PDF',
+    'jpg' || 'jpeg' => 'JPG',
+    'png' => 'PNG',
+    'webp' => 'WEBP',
+    _ => '',
+  };
+  if (type.isNotEmpty) {
+    InAppDocumentViewer.show(context, title: (title ?? '').trim().isNotEmpty ? title!.trim() : 'Document', category: category, fileUrl: url, fileType: type);
+    return;
+  }
   final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't open the file.")));

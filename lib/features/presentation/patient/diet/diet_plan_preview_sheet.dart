@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.dart';
@@ -168,13 +169,13 @@ class _DietPlanPreviewSheetState extends State<DietPlanPreviewSheet> {
                     runSpacing: 8,
                     children: [
                       fact(
-                        Icons.event_rounded,
+                        IosIcons.event_rounded,
                         length != null ? '$length days' : (start != null ? 'From ${_date.format(start)}' : 'No end date'),
                       ),
-                      fact(Icons.repeat_rounded, plan.totalDays > 1 ? '${plan.totalDays}-day rotation' : 'Same menu daily'),
-                      if (plan.targetCalories != null) fact(Icons.local_fire_department_rounded, '${plan.targetCalories} kcal/day goal'),
-                      fact(Icons.eco_rounded, plan.dietType),
-                      fact(Icons.restaurant_rounded, '${foods.length} ${foods.length == 1 ? 'food' : 'foods'}'),
+                      fact(IosIcons.repeat_rounded, plan.totalDays > 1 ? '${plan.totalDays}-day rotation' : 'Same menu daily'),
+                      if (plan.targetCalories != null) fact(IosIcons.local_fire_department_rounded, '${plan.targetCalories} kcal/day goal'),
+                      fact(IosIcons.eco_rounded, plan.dietType),
+                      fact(IosIcons.restaurant_rounded, '${foods.length} ${foods.length == 1 ? 'food' : 'foods'}'),
                     ],
                   ),
                   if (start != null && end != null) ...[

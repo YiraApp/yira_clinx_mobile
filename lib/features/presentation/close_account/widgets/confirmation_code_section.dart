@@ -36,7 +36,7 @@ final isTab = isTablet(context);
                 fontFamily: appPoppinFont,
                 fontSize:isTab? width * 0.022: width * 0.04,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF232323),
               ),
             ),
             Text(

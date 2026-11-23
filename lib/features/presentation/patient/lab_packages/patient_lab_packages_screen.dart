@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +14,14 @@ import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
+import 'lab_collection_address.dart';
+import '../wallet/wallet_attachment.dart';
+import 'lab_package_cover.dart';
 
 const Color _primary = Color(0xFF2563EB);
-const Color _teal = Color(0xFF00A896);
+
+/// The screen's one accent: the app's blue.
+const Color _accent = Color(0xFF2563EB);
 
 String _money(num value) {
   final f = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: value % 1 == 0 ? 0 : 2);
@@ -24,9 +30,14 @@ String _money(num value) {
 
 double _num(dynamic v) => double.tryParse((v ?? 0).toString()) ?? 0.0;
 
+/// "Free" for a package with nothing to pay, else the amount.
+String _priceLabel(num value) => value <= 0 ? 'Free' : _money(value);
+
+/// "No fasting needed" is good news, not a warning.
+bool _prepIsEasy(String prep) => RegExp(r'\b(no|not|without)\b.*\b(fast|fasting|preparation|needed|required)\b', caseSensitive: false).hasMatch(prep);
+
 /// Whole-percent saving from the original price to the offer price (both before GST); 0 when none.
-int _offPercent(double original, double offer) =>
-    original > 0 && offer < original ? (((original - offer) / original) * 100).round() : 0;
+int _offPercent(double original, double offer) => original > 0 && offer < original ? (((original - offer) / original) * 100).round() : 0;
 
 /// 18 rather than 18.0
 String _pct(double value) => value % 1 == 0 ? value.toInt().toString() : value.toString();
@@ -48,78 +59,6 @@ String _errorText(Object e, String fallback) {
 Options _auth() {
   final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
   return Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'});
-}
-
-/// The places at the device's position, or null with a message through [tell] when location is
-/// off, not allowed or not found. [purpose] says what location is for ("find packages near you"),
-/// [fallback] what to do without it ("type your pincode").
-Future<List<geo.Placemark>?> _currentPlaces({
-  required void Function(String message, {SnackBarAction? action}) tell,
-  required String purpose,
-  required String fallback,
-}) async {
-  final instead = '${fallback[0].toUpperCase()}${fallback.substring(1)} instead.';
-  try {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      tell('Turn on location to $purpose.', action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openLocationSettings()));
-      return null;
-    }
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.deniedForever) {
-      tell('Location access is off for this app. Allow it in settings, or $fallback.',
-          action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openAppSettings()));
-      return null;
-    }
-    if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
-      tell('Allow location access to $purpose, or $fallback.');
-      return null;
-    }
-
-    Position? position;
-    try {
-      position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
-      );
-    } catch (_) {
-      // no fix in time (indoors, GPS warming up): the last known position is close enough
-      position = await Geolocator.getLastKnownPosition();
-    }
-    if (position == null) {
-      tell('Could not find your location. $instead');
-      return null;
-    }
-    return await geo.Geocoding()
-        .placemarkFromCoordinates(position.latitude, position.longitude)
-        .timeout(const Duration(seconds: 10));
-  } catch (_) {
-    tell('Could not find your location. $instead');
-    return null;
-  }
-}
-
-/// A 6-digit Indian pincode from a place, or null.
-String? _placePincode(geo.Placemark place) {
-  final pin = (place.postalCode ?? '').replaceAll(RegExp(r'\s'), '');
-  return RegExp(r'^[1-9]\d{5}$').hasMatch(pin) ? pin : null;
-}
-
-/// A collection address as the server sends and takes it: line1, line2, landmark, city, state, pincode.
-typedef _Address = Map<String, String>;
-
-_Address? _addressOf(dynamic raw) {
-  if (raw is! Map) return null;
-  String f(String k) => (raw[k] ?? '').toString().trim();
-  final a = {'line1': f('line1'), 'line2': f('line2'), 'landmark': f('landmark'), 'city': f('city'), 'state': f('state'), 'pincode': f('pincode')};
-  return a['line1']!.isEmpty || a['city']!.isEmpty || a['pincode']!.length != 6 ? null : a;
-}
-
-/// "12 MG Road, Indiranagar, Bengaluru, Karnataka 560038"
-String _addressText(_Address a) {
-  final place = [a['city'], a['state']].where((s) => (s ?? '').isNotEmpty).join(', ');
-  return [a['line1'], a['line2'], a['landmark'], '$place ${a['pincode']}'.trim()].where((s) => (s ?? '').isNotEmpty).join(', ');
 }
 
 /// Patient tab: lab packages offered in the patient's pincode, bought at a hospital of their
@@ -148,6 +87,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
   /// Finding the pincode from the device's location
   bool _locating = false;
   bool _firstLoadStarted = false;
+
   /// "Kukatpally, Hyderabad" while the pincode shown came from the current location
   String? _locationLabel;
 
@@ -193,11 +133,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       _packagesError = null;
     });
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            URLs.labPackagesUrl,
-            data: {if (pincode != null && pincode.isNotEmpty) 'pincode': pincode},
-            options: _auth(),
-          );
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(URLs.labPackagesUrl, data: {if (pincode != null && pincode.isNotEmpty) 'pincode': pincode}, options: _auth());
       final data = (res.data is Map) ? res.data['data'] : null;
       final list = (data is Map && data['packages'] is List) ? data['packages'] as List : const [];
       final usedPincode = (data is Map ? data['pincode'] : null)?.toString() ?? '';
@@ -289,19 +225,55 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     }
 
     try {
-      final places = await _currentPlaces(tell: tell, purpose: 'find packages near you', fallback: 'type your pincode');
-      if (places == null) return null;
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        tell(
+          'Turn on location to find packages near you.',
+          action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openLocationSettings()),
+        );
+        return null;
+      }
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        tell(
+          'Location access is off for this app. Allow it in settings, or type your pincode.',
+          action: SnackBarAction(label: 'Settings', onPressed: () => Geolocator.openAppSettings()),
+        );
+        return null;
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.unableToDetermine) {
+        tell('Allow location access to find your pincode, or type it.');
+        return null;
+      }
+
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)),
+        );
+      } catch (_) {
+        // no fix in time (indoors, GPS warming up): the last known position is close enough for a pincode
+        position = await Geolocator.getLastKnownPosition();
+      }
+      if (position == null) {
+        tell('Could not find your location. Type your pincode instead.');
+        return null;
+      }
+
+      final places = await geo.Geocoding().placemarkFromCoordinates(position.latitude, position.longitude).timeout(const Duration(seconds: 10));
       for (final place in places) {
-        final pin = _placePincode(place);
-        if (pin != null) {
-          final label = {place.subLocality, place.locality}
-              .map((s) => (s ?? '').trim())
-              .where((s) => s.isNotEmpty)
-              .join(', ');
+        final pin = (place.postalCode ?? '').replaceAll(RegExp(r'\s'), '');
+        if (RegExp(r'^[1-9]\d{5}$').hasMatch(pin)) {
+          final label = {place.subLocality, place.locality}.map((s) => (s ?? '').trim()).where((s) => s.isNotEmpty).join(', ');
           return (pincode: pin, label: label);
         }
       }
       tell('Could not find the pincode for your location. Type it instead.');
+      return null;
+    } catch (_) {
+      tell('Could not find your location. Type your pincode instead.');
       return null;
     } finally {
       if (mounted) setState(() => _locating = false);
@@ -323,19 +295,17 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     if (index == 1 && !_ordersLoadedOnce) _loadOrders();
   }
 
+  /// The package opens on its own page (details, then booking); it returns the order number once paid.
   Future<void> _openPackage(Map<String, dynamic> pkg) async {
-    final booked = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _LabPackageCheckoutSheet(package: pkg, pincode: _pincodeController.text.trim()),
+    final booked = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => _LabPackageDetailsPage(package: pkg, pincode: _pincodeController.text.trim()),
+      ),
     );
     if (booked != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: _teal,
-        content: Text(booked.isNotEmpty ? 'Payment successful. Order $booked is booked.' : 'Payment successful. Your lab package is booked.'),
-      ));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(backgroundColor: _accent, content: Text(booked.isNotEmpty ? 'Payment successful. Order $booked is booked.' : 'Payment successful. Your lab package is booked.')));
       _switchSegment(1);
       _loadOrders();
     }
@@ -349,20 +319,14 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _SlotPickerSheet(
-        orderId: order['id']?.toString(),
-        currentDate: slot?['date']?.toString(),
-        currentStart: slot?['start']?.toString(),
-        rescheduleEnabled: order['rescheduleEnabled'] != false,
-      ),
+      builder: (_) => _SlotPickerSheet(orderId: order['id']?.toString(), currentDate: slot?['date']?.toString(), currentStart: slot?['start']?.toString()),
     );
     if (updated == null || !mounted) return;
     setState(() => _orders = _orders.map((o) => o['id'] == updated['id'] ? updated : o).toList());
     final booked = updated['slot'] is Map ? updated['slot'] as Map : null;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      backgroundColor: _teal,
-      content: Text(booked != null ? 'Visit booked: ${_slotDay(booked['date']?.toString())}, ${booked['label']}' : 'Visit slot saved.'),
-    ));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(backgroundColor: _accent, content: Text(booked != null ? 'Visit booked: ${_slotDay(booked['date']?.toString())}, ${booked['label']}' : 'Visit slot saved.')));
   }
 
   Future<void> _openReport(Map<String, dynamic> order) async {
@@ -370,10 +334,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     if (id.isEmpty) return;
     setState(() => _openingReportFor = id);
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
-            '${URLs.labPackageOrdersUrl}/$id/report',
-            options: _auth().copyWith(responseType: ResponseType.bytes),
-          );
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).get('${URLs.labPackageOrdersUrl}/$id/report', options: _auth().copyWith(responseType: ResponseType.bytes));
       final bytes = res.data as List<int>;
       final fileName = (order['reportFileName'] ?? '${order['orderNumber'] ?? 'lab-report'}.pdf').toString();
       final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
@@ -403,7 +364,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -413,17 +374,12 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
                 'Packages',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212)),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _SegmentSwitch(
-                labels: const ['Packages', 'My Orders'],
-                selected: _segment,
-                onChanged: _switchSegment,
-                isDark: isDark,
-              ),
+              child: _SegmentSwitch(labels: const ['Packages', 'My Orders'], selected: _segment, onChanged: _switchSegment, isDark: isDark),
             ),
             const SizedBox(height: 12),
             Expanded(child: _segment == 0 ? _buildPackages(isDark) : _buildOrders(isDark)),
@@ -454,7 +410,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                   style: const TextStyle(fontFamily: appPoppinFont, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Your pincode',
-                    prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+                    prefixIcon: const Icon(IosIcons.location_on_outlined, size: 20),
                     suffixIcon: _locating
                         ? const Padding(
                             padding: EdgeInsets.all(12),
@@ -462,14 +418,20 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                           )
                         : IconButton(
                             tooltip: 'Use my current location',
-                            icon: const Icon(Icons.my_location, size: 20, color: _primary),
+                            icon: const Icon(IosIcons.my_location, size: 20, color: _primary),
                             onPressed: _loadingPackages ? null : _useCurrentLocation,
                           ),
                     isDense: true,
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300)),
+                    fillColor: isDark ? const Color(0xFF232323) : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: isDark ? Colors.white12 : Colors.grey.shade300),
+                    ),
                   ),
                 ),
               ),
@@ -485,7 +447,10 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Search', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Search',
+                  style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),
@@ -495,14 +460,14 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             padding: const EdgeInsets.fromLTRB(20, 6, 16, 0),
             child: Row(
               children: [
-                const Icon(Icons.near_me, size: 14, color: _teal),
+                const Icon(IosIcons.near_me, size: 14, color: _accent),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     'Your current location · $_locationLabel',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                   ),
                 ),
               ],
@@ -529,24 +494,24 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                     ),
                   )
                 : _packagesError != null
-                    ? _messageList(Icons.error_outline, _packagesError!, isDark)
-                    : _packages.isEmpty && _fallbackPackages.isNotEmpty
-                        ? _buildFallback(isDark)
-                    : _packages.isEmpty
-                        ? _messageList(
-                            Icons.science_outlined,
-                            _pincodeController.text.trim().isEmpty
-                                ? 'Enter your pincode to see lab packages available near you.'
-                                : 'No lab packages are available for pincode ${_pincodeController.text.trim()} yet.',
-                            isDark,
-                          )
-                        : ListView.separated(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                            itemCount: _packages.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 12),
-                            itemBuilder: (_, i) => _PackageCard(pkg: _packages[i], isDark: isDark, onTap: () => _openPackage(_packages[i])),
-                          ),
+                ? _messageList(IosIcons.error_outline, _packagesError!, isDark)
+                : _packages.isEmpty && _fallbackPackages.isNotEmpty
+                ? _buildFallback(isDark)
+                : _packages.isEmpty
+                ? _messageList(
+                    IosIcons.science_outlined,
+                    _pincodeController.text.trim().isEmpty
+                        ? 'Enter your pincode to see lab packages available near you.'
+                        : 'No lab packages are available for pincode ${_pincodeController.text.trim()} yet.',
+                    isDark,
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                    itemCount: _packages.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _PackageCard(pkg: _packages[i], isDark: isDark, onTap: () => _openPackage(_packages[i])),
+                  ),
           ),
         ),
       ],
@@ -559,22 +524,22 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
       child: _loadingOrders && _orders.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : _ordersError != null
-              ? _messageList(Icons.error_outline, _ordersError!, isDark)
-              : _orders.isEmpty
-                  ? _messageList(Icons.receipt_long_outlined, 'You have no lab orders yet. Book a package from the Packages tab.', isDark)
-                  : ListView.separated(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                      itemCount: _orders.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _OrderCard(
-                        order: _orders[i],
-                        isDark: isDark,
-                        openingReport: _openingReportFor == _orders[i]['id']?.toString(),
-                        onViewReport: () => _openReport(_orders[i]),
-                        onChangeSlot: () => _changeSlot(_orders[i]),
-                      ),
-                    ),
+          ? _messageList(IosIcons.error_outline, _ordersError!, isDark)
+          : _orders.isEmpty
+          ? _messageList(IosIcons.receipt_long_outlined, 'You have no lab orders yet. Book a package from the Packages tab.', isDark)
+          : ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              itemCount: _orders.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (_, i) => _OrderCard(
+                order: _orders[i],
+                isDark: isDark,
+                openingReport: _openingReportFor == _orders[i]['id']?.toString(),
+                onViewReport: () => _openReport(_orders[i]),
+                onChangeSlot: () => _changeSlot(_orders[i]),
+              ),
+            ),
     );
   }
 
@@ -590,14 +555,14 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFFFBEB),
+            color: isDark ? const Color(0xFF232323) : const Color(0xFFFFFBEB),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFFDE68A)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309)),
+              Icon(IosIcons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : const Color(0xFFB45309)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -613,24 +578,24 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Icon(Icons.local_hospital_outlined, size: 18, color: _primary),
+            const Icon(IosIcons.local_hospital_outlined, size: 18, color: _primary),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 'Packages from $hospital',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212)),
               ),
             ),
           ],
         ),
         Padding(
           padding: const EdgeInsets.only(left: 24, top: 2, bottom: 10),
-          child: Text('Bookable from any pincode', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted)),
+          child: Text(
+            'Bookable from any pincode',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
+          ),
         ),
-        for (final pkg in _fallbackPackages) ...[
-          _PackageCard(pkg: pkg, isDark: isDark, onTap: () => _openPackage(pkg)),
-          const SizedBox(height: 12),
-        ],
+        for (final pkg in _fallbackPackages) ...[_PackageCard(pkg: pkg, isDark: isDark, onTap: () => _openPackage(pkg)), const SizedBox(height: 12)],
       ],
     );
   }
@@ -643,7 +608,11 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
         const SizedBox(height: 40),
         Icon(icon, size: 48, color: isDark ? Colors.white38 : Colors.grey.shade400),
         const SizedBox(height: 12),
-        Text(message, textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white60 : Colors.grey.shade600)),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white60 : Colors.grey.shade600),
+        ),
       ],
     );
   }
@@ -660,10 +629,7 @@ class _SegmentSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: List.generate(labels.length, (i) {
           final active = i == selected;
@@ -673,10 +639,7 @@ class _SegmentSwitch extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: active ? (isDark ? const Color(0xFF334155) : Colors.white) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(9),
-                ),
+                decoration: BoxDecoration(color: active ? (isDark ? const Color(0xFF3A3A3A) : Colors.white) : Colors.transparent, borderRadius: BorderRadius.circular(9)),
                 alignment: Alignment.center,
                 child: Text(
                   labels[i],
@@ -696,6 +659,8 @@ class _SegmentSwitch extends StatelessWidget {
   }
 }
 
+/// A package in the list: its picture with the saving and report time on it, what it covers,
+/// and the price with a way into the details page.
 class _PackageCard extends StatelessWidget {
   final Map<String, dynamic> pkg;
   final bool isDark;
@@ -704,108 +669,225 @@ class _PackageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tests = (pkg['tests'] is List) ? (pkg['tests'] as List).map((e) => e.toString()).toList() : <String>[];
+    final groups = _testGroupsOf(pkg);
+    final tests = groups.map((g) => (g['name'] ?? '').toString()).where((t) => t.trim().isNotEmpty).toList();
+    final params = _num(pkg['parameterCount']).toInt();
     final offer = _num(pkg['price']);
     final original = pkg['mrp'] == null ? 0.0 : _num(pkg['mrp']);
     final off = _offPercent(original, offer);
     final gstPct = _num(pkg['gstPercentage']);
-    final prep = (pkg['preparation'] ?? '').toString();
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(color: _primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.science_rounded, color: _primary, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    final prep = (pkg['preparation'] ?? '').toString().trim();
+    final turnaround = (pkg['reportTurnaround'] ?? '').toString().trim();
+    final ink = isDark ? Colors.white : const Color(0xFF121212);
+    final muted = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
+    final look = labPackageLook(pkg);
+
+    return Material(
+      color: isDark ? const Color(0xFF232323) : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Hero(
+                tag: 'lab-package-${pkg['id']}',
+                child: LabPackageCover(
+                  package: pkg,
+                  height: 132,
+                  fitPhoto: true,
+                  child: Stack(
                     children: [
-                      Text(pkg['name']?.toString() ?? 'Lab package',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${tests.length} test${tests.length == 1 ? '' : 's'}'
-                        '${_num(pkg['parameterCount']) > tests.length ? ' · ${_num(pkg['parameterCount']).toInt()} parameters' : ''}'
-                        '${(pkg['reportTurnaround'] ?? '').toString().isNotEmpty ? ' · Report in ${pkg['reportTurnaround']}' : ''}',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
-                      ),
+                      if (off > 0) Positioned(top: 12, left: 12, child: _CoverPill(text: '$off% OFF', strong: true)),
+                      Positioned(left: 12, bottom: 12, child: _CoverPill(text: look.label)),
                     ],
                   ),
                 ),
-              ],
-            ),
-            if (tests.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                tests.take(4).join(' • ') + (tests.length > 4 ? ' +${tests.length - 4} more' : ''),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569)),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pkg['name']?.toString() ?? 'Lab package',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: ink, height: 1.25),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(IosIcons.biotech_outlined, size: 15, color: muted),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '${tests.length} test${tests.length == 1 ? '' : 's'}${params > tests.length ? ' · $params parameters' : ''}'
+                            '${turnaround.isNotEmpty ? ' · Report in $turnaround' : ''}',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (tests.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(spacing: 6, runSpacing: 6, children: [for (final t in tests.take(3)) _testChip(t), if (tests.length > 3) _testChip('+${tests.length - 3} more', highlight: true)]),
+                    ],
+                    if (prep.isNotEmpty || _num(pkg['benefitsValue']) > 0) const SizedBox(height: 10),
+                    if (prep.isNotEmpty)
+                      _infoLine(
+                        _prepIsEasy(prep) ? IosIcons.check_circle_outline : IosIcons.no_food_outlined,
+                        'Preparation: $prep',
+                        _prepIsEasy(prep) ? (isDark ? Colors.white70 : const Color(0xFF475569)) : (isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309)),
+                      ),
+                    if (_num(pkg['benefitsValue']) > 0)
+                      _infoLine(
+                        IosIcons.workspace_premium_outlined,
+                        'Worth ${_rupees(_num(pkg['benefitsValue']))}${pkg['benefitsValuePlus'] == true ? '+' : ''} of care',
+                        isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
+                        bold: true,
+                      ),
+                    const SizedBox(height: 12),
+                    Divider(height: 1, color: line),
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (off > 0)
+                                Text(
+                                  _money(original),
+                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted, decoration: TextDecoration.lineThrough),
+                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    _priceLabel(offer),
+                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 21, fontWeight: FontWeight.w800, color: isDark ? const Color(0xFF93B4FF) : _primary),
+                                  ),
+                                  if (gstPct > 0 && offer > 0) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '+ ${_pct(gstPct)}% GST',
+                                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        FilledButton(
+                          onPressed: onTap,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _primary,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'View details',
+                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(IosIcons.arrow_forward_rounded, size: 16),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
-            if (prep.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Row(children: [
-                Icon(Icons.info_outline, size: 14, color: Colors.orange.shade700),
-                const SizedBox(width: 4),
-                Expanded(child: Text(prep, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: Colors.orange.shade800))),
-              ]),
-            ],
-            if (_num(pkg['benefitsValue']) > 0) ...[
-              const SizedBox(height: 6),
-              Row(children: [
-                const Icon(Icons.workspace_premium_outlined, size: 14, color: Color(0xFF047857)),
-                const SizedBox(width: 4),
-                Text(
-                  'Worth ${_rupees(_num(pkg['benefitsValue']))}${pkg['benefitsValuePlus'] == true ? '+' : ''} of care',
-                  style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF047857)),
-                ),
-              ]),
-            ],
-            const SizedBox(height: 12),
-            // Original price struck through → offer price, the saving, and GST added on top
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (off > 0) ...[
-                  Text(_money(original),
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.grey.shade500, decoration: TextDecoration.lineThrough)),
-                  const SizedBox(width: 8),
-                ],
-                Text(_money(offer), style: const TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.w800, color: _primary)),
-                if (off > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: _teal.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(8)),
-                    child: Text('$off% OFF', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, color: _teal)),
-                  ),
-                ],
-                const Spacer(),
-                if (gstPct > 0)
-                  Text('+ ${_pct(gstPct)}% GST',
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600)),
-              ],
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _testChip(String text, {bool highlight = false}) {
+    final blue = isDark ? const Color(0xFF93B4FF) : _accent;
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 190),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: highlight ? blue.withValues(alpha: isDark ? 0.16 : 0.08) : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontFamily: appPoppinFont,
+          fontSize: 11.5,
+          fontWeight: highlight ? FontWeight.w600 : FontWeight.w500,
+          color: highlight ? blue : (isDark ? Colors.white70 : const Color(0xFF334155)),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoLine(IconData icon, String text, Color color, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: bold ? FontWeight.w700 : FontWeight.w500, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A label on a package picture: white glass, readable on any cover or photo.
+class _CoverPill extends StatelessWidget {
+  final String text;
+  final bool strong;
+  const _CoverPill({required this.text, this.strong = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: strong ? Colors.white : Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: strong ? null : Border.all(color: Colors.white.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: strong ? FontWeight.w800 : FontWeight.w600, color: strong ? _accent : Colors.white),
+          ),
+        ],
       ),
     );
   }
@@ -815,20 +897,55 @@ class _PackageCard extends StatelessWidget {
 String _rupees(num value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(value.round());
 
 /// Icon and colours of a "why it is worth it" card; the same set as the web admin's picker
-const Map<String, (IconData, Color, Color)> _benefitIcons = {
-  'lab': (Icons.science_outlined, Color(0xFFECFDF5), Color(0xFF047857)),
-  'doctor': (Icons.medical_services_outlined, Color(0xFFEEF2FF), Color(0xFF4338CA)),
-  'report': (Icons.description_outlined, Color(0xFFFFFBEB), Color(0xFFB45309)),
-  'dental': (Icons.mood, Color(0xFFFDF2F8), Color(0xFFBE185D)),
-  'eye': (Icons.visibility_outlined, Color(0xFFF0F9FF), Color(0xFF0369A1)),
-  'insurance': (Icons.verified_user_outlined, Color(0xFF047857), Colors.white),
-  'home': (Icons.home_outlined, Color(0xFFF0FDFA), Color(0xFF0F766E)),
-  'family': (Icons.family_restroom, Color(0xFFF5F3FF), Color(0xFF6D28D9)),
-  'support': (Icons.support_agent, Color(0xFFFFF7ED), Color(0xFFC2410C)),
-  'heart': (Icons.favorite_border, Color(0xFFFFF1F2), Color(0xFFBE123C)),
-  'calendar': (Icons.event_available, Color(0xFFF7FEE7), Color(0xFF4D7C0F)),
-  'video': (Icons.videocam_outlined, Color(0xFFEFF6FF), Color(0xFF1D4ED8)),
+const Map<String, IconData> _benefitIcons = {
+  'lab': IosIcons.science_outlined,
+  'doctor': IosIcons.medical_services_outlined,
+  'report': IosIcons.description_outlined,
+  'dental': IosIcons.sentiment_satisfied_alt_outlined,
+  'eye': IosIcons.visibility_outlined,
+  'insurance': IosIcons.health_and_safety_outlined,
+  'home': IosIcons.home_outlined,
+  'family': IosIcons.family_restroom_outlined,
+  'support': IosIcons.support_agent_outlined,
+  'heart': IosIcons.favorite_border,
+  'calendar': IosIcons.event_available_outlined,
+  'video': IosIcons.videocam_outlined,
 };
+
+/// Words in a benefit's title that name its icon, for benefits saved with the generic
+/// 'lab' icon (or none): "Dental check-up" gets the dental icon, not a flask.
+const List<(String, String)> _benefitKeywords = [
+  ('dental', 'dental'),
+  ('dentist', 'dental'),
+  ('tooth', 'dental'),
+  ('teeth', 'dental'),
+  ('eye', 'eye'),
+  ('vision', 'eye'),
+  ('optic', 'eye'),
+  ('insurance', 'insurance'),
+  ('accident', 'insurance'),
+  ('cover', 'insurance'),
+  ('consult', 'doctor'),
+  ('doctor', 'doctor'),
+  ('physician', 'doctor'),
+  ('report', 'report'),
+  ('home', 'home'),
+  ('family', 'family'),
+  ('video', 'video'),
+  ('heart', 'heart'),
+  ('cardio', 'heart'),
+  ('support', 'support'),
+];
+
+IconData _benefitIcon(Map benefit) {
+  final key = benefit['icon']?.toString().trim().toLowerCase() ?? '';
+  if (key.isNotEmpty && key != 'lab' && _benefitIcons.containsKey(key)) return _benefitIcons[key]!;
+  final title = (benefit['title'] ?? '').toString().toLowerCase();
+  for (final (word, icon) in _benefitKeywords) {
+    if (title.contains(word)) return _benefitIcons[icon]!;
+  }
+  return _benefitIcons['lab']!;
+}
 
 /// A package's tests with their parameters: `testGroups` from the server, or (older packages) the
 /// plain `tests` names, each then a single test.
@@ -842,14 +959,7 @@ List<Map<String, dynamic>> _testGroupsOf(Map<String, dynamic> pkg) {
 }
 
 /// Badge colours (background, number) the test cards cycle through
-const List<(Color, Color)> _testBadgeColors = [
-  (Color(0xFFE6F4EE), Color(0xFF0F7A55)),
-  (Color(0xFFFFF4DC), Color(0xFFB7791F)),
-  (Color(0xFFE8EEFF), Color(0xFF3B5BDB)),
-  (Color(0xFFFDECEF), Color(0xFFC2255C)),
-  (Color(0xFFE3F5FA), Color(0xFF0B7285)),
-  (Color(0xFFF1EAFE), Color(0xFF6741D9)),
-];
+const List<(Color, Color)> _testBadgeColors = [(Color(0xFFEAF0FE), _accent)];
 
 /// "Tests included": a card per test with its parameter count, name and description; tapping +
 /// opens the parameters in two columns, − closes them.
@@ -868,7 +978,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     final groups = widget.groups;
     final parameters = groups.fold<int>(0, (n, g) => n + ((g['tests'] is List && (g['tests'] as List).isNotEmpty) ? (g['tests'] as List).length : 1));
@@ -876,9 +986,14 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tests included', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
-        Text('${groups.length} test${groups.length == 1 ? '' : 's'}${parameters > groups.length ? ' · $parameters parameters' : ''}',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+        Text(
+          'Tests included',
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
+        ),
+        Text(
+          '${groups.length} test${groups.length == 1 ? '' : 's'}${parameters > groups.length ? ' · $parameters parameters' : ''}',
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+        ),
         const SizedBox(height: 10),
         for (var i = 0; i < groups.length; i++) _card(i, groups[i], textColor, subColor),
       ],
@@ -896,7 +1011,7 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
       ),
@@ -914,20 +1029,29 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                     height: 46,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: isDark ? badgeFg.withValues(alpha: 0.2) : badgeBg, borderRadius: BorderRadius.circular(12)),
-                    child: Text('${canOpen ? params.length : 1}',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: isDark ? Colors.white : badgeFg)),
+                    child: Text(
+                      '${canOpen ? params.length : 1}',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w800, color: isDark ? const Color(0xFF93B4FF) : badgeFg),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(group['name']?.toString() ?? '', style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor)),
-                        if (description.isNotEmpty) Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
+                        Text(
+                          group['name']?.toString() ?? '',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
+                        ),
+                        if (description.isNotEmpty)
+                          Text(
+                            description,
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+                          ),
                       ],
                     ),
                   ),
-                  if (canOpen) Icon(open ? Icons.remove : Icons.add, color: _teal, size: 22),
+                  if (canOpen) Icon(open ? IosIcons.remove : IosIcons.add, color: _accent, size: 22),
                 ],
               ),
             ),
@@ -943,20 +1067,27 @@ class _TestGroupCardsState extends State<_TestGroupCards> {
                     spacing: 12,
                     runSpacing: 8,
                     children: params
-                        .map((p) => SizedBox(
-                              width: column,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.only(top: 6),
-                                    child: CircleAvatar(radius: 3, backgroundColor: Color(0xFF0F7A55)),
+                        .map(
+                          (p) => SizedBox(
+                            width: column,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 6),
+                                  child: CircleAvatar(radius: 3, backgroundColor: _accent),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    p,
+                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: textColor),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(p, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: textColor))),
-                                ],
-                              ),
-                            ))
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                         .toList(),
                   );
                 },
@@ -980,78 +1111,123 @@ class _WorthItSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = benefits.fold<double>(0, (s, b) => s + _num(b['value']));
     final plus = benefits.any((b) => b['valuePlus'] == true);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    // Values marked "+" are estimates, so the saving is rounded down to a round figure.
+    final saving = plus ? ((total - pays) / 100).floor() * 100.0 : total - pays;
+    final accent = Theme.of(context).primaryColor;
+    final ink = isDark ? Colors.white : const Color(0xFF111111);
+    final muted = isDark ? Colors.white70 : const Color(0xFF5F6368);
+    final card = isDark ? const Color(0xFF232323) : Colors.white;
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('WHY IT IS WORTH IT',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 2, color: Color(0xFF047857))),
+        Text(
+          'WHY IT IS WORTH IT',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.6, color: accent),
+        ),
         if (total > 0) ...[
           const SizedBox(height: 6),
-          Text('${_rupees(total)}${plus ? '+' : ''} of care for ${_rupees(pays)}.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 22, fontWeight: FontWeight.w800, color: textColor, height: 1.2)),
-        ],
-        const SizedBox(height: 4),
-        Text('What these would typically cost if you booked them separately.',
-            textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-        const SizedBox(height: 12),
-        ...benefits.map((b) {
-          final style = _benefitIcons[b['icon']?.toString()] ?? _benefitIcons['lab']!;
-          final highlight = b['highlight'] == true;
-          final value = _num(b['value']);
-          final description = (b['description'] ?? '').toString();
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: highlight ? const Color(0xFFA7F3D0) : (isDark ? Colors.white12 : const Color(0xFFE2E8F0))),
-              gradient: highlight
-                  ? LinearGradient(colors: [const Color(0xFFECFDF5), isDark ? const Color(0xFF1E293B) : Colors.white])
-                  : null,
-              color: highlight ? null : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          Text(
+            '${_rupees(total)}${plus ? '+' : ''} of care for ${_rupees(pays)}',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 21, fontWeight: FontWeight.w700, color: ink, height: 1.25),
+          ),
+          if (saving > 0) ...[
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: isDark ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'You save ${_rupees(saving)}${plus ? '+' : ''}',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : accent),
+                ),
+              ),
             ),
-            child: Row(
+          ],
+        ],
+        const SizedBox(height: 8),
+        Text(
+          'What each would typically cost if booked on its own.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          decoration: BoxDecoration(
+            color: card,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: line),
+          ),
+          child: Column(
+            children: [
+              for (final (i, b) in benefits.indexed) ...[if (i > 0) Divider(height: 1, thickness: 1, indent: 66, color: line), _benefitRow(b, accent: accent, ink: ink, muted: muted)],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _benefitRow(Map b, {required Color accent, required Color ink, required Color muted}) {
+    final value = _num(b['value']);
+    final description = (b['description'] ?? '').toString();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? 0.18 : 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(_benefitIcon(b), color: isDark ? const Color(0xFF93B4FF) : accent, size: 21),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(color: style.$2, borderRadius: BorderRadius.circular(12)),
-                  child: Icon(style.$1, color: style.$3, size: 22),
+                Text(
+                  (b['title'] ?? '').toString(),
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: ink, height: 1.3),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text((b['title'] ?? '').toString(),
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w800, color: highlight && isDark ? Colors.white : textColor)),
-                      if (description.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(description, style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-                      ],
-                    ],
-                  ),
-                ),
-                if (value > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(20)),
-                    child: Text('${_rupees(value)}${b['valuePlus'] == true ? '+' : ''} value',
-                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF92400E))),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: muted, height: 1.35),
                   ),
                 ],
               ],
             ),
-          );
-        }),
-      ],
+          ),
+          if (value > 0) ...[
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${_rupees(value)}${b['valuePlus'] == true ? '+' : ''}',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w700, color: ink),
+                ),
+                Text(
+                  'value',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -1083,16 +1259,12 @@ class _OrderCard extends StatelessWidget {
     final canChangeSlot = order['canChangeSlot'] == true;
     final changeUntil = DateTime.tryParse(order['slotChangeUntil']?.toString() ?? '')?.toLocal();
     final lockedReason = order['slotLockedReason']?.toString();
-    // Off at the hospital (Lab Packages → Settings): the hospital fixes the visit time with the patient
-    final slotsEnabled = order['slotsEnabled'] != false;
     final showSlot = slot != null || status == 'Paid';
-    final address = _addressOf(order['collectionAddress']);
     final muted = isDark ? Colors.white54 : Colors.grey.shade600;
-    final waitingColor = slotsEnabled ? const Color(0xFFD97706) : const Color(0xFF64748B);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF232323) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
       ),
@@ -1102,99 +1274,138 @@ class _OrderCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(order['packageName']?.toString() ?? 'Lab package',
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+                child: Text(
+                  order['packageName']?.toString() ?? 'Lab package',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF121212)),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                child: Text(order['statusLabel']?.toString() ?? status,
-                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+                child: Text(
+                  order['statusLabel']?.toString() ?? status,
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w700, color: color),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(order['hospitalName']?.toString() ?? '',
-              style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569))),
+          Text(
+            order['hospitalName']?.toString() ?? '',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+          ),
           const SizedBox(height: 2),
           Text(
             '${order['orderNumber'] ?? ''}${created != null ? ' · ${DateFormat('dd MMM yyyy').format(created)}' : ''}${slot == null && preferred != null && preferred.isNotEmpty ? ' · Visit ${_formatDay(preferred)}' : ''}',
             style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: muted),
           ),
+          if (order['collectionAddress'] is Map && ((order['collectionAddress'] as Map)['text'] ?? '').toString().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(IosIcons.location_on_outlined, size: 14, color: muted),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    (order['collectionAddress'] as Map)['text'].toString(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (showSlot) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.fromLTRB(10, 8, 4, 8),
               decoration: BoxDecoration(
-                color: slot != null ? _primary.withValues(alpha: isDark ? 0.15 : 0.06) : waitingColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                color: slot != null ? _primary.withValues(alpha: isDark ? 0.15 : 0.06) : const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.15 : 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(slot != null ? Icons.event_available : (slotsEnabled ? Icons.event_outlined : Icons.phone_in_talk_outlined),
-                      size: 20, color: slot != null ? _primary : waitingColor),
+                  Icon(slot != null ? IosIcons.event_available : IosIcons.event_outlined, size: 20, color: slot != null ? _primary : const Color(0xFFD97706)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          slot != null
-                              ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}'
-                              : (slotsEnabled ? 'No visit slot chosen yet' : 'Visit time to be fixed by the hospital'),
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          slot != null ? '${_slotDay(slot['date']?.toString())} · ${slot['label']}' : 'No visit slot chosen yet',
+                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF121212)),
                         ),
                         if (slot != null && canChangeSlot && changeUntil != null)
-                          Text('You can change it until ${DateFormat('hh:mm a, dd MMM').format(changeUntil)}',
-                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted))
+                          Text(
+                            'You can change it until ${DateFormat('hh:mm a, dd MMM').format(changeUntil)}',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted),
+                          )
                         else if (slot == null && canChangeSlot)
-                          Text('Choose when to visit the hospital for your sample.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted))
+                          Text(
+                            'Choose when to visit the hospital for your sample.',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted),
+                          )
                         else if (!canChangeSlot && status == 'Paid' && lockedReason != null)
-                          Text(lockedReason, style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted)),
+                          Text(
+                            lockedReason,
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: muted),
+                          ),
                       ],
                     ),
                   ),
                   if (canChangeSlot)
                     TextButton(
                       onPressed: onChangeSlot,
-                      child: Text(slot == null ? 'Choose' : 'Reschedule', style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        slot == null ? 'Choose' : 'Reschedule',
+                        style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700),
+                      ),
                     ),
                 ],
               ),
             ),
           ],
-          if (address != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.location_on_outlined, size: 16, color: muted),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text('Sample collection: ${_addressText(address)}',
-                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF475569))),
-                ),
-              ],
-            ),
-          ],
           const SizedBox(height: 10),
           Row(
             children: [
-              Text(_money(_num(order['totalAmount'])),
-                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+              Text(
+                _money(_num(order['totalAmount'])),
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF121212)),
+              ),
               const SizedBox(width: 6),
-              Text('paid', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600)),
+              Text(
+                'paid',
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600),
+              ),
               const Spacer(),
+              if ((order['invoiceUrl'] ?? '').toString().startsWith('https://'))
+                TextButton.icon(
+                  key: const Key('labOrder.invoice'),
+                  onPressed: () => openWalletFile(
+                    context,
+                    order['invoiceUrl'].toString(),
+                    title: 'Invoice ${order['invoiceNumber'] ?? order['orderNumber'] ?? ''}'.trim(),
+                    category: 'Invoice',
+                  ),
+                  icon: const Icon(IosIcons.receipt_long_outlined, size: 18),
+                  label: const Text('Invoice', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
+                ),
               if (hasReport)
                 TextButton.icon(
                   onPressed: openingReport ? null : onViewReport,
-                  icon: openingReport
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.description_outlined, size: 18),
-                  label: const Text('View report', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600)),
+                  icon: openingReport ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(IosIcons.description_outlined, size: 18),
+                  label: const Text(
+                    'View report',
+                    style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
+                  ),
                 )
               else if (status != 'Cancelled')
-                Text('Report pending', style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600)),
+                Text(
+                  'Report pending',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white54 : Colors.grey.shade600),
+                ),
             ],
           ),
         ],
@@ -1208,57 +1419,43 @@ class _OrderCard extends StatelessWidget {
   }
 }
 
-/// Package details, the hospital to visit (its own Razorpay account takes the payment), an optional
-/// preferred date and notes, the price with GST, and Pay. Pops with the order number once paid.
-class _LabPackageCheckoutSheet extends StatefulWidget {
+/// A package's own page: its picture, what it covers and why it is worth it, then booking: the
+/// collection address, an optional visit slot and notes, the price with GST, and Pay (the nearest
+/// hospital's own Razorpay account takes the payment). Pops with the order number once paid.
+class _LabPackageDetailsPage extends StatefulWidget {
   final Map<String, dynamic> package;
   final String pincode;
-  const _LabPackageCheckoutSheet({required this.package, required this.pincode});
+
+  /// Tests only: the hospitals to show instead of loading them
+  final List<Map<String, dynamic>>? hospitals;
+
+  /// The second step, opened by Book now: address, visit slot, notes, price and Pay.
+  final bool checkout;
+  const _LabPackageDetailsPage({required this.package, required this.pincode, this.hospitals, this.checkout = false});
 
   @override
-  State<_LabPackageCheckoutSheet> createState() => _LabPackageCheckoutSheetState();
+  State<_LabPackageDetailsPage> createState() => _LabPackageDetailsPageState();
 }
 
-class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
+class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
   bool _loadingHospitals = true;
   String? _hospitalsError;
   List<Map<String, dynamic>> _hospitals = [];
   int? _hospitalId;
+
   /// Optional at checkout; it can also be chosen from My Orders after paying
   _SlotChoice? _slot;
-  /// Where the sample is collected; required when the hospital asks for it
-  _Address? _address;
+
+  /// Where the sample is collected, when the hospital asks for one
+  LabCollectionAddress? _address;
   final TextEditingController _notesController = TextEditingController();
   bool _paying = false;
   String? _payError;
 
-  /// The hospital the order goes to (the first the server lists) and its app options from Settings
-  Map<String, dynamic>? get _hospital => _hospitals.isEmpty ? null : _hospitals.first;
-  bool get _slotsEnabled => _hospital?['slotsEnabled'] != false;
-  bool get _rescheduleEnabled => _hospital?['rescheduleEnabled'] != false;
-  bool get _collectAddress => _hospital?['collectAddress'] == true;
-  int get _cutoffHours => int.tryParse('${_hospital?['cutoffHours'] ?? ''}') ?? 5;
-
-  Future<void> _pickAddress() async {
-    final chosen = await showModalBottomSheet<_Address>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AddressPickerSheet(current: _address),
-    );
-    if (chosen != null && mounted) {
-      setState(() {
-        _address = chosen;
-        _payError = null;
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _loadHospitals();
+    if (widget.checkout) _loadHospitals();
   }
 
   @override
@@ -1267,13 +1464,33 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     super.dispose();
   }
 
+  /// The collection address's pincode once there is one, else the pincode the patient searched.
+  String get _pincode => _address?.pincode ?? widget.pincode;
+
+  Map<String, dynamic>? get _hospital {
+    for (final h in _hospitals) {
+      if (int.tryParse(h['id'].toString()) == _hospitalId) return h;
+    }
+    return null;
+  }
+
+  /// The hospital's "Collect address" setting (Lab Package Orders → Settings); without it the
+  /// server keeps no address, so none is asked for.
+  bool get _collectAddress => _hospital?['collectAddress'] == true;
+
   Future<void> _loadHospitals() async {
+    if (widget.hospitals != null) {
+      setState(() {
+        _hospitals = widget.hospitals!;
+        _hospitalId = _hospitals.isEmpty ? null : int.tryParse(_hospitals.first['id'].toString());
+        _loadingHospitals = false;
+      });
+      return;
+    }
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            URLs.labPackageHospitalsUrl,
-            data: {'packageId': widget.package['id'], if (widget.pincode.isNotEmpty) 'pincode': widget.pincode},
-            options: _auth(),
-          );
+      final res = await sl<ApiClient>()
+          .account(showSuccessSnack: false)
+          .post(URLs.labPackageHospitalsUrl, data: {'packageId': widget.package['id'], if (_pincode.isNotEmpty) 'pincode': _pincode}, options: _auth());
       final data = (res.data is Map) ? res.data['data'] : null;
       if (!mounted) return;
       setState(() {
@@ -1289,6 +1506,16 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     }
   }
 
+  /// Book now: the second step collects the address, slot and notes, and pays.
+  Future<void> _openCheckout() async {
+    final booked = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => _LabPackageDetailsPage(package: widget.package, pincode: widget.pincode, hospitals: widget.hospitals, checkout: true),
+      ),
+    );
+    if (booked != null && mounted) Navigator.of(context).pop(booked);
+  }
+
   /// The chosen hospital's visit slots (its timings from Lab Package Orders → Settings).
   Future<void> _pickSlot() async {
     if (_hospitalId == null) {
@@ -1300,12 +1527,7 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _SlotPickerSheet(
-        hospitalId: _hospitalId,
-        currentDate: _slot?.date,
-        currentStart: _slot?.start,
-        rescheduleEnabled: _rescheduleEnabled,
-      ),
+      builder: (_) => _SlotPickerSheet(hospitalId: _hospitalId, currentDate: _slot?.date, currentStart: _slot?.start),
     );
     if (choice != null && mounted) {
       setState(() {
@@ -1315,13 +1537,33 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     }
   }
 
+  Future<void> _pickAddress() async {
+    final picked = await LabAddressPickerSheet.show(context, current: _address, pincode: _pincode);
+    if (picked == null || !mounted) return;
+    final pincodeChanged = picked.pincode != _pincode;
+    setState(() {
+      _address = picked;
+      _payError = null;
+      if (pincodeChanged) {
+        // Hospitals near the new pincode come first; the slot belongs to the old hospital.
+        _loadingHospitals = true;
+        _hospitalsError = null;
+        _hospitals = [];
+        _hospitalId = null;
+        _slot = null;
+      }
+    });
+    if (pincodeChanged) await _loadHospitals();
+  }
+
   Future<void> _pay() async {
-    if (_hospitalId == null) {
-      setState(() => _payError = 'Choose the hospital where you will give your sample.');
+    if (_collectAddress && _address == null) {
+      setState(() => _payError = 'Add the address where your sample will be collected.');
+      _pickAddress();
       return;
     }
-    if (_collectAddress && _address == null) {
-      setState(() => _payError = 'Choose the address where the sample will be collected.');
+    if (_hospitalId == null) {
+      setState(() => _payError = 'Choose the hospital where you will give your sample.');
       return;
     }
     setState(() {
@@ -1329,15 +1571,13 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
       _payError = null;
     });
     final user = GlobalSession.instance.userNotifier.value?.data;
-    final address = _collectAddress ? _address : null;
     final result = await RazorpayPaymentService.instance.processLabPackagePayment(
       packageId: int.tryParse(widget.package['id'].toString()) ?? 0,
       hospitalId: _hospitalId!,
-      // a home collection is checked against the address's own pincode
-      pincode: address?['pincode'] ?? widget.pincode,
-      preferredDate: _slotsEnabled ? _slot?.date : null,
-      slotStart: _slotsEnabled ? _slot?.start : null,
-      address: address,
+      pincode: _pincode,
+      address: _collectAddress ? _address?.toJson() : null,
+      preferredDate: _slot?.date,
+      slotStart: _slot?.start,
       notes: _notesController.text,
       patientName: user?.firstName?.toString(),
       patientPhone: user?.phoneNumber?.toString(),
@@ -1354,6 +1594,61 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     });
   }
 
+  /// The collection address, or a prompt to add one.
+  Widget _addressTile(bool isDark, Color textColor, Color subColor) {
+    final a = _address;
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFD7DCE3);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: _paying ? null : _pickAddress,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: a == null && _payError != null ? Colors.red : line),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(IosIcons.location_on_outlined, size: 20, color: a == null ? (isDark ? const Color(0xFF93B4FF) : _accent) : textColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: a == null
+                    ? Text(
+                        'Add sample collection address *',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : _accent),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sample collection address',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            a.text,
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, fontWeight: FontWeight.w500, color: textColor, height: 1.35),
+                          ),
+                        ],
+                      ),
+              ),
+              if (a != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  'Change',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF93B4FF) : _accent),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1364,179 +1659,429 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
     final gstPct = _num(pkg['gstPercentage']);
     final gst = _num(pkg['gstAmount']);
     final total = _num(pkg['totalAmount']);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      expand: false,
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+    final look = labPackageLook(pkg);
+    final turnaround = (pkg['reportTurnaround'] ?? '').toString().trim();
+    final groups = _testGroupsOf(pkg);
+    final params = _num(pkg['parameterCount']).toInt();
+    final pageBg = isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC);
+    final cardBg = isDark ? const Color(0xFF232323) : Colors.white;
+    final line = isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
+
+    Widget section(String title, List<Widget> children) => Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title.isNotEmpty) ...[
+            Text(
+              title,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: textColor),
+            ),
+            const SizedBox(height: 12),
+          ],
+          ...children,
+        ],
+      ),
+    );
+
+    if (widget.checkout) {
+      return Scaffold(
+        backgroundColor: pageBg,
+        appBar: AppBar(
+          backgroundColor: cardBg,
+          surfaceTintColor: Colors.transparent,
+          foregroundColor: textColor,
+          elevation: 0,
+          title: Text(
+            'Book package',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w700, color: textColor),
+          ),
         ),
-        child: Column(
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            const SizedBox(height: 10),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2))),
-            Expanded(
-              child: ListView(
-                controller: controller,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            // What is being booked
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: line),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
                 children: [
-                  Text(pkg['name']?.toString() ?? 'Lab package', style: TextStyle(fontFamily: appPoppinFont, fontSize: 20, fontWeight: FontWeight.w700, color: textColor)),
-                  if ((pkg['description'] ?? '').toString().isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(pkg['description'].toString(), style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor)),
-                  ],
-                  const SizedBox(height: 14),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    if ((pkg['sampleType'] ?? '').toString().isNotEmpty) _chip(Icons.water_drop_outlined, pkg['sampleType'].toString(), isDark),
-                    if ((pkg['reportTurnaround'] ?? '').toString().isNotEmpty) _chip(Icons.schedule, 'Report in ${pkg['reportTurnaround']}', isDark),
-                    if ((pkg['preparation'] ?? '').toString().isNotEmpty) _chip(Icons.info_outline, pkg['preparation'].toString(), isDark),
-                  ]),
-                  if (pkg['benefits'] is List && (pkg['benefits'] as List).isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    _WorthItSection(benefits: (pkg['benefits'] as List).whereType<Map>().toList(), pays: total, isDark: isDark),
-                  ],
-                  const SizedBox(height: 18),
-                  _TestGroupCards(groups: _testGroupsOf(pkg), isDark: isDark),
-                  const SizedBox(height: 18),
-                  // The hospital is picked for the patient (no choice shown); only say when booking is not possible
-                  if (_hospitalsError != null) ...[
-                    Text(_hospitalsError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red)),
-                    const SizedBox(height: 10),
-                  ] else if (!_loadingHospitals && _hospitals.isEmpty) ...[
-                    Text('This package cannot be booked online right now.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-                    const SizedBox(height: 10),
-                  ],
-                  if (_collectAddress) ...[
-                    OutlinedButton.icon(
-                      onPressed: _paying ? null : _pickAddress,
-                      icon: Icon(_address == null ? Icons.add_location_alt_outlined : Icons.location_on, size: 18),
-                      label: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          _address == null ? 'Choose sample collection address' : _addressText(_address!),
-                          style: const TextStyle(fontFamily: appPoppinFont),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                  SizedBox(width: 92, height: 92, child: LabPackageCover(package: pkg, height: 92)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            pkg['name']?.toString() ?? 'Lab package',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: textColor),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${groups.length} test${groups.length == 1 ? '' : 's'}${turnaround.isNotEmpty ? ' · Report in $turnaround' : ''}',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _priceLabel(total),
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? const Color(0xFF93B4FF) : _primary),
+                          ),
+                        ],
                       ),
-                      style: OutlinedButton.styleFrom(
-                        alignment: Alignment.centerLeft,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 4),
-                      child: Text(_address == null ? 'Required: the lab collects your sample at this address.' : 'Tap to change the address.',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor)),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (_slotsEnabled) ...[
-                    OutlinedButton.icon(
-                      onPressed: _paying ? null : _pickSlot,
-                      icon: Icon(_slot == null ? Icons.event_outlined : Icons.event_available, size: 18),
-                      label: Text(
-                        _slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}',
-                        style: const TextStyle(fontFamily: appPoppinFont),
-                      ),
-                      style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14)),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, left: 4),
-                      child: Text(
-                        _rescheduleEnabled
-                            ? 'You can also choose or change it later in My Orders, until $_cutoffHours hours before the slot.'
-                            : 'You can also choose it later in My Orders. Once chosen, call the hospital to change it.',
-                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor),
-                      ),
-                    ),
-                  ] else if (_hospital != null)
-                    Row(children: [
-                      Icon(Icons.phone_in_talk_outlined, size: 16, color: subColor),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text('After you pay, the hospital will call you to fix the visit time.',
-                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: subColor)),
-                      ),
-                    ]),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _notesController,
-                    enabled: !_paying,
-                    maxLength: 500,
-                    maxLines: 2,
-                    style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
-                    decoration: InputDecoration(
-                      hintText: 'Notes for the lab (optional)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      isDense: true,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
-                    child: Column(children: [
-                      if (off > 0) ...[
-                        Row(children: [
-                          Text('Original price', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor)),
-                          const Spacer(),
-                          Text(_money(original),
-                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor, decoration: TextDecoration.lineThrough)),
-                        ]),
-                        const SizedBox(height: 6),
-                      ],
-                      _priceRow(off > 0 ? 'Offer price ($off% off)' : 'Package price', _money(price), subColor, textColor),
-                      const SizedBox(height: 6),
-                      _priceRow('GST (${_pct(gstPct)}%)', _money(gst), subColor, textColor),
-                      const Divider(height: 18),
-                      _priceRow('Total', _money(total), textColor, textColor, bold: true),
-                      if (off > 0) ...[
-                        const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Text('You save ${_money(original - price)}',
-                              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700, color: _teal)),
-                        ),
-                      ],
-                    ]),
-                  ),
-                  if (_payError != null) ...[
-                    const SizedBox(height: 10),
-                    Text(_payError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red)),
-                  ],
+                  const SizedBox(width: 12),
                 ],
               ),
             ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: (_paying || _loadingHospitals || _hospitals.isEmpty) ? null : _pay,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            section('Book this package', [
+              // The hospital is picked for the patient (no choice shown); only say when booking is not possible
+              if (_hospitalsError != null) ...[
+                Text(
+                  _hospitalsError!,
+                  style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red),
+                ),
+                const SizedBox(height: 10),
+              ] else if (!_loadingHospitals && _hospitals.isEmpty) ...[
+                Text(
+                  'This package cannot be booked online right now.',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
+                ),
+                const SizedBox(height: 10),
+              ],
+              if (_collectAddress) ...[
+                _addressTile(isDark, textColor, subColor),
+                const SizedBox(height: 12),
+              ],
+              OutlinedButton.icon(
+                onPressed: _paying ? null : _pickSlot,
+                icon: Icon(_slot == null ? IosIcons.event_outlined : IosIcons.event_available, size: 18),
+                label: Text(_slot == null ? 'Choose visit slot (optional)' : 'Visit ${_slotDay(_slot!.date)} · ${_slot!.label}', style: const TextStyle(fontFamily: appPoppinFont)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: isDark ? const Color(0xFF93B4FF) : _accent,
+                  side: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFD7DCE3)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  alignment: Alignment.centerLeft,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Text(
+                  'You can also choose or change it later in My Orders, until 5 hours before the slot.',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notesController,
+                enabled: !_paying,
+                maxLength: 500,
+                maxLines: 2,
+                style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Notes for the lab (optional)',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  isDense: true,
+                ),
+              ),
+            ]),
+            section('Price details', [
+              if (off > 0) ...[
+                Row(
+                  children: [
+                    Text(
+                      'Original price',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor),
                     ),
-                    child: _paying
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Pay ${_money(total)}', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
+                    const Spacer(),
+                    Text(
+                      _money(original),
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor, decoration: TextDecoration.lineThrough),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+              ],
+              _priceRow(off > 0 ? 'Offer price ($off% off)' : 'Package price', _money(price), subColor, textColor),
+              const SizedBox(height: 6),
+              _priceRow('GST (${_pct(gstPct)}%)', _money(gst), subColor, textColor),
+              Divider(height: 20, color: line),
+              _priceRow('Total', _money(total), textColor, textColor, bold: true),
+              if (off > 0) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'You save ${_money(original - price)}',
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857)),
                   ),
+                ),
+              ],
+            ]),
+            if (_payError != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _payError!,
+                style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: Colors.red),
+              ),
+            ],
+          ],
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: cardBg,
+            border: Border(top: BorderSide(color: line)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: Row(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _priceLabel(total),
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w800, color: textColor),
+                      ),
+                      Text(
+                        total <= 0 ? 'Nothing to pay' : gstPct > 0 ? 'incl. ${_pct(gstPct)}% GST' : 'Total to pay',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: ElevatedButton(
+                      key: const Key('labPackage.pay'),
+                      onPressed: (_paying || _loadingHospitals || _hospitals.isEmpty) ? null : _pay,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 50),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: _paying
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : Text(
+                              total > 0 ? 'Pay ${_money(total)}' : 'Confirm booking',
+                              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: pageBg,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 250,
+            backgroundColor: isDark ? const Color(0xFF1A1A1A) : _primary,
+            foregroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            // white status bar icons over the coloured cover
+            systemOverlayStyle: SystemUiOverlayStyle.light,
+            leading: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.22),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  tooltip: 'Back',
+                  icon: const Icon(IosIcons.arrow_back_rounded, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.of(context).maybePop(),
                 ),
               ),
             ),
-          ],
+            flexibleSpace: LayoutBuilder(
+              builder: (context, box) {
+                final collapsed = box.maxHeight <= kToolbarHeight + MediaQuery.paddingOf(context).top + 8;
+                return FlexibleSpaceBar(
+                  titlePadding: const EdgeInsetsDirectional.only(start: 64, end: 16, bottom: 16),
+                  title: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: collapsed ? 1 : 0,
+                    child: Text(
+                      pkg['name']?.toString() ?? 'Lab package',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                  background: Hero(
+                    tag: 'lab-package-${pkg['id']}',
+                    child: LabPackageCover(
+                      package: pkg,
+                      height: 250 + MediaQuery.paddingOf(context).top,
+                      large: true,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 20,
+                            bottom: 18,
+                            child: Row(
+                              children: [
+                                _CoverPill(text: look.label),
+                                if (off > 0) ...[const SizedBox(width: 8), _CoverPill(text: '$off% OFF', strong: true)],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            sliver: SliverList.list(
+              children: [
+                Text(
+                  pkg['name']?.toString() ?? 'Lab package',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 21, fontWeight: FontWeight.w700, color: textColor, height: 1.25),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${groups.length} test${groups.length == 1 ? '' : 's'}${params > groups.length ? ' · $params parameters' : ''}${turnaround.isNotEmpty ? ' · Report in $turnaround' : ''}',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: subColor),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _priceLabel(price),
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 26, fontWeight: FontWeight.w800, color: isDark ? const Color(0xFF93B4FF) : _primary),
+                    ),
+                    if (off > 0) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        _money(original),
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, color: subColor, decoration: TextDecoration.lineThrough),
+                      ),
+                    ],
+                    if (gstPct > 0 && price > 0) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '+ ${_pct(gstPct)}% GST',
+                        style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: subColor),
+                      ),
+                    ],
+                  ],
+                ),
+                if ((pkg['description'] ?? '').toString().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    pkg['description'].toString(),
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor, height: 1.45),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if ((pkg['sampleType'] ?? '').toString().isNotEmpty) _chip(IosIcons.water_drop_outlined, pkg['sampleType'].toString(), isDark),
+                    if (turnaround.isNotEmpty) _chip(IosIcons.schedule, 'Report in $turnaround', isDark),
+                    if ((pkg['preparation'] ?? '').toString().isNotEmpty)
+                        _chip(_prepIsEasy(pkg['preparation'].toString()) ? IosIcons.check_circle_outline : IosIcons.no_food_outlined, 'Preparation: ${pkg['preparation']}', isDark),
+                    _chip(IosIcons.home_outlined, 'Sample collected at home', isDark),
+                  ],
+                ),
+                if (pkg['benefits'] is List && (pkg['benefits'] as List).isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 22),
+                    child: _WorthItSection(benefits: (pkg['benefits'] as List).whereType<Map>().toList(), pays: total, isDark: isDark),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 22),
+                  child: _TestGroupCards(groups: groups, isDark: isDark),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      // Total and Pay stay in reach while reading the details
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          border: Border(top: BorderSide(color: line)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            child: Row(
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _priceLabel(total),
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w800, color: textColor),
+                    ),
+                    Text(
+                      total <= 0 ? 'Nothing to pay' : gstPct > 0 ? 'incl. ${_pct(gstPct)}% GST' : 'Total to pay',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: subColor),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: ElevatedButton(
+                    key: const Key('labPackage.bookNow'),
+                    onPressed: _openCheckout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 50),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Book now',
+                      style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1545,21 +2090,37 @@ class _LabPackageCheckoutSheetState extends State<_LabPackageCheckoutSheet> {
   Widget _chip(IconData icon, String text, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 14, color: isDark ? Colors.white70 : const Color(0xFF475569)),
-        const SizedBox(width: 4),
-        Flexible(child: Text(text, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF475569)))),
-      ]),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _priceRow(String label, String value, Color labelColor, Color valueColor, {bool bold = false}) {
-    return Row(children: [
-      Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: bold ? 15 : 13, fontWeight: bold ? FontWeight.w700 : FontWeight.w500, color: labelColor)),
-      const Spacer(),
-      Text(value, style: TextStyle(fontFamily: appPoppinFont, fontSize: bold ? 16 : 13, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: valueColor)),
-    ]);
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: bold ? 15 : 13, fontWeight: bold ? FontWeight.w700 : FontWeight.w500, color: labelColor),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: TextStyle(fontFamily: appPoppinFont, fontSize: bold ? 16 : 13, fontWeight: bold ? FontWeight.w800 : FontWeight.w600, color: valueColor),
+        ),
+      ],
+    );
   }
 }
 
@@ -1574,9 +2135,7 @@ class _SlotPickerSheet extends StatefulWidget {
   final int? hospitalId;
   final String? currentDate;
   final String? currentStart;
-  /// Off at the hospital: a chosen slot cannot be moved in the app afterwards
-  final bool rescheduleEnabled;
-  const _SlotPickerSheet({this.orderId, this.hospitalId, this.currentDate, this.currentStart, this.rescheduleEnabled = true});
+  const _SlotPickerSheet({this.orderId, this.hospitalId, this.currentDate, this.currentStart});
 
   @override
   State<_SlotPickerSheet> createState() => _SlotPickerSheetState();
@@ -1610,11 +2169,9 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
       _error = null;
     });
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            URLs.labPackageSlotsUrl,
-            data: widget.orderId != null ? {'orderId': widget.orderId} : {'hospitalId': widget.hospitalId},
-            options: _auth(),
-          );
+      final res = await sl<ApiClient>()
+          .account(showSuccessSnack: false)
+          .post(URLs.labPackageSlotsUrl, data: widget.orderId != null ? {'orderId': widget.orderId} : {'hospitalId': widget.hospitalId}, options: _auth());
       final data = (res.data is Map) ? res.data['data'] : null;
       final days = (data is Map && data['days'] is List) ? data['days'] as List : const [];
       if (!mounted) return;
@@ -1646,11 +2203,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
       _saveError = null;
     });
     try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(
-            '${URLs.labPackageOrdersUrl}/${widget.orderId}/slot',
-            data: {'date': date, 'slotStart': start},
-            options: _auth(),
-          );
+      final res = await sl<ApiClient>().account(showSuccessSnack: false).post('${URLs.labPackageOrdersUrl}/${widget.orderId}/slot', data: {'date': date, 'slotStart': start}, options: _auth());
       final data = (res.data is Map) ? res.data['data'] : null;
       if (!mounted) return;
       if (data is Map) {
@@ -1669,7 +2222,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textColor = isDark ? Colors.white : const Color(0xFF121212);
     final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     final rescheduling = widget.currentStart != null;
     final unchanged = _date == widget.currentDate && _start == widget.currentStart;
@@ -1678,7 +2231,7 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        color: isDark ? const Color(0xFF121212) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -1689,33 +2242,54 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)))),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
               const SizedBox(height: 14),
-              Text(rescheduling ? 'Reschedule your visit' : 'Choose a visit slot',
-                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
+              Text(
+                rescheduling ? 'Reschedule your visit' : 'Choose a visit slot',
+                style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor),
+              ),
               const SizedBox(height: 4),
               Text(
-                widget.rescheduleEnabled
-                    ? 'You can change it until $_cutoffHours hours before the slot.'
-                    : 'Once chosen, the slot can only be changed by calling the hospital.',
+                'You can change it until $_cutoffHours hours before the slot.',
                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor),
               ),
               const SizedBox(height: 16),
               if (_loading)
-                const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (_error != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Column(children: [
-                    Text(_error!, textAlign: TextAlign.center, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.red)),
-                    TextButton(onPressed: _load, child: const Text('Try again', style: TextStyle(fontFamily: appPoppinFont))),
-                  ]),
+                  child: Column(
+                    children: [
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: Colors.red),
+                      ),
+                      TextButton(
+                        onPressed: _load,
+                        child: const Text('Try again', style: TextStyle(fontFamily: appPoppinFont)),
+                      ),
+                    ],
+                  ),
                 )
               else if (_days.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Text('No visit slots are open in the next 14 days. Please call the hospital.',
-                      textAlign: TextAlign.center, style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor)),
+                  child: Text(
+                    'No visit slots are open in the next 14 days. Please call the hospital.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: subColor),
+                  ),
                 )
               else ...[
                 SizedBox(
@@ -1733,24 +2307,27 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
                         onTap: _saving
                             ? null
                             : () => setState(() {
-                                  _date = date;
-                                  if (!_slotsOf(date).any((s) => s['start'] == _start)) _start = null;
-                                }),
+                                _date = date;
+                                if (!_slotsOf(date).any((s) => s['start'] == _start)) _start = null;
+                              }),
                         child: Container(
                           width: 58,
-                          decoration: BoxDecoration(
-                            color: selected ? _primary : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
+                          decoration: BoxDecoration(color: selected ? _primary : (isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9)), borderRadius: BorderRadius.circular(14)),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(d != null ? DateFormat('EEE').format(d) : '',
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor)),
-                              Text(d != null ? DateFormat('dd').format(d) : (date ?? ''),
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: selected ? Colors.white : textColor)),
-                              Text(d != null ? DateFormat('MMM').format(d) : '',
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor)),
+                              Text(
+                                d != null ? DateFormat('EEE').format(d) : '',
+                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor),
+                              ),
+                              Text(
+                                d != null ? DateFormat('dd').format(d) : (date ?? ''),
+                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: selected ? Colors.white : textColor),
+                              ),
+                              Text(
+                                d != null ? DateFormat('MMM').format(d) : '',
+                                style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: selected ? Colors.white70 : subColor),
+                              ),
                             ],
                           ),
                         ),
@@ -1759,7 +2336,10 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Time', style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: textColor)),
+                Text(
+                  'Time',
+                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: textColor),
+                ),
                 const SizedBox(height: 8),
                 Flexible(
                   child: SingleChildScrollView(
@@ -1769,7 +2349,10 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
                       children: slots.map((s) {
                         final selected = s['start'] == _start;
                         return ChoiceChip(
-                          label: Text(s['label']?.toString() ?? '', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: selected ? Colors.white : textColor)),
+                          label: Text(
+                            s['label']?.toString() ?? '',
+                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: selected ? Colors.white : textColor),
+                          ),
                           selected: selected,
                           selectedColor: _primary,
                           showCheckmark: false,
@@ -1782,7 +2365,10 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
               ],
               if (_saveError != null) ...[
                 const SizedBox(height: 10),
-                Text(_saveError!, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red)),
+                Text(
+                  _saveError!,
+                  style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: Colors.red),
+                ),
               ],
               const SizedBox(height: 16),
               SizedBox(
@@ -1797,322 +2383,30 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
                   ),
                   child: _saving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(rescheduling ? 'Reschedule' : 'Confirm slot', style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Where the lab collects the sample: one of the patient's saved addresses (profile, earlier lab
-/// orders) or a new one, which the device's location can fill in. Pops with the chosen address.
-class _AddressPickerSheet extends StatefulWidget {
-  final _Address? current;
-  const _AddressPickerSheet({this.current});
-
-  @override
-  State<_AddressPickerSheet> createState() => _AddressPickerSheetState();
-}
-
-class _AddressPickerSheetState extends State<_AddressPickerSheet> {
-  bool _loading = true;
-  List<({String label, _Address address})> _saved = [];
-  /// An index into [_saved], or -1 for the new address below
-  int _selected = -1;
-  final _formKey = GlobalKey<FormState>();
-  final Map<String, TextEditingController> _fields = {
-    for (final k in const ['line1', 'line2', 'landmark', 'city', 'state', 'pincode']) k: TextEditingController(),
-  };
-  bool _locating = false;
-  String? _locateMessage;
-  SnackBarAction? _locateAction;
-
-  @override
-  void initState() {
-    super.initState();
-    final current = widget.current;
-    if (current != null) {
-      for (final k in _fields.keys) {
-        _fields[k]!.text = current[k] ?? '';
-      }
-    }
-    _load();
-  }
-
-  @override
-  void dispose() {
-    for (final c in _fields.values) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  String _key(_Address a) => _addressText(a).toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-
-  Future<void> _load() async {
-    try {
-      final res = await sl<ApiClient>().account(showSuccessSnack: false).post(URLs.labPackageAddressesUrl, data: const {}, options: _auth());
-      final data = (res.data is Map) ? res.data['data'] : null;
-      final saved = <({String label, _Address address})>[];
-      for (final raw in (data is List ? data : const [])) {
-        final address = _addressOf(raw);
-        if (address != null) saved.add((label: (raw['label'] ?? 'Saved').toString(), address: address));
-      }
-      if (!mounted) return;
-      final current = widget.current;
-      setState(() {
-        _saved = saved;
-        _selected = current != null
-            ? saved.indexWhere((s) => _key(s.address) == _key(current))
-            : (saved.isNotEmpty ? 0 : -1);
-      });
-    } catch (_) {
-      // no saved addresses to offer: the patient types one
-      if (mounted) setState(() => _selected = -1);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  /// Fills the new address from the device's location; the house number usually needs a check.
-  Future<void> _useLocation() async {
-    if (_locating) return;
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _locating = true;
-      _selected = -1;
-      _locateMessage = null;
-      _locateAction = null;
-    });
-    void tell(String message, {SnackBarAction? action}) {
-      if (!mounted) return;
-      setState(() {
-        _locateMessage = message;
-        _locateAction = action;
-      });
-    }
-
-    try {
-      final places = await _currentPlaces(tell: tell, purpose: 'fill in your address', fallback: 'type the address');
-      if (places == null || !mounted) return;
-      geo.Placemark? place;
-      for (final p in places) {
-        if (_placePincode(p) != null) {
-          place = p;
-          break;
-        }
-      }
-      if (place == null) {
-        tell('Could not find the address for your location. Type it instead.');
-        return;
-      }
-      String clean(String? s) => (s ?? '').trim();
-      final street = [clean(place.subThoroughfare), clean(place.thoroughfare)].where((s) => s.isNotEmpty).join(' ');
-      final line1 = street.isNotEmpty ? street : (clean(place.street).isNotEmpty ? clean(place.street) : clean(place.name));
-      final city = clean(place.locality).isNotEmpty ? clean(place.locality) : clean(place.subAdministrativeArea);
-      final pin = _placePincode(place)!;
-      setState(() {
-        _fields['line1']!.text = line1;
-        _fields['line2']!.text = clean(place!.subLocality);
-        _fields['city']!.text = city;
-        _fields['state']!.text = clean(place.administrativeArea);
-        _fields['pincode']!.text = pin;
-        _locateMessage = 'Filled from your location. Check the house or flat number before you continue.';
-        _locateAction = null;
-      });
-    } finally {
-      if (mounted) setState(() => _locating = false);
-    }
-  }
-
-  void _confirm() {
-    if (_selected >= 0 && _selected < _saved.length) {
-      Navigator.of(context).pop(_saved[_selected].address);
-      return;
-    }
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(<String, String>{
-      for (final e in _fields.entries) e.key: e.value.text.trim().replaceAll(RegExp(r'\s+'), ' '),
-    });
-  }
-
-  Widget _field(String key, String label, {bool required = false, TextInputType? type, String? Function(String value)? check}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        controller: _fields[key],
-        keyboardType: type,
-        textCapitalization: type == null ? TextCapitalization.words : TextCapitalization.none,
-        inputFormatters: key == 'pincode' ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)] : null,
-        style: const TextStyle(fontFamily: appPoppinFont, fontSize: 13),
-        decoration: InputDecoration(
-          labelText: required ? '$label *' : label,
-          isDense: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        validator: (v) {
-          final value = (v ?? '').trim();
-          if (required && value.isEmpty) return 'Required';
-          return check?.call(value);
-        },
-      ),
-    );
-  }
-
-  Widget _choice({required bool selected, required VoidCallback onTap, required Widget child, required bool isDark, required Color subColor}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? _primary : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)), width: selected ? 1.6 : 1),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, size: 20, color: selected ? _primary : subColor),
-              const SizedBox(width: 10),
-              Expanded(child: child),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subColor = isDark ? Colors.white60 : const Color(0xFF64748B);
-    final typingNew = _selected == -1;
-
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2))),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Sample collection address',
-                          style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: textColor)),
-                      const SizedBox(height: 4),
-                      Text('The lab collects your sample here.', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-                      const SizedBox(height: 14),
-                      if (_loading)
-                        const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
-                      else ...[
-                        for (var i = 0; i < _saved.length; i++)
-                          _choice(
-                            selected: _selected == i,
-                            onTap: () => setState(() => _selected = i),
-                            isDark: isDark,
-                            subColor: subColor,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(_saved[i].label,
-                                    style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w700, color: textColor)),
-                                const SizedBox(height: 2),
-                                Text(_addressText(_saved[i].address), style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: subColor)),
-                              ],
-                            ),
-                          ),
-                        _choice(
-                          selected: typingNew,
-                          onTap: () => setState(() => _selected = -1),
-                          isDark: isDark,
-                          subColor: subColor,
-                          child: Text(_saved.isEmpty ? 'Enter the address' : 'Use a new address',
-                              style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                      : Text(
+                          rescheduling ? 'Reschedule' : 'Confirm slot',
+                          style: const TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700),
                         ),
-                        if (typingNew) ...[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: _locating ? null : _useLocation,
-                              icon: _locating
-                                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                                  : const Icon(Icons.my_location, size: 16),
-                              label: const Text('Use my current location', style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5)),
-                            ),
-                          ),
-                          if (_locateMessage != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(children: [
-                                Expanded(child: Text(_locateMessage!, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: subColor))),
-                                if (_locateAction != null)
-                                  TextButton(
-                                    onPressed: _locateAction!.onPressed,
-                                    child: Text(_locateAction!.label, style: const TextStyle(fontFamily: appPoppinFont)),
-                                  ),
-                              ]),
-                            ),
-                          const SizedBox(height: 4),
-                          _field('line1', 'House / flat no. and street', required: true),
-                          _field('line2', 'Area / locality'),
-                          _field('landmark', 'Landmark'),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: _field('city', 'City', required: true)),
-                              const SizedBox(width: 10),
-                              Expanded(child: _field('state', 'State')),
-                            ],
-                          ),
-                          _field('pincode', 'Pincode', required: true, type: TextInputType.number,
-                              check: (v) => RegExp(r'^[1-9]\d{5}$').hasMatch(v) ? null : 'Enter a 6-digit pincode'),
-                        ],
-                      ],
-                    ],
-                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _loading ? null : _confirm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text('Use this address', style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700)),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+/// Tests only: a package card and a package's page, without the network.
+@visibleForTesting
+Widget labPackageCardForTest(Map<String, dynamic> pkg, {bool isDark = false}) => _PackageCard(pkg: pkg, isDark: isDark, onTap: () {});
+
+@visibleForTesting
+Widget labPackageDetailsForTest(Map<String, dynamic> pkg, {bool checkout = false, bool collectAddress = true}) => _LabPackageDetailsPage(
+  package: pkg,
+  pincode: '500072',
+  hospitals: [
+    {'id': 19, 'name': 'Yira Hospitals', 'collectAddress': collectAddress},
+  ],
+  checkout: checkout,
+);

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/colors/colors.dart';
@@ -91,8 +92,8 @@ class AppointmentCard extends StatelessWidget {
                             children: [
                               Icon(
                                 appointment.type == AppointmentType.videoCall
-                                    ? Icons.videocam_outlined
-                                    : Icons.access_time_rounded,
+                                    ? IosIcons.videocam_outlined
+                                    : IosIcons.access_time_rounded,
                                 size: 16,
                                 color: theme.primaryColor,
                               ),
@@ -166,7 +167,7 @@ class AppointmentCard extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.phone, size: 14, color: theme.hintColor),
+                                    Icon(IosIcons.phone, size: 14, color: theme.hintColor),
                                     const SizedBox(width: 4),
                                     Text(
                                       appointment.phoneNumber,
@@ -181,7 +182,7 @@ class AppointmentCard extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      appointment.category == "Follow-up" ? Icons.history : Icons.medical_services_outlined,
+                                      appointment.category == "Follow-up" ? IosIcons.history : IosIcons.medical_services_outlined,
                                       size: 14,
                                       color: theme.hintColor,
                                     ),
@@ -199,7 +200,7 @@ class AppointmentCard extends StatelessWidget {
                                  Row(
                                    children: [
                                      Icon(
-                                       appointment.type == AppointmentType.videoCall ? Icons.videocam : Icons.location_on_outlined,
+                                       appointment.type == AppointmentType.videoCall ? IosIcons.videocam : IosIcons.location_on_outlined,
                                        size: 14,
                                        color: theme.hintColor,
                                      ),
@@ -217,7 +218,7 @@ class AppointmentCard extends StatelessWidget {
                                    const SizedBox(height: 4),
                                    Row(
                                      children: [
-                                       Icon(Icons.local_hospital_rounded, size: 14, color: theme.primaryColor),
+                                       Icon(IosIcons.local_hospital_rounded, size: 14, color: theme.primaryColor),
                                        const SizedBox(width: 4),
                                        Expanded(
                                          child: Text(
@@ -290,7 +291,7 @@ class AppointmentCard extends StatelessWidget {
                                       }
                                     },
                                     icon: Icon(
-                                      Icons.video_call_rounded,
+                                      IosIcons.video_call_rounded,
                                       color: isDark ? const Color(0xFF64B5F6) : theme.primaryColor,
                                     ),
                                     tooltip: 'Start Video Consultation',
@@ -299,7 +300,7 @@ class AppointmentCard extends StatelessWidget {
                                 ),
                                IconButton(
                                 onPressed: onEdit,
-                                icon: Icon(Icons.edit_note_outlined, color: theme.hintColor),
+                                icon: Icon(IosIcons.edit_note_outlined, color: theme.hintColor),
                                 splashRadius: 15,
                               ),
                             ],

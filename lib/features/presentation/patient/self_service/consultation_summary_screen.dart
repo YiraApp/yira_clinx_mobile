@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/constants/constants.dart';
@@ -22,7 +23,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
         title: const Text('Consultation Summary', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.print_rounded),
+            icon: const Icon(IosIcons.print_rounded),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Generating printable summary PDF...')),
@@ -52,7 +53,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 26,
                         backgroundColor: primaryColor.withOpacity(0.12),
-                        child: Icon(Icons.medical_services_rounded, color: primaryColor, size: 24),
+                        child: Icon(IosIcons.medical_services_rounded, color: primaryColor, size: 24),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -75,8 +76,8 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                 _buildSummarySection(
                   context: context,
                   title: 'Chief Complaint & Diagnosis',
-                  icon: Icons.search_rounded,
-                  iconColor: Colors.blue,
+                  icon: IosIcons.search_rounded,
+                  iconColor: const Color(0xFF2563EB),
                   content: 'Patient presented with mild chest tightness and dyspnea on exertion. EKG showed normal sinus rhythm. Primary Diagnosis: Mild Stress-Induced Angina.',
                 ),
                 const SizedBox(height: 14),
@@ -85,7 +86,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                 _buildSummarySection(
                   context: context,
                   title: 'Doctor Advice & Instructions',
-                  icon: Icons.assignment_rounded,
+                  icon: IosIcons.assignment_rounded,
                   iconColor: Colors.teal,
                   content: '1. Maintain low-sodium diet and avoid high-caffeine beverages.\n2. Daily 30-minute moderate walking.\n3. Repeat Lipid Profile test in 30 days.',
                 ),
@@ -95,7 +96,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
                 _buildSummarySection(
                   context: context,
                   title: 'Prescribed Medications',
-                  icon: Icons.medication_rounded,
+                  icon: IosIcons.medication_rounded,
                   iconColor: Colors.purple,
                   content: '• Atorvastatin 10mg — 1 tablet daily at bedtime (30 Days)\n• Aspirin 75mg — 1 tablet daily post breakfast (30 Days)\n• Metoprolol 25mg — 1/2 tablet twice daily (15 Days)',
                 ),
@@ -131,13 +132,13 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
             children: [
               Icon(icon, color: iconColor, size: 20),
               const SizedBox(width: 8),
-              Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+              Text(title, style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF121212))),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             content,
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : const Color(0xFF334155)),
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, height: 1.5, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A)),
           ),
         ],
       ),

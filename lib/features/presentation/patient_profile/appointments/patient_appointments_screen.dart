@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/constants.dart';
@@ -139,9 +140,9 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RecordEmptyState(icon: Icons.wifi_off_rounded, title: "Unable to Load", message: state.error),
+                  RecordEmptyState(icon: IosIcons.wifi_off_rounded, title: "Unable to Load", message: state.error),
                   const SizedBox(height: 16),
-                  RecordPrimaryButton(label: 'Retry', icon: Icons.refresh_rounded, compact: true, onPressed: _loadAppointments),
+                  RecordPrimaryButton(label: 'Retry', icon: IosIcons.refresh_rounded, compact: true, onPressed: _loadAppointments),
                 ],
               ),
             );
@@ -182,7 +183,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                       decoration: BoxDecoration(color: RecordUi.soft(isDark), borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
-                          const Icon(Icons.shield_outlined, size: 18, color: Color(0xFFD97706)),
+                          const Icon(IosIcons.shield_outlined, size: 18, color: Color(0xFFD97706)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -245,7 +246,7 @@ class _PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 48),
                       child: RecordEmptyState(
-                        icon: Icons.event_busy_outlined,
+                        icon: IosIcons.event_busy_outlined,
                         title: !widget.hasAccess ? "No Treated Appointments Found" : "No Appointments Found",
                         message: !widget.hasAccess
                             ? "No treated records available for this patient. Patient consent is required to access full appointment history."

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -85,7 +86,7 @@ class _SnomedSearchPickerState extends State<SnomedSearchPicker> {
       children: [
         Row(
           children: [
-            Icon(Icons.search_rounded, color: theme.primaryColor, size: 16),
+            Icon(IosIcons.search_rounded, color: theme.primaryColor, size: 16),
             const SizedBox(width: 6),
             Text(
               widget.label,
@@ -117,7 +118,7 @@ class _SnomedSearchPickerState extends State<SnomedSearchPicker> {
             child: Row(
               children: [
                 Icon(
-                  Icons.search,
+                  IosIcons.search,
                   size: 18,
                   color: isDark ? Colors.white38 : Colors.grey.shade400,
                 ),
@@ -149,7 +150,7 @@ class _SnomedSearchPickerState extends State<SnomedSearchPicker> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle,
+                        Icon(IosIcons.check_circle,
                             size: 12,
                             color: Colors.green.shade600),
                         const SizedBox(width: 3),
@@ -274,12 +275,12 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF7F8FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
+          icon: Icon(IosIcons.arrow_back_ios_new_rounded,
               size: 20,
               color: isDark ? Colors.white : Colors.black87),
           onPressed: () => Navigator.pop(context),
@@ -321,13 +322,13 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                   color: Colors.grey.shade400,
                 ),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  IosIcons.search_rounded,
                   color: theme.primaryColor,
                   size: 22,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear_rounded,
+                        icon: Icon(IosIcons.clear_rounded,
                             size: 18, color: Colors.grey.shade500),
                         onPressed: () {
                           _searchController.clear();
@@ -379,7 +380,7 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                           color: theme.primaryColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.add_rounded,
+                        child: Icon(IosIcons.add_rounded,
                             color: theme.primaryColor, size: 16),
                       ),
                       const SizedBox(width: 10),
@@ -410,7 +411,7 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                           ],
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded,
+                      Icon(IosIcons.arrow_forward_ios_rounded,
                           size: 14, color: theme.primaryColor),
                     ],
                   ),
@@ -431,8 +432,8 @@ class _SnomedFullScreenSearchState extends State<_SnomedFullScreenSearch> {
                             children: [
                               Icon(
                                 _hasSearched
-                                    ? Icons.search_off_rounded
-                                    : Icons.medication_liquid_rounded,
+                                    ? IosIcons.search_off_rounded
+                                    : IosIcons.medication_liquid_rounded,
                                 size: 56,
                                 color: Colors.grey.shade300,
                               ),
@@ -503,7 +504,7 @@ class _ResultTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
@@ -527,7 +528,7 @@ class _ResultTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    Icons.medical_information_outlined,
+                    IosIcons.medical_information_outlined,
                     color: theme.primaryColor,
                     size: 18,
                   ),
@@ -575,7 +576,7 @@ class _ResultTile extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.add_circle_outline_rounded,
+                  IosIcons.add_circle_outline_rounded,
                   size: 20,
                   color: theme.primaryColor.withValues(alpha: 0.6),
                 ),
@@ -681,7 +682,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
           children: [
             Row(
               children: [
-                const Icon(Icons.checklist_rounded, color: Color(0xFF2563EB), size: 16),
+                const Icon(IosIcons.checklist_rounded, color: Color(0xFF2563EB), size: 16),
                 const SizedBox(width: 6),
                 Text(
                   widget.label,
@@ -689,7 +690,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                     fontFamily: appPoppinFont,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                   ),
                 ),
                 if (widget.isRequired)
@@ -728,7 +729,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
             child: _selectedItems.isEmpty
                 ? Row(
                     children: [
-                      const Icon(Icons.search_rounded, size: 18, color: Color(0xFF2563EB)),
+                      const Icon(IosIcons.search_rounded, size: 18, color: Color(0xFF2563EB)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -769,14 +770,14 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                                       fontFamily: appPoppinFont,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                   ),
                                   const SizedBox(width: 4),
                                   GestureDetector(
                                     onTap: () => _removeItem(item),
                                     child: Icon(
-                                      Icons.close_rounded,
+                                      IosIcons.close_rounded,
                                       size: 14,
                                       color: isDark ? Colors.white70 : const Color(0xFF64748B),
                                     ),
@@ -795,7 +796,7 @@ class _SnomedMultiSearchPickerState extends State<SnomedMultiSearchPicker> {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.add_rounded,
+                          IosIcons.add_rounded,
                           size: 16,
                           color: Color(0xFF2563EB),
                         ),
@@ -918,12 +919,12 @@ class _SnomedMultiFullScreenSearchState
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1117) : const Color(0xFFF7F8FA),
+      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF7F8FA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1D27) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1C1C1C) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
+          icon: Icon(IosIcons.arrow_back_ios_new_rounded,
               size: 20, color: isDark ? Colors.white : Colors.black87),
           onPressed: () => Navigator.pop(context, _selectedSet.toList()),
         ),
@@ -964,13 +965,13 @@ class _SnomedMultiFullScreenSearchState
                   color: Colors.grey.shade400,
                 ),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  IosIcons.search_rounded,
                   color: theme.primaryColor,
                   size: 22,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear_rounded,
+                        icon: Icon(IosIcons.clear_rounded,
                             size: 18, color: Colors.grey.shade500),
                         onPressed: () {
                           _searchController.clear();
@@ -995,7 +996,7 @@ class _SnomedMultiFullScreenSearchState
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: isDark
-                  ? const Color(0xFF161922)
+                  ? const Color(0xFF191919)
                   : theme.primaryColor.withValues(alpha: 0.04),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1051,7 +1052,7 @@ class _SnomedMultiFullScreenSearchState
                               ),
                             ),
                             deleteIcon: const Icon(
-                              Icons.close_rounded,
+                              IosIcons.close_rounded,
                               size: 14,
                               color: Colors.white,
                             ),
@@ -1087,7 +1088,7 @@ class _SnomedMultiFullScreenSearchState
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.add_circle_outline_rounded,
+                      Icon(IosIcons.add_circle_outline_rounded,
                           color: theme.primaryColor, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
@@ -1116,7 +1117,7 @@ class _SnomedMultiFullScreenSearchState
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.manage_search_rounded,
+                            Icon(IosIcons.manage_search_rounded,
                                 size: 54, color: Colors.grey.shade400),
                             const SizedBox(height: 12),
                             Text(
@@ -1161,8 +1162,8 @@ class _SnomedMultiFullScreenSearchState
                                     : null,
                                 leading: Icon(
                                   isSelected
-                                      ? Icons.check_box_rounded
-                                      : Icons.check_box_outline_blank_rounded,
+                                      ? IosIcons.check_box_rounded
+                                      : IosIcons.check_box_outline_blank_rounded,
                                   color: isSelected
                                       ? theme.primaryColor
                                       : (isDark
@@ -1200,7 +1201,7 @@ class _SnomedMultiFullScreenSearchState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1D27) : Colors.white,
+              color: isDark ? const Color(0xFF1C1C1C) : Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -1250,7 +1251,7 @@ class _SnomedSearchShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1A1D27) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1C1C1C) : Colors.white;
 
     return ListView.builder(
       shrinkWrap: true,

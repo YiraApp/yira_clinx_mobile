@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -54,7 +55,7 @@ class WeightScaleScreen extends StatelessWidget {
               padding: EdgeInsets.only(left: isTab ? tabletPadding + 8 : 8.0),
               child: IconButton(
                 icon: Icon(
-                  Icons.arrow_back_ios_new,
+                  IosIcons.arrow_back_ios_new,
                   color: isDark ? Colors.white : Colors.black87,
                   size: 20,
                 ),
@@ -183,7 +184,7 @@ class WeightScaleScreen extends StatelessWidget {
                   fontSize: referenceWidth * 0.18,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -2,
-                  color: isDark ? Colors.white : const Color(0xFF1D1D35),
+                  color: isDark ? Colors.white : const Color(0xFF1D1D1D),
                 ),
               ),
               Padding(
@@ -293,7 +294,7 @@ class WeightScaleScreen extends StatelessWidget {
             ? Colors.white.withOpacity(0.04)
             : const Color(0xFFF4F7FF),
         borderRadius: BorderRadius.circular(fieldBorderRadius),
-        border: Border.all(color: Colors.blue.withOpacity(0.08)),
+        border: Border.all(color: const Color(0xFF2563EB).withOpacity(0.08)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -314,7 +315,7 @@ class WeightScaleScreen extends StatelessWidget {
                   : [],
             ),
             child: const Icon(
-              Icons.lightbulb_outline_sharp,
+              IosIcons.lightbulb_outline_sharp,
               color: Color(0xFF005696),
               size: 20,
             ),
@@ -329,7 +330,7 @@ class WeightScaleScreen extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF1D1D35),
+                    color: isDark ? Colors.white : const Color(0xFF1D1D1D),
                     fontSize: isTab ? referenceWidth * 0.024: referenceWidth * 0.035,
                   ),
                 ),

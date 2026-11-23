@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -357,7 +358,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                   letterSpacing: -0.3,
                 ),
               ),
@@ -368,7 +369,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   fontFamily: appPoppinFont,
                   fontSize: 14,
                   height: 1.5,
-                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF3A3A3A),
                 ),
               ),
               Builder(
@@ -440,7 +441,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                      icon: const Icon(IosIcons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
                       label: const Text(
                         "Delete",
                         style: TextStyle(
@@ -473,7 +474,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                               Navigator.pop(sheetContext);
                               Utils.launchURL(rawRoute);
                             },
-                            icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Colors.white),
+                            icon: const Icon(IosIcons.open_in_new_rounded, size: 18, color: Colors.white),
                             label: const Text(
                               "Open Link",
                               style: TextStyle(
@@ -527,7 +528,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         title: "Clear Notifications",
         message: "Are you sure you want to clear all notifications? This will permanently remove them from your notification center.",
         tone: AppDialogTone.danger,
-        icon: Icons.delete_sweep_rounded,
+        icon: IosIcons.delete_sweep_rounded,
         primaryLabel: "Clear All",
         onPrimary: () {
           Navigator.pop(dialogContext);
@@ -585,16 +586,16 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     return BlocProvider.value(
       value: _bloc,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
         appBar: AppBar(
           elevation: 0,
           scrolledUnderElevation: 0,
           backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
           leading: IconButton(
             icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              IosIcons.arrow_back_ios_new_rounded,
               size: 20,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
             onPressed: () => Navigator.pop(context),
           ),
@@ -618,7 +619,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                         fontFamily: appPoppinFont,
                         fontSize: isTab ? 20 : 18,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF121212),
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -683,7 +684,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                       padding: const EdgeInsets.all(8),
                       constraints: const BoxConstraints(),
                       icon: Icon(
-                        Icons.delete_sweep_outlined,
+                        IosIcons.delete_sweep_outlined,
                         size: 22,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
@@ -715,7 +716,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
+                        child: Icon(IosIcons.cloud_off_rounded, size: 48, color: Colors.grey.shade400),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -824,7 +825,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                     fontFamily: appPoppinFont,
                                     fontSize: 11.5,
                                     fontWeight: _category == cat ? FontWeight.w600 : FontWeight.w500,
-                                    color: _category == cat ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                    color: _category == cat ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                                   ),
                                   selectedColor: primaryColor.withValues(alpha: isDark ? 0.25 : 0.1),
                                   backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
@@ -917,7 +918,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                   fontWeight: FontWeight.w700,
                   color: isSelected
                       ? Colors.white
-                      : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                      : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A)),
                 ),
               ),
             ),
@@ -1035,7 +1036,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 22),
+            Icon(IosIcons.delete_outline_rounded, color: Colors.white, size: 22),
             SizedBox(width: 6),
             Text(
               "Delete",
@@ -1141,7 +1142,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 14.5 : 13.5,
                               fontWeight: notification.isRead ? FontWeight.w600 : FontWeight.w700,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF121212),
                               letterSpacing: -0.2,
                               height: 1.3,
                             ),
@@ -1177,7 +1178,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 12.5,
                                 fontWeight: FontWeight.w400,
-                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A),
                                 height: 1.4,
                               ),
                             ),
@@ -1265,7 +1266,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.open_in_new_rounded, size: 12, color: primaryColor),
+                                          Icon(IosIcons.open_in_new_rounded, size: 12, color: primaryColor),
                                           const SizedBox(width: 4),
                                           Text(
                                             "Open Website",
@@ -1332,7 +1333,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isFiltered ? Icons.mark_email_read_outlined : Icons.notifications_none_rounded,
+                isFiltered ? IosIcons.mark_email_read_outlined : IosIcons.notifications_none_rounded,
                 size: 50,
                 color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
               ),
@@ -1344,7 +1345,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                 fontFamily: appPoppinFont,
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF121212),
               ),
             ),
             const SizedBox(height: 8),

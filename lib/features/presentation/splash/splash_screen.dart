@@ -13,8 +13,7 @@ import '../../domain/repositories/side_menu/side_menu_repo.dart';
 import '../configuration/config_bloc.dart';
 import '../configuration/configuration_screen.dart';
 import 'auth_bloc/auth_bloc.dart';
-import 'widgets/service_icon_widget.dart';
-import 'yira_splash_screen.dart';
+import 'yira_video_splash.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,11 +29,16 @@ class _SplashScreenState extends State<SplashScreen> {
   bool _hasNavigated = false;
   GetDataSuccessState? _pendingSuccessState;
   bool _configFailed = false;
+  late final bool _playStory;
 
   @override
   void initState() {
     super.initState();
     _sharedPrefsService = sl<SharedPrefsService>();
+    _playStory = !(_sharedPrefsService.getValue<bool>(ClinxStorageKeys.hasSeenSplashStory) ?? false);
+    if (_playStory) {
+      _sharedPrefsService.setValue<bool>(ClinxStorageKeys.hasSeenSplashStory, true);
+    }
     context.read<AuthBloc>().add(AppStarted());
     _initializeFlow();
   }
@@ -42,14 +46,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Warm up image cache ahead of animation execution to prevent decode spikes
-    precacheImage(
-      const AssetImage('assets/images/yira_hand_light_centered.png'),
-      context,
-    );
-    for (final service in splashHealthcareServices) {
-      precacheImage(AssetImage(service.assetPath), context);
-    }
   }
 
   void _initializeFlow() async {
@@ -80,8 +76,8 @@ class _SplashScreenState extends State<SplashScreen> {
       });
     }
 
-    // Fallback safety timeout (10 seconds) in case animation callback is interrupted
-    Future.delayed(const Duration(seconds: 10), () {
+    // Fallback in case the splash never reports completion (the video is 7 s).
+    Future.delayed(const Duration(seconds: 14), () {
       if (mounted && !_animationFinished) {
         setState(() {
           _animationFinished = true;
@@ -129,11 +125,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Crisp dark status bar icons for clean light mode
+    // The splash is always dark, so light status-bar icons.
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
     ));
 
     return BlocListener<ConfigBloc, ConfigState>(
@@ -148,11 +144,12 @@ class _SplashScreenState extends State<SplashScreen> {
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: const Color(0xFF16171B),
         extendBodyBehindAppBar: true,
         extendBody: true,
-        body: YiraSplashScreen(
-          onAnimationComplete: () {
+        body: YiraVideoSplash(
+          fullVideo: _playStory,
+          onComplete: () {
             if (mounted && !_animationFinished) {
               setState(() {
                 _animationFinished = true;

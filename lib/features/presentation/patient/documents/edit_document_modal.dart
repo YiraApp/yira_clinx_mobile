@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
@@ -164,7 +165,7 @@ class EditDocumentModal {
         builder: (sheetCtx) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF232323) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -176,7 +177,7 @@ class EditDocumentModal {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -188,7 +189,7 @@ class EditDocumentModal {
                   fontFamily: appPoppinFont,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
               ),
               const SizedBox(height: 4),
@@ -209,7 +210,7 @@ class EditDocumentModal {
                     color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF3B82F6), size: 22),
+                  child: const Icon(IosIcons.camera_alt_rounded, color: Color(0xFF3B82F6), size: 22),
                 ),
                 title: Text(
                   'Take Photo',
@@ -217,7 +218,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -242,7 +243,7 @@ class EditDocumentModal {
                     color: _emerald.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: _emerald, size: 22),
+                  child: const Icon(IosIcons.photo_library_rounded, color: _emerald, size: 22),
                 ),
                 title: Text(
                   'Choose from Gallery',
@@ -250,7 +251,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -275,7 +276,7 @@ class EditDocumentModal {
                     color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF8B5CF6), size: 22),
+                  child: const Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFF8B5CF6), size: 22),
                 ),
                 title: Text(
                   'Select PDF / Document',
@@ -283,7 +284,7 @@ class EditDocumentModal {
                     fontFamily: appPoppinFont,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                 ),
                 subtitle: Text(
@@ -323,7 +324,7 @@ class EditDocumentModal {
               bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF232323) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
@@ -344,7 +345,7 @@ class EditDocumentModal {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -360,7 +361,7 @@ class EditDocumentModal {
                           color: _emerald.withValues(alpha: isDark ? 0.2 : 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.edit_note_rounded, color: _emerald, size: 22),
+                        child: const Icon(IosIcons.edit_note_rounded, color: _emerald, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -373,7 +374,7 @@ class EditDocumentModal {
                                 fontFamily: appPoppinFont,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF121212),
                               ),
                             ),
                             Text(
@@ -388,7 +389,7 @@ class EditDocumentModal {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close_rounded, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                        icon: Icon(IosIcons.close_rounded, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -398,7 +399,7 @@ class EditDocumentModal {
                   // ─── 1. CURRENT DOCUMENT PREVIEW CARD ──────────────────────
                   Row(
                     children: [
-                      const Icon(Icons.visibility_outlined, size: 16, color: _primaryBlue),
+                      const Icon(IosIcons.visibility_outlined, size: 16, color: _primaryBlue),
                       const SizedBox(width: 6),
                       Text(
                         'Current Document',
@@ -406,7 +407,7 @@ class EditDocumentModal {
                           fontFamily: appPoppinFont,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                         ),
                       ),
                     ],
@@ -415,10 +416,10 @@ class EditDocumentModal {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      color: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Row(
@@ -430,24 +431,24 @@ class EditDocumentModal {
                             width: 48,
                             height: 48,
                             color: isCurrentImage
-                                ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0))
+                                ? (isDark ? const Color(0xFF232323) : const Color(0xFFE2E8F0))
                                 : const Color(0xFFEF4444).withValues(alpha: 0.1),
                                 child: isCurrentImage
                                     ? (currentDocUrl.isNotEmpty
                                         ? Image.network(
                                             currentDocUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _primaryBlue),
+                                            errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _primaryBlue),
                                           )
                                         : (currentDocPath.isNotEmpty && File(currentDocPath).existsSync()
                                             ? Image.file(
                                                 File(currentDocPath),
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _primaryBlue),
+                                                errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _primaryBlue),
                                               )
-                                            : const Icon(Icons.image_outlined, color: _primaryBlue)))
+                                            : const Icon(IosIcons.image_outlined, color: _primaryBlue)))
                                     : const Center(
-                                        child: Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
+                                        child: Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
                                       ),
                           ),
                         ),
@@ -498,7 +499,7 @@ class EditDocumentModal {
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDark ? Colors.white : const Color(0xFF121212),
                                 ),
                               ),
                             ],
@@ -508,7 +509,7 @@ class EditDocumentModal {
                         // Preview Button
                         OutlinedButton.icon(
                           onPressed: openCurrentPreview,
-                          icon: const Icon(Icons.visibility_outlined, size: 15),
+                          icon: const Icon(IosIcons.visibility_outlined, size: 15),
                           label: const Text('Preview'),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -532,7 +533,7 @@ class EditDocumentModal {
                   // ─── 2. REPLACE DOCUMENT / UPLOAD ANOTHER FILE ────────────
                   Row(
                     children: [
-                      const Icon(Icons.cloud_upload_outlined, size: 17, color: _emerald),
+                      const Icon(IosIcons.cloud_upload_outlined, size: 17, color: _emerald),
                       const SizedBox(width: 6),
                       Text(
                         'Replace Document File',
@@ -540,14 +541,14 @@ class EditDocumentModal {
                           fontFamily: appPoppinFont,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                         ),
                       ),
                       const Spacer(),
                       if (replacementFile != null)
                         TextButton.icon(
                           onPressed: () => showSourceActionSheet(setModalState),
-                          icon: const Icon(Icons.sync_rounded, size: 14),
+                          icon: const Icon(IosIcons.sync_rounded, size: 14),
                           label: const Text('Change'),
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,
@@ -573,10 +574,10 @@ class EditDocumentModal {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF121212).withValues(alpha: 0.6) : const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                            color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFCBD5E1),
                           ),
                         ),
                         child: Row(
@@ -588,7 +589,7 @@ class EditDocumentModal {
                                 color: _emerald.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.file_upload_outlined, color: _emerald, size: 18),
+                              child: const Icon(IosIcons.file_upload_outlined, color: _emerald, size: 18),
                             ),
                             const SizedBox(width: 10),
                             Column(
@@ -600,7 +601,7 @@ class EditDocumentModal {
                                     fontFamily: appPoppinFont,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                                 Text(
@@ -650,10 +651,10 @@ class EditDocumentModal {
                                       ? Image.file(
                                           replacementFile!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, color: _emerald),
+                                          errorBuilder: (context, error, stackTrace) => const Icon(IosIcons.image_outlined, color: _emerald),
                                         )
                                       : const Center(
-                                          child: Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
+                                          child: Icon(IosIcons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 24),
                                         ),
                                 ),
                               ),
@@ -704,7 +705,7 @@ class EditDocumentModal {
                                         fontFamily: appPoppinFont,
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
                                     ),
                                   ],
@@ -713,13 +714,13 @@ class EditDocumentModal {
                               const SizedBox(width: 6),
                               // Preview Action for Replacement
                               IconButton(
-                                icon: const Icon(Icons.visibility_outlined, size: 20, color: _emerald),
+                                icon: const Icon(IosIcons.visibility_outlined, size: 20, color: _emerald),
                                 tooltip: 'Preview new replacement file',
                                 onPressed: openReplacementPreview,
                               ),
                               // Cancel / Remove replacement
                               IconButton(
-                                icon: Icon(Icons.cancel_outlined, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                icon: Icon(IosIcons.cancel_outlined, size: 20, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
                                 tooltip: 'Remove replacement',
                                 onPressed: () {
                                   setModalState(() {
@@ -743,7 +744,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -752,21 +753,21 @@ class EditDocumentModal {
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 14,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     decoration: InputDecoration(
                       hintText: 'e.g. Blood Test Report',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                      prefixIcon: const Icon(Icons.description_outlined, size: 18, color: Color(0xFF64748B)),
+                      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+                      prefixIcon: const Icon(IosIcons.description_outlined, size: 18, color: Color(0xFF64748B)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -783,7 +784,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -801,17 +802,17 @@ class EditDocumentModal {
                           }
                         },
                         selectedColor: _primaryBlue,
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF1F5F9),
                         labelStyle: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 12,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
+                          color: isSelected ? Colors.white : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A4A4A)),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                            color: isSelected ? _primaryBlue : (isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                           ),
                         ),
                       );
@@ -826,7 +827,7 @@ class EditDocumentModal {
                       fontFamily: appPoppinFont,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF3A3A3A),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -836,20 +837,20 @@ class EditDocumentModal {
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 13,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     decoration: InputDecoration(
                       hintText: 'Add notes about doctor, diagnosis or findings...',
                       filled: true,
-                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1010,7 +1011,7 @@ class EditDocumentModal {
                                       const SnackBar(
                                         content: Row(
                                           children: [
-                                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                            Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                                             SizedBox(width: 8),
                                             Text('Document replaced & updated successfully'),
                                           ],
@@ -1060,7 +1061,7 @@ class EditDocumentModal {
                                       const SnackBar(
                                         content: Row(
                                           children: [
-                                            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                                            Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 20),
                                             SizedBox(width: 8),
                                             Text('Document updated successfully'),
                                           ],
@@ -1102,7 +1103,7 @@ class EditDocumentModal {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  replacementFile != null ? Icons.cloud_done_rounded : Icons.check_circle_outline_rounded,
+                                  replacementFile != null ? IosIcons.cloud_done_rounded : IosIcons.check_circle_outline_rounded,
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 
@@ -73,6 +75,7 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
           additionalNotes: data.additionalNotes,
           pdfUrl: data.pdfUrl,
           prescriptionId: data.id,
+          prescriptionCreatedAt: data.createdAt,
         ));
       }
       // A failed load comes back as an empty prescription with no id.
@@ -86,21 +89,13 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
   ) async {
     emit(state.copyWith(status: PrescriptionStatus.submitLoading));
     try {
-      final validMeds = state.medications.where((m) => m.name.trim().isNotEmpty).toList();
-
-      final payload = PrescriptionEntity(
-        id: state.prescriptionId,
+      final payload = draftFor(
         patientId: event.patientId,
         appointmentId: event.appointmentId,
         hospitalId: event.hospitalId,
         orgId: event.orgId,
-        diagnoses: state.diagnoses,
-        medications: validMeds,
+        medicalRecordId: event.medicalRecordId,
         additionalNotes: event.additionalNotes,
-        // Always a list, even empty, so removing every test reaches the server.
-        // Null leaves the saved tests alone: an empty form after a failed load
-        // must not read as the doctor removing them.
-        labTests: (_savedTestsLoaded || state.labTests.isNotEmpty) ? state.labTests : null,
       );
 
       final PrescriptionEntity synchronizedData = await _savePrescriptionUseCase!.call(payload);
@@ -119,6 +114,39 @@ class PrescriptionBloc extends Bloc<PrescriptionEvent, PrescriptionState> {
         errorMessage: e.toString().replaceAll("Exception: ", ""),
       ));
     }
+  }
+
+  /// The prescription as it stands on screen, for a save or a preview.
+  PrescriptionEntity draftFor({
+    required String patientId,
+    String? appointmentId,
+    String? hospitalId,
+    String? orgId,
+    String? medicalRecordId,
+    required String additionalNotes,
+  }) {
+    return PrescriptionEntity(
+      id: state.prescriptionId,
+      patientId: patientId,
+      appointmentId: appointmentId,
+      hospitalId: hospitalId,
+      orgId: orgId,
+      medicalRecordId: medicalRecordId,
+      diagnoses: state.diagnoses,
+      medications: state.medications.where((m) => m.name.trim().isNotEmpty).toList(),
+      additionalNotes: additionalNotes,
+      // Always a list, even empty, so removing every test reaches the server.
+      // Null leaves the saved tests alone: an empty form after a failed load
+      // must not read as the doctor removing them.
+      labTests: (_savedTestsLoaded || state.labTests.isNotEmpty) ? state.labTests : null,
+    );
+  }
+
+  /// The PDF [draft] would get, drawn by the server without saving anything.
+  Future<Uint8List> previewPdf(PrescriptionEntity draft) {
+    final repository = _savePrescriptionUseCase?.repository;
+    if (repository == null) throw Exception("Preview isn't available here.");
+    return repository.previewPrescription(draft);
   }
 
   void _onAddDiagnosis(AddDiagnosis event, Emitter<PrescriptionState> emit) {

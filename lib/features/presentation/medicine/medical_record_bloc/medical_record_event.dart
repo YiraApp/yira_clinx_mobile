@@ -31,6 +31,9 @@ class SaveMedicalRecordEvent extends MedicalRecordEvent {
   final String? spo2;
   final String diagnosis;
   final String treatmentPlan;
+  /// The OPD note fields by their API keys (allergies, familyHistory, cvsExamination, ...). Every
+  /// key is sent, so a field the doctor cleared is cleared on the server too.
+  final Map<String, String> clinicalNote;
 
   const SaveMedicalRecordEvent({
     this.recordId,
@@ -50,5 +53,6 @@ class SaveMedicalRecordEvent extends MedicalRecordEvent {
     this.spo2,
     required this.diagnosis,
     required this.treatmentPlan,
+    this.clinicalNote = const {},
   });
 }

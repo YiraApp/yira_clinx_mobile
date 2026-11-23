@@ -9,8 +9,13 @@ class EcosystemLinesPainter extends CustomPainter {
   final double convergence;
   final double dashOffset;
   final Offset convergenceCenter;
+  final bool dark;
+
+  Color get _core => dark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB);
+  Color get _glow => dark ? const Color(0xFF3B82F6) : const Color(0xFF38BDF8);
 
   EcosystemLinesPainter({
+    this.dark = false,
     required this.iconPositions,
     required this.revealProgress,
     required this.convergence,
@@ -65,7 +70,7 @@ class EcosystemLinesPainter extends CustomPainter {
             midX + towardCenterX, midY + towardCenterY, p2.dx, p2.dy);
 
       final arcPaint = Paint()
-        ..color = const Color(0xFF2563EB).withValues(alpha: ringOpacity * 0.35)
+        ..color = _core.withValues(alpha: ringOpacity * 0.35)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2;
       canvas.drawPath(path, arcPaint);
@@ -95,14 +100,14 @@ class EcosystemLinesPainter extends CustomPainter {
 
     // Soft laser halo line (no GPU blur pass)
     final glowPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.40)
+      ..color = _glow.withValues(alpha: lineOpacity * 0.40)
       ..strokeWidth = 3.2
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(center, endPoint, glowPaint);
 
     // Core crisp royal blue beam
     final corePaint = Paint()
-      ..color = const Color(0xFF2563EB).withValues(alpha: lineOpacity * 0.95)
+      ..color = _core.withValues(alpha: lineOpacity * 0.95)
       ..strokeWidth = 1.3
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(center, endPoint, corePaint);
@@ -118,12 +123,12 @@ class EcosystemLinesPainter extends CustomPainter {
 
       // Photon soft halo
       final photonGlow = Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: lineOpacity * 0.45);
+        ..color = _glow.withValues(alpha: lineOpacity * 0.45);
       canvas.drawCircle(pulsePos, 4.0, photonGlow);
 
       // Photon core
       final photonCore = Paint()
-        ..color = const Color(0xFF2563EB).withValues(alpha: lineOpacity * 0.95);
+        ..color = _core.withValues(alpha: lineOpacity * 0.95);
       canvas.drawCircle(pulsePos, 2.0, photonCore);
     }
   }
@@ -132,6 +137,7 @@ class EcosystemLinesPainter extends CustomPainter {
   bool shouldRepaint(EcosystemLinesPainter oldDelegate) {
     return oldDelegate.revealProgress != revealProgress ||
         oldDelegate.convergence != convergence ||
-        oldDelegate.dashOffset != dashOffset;
+        oldDelegate.dashOffset != dashOffset ||
+        oldDelegate.dark != dark;
   }
 }

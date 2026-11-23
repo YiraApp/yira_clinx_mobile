@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -36,7 +37,7 @@ class PermissionsScreen extends StatelessWidget {
             padding: EdgeInsets.only(left: isTab ? tabletPadding + 8 : 8.0),
             child: IconButton(
               icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
+                IosIcons.arrow_back_ios_new_rounded,
                 color: isDark ? Colors.white : Colors.black87,
                 size: 20,
               ),

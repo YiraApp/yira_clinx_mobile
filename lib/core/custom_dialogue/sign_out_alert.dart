@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 
@@ -20,7 +21,7 @@ class SignOutAlert {
               title: 'Confirm Sign Out?',
               message:
                   'Sign out of your clinic management dashboard? This will disconnect your device from the live patient queue and automated documentation workflow until your next login.',
-              icon: Icons.logout_rounded,
+              icon: IosIcons.logout_rounded,
               accentColor: buttonPrimaryColor,
               primaryLabel: 'Sign Out',
               isPrimaryLoading: isSignOut,

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'widgets/prescription_history_tab.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -196,7 +197,7 @@ class _DoctorPatientDetailProfileScreenState
                           backgroundColor: const Color(0xFF2563EB),
                           foregroundColor: Colors.white,
                           elevation: 4,
-                          icon: const Icon(Icons.add_rounded, size: 20),
+                          icon: const Icon(IosIcons.add_rounded, size: 20),
                           label: const Text(
                             "Add Suggestion",
                             style: TextStyle(

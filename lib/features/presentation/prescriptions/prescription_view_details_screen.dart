@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:yiraclinics/features/presentation/prescriptions/prescription_bloc/prescription_bloc.dart';
@@ -60,7 +61,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(fieldBorderRadius),
                           ),
                           child: Icon(
-                            Icons.description_outlined,
+                            IosIcons.description_outlined,
                             color: theme.primaryColor,
                             size: 18,
                           ),
@@ -96,7 +97,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(IosIcons.close_rounded),
                           color: isDark ? Colors.white70 : Colors.black54,
                           onPressed: () => Navigator.of(context).pop(),
                           constraints: const BoxConstraints(),
@@ -148,7 +149,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const RecordSectionTitle(icon: Icons.biotech_outlined, title: 'Lab Tests'),
+                                      const RecordSectionTitle(icon: IosIcons.biotech_outlined, title: 'Investigations'),
                                       const SizedBox(height: 8),
                                       RecordCard(child: RecordLabTestLines(tests: state.labTests)),
                                     ],
@@ -234,7 +235,7 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            icon: const Icon(Icons.picture_as_pdf_rounded, size: 20),
+                            icon: const Icon(IosIcons.picture_as_pdf_rounded, size: 20),
                             label: const Text(
                               "View PDF",
                               style: TextStyle(

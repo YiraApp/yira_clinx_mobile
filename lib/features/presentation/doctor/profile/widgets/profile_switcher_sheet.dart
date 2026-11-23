@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,21 +28,22 @@ class ProfileSwitcherSheet extends StatefulWidget {
   }
 
   /// Switches straight to one of the account's family profiles, as tapping it
-  /// in the sheet would. Shows a message if the switch fails.
-  static Future<void> switchToFamilyProfile(BuildContext context, String profileUserId) async {
+  /// in the sheet would. Shows a message if the switch fails. True when it switched.
+  static Future<bool> switchToFamilyProfile(BuildContext context, String profileUserId) async {
     final user = GlobalSession.instance.userNotifier.value;
     final profiles = user?.data?.profiles ?? [];
     final primaryUserId = (profiles.isNotEmpty && (profiles.first.id ?? '').isNotEmpty) ? profiles.first.id! : (user?.data?.id ?? '');
     final items = _buildFamilyItems(user, primaryUserId, (_, image) => image);
     final target = items.where((i) => (i.profileUserId ?? '').toLowerCase() == profileUserId.toLowerCase()).firstOrNull;
-    if (target == null) return;
+    if (target == null) return false;
     final messenger = ScaffoldMessenger.maybeOf(context);
     final error = await _performSwitch(target);
     if (error == null) {
       NavigationService.navigateTo(AppRoutes.userConfiguration);
-    } else {
-      messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+      return true;
     }
+    messenger?.showSnackBar(SnackBar(content: Text(error), behavior: SnackBarBehavior.floating));
+    return false;
   }
 
   @override
@@ -266,30 +268,30 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
   IconData _getRoleIcon(String roleName) {
     final lower = roleName.toLowerCase();
     if (lower.contains('doctor') || lower.contains('provider') || lower.contains('physician')) {
-      return Icons.medical_services_rounded;
+      return IosIcons.medical_services_rounded;
     }
     if (lower.contains('admin') || lower.contains('manager')) {
-      return Icons.admin_panel_settings_rounded;
+      return IosIcons.admin_panel_settings_rounded;
     }
     if (lower.contains('nurse')) {
-      return Icons.health_and_safety_rounded;
+      return IosIcons.health_and_safety_rounded;
     }
     if (lower.contains('father') || lower.contains('mother') || lower.contains('parent')) {
-      return Icons.family_restroom_rounded;
+      return IosIcons.family_restroom_rounded;
     }
     if (lower.contains('spouse') || lower.contains('wife') || lower.contains('husband')) {
-      return Icons.favorite_rounded;
+      return IosIcons.favorite_rounded;
     }
     if (lower.contains('brother') || lower.contains('sister') || lower.contains('sibling')) {
-      return Icons.people_alt_rounded;
+      return IosIcons.people_alt_rounded;
     }
     if (lower.contains('son') || lower.contains('daughter') || lower.contains('child') || lower.contains('kid')) {
-      return Icons.child_care_rounded;
+      return IosIcons.child_care_rounded;
     }
     if (lower.contains('patient') || lower.contains('user') || lower == 'primary' || lower == 'self') {
-      return Icons.person_rounded;
+      return IosIcons.person_rounded;
     }
-    return Icons.local_hospital_rounded;
+    return IosIcons.local_hospital_rounded;
   }
 
   Color _getRoleColor(String roleName, Color fallback) {
@@ -375,7 +377,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      Icons.switch_account_rounded,
+                      IosIcons.switch_account_rounded,
                       size: 20,
                       color: primaryColor,
                     ),
@@ -390,7 +392,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? 19 : 17,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                           letterSpacing: -0.3,
                         ),
                       ),
@@ -407,7 +409,7 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(IosIcons.close_rounded),
                 visualDensity: VisualDensity.compact,
                 onPressed: () => Navigator.pop(context),
                 color: isDark ? Colors.white60 : Colors.grey.shade600,
@@ -550,11 +552,11 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
     final List<Widget> info = isPatientItem
         ? [
             if (gender.isNotEmpty) ProfileInfoItem(icon: profileGenderIcon(gender), text: gender, color: infoColor, isTab: isTab),
-            if (age != null) ProfileInfoItem(icon: Icons.cake_outlined, text: age, color: infoColor, isTab: isTab),
+            if (age != null) ProfileInfoItem(icon: IosIcons.cake_outlined, text: age, color: infoColor, isTab: isTab),
           ]
         : [
-            if (item.orgName.isNotEmpty) ProfileInfoItem(icon: Icons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
-            if (location != null) ProfileInfoItem(icon: Icons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
+            if (item.orgName.isNotEmpty) ProfileInfoItem(icon: IosIcons.apartment_rounded, text: item.orgName, color: infoColor, isTab: isTab),
+            if (location != null) ProfileInfoItem(icon: IosIcons.location_on_outlined, text: location, color: infoColor, isTab: isTab),
           ];
 
     return Padding(
@@ -600,7 +602,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                                     fontFamily: appPoppinFont,
                                     fontSize: isTab ? 15.5 : 14.5,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
                                   ),
                                 ),
                               ),
@@ -625,7 +627,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_rounded, size: 13, color: Colors.white),
+                            Icon(IosIcons.check_rounded, size: 13, color: Colors.white),
                             SizedBox(width: 3),
                             Text(
                               'Current',
@@ -642,7 +644,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                           color: isDark ? const Color(0xFF232323) : const Color(0xFFF1F5F9),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.arrow_forward_ios_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey.shade600),
+                        child: Icon(IosIcons.arrow_forward_ios_rounded, size: 13, color: isDark ? Colors.white54 : Colors.grey.shade600),
                       ),
                   ],
                 ),
@@ -689,7 +691,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
                   width: isTab ? 46 : 42,
                   height: isTab ? 46 : 42,
                   decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.12), shape: BoxShape.circle),
-                  child: Icon(Icons.person_add_alt_1_rounded, size: 20, color: primaryColor),
+                  child: Icon(IosIcons.person_add_alt_1_rounded, size: 20, color: primaryColor),
                 ),
                 const SizedBox(width: 13),
                 Expanded(
@@ -799,7 +801,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline_rounded, size: 36, color: Colors.amber.shade600),
+          Icon(IosIcons.error_outline_rounded, size: 36, color: Colors.amber.shade600),
           const SizedBox(height: 10),
           Text(
             _errorMessage ?? "Error loading profiles",
@@ -813,7 +815,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
           const SizedBox(height: 12),
           TextButton.icon(
             onPressed: _loadAllRolesAndWorkspaces,
-            icon: const Icon(Icons.refresh_rounded, size: 16),
+            icon: const Icon(IosIcons.refresh_rounded, size: 16),
             label: const Text("Retry"),
           ),
         ],

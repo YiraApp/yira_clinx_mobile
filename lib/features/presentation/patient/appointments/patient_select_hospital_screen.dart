@@ -169,7 +169,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF0F172A),
+        foregroundColor: isDark ? Colors.white : const Color(0xFF121212),
         leading: IconButton(
           icon: const PhosphorIcon(PhosphorIconsBold.caretLeft, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -180,7 +180,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: isTab ? 17.5 : 15.5,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
+            color: isDark ? Colors.white : const Color(0xFF121212),
             letterSpacing: -0.3,
           ),
         ),
@@ -246,7 +246,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 16 : 14.5,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                color: isDark ? Colors.white : const Color(0xFF232323),
                                 letterSpacing: -0.2,
                               ),
                             ),
@@ -343,7 +343,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
         style: TextStyle(
           fontFamily: appPoppinFont,
           fontSize: 13.5,
-          color: isDark ? Colors.white : const Color(0xFF0F172A),
+          color: isDark ? Colors.white : const Color(0xFF121212),
         ),
         decoration: InputDecoration(
           hintText: "Search hospital, clinic or area",
@@ -424,7 +424,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                           fontFamily: appPoppinFont,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
                       ),
                       Text(
@@ -495,7 +495,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
     ];
 
     final muted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final strong = isDark ? Colors.white : const Color(0xFF0F172A);
+    final strong = isDark ? Colors.white : const Color(0xFF121212);
 
     Future<void> open() async {
       if (_isNavigating) return;
@@ -616,7 +616,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
                                     fontFamily: appPoppinFont,
                                     fontSize: 11.5,
                                     height: 1.35,
-                                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                                    color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                                   ),
                                 ),
                               ),
@@ -718,7 +718,7 @@ class _PatientSelectHospitalScreenState extends State<PatientSelectHospitalScree
               fontFamily: appPoppinFont,
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF121212),
             ),
           ),
           const SizedBox(height: 6),
