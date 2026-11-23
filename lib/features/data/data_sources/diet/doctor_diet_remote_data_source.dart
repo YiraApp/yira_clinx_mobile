@@ -49,6 +49,15 @@ class DoctorDietRemoteDataSource {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
+  /// A prescribed plan's PDF, as bytes. Throws on failure.
+  Future<List<int>> downloadPlanPdf(int planId, {String? orgId}) async {
+    final response = await _apiClient.account(showSuccessSnack: false).get(
+          '${URLs.doctorDietPlanUrl}/$planId/pdf',
+          options: _options(orgId).copyWith(responseType: ResponseType.bytes),
+        );
+    return response.data as List<int>;
+  }
+
   /// Saves a doctor's changes to a prescribed plan (details and meals).
   Future<Map<String, dynamic>> updatePlan(int planId, Map<String, dynamic> payload, {String? orgId}) async {
     final response = await _apiClient.account(showSuccessSnack: false).put(

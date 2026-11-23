@@ -17,6 +17,7 @@ import 'add_user_prescription_screen.dart';
 import 'widgets/reminder_alert_settings_sheet.dart';
 import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 import 'package:yiraclinics/core/widgets/huge_icons.dart';
+import 'package:yiraclinics/core/widgets/medical_loader.dart';
 
 /// Prescriptions from doctors (and ones the patient added), plus the daily
 /// medication reminders made from them.
@@ -48,7 +49,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging && mounted) setState(() {});
     });
-    if (widget.bloc == null) MedicationReminderService.instance.init();
+    // Shows the stored list at once and refreshes it from the server in the background.
+    if (widget.bloc == null) MedicationReminderService.instance.init(force: true);
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -66,6 +68,17 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
     if (state == AppLifecycleState.resumed && widget.bloc == null) {
       MedicationReminderService.instance.loadReminders();
     }
+  }
+
+  /// Reloads prescriptions and medicines, and keeps the pull-to-refresh spinner
+  /// up until both are back.
+  Future<void> _refreshAll(BuildContext ctx) async {
+    final bloc = ctx.read<MedicationBloc>();
+    bloc.add(LoadMedicationData());
+    await Future.wait([
+      bloc.stream.firstWhere((s) => s.status != MedicationStatus.loading).timeout(const Duration(seconds: 20), onTimeout: () => bloc.state),
+      MedicationReminderService.instance.fetchRemoteReminders(),
+    ]);
   }
 
   Future<void> _navigateToAddPrescription(BuildContext ctx) async {
@@ -113,9 +126,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               buildWhen: (a, b) =>
                   a.status != b.status || a.allPrescriptions.isEmpty != b.allPrescriptions.isEmpty,
               builder: (ctx, state) {
-                if (state.status == MedicationStatus.loading || state.allPrescriptions.isEmpty) {
-                  return const SizedBox.shrink();
-                }
+                if (state.allPrescriptions.isEmpty) return const SizedBox.shrink();
                 return FloatingActionButton.extended(
                   onPressed: () => _navigateToAddPrescription(ctx),
                   backgroundColor: primaryColor,
@@ -214,7 +225,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 tab(
                   PhosphorIconsDuotone.alarm,
                   'My Medicines',
-                  reminders.where((r) => r.isActive).length,
+                  reminders.where((r) => r.isActive && !r.hasEnded).length,
                   _tabController.index == 1,
                 ),
               ],
@@ -244,7 +255,8 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         }
       },
       builder: (context, state) {
-        if (state.status == MedicationStatus.loading) return _buildSkeleton(isDark);
+        // A refresh keeps the list on screen; the skeleton is only for the first load.
+        if (state.status == MedicationStatus.loading && state.allPrescriptions.isEmpty) return _buildSkeleton(isDark);
 
         final allItems = state.filteredPrescriptions;
         final q = _searchQuery.trim().toLowerCase();
@@ -269,7 +281,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
 
         return RefreshIndicator(
           color: primaryColor,
-          onRefresh: () async => context.read<MedicationBloc>().add(LoadMedicationData()),
+          onRefresh: () => _refreshAll(context),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             slivers: [
@@ -652,10 +664,22 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
   }
 
   Widget _buildMedicationsReminderTab(bool isDark) {
-    return ValueListenableBuilder<List<MedicationReminder>>(
+    return ValueListenableBuilder<bool>(
+      valueListenable: MedicationReminderService.instance.isLoading,
+      builder: (context, loading, _) => ValueListenableBuilder<List<MedicationReminder>>(
       valueListenable: MedicationReminderService.instance.remindersNotifier,
       builder: (context, reminders, _) {
-        if (reminders.isEmpty) return _buildRemindersEmpty(isDark);
+        if (reminders.isEmpty && loading) return _buildMedicinesSkeleton(isDark);
+        if (reminders.isEmpty) {
+          return RefreshIndicator(
+            color: primaryColor,
+            onRefresh: () => MedicationReminderService.instance.fetchRemoteReminders(),
+            child: _buildRemindersEmpty(isDark),
+          );
+        }
+        final current = reminders.where((r) => !r.hasEnded).toList();
+        final finished = reminders.where((r) => r.hasEnded).toList()
+          ..sort((a, b) => b.endDate.compareTo(a.endDate));
 
         final todayDoses = [...MedicationReminderService.instance.getTodayDoses()]
           ..sort((a, b) => _minutes(a.time).compareTo(_minutes(b.time)));
@@ -677,8 +701,11 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           byPeriod.putIfAbsent(_period(d.time).label, () => []).add(d);
         }
 
-        return ListView(
-          physics: const BouncingScrollPhysics(),
+        return RefreshIndicator(
+          color: primaryColor,
+          onRefresh: () => MedicationReminderService.instance.fetchRemoteReminders(),
+          child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
             _buildTodaySummary(total, taken, progress, next, isDark),
@@ -710,11 +737,47 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 const SizedBox(height: 8),
               ],
             const SizedBox(height: 12),
-            DietUi.sectionLabel('YOUR MEDICINES · ${reminders.length}', isDark),
-            for (final reminder in reminders) _buildActiveCourseCard(reminder, isDark),
+            if (current.isNotEmpty) ...[
+              DietUi.sectionLabel('CURRENT MEDICINES · ${current.length}', isDark),
+              for (final reminder in current) _buildActiveCourseCard(reminder, isDark),
+            ],
+            if (finished.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              DietUi.sectionLabel(
+                'FINISHED · ${finished.length}',
+                isDark,
+                trailing: Text('No reminders', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
+              ),
+              for (final reminder in finished) _buildFinishedCourseCard(reminder, isDark),
+            ],
           ],
+        ),
         );
       },
+      ),
+    );
+  }
+
+  Widget _buildMedicinesSkeleton(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      children: [
+        Container(
+          height: 150,
+          decoration: DietUi.cardDecoration(isDark),
+          child: const Center(child: MedicalLoader(message: 'Loading your medicines…', size: 0.8)),
+        ),
+        for (var i = 0; i < 3; i++)
+          Container(
+            height: 92,
+            margin: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              color: DietUi.card(isDark),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: DietUi.line(isDark)),
+            ),
+          ),
+      ],
     );
   }
 
@@ -973,113 +1036,186 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
     );
   }
 
+  /// The dose text without its daily pattern: "1 Tablet - 1-0-1" -> "1 Tablet".
+  String _doseText(MedicationReminder r) => r.dosage.split(' - ').first.trim();
+
   Widget _buildActiveCourseCard(MedicationReminder r, bool isDark) {
-    final finishDateStr = DateFormat('d MMM yyyy').format(r.endDate);
+    final finishDateStr = DateFormat('d MMM').format(r.endDate);
     final daysLeft = r.daysRemaining;
     final totalDays = r.durationDays > 0 ? r.durationDays : 1;
-    final currentDay = r.currentDayNumber.clamp(0, totalDays);
+    final currentDay = r.currentDayNumber.clamp(1, totalDays);
+    final notStarted = DateTime(r.startDate.year, r.startDate.month, r.startDate.day).isAfter(DateTime.now());
     final courseProgress = r.isContinuous ? 1.0 : (currentDay / totalDays).clamp(0.0, 1.0);
-    final completed = !r.isContinuous && daysLeft <= 0;
+    final endsToday = !r.isContinuous && daysLeft == 0;
+    final accent = r.isContinuous ? const Color(0xFF8B5CF6) : primaryColor;
+    final details = [
+      if (_doseText(r).isNotEmpty) _doseText(r),
+      if (r.mealRelation.isNotEmpty) r.mealRelation,
+      '${r.times.length}× a day',
+    ].join(' · ');
+
+    final String status;
+    if (r.isContinuous) {
+      status = 'Ongoing';
+    } else if (notStarted) {
+      status = 'Starts ${DateFormat('d MMM').format(r.startDate)}';
+    } else if (endsToday) {
+      status = 'Last day today';
+    } else {
+      status = 'Day $currentDay of $totalDays';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 12, 6, 14),
       decoration: DietUi.cardDecoration(isDark),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DietUi.iconBadge(PhosphorIconsDuotone.pill, primaryColor, isDark, size: 40),
-              const SizedBox(width: 12),
-              Expanded(
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: accent),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      r.medicineName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DietUi.iconBadge(PhosphorIconsDuotone.pill, accent, isDark, size: 42, iconSize: 21),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                r.medicineName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: DietUi.text(15, FontWeight.w700, DietUi.strong(isDark), height: 1.25),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                details,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark), height: 1.3),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        DietUi.pill(status, endsToday ? const Color(0xFFF59E0B) : accent, isDark),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      r.isContinuous
-                          ? 'Ongoing · reminders every day'
-                          : completed
-                              ? 'Course completed'
-                              : 'Day $currentDay of $totalDays · ends $finishDateStr',
-                      style: DietUi.text(11.5, FontWeight.w500, r.isContinuous ? primaryColor : DietUi.muted(isDark)),
+                    if (!r.isContinuous && totalDays > 1 && !notStarted) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: courseProgress,
+                                minHeight: 6,
+                                backgroundColor: DietUi.line(isDark),
+                                color: accent,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            endsToday ? 'Ends today' : '$daysLeft day${daysLeft == 1 ? '' : 's'} left · ends $finishDateStr',
+                            style: DietUi.text(11, FontWeight.w600, DietUi.muted(isDark)),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [for (final t in r.times) DietUi.pill(t, accent, isDark, icon: PhosphorIconsBold.clock)],
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(height: 1, color: DietUi.line(isDark)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        if (r.doctorName.isNotEmpty) ...[
+                          DoctorAvatarWidget(photoUrl: r.doctorPhoto, doctorName: r.doctorName, size: 20, borderRadius: 6),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _doctorLabel(r.doctorName),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
+                            ),
+                          ),
+                        ] else
+                          const Spacer(),
+                        TextButton.icon(
+                          onPressed: () => _confirmDeleteReminder(r),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFFEF4444),
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          icon: const PhosphorIcon(PhosphorIconsBold.bellSimpleSlash, size: 15),
+                          label: Text('Stop reminders', style: DietUi.text(12, FontWeight.w600, const Color(0xFFEF4444))),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              TextButton.icon(
-                onPressed: () => _confirmDeleteReminder(r),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-                icon: const PhosphorIcon(PhosphorIconsBold.bellSimpleSlash, size: 16),
-                label: Text('Stop', style: DietUi.text(12, FontWeight.w600, const Color(0xFFEF4444))),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A course whose last day has passed: no reminders are sent for it any more.
+  Widget _buildFinishedCourseCard(MedicationReminder r, bool isDark) {
+    final details = [
+      if (_doseText(r).isNotEmpty) _doseText(r),
+      'Finished ${DateFormat('d MMM yyyy').format(r.endDate)}',
+    ].join(' · ');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+      decoration: BoxDecoration(
+        color: DietUi.sunken(isDark),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DietUi.line(isDark)),
+      ),
+      child: Row(
+        children: [
+          DietUi.iconBadge(PhosphorIconsBold.checkCircle, _green, isDark, size: 34, iconSize: 17),
+          const SizedBox(width: 10),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!r.isContinuous && totalDays > 1) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: courseProgress,
-                            minHeight: 6,
-                            backgroundColor: DietUi.line(isDark),
-                            color: courseProgress >= 1.0 ? _green : primaryColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        completed ? 'Done' : '$daysLeft day${daysLeft == 1 ? '' : 's'} left',
-                        style: DietUi.text(11, FontWeight.w600, DietUi.muted(isDark)),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [for (final t in r.times) DietUi.pill(t, primaryColor, isDark, icon: PhosphorIconsBold.clock)],
+                Text(
+                  r.medicineName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DietUi.text(13.5, FontWeight.w600, DietUi.body(isDark)),
                 ),
-                if (r.doctorName.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      DoctorAvatarWidget(photoUrl: r.doctorPhoto, doctorName: r.doctorName, size: 18, borderRadius: 5),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Prescribed by ${_doctorLabel(r.doctorName)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                const SizedBox(height: 2),
+                Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
               ],
             ),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            visualDensity: VisualDensity.compact,
+            icon: Icon(HugeIcons.delete02, size: 18, color: DietUi.hint(isDark)),
+            onPressed: () => MedicationReminderService.instance.deleteReminder(r.id),
           ),
         ],
       ),

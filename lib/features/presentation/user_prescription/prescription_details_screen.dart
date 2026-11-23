@@ -574,6 +574,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                     doctorName: doctorName,
                     doctorPhoto: doctorPhoto,
                     condition: condition,
+                    durationText: duration,
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,

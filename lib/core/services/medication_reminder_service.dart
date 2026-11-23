@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yiraclinics/core/api/api_client.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
-import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/features/data/models/medication/medication_reminder_model.dart';
 
@@ -25,39 +24,70 @@ class TodayMedicationDose {
 }
 
 class MedicationReminderService {
-  MedicationReminderService._privateConstructor();
+  MedicationReminderService._privateConstructor() {
+    // Each family profile has its own medicines: when the open profile changes,
+    // show that profile's list instead of the previous one's.
+    GlobalSession.instance.userNotifier.addListener(_onSessionChanged);
+  }
   static final MedicationReminderService instance = MedicationReminderService._privateConstructor();
 
-  static String get _storageKey {
-    final userId = GlobalSession.instance.userNotifier.value?.data?.id?.trim();
-    if (userId != null && userId.isNotEmpty) {
-      return 'saved_medication_reminders_v1_$userId';
-    }
-    return 'saved_medication_reminders_v1_guest';
-  }
+  /// Remembers the open profile, so the floating popup (which has no session) can
+  /// find the right list when it marks a dose taken.
+  static const String _lastProfileKey = 'saved_medication_reminders_profile_v1';
+
+  static String _keyFor(String profileId, String kind) =>
+      'saved_medication_reminders_v1${kind.isEmpty ? '' : '_$kind'}_${profileId.isEmpty ? 'guest' : profileId}';
+
+  /// The family profile the app has open (the account holder or a dependent).
+  static String get _profileId => GlobalSession.instance.userNotifier.value?.data?.id?.trim() ?? '';
 
   final ValueNotifier<List<MedicationReminder>> remindersNotifier = ValueNotifier<List<MedicationReminder>>([]);
-  bool _isInitialized = false;
+
+  /// True while the list is being fetched and nothing is stored on the phone yet.
+  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
+
+  /// The profile whose list is in [remindersNotifier]; null before the first load.
+  String? _loadedFor;
+
+  void _onSessionChanged() {
+    final id = _profileId;
+    if (_loadedFor == null || id == _loadedFor) return;
+    remindersNotifier.value = [];
+    _loadedFor = null;
+    if (id.isNotEmpty) init();
+  }
 
   Future<void> init({bool force = false}) async {
-    if (_isInitialized && !force) return;
-    await loadReminders();
-    _isInitialized = true;
-
-    // Asynchronously synchronize with backend for active user
-    fetchRemoteReminders();
+    final id = _profileId;
+    if (!force && _loadedFor == id && id.isNotEmpty) return;
+    _loadedFor = id;
+    final local = await loadReminders();
+    if (id.isEmpty) return;
+    isLoading.value = local.isEmpty;
+    await fetchRemoteReminders();
   }
 
   /// Clears in-memory reminders and de-initializes service on logout
   Future<void> clear() async {
     try {
       remindersNotifier.value = [];
-      _isInitialized = false;
+      isLoading.value = false;
+      _loadedFor = null;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('saved_medication_reminders_v1');
+      for (final key in prefs.getKeys().where((k) => k.startsWith('saved_medication_reminders')).toList()) {
+        await prefs.remove(key);
+      }
     } catch (e) {
       debugPrint("[MedicationReminderService] Error clearing reminders: $e");
     }
+  }
+
+  /// The profile whose stored list to use: the open one, or (in the floating popup,
+  /// which has no session) the last one the app had open.
+  Future<String> _storageProfile(SharedPreferences prefs) async {
+    final id = _profileId;
+    if (id.isNotEmpty) return id;
+    return prefs.getString(_lastProfileKey) ?? '';
   }
 
   Future<List<MedicationReminder>> loadReminders() async {
@@ -65,8 +95,7 @@ class MedicationReminderService {
       final prefs = await SharedPreferences.getInstance();
       // The floating popup runs separately and may have marked a dose taken.
       await prefs.reload();
-      final key = _storageKey;
-      final raw = prefs.getString(key);
+      final raw = prefs.getString(_keyFor(await _storageProfile(prefs), ''));
       if (raw != null && raw.isNotEmpty) {
         final List list = json.decode(raw);
         final loaded = list.map((item) => MedicationReminder.fromMap(Map<String, dynamic>.from(item))).toList();
@@ -80,31 +109,61 @@ class MedicationReminderService {
     return [];
   }
 
-  /// Fetches reminders saved on the backend MSSQL database and merges with local doses
-  Future<void> fetchRemoteReminders() async {
-    try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final token = currentUser?.data?.accessToken ?? '';
-      if (token.isEmpty) return;
+  /// Every medicine call names the open profile (x-user-id), so the server keeps a
+  /// dependent's medicines apart from the account holder's. Without it the server
+  /// used the signed-in account for everything, so medicines added for one person
+  /// showed up for the whole family.
+  Options _options(String profileId) {
+    final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
+    return Options(
+      headers: {
+        if (token.isNotEmpty) HttpHeaders.authorizationHeader: 'Bearer $token',
+        if (profileId.isNotEmpty) 'x-user-id': profileId,
+      },
+      extra: const {'showSuccessSnack': false, 'suppressErrorSnack': true},
+    );
+  }
 
-      final client = ApiClient();
-      final response = await client.account(showSuccessSnack: false).get(
-        URLs.patientMedicationRemindersUrl,
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-          },
-        ),
-      );
+  Future<Set<String>> _pending(String profileId, String kind) async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_keyFor(profileId, kind)) ?? const []).toSet();
+  }
+
+  Future<void> _setPending(String profileId, String kind, String id, bool pending) async {
+    final prefs = await SharedPreferences.getInstance();
+    final set = (prefs.getStringList(_keyFor(profileId, kind)) ?? const []).toSet();
+    pending ? set.add(id) : set.remove(id);
+    await prefs.setStringList(_keyFor(profileId, kind), set.toList());
+  }
+
+  /// Fetches the open profile's reminders from the server. Changes that couldn't
+  /// reach the server earlier (a stop or a new reminder made offline) are sent
+  /// first, so a stopped medicine doesn't come back and keep reminding.
+  Future<void> fetchRemoteReminders() async {
+    final profileId = _profileId;
+    if (profileId.isEmpty) return;
+    try {
+      await _retryPending(profileId);
+
+      final response = await ApiClient().account(showSuccessSnack: false).get(
+            URLs.patientMedicationRemindersUrl,
+            queryParameters: {'userId': profileId},
+            options: _options(profileId),
+          );
+      // The person switched profile meanwhile: this list isn't theirs.
+      if (_profileId != profileId) return;
 
       if (response.statusCode == 200 && response.data != null) {
         final dynamic data = response.data['data'] ?? response.data['result'];
         if (data is List) {
+          final pendingDeletes = await _pending(profileId, 'deletes');
+          final pendingSaves = await _pending(profileId, 'saves');
           final currentMap = {for (var r in remindersNotifier.value) r.id: r};
           final List<MedicationReminder> remoteList = [];
 
           for (final item in data) {
             final parsed = MedicationReminder.fromMap(Map<String, dynamic>.from(item));
+            if (pendingDeletes.contains(parsed.id)) continue;
             // Preserve locally tracked dose completion status
             final localExisting = currentMap[parsed.id];
             if (localExisting != null && localExisting.takenDoses.isNotEmpty) {
@@ -114,18 +173,37 @@ class MedicationReminderService {
               remoteList.add(parsed);
             }
           }
+          // Reminders saved on this phone that the server hasn't got yet stay.
+          final remoteIds = remoteList.map((r) => r.id).toSet();
+          for (final local in currentMap.values) {
+            if (pendingSaves.contains(local.id) && !remoteIds.contains(local.id)) remoteList.insert(0, local);
+          }
 
           remindersNotifier.value = remoteList;
-          await _persistList(remoteList);
-          debugPrint("[MedicationReminderService] Successfully synced ${remoteList.length} reminders from backend");
+          await _persistList(remoteList, profileId: profileId);
+          debugPrint("[MedicationReminderService] Synced ${remoteList.length} reminders for profile $profileId");
         }
       }
     } catch (e) {
       debugPrint("[MedicationReminderService] Remote fetch ignored (offline/fallback): $e");
+    } finally {
+      if (_profileId == profileId) isLoading.value = false;
+    }
+  }
+
+  Future<void> _retryPending(String profileId) async {
+    for (final id in await _pending(profileId, 'deletes')) {
+      await _syncDeleteReminderToBackend(id, profileId);
+    }
+    final saves = await _pending(profileId, 'saves');
+    if (saves.isEmpty) return;
+    for (final r in remindersNotifier.value.where((r) => saves.contains(r.id)).toList()) {
+      await _syncSaveReminderToBackend(r, profileId);
     }
   }
 
   Future<void> saveReminder(MedicationReminder reminder) async {
+    final profileId = _profileId;
     try {
       final currentList = List<MedicationReminder>.from(remindersNotifier.value);
       final index = currentList.indexWhere((r) => r.id == reminder.id);
@@ -136,36 +214,26 @@ class MedicationReminderService {
       }
 
       remindersNotifier.value = currentList;
-      await _persistList(currentList);
+      await _persistList(currentList, profileId: profileId);
 
-      // Trigger immediate notification confirming reminder is scheduled
-      final timesStr = reminder.times.join(', ');
-      await NotificationService.instance.showNotification(
-        title: "💊 Reminder Scheduled",
-        body: "We'll notify you to take ${reminder.medicineName} (${reminder.mealRelation}) for ${reminder.durationDays} days at $timesStr.",
-        payload: jsonEncode({'type': 'medication_reminder', 'id': reminder.id}),
-      );
+      // No notification here: the screen that saved it already confirms it.
 
-      // Asynchronously send to backend scheduler
-      _syncSaveReminderToBackend(reminder);
+      // The server sends the reminders; until it has this one it's retried on the next load.
+      await _setPending(profileId, 'saves', reminder.id, true);
+      _syncSaveReminderToBackend(reminder, profileId);
     } catch (e) {
       debugPrint("[MedicationReminderService] Error saving reminder: $e");
     }
   }
 
-  Future<void> _syncSaveReminderToBackend(MedicationReminder reminder) async {
+  Future<bool> _syncSaveReminderToBackend(MedicationReminder reminder, String profileId) async {
     try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final token = currentUser?.data?.accessToken ?? '';
-      final userId = currentUser?.data?.id ?? '';
-      if (token.isEmpty || userId.isEmpty) return;
-
-      final client = ApiClient();
-      await client.account(showSuccessSnack: false).post(
+      if (profileId.isEmpty) return false;
+      await ApiClient().account(showSuccessSnack: false).post(
         URLs.patientMedicationRemindersUrl,
         data: {
           'id': reminder.id,
-          'userId': userId,
+          'userId': profileId,
           'prescriptionId': reminder.prescriptionId,
           'medicineName': reminder.medicineName,
           'dosage': reminder.dosage,
@@ -181,15 +249,14 @@ class MedicationReminderService {
           'condition': reminder.condition,
           'isActive': reminder.isActive,
         },
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-          },
-        ),
+        options: _options(profileId),
       );
-      debugPrint("[MedicationReminderService] Successfully synced reminder ${reminder.id} to backend scheduler");
+      await _setPending(profileId, 'saves', reminder.id, false);
+      debugPrint("[MedicationReminderService] Saved reminder ${reminder.id} on the server");
+      return true;
     } catch (e) {
       debugPrint("[MedicationReminderService] Error syncing reminder to backend: $e");
+      return false;
     }
   }
 
@@ -209,14 +276,6 @@ class MedicationReminderService {
         currentList[index] = r.copyWith(takenDoses: updatedDoses);
         remindersNotifier.value = currentList;
         await _persistList(currentList);
-
-        if (!currentVal) {
-          // Send feedback notification when dose taken
-          await NotificationService.instance.showNotification(
-            title: "🎉 Medicine Taken!",
-            body: "Great! You logged your dose of ${r.medicineName} for $timeKey.",
-          );
-        }
       }
     } catch (e) {
       debugPrint("[MedicationReminderService] Error toggling dose: $e");
@@ -230,7 +289,8 @@ class MedicationReminderService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.reload();
-      final raw = prefs.getString(_storageKey);
+      final profileId = await _storageProfile(prefs);
+      final raw = prefs.getString(_keyFor(profileId, ''));
       if (raw == null || raw.isEmpty) return false;
       final list = (json.decode(raw) as List)
           .map((item) => MedicationReminder.fromMap(Map<String, dynamic>.from(item)))
@@ -245,8 +305,8 @@ class MedicationReminderService {
       final doses = Map<String, bool>.from(list[index].takenDoses)..["${day}_$timeKey"] = true;
       list[index] = list[index].copyWith(takenDoses: doses);
 
-      await _persistList(list);
-      remindersNotifier.value = list;
+      await _persistList(list, profileId: profileId);
+      if (_profileId.isEmpty || _profileId == profileId) remindersNotifier.value = list;
       return true;
     } catch (e) {
       debugPrint("[MedicationReminderService] Error marking dose taken: $e");
@@ -255,56 +315,51 @@ class MedicationReminderService {
   }
 
   Future<void> deleteReminder(String reminderId) async {
+    final profileId = _profileId;
     try {
       final currentList = List<MedicationReminder>.from(remindersNotifier.value);
       currentList.removeWhere((r) => r.id == reminderId);
       remindersNotifier.value = currentList;
-      await _persistList(currentList);
+      await _persistList(currentList, profileId: profileId);
 
-      // Asynchronously delete from backend
-      _syncDeleteReminderToBackend(reminderId);
+      // Until the server has stopped it, it keeps sending reminders: retried on each load.
+      await _setPending(profileId, 'saves', reminderId, false);
+      await _setPending(profileId, 'deletes', reminderId, true);
+      await _syncDeleteReminderToBackend(reminderId, profileId);
     } catch (e) {
       debugPrint("[MedicationReminderService] Error deleting reminder: $e");
     }
   }
 
-  Future<void> _syncDeleteReminderToBackend(String reminderId) async {
+  Future<bool> _syncDeleteReminderToBackend(String reminderId, String profileId) async {
     try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final token = currentUser?.data?.accessToken ?? '';
-      if (token.isEmpty) return;
-
-      final client = ApiClient();
-      await client.account(showSuccessSnack: false).delete(
+      if (profileId.isEmpty) return false;
+      await ApiClient().account(showSuccessSnack: false).delete(
         "${URLs.patientMedicationRemindersUrl}/$reminderId",
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-          },
-        ),
+        data: {'userId': profileId},
+        options: _options(profileId),
       );
-      debugPrint("[MedicationReminderService] Successfully deactivated reminder $reminderId on backend");
+      await _setPending(profileId, 'deletes', reminderId, false);
+      debugPrint("[MedicationReminderService] Stopped reminder $reminderId on the server");
+      return true;
     } catch (e) {
       debugPrint("[MedicationReminderService] Error deactivating reminder on backend: $e");
+      return false;
     }
   }
 
   /// Syncs all existing local reminders to the backend in a batch
   Future<void> syncAllToBackend() async {
+    final profileId = _profileId;
     try {
-      final currentUser = GlobalSession.instance.userNotifier.value;
-      final token = currentUser?.data?.accessToken ?? '';
-      final userId = currentUser?.data?.id ?? '';
-      if (token.isEmpty || userId.isEmpty) return;
-
+      if (profileId.isEmpty) return;
       final remindersList = remindersNotifier.value;
       if (remindersList.isEmpty) return;
 
-      final client = ApiClient();
-      await client.account(showSuccessSnack: false).post(
+      await ApiClient().account(showSuccessSnack: false).post(
         URLs.patientMedicationRemindersSyncUrl,
         data: {
-          'userId': userId,
+          'userId': profileId,
           'reminders': remindersList.map((r) => {
             'id': r.id,
             'prescriptionId': r.prescriptionId,
@@ -323,11 +378,7 @@ class MedicationReminderService {
             'isActive': r.isActive,
           }).toList(),
         },
-        options: Options(
-          headers: {
-            HttpHeaders.authorizationHeader: 'Bearer $token',
-          },
-        ),
+        options: _options(profileId),
       );
       debugPrint("[MedicationReminderService] Synced ${remindersList.length} local reminders to backend in batch");
     } catch (e) {
@@ -426,9 +477,11 @@ class MedicationReminderService {
     }
   }
 
-  Future<void> _persistList(List<MedicationReminder> list) async {
+  Future<void> _persistList(List<MedicationReminder> list, {String? profileId}) async {
     final prefs = await SharedPreferences.getInstance();
+    final id = profileId ?? await _storageProfile(prefs);
     final jsonList = list.map((r) => r.toMap()).toList();
-    await prefs.setString(_storageKey, json.encode(jsonList));
+    await prefs.setString(_keyFor(id, ''), json.encode(jsonList));
+    if (id.isNotEmpty) await prefs.setString(_lastProfileKey, id);
   }
 }

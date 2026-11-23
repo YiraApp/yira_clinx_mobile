@@ -1,4 +1,5 @@
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
+import 'package:yiraclinics/core/widgets/medical_loader.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -479,19 +480,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
             onRefresh: () => _loadPackages(pincode: _pincodeController.text.trim()),
             child: _loadingPackages || (_locating && !_packagesLoadedOnce)
                 ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(),
-                        if (_locating) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            'Finding your location…',
-                            style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
-                          ),
-                        ],
-                      ],
-                    ),
+                    child: MedicalLoader(message: _locating ? 'Finding your location…' : 'Finding health packages near you…'),
                   )
                 : _packagesError != null
                 ? _messageList(IosIcons.error_outline, _packagesError!, isDark)
@@ -522,7 +511,7 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
     return RefreshIndicator(
       onRefresh: _loadOrders,
       child: _loadingOrders && _orders.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: MedicalLoader(message: 'Loading your orders…'))
           : _ordersError != null
           ? _messageList(IosIcons.error_outline, _ordersError!, isDark)
           : _orders.isEmpty
@@ -2262,8 +2251,8 @@ class _SlotPickerSheetState extends State<_SlotPickerSheet> {
               const SizedBox(height: 16),
               if (_loading)
                 const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: MedicalLoader(size: 0.8)),
                 )
               else if (_error != null)
                 Padding(

@@ -137,6 +137,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
     bool? includeConsultationFee,
     double? consultationFee,
     bool? shareRecords,
+    String? shareRecordsDuration,
   }) async {
     final currentUser = GlobalSession.instance.userNotifier.value;
     final endPoint = URLs.bookAppointmentUrl;
@@ -165,6 +166,7 @@ class AppointmentRepoImpl implements AppointmentRepo {
       if (includeConsultationFee != null) "includeConsultationFee": includeConsultationFee,
       if (consultationFee != null) "consultationFee": consultationFee,
       if (shareRecords != null) "shareRecords": shareRecords,
+      if (shareRecords == true && shareRecordsDuration != null) "shareRecordsDuration": shareRecordsDuration,
     };
 
     try {

@@ -61,10 +61,12 @@ class NotificationService {
     try {
       await requestNotificationPermissions();
 
+      // While the app is open, onMessage shows the banner itself (and drops it when
+      // signed out). Letting iOS show the push as well put every message up twice.
       await _fcm.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
+        alert: false,
+        badge: false,
+        sound: false,
       );
 
       const AndroidInitializationSettings androidSettings =
@@ -157,9 +159,25 @@ class NotificationService {
     }
   }
 
+  /// Messages already shown while the app was open; Firebase can hand the same one over twice.
+  final List<String> _shownMessageIds = [];
+
+  bool _alreadyShown(RemoteMessage message) {
+    final id = message.messageId;
+    if (id == null || id.isEmpty) return false;
+    if (_shownMessageIds.contains(id)) return true;
+    _shownMessageIds.add(id);
+    if (_shownMessageIds.length > 50) _shownMessageIds.removeAt(0);
+    return false;
+  }
+
   void _listenToActiveStateNotifications() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint("[NotificationService] Foreground notification received: ${message.data}");
+      if (_alreadyShown(message)) {
+        debugPrint("[NotificationService] Dropping repeated message ${message.messageId}");
+        return;
+      }
       final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
           (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
       final currentUser = GlobalSession.instance.userNotifier.value;
@@ -482,8 +500,15 @@ class NotificationService {
     });
   }
 
+  /// Set while signing out, so a token Firebase issues meanwhile is never sent to the server.
+  static bool signingOut = false;
+
   Future<void> _sendTokenToBackend(String token) async {
     try {
+      if (signingOut) {
+        debugPrint("[NotificationService] Skipping token sync: signing out");
+        return;
+      }
       final bool isLoggedIn = sl.isRegistered<SharedPrefsService>() &&
           (sl<SharedPrefsService>().getValue<bool>(ClinxStorageKeys.isUserLoggedIn) ?? false);
       final currentUser = GlobalSession.instance.userNotifier.value;

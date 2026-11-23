@@ -1,4 +1,9 @@
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:meta/meta.dart';
 
 import '../../../../core/local/global_session.dart';
@@ -132,6 +137,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
           includeConsultationFee: event.includeConsultationFee,
           consultationFee: event.consultationFee,
           shareRecords: event.grantRecordAccess,
+          shareRecordsDuration: event.shareRecordsDuration,
         );
 
         if (bookingData != null) {
@@ -143,6 +149,16 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
             patientUserId = d['patientUserId']?.toString();
           }
           appointmentId ??= int.tryParse(bookingData['appointmentId']?.toString() ?? '');
+
+          // A server from before the duration choice always gives 7 days and doesn't
+          // report recordAccess; then give the chosen duration with the share call.
+          if (event.grantRecordAccess &&
+              event.shareRecordsDuration != '7_DAYS' &&
+              (d is! Map<String, dynamic> || d['recordAccess'] == null) &&
+              (patientUserId ?? '').isNotEmpty &&
+              doctorId.isNotEmpty) {
+            await _shareRecordsFor(patientUserId!, doctorId, event.shareRecordsDuration, hospitalId);
+          }
 
           emit(BookAppointmentSuccessState(
             message: "Appointment booked successfully!",
@@ -195,5 +211,19 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         emit(AppointmentError("Failed to update appointment status: $e"));
       }
     });
+  }
+
+  /// Gives [doctorId] access to [patientId]'s records for [duration]. Booking has
+  /// already succeeded, so a failure here is only logged.
+  Future<void> _shareRecordsFor(String patientId, String doctorId, String duration, int hospitalId) async {
+    try {
+      await sl<ApiClient>().account(showSuccessSnack: false).post(
+            URLs.patientAccessGrantUrl,
+            data: {'patientId': patientId, 'doctorId': doctorId, 'duration': duration, 'hospitalId': hospitalId},
+            options: Options(extra: const {'showSuccessSnack': false, 'suppressErrorSnack': true}),
+          );
+    } catch (e) {
+      debugPrint('[AppointmentBloc] Could not share records for $duration: $e');
+    }
   }
 }

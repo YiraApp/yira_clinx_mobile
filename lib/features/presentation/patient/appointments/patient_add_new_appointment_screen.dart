@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/features/presentation/appointments/widgets/record_share_consent_card.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,6 @@ import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/liked_hospitals_service.dart';
-import 'package:yiraclinics/core/services/notification_services/notification_services.dart';
 import 'package:yiraclinics/core/urls/urls.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/core/services/payment/razorpay_payment_service.dart';
@@ -60,6 +60,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   final TextEditingController _reasonController = TextEditingController();
   String? _slotError;
   bool _shareRecords = true;
+  String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
   final List<String> _quickReasons = const [
@@ -505,6 +506,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "isTeleConsultation": _isTeleConsultation,
       "consultationFee": _selectedDoctor!['consultationFee'] ?? 0,
       "shareRecords": _shareRecords,
+      if (_shareRecords) "shareRecordsDuration": _shareDuration,
     };
 
     try {
@@ -527,6 +529,22 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
             patientUserId = d['patientUserId']?.toString();
           }
           appointmentId ??= int.tryParse(rawData['appointmentId']?.toString() ?? '');
+
+          // A server from before the duration choice always gives 7 days and doesn't
+          // report recordAccess; then give the chosen duration with the share call.
+          final bookedFor = patientUserId ?? profile['userId']?.toString() ?? '';
+          if (_shareRecords && _shareDuration != RecordShareConsentCard.defaultDuration &&
+              (d is! Map<String, dynamic> || d['recordAccess'] == null) && bookedFor.isNotEmpty) {
+            try {
+              await sl<ApiClient>().account(showSuccessSnack: false).post(
+                URLs.patientAccessGrantUrl,
+                data: {'patientId': bookedFor, 'doctorId': doctorId, 'duration': _shareDuration, 'hospitalId': hospitalId},
+                options: Options(extra: const {'showSuccessSnack': false, 'suppressErrorSnack': true}),
+              );
+            } catch (e) {
+              debugPrint("Could not share records for $_shareDuration: $e");
+            }
+          }
         }
 
         final double fee = (_selectedDoctor?['consultationFee'] != null)
@@ -844,24 +862,8 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       LikedHospitalsService.instance.saveLikedHospital(_selectedHospital!);
     }
 
-    // Trigger immediate local notification to alert patient instantly
-    try {
-      final rawDocName = (_selectedDoctor?['name'] ?? 'Doctor').toString().trim();
-      final cleanDocName = rawDocName.replaceFirst(RegExp(r'^(Dr\.\s*|Dr\s+|Doctor\s*)', caseSensitive: false), '').trim();
-      final formattedDocName = cleanDocName.isNotEmpty ? 'Dr. $cleanDocName' : 'your doctor';
-      final dateFormatted = DateFormat('dd MMM yyyy').format(_selectedDate);
-      final slotTime = _selectedSlot?['startTime'] ?? '10:00 AM';
-      NotificationService.instance.showNotification(
-        title: "Appointment Confirmed",
-        body: "Your appointment with $formattedDocName on $dateFormatted at $slotTime is confirmed.",
-        payload: jsonEncode({
-          "type": "APPOINTMENT_BOOKED",
-          "route": "/patientDashboard",
-        }),
-      );
-    } catch (e) {
-      debugPrint("Failed to trigger local appointment notification: $e");
-    }
+    // No local "Appointment Confirmed" here: the server's push already says it,
+    // and a local one showed the same message twice.
 
     final isDark = Theme.of(ctx).brightness == Brightness.dark;
     showModalBottomSheet(
@@ -1935,80 +1937,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
 
                   const SizedBox(height: 16),
 
-                  // Section 6: Record Sharing Consent (Default: Checked / 7-Day Access)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: _shareRecords
-                          ? const Color(0xFF2563EB).withValues(alpha: isDark ? 0.12 : 0.06)
-                          : (isDark ? const Color(0xFF232323) : Colors.white),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _shareRecords
-                            ? const Color(0xFF2563EB).withValues(alpha: 0.35)
-                            : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () => setState(() => _shareRecords = !_shareRecords),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Transform.scale(
-                            scale: 1.05,
-                            child: Checkbox(
-                              value: _shareRecords,
-                              activeColor: const Color(0xFF2563EB),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                              onChanged: (val) => setState(() => _shareRecords = val ?? true),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      IosIcons.verified_user_rounded,
-                                      size: 16,
-                                      color: _shareRecords
-                                          ? const Color(0xFF2563EB)
-                                          : (isDark ? Colors.white70 : const Color(0xFF64748B)),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        "Share Medical Records (7 Days Access)",
-                                        style: TextStyle(
-                                          fontFamily: appPoppinFont,
-                                          fontSize: isTab ? 13.5 : 12.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: isDark ? Colors.white : const Color(0xFF121212),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Allow \${_selectedDoctor?['name'] ?? 'the doctor'} to access your medical history and test records for 7 days. You can revoke access anytime in Approvals.",
-                                  style: TextStyle(
-                                    fontFamily: appPoppinFont,
-                                    fontSize: isTab ? 12 : 11,
-                                    height: 1.35,
-                                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  // Section 6: let the doctor see all the patient's records (7 days by default)
+                  RecordShareConsentCard(
+                    value: _shareRecords,
+                    onChanged: (v) => setState(() => _shareRecords = v),
+                    duration: _shareDuration,
+                    onDurationChanged: (d) => setState(() => _shareDuration = d),
+                    doctorName: _selectedDoctor?['name']?.toString(),
+                    isTab: isTab,
                   ),
 
                   const SizedBox(height: 24),

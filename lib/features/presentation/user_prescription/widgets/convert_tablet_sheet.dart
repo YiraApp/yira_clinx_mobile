@@ -28,7 +28,11 @@ class ConvertTabletSheet extends StatefulWidget {
     this.doctorPhoto,
     this.condition,
     this.onConverted,
+    this.durationText,
   });
+
+  /// The prescription's duration, e.g. "5 Days" or "2 Weeks"; it sets the days to take.
+  final String? durationText;
 
   static Future<void> show(
     BuildContext context, {
@@ -40,6 +44,7 @@ class ConvertTabletSheet extends StatefulWidget {
     String? doctorPhoto,
     String? condition,
     VoidCallback? onConverted,
+    String? durationText,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -54,8 +59,28 @@ class ConvertTabletSheet extends StatefulWidget {
         doctorPhoto: doctorPhoto,
         condition: condition,
         onConverted: onConverted,
+        durationText: durationText,
       ),
     );
+  }
+
+  /// Days in a prescription duration: "5 Days" -> 5, "2 Weeks" -> 14, "1 Month" -> 30.
+  static int? daysFrom(String? text) {
+    final match = RegExp(r'(\d+)\s*(day|week|month)?', caseSensitive: false).firstMatch(text ?? '');
+    if (match == null) return null;
+    final n = int.tryParse(match.group(1)!) ?? 0;
+    if (n <= 0) return null;
+    final unit = (match.group(2) ?? 'day').toLowerCase();
+    return unit.startsWith('week') ? n * 7 : (unit.startsWith('month') ? n * 30 : n);
+  }
+
+  /// Reminder times from a daily pattern like "1-0-1" (morning, afternoon, night).
+  static List<String>? timesFrom(String? text) {
+    final match = RegExp(r'\b([0-9])\s*-\s*([0-9])\s*-\s*([0-9])\b').firstMatch(text ?? '');
+    if (match == null) return null;
+    const slots = ['08:00 AM', '02:00 PM', '08:00 PM'];
+    final times = [for (var i = 0; i < 3; i++) if ((int.tryParse(match.group(i + 1)!) ?? 0) > 0) slots[i]];
+    return times.isEmpty ? null : times;
   }
 
   @override
@@ -81,6 +106,19 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
   @override
   void initState() {
     super.initState();
+    // Start from what the doctor prescribed: its number of days and its daily pattern.
+    final days = ConvertTabletSheet.daysFrom(widget.durationText);
+    if (days != null) {
+      _durationDays = days;
+      _isCustomDays = !_quickDays.contains(days);
+      _customDaysController.text = '$days';
+    }
+    final times = ConvertTabletSheet.timesFrom(widget.dosage);
+    if (times != null) {
+      _times
+        ..clear()
+        ..addAll(times);
+    }
     _sortTimes();
   }
 
@@ -162,7 +200,8 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
     final effectiveDays = _isContinuous ? 365 : _durationDays;
     final endDate = _isContinuous
         ? startDate.add(const Duration(days: 3650))
-        : startDate.add(Duration(days: effectiveDays));
+        // N days of medicine end on day N: today plus N - 1 (adding N gave one extra day of reminders).
+        : startDate.add(Duration(days: effectiveDays - 1));
 
     final reminder = MedicationReminder(
       id: "med_${DateTime.now().millisecondsSinceEpoch}_${widget.medicineName.hashCode.abs()}",
@@ -214,7 +253,7 @@ class _ConvertTabletSheetState extends State<ConvertTabletSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
-    final finishDate = now.add(Duration(days: _durationDays));
+    final finishDate = now.add(Duration(days: _durationDays > 0 ? _durationDays - 1 : 0));
     final dateRangeStr = "${DateFormat('MMM d').format(now)} – ${DateFormat('MMM d, yyyy').format(finishDate)}";
 
     return Container(

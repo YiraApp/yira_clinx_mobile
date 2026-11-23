@@ -34,6 +34,8 @@ class AuthLogoutService {
   static Future<void> performLogout({BuildContext? context}) async {
     if (_isLoggingOut) return;
     _isLoggingOut = true;
+    // From here on the app must not register this phone for pushes again.
+    NotificationService.signingOut = true;
 
     try {
       final currentUser = GlobalSession.instance.userNotifier.value;
@@ -122,7 +124,15 @@ class AuthLogoutService {
         debugPrint("[AuthLogoutService] Backend logout notification skipped/failed: $backendError");
       }
 
-      // 3. Delete FCM token on Firebase so this device stops receiving any push notifications
+      // 3. Mark the app signed out before deleting the token: deleting it makes Firebase
+      // issue a new one, and while the app still looked signed in that new token was
+      // registered for this account again, so the signed-out phone kept getting pushes.
+      try {
+        await sl<SharedPrefsService>().setValue<bool>(ClinxStorageKeys.isUserLoggedIn, false);
+      } catch (_) {}
+      await GlobalSession.instance.clear();
+
+      // Delete FCM token on Firebase so this device stops receiving any push notifications
       try {
         await FirebaseMessaging.instance.deleteToken();
         debugPrint("[AuthLogoutService] Local Firebase messaging token deleted successfully.");
@@ -184,6 +194,7 @@ class AuthLogoutService {
       }
     } finally {
       _isLoggingOut = false;
+      NotificationService.signingOut = false;
     }
   }
 

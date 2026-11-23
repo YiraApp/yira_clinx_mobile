@@ -9,6 +9,7 @@ import 'package:yiraclinics/features/data/data_sources/diet/doctor_diet_remote_d
 import 'package:yiraclinics/features/data/models/diet/patient_diet_plan_model.dart';
 import 'package:yiraclinics/features/presentation/doctor/diet/diet_food_image.dart';
 import 'package:yiraclinics/features/presentation/doctor/diet/doctor_prescribe_diet_sheet.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_pdf.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
 import 'package:yiraclinics/features/presentation/patient_profile/widgets/record_tab_ui.dart';
 
@@ -224,6 +225,16 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
     );
   }
 
+  void _openPdf(TodayDietPlanInfo plan) {
+    openDietPlanPdf(
+      context,
+      planId: plan.id,
+      planName: plan.planName,
+      doctorName: plan.doctorName,
+      download: () => _dataSource.downloadPlanPdf(plan.id, orgId: widget.orgId),
+    );
+  }
+
   Widget _buildPlanCard(TodayDietPlanInfo plan, bool isDark) {
     final status = _status(plan);
     final thisAppointment =
@@ -260,6 +271,7 @@ class _DoctorPatientDietTabState extends State<DoctorPatientDietTab> with Automa
             Row(
               children: [
                 if (canEdit) RecordIconAction(icon: IosIcons.edit_outlined, tooltip: 'Edit plan', onTap: () => _editPlan(plan)),
+                RecordIconAction(icon: IosIcons.picture_as_pdf_outlined, tooltip: 'View PDF', onTap: () => _openPdf(plan)),
                 const Expanded(child: RecordCardLink(label: 'View diet')),
               ],
             ),
@@ -426,6 +438,17 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                           style: ts(12, FontWeight.w400, muted),
                         ),
                       ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'View PDF',
+                    icon: const Icon(IosIcons.picture_as_pdf_outlined, color: DietUi.blue),
+                    onPressed: () => openDietPlanPdf(
+                      context,
+                      planId: plan.id,
+                      planName: plan.planName,
+                      doctorName: plan.doctorName,
+                      download: () => widget.dataSource.downloadPlanPdf(plan.id, orgId: widget.orgId),
                     ),
                   ),
                   IconButton(icon: const Icon(IosIcons.close_rounded), onPressed: () => Navigator.pop(context)),

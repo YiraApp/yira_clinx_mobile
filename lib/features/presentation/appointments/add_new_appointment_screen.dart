@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:yiraclinics/features/presentation/appointments/widgets/record_share_consent_card.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -303,6 +304,7 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
   bool _isLoadingDoctors = false;
   bool _isLoadingInitial = true;
   bool _shareRecords = true;
+  String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   Future<void> _initPatientHospitalsAndDoctors() async {
     setState(() => _isLoadingInitial = true);
@@ -1626,7 +1628,8 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
         discountAmount: (!isPatient && discount > 0) ? discount : null,
         includeConsultationFee: effectiveIncludeConsultationFee,
         consultationFee: consultationFeeAmt,
-        grantRecordAccess: _shareRecords,
+        grantRecordAccess: _isPatientUser && _shareRecords,
+        shareRecordsDuration: _shareDuration,
       ),
     );
   }
@@ -2061,11 +2064,11 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                             isDark,
                           ),
                         ],
-                        if (_shareRecords) ...[
+                        if (_isPatientUser && _shareRecords) ...[
                           const SizedBox(height: 8),
                           _buildSummaryRow(
                             "Record Access",
-                            "Shared (7 Days)",
+                            "Shared (${RecordShareConsentCard.labelFor(_shareDuration)})",
                             IosIcons.verified_user_rounded,
                             isDark,
                             highlight: true,
@@ -3127,88 +3130,20 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Record Sharing Consent Card (Default: Checked / 7-Day Access)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _shareRecords
-                        ? primaryColor.withValues(alpha: isDark ? 0.12 : 0.06)
-                        : (isDark ? const Color(0xFF232323) : Colors.white),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _shareRecords
-                          ? primaryColor.withValues(alpha: 0.35)
-                          : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                      width: 1.2,
+                // The patient can let the doctor see all their records (7 days by default).
+                // Only for patients: staff booking for someone can't give that consent.
+                if (_isPatientUser)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: RecordShareConsentCard(
+                      value: _shareRecords,
+                      onChanged: (v) => setState(() => _shareRecords = v),
+                      duration: _shareDuration,
+                      onDurationChanged: (d) => setState(() => _shareDuration = d),
+                      doctorName: (_selectedDoctorMap?['name'] ?? _selectedDoctor)?.toString(),
+                      isTab: isTab,
                     ),
                   ),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _shareRecords = !_shareRecords;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Transform.scale(
-                          scale: 1.05,
-                          child: Checkbox(
-                            value: _shareRecords,
-                            activeColor: primaryColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                            onChanged: (val) {
-                              setState(() {
-                                _shareRecords = val ?? true;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    IosIcons.verified_user_rounded,
-                                    size: 16,
-                                    color: _shareRecords ? primaryColor : (isDark ? Colors.white70 : const Color(0xFF64748B)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      "Share Medical Records (7 Days Access)",
-                                      style: TextStyle(
-                                        fontFamily: appPoppinFont,
-                                        fontSize: isTab ? 13.5 : 12.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF121212),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Allow \${_selectedDoctorMap?['name'] ?? _selectedDoctor ?? 'the doctor'} to access your medical history and records for 7 days during consultation. You can revoke access anytime in Approvals.",
-                                style: TextStyle(
-                                  fontFamily: appPoppinFont,
-                                  fontSize: isTab ? 12 : 11,
-                                  height: 1.35,
-                                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
                 // 7. Submit Button
                 Builder(
@@ -3489,6 +3424,17 @@ class _AddNewAppointmentScreenState extends State<AddNewAppointmentScreen> {
                   const SizedBox(height: 22),
                   _pSectionTitle("Payment", isDark),
                   _buildPatientPaymentSummary(isDark),
+                  const SizedBox(height: 22),
+                  _pSectionTitle("Share your health records", isDark),
+                  // Shown, not silent: the doctor gets all the patient's records only if this stays ticked.
+                  RecordShareConsentCard(
+                    value: _shareRecords,
+                    onChanged: (v) => setState(() => _shareRecords = v),
+                    duration: _shareDuration,
+                    onDurationChanged: (d) => setState(() => _shareDuration = d),
+                    doctorName: (_selectedDoctorMap?['name'] ?? _selectedDoctor)?.toString(),
+                    isTab: isTab,
+                  ),
                 ],
               ],
             ),

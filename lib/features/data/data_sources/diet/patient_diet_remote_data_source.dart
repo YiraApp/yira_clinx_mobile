@@ -106,6 +106,16 @@ class PatientDietRemoteDataSource {
     }
   }
 
+  /// The plan's PDF (the same one the doctor's portal prints), as bytes.
+  /// Throws on failure; use [dietApiErrorMessage] to show why.
+  Future<List<int>> downloadPlanPdf(int planId) async {
+    final response = await _apiClient.account(showSuccessSnack: false).get(
+          '${URLs.patientDietPlanDetailsUrl}/$planId/pdf',
+          options: _quietOptions().copyWith(responseType: ResponseType.bytes),
+        );
+    return response.data as List<int>;
+  }
+
   /// Saves the signed-in patient's changes to their active plan and returns
   /// the updated plan. Throws on failure; use [dietApiErrorMessage] to show why.
   Future<Map<String, dynamic>> updateMyPlan(int planId, List<Map<String, dynamic>> meals) async {

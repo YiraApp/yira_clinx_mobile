@@ -41,6 +41,9 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
   final double? consultationFee;
   final bool grantRecordAccess;
 
+  /// How long the doctor may see the patient's records: 1_DAY, 7_DAYS or 1_MONTH.
+  final String shareRecordsDuration;
+
   SubmitBookAppointmentEvent({
     required this.patientName,
     required this.phoneNumber,
@@ -66,6 +69,7 @@ class SubmitBookAppointmentEvent extends AppointmentEvent {
     this.includeConsultationFee,
     this.consultationFee,
     this.grantRecordAccess = true,
+    this.shareRecordsDuration = '7_DAYS',
   });
 }
 
