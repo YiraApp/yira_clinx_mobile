@@ -366,14 +366,12 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
 
     if (shouldProceed != true) return;
 
-    // Request Android System Permission
+    // Request Android System Permission (Android 13+ saves to Downloads without one)
     if (Platform.isAndroid) {
       try {
         final androidInfo = await DeviceInfoPlugin().androidInfo;
         if (androidInfo.version.sdkInt < 33) {
           await Permission.storage.request();
-        } else {
-          await Permission.photos.request();
         }
       } catch (e) {
         debugPrint('[Download] Permission request error: $e');

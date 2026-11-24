@@ -239,8 +239,9 @@ class Utils {
 
     if (Platform.isAndroid) {
       final androidInfo = await DeviceInfoPlugin().androidInfo;
+      // Android 13+ picks files and photos with the system pickers, which need no permission
       if (androidInfo.version.sdkInt > 32) {
-        permission = Permission.photos;
+        return true;
       }
     }
 
