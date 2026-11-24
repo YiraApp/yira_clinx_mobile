@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -162,7 +163,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
+            FitText(
               'Policies',
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -170,6 +171,7 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                 fontSize: 16.5,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
+              maxLines: 2,
             ),
           ],
         ),
@@ -347,8 +349,6 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (policy.policyName.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -360,8 +360,6 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF2563EB),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
@@ -446,8 +444,6 @@ class _PatientPoliciesListScreenState extends State<PatientPoliciesListScreen> {
                                       fontWeight: FontWeight.w600,
                                       color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 3),
                                   Row(

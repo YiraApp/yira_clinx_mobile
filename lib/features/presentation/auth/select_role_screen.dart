@@ -875,8 +875,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             Flexible(
                               child: Text(
                                 displayName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: isPrimaryCard
@@ -1162,8 +1160,6 @@ class _SelectRoleScreenState extends State<SelectRoleScreen>
                             Flexible(
                               child: Text(
                                 title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: isTab ? 16 : 14.5,

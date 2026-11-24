@@ -1,7 +1,12 @@
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/di/dependency_injection.dart';
+import 'package:yiraclinics/features/presentation/patient/diet/diet_plan_pdf.dart';
 import 'package:intl/intl.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/features/presentation/medicine/widgets/clinical_info_session.dart';
@@ -249,23 +254,42 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
       body: BlocConsumer<MedicalRecordBloc, MedicalRecordState>(
         listener: (context, state) {
           if (state is MedicalRecordSuccess) {
+            // The record's PDF: on its own in the patient's documents, or printed on the visit's
+            // prescription once there is one. "View PDF" opens it straight away.
+            final recordId = state.recordId;
+            final rootContext = Navigator.of(context, rootNavigator: true).context;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(IosIcons.check_circle_rounded, color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      widget.recordToEdit != null
-                          ? "Medical record updated successfully!"
-                          : "Medical record created successfully!",
-                      style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
-                    ),
-                  ],
+                content: Text(
+                  "${widget.recordToEdit != null ? 'Medical record updated.' : 'Medical record saved.'} "
+                  "Its PDF is in the patient's documents (or on this visit's prescription).",
+                  style: const TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w600),
                 ),
                 backgroundColor: const Color(0xFF10B981),
                 behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                action: (recordId == null || recordId.isEmpty)
+                    ? null
+                    : SnackBarAction(
+                        label: 'View PDF',
+                        textColor: Colors.white,
+                        onPressed: () => openDietPlanPdf(
+                          rootContext,
+                          planId: 0,
+                          planName: 'Medical record',
+                          category: 'Medical Record',
+                          filePrefix: 'medical-record-${recordId.substring(0, recordId.length < 8 ? recordId.length : 8)}',
+                          errorMessage: "Couldn't open the medical record PDF. Please try again.",
+                          download: () async {
+                            final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
+                                  URLs.medicalRecordPdfUrl(recordId),
+                                  options: Options(responseType: ResponseType.bytes),
+                                );
+                            return res.data as List<int>;
+                          },
+                        ),
+                      ),
               ),
             );
             Navigator.of(context).pop();
@@ -342,8 +366,6 @@ class _CreateMedicalRecordScreenState extends State<CreateMedicalRecordScreen> {
                                   color: Colors.white.withValues(alpha: 0.85),
                                   fontWeight: FontWeight.w500,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
@@ -236,7 +237,6 @@ class _AddPrescriptionRecordScreenState
                     Expanded(
                       child: Text(
                         "Prescription issued & digital PDF generated!",
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -284,14 +284,15 @@ class _AddPrescriptionRecordScreenState
                 ),
                 onPressed: () => Navigator.pop(context),
               ),
-              title: Text(
-                'Prescribe Medication',
+              title: FitText(
+                'Prescription',
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 18 : 16.5,
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white : const Color(0xFF121212),
                 ),
+                maxLines: 2,
               ),
               centerTitle: true,
             ),
@@ -700,7 +701,7 @@ class _AddPrescriptionRecordScreenState
                             color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
                           decoration: InputDecoration(
-                            hintText: "Enter special instructions or diet advice...",
+                            hintText: "Special instructions or diet advice",
                             hintStyle: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: 12,
@@ -792,8 +793,6 @@ class _AddPrescriptionRecordScreenState
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 if (details.isNotEmpty) ...[
                   const SizedBox(height: 1),

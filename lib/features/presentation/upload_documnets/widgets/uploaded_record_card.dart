@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -19,6 +20,9 @@ class UploadedRecordCard extends StatefulWidget {
 
   /// Opens the AI insights; the row only shows once the report is analysed.
   final VoidCallback? onAiInsights;
+
+  /// Sends the document to the patient's WhatsApp; hidden when null.
+  final VoidCallback? onShareWhatsApp;
   final bool isTab;
 
   const UploadedRecordCard({
@@ -29,6 +33,7 @@ class UploadedRecordCard extends StatefulWidget {
     this.onEdit,
     this.onDownload,
     this.onAiInsights,
+    this.onShareWhatsApp,
     required this.isTab,
   });
 
@@ -39,7 +44,6 @@ class UploadedRecordCard extends StatefulWidget {
 }
 
 class _UploadedRecordCardState extends State<UploadedRecordCard> {
-  bool _isDescExpanded = false;
   bool _isDownloading = false;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
@@ -197,6 +201,8 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                           widget.onView!();
                         } else if (action == 'edit' && widget.onEdit != null) {
                           widget.onEdit!();
+                        } else if (action == 'whatsapp' && widget.onShareWhatsApp != null) {
+                          widget.onShareWhatsApp!();
                         } else if (action == 'download') {
                           _handleDownload();
                         } else if (action == 'delete' && widget.onDelete != null) {
@@ -231,6 +237,25 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                                 const SizedBox(width: 10),
                                 Text(
                                   'Edit Document',
+                                  style: TextStyle(
+                                    fontFamily: appPoppinFont,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? Colors.white : const Color(0xFF121212),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (widget.onShareWhatsApp != null)
+                          PopupMenuItem<String>(
+                            value: 'whatsapp',
+                            child: Row(
+                              children: [
+                                const Icon(HugeIcons.whatsapp, size: 18, color: Color(0xFF16A34A)),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Send on WhatsApp',
                                   style: TextStyle(
                                     fontFamily: appPoppinFont,
                                     fontSize: 13,
@@ -282,33 +307,12 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
                     ),
             ),
 
-            // YouTube-style Collapsible Description Render
+            // Full description, never cut
             if (hasDescription) ...[
               const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isDescExpanded = !_isDescExpanded;
-                  });
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      description,
-                      maxLines: _isDescExpanded ? 20 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: DietUi.text(12, FontWeight.w400, DietUi.body(isDark), height: 1.4),
-                    ),
-                    if (description.length > 70) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        _isDescExpanded ? 'Show less' : '...more',
-                        style: DietUi.text(11, FontWeight.w600, DietUi.blue),
-                      ),
-                    ],
-                  ],
-                ),
+              Text(
+                description,
+                style: DietUi.text(12, FontWeight.w400, DietUi.body(isDark), height: 1.4),
               ),
             ],
 
@@ -357,7 +361,7 @@ class _UploadedRecordCardState extends State<UploadedRecordCard> {
             Text('AI', style: DietUi.text(10.5, FontWeight.w600, DietUi.muted(isDark), spacing: 0.4)),
             const SizedBox(width: 6),
             Expanded(
-              child: Text(style.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(12, FontWeight.w600, style.color)),
+              child: Text(style.label, style: DietUi.text(12, FontWeight.w600, style.color)),
             ),
             const RecordCardLink(label: 'View insights'),
           ],

@@ -174,7 +174,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
 
-            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            Flexible(child: Text(label)),
             if (count > 0 && !compact) ...[
               const SizedBox(width: 6),
               Container(
@@ -410,7 +410,7 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
         onChanged: (val) => setState(() => _searchQuery = val),
         style: DietUi.text(13, FontWeight.w500, DietUi.strong(isDark)),
         decoration: InputDecoration(
-          hintText: 'Search doctor, medicine or diagnosis',
+          hintText: 'Search doctor, medicine, diagnosis',
           hintStyle: DietUi.text(12.5, FontWeight.w400, DietUi.hint(isDark)),
           prefixIcon: PhosphorIcon(PhosphorIconsBold.magnifyingGlass, size: 20, color: DietUi.muted(isDark)),
           suffixIcon: _searchQuery.isNotEmpty
@@ -478,8 +478,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                         children: [
                           Text(
                             headline,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: DietUi.text(12.5, FontWeight.w700, DietUi.strong(isDark)),
                           ),
                           Text(
@@ -854,8 +852,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                   Expanded(
                     child: Text(
                       '${next.time} · ${next.reminder.medicineName}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: DietUi.text(12.5, FontWeight.w700, DietUi.strong(isDark)),
                     ),
                   ),
@@ -955,8 +951,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                 children: [
                   Text(
                     r.medicineName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: DietUi.text(
                       14,
                       FontWeight.w700,
@@ -973,8 +967,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                     Text(
                       [if (dosageText.isNotEmpty) dosageText, if (r.mealRelation.isNotEmpty) r.mealRelation]
                           .join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
                     ),
                   ],
@@ -987,8 +979,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                         Expanded(
                           child: Text(
                             _doctorLabel(r.doctorName),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
                           ),
                         ),
@@ -1091,15 +1081,11 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                             children: [
                               Text(
                                 r.medicineName,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                                 style: DietUi.text(15, FontWeight.w700, DietUi.strong(isDark), height: 1.25),
                               ),
                               const SizedBox(height: 3),
                               Text(
                                 details,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                                 style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark), height: 1.3),
                               ),
                             ],
@@ -1149,8 +1135,6 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
                           Expanded(
                             child: Text(
                               _doctorLabel(r.doctorName),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
                             ),
                           ),
@@ -1202,12 +1186,10 @@ class _PrescriptionManagementScreenState extends State<PrescriptionManagementScr
               children: [
                 Text(
                   r.medicineName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: DietUi.text(13.5, FontWeight.w600, DietUi.body(isDark)),
                 ),
                 const SizedBox(height: 2),
-                Text(details, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
+                Text(details, style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark))),
               ],
             ),
           ),

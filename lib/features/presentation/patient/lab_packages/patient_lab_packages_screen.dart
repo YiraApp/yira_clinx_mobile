@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/widgets/medical_loader.dart';
 import 'dart:io';
@@ -466,8 +467,6 @@ class _PatientLabPackagesScreenState extends State<PatientLabPackagesScreen> {
                 Expanded(
                   child: Text(
                     'Your current location · $_locationLabel',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4A4A4A)),
                   ),
                 ),
@@ -707,8 +706,6 @@ class _PackageCard extends StatelessWidget {
                   children: [
                     Text(
                       pkg['name']?.toString() ?? 'Lab package',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: ink, height: 1.25),
                     ),
                     const SizedBox(height: 4),
@@ -822,8 +819,6 @@ class _PackageCard extends StatelessWidget {
       ),
       child: Text(
         text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontFamily: appPoppinFont,
           fontSize: 11.5,
@@ -1298,8 +1293,6 @@ class _OrderCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     (order['collectionAddress'] as Map)['text'].toString(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
                   ),
                 ),
@@ -1690,9 +1683,10 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
           surfaceTintColor: Colors.transparent,
           foregroundColor: textColor,
           elevation: 0,
-          title: Text(
+          title: FitText(
             'Book package',
             style: TextStyle(fontFamily: appPoppinFont, fontSize: 17, fontWeight: FontWeight.w700, color: textColor),
+            maxLines: 2,
           ),
         ),
         body: ListView(
@@ -1719,8 +1713,6 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
                         children: [
                           Text(
                             pkg['name']?.toString() ?? 'Lab package',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: textColor),
                           ),
                           const SizedBox(height: 2),
@@ -1920,10 +1912,9 @@ class _LabPackageDetailsPageState extends State<_LabPackageDetailsPage> {
                   title: AnimatedOpacity(
                     duration: const Duration(milliseconds: 150),
                     opacity: collapsed ? 1 : 0,
-                    child: Text(
+                    child: FitText(
                       pkg['name']?.toString() ?? 'Lab package',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
                       style: const TextStyle(fontFamily: appPoppinFont, fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                     ),
                   ),

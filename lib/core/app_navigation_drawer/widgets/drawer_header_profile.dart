@@ -101,7 +101,6 @@ class DrawerHeaderProfile extends StatelessWidget {
                     Expanded(
                       child: CommonText(
                         doctorName,
-                        maxLines: 1,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: currentDrawerWidth * (isTab ? 0.052 : 0.05),

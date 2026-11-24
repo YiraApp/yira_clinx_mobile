@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -134,8 +135,8 @@ class _PatientConnectFitnessScreenState extends State<PatientConnectFitnessScree
         titleSpacing: 0,
         backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
         leading: IconButton(icon: Icon(PhosphorIconsBold.caretLeft, color: fg), onPressed: () => Navigator.pop(context)),
-        title: Text('Fitness',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w700, color: fg)),
+        title: FitText('Fitness',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w700, color: fg), maxLines: 2),
       ),
       body: SafeArea(
         child: Column(

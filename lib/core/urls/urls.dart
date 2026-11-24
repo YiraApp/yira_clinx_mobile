@@ -59,6 +59,8 @@ class URLs {
 
   /*Medical Records*/
   static const medicalRecordsUrl = "/v1/api/auth/medical-records";
+  /// A medical record drawn as a PDF (on its own, or as printed on the visit's prescription).
+  static String medicalRecordPdfUrl(String recordId) => "$medicalRecordsUrl/$recordId/pdf";
 
   /*Prescriptions*/
   static const prescriptionsUrl = "/v1/api/auth/prescriptions";
@@ -72,6 +74,7 @@ class URLs {
 
   /*Medical Documents*/
   static const medicalDocumentsUrl = "/v1/api/auth/medical-documents";
+  static String medicalDocumentShareWhatsAppUrl(String id) => "$medicalDocumentsUrl/$id/share-whatsapp";
 
   /*Patient Medical Record Access Consents*/
   static const patientAccessRequestUrl = "/v1/api/auth/patient-access/request";
@@ -80,6 +83,9 @@ class URLs {
   static const patientConsentRespondUrl = "/v1/api/auth/patient-access/respond";
   static const patientAccessConnectByQrUrl = "/v1/api/auth/patient-access/connect-by-qr";
   static const patientAccessGrantUrl = "/v1/api/auth/patient-access/grant";
+  /// Doctor asks for access by OTP: a code goes to the patient's phone, then the doctor enters it.
+  static const patientAccessOtpSendUrl = "/v1/api/auth/patient-access/otp/send";
+  static const patientAccessOtpVerifyUrl = "/v1/api/auth/patient-access/otp/verify";
 
   /*Share my profile (web links for doctors not on Yira)*/
   static const profileShareLinksUrl = "/v1/api/auth/patient/share-links";
@@ -111,6 +117,9 @@ class URLs {
   static String doctorPatientQuestionnairesUrl(String patientId) => "/v1/api/auth/provider/patients/$patientId/questionnaires";
   static String doctorSendableQuestionnairesUrl(String patientId) => "/v1/api/auth/provider/patients/$patientId/questionnaires/sendable";
   static String doctorSendQuestionnaireUrl(String patientId, int id) => "/v1/api/auth/provider/patients/$patientId/questionnaires/$id/send";
+  // A doctor's own questionnaires at one hospital (web API routes, same sign-in).
+  static String doctorQuestionnaireTemplatesUrl(String hospitalId) => "/api/hospitals/$hospitalId/questionnaire-templates";
+  static String doctorQuestionnaireTemplateUrl(String hospitalId, int id) => "/api/hospitals/$hospitalId/questionnaire-templates/$id";
   static const patientFitnessDisconnectUrl = "/v1/api/auth/patient/fitness/disconnect";
 
   /*Online Payments & Razorpay*/

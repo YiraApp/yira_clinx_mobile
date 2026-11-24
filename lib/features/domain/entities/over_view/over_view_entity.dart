@@ -123,6 +123,9 @@ class AppointmentPrescriptionEntity {
   final List<AppointmentMedicationEntity> medications;
   final List<AppointmentDiagnosisEntity> diagnoses;
 
+  /// Investigations ordered on the prescription; a prescription can have only these.
+  final List<AppointmentLabTestEntity> labTests;
+
   const AppointmentPrescriptionEntity({
     required this.id,
     this.date = '',
@@ -131,7 +134,25 @@ class AppointmentPrescriptionEntity {
     this.doctorName = '',
     this.medications = const [],
     this.diagnoses = const [],
+    this.labTests = const [],
   });
+}
+
+/// One investigation (lab test) on a prescription.
+class AppointmentLabTestEntity {
+  final String name;
+  final String category;
+  final String priority;
+  final String instructions;
+
+  const AppointmentLabTestEntity({required this.name, this.category = '', this.priority = '', this.instructions = ''});
+
+  factory AppointmentLabTestEntity.fromJson(Map<String, dynamic> json) => AppointmentLabTestEntity(
+        name: (json['name'] ?? json['TestName'] ?? json['testName'] ?? '').toString().trim(),
+        category: (json['category'] ?? json['Category'] ?? '').toString().trim(),
+        priority: (json['priority'] ?? json['Priority'] ?? '').toString().trim(),
+        instructions: (json['instructions'] ?? json['Instructions'] ?? '').toString().trim(),
+      );
 }
 
 class AppointmentMedicationEntity {

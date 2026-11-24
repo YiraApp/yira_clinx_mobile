@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
@@ -36,7 +37,6 @@ import 'package:yiraclinics/core/widgets/phosphor_icons.dart';
 import 'package:yiraclinics/core/widgets/profile_visuals.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
 import 'package:flutter/services.dart';
-import '../share/share_profile_screen.dart';
 import 'widgets/family_profiles_strip.dart';
 
 class PatientProfilePassportScreen extends StatefulWidget {
@@ -132,16 +132,20 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
       final savedNetworkUrl = prefs.getString('patient_profile_network_image_$userId');
 
       final activeProfile = _openProfile(currentUser);
-      final sessionImage = (currentUser?.data?.imagePath?.isNotEmpty == true)
-          ? currentUser!.data!.imagePath
-          : activeProfile?.imagePath;
+      // The open profile's OWN photo. data.imagePath can still hold the account holder's image
+      // while a dependent profile is open, so never prefer it over the open profile's own.
+      final sessionImage = (activeProfile != null)
+          ? activeProfile.imagePath
+          : currentUser?.data?.imagePath;
 
       if (mounted) {
         setState(() {
           _photoRemovedExplicitly = false;
-          if (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync()) {
-            _localProfileImage = File(savedPath);
-          }
+          // Each profile has its own photo: clear the previous profile's local file when the one
+          // now open has none of its own, so switching never carries a picture across profiles.
+          _localProfileImage = (savedPath != null && savedPath.isNotEmpty && File(savedPath).existsSync())
+              ? File(savedPath)
+              : null;
           _networkProfileImageUrl = (savedNetworkUrl != null && savedNetworkUrl.isNotEmpty)
               ? savedNetworkUrl
               : sessionImage;
@@ -1527,9 +1531,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                               } else {
                                 errorMsg = e.toString();
                               }
-                              if (errorMsg.length > 90) {
-                                errorMsg = '${errorMsg.substring(0, 90)}...';
-                              }
                               _showErrorSnackBar(context, errorMsg);
                             }
                           }
@@ -1733,7 +1734,7 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                         controller: otherRelationController,
                         style: TextStyle(fontFamily: appPoppinFont, color: textColor),
                         decoration: InputDecoration(
-                          hintText: 'Enter relationship (e.g. Uncle, Colleague, Neighbor)',
+                          hintText: 'e.g. Uncle, Colleague, Neighbor',
                           hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey),
                           filled: true,
                           fillColor: isDark ? const Color(0xFF121212) : Colors.grey[100],
@@ -1919,12 +1920,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         appBar: AppBar(
           elevation: 0,
           backgroundColor: theme.scaffoldBackgroundColor,
-          title: const Text(
+          title: const FitText(
             'My Profile',
             style: TextStyle(
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.bold,
             ),
+            maxLines: 2,
           ),
           actions: [
             IconButton(
@@ -2051,16 +2053,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     // Every profile on the account, one tap to switch
                     FamilyProfilesStrip(isDark: isDark),
                     if (!GlobalSession.instance.isSignedInAsFamilyMember) const SizedBox(height: 14),
-
-                    // More: vitals, sharing and doctor suggestions (everything else is on Home)
-                    _buildMoreLinks(
-                      context,
-                      isDark,
-                      onVitalsClosed: () => context
-                          .read<PatientOverViewBloc>()
-                          .add(LoadPatientData(userId, orgId: orgId, hospitalId: hospitalId)),
-                    ),
-                    const SizedBox(height: 16),
 
                     // 2. Personal Information Card
                     DoctorProfileSectionCard(
@@ -2269,12 +2261,13 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
     Widget? stats,
   }) {
     final currentUser = GlobalSession.instance.userNotifier.value;
-    final List<ProfileEntity> profiles = currentUser?.data?.profiles ?? [];
-    final activeProfile = profiles.isNotEmpty ? profiles.first : null;
+    final activeProfile = _openProfile(currentUser);
     final bool hasLocalImage = !_photoRemovedExplicitly && _localProfileImage != null && _localProfileImage!.existsSync();
-    final String activeSessionImage = !_photoRemovedExplicitly
-        ? (currentUser?.data?.imagePath?.isNotEmpty == true ? currentUser!.data!.imagePath!.trim() : (activeProfile?.imagePath ?? '').trim())
-        : '';
+    // The OPEN profile's own photo (empty -> initials). Never fall back to the account holder's
+    // image, so a dependent with no photo shows its monogram, not the primary's picture.
+    final String activeSessionImage = (!_photoRemovedExplicitly && activeProfile != null)
+        ? (activeProfile.imagePath ?? '').trim()
+        : (!_photoRemovedExplicitly ? (currentUser?.data?.imagePath ?? '').trim() : '');
     final String networkUrl = !_photoRemovedExplicitly ? ((_networkProfileImageUrl ?? activeSessionImage).trim()) : '';
     final double avatar = isTab ? 76 : 66;
     final meta = [
@@ -2372,8 +2365,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                     children: [
                       Text(
                         name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: isTab ? 20 : 18, fontWeight: FontWeight.w700, color: ink, height: 1.2),
                       ),
                       if (meta.isNotEmpty) ...[
@@ -2507,7 +2498,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
                   fit: BoxFit.scaleDown,
                   child: Text(
                     note != null ? '$label · $note' : label,
-                    maxLines: 1,
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w500, color: noteColor ?? muted),
                   ),
                 ),
@@ -2530,74 +2520,6 @@ class _PatientProfilePassportScreenState extends State<PatientProfilePassportScr
         // Colour only where it carries meaning: the BMI band
         stat(PhosphorIconsBold.gauge, bmi == null ? const Color(0xFF059669) : bmiColor, 'BMI', bmi?.toStringAsFixed(1), note: bmiLabel, noteColor: bmiLabel == null ? null : bmiColor),
       ],
-    );
-  }
-
-  Widget _buildMoreLinks(BuildContext context, bool isDark, {required VoidCallback onVitalsClosed}) {
-    final links = <(IconData, Color, String, VoidCallback)>[
-      (PhosphorIconsDuotone.heartbeat, const Color(0xFFE11D48), 'My vitals', () async {
-        await Navigator.pushNamed(context, AppRoutes.patientVitalsTracking);
-        onVitalsClosed();
-      }),
-      (PhosphorIconsDuotone.shareNetwork, const Color(0xFF2563EB), 'Share my profile',
-          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ShareProfileScreen()))),
-      (PhosphorIconsDuotone.chatCircleText, const Color(0xFFD97706), 'Doctor suggestions',
-          () => Navigator.pushNamed(context, AppRoutes.patientDoctorSuggestions)),
-    ];
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF232323) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE6EAF0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 10),
-            child: Text('MORE',
-                style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: isDark ? Colors.white60 : const Color(0xFF64748B))),
-          ),
-          LayoutBuilder(
-            builder: (context, c) {
-              final perRow = links.length;
-              final width = c.maxWidth / perRow;
-              return Wrap(
-                children: [
-                  for (final l in links)
-                    SizedBox(
-                      width: width,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: l.$4,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(color: l.$2.withValues(alpha: isDark ? 0.2 : 0.08), borderRadius: BorderRadius.circular(13)),
-                                child: PhosphorIcon(l.$1, size: 22, color: l.$2),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(l.$3,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w500, height: 1.25, color: isDark ? Colors.white70 : const Color(0xFF3A3A3A))),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 

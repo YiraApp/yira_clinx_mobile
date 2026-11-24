@@ -61,7 +61,6 @@ class InputSearchChipField extends StatelessWidget {
                   ? displayWidth(context) * 0.018: displayWidth(context) * 0.028,
               color: Colors.grey,
             ),
-            maxLines: 2,
             softWrap: true,
           ),
         ),

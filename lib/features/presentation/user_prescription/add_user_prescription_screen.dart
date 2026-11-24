@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -463,7 +464,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: FitText(
           "Add Prescription",
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -471,6 +472,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF121212),
           ),
+          maxLines: 2,
         ),
         centerTitle: false,
       ),
@@ -831,8 +833,6 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
                             fontWeight: FontWeight.w500,
                             color: isDark ? Colors.white : const Color(0xFF121212),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
@@ -941,7 +941,7 @@ class _AddUserPrescriptionScreenState extends State<AddUserPrescriptionScreen> {
           _buildInputLabel("Medicine Name", isDark),
           _buildCleanTextField(
             controller: item.nameController,
-            hintText: "e.g. Paracetamol 650mg, Amoxicillin 500mg",
+            hintText: "e.g. Paracetamol 650mg",
             isDark: isDark,
           ),
           const SizedBox(height: 12),

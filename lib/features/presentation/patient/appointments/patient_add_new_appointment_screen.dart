@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -59,10 +60,23 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
   bool _isTeleConsultation = false;
   final TextEditingController _reasonController = TextEditingController();
   String? _slotError;
-  bool _shareRecords = true;
+  // Access only when the patient ticks the box
+  bool _shareRecords = false;
   String _shareDuration = RecordShareConsentCard.defaultDuration;
 
   final List<String> _visitTypes = const ["Consultation", "Follow-up", "Check-up", "Tele-Consult"];
+
+  /// The default org (Yira) offers online video consultation only; in-clinic visits are blocked
+  /// there, so only the Tele-Consult visit type is offered and teleconsultation stays on.
+  bool get _isDefaultOrgHospital =>
+      _selectedHospital != null && LikedHospitalsService.isDefaultHospital(_selectedHospital!);
+
+  void _enforceConsultationConstraints() {
+    if (_isDefaultOrgHospital) {
+      _isTeleConsultation = true;
+      _selectedVisitType = "Tele-Consult";
+    }
+  }
   final List<String> _quickReasons = const [
     "General Checkup",
     "Follow-up",
@@ -255,6 +269,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
     } else {
       _selectedHospital = hospitals.isNotEmpty ? hospitals.first : null;
     }
+    _enforceConsultationConstraints();
 
     if (_selectedHospital != null) {
       _filterDoctorsForHospital(_selectedHospital!['id']);
@@ -498,6 +513,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
       "isPrimary": profile['isPrimary'] ?? true,
       "patientName": profile['name'] ?? "Patient",
       "patientPhone": profile['phone'] ?? currentUser?.data?.phoneNumber ?? "",
+      // The family shares the account holder's number, so it has their country code
+      if ((currentUser?.data?.countryCode ?? '').replaceAll(RegExp(r'\D'), '').isNotEmpty)
+        "countryCode": currentUser!.data!.countryCode!.replaceAll(RegExp(r'\D'), ''),
       "gender": profile['gender'] ?? "Male",
       "appointmentDate": appointmentDate,
       "startTime": startTime,
@@ -1055,13 +1073,14 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
-        title: Text(
+        title: FitText(
           "New Appointment",
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: isTab ? 20 : 17,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         leading: IconButton(
@@ -1272,6 +1291,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                         );
                                         setState(() {
                                           _selectedHospital = h;
+                                          _enforceConsultationConstraints();
                                         });
                                         _filterDoctorsForHospital(h['id']);
                                       }
@@ -1336,7 +1356,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             ),
                           ] else ...[
                             SizedBox(
-                              height: 88,
+                              height: 92,
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: _filteredDoctors.length,
@@ -1390,10 +1410,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                Text(
+                                                FitText(
                                                   docName,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  maxLines: 2,
                                                   style: TextStyle(
                                                     fontFamily: appPoppinFont,
                                                     fontWeight: FontWeight.bold,
@@ -1401,10 +1420,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                                     color: isDark ? Colors.white : const Color(0xFF121212),
                                                   ),
                                                 ),
-                                                Text(
+                                                FitText(
                                                   doc['specialty'] ?? 'General Physician',
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
                                                   style: const TextStyle(
                                                     fontFamily: appPoppinFont,
                                                     fontSize: 10,
@@ -1767,7 +1785,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _visitTypes.map((type) {
+                          children: (_isDefaultOrgHospital ? const ["Tele-Consult"] : _visitTypes).map((type) {
                             final isSelected = _selectedVisitType == type;
                             return InkWell(
                               onTap: () {
@@ -1830,7 +1848,9 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                     ),
                                   ),
                                   Text(
-                                    "Automatically generate video link & send WhatsApp invite",
+                                    _isDefaultOrgHospital
+                                        ? "This clinic offers online video consultation only"
+                                        : "Automatically generate video link & send WhatsApp invite",
                                     style: TextStyle(
                                       fontFamily: appPoppinFont,
                                       fontSize: 11,
@@ -1844,16 +1864,18 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               value: _isTeleConsultation,
                               activeTrackColor: const Color(0xFF2563EB),
                               activeThumbColor: Colors.white,
-                              onChanged: (val) {
-                                setState(() {
-                                  _isTeleConsultation = val;
-                                  if (val && _selectedVisitType != "Tele-Consult") {
-                                    _selectedVisitType = "Tele-Consult";
-                                  } else if (!val && _selectedVisitType == "Tele-Consult") {
-                                    _selectedVisitType = "Consultation";
-                                  }
-                                });
-                              },
+                              onChanged: _isDefaultOrgHospital
+                                  ? null
+                                  : (val) {
+                                      setState(() {
+                                        _isTeleConsultation = val;
+                                        if (val && _selectedVisitType != "Tele-Consult") {
+                                          _selectedVisitType = "Tele-Consult";
+                                        } else if (!val && _selectedVisitType == "Tele-Consult") {
+                                          _selectedVisitType = "Consultation";
+                                        }
+                                      });
+                                    },
                             ),
                           ],
                         ),
@@ -1880,7 +1902,7 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                             color: isDark ? Colors.white : Colors.black87,
                           ),
                           decoration: InputDecoration(
-                            hintText: "Enter primary complaint or purpose of visit...",
+                            hintText: "Main complaint or reason for the visit",
                             hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                             filled: true,
                             fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
@@ -2212,8 +2234,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w700,
                               color: isDark ? Colors.white : const Color(0xFF121212),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -2229,8 +2249,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         fontWeight: FontWeight.w600,
                         color: primaryColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     if (hospitalName.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -2250,8 +2268,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                                 fontSize: 11,
                                 color: isDark ? Colors.white60 : const Color(0xFF64748B),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -2320,8 +2336,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                         height: 1.35,
                         color: isDark ? Colors.white70 : const Color(0xFF4A4A4A),
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -2398,8 +2412,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ] else if (email.isNotEmpty) ...[
@@ -2414,8 +2426,6 @@ class _PatientAddNewAppointmentScreenState extends State<PatientAddNewAppointmen
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

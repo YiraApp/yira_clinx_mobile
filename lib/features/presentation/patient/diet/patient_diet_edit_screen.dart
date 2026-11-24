@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -557,12 +558,11 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_isCreate ? 'Create My Plan' : 'Edit My Plan', style: _ts(17, FontWeight.w700, _textPrimary(isDark))),
+              FitText(_isCreate ? 'Create My Plan' : 'Edit My Plan', style: _ts(17, FontWeight.w700, _textPrimary(isDark)), maxLines: 1, minFontSize: 13),
               const SizedBox(height: 2),
-              Text(
+              FitText(
                 _isCreate ? 'Plan your own meals' : widget.plan.planName,
-                maxLines: 2,
-                softWrap: true,
+                maxLines: 1,
                 style: _ts(11.5, FontWeight.w500, _textSecondary(isDark)),
               ),
             ],
@@ -1095,21 +1095,18 @@ class _PatientDietEditScreenState extends State<PatientDietEditScreen> {
                     children: [
                       Text(
                         item.foodName,
-                        maxLines: 3,
                         softWrap: true,
                         style: _ts(13, FontWeight.w600, _textPrimary(isDark)),
                       ),
                       const SizedBox(height: 1),
                       Text(
                         '$portion · ${item.calories} kcal',
-                        maxLines: 2,
                         softWrap: true,
                         style: _ts(11, FontWeight.w500, _textSecondary(isDark)),
                       ),
                       if ((item.notes ?? '').trim().isNotEmpty)
                         Text(
                           item.notes!.trim(),
-                          maxLines: 2,
                           softWrap: true,
                           style: _ts(10.5, FontWeight.w400, _textSecondary(isDark)).copyWith(fontStyle: FontStyle.italic),
                         ),

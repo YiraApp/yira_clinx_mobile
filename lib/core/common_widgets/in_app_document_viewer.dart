@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -484,8 +485,6 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                       Text(
                         uniqueFileName,
                         style: const TextStyle(fontSize: 11.5, color: Colors.white70),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -547,7 +546,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            FitText(
               widget.title,
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -556,7 +555,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              minFontSize: 12,
             ),
             Row(
               children: [
@@ -566,7 +565,7 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                     color: _primaryBlue.withValues(alpha: isDark ? 0.25 : 0.12),
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: Text(
+                  child: FitText(
                     widget.category,
                     style: const TextStyle(
                       fontFamily: appPoppinFont,
@@ -574,16 +573,18 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                       fontWeight: FontWeight.w600,
                       color: _primaryBlue,
                     ),
+                    maxLines: 2,
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
+                FitText(
                   widget.fileType.toUpperCase(),
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 10.5,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
+                  maxLines: 2,
                 ),
               ],
             ),
@@ -723,8 +724,6 @@ class _InAppDocumentViewerState extends State<InAppDocumentViewer> {
                 fontWeight: FontWeight.w500,
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

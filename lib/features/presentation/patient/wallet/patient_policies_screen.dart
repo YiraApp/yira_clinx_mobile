@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -167,7 +168,7 @@ class _PatientPoliciesScreenState extends State<PatientPoliciesScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        title: Text('My policies', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: 18, color: c.ink)),
+        title: FitText('My policies', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: 18, color: c.ink), maxLines: 2),
         iconTheme: IconThemeData(color: c.ink),
       ),
       floatingActionButton: _policies == null
@@ -288,8 +289,6 @@ class PolicyCard extends StatelessWidget {
             children: [
               Text(label, style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, color: c.muted)),
               Text(value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 13, fontWeight: FontWeight.w700, color: c.ink)),
             ],
           ),
@@ -322,11 +321,8 @@ class PolicyCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(p.insurer,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontFamily: appPoppinFont, fontSize: 15, fontWeight: FontWeight.w700, color: c.ink)),
-                            Text(p.policyName ?? p.policyType,
-                                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: c.muted)),
+                            Text(p.policyName ?? p.policyType, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: c.muted)),
                           ],
                         ),
                       ),
@@ -442,7 +438,7 @@ class PolicyDetailSheet extends StatelessWidget {
                   onPressed: () => openWalletFile(context, p.fileUrl!, title: p.fileName ?? 'Policy document', category: 'Policy'),
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
                   icon: PhosphorIcon(PhosphorIconsBold.fileText, size: 16, color: primary),
-                  label: Text(p.fileName ?? 'View policy document', overflow: TextOverflow.ellipsis),
+                  label: Text(p.fileName ?? 'View policy document'),
                 ),
               ),
             if (p.editable)

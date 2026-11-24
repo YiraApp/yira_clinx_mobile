@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -24,7 +25,7 @@ class LogoutScreen extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         centerTitle: false,
         titleSpacing: screenHorizontalSpacePadding,
-        title: Text(
+        title: FitText(
           projectTitle,
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -35,6 +36,7 @@ class LogoutScreen extends StatelessWidget {
             color: isDarkMode ? Colors.white : adaptiveTextColor,
             letterSpacing: -0.5,
           ),
+          maxLines: 2,
         ),
         actions: [],
       ),
@@ -118,7 +120,6 @@ class LogoutScreen extends StatelessWidget {
               CommonText(
                 'Securely Logging Out?',
                 textAlign: TextAlign.center,
-                maxLines: 1,
                 softWrap: true,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -132,7 +133,6 @@ class LogoutScreen extends StatelessWidget {
               CommonText(
                 "Your session has timed out or a server disconnection occurred. For your security, please log out and sign back in to continue managing your clinic tasks.",
                 textAlign: TextAlign.center,
-                maxLines: 4,
                 softWrap: true,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,

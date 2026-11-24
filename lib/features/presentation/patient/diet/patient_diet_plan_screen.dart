@@ -654,7 +654,6 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                         plan.createdByPatient
                             ? 'Day ${plan.currentDayNumber} of ${plan.totalDays}'
                             : 'Dr. ${plan.doctorName}',
-                        maxLines: 1,
                         softWrap: true,
                         style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
                       ),
@@ -997,7 +996,6 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                   Expanded(
                     child: Text(
                       'Prescribed by Dr. ${plan.doctorName} · Clinical diet plan (view only)',
-                      maxLines: 2,
                       softWrap: true,
                       style: DietUi.text(10.5, FontWeight.w500, isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8)),
                     ),
@@ -1059,14 +1057,12 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                         children: [
                           Text(
                             slot.name,
-                            maxLines: 2,
                             softWrap: true,
                             style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark)),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '${slot.time.trim().isEmpty ? 'Any time' : slot.time} · $eatenCount/${slot.items.length} eaten',
-                            maxLines: 2,
                             softWrap: true,
                             style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark)),
                           ),
@@ -1147,7 +1143,6 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
               children: [
                 Text(
                   meal.foodName,
-                  maxLines: 3,
                   softWrap: true,
                   style: DietUi.text(13.5, FontWeight.w600, DietUi.strong(isDark), height: 1.3),
                 ),
@@ -1160,11 +1155,10 @@ class _PatientDietPlanScreenState extends State<PatientDietPlanScreen> {
                     meal.caloriesUnknown ? DietUi.amber : DietUi.body(isDark),
                   ),
                 ),
-                Text(portion, maxLines: 2, softWrap: true, style: DietUi.text(11, FontWeight.w400, DietUi.muted(isDark))),
+                Text(portion,softWrap: true, style: DietUi.text(11, FontWeight.w400, DietUi.muted(isDark))),
                 if ((meal.notes ?? '').trim().isNotEmpty)
                   Text(
                     meal.notes!.trim(),
-                    maxLines: 3,
                     softWrap: true,
                     style: DietUi.text(11, FontWeight.w400, DietUi.muted(isDark)).copyWith(fontStyle: FontStyle.italic),
                   ),

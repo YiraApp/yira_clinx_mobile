@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -464,8 +465,6 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                                           fontSize: 12.5,
                                           color: isDark ? Colors.white : const Color(0xFF121212),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -1094,10 +1093,9 @@ class _MyFamilyCardState extends State<MyFamilyCard> {
                         const SizedBox(height: 6),
 
                         // Name
-                        Text(
+                        FitText(
                           pName,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: appPoppinFont,

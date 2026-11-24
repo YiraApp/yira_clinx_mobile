@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
@@ -105,13 +106,14 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF232323) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF232323),
-        title: Text(
+        title: FitText(
           "Choose a doctor",
           style: TextStyle(
             fontFamily: appPoppinFont,
             fontWeight: FontWeight.w700,
             fontSize: isTab ? 18 : 16,
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
         leading: IconButton(
@@ -259,8 +261,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
               children: [
                 Text(
                   name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontFamily: appPoppinFont,
                     fontSize: 14,
@@ -271,8 +271,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                 if (type.isNotEmpty || place.isNotEmpty)
                   Text(
                     [if (type.isNotEmpty) type, if (place.isNotEmpty) place].join(' · '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: muted),
                   ),
               ],
@@ -382,8 +380,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                               ),
                             ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 16 : 15,
@@ -396,8 +392,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
                           const SizedBox(height: 2),
                           Text(
                             qualification,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w500, color: muted),
                           ),
                         ],
@@ -484,8 +478,6 @@ class _PatientHospitalDoctorsScreenState extends State<PatientHospitalDoctorsScr
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w600, color: color),
             ),
           ),

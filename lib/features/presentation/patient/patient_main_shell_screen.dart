@@ -158,17 +158,18 @@ class _PatientMainShellScreenState extends State<PatientMainShellScreen> {
                                 : (isDark ? Colors.white54 : Colors.grey[500]),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            item['label'] as String,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: appPoppinFont,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              fontSize: 10.5,
-                              color: isSelected
-                                  ? (isDark ? accentBlueDark : accentBlue)
-                                  : (isDark ? Colors.white54 : Colors.grey[500]),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontFamily: appPoppinFont,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                fontSize: 10.5,
+                                color: isSelected
+                                    ? (isDark ? accentBlueDark : accentBlue)
+                                    : (isDark ? Colors.white54 : Colors.grey[500]),
+                              ),
                             ),
                           ),
                         ],

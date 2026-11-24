@@ -178,8 +178,6 @@ class PrescriptionCard extends StatelessWidget {
                             children: [
                               Text(
                                 _doctorNameOnly,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                                 style: DietUi.text(isTab ? 15.5 : 14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25),
                               ),
                               const SizedBox(height: 2),
@@ -236,8 +234,6 @@ class PrescriptionCard extends StatelessWidget {
                                   TextSpan(text: condition, style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark))),
                                 ],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -274,15 +270,11 @@ class PrescriptionCard extends StatelessWidget {
                                   children: [
                                     Text(
                                       (m['name'] ?? '').toString().trim(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                       style: DietUi.text(12.5, FontWeight.w600, DietUi.strong(isDark)),
                                     ),
                                     if (_howToTake(m).isNotEmpty)
                                       Text(
                                         _howToTake(m),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                         style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
                                       ),
                                   ],

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -130,7 +131,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                           CircleAvatar(
                             radius: 22,
                             backgroundColor: Colors.white.withOpacity(0.2),
-                            child: CommonText(
+                            child: FitText(
                               "MN",
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
@@ -138,6 +139,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                 fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.035,
                                 fontWeight: FontWeight.w600,
                               ),
+                              maxLines: 2,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -145,7 +147,7 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CommonText(
+                              FitText(
                                 info?.name ?? '--',
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
@@ -153,15 +155,17 @@ class DashboardPatientDetailsScreen extends StatelessWidget {
                                   fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.036,
                                   fontWeight: FontWeight.w600,
                                 ),
+                                maxLines: 2,
                               ),
                               const SizedBox(height: 2),
-                              CommonText(
+                              FitText(
                                 "${info?.age ?? '--'} yrs, ${info?.gender ?? '--'}",
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   color: Colors.white.withOpacity(0.8),
                                   fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.03,
                                 ),
+                                maxLines: 2,
                               ),
                             ],
                           ),

@@ -112,8 +112,10 @@ class PatientAppointmentsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                     ],
+                    if (pres.medications.isNotEmpty || pres.labTests.isEmpty) ...[
                     RecordSectionTitle(icon: IosIcons.medication_outlined, title: "Medications (${pres.medications.length})"),
                     const SizedBox(height: 10),
+                    ],
                     if (pres.medications.isNotEmpty)
                       ...pres.medications.map((m) => Padding(
                             padding: const EdgeInsets.only(bottom: 10),
@@ -146,11 +148,42 @@ class PatientAppointmentsCard extends StatelessWidget {
                               ],
                             ),
                           ))
-                    else
+                    else if (pres.labTests.isEmpty)
                       Text(
                         "No specific medicines listed.",
                         style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark)),
                       ),
+                    // Investigations: a prescription can be only tests, with no medicines
+                    if (pres.labTests.isNotEmpty) ...[
+                      if (pres.medications.isNotEmpty) const SizedBox(height: 8),
+                      RecordSectionTitle(icon: IosIcons.science_outlined, title: "Investigations (${pres.labTests.length})"),
+                      const SizedBox(height: 10),
+                      ...pres.labTests.map((t) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _buildInfoContainer(
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: Text(t.name, style: DietUi.text(13.5, FontWeight.w600, RecordUi.ink(isDark)))),
+                                    if (t.priority.toLowerCase() == 'urgent') ...[
+                                      const SizedBox(width: 8),
+                                      RecordPill('Urgent', color: const Color(0xFFDC2626)),
+                                    ],
+                                  ],
+                                ),
+                                if (t.category.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  RecordMeta(icon: IosIcons.folder_outlined, text: t.category),
+                                ],
+                                if (t.instructions.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  RecordField(label: "Instructions", value: t.instructions),
+                                ],
+                              ],
+                            ),
+                          )),
+                    ],
                     if (!_isPatient() && pres.notes.isNotEmpty) ...[
                       const SizedBox(height: 14),
                       RecordField(label: "Doctor Notes", value: pres.notes),
@@ -340,8 +373,6 @@ class PatientAppointmentsCard extends StatelessWidget {
                             children: [
                               Text(
                                 doc.fileName.isNotEmpty ? doc.fileName : "Document Image",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontWeight: FontWeight.w700,
@@ -989,8 +1020,6 @@ class PatientAppointmentsCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             note.notes,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
             style: DietUi.text(13, FontWeight.w400, DietUi.body(isDark), height: 1.4),
           ),
           const SizedBox(height: 4),

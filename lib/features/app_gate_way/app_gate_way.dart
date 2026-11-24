@@ -15,6 +15,7 @@ import 'package:yiraclinics/core/services/network_services/network_bloc/network_
 import 'package:yiraclinics/core/widgets/internet_guard.dart';
 import 'package:yiraclinics/core/widgets/notificatio_wrapper.dart';
 import 'package:yiraclinics/core/local/global_session.dart';
+import 'package:yiraclinics/features/presentation/doctor/profile/widgets/profile_switcher_sheet.dart';
 import 'package:yiraclinics/core/local/shared_preferences.dart';
 import 'package:yiraclinics/core/constants/clinx_storage_keys.dart';
 
@@ -266,6 +267,18 @@ class AppGateway extends StatelessWidget {
                             (route) => false,
                           );
                           return;
+                        }
+
+                        // A tapped push for another family profile opens that profile first, so it
+                        // lands in the right account instead of whichever profile is active.
+                        final String ownerId = (payload['userId']?.toString() ?? '').trim();
+                        final String activeId = (currentUser.data?.id ?? '').trim();
+                        if (ownerId.isNotEmpty && ownerId.toLowerCase() != activeId.toLowerCase()) {
+                          final ctx = NavigationService.navigatorKey.currentContext;
+                          if (ctx != null) {
+                            final switched = await ProfileSwitcherSheet.switchToFamilyProfile(ctx, ownerId);
+                            if (switched) return;
+                          }
                         }
 
                         final String? targetRoute = payload['route']?.toString().trim();

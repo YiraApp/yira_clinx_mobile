@@ -282,7 +282,7 @@ class _PatientManagementScreenState extends State<PatientManagementScreen> {
                 color: isDark ? Colors.white : const Color(0xFF121212),
               ),
               decoration: InputDecoration(
-                hintText: "Search patient by name, ID, phone...",
+                hintText: "Search name, ID or phone",
                 hintStyle: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: isTab ? 13.5 : 12.5,

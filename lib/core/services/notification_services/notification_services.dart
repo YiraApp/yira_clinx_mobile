@@ -185,7 +185,13 @@ class NotificationService {
         debugPrint("[NotificationService] Dropping foreground notification: user is signed out.");
         return;
       }
-      NotificationBadgeService.instance.increment();
+      // Only bump the bell when this push is for the profile that's currently open; a push aimed
+      // at another family profile must not inflate the active profile's count.
+      final String pushTargetUserId = (message.data['userId'] ?? '').toString().trim();
+      final String activeProfileId = (currentUser.data?.id ?? '').trim();
+      if (pushTargetUserId.isEmpty || pushTargetUserId.toLowerCase() == activeProfileId.toLowerCase()) {
+        NotificationBadgeService.instance.increment();
+      }
       if (sl.isRegistered<SharedPrefsService>()) {
         sl<SharedPrefsService>().remove(_kLastConsumedLaunchPayloadKey);
       }
@@ -249,7 +255,7 @@ class NotificationService {
             ),
             iOS: DarwinNotificationDetails(
               presentAlert: true,
-              presentBadge: true,
+              presentBadge: false,
               presentSound: true,
               attachments: iosAttachments,
             ),
@@ -286,7 +292,7 @@ class NotificationService {
           ),
           iOS: const DarwinNotificationDetails(
             presentAlert: true,
-            presentBadge: true,
+            presentBadge: false,
             presentSound: true,
           ),
         ),

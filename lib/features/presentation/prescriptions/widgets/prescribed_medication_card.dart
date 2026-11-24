@@ -285,8 +285,6 @@ class _PrescribedPrescriptionCardState
                           ? (isDark ? Colors.white : const Color(0xFF121212))
                           : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
                 ),
                 if (widget.showRemove)
@@ -319,7 +317,7 @@ class _PrescribedPrescriptionCardState
                 // 1. Drug name search with SNOMED
                 SnomedSearchPicker(
                   label: 'Medication / Generic Name',
-                  hintText: 'Search drug (e.g. Paracetamol, Amoxicillin)...',
+                  hintText: 'Search drug, e.g. Paracetamol',
                   snomedType: 'drug',
                   isRequired: true,
                   initialValue:

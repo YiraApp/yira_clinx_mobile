@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/constants/constants.dart';
@@ -55,6 +56,7 @@ class DietUi {
     double toolbarHeight = 56,
     List<Widget> actions = const [],
   }) {
+    final hasSubtitle = subtitleWidget != null || (subtitle != null && subtitle.trim().isNotEmpty);
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -100,10 +102,10 @@ class DietUi {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (titleTrailing == null)
-            Text(
+            FitText(
               title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: hasSubtitle ? 1 : 2,
+              minFontSize: hasSubtitle ? 13 : 9,
               style: text(16, FontWeight.w700, strong(isDark), spacing: -0.2, height: 1.25),
             )
           else
@@ -111,10 +113,10 @@ class DietUi {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(
-                  child: Text(
+                  child: FitText(
                     title,
-                    maxLines: 2,
-                    softWrap: true,
+                    maxLines: hasSubtitle ? 1 : 2,
+                    minFontSize: hasSubtitle ? 13 : 9,
                     style: text(16, FontWeight.w700, strong(isDark), spacing: -0.2, height: 1.25),
                   ),
                 ),
@@ -127,10 +129,9 @@ class DietUi {
             subtitleWidget,
           ] else if (subtitle != null && subtitle.trim().isNotEmpty) ...[
             const SizedBox(height: 2),
-            Text(
+            FitText(
               subtitle,
-              maxLines: 2,
-              softWrap: true,
+              maxLines: 1,
               style: text(11.5, FontWeight.w500, muted(isDark), height: 1.25),
             ),
           ],

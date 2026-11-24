@@ -1,9 +1,9 @@
 
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/common_size_helpers/common_size_helpers.dart';
 
-import '../common_widgets/common_text.dart';
 import '../constants/constants.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -41,7 +41,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
               ))
           : leading,
       title: hasTitle
-          ? CommonText(
+          ? FitText(
               titleText!,
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -50,6 +50,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
                     : MediaQuery.of(context).size.width * 0.045,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 2,
             )
           : null,
       actions: actions ?? [],

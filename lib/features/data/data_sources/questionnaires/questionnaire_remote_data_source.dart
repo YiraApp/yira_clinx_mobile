@@ -11,13 +11,21 @@ import '../../models/questionnaires/questionnaire_models.dart';
 /// Questionnaires for the open profile, and a patient's answers for their doctor.
 /// Errors are thrown as-is; [questionnaireErrorMessage] says why.
 class QuestionnaireRemoteDataSource {
-  QuestionnaireRemoteDataSource({ApiClient? apiClient}) : _apiClient = apiClient;
+  QuestionnaireRemoteDataSource({ApiClient? apiClient, String? patientId})
+      : _apiClient = apiClient,
+        _forPatientId = patientId;
 
   final ApiClient? _apiClient;
 
+  /// A family member's profile; the signed-in user's own when null.
+  final String? _forPatientId;
+
   ApiClient get _api => _apiClient ?? sl<ApiClient>();
 
-  String get _patientId => GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+  String get _patientId {
+    final asked = (_forPatientId ?? '').trim();
+    return asked.isNotEmpty ? asked : GlobalSession.instance.userNotifier.value?.data?.id ?? '';
+  }
 
   Options _options() {
     final token = GlobalSession.instance.userNotifier.value?.data?.accessToken ?? '';
@@ -117,6 +125,59 @@ class QuestionnaireRemoteDataSource {
           data: {'hospitalId': int.tryParse(hospitalId) ?? hospitalId, if (dueInDays != null) 'dueInDays': dueInDays},
           options: _options(),
         );
+  }
+
+  // ── The doctor's own questionnaires at [hospitalId] ──────────────────────
+  // Saved ready to send; they also come first in [sendable], marked "mine".
+
+  Future<List<QuestionnaireTemplateSummary>> listTemplates({required String hospitalId}) async {
+    final res = await _api.account(showSuccessSnack: false).get(
+          URLs.doctorQuestionnaireTemplatesUrl(hospitalId),
+          options: _options(),
+        );
+    final data = _data(res);
+    return (data is List ? data : const [])
+        .whereType<Map>()
+        .map((e) => QuestionnaireTemplateSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<QuestionnaireTemplateDetail> getTemplate(int id, {required String hospitalId}) async {
+    final res = await _api.account(showSuccessSnack: false).get(
+          URLs.doctorQuestionnaireTemplateUrl(hospitalId, id),
+          options: _options(),
+        );
+    return QuestionnaireTemplateDetail.fromJson(_map(_data(res)));
+  }
+
+  Future<QuestionnaireTemplateDetail> createTemplate(QuestionnaireTemplateDraft draft, {required String hospitalId}) async {
+    final res = await _api.account(showSuccessSnack: false).post(
+          URLs.doctorQuestionnaireTemplatesUrl(hospitalId),
+          data: draft.toJson(),
+          options: _options(),
+        );
+    return QuestionnaireTemplateDetail.fromJson(_map(_data(res)));
+  }
+
+  /// With no questions in [draft] only the name and note change (for one patients have answered).
+  Future<QuestionnaireTemplateDetail> updateTemplate(int id, QuestionnaireTemplateDraft draft, {required String hospitalId}) async {
+    final res = await _api.account(showSuccessSnack: false).put(
+          URLs.doctorQuestionnaireTemplateUrl(hospitalId, id),
+          data: draft.toJson(),
+          options: _options(),
+        );
+    return QuestionnaireTemplateDetail.fromJson(_map(_data(res)));
+  }
+
+  /// Takes it off the doctor's list. True when it was closed rather than
+  /// deleted because patients had answered it (their answers still show).
+  Future<bool> removeTemplate(int id, {required String hospitalId}) async {
+    final res = await _api.account(showSuccessSnack: false).delete(
+          URLs.doctorQuestionnaireTemplateUrl(hospitalId, id),
+          options: _options(),
+        );
+    final data = res.data is Map ? (res.data as Map)['data'] : null;
+    return data is Map && data['closed'] == true;
   }
 }
 

@@ -1,3 +1,8 @@
+import 'package:dio/dio.dart';
+import 'package:yiraclinics/core/api/api_client.dart';
+import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
+import 'package:yiraclinics/core/urls/urls.dart';
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,9 +39,17 @@ class UploadedRecordsScreen extends StatefulWidget {
     this.hospitalId,
     this.orgId,
     this.allowAdd = true,
+    this.allowWhatsAppShare = false,
+    this.patientName,
   });
 
   final bool allowAdd;
+
+  /// Shows "Send on WhatsApp" on each document (for doctors and hospital staff).
+  final bool allowWhatsAppShare;
+
+  /// Used in the WhatsApp confirmation.
+  final String? patientName;
 
   @override
   State<UploadedRecordsScreen> createState() => _UploadedRecordsScreenState();
@@ -140,6 +153,50 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
     ));
   }
 
+  Future<void> _sendOnWhatsApp(BuildContext context, UploadedRecord record) async {
+    final name = (widget.patientName ?? '').trim();
+    final proceed = await AppDialog.confirm(
+      context,
+      title: 'Send on WhatsApp?',
+      message: '${name.isNotEmpty ? name : 'The patient'} gets a WhatsApp message with a link to open "${record.fileName}".',
+      confirmLabel: 'Send',
+      tone: AppDialogTone.success,
+      icon: HugeIcons.whatsapp,
+    );
+    if (!proceed || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    void show(String text, Color color) => messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(text, style: const TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, color: Colors.white)),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ));
+
+    show('Sending on WhatsApp', const Color(0xFF334155));
+    try {
+      final response = await ApiClient().account(showSuccessSnack: false).post(
+            URLs.medicalDocumentShareWhatsAppUrl(record.id),
+            options: Options(extra: const {'suppressErrorSnack': true}),
+          );
+      final data = response.data;
+      final message = data is Map && (data['message'] ?? '').toString().trim().isNotEmpty
+          ? data['message'].toString()
+          : "Sent to the patient's WhatsApp.";
+      show(message, const Color(0xFF16A34A));
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && (data['message'] ?? '').toString().trim().isNotEmpty
+          ? data['message'].toString()
+          : "Couldn't send it on WhatsApp. Please try again.";
+      show(message, const Color(0xFFDC2626));
+    } catch (_) {
+      show("Couldn't send it on WhatsApp. Please try again.", const Color(0xFFDC2626));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -213,7 +270,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                     context.read<UploadedBloc>().add(SearchQueryChanged(val));
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search documents by name, category, or note...',
+                    hintText: 'Search name, category or note',
                     hintStyle: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 12.5,
@@ -333,7 +390,9 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
               title: state.searchQuery.isNotEmpty ? 'No Matching Documents' : 'No Documents Uploaded',
               message: state.searchQuery.isNotEmpty
                   ? 'Try clearing your search or category filter.'
-                  : 'Tap the button below to upload lab reports, scan files, or prescriptions.',
+                  : widget.allowAdd
+                      ? 'Tap the button below to upload lab reports, scan files, or prescriptions.'
+                      : 'Documents added at a visit will appear here.',
             ),
           ),
         ),
@@ -368,6 +427,7 @@ class _UploadedRecordsScreenState extends State<UploadedRecordsScreen> {
                       )
                   : null,
               onAiInsights: () => _openInsights(context, record),
+              onShareWhatsApp: widget.allowWhatsAppShare ? () => _sendOnWhatsApp(context, record) : null,
               onDelete: widget.allowAdd
                   ? () {
                       context.read<UploadedBloc>().add(DeleteUploadedRecordItem(record.id));

@@ -116,7 +116,6 @@ final double? dateSize;
                   hasEvent: !hasEvent.isNegative,
                   child: Text(
                     '${date.day}',
-                    maxLines: 1,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       color: isSelected || isToday

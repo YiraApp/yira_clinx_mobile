@@ -732,7 +732,6 @@ class _UploadDocumentsScreenState extends State<UploadDocumentsScreen> {
                                               ? displayWidth(context) * 0.018
                                               : displayWidth(context) * 0.03,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 2),
                                       CommonText(

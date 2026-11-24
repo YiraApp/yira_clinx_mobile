@@ -948,7 +948,7 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                                       color: isDark ? Colors.white : const Color(0xFF121212),
                                     ),
                                     decoration: InputDecoration(
-                                      hintText: "Search doctor, hospital, condition...",
+                                      hintText: "Search doctor or hospital",
                                       hintStyle: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 12,
@@ -1229,8 +1229,6 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                       Flexible(
                         child: Text(
                           title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: isTab ? 12 : 11.5,
@@ -1262,8 +1260,6 @@ class PatientAppointmentsScreenState extends State<PatientAppointmentsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: 9.5,

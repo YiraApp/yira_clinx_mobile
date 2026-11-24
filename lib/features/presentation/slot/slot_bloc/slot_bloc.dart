@@ -289,7 +289,10 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
         for (int i = 0; i < sorted.length - 1; i++) {
           final curMins = _timeStringToMinutes(sorted[i].time);
           final nextMins = _timeStringToMinutes(sorted[i + 1].time);
-          final endMins = curMins + currentState.durationMinutes;
+          // The slot's own length ("60m" from the server), not the default length: with 60-minute
+          // slots back to back, assuming 20 showed a "break" after every slot.
+          final ownLength = int.tryParse(RegExp(r'(\d+)').firstMatch(sorted[i].duration)?.group(1) ?? '');
+          final endMins = curMins + (ownLength ?? currentState.durationMinutes);
           if (nextMins - endMins >= 15) {
             final fromDt = DateTime(2000, 1, 1, endMins ~/ 60, endMins % 60);
             final toDt = DateTime(2000, 1, 1, nextMins ~/ 60, nextMins % 60);

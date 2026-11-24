@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:async';
 import 'dart:io';
@@ -22,15 +23,21 @@ class _ReportFile {
 /// Upload a medical report as a PDF (up to 10 pages) or as photos of its
 /// pages (camera or gallery, up to 10), and optionally read it with AI.
 class ReportUploadSheet extends StatefulWidget {
-  const ReportUploadSheet({super.key});
+  const ReportUploadSheet({super.key, this.forPatientId, this.forName});
+
+  /// A family member the report is for. Null means the profile in use.
+  final String? forPatientId;
+  final String? forName;
 
   /// Returns the upload result, or null if the patient closed the sheet.
-  static Future<ReportUploadResult?> show(BuildContext context) {
+  /// With [forPatientId] the report goes to that family member's records
+  /// without switching profiles.
+  static Future<ReportUploadResult?> show(BuildContext context, {String? forPatientId, String? forName}) {
     return showModalBottomSheet<ReportUploadResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const ReportUploadSheet(),
+      builder: (_) => ReportUploadSheet(forPatientId: forPatientId, forName: forName),
     );
   }
 
@@ -197,6 +204,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
         category: _category,
         notes: _notesController.text,
         analyze: _analyze,
+        patientId: widget.forPatientId,
       );
       if (mounted) Navigator.pop(context, result);
     } catch (e) {
@@ -258,6 +266,11 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Upload medical report', style: DietUi.text(16, FontWeight.w700, DietUi.strong(isDark))),
+                  if ((widget.forName ?? '').trim().isNotEmpty)
+                    Text(
+                      'For ${widget.forName!.trim()}',
+                      style: DietUi.text(13, FontWeight.w600, DietUi.blue),
+                    ),
                   Text(
                     'A PDF or photos of the pages, up to $_maxPages pages',
                     style: DietUi.text(12, FontWeight.w400, DietUi.muted(isDark)),
@@ -436,8 +449,6 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
               const SizedBox(height: 6),
               Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: DietUi.text(12, FontWeight.w600, DietUi.strong(isDark)),
               ),
             ],
@@ -477,11 +488,12 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                           children: [
                             const Icon(IosIcons.picture_as_pdf_rounded, color: DietUi.red, size: 26),
                             const SizedBox(height: 6),
-                            Text(
-                              f.file.path.split('/').last,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: DietUi.text(10.5, FontWeight.w600, DietUi.strong(isDark), height: 1.25),
+                            Flexible(
+                              child: FitText(
+                                f.file.path.split('/').last,
+                                minFontSize: 8,
+                                style: DietUi.text(10.5, FontWeight.w600, DietUi.strong(isDark), height: 1.25),
+                              ),
                             ),
                           ],
                         ),

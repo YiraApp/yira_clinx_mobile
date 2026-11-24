@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
@@ -39,7 +40,23 @@ const Map<FitnessMetricType, _Metric> _metrics = {
 };
 
 class PatientFitnessDashboardScreen extends StatefulWidget {
-  const PatientFitnessDashboardScreen({super.key, this.previewSummary, this.previewToday, this.summaryLoader});
+  const PatientFitnessDashboardScreen({
+    super.key,
+    this.previewSummary,
+    this.previewToday,
+    this.summaryLoader,
+    this.viewPatientId,
+    this.viewPatientName,
+    this.embedded = false,
+  });
+
+  /// A doctor viewing a patient who shared access: the patient's synced data from the server,
+  /// read only (no phone, no sync, no settings).
+  final String? viewPatientId;
+  final String? viewPatientName;
+
+  /// Shown inside another screen's tab: no top bar of its own.
+  final bool embedded;
 
   /// Fixed data for screenshots and widget tests; the screen then neither reads the phone nor syncs.
   @visibleForTesting
@@ -112,8 +129,10 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     if (mounted && id != _profileId) Navigator.of(context).maybePop();
   }
 
+  bool get _viewOnly => widget.viewPatientId != null;
+
   Future<void> _start() async {
-    if (widget.summaryLoader != null) {
+    if (widget.summaryLoader != null || _viewOnly) {
       await _loadSummary(showSpinner: true);
       return;
     }
@@ -142,7 +161,9 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     if (showSpinner && mounted) setState(() => _isLoading = true);
     final period = _period == FitnessPeriod.week ? 'week' : 'month';
     final loader = widget.summaryLoader;
-    final res = loader != null ? await loader(period) : await _sync.fetchSummaryFromBackend(period: period);
+    final res = loader != null
+        ? await loader(period)
+        : await _sync.fetchSummaryFromBackend(period: period, patientId: widget.viewPatientId);
     if (!mounted || request != _summaryRequest) return;
     setState(() {
       // A failed refresh keeps what's already on screen.
@@ -234,6 +255,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
   // Today's numbers come from the phone first, then from the server.
   TodayFitnessData? get _today {
     if (widget.previewToday != null) return widget.previewToday;
+    // Someone else's data: never this phone's readings
+    if (_viewOnly) return _summary?.today;
     final local = _sync.todayFitnessNotifier.value;
     if (local != null && local.date == FitnessService.dateKey(DateTime.now())) return local;
     return _summary?.today;
@@ -244,10 +267,11 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final syncing = _sync.isSyncingNotifier.value;
     final fg = isDark ? Colors.white : const Color(0xFF121212);
+    final viewName = (widget.viewPatientName ?? '').trim();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA),
-      appBar: AppBar(
+      backgroundColor: widget.embedded ? Colors.transparent : (isDark ? const Color(0xFF121212) : const Color(0xFFF4F6FA)),
+      appBar: widget.embedded ? null : AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -257,9 +281,9 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           icon: Icon(PhosphorIconsBold.caretLeft, color: fg),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Fitness',
-            style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w700, color: fg)),
-        actions: [
+        title: FitText(_viewOnly && viewName.isNotEmpty ? "$viewName's fitness" : 'Fitness',
+            style: TextStyle(fontFamily: appPoppinFont, fontSize: 19, fontWeight: FontWeight.w700, color: fg), maxLines: 2),
+        actions: _viewOnly ? null : [
           IconButton(
             tooltip: 'Sync now',
             onPressed: syncing ? null : () => _syncNow(),
@@ -286,7 +310,7 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => _syncNow(),
+        onRefresh: () => _viewOnly ? _loadSummary() : _syncNow(),
         child: _isLoading && _summary == null && _today == null
             ? const PatientFitnessDashboardShimmer()
             : ListView(
@@ -334,11 +358,13 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
 
   // ── Sync status ────────────────────────────────────────────────────────
   Widget _buildSyncStatus(bool isDark) {
-    final last = _sync.lastSyncedAtNotifier.value ?? _summary?.lastSyncedAt?.toLocal();
-    final sources = _sync.sourcesNotifier.value;
-    final syncing = _sync.isSyncingNotifier.value;
-    final platform = Platform.isIOS ? 'Apple Health' : 'Health Connect';
-    final when = syncing ? 'Syncing…' : (last == null ? 'Not synced yet' : 'Synced ${_ago(last)}');
+    final last = _viewOnly
+        ? _summary?.lastSyncedAt?.toLocal()
+        : (_sync.lastSyncedAtNotifier.value ?? _summary?.lastSyncedAt?.toLocal());
+    final sources = _viewOnly ? const <String>[] : _sync.sourcesNotifier.value;
+    final syncing = !_viewOnly && _sync.isSyncingNotifier.value;
+    final platform = _viewOnly ? "the patient's phone" : (Platform.isIOS ? 'Apple Health' : 'Health Connect');
+    final when = syncing ? 'Syncing' : (last == null ? 'Not synced yet' : 'Synced ${_ago(last)}');
     final from = sources.isEmpty ? platform : sources.take(3).join(', ');
 
     return Row(
@@ -355,8 +381,6 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
         Expanded(
           child: Text(
             '$when · from $from',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: _muted(isDark)),
           ),
         ),
@@ -404,7 +428,8 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
           Row(
             children: [
               GestureDetector(
-                onTap: _editStepGoal,
+                // The step goal is the patient's own setting
+                onTap: _viewOnly ? null : _editStepGoal,
                 child: SizedBox(
                   width: 128,
                   height: 128,
@@ -475,10 +500,16 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             ),
             child: Text(
               today?.steps == null
-                  ? 'No steps recorded yet today. Carry your phone or wear your watch to start counting.'
+                  ? (_viewOnly
+                      ? 'No steps recorded today.'
+                      : 'No steps recorded yet today. Carry your phone or wear your watch to start counting.')
                   : left == 0
-                      ? 'Goal reached! ${fmt.format(steps - _stepGoal)} steps over your goal.'
-                      : '${fmt.format(left)} steps to go · ${(progress * 100).round()}% of your daily goal',
+                      ? (_viewOnly
+                          ? 'Daily goal reached, ${fmt.format(steps - _stepGoal)} steps over.'
+                          : 'Goal reached! ${fmt.format(steps - _stepGoal)} steps over your goal.')
+                      : (_viewOnly
+                          ? '${(progress * 100).round()}% of the ${fmt.format(_stepGoal)} step daily goal'
+                          : '${fmt.format(left)} steps to go · ${(progress * 100).round()}% of your daily goal'),
               style: TextStyle(
                   fontFamily: appPoppinFont, fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF14532D)),
             ),
@@ -518,8 +549,6 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
                       height: 1.1,
                       color: isDark ? Colors.white : const Color(0xFF121212))),
               Text(label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 11, color: _muted(isDark))),
             ],
           ),
@@ -605,7 +634,6 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(title,
-                  maxLines: 1,
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, fontWeight: FontWeight.w600, color: _muted(isDark))),
             ),
             const SizedBox(height: 2),
@@ -716,7 +744,10 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
               ),
             ] else if (minutes == null) ...[
               const SizedBox(height: 8),
-              Text('Wear your watch or use a sleep app that writes to ${Platform.isIOS ? 'Apple Health' : 'Health Connect'}.',
+              Text(
+                  _viewOnly
+                      ? "The patient's phone hasn't sent any sleep data."
+                      : 'Wear your watch or use a sleep app that writes to ${Platform.isIOS ? 'Apple Health' : 'Health Connect'}.',
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: _muted(isDark))),
             ],
           ],
@@ -947,7 +978,6 @@ class _PatientFitnessDashboardScreenState extends State<PatientFitnessDashboardS
             if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 4)],
             Flexible(
               child: Text(text,
-                  maxLines: 2,
                   style: TextStyle(fontFamily: appPoppinFont, fontSize: 10.5, fontWeight: FontWeight.w700, color: color)),
             ),
           ],

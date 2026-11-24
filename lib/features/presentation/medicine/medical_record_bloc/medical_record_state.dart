@@ -20,7 +20,10 @@ class MedicalRecordLoading extends MedicalRecordState {
 
 /// Processing completed cleanly
 class MedicalRecordSuccess extends MedicalRecordState {
-  const MedicalRecordSuccess({required super.selectedDate});
+  /// The saved record, so its PDF can be opened right away.
+  final String? recordId;
+
+  const MedicalRecordSuccess({required super.selectedDate, this.recordId});
 }
 
 /// Fallback or network system level validations failures

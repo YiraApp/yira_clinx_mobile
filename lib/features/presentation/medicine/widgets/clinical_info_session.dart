@@ -111,7 +111,7 @@ class ClinicalInfoSection extends StatelessWidget {
           // Chief Complaint
           SnomedMultiSearchPicker(
             label: "Chief Complaint",
-            hintText: "Search chief complaints (SNOMED CT)...",
+            hintText: "Search chief complaints",
             initialValue: chiefComplaintController.text,
             snomedType: "finding",
             isRequired: true,
@@ -128,7 +128,7 @@ class ClinicalInfoSection extends StatelessWidget {
           // Symptoms
           SnomedMultiSearchPicker(
             label: showExamination ? "Symptoms & History" : "Symptoms",
-            hintText: "Search symptoms & observations (SNOMED CT)...",
+            hintText: "Search symptoms",
             initialValue: symptomsController.text,
             snomedType: "finding",
             onSelected: (selectedTerms) {
@@ -145,7 +145,7 @@ class ClinicalInfoSection extends StatelessWidget {
           // Physical Exam
           SnomedMultiSearchPicker(
             label: "Physical Examination",
-            hintText: "Search examination findings (SNOMED CT)...",
+            hintText: "Search examination findings",
             initialValue: physicalExamController.text,
             snomedType: "finding",
             onSelected: (selectedTerms) {

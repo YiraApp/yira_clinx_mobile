@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/config/app_route/app_routes.dart';
@@ -106,7 +107,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Text(
+            FitText(
               "Favorite Patients",
               style: TextStyle(
                 fontFamily: appPoppinFont,
@@ -115,6 +116,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 color: isDark ? Colors.white : const Color(0xFF121212),
                 letterSpacing: -0.3,
               ),
+              maxLines: 2,
             ),
             const SizedBox(width: 8),
             Container(
@@ -124,7 +126,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFFDE68A), width: 0.8),
               ),
-              child: Text(
+              child: FitText(
                 "${_filteredFavorites.length}",
                 style: const TextStyle(
                   fontFamily: appPoppinFont,
@@ -132,6 +134,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFD97706),
                 ),
+                maxLines: 2,
               ),
             ),
           ],
@@ -174,7 +177,7 @@ class _FavoritePatientsScreenState extends State<FavoritePatientsScreen> {
                     color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
                   decoration: InputDecoration(
-                    hintText: "Search in favorite patients...",
+                    hintText: "Search favorite patients",
                     hintStyle: TextStyle(
                       fontFamily: appPoppinFont,
                       fontSize: isTab ? 13.5 : 12.5,

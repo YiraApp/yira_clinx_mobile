@@ -99,8 +99,6 @@ class StatCard extends StatelessWidget {
                   fontSize: isTab ? width * 0.014 : width * 0.028,
                   color: isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF3A3A3A),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
               Text(
@@ -113,8 +111,6 @@ class StatCard extends StatelessWidget {
                       ? Colors.white.withOpacity(0.4)
                       : const Color(0xFF94A3B8),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

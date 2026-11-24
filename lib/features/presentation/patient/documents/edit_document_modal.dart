@@ -493,8 +493,6 @@ class EditDocumentModal {
                               const SizedBox(height: 3),
                               Text(
                                 doc.fileName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: 12.5,
@@ -699,8 +697,6 @@ class EditDocumentModal {
                                     const SizedBox(height: 3),
                                     Text(
                                       newFileName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontFamily: appPoppinFont,
                                         fontSize: 12.5,
@@ -840,7 +836,7 @@ class EditDocumentModal {
                       color: isDark ? Colors.white : const Color(0xFF121212),
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Add notes about doctor, diagnosis or findings...',
+                      hintText: 'Notes about the doctor, diagnosis or findings',
                       filled: true,
                       fillColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

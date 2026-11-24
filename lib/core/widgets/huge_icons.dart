@@ -235,6 +235,7 @@ class HugeIcons {
   static const IconData viewOff = IconData(0x5bd1, fontFamily: _family);
   static const IconData weightScale = IconData(0x5c7d, fontFamily: _family);
   static const IconData wifiOff01 = IconData(0x5cb1, fontFamily: _family);
+  static const IconData whatsapp = IconData(0x5c83, fontFamily: _family);
   static const IconData woman = IconData(0x5cd5, fontFamily: _family);
   static const IconData workoutRun = IconData(0x5d07, fontFamily: _family);
   static const IconData wrench01 = IconData(0x5d17, fontFamily: _family);

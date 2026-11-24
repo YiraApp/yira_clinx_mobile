@@ -17,6 +17,7 @@ abstract class AppointmentRepo {
     required int orgId,
     required int hospitalId,
     required String patientPhone,
+    String? countryCode,
     String? patientUserId,
     String? parentUserId,
     String? relation,

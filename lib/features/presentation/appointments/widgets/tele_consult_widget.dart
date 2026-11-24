@@ -67,7 +67,6 @@ class TeleconsultationCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   CommonText(
-                    maxLines: 2,
                     softWrap: true,
                     'Virtual video call via secure link',
                     style: TextStyle(
@@ -75,7 +74,6 @@ class TeleconsultationCard extends StatelessWidget {
                       fontSize:isTab?displayWidth(context) * 0.018:  displayWidth(context) * 0.028,
                       fontWeight: FontWeight.w400,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

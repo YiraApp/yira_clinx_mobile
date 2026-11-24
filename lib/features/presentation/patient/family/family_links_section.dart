@@ -254,8 +254,6 @@ class _RequestCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w700, color: p.text)),
                     if (subtitle.isNotEmpty)
                       Text(subtitle, style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, height: 1.35, color: p.muted)),

@@ -168,8 +168,6 @@ class PatientAppointmentCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 6),

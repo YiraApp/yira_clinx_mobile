@@ -103,7 +103,7 @@ class TestResultsScreen extends StatelessWidget {
                           context,
                         ).colorScheme.onSurfaceVariant.withOpacity(0.6),
                       ),
-                      hintText: "Search test results...",
+                      hintText: "Search test results",
                       prefixIcon: const Icon(
                         IosIcons.search,
                         color: Colors.blueGrey,

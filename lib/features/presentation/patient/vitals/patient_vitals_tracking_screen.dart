@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -640,15 +641,14 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
             },
           ),
           centerTitle: false,
-          title: Text(
+          title: FitText(
             _selectedMetric == VitalMetricType.all ? 'Vitals Tracking' : metricTitle,
             style: const TextStyle(
               fontFamily: appPoppinFont,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
           actions: [
             if (_selectedMetric != VitalMetricType.all) ...[
@@ -950,8 +950,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                                         fontWeight: FontWeight.bold,
                                         color: isDark ? Colors.white : const Color(0xFF121212),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
@@ -1125,8 +1123,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     fontWeight: FontWeight.w500,
                     color: isDark ? Colors.white60 : const Color(0xFF64748B),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -1137,8 +1133,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : const Color(0xFF121212),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -1385,8 +1379,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white70 : const Color(0xFF64748B),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 InkWell(
@@ -1429,8 +1421,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                                 ? (isDark ? Colors.white : const Color(0xFF121212))
                                 : (isDark ? Colors.white38 : Colors.grey[400]),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (unit.isNotEmpty) ...[
@@ -1594,7 +1584,6 @@ class _PatientVitalsTrackingScreenState extends State<PatientVitalsTrackingScree
                         Flexible(
                           child: Text(
                             latestStr,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 26 : 22,

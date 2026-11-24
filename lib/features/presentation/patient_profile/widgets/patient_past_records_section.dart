@@ -135,14 +135,17 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(
-            scope: r.allHospitals ? 'All hospitals' : 'This hospital',
+            scope: r.allHospitals ? 'All hospitals' : (r.onlyMine ? 'Your records' : 'This hospital'),
             scopeColor: r.allHospitals ? const Color(0xFF059669) : DietUi.blue,
           ),
           if (!r.allHospitals) ...[
             const SizedBox(height: 6),
             GestureDetector(
               onTap: widget.onRequestAccess,
-              child: Text('Ask the patient to see records from other hospitals',
+              child: Text(
+                  r.onlyMine
+                      ? 'Ask the patient for access to see their visits with other doctors, fitness and vitals'
+                      : 'Ask the patient to see records from other hospitals',
                   style: DietUi.text(11.5, FontWeight.w600, DietUi.blue)),
             ),
           ],
@@ -287,13 +290,9 @@ class _PatientPastRecordsSectionState extends State<PatientPastRecordsSection> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: DietUi.text(13, FontWeight.w500, _fg(isDark))),
                   if (subtitle.isNotEmpty)
                     Text(subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: DietUi.text(11.5, FontWeight.w400, _muted(isDark))),
                 ],
               ),

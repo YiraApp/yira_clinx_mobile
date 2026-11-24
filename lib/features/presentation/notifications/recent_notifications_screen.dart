@@ -9,7 +9,9 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/shimmer_widgets/base_shimmer.dart';
 import 'package:yiraclinics/di/dependency_injection.dart';
 import 'package:yiraclinics/features/data/repository_impl/notifications/notifications_repo_impl.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/features/domain/entities/notifications/app_notification_entity.dart';
+import 'package:yiraclinics/features/presentation/doctor/profile/widgets/profile_switcher_sheet.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_bloc.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_event.dart';
 import 'package:yiraclinics/features/presentation/notifications/bloc/notifications_state.dart';
@@ -31,7 +33,6 @@ class RecentNotificationsScreen extends StatefulWidget {
 class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
   late final NotificationsBloc _bloc;
   bool _filterOnlyUnread = false;
-  final Set<String> _expandedNotificationIds = {};
 
   /// Kind filter under All / Unread; null shows every kind.
   String? _category;
@@ -232,20 +233,23 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     if (!notification.isRead) {
       _bloc.add(MarkNotificationAsReadEvent(notification.id));
     }
+    // A notification for another family profile opens that profile first, so the tap lands in
+    // the right account's data instead of whichever profile happens to be active.
+    final activeId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim();
+    final ownerId = notification.userId.trim();
+    if (ownerId.isNotEmpty && ownerId.toLowerCase() != activeId.toLowerCase()) {
+      // Opens that profile (or explains why it can't); either way, don't route in the wrong one.
+      await ProfileSwitcherSheet.switchToFamilyProfile(context, ownerId);
+      return;
+    }
     final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
     if (target?.url != null) {
       await Utils.launchURL(target!.url!);
       return;
     }
-    if (target != null) {
+    if (target != null && mounted) {
       await Navigator.pushNamed(context, target.route, arguments: target.arguments);
-      return;
     }
-    setState(() {
-      if (!_expandedNotificationIds.remove(notification.id)) {
-        _expandedNotificationIds.add(notification.id);
-      }
-    });
   }
 
   bool _isValidImageUrl(String? url) {
@@ -1084,7 +1088,6 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
     final typeIcon = _getIconForType(notification.type, notification.title);
     final relativeTime = _formatRelativeTime(notification.createdAt);
     final target = notificationTargetFor(type: notification.type, route: notification.route, title: notification.title);
-    final expanded = _expandedNotificationIds.contains(notification.id);
 
     return Material(
       color: Colors.transparent,
@@ -1162,7 +1165,7 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                     ),
                     const SizedBox(height: 4),
 
-                    // Body with Read more at last of text if longer
+                    // Full body, never cut
                     Builder(
                       builder: (context) {
                         final String bodyText = notification.body.trim();
@@ -1172,8 +1175,6 @@ class _RecentNotificationsScreenState extends State<RecentNotificationsScreen> {
                           children: [
                             Text(
                               bodyText,
-                              maxLines: expanded || target != null ? null : 3,
-                              overflow: expanded || target != null ? null : TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab ? 13 : 12.5,

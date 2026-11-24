@@ -14,6 +14,9 @@ Future<void> openDietPlanPdf(
   required String planName,
   required Future<List<int>> Function() download,
   String? doctorName,
+  String category = 'Diet Plan',
+  String filePrefix = 'diet-plan',
+  String errorMessage = "Couldn't open the diet plan PDF. Please try again.",
 }) async {
   final navigator = Navigator.of(context);
   final messenger = ScaffoldMessenger.of(context);
@@ -41,14 +44,14 @@ Future<void> openDietPlanPdf(
     if (bytes.isEmpty) throw Exception('The PDF came back empty.');
     final dir = await getTemporaryDirectory();
     final safeName = planName.replaceAll(RegExp(r'[^A-Za-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
-    final file = File('${dir.path}/diet-plan-$planId${safeName.isEmpty ? '' : '-$safeName'}.pdf');
+    final file = File('${dir.path}/$filePrefix-$planId${safeName.isEmpty ? '' : '-$safeName'}.pdf');
     await file.writeAsBytes(bytes, flush: true);
     if (loaderOpen) navigator.pop();
     if (!context.mounted) return;
     InAppDocumentViewer.show(
       context,
-      title: planName.trim().isEmpty ? 'Diet plan' : planName.trim(),
-      category: 'Diet Plan',
+      title: planName.trim().isEmpty ? category : planName.trim(),
+      category: category,
       filePath: file.path,
       fileType: 'PDF',
       doctorName: doctorName,
@@ -57,6 +60,6 @@ Future<void> openDietPlanPdf(
     if (loaderOpen) navigator.pop();
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(dietApiErrorMessage(e, "Couldn't open the diet plan PDF. Please try again."))));
+      ..showSnackBar(SnackBar(content: Text(dietApiErrorMessage(e, errorMessage))));
   }
 }

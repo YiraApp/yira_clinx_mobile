@@ -175,7 +175,6 @@ class AppBottomNavBar extends StatelessWidget {
                             fit: BoxFit.scaleDown,
                             child: CommonText(
                               item.title,
-                              maxLines: 1,
                               style: TextStyle(
                                 fontFamily: appPoppinFont,
                                 fontSize: isTab

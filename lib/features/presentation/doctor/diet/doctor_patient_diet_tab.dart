@@ -430,10 +430,9 @@ class _DoctorPlanDetailsSheetState extends State<_DoctorPlanDetailsSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(plan.planName, maxLines: 2, softWrap: true, style: ts(16.5, FontWeight.w700, strong)),
+                        Text(plan.planName,softWrap: true, style: ts(16.5, FontWeight.w700, strong)),
                         Text(
                           '${plan.prescribedByLabelForDoctor} · ${plan.clinicName}',
-                          maxLines: 2,
                           softWrap: true,
                           style: ts(12, FontWeight.w400, muted),
                         ),

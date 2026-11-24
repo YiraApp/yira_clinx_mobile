@@ -101,8 +101,6 @@ class DashboardQuickActions extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       item.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: appPoppinFont,

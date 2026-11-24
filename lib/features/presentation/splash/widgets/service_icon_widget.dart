@@ -83,8 +83,6 @@ class ServiceCardVisual extends StatelessWidget {
           child: Text(
             service.label,
             textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,

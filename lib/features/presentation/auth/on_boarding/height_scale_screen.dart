@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -46,13 +47,14 @@ class HeightScaleScreen extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            title: Text(
+            title: FitText(
               'Personal Health',
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: (isTab ? 550 : screenWidth) * 0.045,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 2,
             ),
           ),
           bottomNavigationBar: Container(

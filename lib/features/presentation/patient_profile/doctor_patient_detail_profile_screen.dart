@@ -1,3 +1,4 @@
+import 'package:yiraclinics/features/presentation/doctor/fitness/doctor_patient_fitness_tab.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'widgets/prescription_history_tab.dart';
@@ -56,6 +57,19 @@ class _DoctorPatientDetailProfileScreenState
   late final PageController _pageController;
   late final PatientAccessConsentBloc _consentBloc;
 
+  /// Record tabs switched to "Full history" (without access, it shows the request screen).
+  final Set<String> _fullHistoryTabs = {};
+
+  /// Record tabs switched back to "My records"; with access they open on the full history.
+  final Set<String> _myRecordsTabs = {};
+
+  /// The hospital the doctor's own records are read at.
+  String? get _myHospitalId {
+    final given = widget.hospitalId?.trim() ?? '';
+    if (given.isNotEmpty && given != '0') return given;
+    return GlobalSession.instance.userNotifier.value?.data?.latestHospitalId?.toString();
+  }
+
   // Tabs for Doctor Patient Management Record
   final List<String> _tabs = [
     'Info',
@@ -63,6 +77,7 @@ class _DoctorPatientDetailProfileScreenState
     'Medical Record',
     'Prescribe',
     'Diet',
+    'Fitness',
     'Notes',
     'Documents',
     'Suggestions',
@@ -173,21 +188,12 @@ class _DoctorPatientDetailProfileScreenState
                         FloatingActionButton.extended(
                           heroTag: 'add_suggestion_fab',
                           onPressed: () async {
-                            if (!hasAccess) {
-                              RequestAccessDurationModal.show(
-                                context: context,
-                                patient: patient,
-                                patientId: widget.patientId ?? patient.id,
-                                hospitalId: int.tryParse(widget.hospitalId ?? ''),
-                                consentBloc: _consentBloc,
-                              );
-                              return;
-                            }
+                            // A doctor advises their own patient without seeing the rest of their records.
                             final added = await AddDoctorSuggestionSheet.show(
                               context,
                               patientId: widget.patientId ?? patient.id,
                               orgId: widget.orgId,
-                              hospitalId: widget.hospitalId,
+                              hospitalId: _myHospitalId,
                               patientName: patient.name,
                             );
                             if (added == true && context.mounted) {
@@ -290,6 +296,40 @@ class _DoctorPatientDetailProfileScreenState
     );
   }
 
+  /// A record tab: the doctor's own records, or the whole history once the patient gives access.
+  Widget _scoped(
+    String tab,
+    PatientProfileEntity patient,
+    DoctorAccessStatusLoaded? accessStatus, {
+    required String recordType,
+    required Widget Function(bool full) build,
+  }) {
+    final hasAccess = accessStatus?.hasAccess ?? false;
+    return PatientRecordScopeTab(
+      showHistory: hasAccess ? !_myRecordsTabs.contains(tab) : _fullHistoryTabs.contains(tab),
+      onChanged: (full) => setState(() {
+        (full ? _fullHistoryTabs : _myRecordsTabs).add(tab);
+        (full ? _myRecordsTabs : _fullHistoryTabs).remove(tab);
+      }),
+      visitLabel: 'My records',
+      hasAccess: hasAccess,
+      accessStatus: accessStatus,
+      visit: () => build(false),
+      history: () => hasAccess
+          ? build(true)
+          : PatientRecordAccessGate(
+              key: ValueKey('${tab}ConsentGate'),
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              hospitalId: int.tryParse(widget.hospitalId ?? ''),
+              orgId: widget.orgId,
+              consentBloc: _consentBloc,
+              accessStatus: accessStatus,
+              recordType: recordType,
+            ),
+    );
+  }
+
   Widget _buildActiveTabContent(
     BuildContext context,
     PatientProfileEntity patient,
@@ -347,6 +387,13 @@ class _DoctorPatientDetailProfileScreenState
             orgId: widget.orgId,
             isTab: isTab,
             hasAccess: hasAccess,
+            onRequestAccess: () => RequestAccessDurationModal.show(
+              context: context,
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              hospitalId: int.tryParse(widget.hospitalId ?? ''),
+              consentBloc: _consentBloc,
+            ),
             onPrescribeTap: () {
               _openTab(context, 'Prescribe');
             },
@@ -356,110 +403,84 @@ class _DoctorPatientDetailProfileScreenState
           ),
         );
       case 'Medical Record':
-        // Medical Record Tab (Gated by patient consent, read-only tracking)
-        if (!hasAccess) {
-          return PatientRecordAccessGate(
-            key: const ValueKey('MedicalRecordsConsentGate'),
-            patient: patient,
-            patientId: widget.patientId ?? patient.id,
-            hospitalId: int.tryParse(widget.hospitalId ?? ''),
-            orgId: widget.orgId,
-            consentBloc: _consentBloc,
-            accessStatus: accessStatus,
-            recordType: "Medical Records & Clinical Findings",
-          );
-        }
-        return _fullHistory(accessStatus, BlocProvider<MedicalHistoryBloc>(
-          create: (_) => sl<MedicalHistoryBloc>(),
-          child: MedicalRecordsListScreen(
-            key: const ValueKey('PatientDetailMedicalRecordsTabFrame'),
-            patient: patient,
-            patientId: widget.patientId ?? patient.id,
-            allowAdd: false,
+        return _scoped(
+          'Medical Record',
+          patient,
+          accessStatus,
+          recordType: "Medical Records & Clinical Findings",
+          build: (full) => BlocProvider<MedicalHistoryBloc>(
+            key: ValueKey('PatientDetailMedicalRecordsTabFrame$full'),
+            create: (_) => sl<MedicalHistoryBloc>(),
+            child: MedicalRecordsListScreen(
+              patient: patient,
+              patientId: widget.patientId ?? patient.id,
+              listWholeHospital: !full,
+              hospitalId: full ? null : _myHospitalId,
+              allowAdd: false,
+            ),
           ),
-        ));
+        );
       case 'Prescribe':
-        // Prescribe Tab (Gated by patient consent, read-only tracking)
-        if (!hasAccess) {
-          return PatientRecordAccessGate(
-            key: const ValueKey('PrescriptionsConsentGate'),
-            patient: patient,
-            patientId: widget.patientId ?? patient.id,
-            hospitalId: int.tryParse(widget.hospitalId ?? ''),
-            orgId: widget.orgId,
-            consentBloc: _consentBloc,
-            accessStatus: accessStatus,
-            recordType: "Prescriptions & Medication History",
-          );
-        }
         // Every prescription with its real date; the per-visit screen showed only
         // the latest one, labelled "Today".
-        return _fullHistory(accessStatus, PrescriptionHistoryTab(
-          key: const ValueKey('PatientDetailPrescriptionTabFrame'),
-          patientId: widget.patientId ?? patient.id,
-          hospitalId: widget.hospitalId,
-        ));
+        return _scoped(
+          'Prescribe',
+          patient,
+          accessStatus,
+          recordType: "Prescriptions & Medication History",
+          build: (full) => PrescriptionHistoryTab(
+            key: ValueKey('PatientDetailPrescriptionTabFrame$full'),
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: full ? null : _myHospitalId,
+          ),
+        );
       case 'Notes':
-        // Notes Tab (Gated by patient consent, read-only tracking)
-        if (!hasAccess) {
-          return PatientRecordAccessGate(
-            key: const ValueKey('ClinicalNotesConsentGate'),
-            patient: patient,
+        return _scoped(
+          'Notes',
+          patient,
+          accessStatus,
+          recordType: "Clinical Consultation Notes",
+          build: (full) => ClinicalNotesScreen(
+            key: ValueKey('PatientDetailNotesTabFrame$full'),
             patientId: widget.patientId ?? patient.id,
-            hospitalId: int.tryParse(widget.hospitalId ?? ''),
-            orgId: widget.orgId,
-            consentBloc: _consentBloc,
-            accessStatus: accessStatus,
-            recordType: "Clinical Consultation Notes",
-          );
-        }
-        return _fullHistory(accessStatus, ClinicalNotesScreen(
-          key: const ValueKey('PatientDetailNotesTabFrame'),
-          patientId: widget.patientId ?? patient.id,
-          allowAdd: false,
-        ));
-      case 'Documents':
-        // Documents Tab (Gated by patient consent, read-only tracking)
-        if (!hasAccess) {
-          return PatientRecordAccessGate(
-            key: const ValueKey('DocumentsConsentGate'),
-            patient: patient,
-            patientId: widget.patientId ?? patient.id,
-            hospitalId: int.tryParse(widget.hospitalId ?? ''),
-            orgId: widget.orgId,
-            consentBloc: _consentBloc,
-            accessStatus: accessStatus,
-            recordType: "Documents & Clinical Reports",
-          );
-        }
-        return _fullHistory(accessStatus, BlocProvider<UploadedBloc>(
-          create: (_) => sl<UploadedBloc>(),
-          child: UploadedRecordsScreen(
-            key: const ValueKey('PatientDetailDocumentsTabFrame'),
-            patientId: widget.patientId ?? patient.id,
+            listWholeHospital: !full,
+            hospitalId: full ? null : _myHospitalId,
             allowAdd: false,
           ),
-        ));
+        );
+      case 'Documents':
+        return _scoped(
+          'Documents',
+          patient,
+          accessStatus,
+          recordType: "Documents & Clinical Reports",
+          build: (full) => BlocProvider<UploadedBloc>(
+            key: ValueKey('PatientDetailDocumentsTabFrame$full'),
+            create: (_) => sl<UploadedBloc>(),
+            child: UploadedRecordsScreen(
+              patientId: widget.patientId ?? patient.id,
+              listWholeHospital: !full,
+              hospitalId: full ? null : _myHospitalId,
+              allowAdd: false,
+              allowWhatsAppShare: true,
+              patientName: widget.patientName ?? patient.name,
+            ),
+          ),
+        );
       case 'Suggestions':
-        // Suggestions Tab (Gated by patient consent)
-        if (!hasAccess) {
-          return PatientRecordAccessGate(
-            key: const ValueKey('SuggestionsConsentGate'),
-            patient: patient,
+        return _scoped(
+          'Suggestions',
+          patient,
+          accessStatus,
+          recordType: "Doctor Suggestions & Treatment Recommendations",
+          build: (full) => DoctorSuggestionsScreen(
+            key: ValueKey('PatientDetailSuggestionsTabFrame$full'),
             patientId: widget.patientId ?? patient.id,
-            hospitalId: int.tryParse(widget.hospitalId ?? ''),
-            orgId: widget.orgId,
-            consentBloc: _consentBloc,
-            accessStatus: accessStatus,
-            recordType: "Doctor Suggestions & Treatment Recommendations",
-          );
-        }
-        return _fullHistory(accessStatus, DoctorSuggestionsScreen(
-          key: const ValueKey('PatientDetailSuggestionsTabFrame'),
-          patientId: widget.patientId ?? patient.id,
-          patientName: widget.patientName ?? patient.name,
-          showFab: false,
-        ));
+            patientName: widget.patientName ?? patient.name,
+            hospitalId: full ? null : _myHospitalId,
+            showFab: false,
+          ),
+        );
       case 'Questionnaires':
         final questionnairesTab = DoctorPatientQuestionnairesTab(
           key: ValueKey('PatientDetailQuestionnairesTabFrame$hasAccess'),
@@ -468,6 +489,21 @@ class _DoctorPatientDetailProfileScreenState
           fullHistory: hasAccess,
         );
         return hasAccess ? _fullHistory(accessStatus, questionnairesTab) : questionnairesTab;
+      case 'Fitness':
+        // The patient's synced fitness, once they have shared access with this doctor
+        return DoctorPatientFitnessTab(
+          key: ValueKey('PatientDetailFitnessTabFrame$hasAccess'),
+          patientId: widget.patientId ?? patient.id,
+          patientName: widget.patientName ?? patient.name,
+          hasAccess: hasAccess,
+          onRequestAccess: () => RequestAccessDurationModal.show(
+            context: context,
+            patient: patient,
+            patientId: widget.patientId ?? patient.id,
+            hospitalId: int.tryParse(widget.hospitalId ?? ''),
+            consentBloc: _consentBloc,
+          ),
+        );
       case 'Diet':
         // Diet Tab (Plans prescribed to this patient, and prescribing a new one)
         final dietTab = DoctorPatientDietTab(

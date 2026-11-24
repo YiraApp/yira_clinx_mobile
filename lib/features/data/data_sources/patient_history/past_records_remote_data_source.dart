@@ -93,6 +93,7 @@ class LatestVital {
 class PastRecords {
   PastRecords.fromJson(Map<String, dynamic> j)
       : allHospitals = j['scope'] == 'all',
+        onlyMine = j['scope'] == 'doctor',
         accessExpiresAt = _date(j['accessExpiresAt']),
         visits = _list(j['appointments']).map(PastVisit.new).toList(),
         prescriptions = _list(j['prescriptions']).map(PastPrescription.new).toList(),
@@ -110,9 +111,11 @@ class PastRecords {
             .toList(),
         fitness = _list(j['fitness']);
 
-  /// True with the patient's consent (or as their treating doctor); false
-  /// when only this hospital's own records are visible.
+  /// True with the patient's consent; false when only part of the history is visible.
   final bool allHospitals;
+
+  /// A doctor without the patient's consent: only his own work with this patient is shown.
+  final bool onlyMine;
   final DateTime? accessExpiresAt;
   final List<PastVisit> visits;
   final List<PastPrescription> prescriptions;

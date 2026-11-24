@@ -148,7 +148,7 @@ class _SplashScreenState extends State<SplashScreen> {
         extendBodyBehindAppBar: true,
         extendBody: true,
         body: YiraVideoSplash(
-          fullVideo: _playStory,
+          fullVideo: true, // Play the whole splash video on every launch, not just the first.
           onComplete: () {
             if (mounted && !_animationFinished) {
               setState(() {

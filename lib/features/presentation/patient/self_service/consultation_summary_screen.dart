@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/common_size_helpers/common_size_helpers.dart';
@@ -20,7 +21,7 @@ class ViewConsultationSummaryScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
-        title: const Text('Consultation Summary', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold)),
+        title: const FitText('Consultation Summary', style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.bold), maxLines: 2),
         actions: [
           IconButton(
             icon: const Icon(IosIcons.print_rounded),

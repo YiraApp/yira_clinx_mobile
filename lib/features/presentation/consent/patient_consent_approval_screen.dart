@@ -279,7 +279,7 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                       onChanged: (val) => setState(() => _searchQuery = val),
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF121212)),
                       decoration: InputDecoration(
-                        hintText: 'Search doctor, hospital, or specialty...',
+                        hintText: 'Search doctor, hospital, specialty',
                         hintStyle: TextStyle(fontFamily: appPoppinFont, fontSize: 13, color: isDark ? Colors.white38 : Colors.grey.shade400),
                         prefixIcon: Icon(IosIcons.search_rounded, color: isDark ? Colors.white54 : Colors.grey.shade500),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -585,8 +585,6 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -658,8 +656,6 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white70 : const Color(0xFF3A3A3A),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -696,8 +692,6 @@ class _PatientConsentApprovalScreenState extends State<PatientConsentApprovalScr
                     Flexible(
                       child: Text(
                         'Requested: ${_formatDate(item.requestedAt)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: 11,

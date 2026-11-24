@@ -127,7 +127,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Add a prescription'), empty ? findsOneWidget : findsNothing);
       expect(find.byType(FloatingActionButton), empty ? findsNothing : findsOneWidget);
-      expect(find.text('Search doctor, medicine or diagnosis'), empty ? findsNothing : findsOneWidget);
+      expect(find.text('Search doctor, medicine, diagnosis'), empty ? findsNothing : findsOneWidget);
     });
   }
 

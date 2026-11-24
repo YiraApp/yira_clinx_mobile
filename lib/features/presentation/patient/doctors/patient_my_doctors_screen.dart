@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:yiraclinics/core/custom_dialogue/app_dialog.dart';
 import 'dart:convert';
@@ -65,6 +66,8 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
 
     bool shouldSkip(String docId, String name) {
       if (_isTestDoctor(name)) return true;
+      // A doctor who books an appointment with himself (testing) is not his own doctor
+      if (docId.isNotEmpty && docId.toLowerCase() == patientId.toLowerCase()) return true;
       if (docId.isNotEmpty && unlinkedIds.contains(docId)) return true;
       if (name.isNotEmpty && unlinkedIds.contains(name.toLowerCase())) return true;
       if (docId.isNotEmpty && seenDoctorIds.contains(docId.toLowerCase())) return true;
@@ -82,17 +85,8 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       unlinkedIds = (prefs.getStringList(unlinkedStorageKey) ?? []).toSet();
 
       // 1. Load explicitly linked / scanned doctors from local storage
-      String? localStr = prefs.getString(linkedStorageKey);
-      if (localStr == null || localStr.isEmpty) {
-        final profiles = currentUser?.data?.profiles;
-        final primaryId = (profiles != null && profiles.isNotEmpty
-            ? (profiles.where((p) => p.isPrimary == true).firstOrNull?.id ?? profiles.first.id)
-            : currentUser?.data?.id)?.toString().trim();
-        if (primaryId != null && primaryId.isNotEmpty && primaryId != patientId) {
-          localStr = prefs.getString('patient_linked_doctors_$primaryId');
-        }
-        localStr ??= prefs.getString('patient_linked_doctors');
-      }
+      // This profile's own list only: a family member's doctors are not the account holder's.
+      final String? localStr = prefs.getString(linkedStorageKey);
       List<Map<String, dynamic>> localItems = [];
       if (localStr != null) {
         final List<dynamic> localList = jsonDecode(localStr);
@@ -190,9 +184,22 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           } catch (_) {}
         }
 
-        // Add doctors who actually treated the patient (non-cancelled appointments)
-        for (final appt in apptList) {
-          if (appt is! Map<String, dynamic>) continue;
+        // Add doctors who actually treated the patient (non-cancelled appointments). The list also
+        // has the family's visits: this profile's own come first, and a doctor who only saw a
+        // family member is labelled with who they saw.
+        String visitPatientId(Map<String, dynamic> a) =>
+            (a['patientUserId'] ?? a['userId'] ?? a['patientId'] ?? '').toString().trim().toLowerCase();
+        final ownFirst = [
+          ...apptList.whereType<Map<String, dynamic>>().where((a) {
+            final pid = visitPatientId(a);
+            return pid.isEmpty || pid == patientId.toLowerCase();
+          }),
+          ...apptList.whereType<Map<String, dynamic>>().where((a) {
+            final pid = visitPatientId(a);
+            return pid.isNotEmpty && pid != patientId.toLowerCase();
+          }),
+        ];
+        for (final appt in ownFirst) {
           final docId = (appt['doctorId'] ?? '').toString().trim();
           final docName = (appt['doctorName'] ?? '').toString().trim();
           final hospId = appt['hospitalId'];
@@ -222,12 +229,17 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
             'hospitalName': finalHospitalName,
             'orgId': appt['organizationId'] ?? profile['orgId'],
             'isLinked': true,
+            if (visitPatientId(appt).isNotEmpty && visitPatientId(appt) != patientId.toLowerCase())
+              'seenFor': (appt['patientName'] ?? appt['patient_name'] ?? '').toString().trim(),
           });
         }
 
-        // Add doctors connected via QR scan / consent
+        // Add doctors connected via QR scan / consent. Only ones the patient approved (now or
+        // before): a doctor who just asked for access, or whom the patient declined, isn't connected.
         for (final consent in consentList) {
           if (consent is! Map<String, dynamic>) continue;
+          final consentStatus = (consent['status'] ?? '').toString().toUpperCase();
+          if (consentStatus == 'PENDING' || consentStatus == 'REJECTED') continue;
           final docId = (consent['doctorId'] ?? '').toString().trim();
           final docName = (consent['doctorName'] ?? '').toString().trim();
           if (docId.isEmpty || shouldSkip(docId, docName)) continue;
@@ -277,48 +289,8 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           });
         }
 
-        // 5. Nothing linked yet (e.g. a switched family profile): fall back to the hospital's doctors
-        if (fetchedDoctors.isEmpty) {
-          final curHosp = currentUser?.data?.latestHospitalId;
-          final hospId = (curHosp != null && curHosp > 1) ? curHosp.toString() : '19';
-
-          Future<void> fetchHospitalDoctors(String targetHospId) async {
-            try {
-              final res = await sl<ApiClient>().account(showSuccessSnack: false).get(
-                URLs.hospitalDoctorsUrl,
-                queryParameters: {'hospitalId': targetHospId},
-                options: Options(headers: {HttpHeaders.authorizationHeader: 'Bearer $token'}),
-              );
-
-              if (res.data != null && res.data['data'] is List) {
-                for (final item in res.data['data'] as List) {
-                  if (item is! Map<String, dynamic>) continue;
-                  final map = Map<String, dynamic>.from(item);
-                  final firstName = (map['firstName'] ?? '').toString().trim();
-                  final lastName = (map['lastName'] ?? '').toString().trim();
-                  final nameField = (map['name'] ?? map['displayName'] ?? '').toString().trim();
-                  final name = nameField.isNotEmpty
-                      ? nameField
-                      : (firstName.isNotEmpty || lastName.isNotEmpty
-                          ? 'Dr. $firstName $lastName'.trim()
-                          : '');
-                  final docId = (map['doctorId'] ?? map['id'] ?? map['userId'] ?? map['providerId'] ?? '').toString().trim();
-                  if (shouldSkip(docId, name)) continue;
-
-                  map['name'] = name;
-                  map['doctorId'] ??= docId;
-                  map['id'] ??= docId;
-                  addDoctor(map);
-                }
-              }
-            } catch (_) {}
-          }
-
-          await fetchHospitalDoctors(hospId);
-          if (fetchedDoctors.isEmpty && hospId != '19') {
-            await fetchHospitalDoctors('19');
-          }
-        }
+        // Nothing linked yet: the list stays empty (the empty state says how to connect). Showing
+        // the hospital's doctors instead made strangers look like the patient's doctors.
       }
     } catch (_) {}
 
@@ -574,7 +546,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
-        title: Text(
+        title: FitText(
           'My Doctors',
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -582,6 +554,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
             fontWeight: FontWeight.bold,
             color: textColor,
           ),
+          maxLines: 2,
         ),
         actions: [
           IconButton(
@@ -611,33 +584,8 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => ScanDoctorQrSheet.show(
-          context,
-          onDoctorLinked: (newDoc) {
-            setState(() {
-              _doctors.removeWhere((d) =>
-                  (d['doctorId'] != null && d['doctorId'] == newDoc['doctorId']) ||
-                  (d['id'] != null && d['id'] == newDoc['id']) ||
-                  (d['name'] != null && d['name'] == newDoc['name']));
-              _doctors.insert(0, newDoc);
-            });
-            _loadDoctors();
-          },
-        ),
-        backgroundColor: _primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        icon: const Icon(IosIcons.qr_code_scanner_rounded, size: 20),
-        label: const Text(
-          'Add Doctor',
-          style: TextStyle(
-            fontFamily: appPoppinFont,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ),
+      // Adding a doctor is the QR button at the top (and in the empty state). The floating button
+      // that did the same sat on top of the last card's Book Appointment button.
       body: RefreshIndicator(
         onRefresh: _loadDoctors,
         child: _isLoading
@@ -652,7 +600,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         onChanged: (val) => setState(() => _searchQuery = val),
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 13.5, color: textColor),
                         decoration: InputDecoration(
-                          hintText: 'Search by doctor name, specialty, hospital...',
+                          hintText: 'Search doctor, specialty, hospital',
                           hintStyle: TextStyle(
                             fontFamily: appPoppinFont,
                             fontSize: 12.5,
@@ -764,6 +712,7 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
     final name = (doctor['name'] ?? doctor['displayName'] ?? 'Dr. Specialist').toString();
     final specialty = (doctor['specialty'] ?? '').toString().trim();
     final hospital = (doctor['hospitalName'] ?? '').toString().trim();
+    final seenFor = (doctor['seenFor'] ?? '').toString().trim();
     final qualification = (doctor['qualification'] ?? '').toString().trim();
     final rawExperience = (doctor['experience'] ?? '').toString().trim();
     final experienceYears = num.tryParse(rawExperience);
@@ -815,8 +764,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : const Color(0xFF121212),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     if (specialty.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -828,8 +775,6 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                         fontWeight: FontWeight.w600,
                         color: _primaryBlue,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     ],
                     if (hospital.isNotEmpty) ...[
@@ -850,12 +795,26 @@ class _PatientMyDoctorsScreenState extends State<PatientMyDoctorsScreen> {
                               fontSize: 11,
                               color: isDark ? Colors.white60 : const Color(0xFF64748B),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
+                    ],
+                    // A family member's doctor: say whom they saw
+                    if (seenFor.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(IosIcons.family_restroom_rounded, size: 12, color: _primaryBlue),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Saw $seenFor',
+                              style: const TextStyle(fontFamily: appPoppinFont, fontSize: 11, fontWeight: FontWeight.w600, color: _primaryBlue),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ],
                 ),

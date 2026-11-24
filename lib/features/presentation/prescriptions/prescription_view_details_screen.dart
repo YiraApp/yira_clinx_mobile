@@ -83,8 +83,6 @@ class PrescriptionViewDetailsScreen extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 'Prescription Details',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: appPoppinFont,
                                   fontSize: displayWidth(context) * (isTab ? 0.014 : 0.025),

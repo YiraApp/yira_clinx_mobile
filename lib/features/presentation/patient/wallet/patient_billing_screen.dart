@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -114,9 +115,10 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        title: Text(
+        title: FitText(
           'My billing',
           style: TextStyle(fontFamily: appPoppinFont, fontWeight: FontWeight.w700, fontSize: 18, color: c.ink),
+          maxLines: 2,
         ),
         iconTheme: IconThemeData(color: c.ink),
       ),
@@ -419,15 +421,11 @@ class _PatientBillingScreenState extends State<PatientBillingScreen> {
                   children: [
                     Text(
                       b.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontFamily: appPoppinFont, fontSize: 14, fontWeight: FontWeight.w600, color: c.ink),
                     ),
                     if (sub.isNotEmpty)
                       Text(
                         sub,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontFamily: appPoppinFont, fontSize: 11.5, color: c.muted),
                       ),
                     const SizedBox(height: 3),
@@ -702,7 +700,7 @@ class BillDetailSheet extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => openWalletFile(context, b.fileUrl!, title: b.fileName ?? b.title, category: b.category),
                 icon: PhosphorIcon(PhosphorIconsBold.fileText, size: 16, color: Theme.of(context).primaryColor),
-                label: Text(b.fileName ?? 'View attached bill', overflow: TextOverflow.ellipsis),
+                label: Text(b.fileName ?? 'View attached bill'),
               ),
             ],
             const SizedBox(height: 14),

@@ -472,8 +472,6 @@ class _DoctorSuggestionsScreenState extends State<DoctorSuggestionsScreen> {
                                             fontWeight: FontWeight.w600,
                                             color: Color(0xFF2563EB),
                                           ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       const SizedBox(width: 4),

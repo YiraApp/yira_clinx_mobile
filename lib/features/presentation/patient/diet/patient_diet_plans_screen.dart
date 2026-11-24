@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +20,13 @@ class PatientDietPlansScreen extends StatefulWidget {
   /// For tests; the app uses the real API.
   final PatientDietRemoteDataSource? dataSource;
 
-  const PatientDietPlansScreen({super.key, this.dataSource});
+  /// A family member's plans, shown read-only; the signed-in patient's own when null.
+  final String? patientId;
+
+  /// Shown inside another screen (a profile tab), without its own app bar.
+  final bool embedded;
+
+  const PatientDietPlansScreen({super.key, this.dataSource, this.patientId, this.embedded = false});
 
   @override
   State<PatientDietPlansScreen> createState() => _PatientDietPlansScreenState();
@@ -39,6 +46,15 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
 
   static final DateFormat _dateFormat = DateFormat('d MMM yyyy');
 
+  /// A family member's plans: they can be read, not changed, from this account.
+  bool get _viewOnly {
+    final asked = (widget.patientId ?? '').trim().toLowerCase();
+    final me = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim().toLowerCase();
+    return asked.isNotEmpty && asked != me;
+  }
+
+  String? get _viewedId => _viewOnly ? widget.patientId!.trim() : null;
+
   @override
   void initState() {
     super.initState();
@@ -53,7 +69,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
       });
     }
     try {
-      final plans = await _dataSource.getMyPlans();
+      final plans = await _dataSource.getMyPlans(patientId: _viewedId);
       if (!mounted) return;
       setState(() {
         _plans = plans;
@@ -78,7 +94,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
     if (_loadingMeals.contains(planId)) return;
     setState(() => _loadingMeals.add(planId));
     try {
-      final details = await _dataSource.getPlanDetails(planId);
+      final details = await _dataSource.getPlanDetails(planId, patientId: _viewedId);
       final raw = details?['Meals'];
       final meals = raw is List
           ? raw.whereType<Map>().map((m) => TodayDietMealItem.fromJson(Map<String, dynamic>.from(m))).toList()
@@ -102,7 +118,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
       _showMessage("Couldn't load this plan's foods. Please try again.", color: DietUi.red);
       return;
     }
-    await DietPlanPreviewSheet.show(context, plan: plan, meals: meals, onOpen: () => _open(plan));
+    await DietPlanPreviewSheet.show(context, plan: plan, meals: meals, onOpen: _viewOnly ? null : () => _open(plan));
   }
 
   /// "31-day plan · 2-day rotation" and the first few foods.
@@ -160,8 +176,6 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                     const SizedBox(height: 4),
                     Text(
                       foodsText,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                       style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark), height: 1.35),
                     ),
                   ],
@@ -305,6 +319,8 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
       plan.createdByPatient ? 'Made by you' : 'Dr. ${plan.doctorName} · ${plan.clinicName}';
 
   Future<void> _open(PatientDietPlanSummary plan) async {
+    // A family member's plan opens as a preview; the full screen is for the patient's own plans.
+    if (_viewOnly) return _preview(plan);
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -317,6 +333,10 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (widget.embedded) {
+      return ColoredBox(color: DietUi.background(isDark), child: _buildBody(isDark));
+    }
 
     return Scaffold(
       backgroundColor: DietUi.background(isDark),
@@ -359,7 +379,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         // Room at the bottom so the floating New Plan button never covers a card.
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, widget.embedded ? 32 : 100),
         children: [
           if (_error != null)
             _buildMessageCard(
@@ -383,7 +403,9 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
               const SizedBox(height: 20),
             ] else ...[
               DietUi.notice(
-                'No plan is active right now. Turn one on below to see your daily meals.',
+                _viewOnly
+                    ? 'No plan is active right now.'
+                    : 'No plan is active right now. Turn one on below to see your daily meals.',
                 DietUi.amber,
                 IosIcons.pause_circle_outline_rounded,
                 isDark,
@@ -409,7 +431,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
           context,
           planId: plan.id,
           planName: plan.planName,
-          download: () => _dataSource.downloadPlanPdf(plan.id),
+          download: () => _dataSource.downloadPlanPdf(plan.id, patientId: _viewedId),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: DietUi.blue,
@@ -474,14 +496,12 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                         children: [
                           Text(
                             plan.planName,
-                            maxLines: 3,
                             softWrap: true,
                             style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.3),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             _byLine(plan),
-                            maxLines: 2,
                             softWrap: true,
                             style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark)),
                           ),
@@ -499,7 +519,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                             child: Switch.adaptive(
                               value: true,
                               activeTrackColor: DietUi.green,
-                              onChanged: (_) => _toggle(plan, false),
+                              onChanged: _viewOnly ? null : (_) => _toggle(plan, false),
                             ),
                           ),
                   ],
@@ -533,7 +553,6 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                       Expanded(
                         child: Text(
                           dates,
-                          maxLines: 2,
                           softWrap: true,
                           style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark)),
                         ),
@@ -560,7 +579,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                               const Icon(IosIcons.visibility_outlined, size: 17),
                               const SizedBox(width: 6),
                               Flexible(
-                                child: Text('View Diet Plan', maxLines: 1, style: DietUi.text(13, FontWeight.w600, Colors.white)),
+                                child: Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, Colors.white)),
                               ),
                             ],
                           ),
@@ -613,14 +632,12 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                         children: [
                           Text(
                             plan.planName,
-                            maxLines: 3,
                             softWrap: true,
                             style: DietUi.text(14, FontWeight.w700, DietUi.strong(isDark), height: 1.3),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             _byLine(plan),
-                            maxLines: 2,
                             softWrap: true,
                             style: DietUi.text(11.5, FontWeight.w400, DietUi.muted(isDark)),
                           ),
@@ -646,7 +663,6 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                                 Expanded(
                                   child: Text(
                                     dates,
-                                    maxLines: 2,
                                     softWrap: true,
                                     style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
                                   ),
@@ -656,7 +672,6 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                           const SizedBox(height: 2),
                           Text(
                             facts,
-                            maxLines: 2,
                             softWrap: true,
                             style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
                           ),
@@ -685,11 +700,11 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                                     child: Switch.adaptive(
                                       value: false,
                                       activeTrackColor: DietUi.green,
-                                      onChanged: (_) => _toggle(plan, true),
+                                      onChanged: _viewOnly ? null : (_) => _toggle(plan, true),
                                     ),
                                   ),
                                 ),
-                                if (plan.createdByPatient)
+                                if (plan.createdByPatient && !_viewOnly)
                                   IconButton(
                                     tooltip: 'Delete plan',
                                     visualDensity: VisualDensity.compact,
@@ -722,7 +737,7 @@ class _PatientDietPlansScreenState extends State<PatientDietPlansScreen> {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             icon: const Icon(IosIcons.visibility_outlined, size: 17),
-                            label: Text('View Diet Plan', maxLines: 1, style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
+                            label: Text('View Diet Plan', style: DietUi.text(13, FontWeight.w600, DietUi.blue)),
                           ),
                         ),
                       ),

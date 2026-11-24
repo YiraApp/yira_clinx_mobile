@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -315,7 +316,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             icon: const Icon(IosIcons.arrow_back_ios_new_rounded, size: 18),
             onPressed: _isSaving ? null : () => Navigator.pop(context),
           ),
-        title: Text(
+        title: FitText(
           widget.policy == null ? 'Add Policy' : 'Edit Policy',
           style: TextStyle(
             fontFamily: appPoppinFont,
@@ -323,6 +324,7 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
             fontSize: 16.5,
             color: isDark ? Colors.white : const Color(0xFF121212),
           ),
+          maxLines: 2,
         ),
         centerTitle: true,
       ),
@@ -680,8 +682,6 @@ class _PatientAddEditPolicyScreenState extends State<PatientAddEditPolicyScreen>
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : const Color(0xFF121212),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       InkWell(

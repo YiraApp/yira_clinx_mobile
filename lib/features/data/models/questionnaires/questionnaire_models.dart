@@ -323,9 +323,12 @@ List<Map<String, dynamic>> answersPayload(List<QuestionnaireQuestion> questions,
 
 
 /// One of the hospital's published questionnaires as seen for a patient, when a doctor picks one to send.
+/// [mine] marks one of the doctor's own questionnaires; the server lists those first.
 class SendableQuestionnaire {
   final int id;
   final String title;
+  final String? description;
+  final bool mine;
   final String? categoryName;
   final int questionCount;
   final String targetGender;
@@ -341,6 +344,8 @@ class SendableQuestionnaire {
   const SendableQuestionnaire({
     required this.id,
     required this.title,
+    this.description,
+    this.mine = false,
     this.categoryName,
     this.questionCount = 0,
     this.targetGender = 'All',
@@ -361,6 +366,8 @@ class SendableQuestionnaire {
     return SendableQuestionnaire(
       id: _int(j['id']),
       title: _str(j['title']) ?? 'Questionnaire',
+      description: _str(j['description']),
+      mine: j['mine'] == true,
       categoryName: _str(j['categoryName']),
       questionCount: _int(j['questionCount']),
       targetGender: _str(j['targetGender']) ?? 'All',
@@ -374,4 +381,231 @@ class SendableQuestionnaire {
       reason: _str(j['reason']),
     );
   }
+}
+
+// ── A doctor's own questionnaires ("templates") ─────────────────────────────
+
+/// The answer kinds a doctor can pick for a question, in the editor's order.
+const templateQuestionTypes = [
+  QuestionType.shortText,
+  QuestionType.longText,
+  QuestionType.number,
+  QuestionType.singleChoice,
+  QuestionType.multiChoice,
+  QuestionType.dropdown,
+  QuestionType.yesNo,
+  QuestionType.date,
+  QuestionType.rating,
+];
+
+/// What the editor calls each answer kind.
+String questionTypeLabel(String typeCode) => switch (typeCode) {
+      QuestionType.shortText => 'Short answer',
+      QuestionType.longText => 'Long answer',
+      QuestionType.number => 'Number',
+      QuestionType.singleChoice => 'Single choice',
+      QuestionType.multiChoice => 'Multiple choice',
+      QuestionType.dropdown => 'Dropdown',
+      QuestionType.yesNo => 'Yes / No',
+      QuestionType.date => 'Date',
+      QuestionType.rating => 'Rating 1–5',
+      _ => typeCode,
+    };
+
+/// True for the answer kinds that need a list of options.
+bool needsOptions(String typeCode) =>
+    typeCode == QuestionType.singleChoice || typeCode == QuestionType.multiChoice || typeCode == QuestionType.dropdown;
+
+/// The limits the server holds a doctor's questionnaire to.
+abstract final class TemplateLimits {
+  static const title = 200;
+  static const description = 2000;
+  static const question = 1000;
+  static const helpText = 1000;
+  static const option = 500;
+  static const options = 50;
+  static const questions = 100;
+}
+
+/// A whole number goes out as 5, not 5.0.
+num _jsonNum(double v) => v == v.roundToDouble() ? v.toInt() : v;
+
+/// A number as typed, or null when empty. NaN when it isn't a number.
+double? _typedNumber(String s) {
+  final t = s.trim();
+  if (t.isEmpty) return null;
+  final n = double.tryParse(t);
+  return n == null || !n.isFinite ? double.nan : n;
+}
+
+/// One question of a doctor's own questionnaire, as written in the editor.
+/// [minValue] and [maxValue] are kept as typed (empty for any) and only matter for numbers.
+class TemplateQuestionDraft {
+  final String text;
+  final String typeCode;
+  final String helpText;
+  final bool isRequired;
+  final List<String> options;
+  final String minValue;
+  final String maxValue;
+
+  const TemplateQuestionDraft({
+    required this.text,
+    this.typeCode = QuestionType.shortText,
+    this.helpText = '',
+    this.isRequired = true,
+    this.options = const [],
+    this.minValue = '',
+    this.maxValue = '',
+  });
+
+  factory TemplateQuestionDraft.fromJson(Map<String, dynamic> j) {
+    final min = _double(j['minValue']);
+    final max = _double(j['maxValue']);
+    return TemplateQuestionDraft(
+      text: j['text']?.toString() ?? '',
+      typeCode: _str(j['typeCode'])?.toUpperCase() ?? QuestionType.shortText,
+      helpText: j['helpText']?.toString() ?? '',
+      isRequired: j['isRequired'] == true || j['isRequired'] == 1,
+      options: (j['options'] is List ? j['options'] as List : const [])
+          .map((o) => (o is Map ? o['label'] : o)?.toString() ?? '')
+          .toList(),
+      minValue: min == null ? '' : _fmt(min),
+      maxValue: max == null ? '' : _fmt(max),
+    );
+  }
+
+  /// The options with blanks left out.
+  List<String> get cleanOptions => options.map((o) => o.trim()).where((o) => o.isNotEmpty).toList();
+
+  /// The shape the server takes: trimmed, options only for choices, a range only for numbers.
+  Map<String, dynamic> toJson() {
+    final number = typeCode == QuestionType.number;
+    final min = number ? _typedNumber(minValue) : null;
+    final max = number ? _typedNumber(maxValue) : null;
+    return {
+      'text': text.trim(),
+      'typeCode': typeCode,
+      'helpText': helpText.trim().isEmpty ? null : helpText.trim(),
+      'isRequired': isRequired,
+      'options': needsOptions(typeCode) ? cleanOptions : <String>[],
+      'minValue': min == null || min.isNaN ? null : _jsonNum(min),
+      'maxValue': max == null || max.isNaN ? null : _jsonNum(max),
+    };
+  }
+}
+
+/// What the editor saves. [questions] null sends the name and note only, for a
+/// questionnaire patients have already answered.
+class QuestionnaireTemplateDraft {
+  final String title;
+  final String description;
+  final bool allowMultiple;
+  final List<TemplateQuestionDraft>? questions;
+
+  const QuestionnaireTemplateDraft({required this.title, this.description = '', this.allowMultiple = true, this.questions});
+
+  Map<String, dynamic> toJson() => {
+        'title': title.trim(),
+        'description': description.trim().isEmpty ? null : description.trim(),
+        'allowMultiple': allowMultiple,
+        if (questions != null) 'questions': [for (final q in questions!) q.toJson()],
+      };
+}
+
+/// A doctor's own questionnaire as saved. Once a patient has answered it,
+/// [questionsLocked] is true and only its name and note can change.
+class QuestionnaireTemplateDetail {
+  final int id;
+  final String title;
+  final String? description;
+  final bool allowMultiple;
+  final int submissionCount;
+  final bool questionsLocked;
+  final List<TemplateQuestionDraft> questions;
+
+  const QuestionnaireTemplateDetail({
+    required this.id,
+    required this.title,
+    this.description,
+    this.allowMultiple = true,
+    this.submissionCount = 0,
+    this.questionsLocked = false,
+    this.questions = const [],
+  });
+
+  factory QuestionnaireTemplateDetail.fromJson(Map<String, dynamic> j) => QuestionnaireTemplateDetail(
+        id: _int(j['id']),
+        title: _str(j['title']) ?? '',
+        description: _str(j['description']),
+        allowMultiple: j['allowMultiple'] != false,
+        submissionCount: _int(j['submissionCount']),
+        questionsLocked: j['questionsLocked'] == true,
+        questions: _maps(j['questions']).map(TemplateQuestionDraft.fromJson).toList(),
+      );
+}
+
+/// One of the doctor's own questionnaires in their list.
+class QuestionnaireTemplateSummary {
+  final int id;
+  final String title;
+  final String? description;
+  final bool allowMultiple;
+  final int questionCount;
+  final int sentCount;
+  final int submissionCount;
+
+  const QuestionnaireTemplateSummary({
+    required this.id,
+    required this.title,
+    this.description,
+    this.allowMultiple = true,
+    this.questionCount = 0,
+    this.sentCount = 0,
+    this.submissionCount = 0,
+  });
+
+  factory QuestionnaireTemplateSummary.fromJson(Map<String, dynamic> j) => QuestionnaireTemplateSummary(
+        id: _int(j['id']),
+        title: _str(j['title']) ?? 'Questionnaire',
+        description: _str(j['description']),
+        allowMultiple: j['allowMultiple'] != false,
+        questionCount: _int(j['questionCount']),
+        sentCount: _int(j['sentCount']),
+        submissionCount: _int(j['submissionCount']),
+      );
+}
+
+/// The first thing to fix before saving, and the question it's in (from 0), if any.
+class TemplateProblem {
+  final String message;
+  final int? question;
+
+  const TemplateProblem(this.message, {this.question});
+}
+
+/// The first thing to fix in a doctor's questionnaire before saving, in the
+/// same words as the web, or null when it's ready. The server checks the same.
+TemplateProblem? templateProblem(String title, List<TemplateQuestionDraft> questions) {
+  if (title.trim().isEmpty) return const TemplateProblem('Give the questionnaire a name.');
+  if (questions.isEmpty) return const TemplateProblem('Add at least one question.');
+  for (final (i, q) in questions.indexed) {
+    final where = 'Question ${i + 1}';
+    TemplateProblem at(String message) => TemplateProblem(message, question: i);
+    if (q.text.trim().isEmpty) return at('$where has no text.');
+    if (needsOptions(q.typeCode)) {
+      final options = q.cleanOptions;
+      if (options.length < 2) return at('$where needs at least two options.');
+      if (options.map((o) => o.toLowerCase()).toSet().length != options.length) return at('$where has the same option twice.');
+    }
+    if (q.typeCode == QuestionType.number) {
+      final min = _typedNumber(q.minValue);
+      final max = _typedNumber(q.maxValue);
+      if ((min?.isNaN ?? false) || (max?.isNaN ?? false)) {
+        return at('$where: the lowest and highest allowed values must be numbers.');
+      }
+      if (min != null && max != null && min > max) return at("$where: the lowest value can't be more than the highest.");
+    }
+  }
+  return null;
 }

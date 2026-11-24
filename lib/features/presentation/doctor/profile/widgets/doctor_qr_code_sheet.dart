@@ -181,8 +181,6 @@ class DoctorQrCodeSheet extends StatelessWidget {
                         children: [
                           Text(
                             doctorName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 16 : 14.5,
@@ -193,8 +191,6 @@ class DoctorQrCodeSheet extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             "$specialty • $hospitalName",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: appPoppinFont,
                               fontSize: isTab ? 12 : 11,

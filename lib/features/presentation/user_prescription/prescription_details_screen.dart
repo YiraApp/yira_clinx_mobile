@@ -346,7 +346,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
     final condition = (data['condition'] ?? 'General Consultation').toString();
     final date = _formatDate((data['date'] ?? '').toString());
 
-    Widget tile(IconData icon, Color color, String label, String value, {int flex = 1, int maxLines = 2}) {
+    Widget tile(IconData icon, Color color, String label, String value, {int flex = 1}) {
       return Expanded(
         flex: flex,
         child: Container(
@@ -364,15 +364,13 @@ class PrescriptionDetailScreen extends StatelessWidget {
                   PhosphorIcon(icon, size: 14, color: color),
                   const SizedBox(width: 5),
                   Flexible(
-                    child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
+                    child: Text(label, style: DietUi.text(10.5, FontWeight.w500, DietUi.muted(isDark))),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                maxLines: maxLines,
-                overflow: TextOverflow.ellipsis,
                 style: DietUi.text(13, FontWeight.w700, DietUi.strong(isDark), height: 1.3),
               ),
             ],
@@ -395,8 +393,8 @@ class PrescriptionDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(docName, maxLines: 2, overflow: TextOverflow.ellipsis, style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25)),
-                    Text(specialty, maxLines: 1, overflow: TextOverflow.ellipsis, style: DietUi.text(12, FontWeight.w500, primaryColor)),
+                    Text(docName, style: DietUi.text(15.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25)),
+                    Text(specialty, style: DietUi.text(12, FontWeight.w500, primaryColor)),
                     const SizedBox(height: 6),
                     if (data['isSelf'] == true)
                       DietUi.pill('Added by you', const Color(0xFF6366F1), isDark, icon: PhosphorIconsBold.user)
@@ -412,7 +410,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                tile(PhosphorIconsDuotone.stethoscope, primaryColor, 'Diagnosis', condition, flex: 3, maxLines: 4),
+                tile(PhosphorIconsDuotone.stethoscope, primaryColor, 'Diagnosis', condition, flex: 3),
                 const SizedBox(width: 10),
                 tile(PhosphorIconsDuotone.calendarCheck, const Color(0xFF0EA5E9), 'Prescribed on', date, flex: 2),
               ],
@@ -480,7 +478,7 @@ class PrescriptionDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25)),
+                          Text(name, style: DietUi.text(14.5, FontWeight.w700, DietUi.strong(isDark), height: 1.25)),
                           if (duration.isNotEmpty)
                             Text('For $duration', style: DietUi.text(11.5, FontWeight.w500, DietUi.muted(isDark))),
                         ],
@@ -543,8 +541,6 @@ class PrescriptionDetailScreen extends StatelessWidget {
                         if (reminder != null && reminder.times.isNotEmpty)
                           Text(
                             reminder.times.join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: DietUi.text(11, FontWeight.w500, DietUi.muted(isDark)),
                           ),
                       ],

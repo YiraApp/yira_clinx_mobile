@@ -516,8 +516,6 @@ class _PatientProfileHeaderState extends State<PatientProfileHeader> {
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
 

@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/huge_icons.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -367,6 +368,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       onEditTap: () => _openEditProfile(context, profile),
                       onQrCodeTap: () => DoctorQrCodeSheet.show(context, profile),
                     ),
+                    const SizedBox(height: 12),
+                    // Switch profile, in plain sight (it was only an unlabelled icon at the top)
+                    _buildSwitchProfileCard(context, profile, isTab),
                     const SizedBox(height: 16),
 
 
@@ -737,6 +741,73 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             onTap: () => SignOutAlert.showSignCustomDialog(context, primaryColor),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchProfileCard(BuildContext context, ProviderProfileEntity profile, bool isTab) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hospital = (profile.hospitalName ?? '').trim();
+    final role = (GlobalSession.instance.userNotifier.value?.data?.latestUserRole ?? 'Doctor').trim();
+    final now = [if (role.isNotEmpty) role, if (hospital.isNotEmpty) hospital].join(' at ');
+    final primaryColor = Theme.of(context).primaryColor;
+    return Material(
+      color: isDark ? const Color(0xFF232323) : Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: () => ProfileSwitcherSheet.show(context),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: isDark ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(HugeIcons.userSwitch, size: 21, color: primaryColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Switch profile',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: isTab ? 16 : 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : const Color(0xFF121212),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      now.isEmpty
+                          ? 'Use the app as yourself, a family member or another workspace.'
+                          : 'Now: $now. Switch to your patient profile, a family member or another workspace.',
+                      style: TextStyle(
+                        fontFamily: appPoppinFont,
+                        fontSize: 11.5,
+                        height: 1.35,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(IosIcons.arrow_forward_ios_rounded, size: 14, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+            ],
+          ),
+        ),
       ),
     );
   }

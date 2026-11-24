@@ -1,3 +1,4 @@
+import 'package:yiraclinics/core/widgets/fit_text.dart';
 import 'package:yiraclinics/core/widgets/ios_icons.dart';
 import 'package:flutter/material.dart';
 
@@ -13,14 +14,21 @@ import 'questionnaire_ui.dart';
 class PatientQuestionnairesScreen extends StatefulWidget {
   final QuestionnaireRemoteDataSource? dataSource;
 
-  const PatientQuestionnairesScreen({super.key, this.dataSource});
+  /// A family member's questionnaires; the signed-in user's own when null.
+  final String? patientId;
+
+  /// Shown inside another screen (a profile tab), without its own app bar.
+  final bool embedded;
+
+  const PatientQuestionnairesScreen({super.key, this.dataSource, this.patientId, this.embedded = false});
 
   @override
   State<PatientQuestionnairesScreen> createState() => _PatientQuestionnairesScreenState();
 }
 
 class _PatientQuestionnairesScreenState extends State<PatientQuestionnairesScreen> {
-  late final QuestionnaireRemoteDataSource _source = widget.dataSource ?? QuestionnaireRemoteDataSource();
+  late final QuestionnaireRemoteDataSource _source =
+      widget.dataSource ?? QuestionnaireRemoteDataSource(patientId: widget.patientId);
   List<PatientQuestionnaire>? _items;
   String? _error;
   bool _loading = true;
@@ -74,22 +82,13 @@ class _PatientQuestionnairesScreenState extends State<PatientQuestionnairesScree
     final available = items.where((q) => q.state == QuestionnaireState.available).toList();
     final done = items.where((q) => q.state == QuestionnaireState.completed).toList();
 
-    return Scaffold(
-      backgroundColor: QUi.background(isDark),
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: QUi.background(isDark),
-        iconTheme: IconThemeData(color: QUi.ink(isDark)),
-        title: Text('Questionnaires', style: QUi.text(18, FontWeight.w700, QUi.ink(isDark))),
-      ),
-      body: RefreshIndicator(
+    final body = RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                padding: EdgeInsets.fromLTRB(16, widget.embedded ? 14 : 4, 16, 32),
                 children: [
                   if (_error != null)
                     QMessage(
@@ -113,7 +112,18 @@ class _PatientQuestionnairesScreenState extends State<PatientQuestionnairesScree
                   ],
                 ],
               ),
+    );
+    if (widget.embedded) return ColoredBox(color: QUi.background(isDark), child: body);
+    return Scaffold(
+      backgroundColor: QUi.background(isDark),
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: QUi.background(isDark),
+        iconTheme: IconThemeData(color: QUi.ink(isDark)),
+        title: FitText('Questionnaires', style: QUi.text(18, FontWeight.w700, QUi.ink(isDark)), maxLines: 2),
       ),
+      body: body,
     );
   }
 
@@ -256,7 +266,7 @@ class QuestionnaireCardTile extends StatelessWidget {
           ),
           if ((q.description ?? '').isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(q.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: QUi.text(13, FontWeight.w400, QUi.body(isDark), height: 1.4)),
+            Text(q.description!, style: QUi.text(13, FontWeight.w400, QUi.body(isDark), height: 1.4)),
           ],
           const SizedBox(height: 12),
           if (from != null) _line(IosIcons.person_outline_rounded, from, QUi.body(isDark)),

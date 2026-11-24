@@ -67,7 +67,6 @@ class MedicationDropdownSelector extends StatelessWidget {
                   value: item,
                   child: CommonText(
                     item,
-                    maxLines: 2,
                     softWrap: true,
                     overflow: TextOverflow.visible,
                     style: TextStyle(
@@ -94,8 +93,6 @@ class MedicationDropdownSelector extends StatelessWidget {
                     Expanded(
                       child: CommonText(
                         (value != null && value!.isNotEmpty) ? value! : 'Select',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: appPoppinFont,
                           fontSize: isTab ? displayWidth(context) * 0.018 : displayWidth(context) * 0.032,

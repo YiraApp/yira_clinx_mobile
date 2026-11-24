@@ -58,8 +58,6 @@ class ProfileStatItem extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab
@@ -72,8 +70,6 @@ class ProfileStatItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: appPoppinFont,
                 fontSize: isTab

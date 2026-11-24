@@ -275,8 +275,6 @@ class DietOptionField extends StatelessWidget {
             Expanded(
               child: Text(
                 hasValue ? value : placeholder,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontFamily: appPoppinFont,
                   fontSize: 13.5,

@@ -269,7 +269,6 @@ class TimeSlotCard extends StatelessWidget {
                                   fontSize: isTab ? displayWidth(context) * 0.02 : displayWidth(context) * 0.034,
                                   fontWeight: FontWeight.w600,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (slot.isVerified) ...[
