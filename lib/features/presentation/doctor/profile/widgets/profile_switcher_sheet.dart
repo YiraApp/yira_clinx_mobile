@@ -116,13 +116,10 @@ class _ProfileSwitcherSheetState extends State<ProfileSwitcherSheet> {
 
       items.addAll(_buildFamilyItems(currentUser, primaryUserId, resolveProfileImage));
 
-      // 2. Add Provider / Staff Workspaces for each facility. A role held at several hospitals
-      // is listed once per hospital; its workspaces cover them all, so each role is fetched once.
-      final seenRoleIds = <String>{};
+      // 2. Add Provider / Staff Workspaces for each facility
       for (final role in roles) {
         final roleId = role.roleId ?? '';
         final roleIdUpper = roleId.toUpperCase();
-        if (!seenRoleIds.add(roleIdUpper)) continue;
         final rawRoleName = role.roleName ?? 'Provider';
 
         String roleName = rawRoleName;
@@ -510,16 +507,17 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
     final String currentUserId = (currentUser?.data?.id ?? '').toLowerCase().trim();
     final String targetProfileId = (item.profileUserId ?? '').toLowerCase().trim();
 
-    final bool isActive = switcherItemIsCurrent(
-      isPatientItem: isPatientItem,
-      sessionIsPatient: isSessionPatient,
-      itemProfileId: targetProfileId,
-      sessionUserId: currentUserId,
-      itemRoleId: item.roleId,
-      sessionRoleId: activeRoleIdStr,
-      itemHospitalId: item.hospitalId.toString(),
-      sessionHospitalId: activeHospitalId.toString(),
-    );
+    final bool isActuallyCurrentModeAndItem = isPatientItem
+        ? (isSessionPatient && targetProfileId.isNotEmpty && targetProfileId == currentUserId)
+        : (!isSessionPatient &&
+            item.roleId.toUpperCase() == activeRoleIdStr &&
+            item.hospitalId.toString() == activeHospitalId.toString());
+
+    final bool isActive = isPatientItem
+        ? (targetProfileId.isNotEmpty && targetProfileId == currentUserId)
+        : (!isSessionPatient &&
+            item.roleId.toUpperCase() == activeRoleIdStr &&
+            item.hospitalId.toString() == activeHospitalId.toString());
     final Color roleColor = _getRoleColor(item.roleName, primaryColor);
     final Color infoColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final Color cardColor = isDark ? const Color(0xFF121212) : Colors.white;
@@ -581,7 +579,7 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
-              onTap: isActive || _switchingKey != null ? null : () => _switchWorkspace(item),
+              onTap: isActuallyCurrentModeAndItem || _switchingKey != null ? null : () => _switchWorkspace(item),
               borderRadius: BorderRadius.circular(18),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -843,28 +841,6 @@ ProfileSectionLabel(title: "Workspaces", count: roleItems.length, isDark: isDark
 
 }
 
-/// Whether a switcher item is what the app is signed in as now, so only one item is ever marked
-/// Current: a family profile while the session is a patient one, else the workspace (role at a
-/// hospital). In a workspace the account's own profile is not current, though its id matches.
-@visibleForTesting
-bool switcherItemIsCurrent({
-  required bool isPatientItem,
-  required bool sessionIsPatient,
-  required String itemProfileId,
-  required String sessionUserId,
-  required String itemRoleId,
-  required String sessionRoleId,
-  required String itemHospitalId,
-  required String sessionHospitalId,
-}) {
-  if (isPatientItem) {
-    final id = itemProfileId.trim().toLowerCase();
-    return sessionIsPatient && id.isNotEmpty && id == sessionUserId.trim().toLowerCase();
-  }
-  return !sessionIsPatient &&
-      itemRoleId.toUpperCase() == sessionRoleId.toUpperCase() &&
-      itemHospitalId == sessionHospitalId;
-}
 
 /// The account's family profiles (primary first, then dependents) as switch
 /// targets. Shared by the sheet and the profile row on My Profile.
