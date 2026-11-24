@@ -14,7 +14,11 @@ class EnvironmentService {
   /// The API that release builds (TestFlight and the stores) talk to.
   static const String productionBaseUrl = "https://clinicsapi-fegha0fkfrcnfufu.centralindia-01.azurewebsites.net";
 
-  /// Release builds use production; debug runs use the local backend.
+  /// BACKEND_URL from .env, passed with --dart-define-from-file=.env (the Android Studio run
+  /// does): when set, every run and build talks to it, whatever APP_ENV says.
+  static const String backendUrlOverride = String.fromEnvironment('BACKEND_URL');
+
+  /// Release builds use production; debug runs use the local backend, unless BACKEND_URL is set.
   /// Override with --dart-define=APP_ENV=local|dev|qa|production.
   static Environment get buildEnvironment {
     const name = String.fromEnvironment('APP_ENV');
@@ -30,8 +34,9 @@ class EnvironmentService {
   /// 1. 192.168.0.5:5000 (Current Wi-Fi LAN)
   /// 2. 127.0.0.1:5000 (direct USB tunnel via `adb reverse tcp:5000 tcp:5000`)
   /// 3. Fallback candidates (192.168.0.4, 192.168.0.7, 192.168.0.3, 192.168.0.6, 10.0.2.2)
+  /// When none answers, the server ([productionBaseUrl]) is used.
   static Future<void> autoDetectLocalHost({bool force = true}) async {
-    if (_currentEnv != Environment.local) return;
+    if (_currentEnv != Environment.local || backendUrlOverride.trim().isNotEmpty) return;
     if (!force && _customBaseUrl != null && _customBaseUrl!.isNotEmpty) return;
     _customBaseUrl = null;
 
@@ -61,8 +66,9 @@ class EnvironmentService {
       } catch (_) {}
     }
 
-    _customBaseUrl = "http://127.0.0.1:$localPort";
-    debugPrint('[Environment] ⚠️ Using local fallback URL: $_customBaseUrl');
+    // No local backend running: talk to the server rather than a dead local address.
+    _customBaseUrl = productionBaseUrl;
+    debugPrint('[Environment] No local backend found, using the server: $_customBaseUrl');
   }
 
   /// Whether [host]:[port] is the Clinicx API: it answers in JSON (even a 401 for no token),
@@ -89,6 +95,10 @@ class EnvironmentService {
   }
 
   static EnvironmentConfig get config {
+    final override = backendUrlOverride.trim();
+    if (override.isNotEmpty) {
+      return EnvironmentConfig(accountBaseUrl: override, healthCampBaseUrl: override);
+    }
     switch (_currentEnv) {
       case Environment.local:
         return EnvironmentConfig(
@@ -96,8 +106,7 @@ class EnvironmentService {
           healthCampBaseUrl: _localHostUrl,
         );
       case Environment.dev:
-        const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');
-        final devUrl = _customBaseUrl ?? (envUrl.isNotEmpty ? envUrl.trim() : "https://clinicx-api-dev.azurewebsites.net");
+        final devUrl = _customBaseUrl ?? "https://clinicx-api-dev.azurewebsites.net";
         return EnvironmentConfig(
           accountBaseUrl: devUrl,
           healthCampBaseUrl: devUrl,

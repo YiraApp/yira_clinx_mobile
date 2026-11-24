@@ -221,6 +221,15 @@ void main() {
     expect(fake.savedPolicy?['policyNumber'], 'PMJAY-1');
   });
 
+  testWidgets('policy form marks its required fields with *', (tester) async {
+    await _pump(tester, Scaffold(body: PolicyFormSheet(dataSource: _FakeWallet())), size: const Size(390, 1900));
+    expect(find.text('Type *'), findsOneWidget);
+    expect(find.text('Insurer or scheme *'), findsOneWidget);
+    expect(find.text('Policy or card number *'), findsOneWidget);
+    expect(find.text('Plan name  Optional'), findsOneWidget);
+    expect(find.textContaining('Plan name *'), findsNothing);
+  });
+
   testWidgets('sideways, billing shows spending by type as a ring chart', (tester) async {
     await _pump(tester, PatientBillingScreen(dataSource: _FakeWallet(billing: _sampleBilling())), size: const Size(844, 390));
     expect(find.text('Spending by type'), findsOneWidget);

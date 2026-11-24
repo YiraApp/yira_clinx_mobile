@@ -155,7 +155,7 @@ class _PolicyFormSheetState extends State<PolicyFormSheet> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            WalletFieldLabel(label, optional: optional, isDark: isDark),
+            WalletFieldLabel(label, optional: optional, required: !optional, isDark: isDark),
             TextFormField(
               controller: ctrl,
               maxLength: max,
@@ -215,7 +215,7 @@ class _PolicyFormSheetState extends State<PolicyFormSheet> {
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 18, fontWeight: FontWeight.w700, color: c.ink)),
                 Text('Health insurance, life cover or a government scheme',
                     style: TextStyle(fontFamily: appPoppinFont, fontSize: 12, color: c.muted)),
-                WalletFieldLabel('Type', isDark: isDark),
+                WalletFieldLabel('Type', required: true, isDark: isDark),
                 WalletChoiceChips(options: policyTypes, selected: _type, onSelected: (v) => setState(() => _type = v), accent: primary, isDark: isDark),
                 field('Insurer or scheme', _insurer,
                     hint: 'e.g. Star Health', optional: false, validator: (v) => (v ?? '').trim().isEmpty ? 'Enter the insurer' : null),

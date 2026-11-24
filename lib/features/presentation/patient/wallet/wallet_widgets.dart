@@ -141,9 +141,12 @@ class WalletChoiceChips extends StatelessWidget {
 class WalletFieldLabel extends StatelessWidget {
   final String text;
   final bool optional;
+
+  /// Marks the field with a red * (it must be filled before saving).
+  final bool required;
   final bool isDark;
 
-  const WalletFieldLabel(this.text, {super.key, this.optional = false, required this.isDark});
+  const WalletFieldLabel(this.text, {super.key, this.optional = false, this.required = false, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +156,10 @@ class WalletFieldLabel extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           text: text,
-          children: [if (optional) TextSpan(text: '  Optional', style: TextStyle(fontWeight: FontWeight.w400, color: c.muted))],
+          children: [
+            if (required) const TextSpan(text: ' *', style: TextStyle(color: WalletColors.danger)),
+            if (optional) TextSpan(text: '  Optional', style: TextStyle(fontWeight: FontWeight.w400, color: c.muted)),
+          ],
         ),
         style: TextStyle(fontFamily: appPoppinFont, fontSize: 12.5, fontWeight: FontWeight.w600, color: c.ink),
       ),
