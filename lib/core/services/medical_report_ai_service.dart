@@ -35,6 +35,9 @@ class ReportUploadResult {
   final bool analysisPending;
   final String? pendingMessage;
 
+  /// The profile the report was saved to.
+  final String? patientId;
+
   const ReportUploadResult({
     required this.documentId,
     required this.fileName,
@@ -45,6 +48,7 @@ class ReportUploadResult {
     this.analysisError,
     this.analysisPending = false,
     this.pendingMessage,
+    this.patientId,
   });
 }
 
@@ -165,6 +169,7 @@ class MedicalReportAiService {
           : null,
       analysisPending: data['analysisPending'] == true,
       pendingMessage: data['pendingMessage']?.toString(),
+      patientId: forId,
     );
   }
 

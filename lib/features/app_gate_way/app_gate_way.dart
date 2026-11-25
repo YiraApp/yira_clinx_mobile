@@ -23,6 +23,7 @@ import 'package:yiraclinics/core/constants/constants.dart';
 import 'package:yiraclinics/core/utils/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:yiraclinics/features/presentation/auth/on_boarding/on_boarding_bloc/on_boarding_bloc.dart';
+import 'package:yiraclinics/features/presentation/patient/documents/share_into_yira.dart';
 import 'package:yiraclinics/features/presentation/splash/auth_bloc/auth_bloc.dart';
 import 'package:yiraclinics/features/presentation/theme/theme_bloc/theme_bloc.dart';
 
@@ -431,6 +432,8 @@ class _RouteLoggingObserver extends NavigatorObserver {
     NavigationService.currentRoute = routeName;
     final filePath = _getFilePath(routeName);
     debugPrint("[ROUTE_NAVIGATED] Pushed Route: $routeName (args: ${route.settings.arguments}) | File: $filePath");
+    // A report shared before sign-in opens once the patient reaches home.
+    ShareIntoYira.instance.check();
   }
 
   @override
@@ -452,6 +455,7 @@ class _RouteLoggingObserver extends NavigatorObserver {
       NavigationService.currentRoute = routeName;
       final filePath = _getFilePath(routeName);
       debugPrint("[ROUTE_NAVIGATED] Replaced Route to: $routeName | File: $filePath");
+      ShareIntoYira.instance.check();
     }
   }
 }

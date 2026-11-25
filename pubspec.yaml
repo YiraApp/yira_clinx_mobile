@@ -86,6 +86,7 @@ dependencies:
   geolocator: ^14.0.1
   geocoding: ^5.0.1
   video_player: ^2.14.1
+  receive_sharing_intent: ^1.9.0
 dependency_overrides:
 
 dev_dependencies:

@@ -12,6 +12,7 @@ import '../../../../core/common_size_helpers/common_size_helpers.dart';
 import '../../../../core/common_widgets/in_app_document_viewer.dart';
 import '../../../../core/constants/constants.dart';
 import '../../../../core/local/global_session.dart';
+import '../../../../core/services/share_into_yira/shared_report.dart';
 import '../../../../core/shimmer_widgets/base_shimmer.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../di/dependency_injection.dart';
@@ -24,10 +25,13 @@ import 'report_upload_sheet.dart';
 import 'edit_document_modal.dart';
 
 class PatientDocumentsScreen extends StatefulWidget {
-  const PatientDocumentsScreen({super.key, this.startUpload = false});
+  const PatientDocumentsScreen({super.key, this.startUpload = false, this.shared});
 
   /// Opens the upload sheet as soon as the screen shows.
   final bool startUpload;
+
+  /// Files shared into Yira from another app, attached to that first upload.
+  final SharedReport? shared;
 
   @override
   State<PatientDocumentsScreen> createState() => _PatientDocumentsScreenState();
@@ -225,9 +229,27 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
 
 
   // ─── UPLOAD + AI ANALYSIS ─────────────────────────────────────────────────
-  Future<void> _openReportUpload(BuildContext blocContext) async {
-    final result = await ReportUploadSheet.show(context);
+  Future<void> _openReportUpload(BuildContext blocContext, {SharedReport? shared}) async {
+    final result = await ReportUploadSheet.show(context, shared: shared, chooseProfile: shared != null);
+    // The app's copies of shared files aren't needed once the sheet closes.
+    if (shared != null) await shared.discard();
     if (result == null || !mounted) return;
+
+    // A shared report can go to a family member; it isn't in this list.
+    final currentId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim().toLowerCase();
+    final savedFor = (result.patientId ?? '').trim();
+    if (savedFor.isNotEmpty && currentId.isNotEmpty && savedFor.toLowerCase() != currentId) {
+      final name = ReportProfileChoice.nameFor(savedFor) ?? 'your family member';
+      final aiNote = result.analysisError != null
+          ? ' ${result.analysisError!.message}'
+          : (result.analysisPending || result.analysis != null)
+              ? ' Switch to $name to see the AI insights.'
+              : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${result.fileName}" saved to $name\'s records.$aiNote'), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
 
     final analysis = result.analysis;
     final record = UploadedRecord(
@@ -352,7 +374,7 @@ class _PatientDocumentsScreenState extends State<PatientDocumentsScreen> {
           if (widget.startUpload && !_startedUpload) {
             _startedUpload = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _openReportUpload(blocContext);
+              if (mounted) _openReportUpload(blocContext, shared: widget.shared);
             });
           }
           final uploadedState = blocContext.watch<UploadedBloc>().state;

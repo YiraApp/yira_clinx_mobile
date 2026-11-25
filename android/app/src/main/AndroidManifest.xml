@@ -69,6 +69,31 @@
             </intent-filter>
         </activity>
 
+        <!-- "Yira Health" in the share list for PDFs and photos from other apps. It copies the
+             files using the sender's read grant (no storage or media permission) and opens
+             MainActivity in the app's own task. See ShareIntoYiraActivity.kt. -->
+        <activity
+            android:name=".ShareIntoYiraActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
         <!-- Health Connect View Permission Usage -->
         <activity-alias
             android:name="ViewPermissionUsageActivity"

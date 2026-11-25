@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:yiraclinics/core/services/medication_popup_service.dart';
@@ -7,6 +9,7 @@ import 'core/api/base_api_configuration.dart';
 import 'core/local/global_session.dart';
 import 'core/services/notification_services/notification_services.dart';
 import 'features/app_gate_way/app_gate_way.dart';
+import 'features/presentation/patient/documents/share_into_yira.dart';
 import 'features/presentation/medication_popup/medication_popup_overlay.dart';
 
 /// Entry point for the floating medicine reminder shown over other apps
@@ -34,12 +37,15 @@ void main() async {
     ]);
     await init();
     GlobalSession.instance.initializePlatformTelemetry();
+    // PDFs and photos shared into Yira from other apps.
+    unawaited(ShareIntoYira.instance.start());
     runApp(const AppGateway());
     // Saved for the floating medicine popup, whose engine cannot read it.
     WidgetsBinding.instance.addPostFrameCallback((_) => MedicationPopupService.cacheScreenMetrics());
   } catch (e) {
     debugPrint('Initialization error: $e');
     GlobalSession.instance.initializePlatformTelemetry();
+    unawaited(ShareIntoYira.instance.start());
     runApp(const AppGateway());
   }
 }

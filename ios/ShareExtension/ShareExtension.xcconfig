@@ -1,0 +1,4 @@
+// The Share Extension's base settings. Only Flutter's generated values (FLUTTER_BUILD_NAME and
+// FLUTTER_BUILD_NUMBER, so its version matches the app's). Not Flutter/Debug.xcconfig, which
+// pulls in the CocoaPods settings and would link every pod into the extension.
+#include? "../Flutter/Generated.xcconfig"

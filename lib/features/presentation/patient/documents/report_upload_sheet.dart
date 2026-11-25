@@ -7,9 +7,58 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:yiraclinics/core/local/global_session.dart';
 import 'package:yiraclinics/core/services/medical_report_ai_service.dart';
 import 'package:yiraclinics/core/services/permission_helper.dart';
+import 'package:yiraclinics/core/services/share_into_yira/shared_report.dart';
+import 'package:yiraclinics/features/domain/entities/login/login_entity.dart';
 import 'package:yiraclinics/features/presentation/patient/diet/diet_ui.dart';
+
+/// A profile on the account that a report can be saved to.
+class ReportProfileChoice {
+  const ReportProfileChoice({required this.id, required this.name, required this.label});
+
+  final String id;
+  final String name;
+
+  /// "You" for the account holder, otherwise the first name.
+  final String label;
+
+  static bool _isSelf(ProfileEntity p) {
+    final r = (p.relation ?? '').trim().toLowerCase();
+    return p.isPrimary == true && (r.isEmpty || r == 'self' || r == 'primary' || r == 'admin');
+  }
+
+  static String _name(ProfileEntity p) {
+    final full = (p.name ?? '').trim().isNotEmpty ? p.name!.trim() : '${p.firstName ?? ''} ${p.lastName ?? ''}'.trim();
+    return full.isEmpty ? 'Profile' : full;
+  }
+
+  /// Every profile on the account, the account holder first. Empty when there
+  /// is only one, or when a family member signed in on their own.
+  static List<ReportProfileChoice> fromSession() {
+    final session = GlobalSession.instance;
+    if (session.isSignedInAsFamilyMember) return const [];
+    final seen = <String>{};
+    final profiles = [
+      for (final p in session.userNotifier.value?.data?.profiles ?? const <ProfileEntity>[])
+        if ((p.id ?? '').trim().isNotEmpty && seen.add(p.id!.trim().toLowerCase())) p,
+    ]..sort((a, b) => (_isSelf(b) ? 1 : 0).compareTo(_isSelf(a) ? 1 : 0));
+    if (profiles.length < 2) return const [];
+    return [
+      for (final p in profiles)
+        ReportProfileChoice(id: p.id!.trim(), name: _name(p), label: _isSelf(p) ? 'You' : _name(p).split(' ').first),
+    ];
+  }
+
+  /// The name of the profile with this id, or null.
+  static String? nameFor(String id) {
+    for (final p in fromSession()) {
+      if (p.id.toLowerCase() == id.trim().toLowerCase()) return p.name;
+    }
+    return null;
+  }
+}
 
 /// One page photo, or the whole PDF.
 class _ReportFile {
@@ -23,21 +72,34 @@ class _ReportFile {
 /// Upload a medical report as a PDF (up to 10 pages) or as photos of its
 /// pages (camera or gallery, up to 10), and optionally read it with AI.
 class ReportUploadSheet extends StatefulWidget {
-  const ReportUploadSheet({super.key, this.forPatientId, this.forName});
+  const ReportUploadSheet({super.key, this.forPatientId, this.forName, this.shared, this.chooseProfile = false});
 
   /// A family member the report is for. Null means the profile in use.
   final String? forPatientId;
   final String? forName;
 
+  /// Files shared into Yira from another app. They are attached when the
+  /// sheet opens, with the same checks as picking them here.
+  final SharedReport? shared;
+
+  /// Lets the patient pick which profile on the account the report is for.
+  final bool chooseProfile;
+
   /// Returns the upload result, or null if the patient closed the sheet.
   /// With [forPatientId] the report goes to that family member's records
   /// without switching profiles.
-  static Future<ReportUploadResult?> show(BuildContext context, {String? forPatientId, String? forName}) {
+  static Future<ReportUploadResult?> show(
+    BuildContext context, {
+    String? forPatientId,
+    String? forName,
+    SharedReport? shared,
+    bool chooseProfile = false,
+  }) {
     return showModalBottomSheet<ReportUploadResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ReportUploadSheet(forPatientId: forPatientId, forName: forName),
+      builder: (_) => ReportUploadSheet(forPatientId: forPatientId, forName: forName, shared: shared, chooseProfile: chooseProfile),
     );
   }
 
@@ -61,6 +123,32 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
   int get _pageCount => _files.fold(0, (sum, f) => sum + f.pages);
   bool get _hasPdf => _files.any((f) => f.isPdf);
   int get _photosLeft => _maxPages - _pageCount;
+
+  late final List<ReportProfileChoice> _profiles = widget.chooseProfile ? ReportProfileChoice.fromSession() : const [];
+  final String _activeId = (GlobalSession.instance.userNotifier.value?.data?.id ?? '').trim();
+  late String _profileId = _activeId;
+
+  ReportProfileChoice? get _chosen {
+    for (final p in _profiles) {
+      if (p.id.toLowerCase() == _profileId.toLowerCase()) return p;
+    }
+    return null;
+  }
+
+  bool get _forSomeoneElse => _chosen != null && _profileId.toLowerCase() != _activeId.toLowerCase();
+  String? get _patientId => _forSomeoneElse ? _chosen!.id : widget.forPatientId;
+  String? get _forName => _forSomeoneElse ? _chosen!.name : widget.forName;
+
+  @override
+  void initState() {
+    super.initState();
+    final shared = widget.shared;
+    if (shared != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _attachShared(shared);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -96,16 +184,26 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
         if (single != null) picked = [single];
       }
       if (picked.isEmpty) return;
-      if (picked.length > left) {
-        _setError('Only $left more page${left == 1 ? '' : 's'} can be added. The first $left were kept.');
-        picked = picked.take(left).toList();
-      }
-      final prepared = <_ReportFile>[];
-      for (final p in picked) {
-        prepared.add(_ReportFile(await MedicalReportAiService.preparePhoto(p.path)));
-      }
-      setState(() => _files.addAll(prepared));
+      final notice = await _addPhotos([for (final p in picked) p.path]);
+      if (notice != null) _setError(notice);
     });
+  }
+
+  /// Adds page photos up to the page limit. Returns a notice when some were
+  /// left out.
+  Future<String?> _addPhotos(List<String> paths) async {
+    final left = _photosLeft;
+    String? notice;
+    if (paths.length > left) {
+      notice = 'Only $left more page${left == 1 ? '' : 's'} can be added. The first $left were kept.';
+      paths = paths.take(left).toList();
+    }
+    final prepared = <_ReportFile>[];
+    for (final p in paths) {
+      prepared.add(_ReportFile(await MedicalReportAiService.preparePhoto(p)));
+    }
+    if (mounted) setState(() => _files.addAll(prepared));
+    return notice;
   }
 
   Future<void> _pickPdf() async {
@@ -118,26 +216,64 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
       final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: const ['pdf']);
       final path = result?.files.single.path;
       if (path == null) return;
-      final file = File(path);
-      if (await file.length() > MedicalReportAiService.maxFileBytes) {
-        _setError('This PDF is larger than 10 MB. Try a smaller file.');
-        return;
-      }
-      final pages = await MedicalReportAiService.pdfPageCount(path);
-      if (pages != null && pages > _maxPages) {
-        _setError('This PDF has $pages pages. Reports can have up to $_maxPages pages.');
-        return;
-      }
-      if (_titleController.text.trim().isEmpty) {
-        final name = result!.files.single.name;
-        _titleController.text = name.contains('.') ? name.substring(0, name.lastIndexOf('.')) : name;
-      }
+      final error = await _addPdf(File(path), result!.files.single.name);
+      if (error != null) _setError(error);
+    });
+  }
+
+  /// Makes this PDF the report if it is within the size and page limits.
+  /// Returns why it was refused, or null.
+  Future<String?> _addPdf(File file, String name) async {
+    if (await file.length() > MedicalReportAiService.maxFileBytes) {
+      return 'This PDF is larger than 10 MB. Try a smaller file.';
+    }
+    final pages = await MedicalReportAiService.pdfPageCount(file.path);
+    if (pages != null && pages > _maxPages) {
+      return 'This PDF has $pages pages. Reports can have up to $_maxPages pages.';
+    }
+    if (_titleController.text.trim().isEmpty) {
+      _titleController.text = name.contains('.') ? name.substring(0, name.lastIndexOf('.')) : name;
+    }
+    if (mounted) {
       setState(() {
         _files
           ..clear()
           ..add(_ReportFile(file, isPdf: true, pages: pages ?? 1));
       });
+    }
+    return null;
+  }
+
+  /// Attaches files shared from another app. A report is one PDF or photos of
+  /// its pages, so the first file decides which; anything left out is
+  /// explained in the notice instead of being uploaded.
+  Future<void> _attachShared(SharedReport shared) async {
+    final notices = <String>[if (shared.problem != null) shared.problem!];
+    final usable = shared.usable;
+    await _guardPicking(() async {
+      if (usable.isEmpty) return;
+      if (usable.first.kind == SharedFileKind.pdf) {
+        final first = usable.first;
+        final error = await _addPdf(await first.fileForUpload(), first.name);
+        if (error != null) notices.add(error.replaceFirst('This PDF', '"${first.name}"'));
+        final rest = usable.skip(1).toList();
+        if (rest.any((f) => f.kind == SharedFileKind.photo)) {
+          notices.add('A report can be one PDF or photos of its pages, not both, so the photos were left out.');
+        } else if (rest.isNotEmpty) {
+          notices.add('A report can have one PDF. Share the others one at a time.');
+        }
+      } else {
+        final photos = [for (final f in usable) if (f.kind == SharedFileKind.photo) f];
+        final notice = await _addPhotos([for (final f in photos) f.path]);
+        if (notice != null) notices.add(notice);
+        if (photos.length < usable.length) {
+          notices.add('A report can be one PDF or photos of its pages, not both, so the PDF was left out.');
+        }
+      }
     });
+    if (!mounted) return;
+    final failed = _error;
+    if (notices.isNotEmpty || failed != null) _setError([...notices, ?failed].join('\n'));
   }
 
   Future<bool> _canAddPhotos() async {
@@ -204,7 +340,7 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
         category: _category,
         notes: _notesController.text,
         analyze: _analyze,
-        patientId: widget.forPatientId,
+        patientId: _patientId,
       );
       if (mounted) Navigator.pop(context, result);
     } catch (e) {
@@ -266,9 +402,9 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Upload medical report', style: DietUi.text(16, FontWeight.w700, DietUi.strong(isDark))),
-                  if ((widget.forName ?? '').trim().isNotEmpty)
+                  if ((_forName ?? '').trim().isNotEmpty)
                     Text(
-                      'For ${widget.forName!.trim()}',
+                      'For ${_forName!.trim()}',
                       style: DietUi.text(13, FontWeight.w600, DietUi.blue),
                     ),
                   Text(
@@ -293,6 +429,37 @@ class _ReportUploadSheetState extends State<ReportUploadSheet> {
           ],
         ),
         const SizedBox(height: 16),
+
+        if (_profiles.isNotEmpty) ...[
+          _label('Who is this report for?', isDark),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final p in _profiles)
+                ChoiceChip(
+                  label: Text(p.label),
+                  selected: p.id.toLowerCase() == _profileId.toLowerCase(),
+                  showCheckmark: false,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  onSelected: _working ? null : (_) => setState(() => _profileId = p.id),
+                  labelStyle: DietUi.text(
+                    11.5,
+                    p.id.toLowerCase() == _profileId.toLowerCase() ? FontWeight.w700 : FontWeight.w500,
+                    p.id.toLowerCase() == _profileId.toLowerCase() ? Colors.white : DietUi.body(isDark),
+                  ),
+                  selectedColor: DietUi.blue,
+                  backgroundColor: DietUi.sunken(isDark),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: p.id.toLowerCase() == _profileId.toLowerCase() ? DietUi.blue : DietUi.line(isDark)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
 
         // Sources
         Row(

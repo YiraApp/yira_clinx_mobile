@@ -1,6 +1,7 @@
 package com.paccore.yiralife
 
 import android.content.Intent
+import android.os.Bundle
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -16,6 +17,17 @@ class MainActivity: FlutterFragmentActivity() {
     // app's own push routing, and opened a doctor's screen for patients.
     // Always start at the splash screen; the app routes the tapped push itself.
     override fun getInitialRoute(): String = "/"
+
+    // Shared files arrive through ShareIntoYiraActivity, which copies them first. A share sent
+    // straight here is dropped before receive_sharing_intent sees it (see SharedFiles).
+    override fun onCreate(savedInstanceState: Bundle?) {
+        if (!SharedFiles.isSafeForMainActivity(this, intent)) intent = Intent(Intent.ACTION_MAIN)
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(if (SharedFiles.isSafeForMainActivity(this, intent)) intent else Intent(Intent.ACTION_MAIN))
+    }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
